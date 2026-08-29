@@ -41,6 +41,7 @@ const ForgotPassword = lazy(() => import("./user_frontend/pages/ForgotPassword")
 const VerifyOTP = lazy(() => import("./user_frontend/pages/VerifyOTP"));
 const ResetPassword = lazy(() => import("./user_frontend/pages/ResetPassword"));
 const ForgotPin = lazy(() => import("./user_frontend/pages/ForgotPin"));
+const ResetPin = lazy(() => import("./user_frontend/pages/ResetPin")); // ✅ THÊM MỚI
 
 // Main Pages
 const MovieDetail = lazy(() => import("./user_frontend/pages/MovieDetail"));
@@ -214,6 +215,7 @@ const AUTH_ROUTES = [
     { path: "/verify-otp", element: <VerifyOTP /> },
     { path: "/reset-password", element: <ResetPassword /> },
     { path: "/forgot-pin", element: <ForgotPin /> },
+    { path: "/reset-pin", element: <ResetPin /> }, // ✅ THÊM MỚI
 ];
 
 // ✅ User Main Routes (có Layout - Cần SessionGuard)
@@ -332,7 +334,6 @@ const AppContent = () => {
             )}
             <ScrollToTop />
             
-            {/* ✅ SessionGuard KHÔNG bọc toàn bộ App, chỉ bọc bên trong UserRoutes */}
             <LazyErrorBoundary>
                 <Suspense fallback={<SuspenseLoading />}>
                     {isAdminDomain ? <AdminRoutesComponent /> : <UserRoutesComponent />}

@@ -18,6 +18,9 @@ const PURPOSE = {
 };
 
 class OtpService {
+    // ============================================================
+    // CREATE OTP - Trả về TTL thực tế
+    // ============================================================
     async createOTP(email, purpose) {
         if (!purpose) throw new Error("Purpose is required");
         email = email.trim();
@@ -31,7 +34,6 @@ class OtpService {
         const otpCode = Otp.generate6(); 
         console.log(`📤 Generated OTP: ${otpCode}`);
 
-        // ✅ SỬA: Dùng biến từ .env thay vì hardcode 300
         await RedisService.deleteOTP(email, purpose);
         await RedisService.saveOTP(email, purpose, otpCode, OTP_EXPIRE_SECONDS);
         
@@ -43,52 +45,66 @@ class OtpService {
             user_agent: null
         });
 
-        return { success: true, otp: otpCode, otpId };
-    }
+        // ✅ Lấy TTL thực tế từ Redis
+        const otpKey = `otp:${email}:${purpose}`;
+        const ttl = await RedisService.getTTL(otpKey);
 
-    // OtpService.js
-async verifyOTP(email, otp, purpose, deleteAfterVerify = true) {
-    if (!purpose) throw new Error("Purpose is required");
-    email = email.trim();
-    console.log(`🔑 [VERIFY OTP] email: "${email}", purpose: "${purpose}", received otp: "${otp}"`);
-
-    const isLocked = await RedisService.isOTPLocked(email, purpose, 5);
-    if (isLocked) {
-        return { success: false, code: "OTP_LOCKED", message: "OTP đã bị khóa do nhập sai quá nhiều lần" };
-    }
-
-    const savedOTP = String(await RedisService.getOTP(email, purpose) || '').trim();
-    const userOTP = String(otp || '').trim();
-
-    if (!savedOTP) {
-        return { success: false, code: "OTP_NOT_FOUND", message: "OTP không tồn tại hoặc đã hết hạn" };
-    }
-
-    if (savedOTP !== userOTP) {
-        const attempts = await RedisService.incrementOTPAttempts(email, purpose, 300);
-        const latestLog = await OtpRepository.findLatest(email, purpose);
-        if (latestLog?.otp_id) await OtpRepository.markFailed(latestLog.otp_id);
-        return {
-            success: false,
-            code: "OTP_INVALID",
-            message: `OTP không đúng. Còn ${5 - attempts} lần thử`
+        return { 
+            success: true, 
+            otp: otpCode, 
+            otpId,
+            expiresIn: ttl > 0 ? ttl : OTP_EXPIRE_SECONDS // ✅ Trả về TTL thực tế
         };
     }
 
-    // ✅ CHỈ XÓA OTP KHI deleteAfterVerify = true
-    if (deleteAfterVerify) {
-        await RedisService.deleteOTP(email, purpose);
-        const latestLog = await OtpRepository.findLatest(email, purpose);
-        if (latestLog?.otp_id) await OtpRepository.markVerified(latestLog.otp_id);
-        await OtpRepository.create({ email, purpose, status: "verified", ip_address: null, user_agent: null });
-    } else {
-        // ✅ KHÔNG XÓA OTP, chỉ reset số lần thử sai
-        await RedisService.resetOTPAttempts(email, purpose);
+    // ============================================================
+    // VERIFY OTP
+    // ============================================================
+    async verifyOTP(email, otp, purpose, deleteAfterVerify = true) {
+        if (!purpose) throw new Error("Purpose is required");
+        email = email.trim();
+        console.log(`🔑 [VERIFY OTP] email: "${email}", purpose: "${purpose}", received otp: "${otp}"`);
+
+        const isLocked = await RedisService.isOTPLocked(email, purpose, 5);
+        if (isLocked) {
+            return { success: false, code: "OTP_LOCKED", message: "OTP đã bị khóa do nhập sai quá nhiều lần" };
+        }
+
+        const savedOTP = String(await RedisService.getOTP(email, purpose) || '').trim();
+        const userOTP = String(otp || '').trim();
+
+        if (!savedOTP) {
+            return { success: false, code: "OTP_NOT_FOUND", message: "OTP không tồn tại hoặc đã hết hạn" };
+        }
+
+        if (savedOTP !== userOTP) {
+            const attempts = await RedisService.incrementOTPAttempts(email, purpose, 300);
+            const latestLog = await OtpRepository.findLatest(email, purpose);
+            if (latestLog?.otp_id) await OtpRepository.markFailed(latestLog.otp_id);
+            return {
+                success: false,
+                code: "OTP_INVALID",
+                message: `OTP không đúng. Còn ${5 - attempts} lần thử`
+            };
+        }
+
+        // ✅ CHỈ XÓA OTP KHI deleteAfterVerify = true
+        if (deleteAfterVerify) {
+            await RedisService.deleteOTP(email, purpose);
+            const latestLog = await OtpRepository.findLatest(email, purpose);
+            if (latestLog?.otp_id) await OtpRepository.markVerified(latestLog.otp_id);
+            await OtpRepository.create({ email, purpose, status: "verified", ip_address: null, user_agent: null });
+        } else {
+            // ✅ KHÔNG XÓA OTP, chỉ reset số lần thử sai
+            await RedisService.resetOTPAttempts(email, purpose);
+        }
+
+        return { success: true, message: "Xác thực OTP thành công" };
     }
 
-    return { success: true, message: "Xác thực OTP thành công" };
-}
-
+    // ============================================================
+    // DELETE OTP
+    // ============================================================
     async deleteOTP(email, purpose) {
         if (!purpose) throw new Error("Purpose is required");
         email = email.trim();
@@ -101,10 +117,34 @@ async verifyOTP(email, otp, purpose, deleteAfterVerify = true) {
         return { success: true, message: "OTP đã được xóa" };
     }
 
+    // ============================================================
+    // GET OTP TTL - Kiểm tra thời gian còn lại của OTP
+    // ============================================================
+    async getOtpTTL(email, purpose) {
+        if (!purpose) throw new Error("Purpose is required");
+        email = email.trim();
+        
+        const otpKey = `otp:${email}:${purpose}`;
+        const ttl = await RedisService.getTTL(otpKey);
+        const otp = await RedisService.getOTP(email, purpose);
+
+        return {
+            exists: !!otp,
+            expiresIn: ttl > 0 ? ttl : 0,
+            purpose: purpose
+        };
+    }
+
+    // ============================================================
+    // RESEND OTP - KHÔNG HỖ TRỢ (dùng createOTP mới)
+    // ============================================================
     async resendOTP() {
         throw new Error("Không hỗ trợ gửi lại OTP. Vui lòng bắt đầu lại giao dịch.");
     }
 
+    // ============================================================
+    // CLEANUP OLD LOGS
+    // ============================================================
     async cleanupOldLogs(days = 90) {
         const deleted = await OtpRepository.cleanupOldLogs(days);
         return { success: true, deleted };

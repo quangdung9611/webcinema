@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../../api/api';
-import { ShieldCheck, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
+import { ShieldCheck, AlertCircle, CheckCircle, ArrowLeft, RefreshCw } from 'lucide-react';
 import LoadingButton from '../components/LoadingButton';
-import ResetPasswordSuccessModal from '../components/ResetPasswordSuccessModal'; // 🆕 Import modal riêng
+import ResetPasswordSuccessModal from '../components/ResetPasswordSuccessModal';
 import '../styles/UserAuth.css';
 
 const VerifyOTP = () => {
@@ -12,6 +12,8 @@ const VerifyOTP = () => {
     
     const email = location.state?.email || '';
     const newPassword = location.state?.newPassword || '';
+    const purpose = location.state?.purpose || 'RESET_PASSWORD';
+    const initialExpiresIn = location.state?.expiresIn || 300;
 
     const [otpValues, setOtpValues] = useState(['', '', '', '', '', '']);
     const inputRefs = useRef([]);
@@ -21,6 +23,32 @@ const VerifyOTP = () => {
     const [message, setMessage] = useState('');
     const [messageType, setMessageType] = useState('');
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    
+    // ✅ Countdown states
+    const [countdown, setCountdown] = useState(initialExpiresIn);
+    const [isOtpExpired, setIsOtpExpired] = useState(false);
+    const timerRef = useRef(null);
+    const intervalRef = useRef(null);
+
+    // ✅ Rate limit states
+    const [isRateLimited, setIsRateLimited] = useState(false);
+    const [rateLimitTimeLeft, setRateLimitTimeLeft] = useState(0);
+
+    // ✅ Countdown timer cho rate limit
+    useEffect(() => {
+        if (!isRateLimited || rateLimitTimeLeft <= 0) return;
+        const timer = setInterval(() => {
+            setRateLimitTimeLeft(prev => {
+                if (prev <= 1) {
+                    setIsRateLimited(false);
+                    setMessage('');
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [isRateLimited, rateLimitTimeLeft]);
 
     // Auto focus vào ô đầu tiên khi mount
     useEffect(() => {
@@ -28,6 +56,54 @@ const VerifyOTP = () => {
             inputRefs.current[0]?.focus();
         }
     }, [email, newPassword]);
+
+    // ✅ Countdown OTP
+    useEffect(() => {
+        if (countdown > 0) {
+            timerRef.current = setTimeout(() => {
+                setCountdown(prev => {
+                    if (prev <= 1) {
+                        setIsOtpExpired(true);
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        }
+        return () => clearTimeout(timerRef.current);
+    }, [countdown]);
+
+    // ✅ Đồng bộ TTL từ Redis mỗi 10 giây
+    useEffect(() => {
+        const syncTTL = async () => {
+            try {
+                const response = await api.get(`/api/auth/check-otp-ttl`, {
+                    params: {
+                        email: email,
+                        purpose: purpose
+                    }
+                });
+                if (response.data.success) {
+                    const ttl = response.data.data.expiresIn;
+                    if (ttl > 0) {
+                        setCountdown(ttl);
+                        setIsOtpExpired(false);
+                    } else {
+                        setIsOtpExpired(true);
+                        setCountdown(0);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to sync OTP TTL:', error);
+            }
+        };
+
+        syncTTL();
+        intervalRef.current = setInterval(syncTTL, 10000);
+        return () => {
+            if (intervalRef.current) clearInterval(intervalRef.current);
+        };
+    }, [email, purpose]);
 
     if (!email || !newPassword) {
         return (
@@ -92,6 +168,18 @@ const VerifyOTP = () => {
     };
 
     const handleVerifyOTP = async () => {
+        if (isOtpExpired) {
+            setMessage('⚠️ OTP đã hết hạn. Vui lòng gửi lại.');
+            setMessageType('error');
+            return;
+        }
+
+        if (isRateLimited) {
+            setMessage(`⚠️ Vui lòng đợi ${rateLimitTimeLeft} giây trước khi thử lại.`);
+            setMessageType('error');
+            return;
+        }
+
         const otp = otpValues.join('');
         
         if (!otp.trim()) {
@@ -122,10 +210,18 @@ const VerifyOTP = () => {
 
         } catch (err) {
             const status = err.response?.status;
-            const errorMessage = err.response?.data?.message || 'OTP không hợp lệ';
+            const errorData = err.response?.data || {};
+            const errorMessage = errorData.message || 'OTP không hợp lệ';
             
             if (status === 429) {
-                setMessage(`⚠️ ${errorMessage}`);
+                const remainingSeconds = errorData.data?.remainingSeconds || 60;
+                setMessage(`⚠️ Vui lòng thử lại sau ${remainingSeconds} giây.`);
+                setIsRateLimited(true);
+                setRateLimitTimeLeft(remainingSeconds);
+            } else if (errorMessage.includes('hết hạn')) {
+                setIsOtpExpired(true);
+                setCountdown(0);
+                setMessage('⚠️ OTP đã hết hạn. Vui lòng gửi lại.');
             } else {
                 setMessage(errorMessage);
             }
@@ -136,27 +232,48 @@ const VerifyOTP = () => {
     };
 
     const handleResendOTP = async () => {
+        if (isRateLimited) {
+            setMessage(`⚠️ Vui lòng đợi ${rateLimitTimeLeft} giây trước khi thử lại.`);
+            setMessageType('error');
+            return;
+        }
+
+        if (countdown > 0 && !isOtpExpired) {
+            setMessage(`⚠️ Vui lòng đợi ${countdown} giây trước khi gửi lại.`);
+            setMessageType('error');
+            return;
+        }
+
         try {
             setResendLoading(true);
             setMessage('');
 
-            const res = await api.post('/api/auth/submit-new-password', {
-                token: location.state?.token,
-                newPassword
+            // ✅ Dùng API resend-otp
+            const res = await api.post('/api/auth/resend-otp', {
+                email,
+                purpose: purpose
             });
 
-            setMessage(res.data.message || 'OTP đã được gửi lại');
-            setMessageType('success');
+            if (res.data.success) {
+                const expiresIn = res.data.data?.expiresIn || 300;
+                setCountdown(expiresIn);
+                setIsOtpExpired(false);
+                setMessage(res.data.message || 'OTP đã được gửi lại');
+                setMessageType('success');
 
-            setOtpValues(['', '', '', '', '', '']);
-            inputRefs.current[0]?.focus();
-
+                setOtpValues(['', '', '', '', '', '']);
+                inputRefs.current[0]?.focus();
+            }
         } catch (err) {
             const status = err.response?.status;
-            const errorMessage = err.response?.data?.message || 'Không thể gửi lại OTP';
+            const errorData = err.response?.data || {};
+            const errorMessage = errorData.message || 'Không thể gửi lại OTP';
             
             if (status === 429) {
-                setMessage(`⚠️ ${errorMessage}`);
+                const remainingSeconds = errorData.data?.remainingSeconds || 60;
+                setMessage(`⚠️ Vui lòng thử lại sau ${remainingSeconds} giây.`);
+                setIsRateLimited(true);
+                setRateLimitTimeLeft(remainingSeconds);
             } else {
                 setMessage(errorMessage);
             }
@@ -170,6 +287,13 @@ const VerifyOTP = () => {
         if (e.key === 'Enter') {
             handleVerifyOTP();
         }
+    };
+
+    const formatTime = (seconds) => {
+        if (seconds <= 0) return '0:00';
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
     // ✅ Xử lý đóng modal và chuyển về login
@@ -222,14 +346,24 @@ const VerifyOTP = () => {
                                         onChange={(e) => handleOtpChange(index, e.target.value)}
                                         onKeyDown={(e) => handleKeyDown(index, e)}
                                         onPaste={handlePaste}
-                                        className={`pin-box ${messageType === 'error' && message.includes('OTP') ? 'input-error' : ''}`}
-                                        disabled={loading || resendLoading}
+                                        className={`pin-box ${isOtpExpired ? 'input-error' : ''} ${messageType === 'error' && message.includes('OTP') ? 'input-error' : ''}`}
+                                        disabled={loading || resendLoading || isOtpExpired || isRateLimited}
                                         autoComplete="one-time-code"
                                     />
                                 ))}
                             </div>
                             <div className="input-hint center-text">
-                                📧 Mã OTP đã được gửi đến email của bạn
+                                {isOtpExpired ? (
+                                    <span style={{ color: '#ff6b8a' }}>
+                                        ⚠️ OTP đã hết hạn. Vui lòng <strong>gửi lại</strong> mã mới.
+                                    </span>
+                                ) : (
+                                    <span>
+                                        ⏳ OTP hết hạn sau: <strong style={{ color: countdown <= 60 ? '#ff6b8a' : '#4ade80' }}>
+                                            {formatTime(countdown)}
+                                        </strong> (5 phút)
+                                    </span>
+                                )}
                             </div>
                         </div>
 
@@ -238,23 +372,24 @@ const VerifyOTP = () => {
                                 type="button"
                                 loading={loading}
                                 loadingText="Đang xác thực..."
-                                disabled={loading || resendLoading}
+                                disabled={loading || resendLoading || isOtpExpired || isRateLimited}
                                 className="btn-user"
                                 spinnerColor="#000000"
                                 onClick={handleVerifyOTP}
                             >
-                                XÁC NHẬN OTP
+                                {isRateLimited ? `Đang chờ (${rateLimitTimeLeft}s)` : 'XÁC NHẬN OTP'}
                             </LoadingButton>
 
                             <LoadingButton
                                 type="button"
                                 loading={resendLoading}
                                 loadingText="Đang gửi..."
-                                disabled={loading || resendLoading}
+                                disabled={loading || resendLoading || (countdown > 0 && !isOtpExpired) || isRateLimited}
                                 className="btn-user btn-outline-secondary"
                                 onClick={handleResendOTP}
                             >
-                                GỬI LẠI OTP
+                                <RefreshCw size={16} />
+                                {isRateLimited ? `Đang chờ (${rateLimitTimeLeft}s)` : 'GỬI LẠI OTP'}
                             </LoadingButton>
                         </div>
                     </form>
@@ -272,7 +407,6 @@ const VerifyOTP = () => {
                 </div>
             </div>
 
-            {/* 🆕 DÙNG RESET PASSWORD SUCCESS MODAL RIÊNG */}
             <ResetPasswordSuccessModal
                 show={showSuccessModal}
                 onClose={handleModalClose}

@@ -1,3 +1,4 @@
+// Controllers/AuthController.js
 const AuthService = require("../Services/AuthService");
 
 /*=========================================================
@@ -9,17 +10,18 @@ exports.registerStep1 = async (req, res) => {
         return res.status(200).json(result);
     } catch (error) {
         console.error("Register Step 1 Error:", error);
-        // 🔥 Xử lý lỗi rate limit
         if (error.statusCode === 429) {
             return res.status(429).json({
                 success: false,
-                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.'
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.',
+                data: error.data || null
             });
         }
         return res.status(error.statusCode || 500).json({
             success: false,
             field: error.field || null,
-            message: error.message || "Lỗi máy chủ"
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
         });
     }
 };
@@ -36,13 +38,15 @@ exports.completeRegistration = async (req, res) => {
         if (error.statusCode === 429) {
             return res.status(429).json({
                 success: false,
-                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.'
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.',
+                data: error.data || null
             });
         }
         return res.status(error.statusCode || 500).json({
             success: false,
             field: error.field || null,
-            message: error.message || "Lỗi máy chủ"
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
         });
     }
 };
@@ -59,13 +63,15 @@ exports.resendVerification = async (req, res) => {
         if (error.statusCode === 429) {
             return res.status(429).json({
                 success: false,
-                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.'
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.',
+                data: error.data || null
             });
         }
         return res.status(error.statusCode || 500).json({
             success: false,
             field: error.field || null,
-            message: error.message || "Lỗi máy chủ"
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
         });
     }
 };
@@ -82,13 +88,15 @@ exports.register = async (req, res) => {
         if (error.statusCode === 429) {
             return res.status(429).json({
                 success: false,
-                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.'
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.',
+                data: error.data || null
             });
         }
         return res.status(error.statusCode || 500).json({
             success: false,
             field: error.field || null,
-            message: error.message || "Lỗi máy chủ"
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
         });
     }
 };
@@ -105,7 +113,8 @@ exports.checkLockStatus = async (req, res) => {
         console.error("Check Lock Status Error:", error);
         return res.status(error.statusCode || 500).json({
             success: false,
-            message: error.message || "Lỗi máy chủ"
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
         });
     }
 };
@@ -168,7 +177,8 @@ exports.getMe = async (req, res) => {
         console.error("GetMe Error:", error);
         return res.status(error.statusCode || 500).json({
             success: false,
-            message: error.message || "Lỗi máy chủ"
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
         });
     }
 };
@@ -186,7 +196,8 @@ exports.refreshToken = async (req, res) => {
         console.error("Refresh Error:", error);
         return res.status(error.statusCode || 500).json({
             success: false,
-            message: error.message || "Lỗi máy chủ"
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
         });
     }
 };
@@ -202,7 +213,8 @@ exports.logout = async (req, res) => {
         console.error("Logout Error:", error);
         return res.status(error.statusCode || 500).json({
             success: false,
-            message: error.message || "Lỗi máy chủ"
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
         });
     }
 };
@@ -218,7 +230,8 @@ exports.logoutAllDevices = async (req, res) => {
         console.error("Logout All Devices Error:", error);
         return res.status(error.statusCode || 500).json({
             success: false,
-            message: error.message || "Lỗi máy chủ"
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
         });
     }
 };
@@ -235,7 +248,8 @@ exports.changePassword = async (req, res) => {
         return res.status(error.statusCode || 500).json({
             success: false,
             field: error.field || null,
-            message: error.message || "Lỗi máy chủ"
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
         });
     }
 };
@@ -253,13 +267,15 @@ exports.forgotPassword = async (req, res) => {
         if (error.statusCode === 429) {
             return res.status(429).json({
                 success: false,
-                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.'
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.',
+                data: error.data || null
             });
         }
         return res.status(error.statusCode || 500).json({
             success: false,
             field: error.field || null,
-            message: error.message || "Lỗi máy chủ"
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
         });
     }
 };
@@ -277,13 +293,15 @@ exports.submitNewPassword = async (req, res) => {
         if (error.statusCode === 429) {
             return res.status(429).json({
                 success: false,
-                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.'
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.',
+                data: error.data || null
             });
         }
         return res.status(error.statusCode || 500).json({
             success: false,
             field: error.field || null,
-            message: error.message || "Lỗi máy chủ"
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
         });
     }
 };
@@ -301,7 +319,8 @@ exports.verifyOtpAndReset = async (req, res) => {
         return res.status(error.statusCode || 500).json({
             success: false,
             field: error.field || null,
-            message: error.message || "Lỗi máy chủ"
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
         });
     }
 };
@@ -319,7 +338,8 @@ exports.verifyResetOTP = async (req, res) => {
         return res.status(error.statusCode || 500).json({
             success: false,
             field: error.field || null,
-            message: error.message || "Lỗi máy chủ"
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
         });
     }
 };
@@ -337,7 +357,8 @@ exports.resetPassword = async (req, res) => {
         return res.status(error.statusCode || 500).json({
             success: false,
             field: error.field || null,
-            message: error.message || "Lỗi máy chủ"
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
         });
     }
 };
@@ -355,13 +376,15 @@ exports.sendVerificationEmail = async (req, res) => {
         if (error.statusCode === 429) {
             return res.status(429).json({
                 success: false,
-                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.'
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.',
+                data: error.data || null
             });
         }
         return res.status(error.statusCode || 500).json({
             success: false,
             field: error.field || null,
-            message: error.message || "Lỗi máy chủ"
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
         });
     }
 };
@@ -404,7 +427,8 @@ exports.getDevices = async (req, res) => {
         console.error("Get Devices Error:", error);
         return res.status(error.statusCode || 500).json({
             success: false,
-            message: error.message || "Lỗi máy chủ"
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
         });
     }
 };
@@ -421,7 +445,8 @@ exports.revokeDevice = async (req, res) => {
         console.error("Revoke Device Error:", error);
         return res.status(error.statusCode || 500).json({
             success: false,
-            message: error.message || "Lỗi máy chủ"
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
         });
     }
 };
@@ -439,13 +464,15 @@ exports.forgotPin = async (req, res) => {
         if (error.statusCode === 429) {
             return res.status(429).json({
                 success: false,
-                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.'
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.',
+                data: error.data || null
             });
         }
         return res.status(error.statusCode || 500).json({
             success: false,
             field: error.field || null,
-            message: error.message || "Lỗi máy chủ"
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
         });
     }
 };
@@ -463,7 +490,65 @@ exports.verifyOtpAndChangePin = async (req, res) => {
         return res.status(error.statusCode || 500).json({
             success: false,
             field: error.field || null,
-            message: error.message || "Lỗi máy chủ"
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
+        });
+    }
+};
+
+/*=========================================================
+    🆕 KIỂM TRA TTL OTP
+=========================================================*/
+exports.checkOtpTTL = async (req, res) => {
+    try {
+        const { email, purpose } = req.query;
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: "Thiếu email"
+            });
+        }
+        if (!purpose) {
+            return res.status(400).json({
+                success: false,
+                message: "Thiếu purpose"
+            });
+        }
+
+        const result = await AuthService.checkOtpTTL(email, purpose);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Check OTP TTL Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
+        });
+    }
+};
+
+/*=========================================================
+    🆕 GỬI LẠI OTP
+=========================================================*/
+exports.resendOtp = async (req, res) => {
+    try {
+        const { email, purpose } = req.body;
+        const result = await AuthService.resendOtp(email, purpose);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Resend OTP Error:", error);
+        if (error.statusCode === 429) {
+            return res.status(429).json({
+                success: false,
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.',
+                data: error.data || null
+            });
+        }
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            field: error.field || null,
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
         });
     }
 };
