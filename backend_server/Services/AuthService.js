@@ -758,9 +758,9 @@ exports.forgotPin = async (email) => {
     };
 };
 
-// 🆕 6. XÁC THỰC OTP VÀ ĐỔI MÃ PIN MỚI - ✅ SỬA: Cho phép newPin rỗng
+// AuthService.js
 exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
-    // 🔥 RATE LIMIT: Tối đa 5 lần thử OTP trong 60 giây
+    // 🔥 RATE LIMIT
     const rateLimit = await RedisService.checkRateLimit(email, "verify-otp-pin", 5, 60);
     if (!rateLimit.allowed) {
         throw { 
@@ -769,7 +769,14 @@ exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
         };
     }
 
-    const otpResult = await OtpService.verifyOTP(email, otp, OtpService.PURPOSE.FORGOT_PIN);
+    // ✅ SỬA: Gọi verify với deleteAfterVerify = false (KHÔNG xóa OTP)
+    const otpResult = await OtpService.verifyOTP(
+        email, 
+        otp, 
+        OtpService.PURPOSE.FORGOT_PIN, 
+        false  // ← KHÔNG XÓA OTP
+    );
+    
     if (!otpResult.success) {
         throw {
             statusCode: otpResult.code === "OTP_LOCKED" ? 429 : 400,
@@ -778,17 +785,17 @@ exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
         };
     }
 
-    // ✅ SỬA: Cho phép newPin là chuỗi rỗng (chỉ verify OTP)
-    if (newPin && !/^\d{6}$/.test(newPin)) {
-        throw { statusCode: 400, field: "newPin", message: "Mã PIN mới phải là 6 chữ số" };
-    }
-
-    // ✅ Nếu không có newPin hoặc newPin rỗng → chỉ verify OTP
+    // Nếu không có newPin hoặc newPin rỗng → chỉ verify OTP (KHÔNG xóa)
     if (!newPin || newPin.length === 0) {
         return { success: true, message: "Xác thực OTP thành công" };
     }
 
-    // ✅ Nếu có newPin → đổi PIN
+    // Validate newPin
+    if (!/^\d{6}$/.test(newPin)) {
+        throw { statusCode: 400, field: "newPin", message: "Mã PIN mới phải là 6 chữ số" };
+    }
+
+    // Đổi PIN
     const user = await UserRepository.findByEmail(email);
     if (!user) {
         throw { statusCode: 404, message: "Không tìm thấy người dùng" };
@@ -797,12 +804,14 @@ exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
     const hashedPin = await Password.hash(newPin);
     await UserRepository.updatePinHash(user.user_id, hashedPin);
 
+    // ✅ LÚC NÀY MỚI XÓA OTP (sau khi đổi PIN thành công)
+    await RedisService.deleteOTP(email, OtpService.PURPOSE.FORGOT_PIN);
+
     return {
         success: true,
         message: "Đổi mã PIN thành công!"
     };
 };
-
 // ============================================================
 // EXPORT SOCKET
 // ============================================================
