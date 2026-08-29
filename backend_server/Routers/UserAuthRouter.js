@@ -13,7 +13,7 @@ router.post("/forgot-pin", AuthController.forgotPin);
 router.post("/verify-otp-and-change-pin", AuthController.verifyOtpAndChangePin);
 
 // 🆕 ROUTES CHO ĐỒNG BỘ TTL
-// router.get("/check-otp-ttl", AuthController.checkOtpTTL);
+router.get("/check-otp-ttl", AuthController.checkOtpTTL);
 router.post("/resend-otp", AuthController.resendOtp);
 
 // AUTH ROUTES
