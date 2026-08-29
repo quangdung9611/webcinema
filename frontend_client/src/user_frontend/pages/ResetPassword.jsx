@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom'; // ✅ Dùng useLocation
 import api from '../../api/api';
 import { LockKeyhole, AlertCircle, CheckCircle, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import LoadingButton from '../components/LoadingButton';
@@ -8,8 +8,11 @@ import '../styles/UserAuth.css';
 
 const ResetPassword = () => {
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
-    const token = searchParams.get('token');
+    const location = useLocation(); // ✅ Lấy state từ ForgotPassword
+
+    // ✅ Lấy email và otp từ state (thay vì token từ URL)
+    const email = location.state?.email || '';
+    const otp = location.state?.otp || '';
 
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -18,7 +21,6 @@ const ResetPassword = () => {
     const [messageType, setMessageType] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [status, setStatus] = useState('form');
     const [fieldErrors, setFieldErrors] = useState({});
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
@@ -44,12 +46,12 @@ const ResetPassword = () => {
         return () => clearInterval(timer);
     }, [isRateLimited, rateLimitTimeLeft]);
 
+    // ✅ Nếu không có email hoặc otp -> quay lại forgot-password
     useEffect(() => {
-        if (!token) {
-            setStatus('error');
-            setMessage('Link không hợp lệ. Vui lòng yêu cầu gửi lại.');
+        if (!email || !otp) {
+            navigate('/forgot-password');
         }
-    }, [token]);
+    }, [email, otp, navigate]);
 
     const handleFieldChange = (field, value) => {
         if (field === 'newPassword') {
@@ -106,16 +108,15 @@ const ResetPassword = () => {
         try {
             setLoading(true);
 
-            // ✅ Gọi API reset password trực tiếp
-            const res = await api.post('/api/auth/reset-password', {
-                resetToken: token,
+            // ✅ Gọi API verify-otp-and-reset với email, otp, newPassword
+            const res = await api.post('/api/auth/verify-otp-and-reset', {
+                email,
+                otp,
                 newPassword
             });
 
             setMessage(res.data.message || 'Đặt lại mật khẩu thành công!');
             setMessageType('success');
-            
-            // ✅ Hiển thị modal thành công
             setShowSuccessModal(true);
 
         } catch (err) {
@@ -129,19 +130,10 @@ const ResetPassword = () => {
             } else if (field === 'confirmPassword') {
                 setFieldErrors({ confirmPassword: errorMessage });
             } else if (status === 429) {
-                const remaining = errorData.data?.remaining;
                 const remainingSeconds = errorData.data?.remainingSeconds || 60;
                 const maxAttempts = errorData.data?.maxAttempts || 3;
-                
-                let displayMessage = `⚠️ Bạn chỉ được gửi tối đa ${maxAttempts} lần.`;
-                if (remaining !== undefined && remaining >= 0) {
-                    displayMessage += ` Còn ${remaining} lần thử.`;
-                }
-                displayMessage += ` Vui lòng thử lại sau ${remainingSeconds} giây.`;
-                
-                setMessage(displayMessage);
+                setMessage(`⚠️ Bạn chỉ được gửi tối đa ${maxAttempts} lần. Vui lòng thử lại sau ${remainingSeconds} giây.`);
                 setMessageType('error');
-                
                 setIsRateLimited(true);
                 setRateLimitTimeLeft(remainingSeconds);
             } else {
@@ -153,7 +145,6 @@ const ResetPassword = () => {
         }
     };
 
-    // ✅ Xử lý đóng modal
     const handleModalConfirm = () => {
         setShowSuccessModal(false);
         navigate('/login');
@@ -164,28 +155,6 @@ const ResetPassword = () => {
         navigate('/login');
     };
 
-    if (status === 'error') {
-        return (
-            <div className="auth-container">
-                <div className="auth-card">
-                    <div className="forgot-icon-wrapper">
-                        <AlertCircle size={42} className="forgot-icon" style={{ color: '#f87171' }} />
-                    </div>
-                    <h2>LINK KHÔNG HỢP LỆ</h2>
-                    <p className="auth-subtitle">{message}</p>
-                    <div className="button-group">
-                        <button 
-                            className="btn-user" 
-                            onClick={() => navigate('/forgot-password')}
-                        >
-                            Gửi lại liên kết
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div className="auth-container">
             <div className="auth-card">
@@ -194,7 +163,9 @@ const ResetPassword = () => {
                 </div>
 
                 <h2>ĐẶT LẠI MẬT KHẨU</h2>
-                <p className="auth-subtitle">Nhập mật khẩu mới cho tài khoản của bạn</p>
+                <p className="auth-subtitle">
+                    Nhập mật khẩu mới cho tài khoản <strong>{email}</strong>
+                </p>
 
                 {message && (
                     <div className={`forgot-message ${messageType}`}>
@@ -304,7 +275,6 @@ const ResetPassword = () => {
                 </div>
             </div>
 
-            {/* ✅ Modal thành công */}
             <ResetPasswordSuccessModal
                 show={showSuccessModal}
                 onClose={handleModalClose}

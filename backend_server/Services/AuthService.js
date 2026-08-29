@@ -295,7 +295,9 @@ exports.changePassword = async (userId, passwordData) => {
     return { success: true, message: "Đổi mật khẩu thành công. Vui lòng đăng nhập lại." };
 };
 
-// AuthService.js - forgotPassword
+// ============================================================
+// FORGOT PASSWORD - CÓ RATE LIMIT (3 lần/5 PHÚT) + Trả về TTL
+// ============================================================
 exports.forgotPassword = async (email, req) => {
     if (!email?.trim()) throw { statusCode: 400, field: "email", message: "Email không được để trống" };
     if (!EMAIL_REGEX.test(email)) throw { statusCode: 400, field: "email", message: "Email không hợp lệ" };
@@ -308,27 +310,38 @@ exports.forgotPassword = async (email, req) => {
         };
     }
 
-    const rateLimit = await RedisService.checkRateLimit(email, "password-reset", 3, 60);
+    // ✅ SỬA: 3 lần / 5 phút (300 giây)
+    const rateLimit = await RedisService.checkRateLimit(email, "password-reset", 3, 300);
     if (!rateLimit.allowed) {
         throw { 
             statusCode: 429, 
-            message: `Bạn chỉ được gửi tối đa 3 lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 60} giây.`,
+            message: `Bạn chỉ được gửi tối đa 3 lần trong 5 phút. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 300} giây.`,
             data: {
-                remainingSeconds: rateLimit.remainingSeconds || 60,
+                remainingSeconds: rateLimit.remainingSeconds || 300,
                 maxAttempts: 3
             }
         };
     }
 
-    // ✅ Tạo OTP thay vì gửi link
+    // ✅ Tạo OTP và lưu Redis
     const otpResult = await OtpService.createOTP(email, OtpService.PURPOSE.RESET_PASSWORD);
-    await MailService.sendResetPasswordOTP(email, otpResult.otp, user.full_name);
+    
+    // ✅ SỬA: GỬI EMAIL KHÔNG ĐỢI (async) - GIẢM DELAY
+    setImmediate(() => {
+        MailService.sendResetPasswordOTP(email, otpResult.otp, user.full_name)
+            .then(() => console.log(`✅ Email sent to ${email}`))
+            .catch(err => console.error(`❌ Email failed: ${err.message}`));
+    });
+
+    // ✅ Lấy TTL thực tế từ Redis
+    const otpKey = `otp:${email}:${OtpService.PURPOSE.RESET_PASSWORD}`;
+    const ttl = await RedisService.getTTL(otpKey);
 
     return {
         success: true,
         message: "Mã OTP đã được gửi tới email của bạn.",
         data: {
-            expiresIn: otpResult.expiresIn || 300
+            expiresIn: ttl > 0 ? ttl : 300
         }
     };
 };
@@ -387,7 +400,12 @@ exports.submitNewPassword = async (token, newPassword) => {
     }
 
     const otpResult = await OtpService.createOTP(user.email, OtpService.PURPOSE.RESET_PASSWORD);
-    await MailService.sendResetPasswordOTP(user.email, otpResult.otp, user.full_name);
+    
+    setImmediate(() => {
+        MailService.sendResetPasswordOTP(user.email, otpResult.otp, user.full_name)
+            .then(() => console.log(`✅ Email sent to ${user.email}`))
+            .catch(err => console.error(`❌ Email failed: ${err.message}`));
+    });
 
     return {
         success: true,
@@ -398,6 +416,7 @@ exports.submitNewPassword = async (token, newPassword) => {
         }
     };
 };
+
 // ============================================================
 // 🆕 XÁC THỰC OTP VÀ ĐỔI MẬT KHẨU (GIỐNG VERIFY OTP CHANGE PIN)
 // ============================================================
@@ -469,6 +488,7 @@ exports.verifyOtpAndReset = async (email, otp, newPassword) => {
         message: "Đặt lại mật khẩu thành công!"
     };
 };
+
 // ============================================================
 // SEND VERIFICATION EMAIL - CÓ RATE LIMIT (3 lần/300s)
 // ============================================================
@@ -820,14 +840,14 @@ exports.resendOtp = async (email, purpose) => {
         throw { statusCode: 404, message: "Không tìm thấy người dùng" };
     }
 
-    // Rate limit cho resend
-    const rateLimit = await RedisService.checkRateLimit(email, `${purpose}-resend`, 3, 120);
+    // Rate limit cho resend: 3 lần / 5 phút
+    const rateLimit = await RedisService.checkRateLimit(email, `${purpose}-resend`, 3, 300);
     if (!rateLimit.allowed) {
         throw { 
             statusCode: 429, 
-            message: `Bạn chỉ được gửi tối đa 3 lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 120} giây.`,
+            message: `Bạn chỉ được gửi tối đa 3 lần trong 5 phút. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 300} giây.`,
             data: {
-                remainingSeconds: rateLimit.remainingSeconds || 120,
+                remainingSeconds: rateLimit.remainingSeconds || 300,
                 maxAttempts: 3
             }
         };
@@ -839,17 +859,24 @@ exports.resendOtp = async (email, purpose) => {
     // Tạo OTP mới
     const otpResult = await OtpService.createOTP(email, purpose);
     
-    // Gửi email tùy theo purpose
-    if (purpose === OtpService.PURPOSE.FORGOT_PIN) {
-        await MailService.sendForgotPinOTP(email, otpResult.otp, user.full_name);
-    } else if (purpose === OtpService.PURPOSE.RESET_PASSWORD) {
-        await MailService.sendResetPasswordOTP(email, otpResult.otp, user.full_name);
-    } else if (purpose === OtpService.PURPOSE.REGISTER) {
-        // Gửi email xác thực đăng ký
-        const verifyToken = Jwt.generateEmailVerifyToken({ user_id: user.user_id, email: email });
-        const verifyUrl = `${FRONTEND_URL}/verify-email?token=${verifyToken}`;
-        await MailService.sendEmailVerification(email, verifyUrl, user.full_name);
-    }
+    // Gửi email tùy theo purpose (KHÔNG ĐỢI)
+    setImmediate(() => {
+        if (purpose === OtpService.PURPOSE.FORGOT_PIN) {
+            MailService.sendForgotPinOTP(email, otpResult.otp, user.full_name)
+                .then(() => console.log(`✅ Forgot PIN email sent to ${email}`))
+                .catch(err => console.error(`❌ Forgot PIN email failed: ${err.message}`));
+        } else if (purpose === OtpService.PURPOSE.RESET_PASSWORD) {
+            MailService.sendResetPasswordOTP(email, otpResult.otp, user.full_name)
+                .then(() => console.log(`✅ Reset password email sent to ${email}`))
+                .catch(err => console.error(`❌ Reset password email failed: ${err.message}`));
+        } else if (purpose === OtpService.PURPOSE.REGISTER) {
+            const verifyToken = Jwt.generateEmailVerifyToken({ user_id: user.user_id, email: email });
+            const verifyUrl = `${FRONTEND_URL}/verify-email?token=${verifyToken}`;
+            MailService.sendEmailVerification(email, verifyUrl, user.full_name)
+                .then(() => console.log(`✅ Verify email sent to ${email}`))
+                .catch(err => console.error(`❌ Verify email failed: ${err.message}`));
+        }
+    });
 
     return {
         success: true,
@@ -861,7 +888,7 @@ exports.resendOtp = async (email, purpose) => {
 };
 
 // ============================================================
-// 🆕 QUÊN MÃ PIN - CÓ RATE LIMIT (3 lần/120s) + Trả về TTL
+// 🆕 QUÊN MÃ PIN - CÓ RATE LIMIT (3 lần/5 PHÚT) + Trả về TTL
 // ============================================================
 exports.forgotPin = async (email) => {
     if (!email?.trim()) {
@@ -873,26 +900,36 @@ exports.forgotPin = async (email) => {
         throw { statusCode: 404, message: "Không tìm thấy người dùng" };
     }
 
-    const rateLimit = await RedisService.checkRateLimit(email, "forgot-pin", 3, 120);
+    // ✅ SỬA: 3 lần / 5 phút (300 giây)
+    const rateLimit = await RedisService.checkRateLimit(email, "forgot-pin", 3, 300);
     if (!rateLimit.allowed) {
         throw { 
             statusCode: 429, 
-            message: `Bạn chỉ được gửi tối đa 3 lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 120} giây.`,
+            message: `Bạn chỉ được gửi tối đa 3 lần trong 5 phút. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 300} giây.`,
             data: {
-                remainingSeconds: rateLimit.remainingSeconds || 120,
+                remainingSeconds: rateLimit.remainingSeconds || 300,
                 maxAttempts: 3
             }
         };
     }
 
     const otpResult = await OtpService.createOTP(email, OtpService.PURPOSE.FORGOT_PIN);
-    await MailService.sendForgotPinOTP(email, otpResult.otp, user.full_name);
+    
+    // ✅ SỬA: GỬI EMAIL KHÔNG ĐỢI
+    setImmediate(() => {
+        MailService.sendForgotPinOTP(email, otpResult.otp, user.full_name)
+            .then(() => console.log(`✅ Forgot PIN email sent to ${email}`))
+            .catch(err => console.error(`❌ Forgot PIN email failed: ${err.message}`));
+    });
+
+    const otpKey = `otp:${email}:${OtpService.PURPOSE.FORGOT_PIN}`;
+    const ttl = await RedisService.getTTL(otpKey);
 
     return {
         success: true,
         message: "Mã OTP đã được gửi tới email. Vui lòng kiểm tra hộp thư.",
         data: {
-            expiresIn: otpResult.expiresIn || 300
+            expiresIn: ttl > 0 ? ttl : 300
         }
     };
 };
@@ -901,7 +938,7 @@ exports.forgotPin = async (email) => {
 // 🆕 XÁC THỰC OTP VÀ ĐỔI MÃ PIN MỚI
 // ============================================================
 exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
-    // 🔥 RATE LIMIT
+    // 🔥 RATE LIMIT: 5 lần/60s
     const rateLimit = await RedisService.checkRateLimit(email, "verify-otp-pin", 5, 60);
     if (!rateLimit.allowed) {
         throw { 
