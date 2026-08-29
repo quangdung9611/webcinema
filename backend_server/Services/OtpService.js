@@ -53,12 +53,12 @@ class OtpService {
             success: true, 
             otp: otpCode, 
             otpId,
-            expiresIn: ttl > 0 ? ttl : OTP_EXPIRE_SECONDS // ✅ Trả về TTL thực tế
+            expiresIn: ttl > 0 ? ttl : OTP_EXPIRE_SECONDS
         };
     }
 
     // ============================================================
-    // VERIFY OTP
+    // VERIFY OTP - XÓA OTP KHI SAI 5 LẦN
     // ============================================================
     async verifyOTP(email, otp, purpose, deleteAfterVerify = true) {
         if (!purpose) throw new Error("Purpose is required");
@@ -67,6 +67,8 @@ class OtpService {
 
         const isLocked = await RedisService.isOTPLocked(email, purpose, 5);
         if (isLocked) {
+            // ✅ XÓA OTP KHỎI REDIS KHI BỊ KHÓA
+            await RedisService.deleteOTP(email, purpose);
             return { success: false, code: "OTP_LOCKED", message: "OTP đã bị khóa do nhập sai quá nhiều lần" };
         }
 
@@ -81,6 +83,17 @@ class OtpService {
             const attempts = await RedisService.incrementOTPAttempts(email, purpose, 300);
             const latestLog = await OtpRepository.findLatest(email, purpose);
             if (latestLog?.otp_id) await OtpRepository.markFailed(latestLog.otp_id);
+            
+            // ✅ KIỂM TRA NẾU ĐẠT 5 LẦN SAI → XÓA OTP
+            if (attempts >= 5) {
+                await RedisService.deleteOTP(email, purpose);
+                return {
+                    success: false,
+                    code: "OTP_LOCKED",
+                    message: "Bạn đã nhập sai quá 5 lần. OTP đã bị khóa. Vui lòng gửi lại OTP mới."
+                };
+            }
+            
             return {
                 success: false,
                 code: "OTP_INVALID",

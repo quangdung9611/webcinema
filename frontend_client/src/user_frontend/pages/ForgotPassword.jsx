@@ -1,30 +1,37 @@
+// ForgotPassword.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MailCheck, ShieldCheck, ArrowLeft, RefreshCw, AlertCircle } from 'lucide-react';
 import api from '../../api/api';
 import LoadingButton from '../components/LoadingButton';
+import LockModal from '../components/LockModal';
 import '../styles/UserAuth.css';
 
 const ForgotPassword = () => {
     const navigate = useNavigate();
 
-    const [step, setStep] = useState('sent'); // 'sent' -> 'otp'
+    const [step, setStep] = useState('sent');
     const [otp, setOtp] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [countdown, setCountdown] = useState(300);
     const [isOtpExpired, setIsOtpExpired] = useState(false);
+    const [otpAttempts, setOtpAttempts] = useState(0);
+    const [showLockModal, setShowLockModal] = useState(false);
+    const [lockMessage, setLockMessage] = useState('');
+
+    const [showLockTimer, setShowLockTimer] = useState(false);
+    const [lockTimeLeft, setLockTimeLeft] = useState(0);
+    const [lockUntil, setLockUntil] = useState(null);
 
     const [email, setEmail] = useState('');
     const otpRefs = useRef([]);
     const timerRef = useRef(null);
     const intervalRef = useRef(null);
 
-    // Rate limit states
     const [isRateLimited, setIsRateLimited] = useState(false);
     const [rateLimitTimeLeft, setRateLimitTimeLeft] = useState(0);
 
-    // Countdown timer cho rate limit
     useEffect(() => {
         if (!isRateLimited || rateLimitTimeLeft <= 0) return;
         const timer = setInterval(() => {
@@ -40,7 +47,28 @@ const ForgotPassword = () => {
         return () => clearInterval(timer);
     }, [isRateLimited, rateLimitTimeLeft]);
 
-    // ✅ Countdown OTP
+    useEffect(() => {
+        if (!showLockTimer || !lockUntil) return;
+
+        const tick = () => {
+            const left = Math.max(0, Math.ceil((lockUntil - Date.now()) / 1000));
+            setLockTimeLeft(left);
+
+            if (left <= 0) {
+                setShowLockTimer(false);
+                setLockTimeLeft(0);
+                setLockUntil(null);
+                setShowLockModal(false);
+                setError('✅ Bạn đã được mở khóa. Vui lòng thử gửi OTP lại.');
+                setTimeout(() => setError(''), 5000);
+            }
+        };
+
+        tick();
+        const interval = setInterval(tick, 1000);
+        return () => clearInterval(interval);
+    }, [showLockTimer, lockUntil]);
+
     useEffect(() => {
         if (step === 'otp' && countdown > 0) {
             timerRef.current = setTimeout(() => {
@@ -56,7 +84,6 @@ const ForgotPassword = () => {
         return () => clearTimeout(timerRef.current);
     }, [step, countdown]);
 
-    // ✅ Đồng bộ TTL từ Redis mỗi 10 giây
     useEffect(() => {
         if (step !== 'otp') return;
 
@@ -97,6 +124,11 @@ const ForgotPassword = () => {
         setError('');
         setCountdown(300);
         setIsOtpExpired(false);
+        setOtpAttempts(0);
+        setShowLockModal(false);
+        setShowLockTimer(false);
+        setLockTimeLeft(0);
+        setLockUntil(null);
     }, []);
 
     const handleOtpChange = (index, value) => {
@@ -114,7 +146,14 @@ const ForgotPassword = () => {
         }
     };
 
-    // ✅ Gửi OTP
+    const formatLockTime = (totalSeconds) => {
+        const m = Math.floor(totalSeconds / 60);
+        const s = totalSeconds % 60;
+        return `${m}:${s.toString().padStart(2, '0')}`;
+    };
+
+    const isLocked = showLockTimer && lockUntil && lockUntil > Date.now();
+
     const handleSendOtp = async () => {
         if (!email.trim()) {
             setError('Vui lòng nhập email');
@@ -126,8 +165,14 @@ const ForgotPassword = () => {
             return;
         }
 
+        if (isLocked) {
+            setError(`⚠️ Bạn đã bị khóa. Vui lòng đợi ${formatLockTime(lockTimeLeft)} để thử lại.`);
+            return;
+        }
+
         setLoading(true);
         setError('');
+        setOtpAttempts(0);
         try {
             const response = await api.post('/api/auth/forgot-password', { email });
             if (response.data.success) {
@@ -145,7 +190,13 @@ const ForgotPassword = () => {
             if (status === 429) {
                 const remainingSeconds = errorData.data?.remainingSeconds || 60;
                 const maxAttempts = errorData.data?.maxAttempts || 3;
-                setError(`⚠️ Bạn chỉ được gửi tối đa ${maxAttempts} lần. Vui lòng thử lại sau ${remainingSeconds} giây.`);
+                
+                const lockUntilTimestamp = Date.now() + remainingSeconds * 1000;
+                setShowLockTimer(true);
+                setLockTimeLeft(remainingSeconds);
+                setLockUntil(lockUntilTimestamp);
+                
+                setError(`⚠️ Bạn chỉ được gửi tối đa ${maxAttempts} lần trong 5 phút. Vui lòng thử lại sau ${remainingSeconds} giây.`);
                 setIsRateLimited(true);
                 setRateLimitTimeLeft(remainingSeconds);
             } else {
@@ -156,10 +207,14 @@ const ForgotPassword = () => {
         }
     };
 
-    // ✅ Gửi lại OTP
     const handleResendOtp = async () => {
         if (isRateLimited) {
             setError(`⚠️ Vui lòng đợi ${rateLimitTimeLeft} giây trước khi thử lại.`);
+            return;
+        }
+
+        if (isLocked) {
+            setError(`⚠️ Bạn đã bị khóa. Vui lòng đợi ${formatLockTime(lockTimeLeft)} để thử lại.`);
             return;
         }
 
@@ -170,6 +225,7 @@ const ForgotPassword = () => {
 
         setLoading(true);
         setError('');
+        setOtpAttempts(0);
         try {
             const response = await api.post('/api/auth/resend-otp', { 
                 email,
@@ -188,6 +244,11 @@ const ForgotPassword = () => {
             
             if (status === 429) {
                 const remainingSeconds = errorData.data?.remainingSeconds || 60;
+                const lockUntilTimestamp = Date.now() + remainingSeconds * 1000;
+                setShowLockTimer(true);
+                setLockTimeLeft(remainingSeconds);
+                setLockUntil(lockUntilTimestamp);
+                
                 setError(`⚠️ Vui lòng thử lại sau ${remainingSeconds} giây.`);
                 setIsRateLimited(true);
                 setRateLimitTimeLeft(remainingSeconds);
@@ -199,7 +260,6 @@ const ForgotPassword = () => {
         }
     };
 
-    // ✅ Xác thực OTP -> chuyển sang ResetPassword
     const handleVerifyOtp = async () => {
         if (isOtpExpired) {
             setError('⚠️ OTP đã hết hạn. Vui lòng gửi lại.');
@@ -216,18 +276,21 @@ const ForgotPassword = () => {
             return;
         }
 
+        if (isLocked) {
+            setError(`⚠️ Bạn đã bị khóa. Vui lòng đợi ${formatLockTime(lockTimeLeft)} để thử lại.`);
+            return;
+        }
+
         setLoading(true);
         setError('');
         try {
-            // ✅ Gọi API verify OTP
             const response = await api.post('/api/auth/verify-otp-and-reset', {
                 email,
                 otp,
-                newPassword: '' // Sẽ nhập ở ResetPassword
+                newPassword: ''
             });
 
             if (response.data.success) {
-                // ✅ Chuyển sang ResetPassword
                 navigate('/reset-password', {
                     state: {
                         email: email,
@@ -241,6 +304,10 @@ const ForgotPassword = () => {
             const errorData = err.response?.data || {};
             let errorMessage = errorData.message || 'OTP không đúng';
             
+            const newAttempts = otpAttempts + 1;
+            setOtpAttempts(newAttempts);
+            const remainingAttempts = 5 - newAttempts;
+            
             if (status === 429) {
                 const remainingSeconds = errorData.data?.remainingSeconds || 60;
                 errorMessage = `⚠️ Vui lòng thử lại sau ${remainingSeconds} giây.`;
@@ -249,6 +316,22 @@ const ForgotPassword = () => {
             } else if (errorMessage.includes('hết hạn')) {
                 setIsOtpExpired(true);
                 setCountdown(0);
+            } else {
+                if (remainingAttempts > 0) {
+                    errorMessage = `❌ OTP không đúng. Bạn còn ${remainingAttempts} lần thử.`;
+                } else {
+                    errorMessage = `❌ Bạn đã nhập sai 5 lần. Tài khoản đã bị khóa 5 phút.`;
+                    
+                    const lockDuration = 300;
+                    const lockUntilTimestamp = Date.now() + lockDuration * 1000;
+                    setShowLockTimer(true);
+                    setLockTimeLeft(lockDuration);
+                    setLockUntil(lockUntilTimestamp);
+                    
+                    setLockMessage('Bạn đã nhập sai OTP quá nhiều lần. Vui lòng đợi hết thời gian khóa để thử lại.');
+                    setShowLockModal(true);
+                    setOtpAttempts(0);
+                }
             }
             setError(errorMessage);
         } finally {
@@ -294,7 +377,7 @@ const ForgotPassword = () => {
                                 placeholder="example@gmail.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                disabled={loading || isRateLimited}
+                                disabled={loading || isRateLimited || isLocked}
                                 autoComplete="email"
                             />
                         </div>
@@ -304,11 +387,27 @@ const ForgotPassword = () => {
                                 loading={loading}
                                 loadingText="Đang gửi..."
                                 onClick={handleSendOtp}
-                                disabled={loading || isRateLimited}
+                                disabled={loading || isRateLimited || isLocked}
                                 className="btn-user"
                                 spinnerColor="#000000"
                             >
-                                {isRateLimited ? `Đang chờ (${rateLimitTimeLeft}s)` : 'GỬI OTP'}
+                                {isLocked ? (
+                                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                        ĐANG BỊ KHÓA
+                                        <span style={{ 
+                                            background: 'rgba(255,255,255,0.2)', 
+                                            padding: '2px 8px', 
+                                            borderRadius: '4px', 
+                                            fontWeight: 'bold' 
+                                        }}>
+                                            {formatLockTime(lockTimeLeft)}
+                                        </span>
+                                    </span>
+                                ) : isRateLimited ? (
+                                    `Đang chờ (${rateLimitTimeLeft}s)`
+                                ) : (
+                                    'GỬI OTP'
+                                )}
                             </LoadingButton>
                         </div>
                     </>
@@ -323,6 +422,17 @@ const ForgotPassword = () => {
                             Nhập mã OTP đã gửi đến <strong className="text-highlight">{email}</strong>
                         </p>
 
+                        {otpAttempts > 0 && !isLocked && !showLockModal && (
+                            <div style={{ 
+                                textAlign: 'center', 
+                                marginBottom: '10px',
+                                fontSize: '14px',
+                                color: otpAttempts >= 3 ? '#ff6b8a' : '#fbbf24'
+                            }}>
+                                ⚠️ Bạn đã nhập sai {otpAttempts}/5 lần. Còn {5 - otpAttempts} lần thử.
+                            </div>
+                        )}
+
                         <div className="pin-input-container">
                             {Array.from({ length: 6 }).map((_, index) => (
                                 <input
@@ -335,33 +445,59 @@ const ForgotPassword = () => {
                                     onChange={(e) => handleOtpChange(index, e.target.value)}
                                     onKeyDown={(e) => handleOtpKeyDown(index, e)}
                                     className={`pin-box ${isOtpExpired ? 'input-error' : ''} ${error && error.includes('OTP') ? 'input-error' : ''}`}
-                                    disabled={loading || isRateLimited || isOtpExpired}
+                                    disabled={loading || isRateLimited || isOtpExpired || isLocked || showLockModal}
                                 />
                             ))}
                         </div>
 
-                        <div className="input-hint center-text">
-                            {isOtpExpired ? (
+                        {!isLocked && !showLockModal && (
+                            <div className="input-hint center-text">
+                                {isOtpExpired ? (
+                                    <span style={{ color: '#ff6b8a' }}>
+                                        ⚠️ OTP đã hết hạn. Vui lòng <strong>gửi lại</strong> mã mới.
+                                    </span>
+                                ) : (
+                                    <span>
+                                        ⏳ OTP hết hạn sau: <strong style={{ color: countdown <= 60 ? '#ff6b8a' : '#4ade80' }}>
+                                            {formatTime(countdown)}
+                                        </strong> (5 phút)
+                                    </span>
+                                )}
+                            </div>
+                        )}
+
+                        {isLocked && (
+                            <div className="input-hint center-text">
                                 <span style={{ color: '#ff6b8a' }}>
-                                    ⚠️ OTP đã hết hạn. Vui lòng <strong>gửi lại</strong> mã mới.
+                                    🔒 Tài khoản bị khóa. Vui lòng đợi <strong>{formatLockTime(lockTimeLeft)}</strong> để thử lại.
                                 </span>
-                            ) : (
-                                <span>
-                                    ⏳ OTP hết hạn sau: <strong style={{ color: countdown <= 60 ? '#ff6b8a' : '#4ade80' }}>
-                                        {formatTime(countdown)}
-                                    </strong> (5 phút)
-                                </span>
-                            )}
-                        </div>
+                            </div>
+                        )}
 
                         <button 
                             className="btn-user btn-outline-secondary" 
                             onClick={handleResendOtp} 
-                            disabled={loading || (countdown > 0 && !isOtpExpired) || isRateLimited}
+                            disabled={loading || (countdown > 0 && !isOtpExpired) || isRateLimited || isLocked || showLockModal}
                             style={{ marginTop: '10px' }}
                         >
                             <RefreshCw size={16} /> 
-                            {isRateLimited ? `Đang chờ (${rateLimitTimeLeft}s)` : 'Gửi lại OTP'}
+                            {isLocked ? (
+                                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                    ĐANG BỊ KHÓA
+                                    <span style={{ 
+                                        background: 'rgba(255,255,255,0.2)', 
+                                        padding: '2px 8px', 
+                                        borderRadius: '4px', 
+                                        fontWeight: 'bold' 
+                                    }}>
+                                        {formatLockTime(lockTimeLeft)}
+                                    </span>
+                                </span>
+                            ) : isRateLimited ? (
+                                `Đang chờ (${rateLimitTimeLeft}s)`
+                            ) : (
+                                'Gửi lại OTP'
+                            )}
                         </button>
 
                         <div className="button-group" style={{ marginTop: '20px' }}>
@@ -373,16 +509,45 @@ const ForgotPassword = () => {
                                 loading={loading}
                                 loadingText="Đang xác thực..."
                                 onClick={handleVerifyOtp}
-                                disabled={loading || isRateLimited || isOtpExpired}
+                                disabled={loading || isRateLimited || isOtpExpired || isLocked || showLockModal}
                                 className="btn-user"
                                 spinnerColor="#000000"
                             >
-                                {isRateLimited ? `Đang chờ (${rateLimitTimeLeft}s)` : 'XÁC NHẬN'}
+                                {isLocked ? (
+                                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                        ĐANG BỊ KHÓA
+                                        <span style={{ 
+                                            background: 'rgba(255,255,255,0.2)', 
+                                            padding: '2px 8px', 
+                                            borderRadius: '4px', 
+                                            fontWeight: 'bold' 
+                                        }}>
+                                            {formatLockTime(lockTimeLeft)}
+                                        </span>
+                                    </span>
+                                ) : isRateLimited ? (
+                                    `Đang chờ (${rateLimitTimeLeft}s)`
+                                ) : (
+                                    'XÁC NHẬN'
+                                )}
                             </LoadingButton>
                         </div>
                     </>
                 )}
             </div>
+
+            <LockModal
+                show={showLockModal}
+                message={lockMessage || 'Bạn đã nhập sai OTP quá nhiều lần. Vui lòng đợi hết thời gian khóa để thử lại.'}
+                email={email}
+                onClose={() => {
+                    setShowLockModal(false);
+                }}
+                onResend={() => {
+                    setShowLockModal(false);
+                    handleResendOtp();
+                }}
+            />
         </div>
     );
 };

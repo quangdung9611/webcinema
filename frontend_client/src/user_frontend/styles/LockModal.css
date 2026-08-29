@@ -1,0 +1,291 @@
+/* LockModal.css */
+
+.otp-lock-modal .modal-content {
+    max-width: 420px;
+    padding: 30px;
+    background: #1a1a2e;
+    border-radius: 16px;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.otp-lock-modal-body {
+    padding: 10px 0;
+}
+
+/* ========== EMAIL ========== */
+.otp-lock-modal-body .lock-email {
+    text-align: center;
+    color: #9ca3af;
+    font-size: 14px;
+    margin-bottom: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px 12px;
+    border-radius: 8px;
+    word-break: break-all;
+}
+
+.otp-lock-modal-body .lock-email strong {
+    color: #e5e7eb;
+}
+
+/* ========== ICON ========== */
+.otp-lock-modal-body .lock-icon-wrapper {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(248, 113, 113, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+}
+
+.otp-lock-modal-body .lock-icon {
+    font-size: 32px;
+}
+
+/* ========== MESSAGE ========== */
+.otp-lock-modal-body .lock-message {
+    color: #d1d5db;
+    font-size: 15px;
+    line-height: 1.7;
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+.otp-lock-modal-body .lock-sub-message {
+    color: #9ca3af;
+    font-size: 14px;
+    text-align: center;
+    line-height: 1.6;
+}
+
+.otp-lock-modal-body .lock-sub-message strong {
+    color: #e5e7eb;
+}
+
+/* ========== HINT ========== */
+.otp-lock-modal-body .lock-hint {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: rgba(251, 191, 36, 0.08);
+    border-radius: 8px;
+    border: 1px solid rgba(251, 191, 36, 0.15);
+}
+
+.otp-lock-modal-body .lock-hint p {
+    color: #9ca3af;
+    font-size: 13px;
+    margin: 0;
+    text-align: center;
+    line-height: 1.5;
+}
+
+.otp-lock-modal-body .lock-hint p strong {
+    color: #e5e7eb;
+}
+
+/* ========================================== */
+/* ========== RESPONSIVE ========== */
+/* ========================================== */
+
+/* ===== BREAKPOINT 1200px ===== */
+@media (max-width: 1200px) {
+    .otp-lock-modal .modal-content {
+        max-width: 440px;
+        padding: 30px;
+    }
+
+    .otp-lock-modal-body .lock-message {
+        font-size: 14px;
+    }
+
+    .otp-lock-modal-body .lock-icon-wrapper {
+        width: 56px;
+        height: 56px;
+    }
+
+    .otp-lock-modal-body .lock-icon {
+        font-size: 28px;
+    }
+}
+
+/* ===== BREAKPOINT 992px ===== */
+@media (max-width: 992px) {
+    .otp-lock-modal .modal-content {
+        max-width: 420px;
+        padding: 28px;
+    }
+
+    .otp-lock-modal-body .lock-message {
+        font-size: 14px;
+    }
+
+    .otp-lock-modal-body .lock-sub-message {
+        font-size: 13px;
+    }
+
+    .otp-lock-modal-body .lock-hint p {
+        font-size: 12px;
+    }
+
+    .otp-lock-modal-body .lock-icon-wrapper {
+        width: 52px;
+        height: 52px;
+    }
+
+    .otp-lock-modal-body .lock-icon {
+        font-size: 26px;
+    }
+}
+
+/* ===== BREAKPOINT 768px ===== */
+@media (max-width: 768px) {
+    .otp-lock-modal .modal-content {
+        max-width: 400px;
+        padding: 24px;
+        border-radius: 14px;
+    }
+
+    .otp-lock-modal-body .lock-email {
+        font-size: 13px;
+        padding: 6px 10px;
+        margin-bottom: 12px;
+    }
+
+    .otp-lock-modal-body .lock-message {
+        font-size: 13px;
+        margin-bottom: 6px;
+    }
+
+    .otp-lock-modal-body .lock-sub-message {
+        font-size: 13px;
+    }
+
+    .otp-lock-modal-body .lock-hint {
+        margin-top: 14px;
+        padding: 10px 14px;
+    }
+
+    .otp-lock-modal-body .lock-hint p {
+        font-size: 12px;
+    }
+
+    .otp-lock-modal-body .lock-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        margin-bottom: 10px;
+    }
+
+    .otp-lock-modal-body .lock-icon {
+        font-size: 24px;
+    }
+}
+
+/* ===== BREAKPOINT 480px ===== */
+@media (max-width: 480px) {
+    .otp-lock-modal .modal-content {
+        max-width: 100%;
+        width: 100%;
+        padding: 20px 16px 24px 16px;
+        border-radius: 16px 16px 0 0;
+        margin-bottom: 0;
+    }
+
+    .otp-lock-modal-body .lock-email {
+        font-size: 12px;
+        padding: 5px 8px;
+        margin-bottom: 10px;
+    }
+
+    .otp-lock-modal-body .lock-message {
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    .otp-lock-modal-body .lock-sub-message {
+        font-size: 12px;
+    }
+
+    .otp-lock-modal-body .lock-hint {
+        margin-top: 12px;
+        padding: 8px 12px;
+    }
+
+    .otp-lock-modal-body .lock-hint p {
+        font-size: 11px;
+    }
+
+    .otp-lock-modal-body .lock-icon-wrapper {
+        width: 44px;
+        height: 44px;
+        margin-bottom: 8px;
+    }
+
+    .otp-lock-modal-body .lock-icon {
+        font-size: 22px;
+    }
+}
+
+/* ===== EXTRA SMALL (dưới 380px) ===== */
+@media (max-width: 380px) {
+    .otp-lock-modal .modal-content {
+        padding: 16px 12px 20px 12px;
+    }
+
+    .otp-lock-modal-body .lock-message {
+        font-size: 12px;
+    }
+
+    .otp-lock-modal-body .lock-sub-message {
+        font-size: 11px;
+    }
+
+    .otp-lock-modal-body .lock-hint p {
+        font-size: 10px;
+    }
+
+    .otp-lock-modal-body .lock-icon-wrapper {
+        width: 40px;
+        height: 40px;
+    }
+
+    .otp-lock-modal-body .lock-icon {
+        font-size: 20px;
+    }
+}
+
+/* ===== Hỗ trợ cho màn hình có notch / tai thỏ ===== */
+@supports (padding: max(0px)) {
+    .otp-lock-modal .modal-content {
+        padding-left: max(16px, env(safe-area-inset-left));
+        padding-right: max(16px, env(safe-area-inset-right));
+        padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
+}
+
+/* ===== High contrast ===== */
+@media (prefers-contrast: high) {
+    .otp-lock-modal .modal-content {
+        border: 2px solid #ffffff;
+    }
+
+    .otp-lock-modal-body .lock-hint {
+        border: 2px solid #fbbf24;
+    }
+}
+
+/* ===== Reduced motion ===== */
+@media (prefers-reduced-motion: reduce) {
+    .otp-lock-modal .modal-content {
+        animation: none;
+    }
+}
+
+/* ===== Print styles ===== */
+@media print {
+    .otp-lock-modal .modal-content {
+        display: none;
+    }
+}
