@@ -26,7 +26,7 @@ class OtpService {
         email = email.trim();
         console.log(`🔐 [CREATE OTP] email: "${email}", purpose: "${purpose}"`);
 
-        const rateLimit = await RedisService.checkRateLimit(email, purpose, 3, 60);
+        const rateLimit = await RedisService.checkRateLimit(email, purpose, 3, 300);
         if (!rateLimit.allowed) {
             throw { statusCode: 429, message: rateLimit.message };
         }
