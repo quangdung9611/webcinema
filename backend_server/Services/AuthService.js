@@ -422,13 +422,13 @@ exports.submitNewPassword = async (token, newPassword) => {
 // ============================================================
 exports.verifyOtpAndReset = async (email, otp, newPassword) => {
     // 🔥 RATE LIMIT: 5 lần/60s
-    const rateLimit = await RedisService.checkRateLimit(email, "verify-otp-reset", 5, 60);
+    const rateLimit = await RedisService.checkRateLimit(email, "verify-otp-reset", 5, 300);
     if (!rateLimit.allowed) {
         throw { 
             statusCode: 429, 
-            message: `Bạn đã thử OTP quá nhiều lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 60} giây.`,
+            message: `Bạn đã thử OTP quá nhiều lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 300} giây.`,
             data: {
-                remainingSeconds: rateLimit.remainingSeconds || 60,
+                remainingSeconds: rateLimit.remainingSeconds || 300,
                 maxAttempts: 5
             }
         };
@@ -939,13 +939,13 @@ exports.forgotPin = async (email) => {
 // ============================================================
 exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
     // 🔥 RATE LIMIT: 5 lần/60s
-    const rateLimit = await RedisService.checkRateLimit(email, "verify-otp-pin", 5, 60);
+    const rateLimit = await RedisService.checkRateLimit(email, "verify-otp-pin", 5, 300);
     if (!rateLimit.allowed) {
         throw { 
             statusCode: 429, 
-            message: `Bạn đã thử OTP quá nhiều lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 60} giây.`,
+            message: `Bạn đã thử OTP quá nhiều lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 300} giây.`,
             data: {
-                remainingSeconds: rateLimit.remainingSeconds || 60,
+                remainingSeconds: rateLimit.remainingSeconds || 300,
                 maxAttempts: 5
             }
         };
