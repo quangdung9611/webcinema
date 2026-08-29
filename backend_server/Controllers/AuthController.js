@@ -254,9 +254,7 @@ exports.changePassword = async (req, res) => {
     }
 };
 
-/*=========================================================
-    FORGOT PASSWORD
-=========================================================*/
+// AuthController.js - forgotPassword
 exports.forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
@@ -279,7 +277,6 @@ exports.forgotPassword = async (req, res) => {
         });
     }
 };
-
 /*=========================================================
     SUBMIT NEW PASSWORD
 =========================================================*/

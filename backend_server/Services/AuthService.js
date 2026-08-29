@@ -295,9 +295,7 @@ exports.changePassword = async (userId, passwordData) => {
     return { success: true, message: "Đổi mật khẩu thành công. Vui lòng đăng nhập lại." };
 };
 
-// ============================================================
-// FORGOT PASSWORD - CÓ RATE LIMIT (3 lần/60s) + Trả về TTL
-// ============================================================
+// AuthService.js - forgotPassword
 exports.forgotPassword = async (email, req) => {
     if (!email?.trim()) throw { statusCode: 400, field: "email", message: "Email không được để trống" };
     if (!EMAIL_REGEX.test(email)) throw { statusCode: 400, field: "email", message: "Email không hợp lệ" };
@@ -306,7 +304,7 @@ exports.forgotPassword = async (email, req) => {
     if (!user) {
         return {
             success: true,
-            message: "Nếu email này tồn tại, chúng tôi đã gửi liên kết đặt lại mật khẩu."
+            message: "Nếu email này tồn tại, chúng tôi đã gửi OTP đặt lại mật khẩu."
         };
     }
 
@@ -322,19 +320,15 @@ exports.forgotPassword = async (email, req) => {
         };
     }
 
-    const resetToken = Jwt.generateResetToken({ user_id: user.user_id, email: user.email });
-    const resetUrl = `${FRONTEND_URL}/reset-password?token=${resetToken}`;
-    await MailService.sendPasswordResetLink(email, resetUrl, user.full_name);
-
-    // ✅ Lấy TTL thực tế từ OTP (nếu có)
-    const otpKey = `otp:${email}:${OtpService.PURPOSE.RESET_PASSWORD}`;
-    const ttl = await RedisService.getTTL(otpKey);
+    // ✅ Tạo OTP thay vì gửi link
+    const otpResult = await OtpService.createOTP(email, OtpService.PURPOSE.RESET_PASSWORD);
+    await MailService.sendResetPasswordOTP(email, otpResult.otp, user.full_name);
 
     return {
         success: true,
-        message: "Nếu email này tồn tại, chúng tôi đã gửi liên kết đặt lại mật khẩu.",
+        message: "Mã OTP đã được gửi tới email của bạn.",
         data: {
-            expiresIn: ttl > 0 ? ttl : 300
+            expiresIn: otpResult.expiresIn || 300
         }
     };
 };
