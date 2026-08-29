@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/api';
 import { Mail, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
@@ -14,7 +14,7 @@ const ForgotPassword = () => {
     const [step, setStep] = useState('form'); // 'form' -> 'sent'
 
     // 🔥 Countdown states
-    const [countdown, setCountdown] = useState(300); // 5 phút
+    const [countdown, setCountdown] = useState(300);
     const [isOtpExpired, setIsOtpExpired] = useState(false);
     const timerRef = useRef(null);
     const intervalRef = useRef(null);
@@ -23,7 +23,7 @@ const ForgotPassword = () => {
     const [isRateLimited, setIsRateLimited] = useState(false);
     const [rateLimitTimeLeft, setRateLimitTimeLeft] = useState(0);
 
-    // 🔥 Countdown timer cho OTP
+    // 🔥 Countdown timer OTP
     useEffect(() => {
         if (step === 'sent' && countdown > 0) {
             timerRef.current = setTimeout(() => {
@@ -39,7 +39,7 @@ const ForgotPassword = () => {
         return () => clearTimeout(timerRef.current);
     }, [step, countdown]);
 
-    // 🔥 Đồng bộ TTL từ Redis mỗi 10 giây
+    // 🔥 Đồng bộ TTL từ Redis
     useEffect(() => {
         if (step !== 'sent') return;
 
@@ -91,7 +91,8 @@ const ForgotPassword = () => {
         return () => clearInterval(timer);
     }, [isRateLimited, rateLimitTimeLeft]);
 
-    const handleSendLink = async () => {
+    // ✅ Gửi OTP
+    const handleSendOtp = async () => {
         if (!email.trim()) {
             setMessage('Vui lòng nhập email');
             setMessageType('error');
@@ -110,32 +111,22 @@ const ForgotPassword = () => {
         try {
             const res = await api.post('/api/auth/forgot-password', { email });
 
-            // ✅ Lấy TTL từ response
             const expiresIn = res.data.data?.expiresIn || 300;
             setCountdown(expiresIn);
             setIsOtpExpired(false);
             setStep('sent');
-            setMessage(res.data.message || 'Liên kết đặt lại mật khẩu đã được gửi tới email của bạn');
+            setMessage(res.data.message || 'Mã OTP đã được gửi tới email của bạn');
             setMessageType('success');
         } catch (err) {
             const status = err.response?.status;
             const errorData = err.response?.data || {};
-            const errorMessage = errorData.message || 'Không gửi được liên kết. Vui lòng thử lại!';
+            const errorMessage = errorData.message || 'Không thể gửi OTP. Vui lòng thử lại!';
             
             if (status === 429) {
-                const remaining = errorData.data?.remaining;
                 const remainingSeconds = errorData.data?.remainingSeconds || 60;
                 const maxAttempts = errorData.data?.maxAttempts || 3;
-                
-                let displayMessage = `⚠️ Bạn chỉ được gửi tối đa ${maxAttempts} lần.`;
-                if (remaining !== undefined && remaining >= 0) {
-                    displayMessage += ` Còn ${remaining} lần thử.`;
-                }
-                displayMessage += ` Vui lòng thử lại sau ${remainingSeconds} giây.`;
-                
-                setMessage(displayMessage);
+                setMessage(`⚠️ Bạn chỉ được gửi tối đa ${maxAttempts} lần. Vui lòng thử lại sau ${remainingSeconds} giây.`);
                 setMessageType('error');
-                
                 setIsRateLimited(true);
                 setRateLimitTimeLeft(remainingSeconds);
             } else {
@@ -147,7 +138,7 @@ const ForgotPassword = () => {
         }
     };
 
-    // 🔥 Gửi lại OTP (resend)
+    // ✅ Gửi lại OTP
     const handleResendOtp = async () => {
         if (isRateLimited) {
             setMessage(`⚠️ Vui lòng đợi ${rateLimitTimeLeft} giây trước khi thử lại.`);
@@ -197,7 +188,7 @@ const ForgotPassword = () => {
         }
     };
 
-    // 🔥 Chuyển sang VerifyOTP
+    // ✅ Chuyển sang VerifyOTP (nhập OTP + mật khẩu mới)
     const handleGoToVerify = () => {
         if (isOtpExpired) {
             setMessage('⚠️ OTP đã hết hạn. Vui lòng gửi lại.');
@@ -205,7 +196,6 @@ const ForgotPassword = () => {
             return;
         }
 
-        // Chuyển sang VerifyOTP với email
         navigate('/verify-otp', {
             state: {
                 email: email,
@@ -217,7 +207,7 @@ const ForgotPassword = () => {
 
     const handleKeyPress = (e) => {
         if (e.key === 'Enter') {
-            handleSendLink();
+            handleSendOtp();
         }
     };
 
@@ -321,7 +311,7 @@ const ForgotPassword = () => {
                                     disabled={loading || isRateLimited}
                                     className="btn-user"
                                     spinnerColor="#000000"
-                                    onClick={handleSendLink}
+                                    onClick={handleSendOtp}
                                 >
                                     {isRateLimited ? (
                                         <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>

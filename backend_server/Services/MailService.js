@@ -9,9 +9,8 @@ const { transporter } = require("../Config/mailer");
 
 const OtpEmailTemplate = require("../Templates/OtpEmailTemplate");
 const TicketEmailTemplate = require("../Templates/TicketEmailTemplate");
-const ResetPasswordOtpTemplate = require("../Templates/ResetPasswordOtpTemplate");
+const ForgotPasswordTemplate = require("../Templates/ForgotPasswordTemplate");
 const VerifyEmailTemplate = require("../Templates/VerifyEmailTemplate");
-const ResetPasswordLinkTemplate = require("../Templates/ResetPasswordLinkTemplate");
 const ForgotPinTemplate = require("../Templates/ForgotPinTemplate");
 
 // =========================================================
@@ -137,7 +136,7 @@ const MailService = {
     },
 
     // =====================================================
-    // SEND RESET PASSWORD OTP
+    // SEND RESET PASSWORD OTP - DÙNG CHO FORGOT PASSWORD
     // =====================================================
 
     sendResetPasswordOTP: async (email, otp, fullName = "") => {
@@ -154,8 +153,8 @@ const MailService = {
 
                 from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
                 to: email,
-                subject: `[${otp}] Mã OTP khôi phục mật khẩu`,
-                html: ResetPasswordOtpTemplate(otp, fullName)
+                subject: `[${otp}] Mã OTP đặt lại mật khẩu`,
+                html: ForgotPasswordTemplate(otp, fullName)
 
             });
 
@@ -173,98 +172,11 @@ const MailService = {
     },
 
     // =====================================================
-    // ALIAS RESET PASSWORD
+    // ALIAS - GIỮ TÊN CŨ CHO TƯƠNG THÍCH
     // =====================================================
 
     sendPasswordResetOTP: async (email, otp, fullName = "") => {
         return await MailService.sendResetPasswordOTP(email, otp, fullName);
-    },
-
-    // =====================================================
-    // SEND RESET PASSWORD LINK
-    // =====================================================
-
-    sendPasswordResetLink: async (email, resetUrl, fullName = "") => {
-
-        console.log(`📨 RESET PASSWORD LINK -> ${email}`);
-
-        if (!email) {
-            throw new Error("Email người nhận không hợp lệ");
-        }
-
-        if (!resetUrl) {
-            throw new Error("URL đặt lại mật khẩu không hợp lệ");
-        }
-
-        try {
-
-            const info = await transporter.sendMail({
-
-                from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
-                to: email,
-                subject: "🔑 Đặt lại mật khẩu - Dũng Cinema",
-                html: ResetPasswordLinkTemplate(fullName, resetUrl)
-
-            });
-
-            console.log("✅ RESET PASSWORD LINK SENT");
-            console.log(`🔗 Reset URL: ${resetUrl}`);
-            return info;
-
-        } catch (error) {
-
-            console.error("❌ RESET PASSWORD LINK ERROR");
-            console.error(error);
-            throw error;
-
-        }
-
-    },
-
-    // =====================================================
-    // SEND PASSWORD CHANGE ALERT
-    // =====================================================
-
-    sendPasswordChangeAlert: async (email, fullName = "") => {
-
-        console.log(`📨 PASSWORD CHANGE ALERT -> ${email}`);
-
-        if (!email) {
-            throw new Error("Email người nhận không hợp lệ");
-        }
-
-        try {
-
-            const info = await transporter.sendMail({
-
-                from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
-                to: email,
-                subject: "⚠️ Cảnh báo: Mật khẩu của bạn vừa được thay đổi",
-                html: `
-                    <div style="max-width:600px; margin:auto; padding:40px; background:#ffffff; border-radius:12px; font-family:Arial,sans-serif;">
-                        <h2 style="color:#d32f2f;">🎬 Dũng Cinema</h2>
-                        <h3 style="color:#333;">Cảnh báo: Mật khẩu của bạn vừa được thay đổi</h3>
-                        <p>Xin chào <b>${fullName || "bạn"}</b>,</p>
-                        <p>Mật khẩu tài khoản <b>${email}</b> vừa được thay đổi thành công.</p>
-                        <p>Nếu bạn không thực hiện hành động này, vui lòng liên hệ hỗ trợ ngay lập tức để bảo vệ tài khoản.</p>
-                        <hr>
-                        <p style="color:#888; font-size:13px;">© Dũng Cinema</p>
-                    </div>
-                `
-
-            });
-
-            console.log("✅ PASSWORD CHANGE ALERT SENT");
-            return info;
-
-        } catch (error) {
-
-            console.error("❌ PASSWORD CHANGE ALERT ERROR");
-            console.error(error);
-            throw error;
-
-        }
-
     },
 
     // =====================================================

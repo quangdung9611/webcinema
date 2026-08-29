@@ -1,37 +1,40 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Eye, EyeOff, AlertCircle, ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../api/api';
+import { LockKeyhole, AlertCircle, CheckCircle, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import LoadingButton from '../components/LoadingButton';
+import ResetPasswordSuccessModal from '../components/ResetPasswordSuccessModal';
 import '../styles/UserAuth.css';
 
 const ResetPassword = () => {
     const navigate = useNavigate();
-    const location = useLocation();
-    
-    const token = location.state?.token || '';
-    const email = location.state?.email || '';
+    const [searchParams] = useSearchParams();
+    const token = searchParams.get('token');
 
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState('');
+    const [messageType, setMessageType] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
-    
+    const [status, setStatus] = useState('form');
+    const [fieldErrors, setFieldErrors] = useState({});
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
     // 🔥 Rate limit states
     const [isRateLimited, setIsRateLimited] = useState(false);
     const [rateLimitTimeLeft, setRateLimitTimeLeft] = useState(0);
 
     // 🔥 Countdown timer
-    React.useEffect(() => {
+    useEffect(() => {
         if (!isRateLimited || rateLimitTimeLeft <= 0) return;
 
         const timer = setInterval(() => {
             setRateLimitTimeLeft(prev => {
                 if (prev <= 1) {
                     setIsRateLimited(false);
-                    setError('');
+                    setMessage('');
                     return 0;
                 }
                 return prev - 1;
@@ -41,172 +44,272 @@ const ResetPassword = () => {
         return () => clearInterval(timer);
     }, [isRateLimited, rateLimitTimeLeft]);
 
-    if (!token || !email) {
-        navigate('/forgot-password');
-        return null;
-    }
+    useEffect(() => {
+        if (!token) {
+            setStatus('error');
+            setMessage('Link không hợp lệ. Vui lòng yêu cầu gửi lại.');
+        }
+    }, [token]);
+
+    const handleFieldChange = (field, value) => {
+        if (field === 'newPassword') {
+            setNewPassword(value);
+            if (fieldErrors.newPassword) {
+                setFieldErrors(prev => ({ ...prev, newPassword: '' }));
+            }
+        } else if (field === 'confirmPassword') {
+            setConfirmPassword(value);
+            if (fieldErrors.confirmPassword) {
+                setFieldErrors(prev => ({ ...prev, confirmPassword: '' }));
+            }
+        }
+        if (message) setMessage('');
+        if (messageType) setMessageType('');
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+        setMessage('');
+        setFieldErrors({});
+
         if (isRateLimited) {
-            setError(`⚠️ Vui lòng đợi ${rateLimitTimeLeft} giây trước khi thử lại.`);
+            setMessage(`⚠️ Vui lòng đợi ${rateLimitTimeLeft} giây trước khi thử lại.`);
+            setMessageType('error');
             return;
         }
 
-        if (newPassword.length < 8) {
-            setError('Mật khẩu phải có ít nhất 8 ký tự');
-            return;
+        // Validate
+        let hasError = false;
+        const errors = {};
+
+        if (!newPassword.trim()) {
+            errors.newPassword = 'Vui lòng nhập mật khẩu mới';
+            hasError = true;
+        } else if (newPassword.length < 8) {
+            errors.newPassword = 'Mật khẩu phải có ít nhất 8 ký tự';
+            hasError = true;
         }
 
-        if (newPassword !== confirmPassword) {
-            setError('Mật khẩu xác nhận không khớp');
-            return;
+        if (!confirmPassword.trim()) {
+            errors.confirmPassword = 'Vui lòng xác nhận mật khẩu';
+            hasError = true;
+        } else if (newPassword !== confirmPassword) {
+            errors.confirmPassword = 'Mật khẩu xác nhận không khớp';
+            hasError = true;
         }
 
-        setLoading(true);
-        setError('');
+        if (hasError) {
+            setFieldErrors(errors);
+            return;
+        }
 
         try {
-            // ✅ Gửi OTP thay vì reset trực tiếp
-            const response = await api.post('/api/auth/submit-new-password', {
-                token,
+            setLoading(true);
+
+            // ✅ Gọi API reset password trực tiếp
+            const res = await api.post('/api/auth/reset-password', {
+                resetToken: token,
                 newPassword
             });
 
-            if (response.data.success) {
-                // ✅ Chuyển sang VerifyOTP với email và newPassword
-                const expiresIn = response.data.data?.expiresIn || 300;
-                navigate('/verify-otp', {
-                    state: {
-                        email: email,
-                        newPassword: newPassword,
-                        purpose: 'RESET_PASSWORD',
-                        token: token,
-                        expiresIn: expiresIn,
-                        fromResetPassword: true
-                    }
-                });
-            }
+            setMessage(res.data.message || 'Đặt lại mật khẩu thành công!');
+            setMessageType('success');
+            
+            // ✅ Hiển thị modal thành công
+            setShowSuccessModal(true);
+
         } catch (err) {
             const status = err.response?.status;
+            const field = err.response?.data?.field;
             const errorData = err.response?.data || {};
-            const errorMessage = errorData.message || 'Không thể gửi yêu cầu';
+            const errorMessage = errorData.message || 'Không thể đặt lại mật khẩu';
             
-            if (status === 429) {
+            if (field === 'newPassword') {
+                setFieldErrors({ newPassword: errorMessage });
+            } else if (field === 'confirmPassword') {
+                setFieldErrors({ confirmPassword: errorMessage });
+            } else if (status === 429) {
+                const remaining = errorData.data?.remaining;
                 const remainingSeconds = errorData.data?.remainingSeconds || 60;
                 const maxAttempts = errorData.data?.maxAttempts || 3;
-                setError(`⚠️ Bạn chỉ được gửi tối đa ${maxAttempts} lần. Vui lòng thử lại sau ${remainingSeconds} giây.`);
+                
+                let displayMessage = `⚠️ Bạn chỉ được gửi tối đa ${maxAttempts} lần.`;
+                if (remaining !== undefined && remaining >= 0) {
+                    displayMessage += ` Còn ${remaining} lần thử.`;
+                }
+                displayMessage += ` Vui lòng thử lại sau ${remainingSeconds} giây.`;
+                
+                setMessage(displayMessage);
+                setMessageType('error');
+                
                 setIsRateLimited(true);
                 setRateLimitTimeLeft(remainingSeconds);
             } else {
-                setError(errorMessage);
+                setMessage(errorMessage);
+                setMessageType('error');
             }
         } finally {
             setLoading(false);
         }
     };
 
+    // ✅ Xử lý đóng modal
+    const handleModalConfirm = () => {
+        setShowSuccessModal(false);
+        navigate('/login');
+    };
+
+    const handleModalClose = () => {
+        setShowSuccessModal(false);
+        navigate('/login');
+    };
+
+    if (status === 'error') {
+        return (
+            <div className="auth-container">
+                <div className="auth-card">
+                    <div className="forgot-icon-wrapper">
+                        <AlertCircle size={42} className="forgot-icon" style={{ color: '#f87171' }} />
+                    </div>
+                    <h2>LINK KHÔNG HỢP LỆ</h2>
+                    <p className="auth-subtitle">{message}</p>
+                    <div className="button-group">
+                        <button 
+                            className="btn-user" 
+                            onClick={() => navigate('/forgot-password')}
+                        >
+                            Gửi lại liên kết
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="auth-container">
             <div className="auth-card">
-                <button 
-                    className="btn-back" 
-                    onClick={() => navigate('/forgot-password')}
-                >
-                    <ArrowLeft size={20} />
-                </button>
+                <div className="forgot-icon-wrapper">
+                    <LockKeyhole size={42} className="forgot-icon" />
+                </div>
 
                 <h2>ĐẶT LẠI MẬT KHẨU</h2>
-                <p className="auth-subtitle">
-                    Nhập mật khẩu mới cho tài khoản <strong>{email}</strong>
-                </p>
+                <p className="auth-subtitle">Nhập mật khẩu mới cho tài khoản của bạn</p>
 
-                {error && (
-                    <div className="forgot-message error">
-                        <AlertCircle size={18} />
-                        <span>{error}</span>
+                {message && (
+                    <div className={`forgot-message ${messageType}`}>
+                        {messageType === 'success' ? (
+                            <CheckCircle size={18} />
+                        ) : (
+                            <AlertCircle size={18} />
+                        )}
+                        <span>{message}</span>
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label>Mật khẩu mới</label>
-                        <div className="password-wrapper">
-                            <input
-                                type={showPassword ? 'text' : 'password'}
-                                className="auth-input"
-                                placeholder="Nhập mật khẩu mới"
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                                disabled={loading || isRateLimited}
-                            />
-                            <button
-                                type="button"
-                                className="toggle-password"
-                                onClick={() => setShowPassword(!showPassword)}
-                                tabIndex="-1"
-                                disabled={loading || isRateLimited}
-                            >
-                                {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
-                            </button>
-                        </div>
-                        <span className="input-hint">
-                            Mật khẩu có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt
-                        </span>
-                    </div>
-
-                    <div className="form-group">
-                        <label>Xác nhận mật khẩu</label>
-                        <div className="password-wrapper">
-                            <input
-                                type={showConfirmPassword ? 'text' : 'password'}
-                                className="auth-input"
-                                placeholder="Nhập lại mật khẩu mới"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                disabled={loading || isRateLimited}
-                            />
-                            <button
-                                type="button"
-                                className="toggle-password"
-                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                tabIndex="-1"
-                                disabled={loading || isRateLimited}
-                            >
-                                {showConfirmPassword ? <Eye size={18} /> : <EyeOff size={18} />}
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="button-group">
-                        <LoadingButton
-                            type="submit"
-                            loading={loading}
-                            loadingText="Đang gửi OTP..."
-                            disabled={loading || isRateLimited}
-                            className="btn-user"
-                            spinnerColor="#000000"
-                        >
-                            {isRateLimited ? (
-                                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                                    ĐANG CHỜ
-                                    <span style={{ 
-                                        background: 'rgba(255,255,255,0.2)', 
-                                        padding: '2px 8px', 
-                                        borderRadius: '4px', 
-                                        fontWeight: 'bold' 
-                                    }}>
-                                        {rateLimitTimeLeft}s
-                                    </span>
-                                </span>
-                            ) : (
-                                'GỬI OTP XÁC NHẬN'
+                <div className="auth-form-wrapper">
+                    <form onSubmit={handleSubmit} noValidate>
+                        <div className="form-group">
+                            <label>Mật khẩu mới</label>
+                            <div className="password-wrapper">
+                                <input
+                                    type={showPassword ? 'text' : 'password'}
+                                    className={`auth-input ${fieldErrors.newPassword ? 'input-error' : ''}`}
+                                    placeholder="Nhập mật khẩu mới (tối thiểu 8 ký tự)"
+                                    value={newPassword}
+                                    onChange={(e) => handleFieldChange('newPassword', e.target.value)}
+                                    disabled={loading || isRateLimited}
+                                    autoComplete="new-password"
+                                />
+                                <button
+                                    type="button"
+                                    className="toggle-password"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    tabIndex="-1"
+                                    disabled={loading || isRateLimited}
+                                >
+                                    {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                                </button>
+                            </div>
+                            {fieldErrors.newPassword && (
+                                <span className="error-text">{fieldErrors.newPassword}</span>
                             )}
-                        </LoadingButton>
-                    </div>
-                </form>
+                        </div>
+
+                        <div className="form-group">
+                            <label>Xác nhận mật khẩu</label>
+                            <div className="password-wrapper">
+                                <input
+                                    type={showConfirmPassword ? 'text' : 'password'}
+                                    className={`auth-input ${fieldErrors.confirmPassword ? 'input-error' : ''}`}
+                                    placeholder="Nhập lại mật khẩu"
+                                    value={confirmPassword}
+                                    onChange={(e) => handleFieldChange('confirmPassword', e.target.value)}
+                                    disabled={loading || isRateLimited}
+                                    autoComplete="new-password"
+                                />
+                                <button
+                                    type="button"
+                                    className="toggle-password"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    tabIndex="-1"
+                                    disabled={loading || isRateLimited}
+                                >
+                                    {showConfirmPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                                </button>
+                            </div>
+                            {fieldErrors.confirmPassword && (
+                                <span className="error-text">{fieldErrors.confirmPassword}</span>
+                            )}
+                        </div>
+
+                        <div className="button-group">
+                            <LoadingButton
+                                type="submit"
+                                loading={loading}
+                                loadingText="Đang xử lý..."
+                                disabled={loading || isRateLimited}
+                                className="btn-user"
+                                spinnerColor="#000000"
+                            >
+                                {isRateLimited ? (
+                                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                        ĐANG CHỜ
+                                        <span style={{ 
+                                            background: 'rgba(255,255,255,0.2)', 
+                                            padding: '2px 8px', 
+                                            borderRadius: '4px', 
+                                            fontWeight: 'bold' 
+                                        }}>
+                                            {rateLimitTimeLeft}s
+                                        </span>
+                                    </span>
+                                ) : (
+                                    'XÁC NHẬN ĐẶT LẠI'
+                                )}
+                            </LoadingButton>
+                        </div>
+                    </form>
+                </div>
+
+                <div className="auth-footer">
+                    <button
+                        type="button"
+                        className="btn-link back-btn"
+                        onClick={() => navigate('/forgot-password')}
+                    >
+                        <ArrowLeft size={16} />
+                        Quay lại
+                    </button>
+                </div>
             </div>
+
+            {/* ✅ Modal thành công */}
+            <ResetPasswordSuccessModal
+                show={showSuccessModal}
+                onClose={handleModalClose}
+                onConfirm={handleModalConfirm}
+            />
         </div>
     );
 };

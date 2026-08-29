@@ -38,10 +38,9 @@ const VerifyEmail = lazy(() => import("./user_frontend/pages/VerifyEmail"));
 
 // Auth Pages
 const ForgotPassword = lazy(() => import("./user_frontend/pages/ForgotPassword"));
-const VerifyOTP = lazy(() => import("./user_frontend/pages/VerifyOTP"));
 const ResetPassword = lazy(() => import("./user_frontend/pages/ResetPassword"));
 const ForgotPin = lazy(() => import("./user_frontend/pages/ForgotPin"));
-const ResetPin = lazy(() => import("./user_frontend/pages/ResetPin")); // ✅ THÊM MỚI
+const ResetPin = lazy(() => import("./user_frontend/pages/ResetPin"));
 
 // Main Pages
 const MovieDetail = lazy(() => import("./user_frontend/pages/MovieDetail"));
@@ -212,10 +211,9 @@ const AUTH_ROUTES = [
     { path: "/register-pin", element: <UserRegisterPin /> },
     { path: "/verify-email", element: <VerifyEmail /> },
     { path: "/forgot-password", element: <ForgotPassword /> },
-    { path: "/verify-otp", element: <VerifyOTP /> },
     { path: "/reset-password", element: <ResetPassword /> },
     { path: "/forgot-pin", element: <ForgotPin /> },
-    { path: "/reset-pin", element: <ResetPin /> }, // ✅ THÊM MỚI
+    { path: "/reset-pin", element: <ResetPin /> },
 ];
 
 // ✅ User Main Routes (có Layout - Cần SessionGuard)
