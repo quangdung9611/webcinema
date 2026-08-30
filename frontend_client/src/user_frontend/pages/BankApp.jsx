@@ -69,6 +69,9 @@ const BankApp = () => {
     const hasShownModalRef = useRef(false);
     const timerCheckRef = useRef(null);
     const isTimerSyncedRef = useRef(false);
+    const otpExpiredRef = useRef(false);
+    const otpAttemptsRef = useRef(parseInt(localStorage.getItem('bankOtpAttempts') || '0'));
+    const isLockedRef = useRef(localStorage.getItem('bankIsLocked') === 'true');
 
     // =========================
     // STATES
@@ -83,7 +86,46 @@ const BankApp = () => {
     const [loadingSendOtp, setLoadingSendOtp] = useState(false);
     const [showBackConfirm, setShowBackConfirm] = useState(false);
     const [isSyncing, setIsSyncing] = useState(true);
-    const [resendCooldown, setResendCooldown] = useState(0);
+    const [resendCooldown, setResendCooldown] = useState(() => {
+        const saved = localStorage.getItem('bankResendCooldown');
+        if (saved) {
+            const remaining = parseInt(saved, 10);
+            if (remaining > 0) {
+                return remaining;
+            }
+        }
+        return 0;
+    });
+
+    // 🔥 Lock state - giống ForgotPassword
+    const [isLocked, setIsLocked] = useState(() => {
+        const saved = localStorage.getItem('bankIsLocked') === 'true';
+        const lockTime = parseInt(localStorage.getItem('bankLockTime') || '0');
+        if (saved && lockTime > 0) {
+            const elapsed = (Date.now() - lockTime) / 1000;
+            if (elapsed < 300) {
+                return true;
+            } else {
+                localStorage.removeItem('bankIsLocked');
+                localStorage.removeItem('bankLockTime');
+                localStorage.removeItem('bankOtpAttempts');
+                return false;
+            }
+        }
+        return false;
+    });
+
+    const [lockTimeLeft, setLockTimeLeft] = useState(() => {
+        const lockTime = parseInt(localStorage.getItem('bankLockTime') || '0');
+        if (lockTime > 0) {
+            const elapsed = (Date.now() - lockTime) / 1000;
+            const remaining = Math.max(0, 300 - elapsed);
+            if (remaining > 0) {
+                return remaining;
+            }
+        }
+        return 0;
+    });
 
     const [modalConfig, setModalConfig] = useState({
         show: false,
@@ -120,6 +162,12 @@ const BankApp = () => {
 
     // Đồng bộ timer với Redis
     const syncTimerWithRedis = async () => {
+        const hasOtp = localStorage.getItem('bankOtpInput');
+        if (hasOtp) {
+            console.log('⏭️ Bỏ qua sync timer vì đã có OTP');
+            return;
+        }
+
         if (isTimerSyncedRef.current) return;
         
         setIsSyncing(true);
@@ -131,9 +179,13 @@ const BankApp = () => {
                     setTimeLeft(redisTime);
                     localStorage.setItem('bankOtpTimeLeft', String(redisTime));
                     isTimerSyncedRef.current = true;
+                    otpExpiredRef.current = false;
                     console.log(`✅ Đồng bộ timer với Redis: ${redisTime}s`);
                 } else {
-                    handleTimeout();
+                    setTimeLeft(0);
+                    localStorage.setItem('bankOtpTimeLeft', '0');
+                    otpExpiredRef.current = true;
+                    console.log('⏰ OTP đã hết hạn, vui lòng gửi lại');
                 }
             } else {
                 const saved = localStorage.getItem('bankOtpTimeLeft');
@@ -141,6 +193,8 @@ const BankApp = () => {
                     const time = parseInt(saved, 10);
                     if (time > 0) {
                         setTimeLeft(time);
+                    } else {
+                        otpExpiredRef.current = true;
                     }
                 }
                 console.log('⚠️ Không lấy được TTL từ Redis, sử dụng localStorage');
@@ -150,6 +204,39 @@ const BankApp = () => {
         } finally {
             setIsSyncing(false);
         }
+    };
+
+    // 🔥 Reset lock state
+    const resetLockState = () => {
+        setIsLocked(false);
+        setLockTimeLeft(0);
+        otpAttemptsRef.current = 0;
+        localStorage.removeItem('bankIsLocked');
+        localStorage.removeItem('bankLockTime');
+        localStorage.removeItem('bankOtpAttempts');
+        isLockedRef.current = false;
+    };
+
+    // 🔥 Lock account
+    const lockAccount = (remainingSeconds = 300) => {
+        const lockTime = Date.now();
+        setIsLocked(true);
+        setLockTimeLeft(remainingSeconds);
+        isLockedRef.current = true;
+        localStorage.setItem('bankIsLocked', 'true');
+        localStorage.setItem('bankLockTime', String(lockTime));
+        localStorage.setItem('bankOtpAttempts', String(otpAttemptsRef.current));
+        
+        const mins = Math.floor(remainingSeconds / 60);
+        const secs = remainingSeconds % 60;
+        openModal(
+            'error',
+            'OTP BỊ KHÓA',
+            `Bạn đã nhập sai OTP quá 5 lần. Tài khoản đã bị khóa ${mins}:${secs < 10 ? '0' + secs : secs}. Vui lòng thử lại sau.`,
+            () => {
+                closeModal();
+            }
+        );
     };
 
     // =========================
@@ -206,6 +293,10 @@ const BankApp = () => {
     useEffect(() => {
         localStorage.setItem('bankOtpInput', otp);
     }, [otp]);
+
+    useEffect(() => {
+        localStorage.setItem('bankResendCooldown', String(resendCooldown));
+    }, [resendCooldown]);
 
     // =========================
     // CALL API CANCEL BOOKING
@@ -316,44 +407,6 @@ const BankApp = () => {
     }, []);
 
     // =========================
-    // HANDLE TIMEOUT
-    // =========================
-    const handleTimeout = async () => {
-        await cancelBookingOnServer();
-        
-        const keysToRemove = [
-            'bankHasSentOtp',
-            'bankHasVisited',
-            'bankOtpTimeLeft',
-            'bankOtpInput',
-            'bankLastOtpSentAt',
-            'paymentInitiated',
-            'paymentCompleted',
-            'completedBookingId',
-            'holdExpiresAt',
-            'selectedSeats',
-            'currentShowtimeId',
-            'lastSuccessTicket',
-            'tempBookingId',
-            'selectedFoods',
-            'booking_temp'
-        ];
-
-        keysToRemove.forEach(key => {
-            localStorage.removeItem(key);
-        });
-
-        setShowBackConfirm(false);
-        hasShownModalRef.current = false;
-        isTimerSyncedRef.current = false;
-
-        if (blocker.state === 'blocked') {
-            blocker.proceed();
-        }
-        navigate('/');
-    };
-
-    // =========================
     // CLEAR ALL & GO HOME
     // =========================
     const clearAllAndGoHome = async () => {
@@ -374,7 +427,11 @@ const BankApp = () => {
             'lastSuccessTicket',
             'tempBookingId',
             'selectedFoods',
-            'booking_temp'
+            'booking_temp',
+            'bankResendCooldown',
+            'bankIsLocked',
+            'bankLockTime',
+            'bankOtpAttempts'
         ];
 
         keysToRemove.forEach(key => {
@@ -384,6 +441,8 @@ const BankApp = () => {
         setShowBackConfirm(false);
         hasShownModalRef.current = false;
         isTimerSyncedRef.current = false;
+        otpExpiredRef.current = false;
+        resetLockState();
 
         if (blocker.state === 'blocked') {
             blocker.proceed();
@@ -425,21 +484,29 @@ const BankApp = () => {
             hasVisitedBankApp.current = true;
             localStorage.setItem('bankHasSentOtp', 'true');
             localStorage.setItem('bankHasVisited', 'true');
-            localStorage.removeItem('paymentInitiated');
+            localStorage.setItem('paymentInitiated', 'true');
             
-            // Sau khi gửi OTP, đồng bộ timer với Redis
+            // Reset attempts khi gửi OTP thành công
+            otpAttemptsRef.current = 0;
+            localStorage.setItem('bankOtpAttempts', '0');
+            resetLockState();
+            
+            // Đồng bộ timer với Redis
             const redisTime = await fetchTimeFromRedis();
             if (redisTime !== null && redisTime > 0) {
                 setTimeLeft(redisTime);
                 localStorage.setItem('bankOtpTimeLeft', String(redisTime));
                 isTimerSyncedRef.current = true;
+                otpExpiredRef.current = false;
             } else {
                 setTimeLeft(300);
                 localStorage.setItem('bankOtpTimeLeft', '300');
+                otpExpiredRef.current = false;
             }
 
-            // Bắt đầu cooldown 60s
-            setResendCooldown(60);
+            // Cooldown 5 phút (300s) - giống ForgotPassword
+            setResendCooldown(300);
+            localStorage.setItem('bankResendCooldown', '300');
 
             return true;
         } catch (err) {
@@ -456,16 +523,25 @@ const BankApp = () => {
     };
 
     // =========================
-    // 🆕 RESEND OTP API (Gửi lại)
+    // 🆕 RESEND OTP API - TỐI ĐA 3 LẦN/5 PHÚT
     // =========================
     const handleResendOtp = async () => {
         if (resendCooldown > 0) {
-            openModal('info', 'THÔNG BÁO', `Vui lòng đợi ${resendCooldown} giây trước khi gửi lại.`);
+            const mins = Math.floor(resendCooldown / 60);
+            const secs = resendCooldown % 60;
+            openModal('info', 'THÔNG BÁO', `Vui lòng đợi ${mins}:${secs < 10 ? '0' + secs : secs} trước khi gửi lại.`);
             return;
         }
 
         if (paymentCompletedRef.current) {
             openModal('info', 'THÔNG BÁO', 'Bạn đã thanh toán thành công!');
+            return;
+        }
+
+        if (isLocked) {
+            const mins = Math.floor(lockTimeLeft / 60);
+            const secs = lockTimeLeft % 60;
+            openModal('error', 'TÀI KHOẢN BỊ KHÓA', `Tài khoản đã bị khóa do nhập sai OTP quá 5 lần. Vui lòng thử lại sau ${mins}:${secs < 10 ? '0' + secs : secs}.`);
             return;
         }
 
@@ -490,34 +566,52 @@ const BankApp = () => {
                 hasVisitedBankApp.current = true;
                 localStorage.setItem('bankHasSentOtp', 'true');
                 localStorage.setItem('bankHasVisited', 'true');
+                localStorage.setItem('paymentInitiated', 'true');
+
+                // Reset attempts khi gửi lại OTP thành công
+                otpAttemptsRef.current = 0;
+                localStorage.setItem('bankOtpAttempts', '0');
+                resetLockState();
 
                 // Cập nhật timer từ response
                 if (response.data.data?.expiresIn) {
                     setTimeLeft(response.data.data.expiresIn);
                     localStorage.setItem('bankOtpTimeLeft', String(response.data.data.expiresIn));
                     isTimerSyncedRef.current = true;
+                    otpExpiredRef.current = false;
                 } else {
-                    // Fallback: lấy từ Redis
                     const redisTime = await fetchTimeFromRedis();
                     if (redisTime !== null && redisTime > 0) {
                         setTimeLeft(redisTime);
                         localStorage.setItem('bankOtpTimeLeft', String(redisTime));
                         isTimerSyncedRef.current = true;
+                        otpExpiredRef.current = false;
+                    } else {
+                        setTimeLeft(300);
+                        localStorage.setItem('bankOtpTimeLeft', '300');
+                        otpExpiredRef.current = false;
                     }
                 }
 
-                // Bắt đầu cooldown 60s
-                setResendCooldown(60);
+                // Cooldown 5 phút (300s)
+                setResendCooldown(300);
+                localStorage.setItem('bankResendCooldown', '300');
 
-                openModal('success', 'THÀNH CÔNG', 'Mã OTP đã được gửi lại tới email của bạn.');
+                // Reset OTP input
+                setOtp('');
+                localStorage.setItem('bankOtpInput', '');
+
+                openModal('success', 'THÀNH CÔNG', 'Mã OTP mới đã được gửi tới email của bạn.');
             }
         } catch (err) {
             console.error('❌ [BankApp] resendOtp error:', err.response?.data || err.message);
             const errorMsg = err.response?.data?.message || 'Không thể gửi lại mã OTP. Vui lòng thử lại.';
             
             if (err.response?.status === 429) {
-                const remainingSeconds = err.response?.data?.data?.remainingSeconds || 60;
-                openModal('error', 'QUÁ NHIỀU YÊU CẦU', `Bạn đã gửi quá nhiều lần. Vui lòng thử lại sau ${remainingSeconds} giây.`);
+                const remainingSeconds = err.response?.data?.data?.remainingSeconds || 300;
+                const mins = Math.floor(remainingSeconds / 60);
+                const secs = remainingSeconds % 60;
+                openModal('error', 'QUÁ NHIỀU YÊU CẦU', `Bạn đã gửi quá nhiều lần (tối đa 3 lần/5 phút). Vui lòng thử lại sau ${mins}:${secs < 10 ? '0' + secs : secs}.`);
             } else {
                 openModal('error', 'LỖI GỬI OTP', errorMsg);
             }
@@ -527,7 +621,7 @@ const BankApp = () => {
     };
 
     // =========================
-    // Cooldown timer cho resend
+    // Cooldown timer cho resend - 5 PHÚT
     // =========================
     useEffect(() => {
         if (resendCooldown <= 0) return;
@@ -535,9 +629,12 @@ const BankApp = () => {
         const timer = setInterval(() => {
             setResendCooldown(prev => {
                 if (prev <= 1) {
+                    localStorage.removeItem('bankResendCooldown');
                     return 0;
                 }
-                return prev - 1;
+                const newVal = prev - 1;
+                localStorage.setItem('bankResendCooldown', String(newVal));
+                return newVal;
             });
         }, 1000);
 
@@ -545,18 +642,75 @@ const BankApp = () => {
     }, [resendCooldown]);
 
     // =========================
-    // TRIGGER SEND OTP - ĐỒNG BỘ VỚI REDIS
+    // 🔥 LOCK TIMER - GIỐNG FORGOTPASSWORD
+    // =========================
+    useEffect(() => {
+        if (!isLocked || lockTimeLeft <= 0) {
+            if (isLocked && lockTimeLeft === 0) {
+                resetLockState();
+                if (!modalConfig.show && !hasShownModalRef.current) {
+                    openModal(
+                        'info',
+                        'MỞ KHÓA TÀI KHOẢN',
+                        'Tài khoản đã được mở khóa. Bạn có thể gửi lại OTP.',
+                        () => {
+                            closeModal();
+                        }
+                    );
+                }
+            }
+            return;
+        }
+
+        const timer = setInterval(() => {
+            setLockTimeLeft(prev => {
+                const newTime = prev - 1;
+                if (newTime <= 0) {
+                    resetLockState();
+                    if (!modalConfig.show && !hasShownModalRef.current) {
+                        openModal(
+                            'info',
+                            'MỞ KHÓA TÀI KHOẢN',
+                            'Tài khoản đã được mở khóa. Bạn có thể gửi lại OTP.',
+                            () => {
+                                closeModal();
+                            }
+                        );
+                    }
+                    return 0;
+                }
+                localStorage.setItem('bankLockTime', String(Date.now()));
+                return newTime;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [isLocked, lockTimeLeft]);
+
+    // =========================
+    // TRIGGER SEND OTP
     // =========================
     useEffect(() => {
         const initializeBankApp = async () => {
             if (paymentCompletedRef.current) return;
             if (!customerEmail || !tempBookingId) return;
 
-            // Đồng bộ timer với Redis trước
+            const hasOtpInStorage = localStorage.getItem('bankOtpInput');
+            const hasSentOtpFlag = localStorage.getItem('bankHasSentOtp') === 'true';
+            const hasOtp = hasOtpInStorage || hasSentOtpFlag;
+
+            if (hasOtp) {
+                console.log('✅ Đã có OTP trong storage, bỏ qua kiểm tra');
+                if (!isTimerSyncedRef.current) {
+                    await syncTimerWithRedis();
+                }
+                return;
+            }
+
             await syncTimerWithRedis();
 
             if (!isPaymentInitiated.current) {
-                if (!modalConfig.show && !hasShownModalRef.current && !isFirstLoad.current) {
+                if (!isFirstLoad.current && !modalConfig.show && !hasShownModalRef.current) {
                     openModal(
                         'error',
                         'TRUY CẬP KHÔNG HỢP LỆ',
@@ -570,7 +724,6 @@ const BankApp = () => {
                 return;
             }
 
-            // Nếu đã gửi OTP trước đó, kiểm tra thời gian còn lại
             if (hasSentOtp.current || hasVisitedBankApp.current) {
                 const lastSentAt = localStorage.getItem('bankLastOtpSentAt');
                 if (lastSentAt) {
@@ -580,7 +733,7 @@ const BankApp = () => {
                     }
                 }
                 
-                if (!modalConfig.show && !hasShownModalRef.current && !isFirstLoad.current) {
+                if (!isFirstLoad.current && !modalConfig.show && !hasShownModalRef.current) {
                     openModal(
                         'info',
                         'THÔNG BÁO',
@@ -595,13 +748,13 @@ const BankApp = () => {
 
         const timer = setTimeout(() => {
             initializeBankApp();
-        }, 500);
+        }, 100);
 
         return () => clearTimeout(timer);
     }, [customerEmail, tempBookingId]);
 
     // =========================
-    // TIMER - CHẠY ĐỒNG BỘ VỚI REDIS
+    // TIMER - KHÔNG RESET VỀ TRANG CHỦ KHI HẾT HẠN
     // =========================
     useEffect(() => {
         if (paymentCompletedRef.current) return;
@@ -616,23 +769,57 @@ const BankApp = () => {
                         localStorage.setItem('bankOtpTimeLeft', String(redisTime));
                     }
                 } else if (redisTime === 0) {
-                    handleTimeout();
+                    setTimeLeft(0);
+                    localStorage.setItem('bankOtpTimeLeft', '0');
+                    otpExpiredRef.current = true;
+                    console.log('⏰ OTP đã hết hạn');
+                    
+                    if (!modalConfig.show && !hasShownModalRef.current && !isLocked) {
+                        openModal(
+                            'warning',
+                            'OTP HẾT HẠN',
+                            'Mã OTP đã hết hạn. Vui lòng bấm "Gửi lại OTP" để nhận mã mới.',
+                            () => {
+                                closeModal();
+                            }
+                        );
+                    }
                 }
             }, 30000);
         }
 
         if (timeLeft <= 0) {
-            const timeoutId = setTimeout(() => {
-                handleTimeout();
-            }, 1500);
-
-            return () => clearTimeout(timeoutId);
+            if (otpExpiredRef.current === false && !paymentCompletedRef.current && !isLocked) {
+                otpExpiredRef.current = true;
+                if (!modalConfig.show && !hasShownModalRef.current) {
+                    openModal(
+                        'warning',
+                        'OTP HẾT HẠN',
+                        'Mã OTP đã hết hạn. Vui lòng bấm "Gửi lại OTP" để nhận mã mới.',
+                        () => {
+                            closeModal();
+                        }
+                    );
+                }
+            }
+            return;
         }
 
         const timer = setInterval(() => {
             setTimeLeft(prev => {
                 const newTime = prev - 1;
                 if (newTime <= 0) {
+                    otpExpiredRef.current = true;
+                    if (!modalConfig.show && !hasShownModalRef.current && !paymentCompletedRef.current && !isLocked) {
+                        openModal(
+                            'warning',
+                            'OTP HẾT HẠN',
+                            'Mã OTP đã hết hạn. Vui lòng bấm "Gửi lại OTP" để nhận mã mới.',
+                            () => {
+                                closeModal();
+                            }
+                        );
+                    }
                     return 0;
                 }
                 return newTime;
@@ -643,14 +830,21 @@ const BankApp = () => {
             clearInterval(timer);
             if (timerCheckRef.current) clearInterval(timerCheckRef.current);
         };
-    }, [timeLeft, tempBookingId, customerEmail, navigate, isTimerSyncedRef.current]);
+    }, [timeLeft, tempBookingId, customerEmail, navigate]);
 
     // =========================
-    // VERIFY OTP
+    // VERIFY OTP - NHẬP SAI 5 LẦN -> KHÓA 5 PHÚT
     // =========================
     const handleVerifyPayment = async () => {
         if (paymentCompletedRef.current) {
             openModal('info', 'THÔNG BÁO', 'Bạn đã thanh toán thành công!');
+            return;
+        }
+
+        if (isLocked) {
+            const mins = Math.floor(lockTimeLeft / 60);
+            const secs = lockTimeLeft % 60;
+            openModal('error', 'TÀI KHOẢN BỊ KHÓA', `Tài khoản đã bị khóa do nhập sai OTP quá 5 lần. Vui lòng thử lại sau ${mins}:${secs < 10 ? '0' + secs : secs}.`);
             return;
         }
 
@@ -677,6 +871,11 @@ const BankApp = () => {
             console.log('✅ [BankApp] verify response:', res.data);
 
             if (res.data.success) {
+                // ✅ OTP đúng -> reset attempts
+                otpAttemptsRef.current = 0;
+                localStorage.setItem('bankOtpAttempts', '0');
+                resetLockState();
+
                 const realBookingId = res.data.data?.bookingId || tempBookingId;
                 localStorage.setItem('paymentCompleted', 'true');
                 localStorage.setItem('completedBookingId', String(realBookingId));
@@ -691,7 +890,11 @@ const BankApp = () => {
                     'paymentInitiated',
                     'holdExpiresAt',
                     'selectedSeats',
-                    'currentShowtimeId'
+                    'currentShowtimeId',
+                    'bankResendCooldown',
+                    'bankIsLocked',
+                    'bankLockTime',
+                    'bankOtpAttempts'
                 ];
 
                 keysToRemove.forEach(key => {
@@ -699,6 +902,7 @@ const BankApp = () => {
                 });
                 
                 isTimerSyncedRef.current = false;
+                otpExpiredRef.current = false;
 
                 openModal(
                     'success',
@@ -719,36 +923,45 @@ const BankApp = () => {
                     autoNavigateRef.current = null;
                 }, 3000);
             } else {
-                const errorCode = res.data.code;
-                if (errorCode === 'OTP_LOCKED' || (res.data.message && res.data.message.includes('khóa'))) {
-                    openModal(
-                        'error',
-                        'OTP BỊ KHÓA',
-                        'Bạn đã nhập sai OTP quá nhiều lần. Toàn bộ thông tin đặt vé sẽ bị xóa.',
-                        async () => {
-                            closeModal();
-                            await clearAllAndGoHome();
-                        }
-                    );
+                // ❌ OTP sai -> lấy thông tin từ backend
+                const errorData = res.data.data || {};
+                const remainingAttempts = errorData.remainingAttempts !== undefined ? errorData.remainingAttempts : 0;
+                
+                // Nếu backend trả về remainingAttempts = 0 hoặc message có chứa "khóa"
+                if (res.data.message?.includes('khóa') || remainingAttempts === 0) {
+                    // Lấy thời gian khóa từ backend nếu có
+                    const lockDuration = errorData.lockDuration || 300;
+                    lockAccount(lockDuration);
+                    return;
+                }
+
+                // Cập nhật attempts từ backend
+                if (remainingAttempts > 0) {
+                    otpAttemptsRef.current = 5 - remainingAttempts;
+                    localStorage.setItem('bankOtpAttempts', String(otpAttemptsRef.current));
+                    openModal('error', 'THẤT BẠI', `${res.data.message || 'Mã OTP không đúng!'} Còn ${remainingAttempts} lần thử.`);
                 } else {
                     openModal('error', 'THẤT BẠI', res.data.message || 'Mã OTP không đúng hoặc đã hết hạn!');
                 }
             }
         } catch (err) {
             console.error('❌ [BankApp] verify error:', err.response?.data || err.message);
-            const errorMsg = err.response?.data?.message || 'Mã OTP không đúng hoặc đã hết hạn!';
-            if (err.response?.status === 429 || errorMsg.includes('khóa') || errorMsg.includes('quá nhiều lần')) {
-                openModal(
-                    'error',
-                    'OTP BỊ KHÓA',
-                    'Bạn đã nhập sai OTP quá nhiều lần. Toàn bộ thông tin đặt vé sẽ bị xóa.',
-                    async () => {
-                        closeModal();
-                        await clearAllAndGoHome();
-                    }
-                );
+            const errorData = err.response?.data || {};
+            const errorMsg = errorData.message || 'Mã OTP không đúng hoặc đã hết hạn!';
+            
+            // 🔥 Xử lý lock từ backend
+            if (err.response?.status === 429 || errorMsg.includes('khóa') || errorData.code === 'OTP_LOCKED') {
+                const lockDuration = errorData.data?.remainingSeconds || 300;
+                lockAccount(lockDuration);
             } else {
-                openModal('error', 'THẤT BẠI', errorMsg);
+                const remainingAttempts = errorData.data?.remainingAttempts;
+                if (remainingAttempts !== undefined && remainingAttempts > 0) {
+                    otpAttemptsRef.current = 5 - remainingAttempts;
+                    localStorage.setItem('bankOtpAttempts', String(otpAttemptsRef.current));
+                    openModal('error', 'THẤT BẠI', `${errorMsg} Còn ${remainingAttempts} lần thử.`);
+                } else {
+                    openModal('error', 'THẤT BẠI', errorMsg);
+                }
             }
         } finally {
             setLoadingVerify(false);
@@ -808,6 +1021,12 @@ const BankApp = () => {
     const mins = Math.floor(timeLeft / 60);
     const secs = timeLeft % 60;
 
+    const formatCooldown = (seconds) => {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m}:${s < 10 ? '0' + s : s}`;
+    };
+
     // =========================
     // RENDER
     // =========================
@@ -861,19 +1080,29 @@ const BankApp = () => {
                                     onChange={(e) => handleOtpChange(e, index)}
                                     onKeyDown={(e) => handleOtpKeyDown(e, index)}
                                     onPaste={handleOtpPaste}
-                                    disabled={paymentCompletedRef.current}
-                                    autoFocus={index === 0}
+                                    disabled={paymentCompletedRef.current || isLocked}
+                                    autoFocus={index === 0 && !otpExpiredRef.current && !isLocked}
                                     ref={(el) => (otpInputsRef.current[index] = el)}
                                 />
                             ))}
                         </div>
 
                         <div className="bank-timer-box">
-                            OTP hết hạn sau:
-                            <span>
-                                {mins < 10 ? `0${mins}` : mins}:
-                                {secs < 10 ? `0${secs}` : secs}
-                            </span>
+                            {isLocked ? (
+                                <span style={{ color: '#ff6b6b' }}>
+                                    🔒 Tài khoản bị khóa: {formatCooldown(lockTimeLeft)}
+                                </span>
+                            ) : otpExpiredRef.current ? (
+                                <span style={{ color: '#ff6b6b' }}>⏰ OTP đã hết hạn</span>
+                            ) : (
+                                <>
+                                    OTP hết hạn sau:
+                                    <span>
+                                        {mins < 10 ? `0${mins}` : mins}:
+                                        {secs < 10 ? `0${secs}` : secs}
+                                    </span>
+                                </>
+                            )}
                         </div>
 
                         {/* ===== NÚT GỬI LẠI OTP ===== */}
@@ -882,12 +1111,14 @@ const BankApp = () => {
                                 type="button"
                                 className="btn-resend-otp"
                                 onClick={handleResendOtp}
-                                disabled={loadingSendOtp || paymentCompletedRef.current || resendCooldown > 0}
+                                disabled={loadingSendOtp || paymentCompletedRef.current || resendCooldown > 0 || isLocked}
                             >
                                 {loadingSendOtp ? (
                                     'Đang gửi...'
                                 ) : resendCooldown > 0 ? (
-                                    `Gửi lại sau ${resendCooldown}s`
+                                    `🔄 Gửi lại sau ${formatCooldown(resendCooldown)}`
+                                ) : isLocked ? (
+                                    `🔒 Đã khóa (${formatCooldown(lockTimeLeft)})`
                                 ) : (
                                     '🔄 GỬI LẠI OTP'
                                 )}
@@ -899,7 +1130,7 @@ const BankApp = () => {
                             loading={loadingVerify}
                             loadingText="Đang xác nhận..."
                             onClick={handleVerifyPayment}
-                            disabled={loadingVerify || loadingSendOtp || paymentCompletedRef.current}
+                            disabled={loadingVerify || loadingSendOtp || paymentCompletedRef.current || otpExpiredRef.current || isLocked}
                             className="btn-confirm-payment"
                             spinnerColor="#ffffff"
                         >

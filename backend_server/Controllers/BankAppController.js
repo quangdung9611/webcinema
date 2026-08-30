@@ -14,7 +14,6 @@ exports.sendOTP = async (req, res) => {
             });
         }
 
-        // Sử dụng BankAppService
         const result = await BankAppService.sendPaymentOTP(email, tempBookingId);
 
         return res.status(200).json(result);
@@ -43,11 +42,19 @@ exports.verifyOTP = async (req, res) => {
         );
 
         if (!verifyResult.success) {
-            return res.status(400).json({
+            // 🔥 Trả về lỗi với thông tin attempts và lock
+            const errorResponse = {
                 success: false,
                 message: verifyResult.message,
                 code: verifyResult.code
-            });
+            };
+            
+            // Nếu có thông tin attempts từ verifyResult
+            if (verifyResult.data) {
+                errorResponse.data = verifyResult.data;
+            }
+            
+            return res.status(400).json(errorResponse);
         }
 
         // Transaction
@@ -84,6 +91,19 @@ exports.verifyOTP = async (req, res) => {
         } catch (_) {}
 
         console.error("❌ verifyOTP error:", error);
+
+        // 🔥 Xử lý lỗi lock từ OtpService
+        if (error.code === 'OTP_LOCKED' || error.message?.includes('khóa')) {
+            return res.status(429).json({
+                success: false,
+                message: error.message || "OTP bị khóa do nhập sai quá nhiều lần",
+                code: 'OTP_LOCKED',
+                data: error.data || {
+                    lockDuration: 300,
+                    remainingSeconds: 300
+                }
+            });
+        }
 
         return res.status(500).json({
             success: false,
@@ -169,10 +189,16 @@ exports.resendOtpPayment = async (req, res) => {
         console.error("❌ resendOtpPayment error:", error);
         
         const statusCode = error.statusCode || 500;
-        return res.status(statusCode).json({
+        const response = {
             success: false,
-            message: error.message || "Lỗi máy chủ",
-            data: error.data || null
-        });
+            message: error.message || "Lỗi máy chủ"
+        };
+        
+        // 🔥 Thêm data nếu có (ví dụ: remainingSeconds, maxAttempts)
+        if (error.data) {
+            response.data = error.data;
+        }
+        
+        return res.status(statusCode).json(response);
     }
 };

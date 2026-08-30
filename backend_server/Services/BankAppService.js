@@ -105,7 +105,6 @@ class BankAppService {
             throw { statusCode: 400, message: "Thiếu tempBookingId" };
         }
 
-        // Kiểm tra temp booking trong Redis
         const key = `temp:${tempBookingId}`;
         const ttl = await RedisService.getTTL(key);
         const data = await RedisService.get(key);
@@ -123,6 +122,8 @@ class BankAppService {
 
     /*=========================================================
         🆕 GỬI LẠI OTP PAYMENT - GIỐNG AUTH SERVICE
+        - Rate limit: 3 lần / 5 phút
+        - Trả về thông báo lock và attempts
     =========================================================*/
 
     async resendOtpPayment(email, tempBookingId) {
@@ -177,7 +178,9 @@ class BankAppService {
             success: true,
             message: "Mã OTP đã được gửi lại tới email.",
             data: {
-                expiresIn: ttl > 0 ? ttl : 300
+                expiresIn: ttl > 0 ? ttl : 300,
+                maxAttempts: 3,
+                remainingAttempts: 3
             }
         };
     }
