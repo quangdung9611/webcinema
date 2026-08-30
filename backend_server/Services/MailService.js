@@ -9,7 +9,7 @@ const { transporter } = require("../Config/mailer");
 
 const OtpEmailTemplate = require("../Templates/OtpEmailTemplate");
 const TicketEmailTemplate = require("../Templates/TicketEmailTemplate");
-const ForgotPasswordTemplate = require("../Templates/ForgotPasswordTemplate"); // ✅ ĐÃ ĐÚNG
+const ForgotPasswordTemplate = require("../Templates/ForgotPasswordTemplate");
 const VerifyEmailTemplate = require("../Templates/VerifyEmailTemplate");
 const ForgotPinTemplate = require("../Templates/ForgotPinTemplate");
 
@@ -20,12 +20,12 @@ const ForgotPinTemplate = require("../Templates/ForgotPinTemplate");
 const MailService = {
 
     // =====================================================
-    // SEND PAYMENT OTP
+    // ✅ SEND PAYMENT OTP - GỬI OTP THANH TOÁN
     // =====================================================
 
-    sendOTP: async (email, otp, bookingId) => {
+    sendPaymentOTP: async (email, otp, bookingId) => {
 
-        console.log(`📨 SEND OTP -> ${email} | Booking: ${bookingId}`);
+        console.log(`📨 SEND PAYMENT OTP -> ${email} | Booking: ${bookingId}`);
 
         if (!email) {
             throw new Error("Email người nhận không hợp lệ");
@@ -42,19 +42,27 @@ const MailService = {
 
             });
 
-            console.log("✅ OTP MAIL SENT");
+            console.log("✅ PAYMENT OTP MAIL SENT");
             console.log(info.messageId);
 
             return info;
 
         } catch (error) {
 
-            console.error("❌ OTP MAIL ERROR");
+            console.error("❌ PAYMENT OTP MAIL ERROR");
             console.error(error);
             throw error;
 
         }
 
+    },
+
+    // =====================================================
+    // ⚠️ ALIAS - GIỮ TÊN CŨ CHO TƯƠNG THÍCH NGƯỢC
+    // =====================================================
+
+    sendOTP: async (email, otp, bookingId) => {
+        return await MailService.sendPaymentOTP(email, otp, bookingId);
     },
 
     // =====================================================
@@ -154,7 +162,7 @@ const MailService = {
                 from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
                 to: email,
                 subject: `[${otp}] Mã OTP đặt lại mật khẩu`,
-                html: ForgotPasswordTemplate(otp, fullName) // ✅ DÙNG TEMPLATE MỚI
+                html: ForgotPasswordTemplate(otp, fullName)
 
             });
 

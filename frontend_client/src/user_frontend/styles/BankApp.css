@@ -288,7 +288,39 @@
     transform: none !important;
     box-shadow: var(--btn-silver-shadow);
 }
+/* ================================
+   NÚT GỬI LẠI OTP
+================================ */
 
+.bank-resend-wrapper {
+    text-align: center;
+    margin-bottom: var(--space-lg);
+}
+
+.btn-resend-otp {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--fw-medium);
+    cursor: pointer;
+    padding: var(--space-sm) var(--space-md);
+    transition: all var(--transition-fast);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-color: rgba(200, 204, 210, 0.3);
+}
+
+.btn-resend-otp:hover:not(:disabled) {
+    color: var(--silver-primary);
+    text-decoration-color: var(--silver-primary);
+}
+
+.btn-resend-otp:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    text-decoration: none;
+}
 /* ================================
    RESPONSIVE
 ================================ */
