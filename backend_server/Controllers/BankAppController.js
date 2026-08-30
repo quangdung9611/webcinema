@@ -1,7 +1,6 @@
 const BankAppService = require("../Services/BankAppService");
 const OtpService = require("../Services/OtpService");
 const { PURPOSE } = require("../Services/OtpService");
-const MailService = require("../Services/MailService");
 const PaymentService = require("../Services/PaymentService");
 const db = require("../Config/db");
 
@@ -15,36 +14,21 @@ exports.sendOTP = async (req, res) => {
             });
         }
 
-        const tempBooking = await PaymentService.getTempData(tempBookingId);
-        if (!tempBooking) {
-            return res.status(400).json({
-                success: false,
-                message: "Phiên đặt vé đã hết hạn. Vui lòng đặt lại."
-            });
-        }
+        // Sử dụng BankAppService
+        const result = await BankAppService.sendPaymentOTP(email, tempBookingId);
 
-        const result = await OtpService.createOTP(email, PURPOSE.PAYMENT);
-        if (!result.success) {
-            return res.status(400).json({
-                success: false,
-                message: result.message
-            });
-        }
-
-        MailService.sendOTP(email, result.otp, tempBookingId).catch(console.error);
-
-        return res.status(200).json({
-            success: true,
-            message: "Mã OTP đang được gửi!"
-        });
+        return res.status(200).json(result);
     } catch (error) {
         console.error("❌ sendOTP error:", error);
-        return res.status(500).json({
+        const statusCode = error.statusCode || 500;
+        return res.status(statusCode).json({
             success: false,
-            message: error.message || "Lỗi máy chủ"
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
         });
     }
 };
+
 exports.verifyOTP = async (req, res) => {
     const connection = await db.getConnection();
 
@@ -132,6 +116,63 @@ exports.cancelBookingTimeout = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: error.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+// ============================================================
+// 🆕 CHECK TTL - GIỐNG AUTH CONTROLLER
+// ============================================================
+exports.checkTTL = async (req, res) => {
+    try {
+        const { tempBookingId } = req.params;
+        
+        if (!tempBookingId) {
+            return res.status(400).json({
+                success: false,
+                message: "Thiếu tempBookingId"
+            });
+        }
+
+        const result = await BankAppService.checkTTL(tempBookingId);
+
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("❌ checkTTL error:", error);
+        const statusCode = error.statusCode || 500;
+        return res.status(statusCode).json({
+            success: false,
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
+        });
+    }
+};
+
+// ============================================================
+// 🆕 RESEND OTP PAYMENT - GIỐNG AUTH CONTROLLER
+// ============================================================
+exports.resendOtpPayment = async (req, res) => {
+    try {
+        const { email, tempBookingId } = req.body;
+
+        if (!email || !tempBookingId) {
+            return res.status(400).json({
+                success: false,
+                message: "Thiếu email hoặc tempBookingId"
+            });
+        }
+
+        const result = await BankAppService.resendOtpPayment(email, tempBookingId);
+
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("❌ resendOtpPayment error:", error);
+        
+        const statusCode = error.statusCode || 500;
+        return res.status(statusCode).json({
+            success: false,
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
         });
     }
 };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import api from '../../api/api'; // ✅ Import api
+import api from '../../api/api';
 
 // Components
 import CountdownTimer from './CountdownTimer';
@@ -14,30 +14,91 @@ const Food = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
+    // Lấy dữ liệu từ location.state hoặc từ localStorage
+    const getStateData = () => {
+        const stateData = location.state || {};
+        
+        // Nếu không có state, thử đọc từ localStorage
+        if (!stateData.selectedSeats || stateData.selectedSeats.length === 0) {
+            try {
+                const savedBooking = localStorage.getItem('booking_temp');
+                if (savedBooking) {
+                    const parsed = JSON.parse(savedBooking);
+                    return parsed;
+                }
+            } catch (err) {
+                console.error('Lỗi đọc booking_temp từ localStorage:', err);
+            }
+        }
+        
+        return stateData;
+    };
+
+    const initialData = getStateData();
+
     const {
-        movie,
-        selectedCinema,
-        selectedDate,
-        selectedShowtime,
-        selectedSeats,
-        showtimeDetail
-    } = location.state || {};
+        movie = initialData.movie || {},
+        selectedCinema = initialData.selectedCinema || {},
+        selectedDate = initialData.selectedDate || '',
+        selectedShowtime = initialData.selectedShowtime || {},
+        selectedSeats = initialData.selectedSeats || [],
+        showtimeDetail = initialData.showtimeDetail || {}
+    } = location.state || initialData;
+
+    // Đọc selectedFoods đã lưu từ localStorage
+    const getSavedFoods = () => {
+        try {
+            const savedFoods = localStorage.getItem('selectedFoods');
+            if (savedFoods) {
+                return JSON.parse(savedFoods);
+            }
+        } catch (err) {
+            console.error('Lỗi đọc selectedFoods từ localStorage:', err);
+        }
+        return {};
+    };
 
     const [foods, setFoods] = useState([]);
-    const [selectedFoods, setSelectedFoods] = useState({});
+    const [selectedFoods, setSelectedFoods] = useState(getSavedFoods);
     const [isTimerActive, setIsTimerActive] = useState(false);
     const [loading, setLoading] = useState(false);
     const [loadingFoods, setLoadingFoods] = useState(false);
+
+    // Lưu selectedFoods vào localStorage mỗi khi thay đổi
+    useEffect(() => {
+        try {
+            localStorage.setItem('selectedFoods', JSON.stringify(selectedFoods));
+        } catch (err) {
+            console.error('Lỗi lưu selectedFoods vào localStorage:', err);
+        }
+    }, [selectedFoods]);
 
     useEffect(() => {
         window.scrollTo(0, 0);
 
         if (!selectedSeats || selectedSeats.length === 0) {
-            navigate('/');
-            return;
+            // Thử đọc lại từ localStorage
+            try {
+                const savedBooking = localStorage.getItem('booking_temp');
+                if (savedBooking) {
+                    const parsed = JSON.parse(savedBooking);
+                    if (parsed.selectedSeats && parsed.selectedSeats.length > 0) {
+                        // Có dữ liệu, tiếp tục
+                    } else {
+                        navigate('/');
+                        return;
+                    }
+                } else {
+                    navigate('/');
+                    return;
+                }
+            } catch (err) {
+                navigate('/');
+                return;
+            }
         }
 
-        if (sessionStorage.getItem('holdExpiresAt')) {
+        if (localStorage.getItem('holdExpiresAt')) {
             setIsTimerActive(true);
         } else {
             navigate('/');
@@ -69,7 +130,27 @@ const Food = () => {
     // HẾT GIỜ GIỮ GHẾ
     // =============================
     const handleTimeExpire = () => {
-        sessionStorage.clear();
+        // Xóa tất cả dữ liệu liên quan đến booking từ localStorage
+        const keysToRemove = [
+            'selectedSeats',
+            'holdExpiresAt',
+            'currentShowtimeId',
+            'booking_seats',
+            'booking_showtime',
+            'booking_data',
+            'selected_foods',
+            'food_selection',
+            'booking_cinema',
+            'booking_date',
+            'booking_movie',
+            'booking_showtime',
+            'selectedFoods',
+            'booking_temp'
+        ];
+
+        keysToRemove.forEach(key => {
+            localStorage.removeItem(key);
+        });
 
         alert(
             'Hết thời gian giữ ghế. Vui lòng thực hiện đặt vé lại.'
@@ -139,10 +220,9 @@ const Food = () => {
             grandTotal
         };
 
-        sessionStorage.setItem(
-            'booking_temp',
-            JSON.stringify(finalBookingData)
-        );
+        // Lưu vào localStorage
+        localStorage.setItem('booking_temp', JSON.stringify(finalBookingData));
+        localStorage.setItem('selectedFoods', JSON.stringify(selectedFoods));
 
         navigate('/payment', {
             state: finalBookingData

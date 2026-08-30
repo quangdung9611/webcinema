@@ -87,11 +87,11 @@ const Booking = () => {
 
 
     // =========================================================
-    // XÓA SẠCH SESSION BOOKING
+    // XÓA SẠCH LOCALSTORAGE BOOKING
     // =========================================================
 
     const clearBookingSession = useCallback(() => {
-        console.log('🧹 [BOOKING] Clearing booking session...');
+        console.log('🧹 [BOOKING] Clearing booking session from localStorage...');
 
         const keysToRemove = [
             'selectedSeats',
@@ -109,7 +109,6 @@ const Booking = () => {
         ];
 
         keysToRemove.forEach(key => {
-            sessionStorage.removeItem(key);
             localStorage.removeItem(key);
         });
 
@@ -126,7 +125,7 @@ const Booking = () => {
         setSelectedSeats([]);
         isSessionClearedRef.current = true;
 
-        console.log('✅ [BOOKING] Booking session cleared');
+        console.log('✅ [BOOKING] Booking session cleared from localStorage');
     }, [isSocketConnected, selectedSeats, showtimeId]);
 
 
@@ -407,8 +406,9 @@ const Booking = () => {
 
             let seatsData = seatsRes.data?.data || [];
 
-            const savedSeats = sessionStorage.getItem('selectedSeats');
-            const savedShowtime = sessionStorage.getItem('currentShowtimeId');
+            // Đọc từ localStorage
+            const savedSeats = localStorage.getItem('selectedSeats');
+            const savedShowtime = localStorage.getItem('currentShowtimeId');
 
             if (savedSeats && savedShowtime === showtimeId.toString()) {
                 const parsed = JSON.parse(savedSeats);
@@ -426,7 +426,7 @@ const Booking = () => {
                     return s;
                 });
                 setSelectedSeats(parsed);
-                if (sessionStorage.getItem('holdExpiresAt')) {
+                if (localStorage.getItem('holdExpiresAt')) {
                     setIsTimerActive(true);
                 }
             }
@@ -610,12 +610,12 @@ const Booking = () => {
             setSelectedSeats(updated);
 
             if (updated.length === 0) {
-                sessionStorage.removeItem('selectedSeats');
-                sessionStorage.removeItem('holdExpiresAt');
-                sessionStorage.removeItem('currentShowtimeId');
+                localStorage.removeItem('selectedSeats');
+                localStorage.removeItem('holdExpiresAt');
+                localStorage.removeItem('currentShowtimeId');
                 setIsTimerActive(false);
             } else {
-                sessionStorage.setItem('selectedSeats', JSON.stringify(updated));
+                localStorage.setItem('selectedSeats', JSON.stringify(updated));
             }
 
             setSeats((prev) =>
@@ -668,8 +668,8 @@ const Booking = () => {
 
         // BẮT ĐẦU TIMER
         if (currentSelected.length === 0) {
-            sessionStorage.setItem('holdExpiresAt', (Date.now() + 10 * 60 * 1000).toString());
-            sessionStorage.setItem('currentShowtimeId', showtimeId.toString());
+            localStorage.setItem('holdExpiresAt', (Date.now() + 10 * 60 * 1000).toString());
+            localStorage.setItem('currentShowtimeId', showtimeId.toString());
             setIsTimerActive(true);
         }
 
@@ -690,7 +690,7 @@ const Booking = () => {
         );
 
         setSelectedSeats(updated);
-        sessionStorage.setItem('selectedSeats', JSON.stringify(updated));
+        localStorage.setItem('selectedSeats', JSON.stringify(updated));
     };
 
 

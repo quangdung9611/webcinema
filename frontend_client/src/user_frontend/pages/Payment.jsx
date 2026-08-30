@@ -15,18 +15,40 @@ const Payment = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
+    // Lấy dữ liệu từ location.state hoặc từ localStorage
+    const getStateData = () => {
+        const stateData = location.state || {};
+        
+        // Nếu không có state, thử đọc từ localStorage
+        if (!stateData.selectedSeats || stateData.selectedSeats.length === 0) {
+            try {
+                const savedBooking = localStorage.getItem('booking_temp');
+                if (savedBooking) {
+                    const parsed = JSON.parse(savedBooking);
+                    return parsed;
+                }
+            } catch (err) {
+                console.error('Lỗi đọc booking_temp từ localStorage:', err);
+            }
+        }
+        
+        return stateData;
+    };
+
+    const initialData = getStateData();
+
     const {
-        movie,
-        selectedCinema,
-        selectedDate,
-        selectedShowtime,
-        selectedSeats,
-        selectedFoods,
-        foods,
-        totalTicketPrice,
-        totalFoodPrice,
-        showtimeDetail
-    } = location.state || {};
+        movie = initialData.movie || {},
+        selectedCinema = initialData.selectedCinema || {},
+        selectedDate = initialData.selectedDate || '',
+        selectedShowtime = initialData.selectedShowtime || {},
+        selectedSeats = initialData.selectedSeats || [],
+        selectedFoods = initialData.selectedFoods || [],
+        foods = initialData.foods || [],
+        totalTicketPrice = initialData.totalTicketPrice || 0,
+        totalFoodPrice = initialData.totalFoodPrice || 0,
+        showtimeDetail = initialData.showtimeDetail || {}
+    } = location.state || initialData;
 
     // =========================
     // STATES
@@ -40,7 +62,9 @@ const Payment = () => {
     const [isTimerActive, setIsTimerActive] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
-    const [tempBookingId, setTempBookingId] = useState(null);
+    const [tempBookingId, setTempBookingId] = useState(() => {
+        return localStorage.getItem('tempBookingId') || null;
+    });
 
     const [userInfo, setUserInfo] = useState({
         user_id: '',
@@ -138,26 +162,55 @@ const Payment = () => {
         window.scrollTo(0, 0);
 
         if (!movie || !selectedSeats || selectedSeats.length === 0) {
-            navigate('/');
-            return;
+            // Thử đọc lại từ localStorage
+            try {
+                const savedBooking = localStorage.getItem('booking_temp');
+                if (savedBooking) {
+                    const parsed = JSON.parse(savedBooking);
+                    if (parsed.selectedSeats && parsed.selectedSeats.length > 0) {
+                        // Có dữ liệu, tiếp tục
+                    } else {
+                        navigate('/');
+                        return;
+                    }
+                } else {
+                    navigate('/');
+                    return;
+                }
+            } catch (err) {
+                navigate('/');
+                return;
+            }
         }
 
-        sessionStorage.removeItem('lastSuccessTicket');
-        sessionStorage.removeItem('bankHasSentOtp');
-        sessionStorage.removeItem('bankHasVisited');
-        sessionStorage.removeItem('bankOtpTimeLeft');
-        sessionStorage.removeItem('bankOtpInput');
-        sessionStorage.removeItem('bankLastOtpSentAt');
-        sessionStorage.removeItem('paymentCompleted');
-        sessionStorage.removeItem('completedBookingId');
-        sessionStorage.removeItem('paymentInitiated');
-        sessionStorage.removeItem('tempBookingId');
+        // Xóa các key liên quan đến bank từ localStorage
+        const bankKeys = [
+            'lastSuccessTicket',
+            'bankHasSentOtp',
+            'bankHasVisited',
+            'bankOtpTimeLeft',
+            'bankOtpInput',
+            'bankLastOtpSentAt',
+            'paymentCompleted',
+            'completedBookingId',
+            'paymentInitiated'
+        ];
+
+        bankKeys.forEach(key => {
+            localStorage.removeItem(key);
+        });
+
+        // Đọc tempBookingId từ localStorage
+        const savedTempId = localStorage.getItem('tempBookingId');
+        if (savedTempId) {
+            setTempBookingId(savedTempId);
+        }
 
         const verifySession = async () => {
             const isValid = await checkSession();
             if (!isValid) return;
 
-            if (sessionStorage.getItem('holdExpiresAt')) {
+            if (localStorage.getItem('holdExpiresAt')) {
                 setIsTimerActive(true);
             }
         };
@@ -189,7 +242,32 @@ const Payment = () => {
                 console.error('Lỗi hủy temp booking:', err);
             }
         }
-        sessionStorage.clear();
+
+        // Xóa tất cả dữ liệu liên quan đến booking từ localStorage
+        const keysToRemove = [
+            'selectedSeats',
+            'holdExpiresAt',
+            'currentShowtimeId',
+            'booking_seats',
+            'booking_showtime',
+            'booking_data',
+            'selected_foods',
+            'food_selection',
+            'booking_cinema',
+            'booking_date',
+            'booking_movie',
+            'booking_showtime',
+            'selectedFoods',
+            'booking_temp',
+            'tempBookingId',
+            'lastSuccessTicket',
+            'paymentInitiated'
+        ];
+
+        keysToRemove.forEach(key => {
+            localStorage.removeItem(key);
+        });
+
         showNotice(
             'error',
             'HẾT THỜI GIAN',
@@ -306,15 +384,22 @@ const Payment = () => {
             return;
         }
 
-        sessionStorage.removeItem('bankHasSentOtp');
-        sessionStorage.removeItem('bankHasVisited');
-        sessionStorage.removeItem('bankOtpTimeLeft');
-        sessionStorage.removeItem('bankOtpInput');
-        sessionStorage.removeItem('bankLastOtpSentAt');
-        sessionStorage.removeItem('paymentCompleted');
-        sessionStorage.removeItem('completedBookingId');
-        sessionStorage.removeItem('paymentInitiated');
-        sessionStorage.removeItem('lastSuccessTicket');
+        // Xóa các key liên quan đến bank từ localStorage
+        const bankKeys = [
+            'bankHasSentOtp',
+            'bankHasVisited',
+            'bankOtpTimeLeft',
+            'bankOtpInput',
+            'bankLastOtpSentAt',
+            'paymentCompleted',
+            'completedBookingId',
+            'paymentInitiated',
+            'lastSuccessTicket'
+        ];
+
+        bankKeys.forEach(key => {
+            localStorage.removeItem(key);
+        });
 
         setIsProcessing(true);
 
@@ -354,7 +439,7 @@ const Payment = () => {
             if (response.data.success) {
                 const tempId = response.data.tempBookingId;
                 setTempBookingId(tempId);
-                sessionStorage.setItem('tempBookingId', tempId);
+                localStorage.setItem('tempBookingId', tempId);
 
                 const finalState = {
                     tempBookingId: tempId,
@@ -374,33 +459,35 @@ const Payment = () => {
                     showtimeDetail
                 };
 
-                sessionStorage.setItem('lastSuccessTicket', JSON.stringify(finalState));
-                sessionStorage.removeItem('holdExpiresAt');
-                sessionStorage.removeItem('selectedSeats');
-                sessionStorage.removeItem('currentShowtimeId');
+                localStorage.setItem('lastSuccessTicket', JSON.stringify(finalState));
+
+                // Xóa dữ liệu giữ ghế
+                localStorage.removeItem('holdExpiresAt');
+                localStorage.removeItem('selectedSeats');
+                localStorage.removeItem('currentShowtimeId');
                 setIsTimerActive(false);
 
                 if (paymentMethod === 'bank') {
-                    sessionStorage.setItem('paymentInitiated', 'true');
+                    localStorage.setItem('paymentInitiated', 'true');
                     navigate('/bank-app', { state: finalState });
                 } else {
-                    sessionStorage.removeItem('paymentInitiated');
+                    localStorage.removeItem('paymentInitiated');
                     navigate('/momo-app', { state: finalState });
                 }
             } else {
-                sessionStorage.removeItem('paymentInitiated');
+                localStorage.removeItem('paymentInitiated');
                 showNotice('error', 'LỖI', response.data?.message || 'Không thể xử lý thanh toán.');
             }
         } catch (err) {
             console.error('Lỗi thanh toán:', err);
             
             if (err.response?.status === 401) {
-                sessionStorage.removeItem('paymentInitiated');
+                localStorage.removeItem('paymentInitiated');
                 return;
             }
             
             const errorMessage = err.response?.data?.message || err.message || 'Không thể xử lý thanh toán.';
-            sessionStorage.removeItem('paymentInitiated');
+            localStorage.removeItem('paymentInitiated');
             showNotice('error', 'LỖI', errorMessage);
         } finally {
             setIsProcessing(false);
