@@ -1,6 +1,6 @@
 /* ============================================
-   MODAL CSS – Responsive & Emoji Icon (No Circle)
-   Version: 2.1
+   MODAL CSS – Silver Edition
+   Phù hợp với theme bạc của Galaxy Cinema
    ============================================ */
 
 /* ----- OVERLAY ----- */
@@ -42,18 +42,21 @@
 
 /* ----- CONTAINER ----- */
 .modal-container {
-  background-color: #1e1e2f;
-  border-radius: 20px;
+  background: var(--glass-bg, rgba(10, 12, 14, 0.95));
+  backdrop-filter: var(--glass-blur, blur(16px));
+  -webkit-backdrop-filter: var(--glass-blur, blur(16px));
+  border: var(--border-premium, 1px solid rgba(244, 246, 248, 0.25));
+  border-radius: var(--radius-lg, 20px);
   max-width: 520px;
   width: 100%;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+  box-shadow: var(--glass-shadow, 0 16px 48px rgba(0, 0, 0, 0.6));
   position: relative;
   animation: slideUp 0.3s ease-out;
   overflow: hidden;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  color: #f1f1f1;
+  color: var(--text-body, #D9DDE2);
 }
 
 /* ----- NÚT ĐÓNG (X) ----- */
@@ -61,8 +64,8 @@
   position: absolute;
   top: 16px;
   right: 16px;
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 50%;
   width: 36px;
   height: 36px;
@@ -70,14 +73,16 @@
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  transition: background 0.2s, transform 0.2s;
+  transition: all var(--transition-fast, 0.2s ease);
   z-index: 10;
-  color: #ddd;
+  color: var(--text-secondary, #9EA8B3);
 }
 
 .modal-close-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: scale(1.05);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-heading, #F4F6F8);
+  transform: rotate(90deg) scale(1.05);
 }
 
 .modal-close-btn:active {
@@ -118,14 +123,14 @@
 /* Tiêu đề */
 .modal-title {
   font-size: 24px;
-  font-weight: 700;
+  font-weight: var(--fw-bold, 700);
   margin: 0;
-  color: #ffffff;
+  color: var(--text-heading, #F4F6F8);
   line-height: 1.3;
   word-break: break-word;
 }
 
-/* Màu chữ tiêu đề theo loại (giữ nguyên) */
+/* Màu chữ tiêu đề theo loại - Dùng màu bạc/silver thay vì màu riêng */
 .modal-title-group.success .modal-title {
   color: #22c55e;
 }
@@ -136,13 +141,13 @@
   color: #f59e0b;
 }
 .modal-title-group.info .modal-title {
-  color: #3b82f6;
+  color: var(--silver-primary, #DDE2E8);
 }
 
 /* ----- ĐƯỜNG KẺ ----- */
 .modal-divider {
   height: 2px;
-  background: linear-gradient(to right, #3a3a4f, transparent);
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.06), transparent);
   margin: 12px 0 16px 0;
   opacity: 0.6;
 }
@@ -151,7 +156,7 @@
 .modal-body {
   font-size: 16px;
   line-height: 1.6;
-  color: #d1d5db;
+  color: var(--text-body, #D9DDE2);
   margin: 8px 0 4px 0;
   max-height: 50vh;
   overflow-y: auto;
@@ -163,41 +168,41 @@
 }
 
 .modal-body::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
 }
 .modal-body::-webkit-scrollbar-track {
-  background: #2d2d3f;
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-round, 999px);
 }
 .modal-body::-webkit-scrollbar-thumb {
-  background: #5a5a7a;
-  border-radius: 4px;
+  background: var(--silver-dark, #A9B2BC);
+  border-radius: var(--radius-round, 999px);
 }
 .modal-body::-webkit-scrollbar-thumb:hover {
-  background: #7a7a9a;
+  background: var(--silver-primary, #DDE2E8);
 }
 
 /* ----- FOOTER NÚT (ĐÃ SỬA THEO YÊU CẦU) ----- */
 .modal-footer {
   display: flex;
-  justify-content: space-between; /* Căn đều 2 bên */
+  justify-content: space-between;
   gap: 12px;
   margin-top: 28px;
-  border-top: 1px solid #3a3a4f;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   padding-top: 20px;
-  flex-wrap: wrap; /* Cho phép xuống hàng khi màn hình nhỏ */
+  flex-wrap: wrap;
 }
 
 /* Style chung cho 2 nút */
 .modal-footer button {
   padding: 12px 20px;
-  border-radius: 50px;
-  font-weight: 600;
+  border-radius: var(--radius-round, 50px);
+  font-weight: var(--fw-semibold, 600);
   font-size: 15px;
   border: none;
   cursor: pointer;
-  transition: background 0.2s, transform 0.15s;
-  flex: 1; /* Để 2 nút co giãn bằng nhau trên desktop */
+  transition: all var(--transition-fast, 0.2s ease);
+  flex: 1;
   min-width: 100px;
   display: inline-flex;
   justify-content: center;
@@ -208,20 +213,41 @@
   transform: scale(0.96);
 }
 
+/* Nút Cancel - Style bạc nhẹ */
 .modal-btn-cancel {
-  background: #3a3a4f;
-  color: #e5e7eb;
-}
-.modal-btn-cancel:hover {
-  background: #4a4a5f;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary, #9EA8B3);
+  border: var(--border-subtle, 1px solid rgba(255, 255, 255, 0.04));
 }
 
+.modal-btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-heading, #F4F6F8);
+  border-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Nút Confirm - Style bạc sáng như nút chính */
 .modal-btn-confirm {
-  background: #2563eb;
+  background: var(--btn-silver-bg, linear-gradient(135deg, #E8ECF1 0%, #F4F7FA 50%, #D5DAE1 100%));
+  color: var(--bg-primary, #07080A);
+  box-shadow: var(--btn-silver-shadow, 0 4px 20px rgba(159, 183, 210, 0.25));
+}
+
+.modal-btn-confirm:hover {
+  filter: brightness(1.05);
+  box-shadow: 0 4px 28px rgba(159, 183, 210, 0.35);
+  transform: translateY(-2px);
+}
+
+/* Nếu có nút Danger (Xóa, v.v.) */
+.modal-btn-danger {
+  background: #ef4444;
   color: #ffffff;
 }
-.modal-btn-confirm:hover {
-  background: #1d4ed8;
+
+.modal-btn-danger:hover {
+  background: #dc2626;
 }
 
 /* ============================================
@@ -251,7 +277,7 @@
 @media (max-width: 768px) {
   .modal-container {
     max-width: 90%;
-    border-radius: 18px;
+    border-radius: var(--radius-md, 18px);
   }
   .modal-content {
     padding: 24px 20px 20px 20px;
@@ -268,12 +294,12 @@
 
   /* Đổi footer: 2 nút xếp chồng lên nhau, full chiều rộng */
   .modal-footer {
-    flex-direction: column; /* Xếp dọc */
+    flex-direction: column;
     gap: 10px;
   }
   .modal-footer button {
     width: 100%;
-    flex: none; /* Bỏ co giãn bằng nhau */
+    flex: none;
     min-width: unset;
     padding: 12px;
     font-size: 15px;
@@ -293,7 +319,7 @@
   }
   .modal-container {
     max-width: 100%;
-    border-radius: 16px;
+    border-radius: var(--radius-md, 16px);
     margin: 8px;
   }
   .modal-content {
@@ -335,5 +361,33 @@
   }
   .modal-divider {
     margin: 8px 0 12px 0;
+  }
+}
+
+/* ============================================
+   DARK THEME (FALLBACK - nếu không có biến CSS)
+   ============================================ */
+@supports not (--custom: property) {
+  .modal-container {
+    background: #0a0a14;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .modal-title {
+    color: #F4F6F8;
+  }
+  .modal-body {
+    color: #D9DDE2;
+  }
+  .modal-btn-confirm {
+    background: linear-gradient(135deg, #E8ECF1 0%, #F4F7FA 50%, #D5DAE1 100%);
+    color: #0a0a14;
+  }
+  .modal-btn-cancel {
+    background: rgba(255, 255, 255, 0.04);
+    color: #9EA8B3;
+  }
+  .modal-btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #F4F6F8;
   }
 }

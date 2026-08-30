@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ShieldCheck, ArrowLeft, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import api from '../../api/api';
 import LoadingButton from '../components/LoadingButton';
 import ForgotPinModal from '../components/ForgotPinModal';
@@ -25,7 +25,7 @@ const ResetPin = () => {
     const pinRefs = useRef([]);
     const confirmPinRefs = useRef([]);
 
-    // ✅ Nếu không có email hoặc otp -> về forgot-pin
+    // Nếu không có email hoặc otp -> về forgot-pin
     if (!email || !otp) {
         navigate('/forgot-pin');
         return null;
@@ -54,7 +54,6 @@ const ResetPin = () => {
         }
     };
 
-    // ✅ Đổi PIN
     const handleChangePin = async () => {
         if (!/^\d{6}$/.test(pin)) {
             setError('Vui lòng nhập đủ 6 số PIN mới');
@@ -98,7 +97,7 @@ const ResetPin = () => {
                 <p className="auth-subtitle">Nhập mã PIN mới (6 số)</p>
 
                 {error && (
-                    <div className="forgot-message error">
+                    <div className="error-message">
                         <AlertCircle size={18} />
                         <span>{error}</span>
                     </div>
@@ -106,71 +105,75 @@ const ResetPin = () => {
 
                 <div className="form-group">
                     <label>Mã PIN mới</label>
-                    <div className="pin-input-container">
-                        {Array.from({ length: 6 }).map((_, index) => (
-                            <input
-                                key={index}
-                                ref={(el) => (pinRefs.current[index] = el)}
-                                type={showPin ? 'text' : 'password'}
-                                inputMode="numeric"
-                                maxLength={1}
-                                value={pin[index] || ''}
-                                onChange={(e) => handlePinChange(index, e.target.value, 'pin')}
-                                onKeyDown={(e) => handlePinKeyDown(index, e, 'pin')}
-                                className="pin-box"
-                                disabled={loading}
-                            />
-                        ))}
+                    <div className="pin-wrapper">
+                        <div className="pin-input-container">
+                            {Array.from({ length: 6 }).map((_, index) => (
+                                <input
+                                    key={index}
+                                    ref={(el) => (pinRefs.current[index] = el)}
+                                    type={showPin ? 'text' : 'password'}
+                                    inputMode="numeric"
+                                    maxLength={1}
+                                    value={pin[index] || ''}
+                                    onChange={(e) => handlePinChange(index, e.target.value, 'pin')}
+                                    onKeyDown={(e) => handlePinKeyDown(index, e, 'pin')}
+                                    className="pin-box"
+                                    disabled={loading}
+                                />
+                            ))}
+                        </div>
+                        <button
+                            type="button"
+                            className="pin-toggle-btn"
+                            onClick={() => setShowPin(!showPin)}
+                            disabled={loading}
+                        >
+                            {showPin ? <Eye size={18} /> : <EyeOff size={18} />}
+                            <span>{showPin ? 'Ẩn PIN' : 'Hiện PIN'}</span>
+                        </button>
                     </div>
-                    <button
-                        type="button"
-                        className="toggle-password"
-                        onClick={() => setShowPin(!showPin)}
-                        style={{ marginTop: '8px' }}
-                    >
-                        {showPin ? <Eye size={18} /> : <EyeOff size={18} />}
-                        <span style={{ marginLeft: '8px', fontSize: '14px' }}>
-                            {showPin ? 'Ẩn PIN' : 'Hiện PIN'}
-                        </span>
-                    </button>
                 </div>
 
                 <div className="form-group">
                     <label>Xác nhận mã PIN mới</label>
-                    <div className="pin-input-container">
-                        {Array.from({ length: 6 }).map((_, index) => (
-                            <input
-                                key={index}
-                                ref={(el) => (confirmPinRefs.current[index] = el)}
-                                type={showConfirmPin ? 'text' : 'password'}
-                                inputMode="numeric"
-                                maxLength={1}
-                                value={confirmPin[index] || ''}
-                                onChange={(e) => handlePinChange(index, e.target.value, 'confirm')}
-                                onKeyDown={(e) => handlePinKeyDown(index, e, 'confirm')}
-                                className="pin-box"
-                                disabled={loading}
-                            />
-                        ))}
+                    <div className="pin-wrapper">
+                        <div className="pin-input-container">
+                            {Array.from({ length: 6 }).map((_, index) => (
+                                <input
+                                    key={index}
+                                    ref={(el) => (confirmPinRefs.current[index] = el)}
+                                    type={showConfirmPin ? 'text' : 'password'}
+                                    inputMode="numeric"
+                                    maxLength={1}
+                                    value={confirmPin[index] || ''}
+                                    onChange={(e) => handlePinChange(index, e.target.value, 'confirm')}
+                                    onKeyDown={(e) => handlePinKeyDown(index, e, 'confirm')}
+                                    className="pin-box"
+                                    disabled={loading}
+                                />
+                            ))}
+                        </div>
+                        <button
+                            type="button"
+                            className="pin-toggle-btn"
+                            onClick={() => setShowConfirmPin(!showConfirmPin)}
+                            disabled={loading}
+                        >
+                            {showConfirmPin ? <Eye size={18} /> : <EyeOff size={18} />}
+                            <span>{showConfirmPin ? 'Ẩn PIN' : 'Hiện PIN'}</span>
+                        </button>
                     </div>
-                    <button
-                        type="button"
-                        className="toggle-password"
-                        onClick={() => setShowConfirmPin(!showConfirmPin)}
-                        style={{ marginTop: '8px' }}
-                    >
-                        {showConfirmPin ? <Eye size={18} /> : <EyeOff size={18} />}
-                        <span style={{ marginLeft: '8px', fontSize: '14px' }}>
-                            {showConfirmPin ? 'Ẩn PIN' : 'Hiện PIN'}
-                        </span>
-                    </button>
                     {pin && confirmPin && pin.length === 6 && confirmPin.length === 6 && pin !== confirmPin && (
                         <span className="error-text">Mã PIN xác nhận không khớp</span>
                     )}
                 </div>
 
-                <div className="button-group" style={{ marginTop: '20px' }}>
-                    <button className="btn-user back-btn" onClick={() => navigate('/forgot-pin')}>
+                <div className="button-group">
+                    <button 
+                        className="btn-user btn-back" 
+                        onClick={() => navigate('/forgot-pin')}
+                        disabled={loading}
+                    >
                         <ArrowLeft size={16} /> Quay lại
                     </button>
                     <LoadingButton
@@ -179,7 +182,7 @@ const ResetPin = () => {
                         loadingText="Đang đổi PIN..."
                         onClick={handleChangePin}
                         disabled={loading || pin.length < 6 || confirmPin.length < 6 || pin !== confirmPin}
-                        className="btn-user"
+                        className="btn-user btn-user-silver"
                         spinnerColor="#000000"
                     >
                         XÁC NHẬN ĐỔI PIN

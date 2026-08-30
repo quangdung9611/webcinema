@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom'; // ✅ Dùng useLocation
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../../api/api';
 import { LockKeyhole, AlertCircle, CheckCircle, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import LoadingButton from '../components/LoadingButton';
@@ -8,9 +8,9 @@ import '../styles/UserAuth.css';
 
 const ResetPassword = () => {
     const navigate = useNavigate();
-    const location = useLocation(); // ✅ Lấy state từ ForgotPassword
+    const location = useLocation();
 
-    // ✅ Lấy email và otp từ state (thay vì token từ URL)
+    // Lấy email và otp từ state
     const email = location.state?.email || '';
     const otp = location.state?.otp || '';
 
@@ -24,11 +24,11 @@ const ResetPassword = () => {
     const [fieldErrors, setFieldErrors] = useState({});
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-    // 🔥 Rate limit states
+    // Rate limit states - chỉ cho việc gửi request đổi mật khẩu
     const [isRateLimited, setIsRateLimited] = useState(false);
     const [rateLimitTimeLeft, setRateLimitTimeLeft] = useState(0);
 
-    // 🔥 Countdown timer
+    // Countdown timer
     useEffect(() => {
         if (!isRateLimited || rateLimitTimeLeft <= 0) return;
 
@@ -46,7 +46,7 @@ const ResetPassword = () => {
         return () => clearInterval(timer);
     }, [isRateLimited, rateLimitTimeLeft]);
 
-    // ✅ Nếu không có email hoặc otp -> quay lại forgot-password
+    // Nếu không có email hoặc otp -> quay lại forgot-password
     useEffect(() => {
         if (!email || !otp) {
             navigate('/forgot-password');
@@ -108,7 +108,6 @@ const ResetPassword = () => {
         try {
             setLoading(true);
 
-            // ✅ Gọi API verify-otp-and-reset với email, otp, newPassword
             const res = await api.post('/api/auth/verify-otp-and-reset', {
                 email,
                 otp,
@@ -130,6 +129,7 @@ const ResetPassword = () => {
             } else if (field === 'confirmPassword') {
                 setFieldErrors({ confirmPassword: errorMessage });
             } else if (status === 429) {
+                // Rate limit khi gửi request đổi mật khẩu
                 const remainingSeconds = errorData.data?.remainingSeconds || 60;
                 const maxAttempts = errorData.data?.maxAttempts || 3;
                 setMessage(`⚠️ Bạn chỉ được gửi tối đa ${maxAttempts} lần. Vui lòng thử lại sau ${remainingSeconds} giây.`);
@@ -155,6 +155,13 @@ const ResetPassword = () => {
         navigate('/login');
     };
 
+    const formatTime = (seconds) => {
+        if (seconds <= 0) return '0:00';
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
     return (
         <div className="auth-container">
             <div className="auth-card">
@@ -164,7 +171,7 @@ const ResetPassword = () => {
 
                 <h2>ĐẶT LẠI MẬT KHẨU</h2>
                 <p className="auth-subtitle">
-                    Nhập mật khẩu mới cho tài khoản <strong>{email}</strong>
+                    Nhập mật khẩu mới cho tài khoản <strong className="text-highlight">{email}</strong>
                 </p>
 
                 {message && (
@@ -240,21 +247,11 @@ const ResetPassword = () => {
                                 loading={loading}
                                 loadingText="Đang xử lý..."
                                 disabled={loading || isRateLimited}
-                                className="btn-user"
+                                className="btn-user btn-user-silver"
                                 spinnerColor="#000000"
                             >
                                 {isRateLimited ? (
-                                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                                        ĐANG CHỜ
-                                        <span style={{ 
-                                            background: 'rgba(255,255,255,0.2)', 
-                                            padding: '2px 8px', 
-                                            borderRadius: '4px', 
-                                            fontWeight: 'bold' 
-                                        }}>
-                                            {rateLimitTimeLeft}s
-                                        </span>
-                                    </span>
+                                    `ĐANG CHỜ (${formatTime(rateLimitTimeLeft)})`
                                 ) : (
                                     'XÁC NHẬN ĐẶT LẠI'
                                 )}
@@ -268,6 +265,7 @@ const ResetPassword = () => {
                         type="button"
                         className="btn-link back-btn"
                         onClick={() => navigate('/forgot-password')}
+                        disabled={loading}
                     >
                         <ArrowLeft size={16} />
                         Quay lại

@@ -28,71 +28,106 @@ import AdminLayout from "./admin_frontend/layouts/AdminLayout";
 axios.defaults.withCredentials = true;
 
 // ============================================================
-// LAZY LOAD - USER PAGES
+// LAZY LOAD RETRY HELPER - GIÚP RETRY KHI LOAD FAIL
 // ============================================================
-const UserHome = lazy(() => import("./user_frontend/pages/UserHome"));
-const UserLogin = lazy(() => import("./user_frontend/pages/UserLogin"));
-const UserRegister = lazy(() => import("./user_frontend/pages/UserRegister"));
-const UserRegisterPin = lazy(() => import("./user_frontend/pages/UserRegisterPin"));
-const VerifyEmail = lazy(() => import("./user_frontend/pages/VerifyEmail"));
+const lazyRetry = (componentImport, maxRetries = 2) => {
+    return new Promise((resolve, reject) => {
+        let retries = 0;
+        
+        const tryLoad = () => {
+            componentImport()
+                .then((component) => {
+                    sessionStorage.removeItem('lazyRetried');
+                    resolve(component);
+                })
+                .catch((error) => {
+                    retries++;
+                    console.warn(`🔄 Lazy load failed (attempt ${retries}/${maxRetries}), retrying...`, error);
+                    
+                    if (retries < maxRetries) {
+                        // Thử lại sau 1 giây
+                        setTimeout(tryLoad, 1000 * retries);
+                    } else {
+                        sessionStorage.removeItem('lazyRetried');
+                        reject(error);
+                    }
+                });
+        };
+        
+        tryLoad();
+    });
+};
 
-// Auth Pages
-const ForgotPassword = lazy(() => import("./user_frontend/pages/ForgotPassword"));
-const ResetPassword = lazy(() => import("./user_frontend/pages/ResetPassword"));
-const ForgotPin = lazy(() => import("./user_frontend/pages/ForgotPin"));
-const ResetPin = lazy(() => import("./user_frontend/pages/ResetPin"));
+// ============================================================
+// LAZY LOAD - USER PAGES (VỚI RETRY)
+// ============================================================
+const UserHome = lazy(() => lazyRetry(() => import("./user_frontend/pages/UserHome")));
+const UserLogin = lazy(() => lazyRetry(() => import("./user_frontend/pages/UserLogin")));
+const UserRegister = lazy(() => lazyRetry(() => import("./user_frontend/pages/UserRegister")));
+const UserRegisterPin = lazy(() => lazyRetry(() => import("./user_frontend/pages/UserRegisterPin")));
+const VerifyEmail = lazy(() => lazyRetry(() => import("./user_frontend/pages/VerifyEmail")));
+
+// Auth Pages - Forgot Password
+const ForgotPassword = lazy(() => lazyRetry(() => import("./user_frontend/pages/ForgotPassword")));
+const VerifyOtpPassword = lazy(() => lazyRetry(() => import("./user_frontend/pages/VerifyOtpPassword")));
+const ResetPassword = lazy(() => lazyRetry(() => import("./user_frontend/pages/ResetPassword")));
+
+// Auth Pages - Forgot Pin
+const ForgotPin = lazy(() => lazyRetry(() => import("./user_frontend/pages/ForgotPin")));
+const VerifyOtpPin = lazy(() => lazyRetry(() => import("./user_frontend/pages/VerifyOtpPin")));
+const ResetPin = lazy(() => lazyRetry(() => import("./user_frontend/pages/ResetPin")));
 
 // Main Pages
-const MovieDetail = lazy(() => import("./user_frontend/pages/MovieDetail"));
-const MovieStatusPage = lazy(() => import("./user_frontend/pages/MovieStatusPage"));
-const Actor = lazy(() => import("./user_frontend/pages/Actor"));
-const Cinema = lazy(() => import("./user_frontend/pages/Cinema"));
-const CinemaDetail = lazy(() => import("./user_frontend/pages/CinemaDetail"));
-const Food = lazy(() => import("./user_frontend/pages/Food"));
-const News = lazy(() => import("./user_frontend/pages/News"));
-const Promotion = lazy(() => import("./user_frontend/pages/Promotion"));
-const BlogCinema = lazy(() => import("./user_frontend/pages/BlogCinema"));
-const CinemaCardDetail = lazy(() => import("./user_frontend/components/CinemaCardDetail"));
+const MovieDetail = lazy(() => lazyRetry(() => import("./user_frontend/pages/MovieDetail")));
+const MovieStatusPage = lazy(() => lazyRetry(() => import("./user_frontend/pages/MovieStatusPage")));
+const Actor = lazy(() => lazyRetry(() => import("./user_frontend/pages/Actor")));
+const Cinema = lazy(() => lazyRetry(() => import("./user_frontend/pages/Cinema")));
+const CinemaDetail = lazy(() => lazyRetry(() => import("./user_frontend/pages/CinemaDetail")));
+const Food = lazy(() => lazyRetry(() => import("./user_frontend/pages/Food")));
+const News = lazy(() => lazyRetry(() => import("./user_frontend/pages/News")));
+const Promotion = lazy(() => lazyRetry(() => import("./user_frontend/pages/Promotion")));
+const BlogCinema = lazy(() => lazyRetry(() => import("./user_frontend/pages/BlogCinema")));
+const CinemaCardDetail = lazy(() => lazyRetry(() => import("./user_frontend/components/CinemaCardDetail")));
 
 // Booking
-const Booking = lazy(() => import("./user_frontend/pages/Booking"));
-const Payment = lazy(() => import("./user_frontend/pages/Payment"));
-const ConfirmSuccess = lazy(() => import("./user_frontend/pages/ConfirmSuccess"));
-const BankApp = lazy(() => import("./user_frontend/pages/BankApp"));
-const MomoApp = lazy(() => import("./user_frontend/pages/MomoApp"));
+const Booking = lazy(() => lazyRetry(() => import("./user_frontend/pages/Booking")));
+const Payment = lazy(() => lazyRetry(() => import("./user_frontend/pages/Payment")));
+const ConfirmSuccess = lazy(() => lazyRetry(() => import("./user_frontend/pages/ConfirmSuccess")));
+const BankApp = lazy(() => lazyRetry(() => import("./user_frontend/pages/BankApp")));
+const MomoApp = lazy(() => lazyRetry(() => import("./user_frontend/pages/MomoApp")));
 
 // Profile & Support
-const Profile = lazy(() => import("./user_frontend/pages/Profile"));
-const FAQ = lazy(() => import("./user_frontend/pages/FAQ"));
-const PrivacyPolicy = lazy(() => import("./user_frontend/pages/PrivacyPolicy"));
-const TermsOfService = lazy(() => import("./user_frontend/pages/TermsOfService"));
-const BookingGuide = lazy(() => import("./user_frontend/pages/BookingGuide"));
-const ContactSupport = lazy(() => import("./user_frontend/pages/ContactSupport"));
-const MemberShip = lazy(() => import("./user_frontend/pages/MemberShip"));
+const Profile = lazy(() => lazyRetry(() => import("./user_frontend/pages/Profile")));
+const FAQ = lazy(() => lazyRetry(() => import("./user_frontend/pages/FAQ")));
+const PrivacyPolicy = lazy(() => lazyRetry(() => import("./user_frontend/pages/PrivacyPolicy")));
+const TermsOfService = lazy(() => lazyRetry(() => import("./user_frontend/pages/TermsOfService")));
+const BookingGuide = lazy(() => lazyRetry(() => import("./user_frontend/pages/BookingGuide")));
+const ContactSupport = lazy(() => lazyRetry(() => import("./user_frontend/pages/ContactSupport")));
+const MemberShip = lazy(() => lazyRetry(() => import("./user_frontend/pages/MemberShip")));
 
 // ============================================================
-// LAZY LOAD - ADMIN PAGES
+// LAZY LOAD - ADMIN PAGES (VỚI RETRY)
 // ============================================================
-const AdminLogin = lazy(() => import("./admin_frontend/pages/Auth/AdminLogin"));
-const AdminDashboard = lazy(() => import("./admin_frontend/pages/Admin/AdminDashboard"));
-const UserPage = lazy(() => import("./admin_frontend/pages/Admin/Users/UserPage"));
-const GenresPage = lazy(() => import("./admin_frontend/pages/Admin/Genres/GenresPage"));
-const CinemaPage = lazy(() => import("./admin_frontend/pages/Admin/Cinema/CinemaPage"));
-const RoomPage = lazy(() => import("./admin_frontend/pages/Admin/Room/RoomPage"));
-const MoviePage = lazy(() => import("./admin_frontend/pages/Admin/Movie/MoviePage"));
-const SeatList = lazy(() => import("./admin_frontend/pages/Admin/Seat/SeatList"));
-const TicketList = lazy(() => import("./admin_frontend/pages/Admin/Ticket/TicketList"));
-const ActorPage = lazy(() => import("./admin_frontend/pages/Admin/Actor/ActorPage"));
-const CouponPage = lazy(() => import("./admin_frontend/pages/Admin/Coupon/CouponPage"));
-const BookingPage = lazy(() => import("./admin_frontend/pages/Admin/Booking/BookingPage"));
-const MovieGenrePage = lazy(() => import("./admin_frontend/pages/Admin/MovieGenre/MovieGenrePage"));
-const MovieActorPage = lazy(() => import("./admin_frontend/pages/Admin/MovieActor/MovieActorPage"));
-const ShowTimePage = lazy(() => import("./admin_frontend/pages/Admin/Showtime/ShowTimePage"));
-const NewsPage = lazy(() => import("./admin_frontend/pages/Admin/News/NewsPage"));
-const FoodPage = lazy(() => import("./admin_frontend/pages/Admin/Food/FoodPage"));
-const BlogCinemaPage = lazy(() => import("./admin_frontend/pages/Admin/BlogCinema/BlogCinemaPage"));
-const PromotionPage = lazy(() => import("./admin_frontend/pages/Admin/Promotion/PromotionPage"));
-const BannerPage = lazy(() => import("./admin_frontend/pages/Admin/Banner/BannerPage"));
+const AdminLogin = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Auth/AdminLogin")));
+const AdminDashboard = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/AdminDashboard")));
+const UserPage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/Users/UserPage")));
+const GenresPage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/Genres/GenresPage")));
+const CinemaPage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/Cinema/CinemaPage")));
+const RoomPage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/Room/RoomPage")));
+const MoviePage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/Movie/MoviePage")));
+const SeatList = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/Seat/SeatList")));
+const TicketList = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/Ticket/TicketList")));
+const ActorPage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/Actor/ActorPage")));
+const CouponPage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/Coupon/CouponPage")));
+const BookingPage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/Booking/BookingPage")));
+const MovieGenrePage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/MovieGenre/MovieGenrePage")));
+const MovieActorPage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/MovieActor/MovieActorPage")));
+const ShowTimePage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/Showtime/ShowTimePage")));
+const NewsPage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/News/NewsPage")));
+const FoodPage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/Food/FoodPage")));
+const BlogCinemaPage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/BlogCinema/BlogCinemaPage")));
+const PromotionPage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/Promotion/PromotionPage")));
+const BannerPage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/Banner/BannerPage")));
 
 // ============================================================
 // HELPER COMPONENTS
@@ -124,24 +159,27 @@ const NotFoundPage = () => {
             alignItems: "center", 
             justifyContent: "center", 
             textAlign: "center", 
-            padding: "20px" 
+            padding: "20px",
+            background: "#0a0a14",
+            color: "#f1f1f1"
         }}>
-            <h1 style={{ fontSize: "100px", margin: 0 }}>404</h1>
-            <h2>Opps! Trang bạn tìm kiếm không tồn tại</h2>
+            <h1 style={{ fontSize: "100px", margin: 0, color: "#f37021" }}>404</h1>
+            <h2 style={{ color: "#fff", marginBottom: "8px" }}>Oops! Trang bạn tìm kiếm không tồn tại</h2>
+            <p style={{ color: "#94a3b8", marginBottom: "20px" }}>Trang này có thể đã bị xóa hoặc di chuyển.</p>
             <button 
                 onClick={() => navigate("/")} 
                 style={{ 
-                    padding: "10px 20px", 
+                    padding: "10px 24px", 
                     cursor: "pointer", 
-                    marginTop: "20px",
-                    background: "#dc2626",
-                    color: "#fff",
+                    background: "linear-gradient(135deg, #f37021, #f5a623)",
+                    color: "#0a0a14",
                     border: "none",
                     borderRadius: "8px",
-                    fontSize: "16px"
+                    fontWeight: "bold",
+                    fontSize: "14px"
                 }}
             >
-                QUAY LẠI TRANG CHỦ
+                🏠 QUAY LẠI TRANG CHỦ
             </button>
         </div>
     );
@@ -210,9 +248,13 @@ const AUTH_ROUTES = [
     { path: "/register", element: <UserRegister /> },
     { path: "/register-pin", element: <UserRegisterPin /> },
     { path: "/verify-email", element: <VerifyEmail /> },
+    // Forgot Password Flow
     { path: "/forgot-password", element: <ForgotPassword /> },
+    { path: "/verify-otp-password", element: <VerifyOtpPassword /> },
     { path: "/reset-password", element: <ResetPassword /> },
+    // Forgot Pin Flow
     { path: "/forgot-pin", element: <ForgotPin /> },
+    { path: "/verify-otp-pin", element: <VerifyOtpPin /> },
     { path: "/reset-pin", element: <ResetPin /> },
 ];
 

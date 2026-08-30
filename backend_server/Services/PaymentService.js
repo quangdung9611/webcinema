@@ -4,10 +4,12 @@ const crypto = require("crypto");
 
 
 /*=========================================================
-    CONFIG
+    CONFIG - ĐỒNG BỘ VỚI AUTH SERVICE
 =========================================================*/
 
-const TEMP_BOOKING_TTL = 300; // 5 phút
+const TEMP_BOOKING_TTL = 300; // 5 phút (giống OTP_EXPIRE_SECONDS)
+const RATE_LIMIT_WINDOW = 300; // 5 phút (giống forgot-password rate limit)
+const MAX_OTP_ATTEMPTS = 5; // 5 lần (giống OtpService)
 
 
 /*=========================================================
@@ -30,7 +32,7 @@ class PaymentService {
         1. PROCESS ORDER
         - Lấy thông tin phòng
         - Kiểm tra ghế
-        - Lưu booking tạm vào Redis
+        - Lưu booking tạm vào Redis với TTL 5 phút
     =========================================================*/
 
     async processOrder(data) {
@@ -170,16 +172,18 @@ class PaymentService {
 
 
         /*=====================================================
-            LƯU REDIS
+            LƯU REDIS VỚI TTL = 5 PHÚT (300s)
+            GIỐNG OTP_EXPIRE_SECONDS TRONG AUTH SERVICE
         =====================================================*/
 
         const key = `temp:${tempBookingId}`;
 
 
+        // ✅ SỬA: Lưu object dưới dạng JSON string
         await RedisService.set(
             key,
             tempData,
-            TEMP_BOOKING_TTL
+            TEMP_BOOKING_TTL  // 300s = 5 phút
         );
 
 
@@ -631,6 +635,94 @@ class PaymentService {
 
 
         return deleted;
+
+    }
+
+
+    /*=========================================================
+        5. 🆕 CHECK TEMP BOOKING TTL - GIỐNG AUTH SERVICE
+        =========================================================*/
+
+    async checkTempBookingTTL(tempBookingId) {
+
+        const key = `temp:${tempBookingId}`;
+
+
+        // Kiểm tra OTP key trước
+        const ttl = await RedisService.getTTL(key);
+        const data = await RedisService.get(key);
+
+        return {
+            success: true,
+            data: {
+                exists: !!data,
+                expiresIn: ttl > 0 ? ttl : 0,
+                isExpired: ttl <= 0 || !data
+            }
+        };
+
+    }
+
+
+    /*=========================================================
+        6. 🆕 RESEND OTP PAYMENT - GIỐNG AUTH SERVICE
+        =========================================================*/
+
+    async resendOtpPayment(email, tempBookingId) {
+
+        if (!email?.trim()) {
+            throw { statusCode: 400, field: "email", message: "Email không được để trống" };
+        }
+
+        // Kiểm tra temp booking còn tồn tại không
+        const key = `temp:${tempBookingId}`;
+        const tempData = await RedisService.get(key);
+        if (!tempData) {
+            throw { statusCode: 404, message: "Phiên đặt vé đã hết hạn. Vui lòng đặt lại." };
+        }
+
+        // Rate limit cho resend: 3 lần / 5 phút (giống AuthService)
+        const rateLimit = await RedisService.checkRateLimit(email, "payment-resend", 3, 300);
+        if (!rateLimit.allowed) {
+            throw { 
+                statusCode: 429, 
+                message: `Bạn chỉ được gửi tối đa 3 lần trong 5 phút. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 300} giây.`,
+                data: {
+                    remainingSeconds: rateLimit.remainingSeconds || 300,
+                    maxAttempts: 3
+                }
+            };
+        }
+
+        // Tạo OTP mới cho payment
+        const OtpService = require("./OtpService");
+        const otpResult = await OtpService.createOTP(email, OtpService.PURPOSE.PAYMENT);
+
+        // Cập nhật temp booking với OTP mới
+        const updatedData = typeof tempData === 'string' ? JSON.parse(tempData) : tempData;
+        updatedData.otp = otpResult.otp;
+        updatedData.otpCreatedAt = Date.now();
+
+        await RedisService.set(key, updatedData, 300);
+
+        // Gửi email (KHÔNG ĐỢI)
+        const MailService = require("./MailService");
+        setImmediate(() => {
+            MailService.sendPaymentOTP(email, otpResult.otp, updatedData.customerName, updatedData.totalAmount)
+                .then(() => console.log(`✅ Payment OTP email sent to ${email}`))
+                .catch(err => console.error(`❌ Payment OTP email failed: ${err.message}`));
+        });
+
+        const otpKey = `otp:${email}:${OtpService.PURPOSE.PAYMENT}`;
+        const ttl = await RedisService.getTTL(otpKey);
+
+        return {
+            success: true,
+            message: "Mã OTP đã được gửi lại tới email.",
+            data: {
+                expiresIn: ttl > 0 ? ttl : 300
+            }
+        };
 
     }
 

@@ -1,6 +1,6 @@
 /* =========================================================
-   USER AUTH – PREMIUM ULTIMATE EDITION
-   ĐỒNG BỘ VỚI INDEX.CSS
+   USER AUTH – SILVER PREMIUM EDITION
+   ĐỒNG BỘ HOÀN TOÀN VỚI INDEX.CSS
    ========================================================= */
 
 /* =========================================================
@@ -77,7 +77,7 @@
 }
 
 .auth-card:hover {
-    border-color: var(--glass-border-hover);
+    border-color: rgba(255, 255, 255, 0.15);
     box-shadow: var(--card-shadow-hover);
     transform: translateY(-4px);
 }
@@ -159,7 +159,7 @@
 
 .step-active {
     background: var(--premium-gradient);
-    color: var(--text-inverse);
+    color: var(--bg-primary);
     box-shadow: 0 4px 20px rgba(200, 204, 210, 0.3);
     transform: scale(1.05);
 }
@@ -211,6 +211,12 @@
     letter-spacing: 0.3px;
 }
 
+.auth-subtitle-sm {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    margin-bottom: var(--space-lg);
+}
+
 /* =========================================================
    6. USER INFO BOX (BƯỚC 2)
    ========================================================= */
@@ -229,7 +235,7 @@
 
 .user-info-box svg {
     flex-shrink: 0;
-    color: var(--silver-400);
+    color: var(--silver-dark);
 }
 
 .user-info-box strong {
@@ -270,7 +276,6 @@
     transition: all var(--transition-fast);
     outline: none;
     backdrop-filter: blur(2px);
-    box-shadow: var(--shadow-input);
 }
 
 .auth-input::placeholder {
@@ -284,9 +289,9 @@
 }
 
 .auth-input:focus {
-    border-color: var(--silver-400);
+    border-color: var(--silver-primary);
     background: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 0 0 3px rgba(200, 204, 210, 0.08), var(--shadow-input);
+    box-shadow: 0 0 0 3px rgba(200, 204, 210, 0.08);
 }
 
 .auth-input.input-error {
@@ -333,7 +338,7 @@
 }
 
 .toggle-password:hover {
-    color: var(--silver-300);
+    color: var(--silver-primary);
     background: rgba(255, 255, 255, 0.05);
 }
 
@@ -462,10 +467,10 @@
 }
 
 .forgot-icon {
-    color: var(--accent-ice);
+    color: var(--silver-primary);
     opacity: 0.9;
     stroke-width: 1.5;
-    filter: drop-shadow(0 0 20px rgba(166, 193, 217, 0.15));
+    filter: drop-shadow(0 0 20px rgba(200, 204, 210, 0.15));
 }
 
 .forgot-message {
@@ -478,7 +483,6 @@
     font-weight: var(--fw-medium);
     margin-bottom: var(--space-lg);
     backdrop-filter: blur(4px);
-    animation: modalFade 0.3s ease;
 }
 
 .forgot-message.success {
@@ -503,23 +507,35 @@
     flex-shrink: 0;
 }
 
+.text-highlight {
+    color: var(--silver-primary);
+}
+
+.text-danger {
+    color: #ff6b8a !important;
+}
+
+.text-success {
+    color: #4ade80 !important;
+}
+
 /* =========================================================
-   14. PIN INPUT – 6 Ô CHUYÊN DỤNG
+   14. PIN INPUT – 6 Ô TRÒN CHUYÊN DỤNG
    ========================================================= */
 .pin-input-container {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     gap: 12px;
-    margin: var(--space-lg) 0 var(--space-md);
+    margin: var(--space-md) 0 var(--space-sm);
 }
 
 .pin-box {
     flex: 1;
-    aspect-ratio: 1 / 1.15;
+    aspect-ratio: 1 / 1;
     max-width: 56px;
-    min-width: 40px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-md);
+    min-width: 44px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
     text-align: center;
     font-size: var(--font-size-xl);
     font-weight: var(--fw-bold);
@@ -528,28 +544,29 @@
     outline: none;
     transition: all var(--transition-fast);
     backdrop-filter: blur(2px);
-    box-shadow: var(--shadow-input);
+    padding: 0;
+    line-height: 1;
 }
 
 .pin-box:hover {
-    border-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.2);
     background: rgba(255, 255, 255, 0.06);
 }
 
 .pin-box:focus {
-    border-color: var(--silver-400);
+    border-color: var(--silver-primary);
     background: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 0 0 3px rgba(200, 204, 210, 0.1), var(--shadow-input);
-    transform: scale(1.04);
+    box-shadow: 0 0 0 4px rgba(200, 204, 210, 0.12);
+    transform: scale(1.05);
 }
 
 .pin-box.input-error {
-    border-color: rgba(255, 59, 92, 0.4) !important;
-    background: rgba(255, 59, 92, 0.06) !important;
+    border-color: rgba(255, 59, 92, 0.5) !important;
+    background: rgba(255, 59, 92, 0.08) !important;
 }
 
 .pin-box.input-error:focus {
-    box-shadow: 0 0 0 3px rgba(255, 59, 92, 0.1) !important;
+    box-shadow: 0 0 0 4px rgba(255, 59, 92, 0.12) !important;
 }
 
 .pin-box:disabled {
@@ -568,7 +585,55 @@
 }
 
 /* =========================================================
-   15. INPUT HINT
+   15. PIN WRAPPER – TÁCH ICON EYE RA XA CÁC Ô TRÒN
+   ========================================================= */
+.pin-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+    width: 100%;
+}
+
+.pin-wrapper .pin-input-container {
+    width: 100%;
+    margin: 0;
+}
+
+/* Nút toggle PIN - cách xa các ô tròn */
+.pin-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    background: rgba(255, 255, 255, 0.04);
+    border: var(--border-subtle);
+    border-radius: var(--radius-round);
+    padding: var(--space-sm) var(--space-lg);
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--fw-medium);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    margin-top: var(--space-xs);
+}
+
+.pin-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-heading);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.pin-toggle-btn svg {
+    flex-shrink: 0;
+}
+
+.pin-toggle-btn span {
+    font-size: var(--font-size-sm);
+    font-weight: var(--fw-medium);
+}
+
+/* =========================================================
+   16. INPUT HINT
    ========================================================= */
 .input-hint {
     color: var(--text-muted);
@@ -582,15 +647,99 @@
 }
 
 /* =========================================================
-   16. BUTTON – PREMIUM SILVER CHROME
+   17. LOCK MESSAGE - HIỂN THỊ TIMER KHI BỊ LOCK
+   ========================================================= */
+.lock-message {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    background: rgba(251, 191, 36, 0.12);
+    border: 1px solid rgba(251, 191, 36, 0.25);
+    color: #fbbf24;
+    font-size: var(--font-size-sm);
+    font-weight: var(--fw-medium);
+    margin-bottom: var(--space-lg);
+    backdrop-filter: blur(4px);
+}
+
+.lock-message svg {
+    flex-shrink: 0;
+    color: #fbbf24;
+}
+
+.lock-message strong {
+    color: #ffc95a;
+    font-weight: var(--fw-bold);
+}
+
+/* PIN box khi bị lock */
+.pin-box-locked {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-color: rgba(251, 191, 36, 0.3) !important;
+}
+
+.pin-box-locked:hover {
+    border-color: rgba(251, 191, 36, 0.3) !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    transform: none !important;
+}
+
+/* =========================================================
+   18. VERIFY EMAIL MODAL CONTENT
+   ========================================================= */
+.verify-email-content {
+    text-align: center;
+    padding: 10px 0;
+}
+
+.verify-email-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: rgba(34, 197, 94, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+}
+
+.verify-email-text {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 10px;
+}
+
+.verify-email-text strong {
+    color: var(--text-heading);
+}
+
+.verify-email-hint {
+    margin-top: 15px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.verify-email-hint p {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin: 0;
+}
+
+/* =========================================================
+   19. BUTTON – SILVER PREMIUM
    ========================================================= */
 .btn-user {
     width: 100%;
     padding: var(--space-md) var(--space-lg);
     border: none;
     border-radius: var(--radius-md);
-    background: var(--premium-gradient);
-    color: var(--text-inverse);
+    background: var(--btn-silver-bg);
+    color: var(--bg-primary);
     font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
     cursor: pointer;
@@ -636,8 +785,62 @@
     box-shadow: var(--btn-silver-shadow);
 }
 
+/* Nút Silver chính - dùng cho nút GỬI OTP và XÁC NHẬN */
+.btn-user-silver {
+    background: var(--btn-silver-bg) !important;
+    color: var(--bg-primary) !important;
+    box-shadow: var(--btn-silver-shadow) !important;
+}
+
+.btn-user-silver:hover:not(:disabled) {
+    background: var(--premium-gradient-hover) !important;
+    box-shadow: var(--btn-silver-hover) !important;
+    transform: translateY(-2px) scale(1.01);
+}
+
+.btn-user-silver:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Nút quay lại */
+.btn-back {
+    background: rgba(255, 255, 255, 0.04) !important;
+    color: var(--text-secondary) !important;
+    border: var(--border-subtle) !important;
+    box-shadow: none !important;
+}
+
+.btn-back:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: var(--text-heading) !important;
+    transform: translateY(-2px);
+}
+
+/* Nút outline secondary */
+.btn-outline-secondary {
+    background: transparent !important;
+    color: var(--text-secondary) !important;
+    border: var(--border-subtle) !important;
+    box-shadow: none !important;
+    text-transform: none;
+    font-weight: var(--fw-medium);
+}
+
+.btn-outline-secondary:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: var(--text-heading) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+    transform: translateY(-2px);
+}
+
+.btn-outline-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 /* =========================================================
-   17. BUTTON GROUP
+   20. BUTTON GROUP
    ========================================================= */
 .button-group {
     display: flex;
@@ -647,7 +850,39 @@
 }
 
 /* =========================================================
-   18. FOOTER
+   21. LOADING TTL & OTP ATTEMPT COUNTER
+   ========================================================= */
+.loading-ttl-text {
+    text-align: center;
+    margin-bottom: var(--space-sm);
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.otp-attempt-counter {
+    text-align: center;
+    margin-bottom: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+}
+
+.otp-attempt-counter.warning {
+    background: rgba(251, 191, 36, 0.08);
+    color: #fbbf24;
+}
+
+.otp-attempt-counter.danger {
+    background: rgba(255, 59, 92, 0.08);
+    color: #ff6b8a;
+}
+
+.otp-attempt-counter .text-danger {
+    color: #ff6b8a;
+}
+
+/* =========================================================
+   22. FOOTER
    ========================================================= */
 .auth-footer {
     text-align: center;
@@ -664,7 +899,7 @@
 }
 
 .auth-footer .btn-link {
-    color: var(--silver-300);
+    color: var(--silver-primary);
     font-weight: var(--fw-bold);
     text-decoration: none;
     transition: all var(--transition-fast);
@@ -673,7 +908,7 @@
 }
 
 .auth-footer .btn-link:hover {
-    color: var(--silver-100);
+    color: var(--silver-light);
     background: rgba(255, 255, 255, 0.05);
 }
 
@@ -693,12 +928,12 @@
 }
 
 .auth-footer .back-btn:hover {
-    color: var(--silver-300);
+    color: var(--silver-primary);
     background: rgba(255, 255, 255, 0.05);
 }
 
 /* =========================================================
-   19. MODAL OVERLAY & BOX
+   23. MODAL OVERLAY & BOX
    ========================================================= */
 .modal-overlay {
     position: fixed;
@@ -770,8 +1005,8 @@
     padding: var(--space-md) var(--space-2xl);
     border: none;
     border-radius: var(--radius-full);
-    background: var(--premium-gradient);
-    color: var(--text-inverse);
+    background: var(--btn-silver-bg);
+    color: var(--bg-primary);
     font-size: var(--font-size-sm);
     font-weight: var(--fw-bold);
     cursor: pointer;
@@ -808,12 +1043,12 @@
 }
 
 .modal-box .modal-close-btn:hover {
-    color: var(--silver-300);
+    color: var(--silver-primary);
     background: rgba(255, 255, 255, 0.05);
 }
 
 /* =========================================================
-   20. SESSION EXPIRED MODAL
+   24. SESSION EXPIRED MODAL
    ========================================================= */
 .session-expired-overlay {
     position: fixed;
@@ -873,8 +1108,8 @@
     padding: var(--space-md) var(--space-2xl);
     font-size: var(--font-size-sm);
     font-weight: var(--fw-bold);
-    background: var(--premium-gradient);
-    color: var(--text-inverse);
+    background: var(--btn-silver-bg);
+    color: var(--bg-primary);
     border: none;
     border-radius: var(--radius-full);
     cursor: pointer;
@@ -891,7 +1126,7 @@
 }
 
 /* =========================================================
-   21. ANIMATIONS
+   25. ANIMATIONS
    ========================================================= */
 @keyframes modalFade {
     from { opacity: 0; }
@@ -935,7 +1170,7 @@
 }
 
 /* =========================================================
-   22. RESPONSIVE – MOBILE FIRST
+   26. RESPONSIVE – MOBILE FIRST
    ========================================================= */
 @media (max-width: 768px) {
     .auth-container {
@@ -965,8 +1200,10 @@
     }
     
     .pin-box {
-        min-width: 36px;
+        min-width: 38px;
+        max-width: 48px;
         font-size: var(--font-size-lg);
+        border-width: 2px;
     }
     
     .btn-user {
@@ -988,16 +1225,51 @@
         height: 36px;
     }
 
-    .forgot-message {
-        font-size: var(--font-size-xs);
-        padding: var(--space-sm) var(--space-md);
-        gap: var(--space-xs);
-    }
-
     .form-options {
         flex-direction: column;
         align-items: flex-start;
         gap: var(--space-sm);
+    }
+
+    .auth-subtitle-sm {
+        font-size: var(--font-size-xs);
+    }
+    
+    .otp-attempt-counter {
+        font-size: var(--font-size-xs);
+        padding: var(--space-xs) var(--space-sm);
+    }
+
+    /* PIN toggle responsive */
+    .pin-toggle-btn {
+        padding: var(--space-xs) var(--space-md);
+        font-size: var(--font-size-xs);
+    }
+    
+    .pin-toggle-btn span {
+        font-size: var(--font-size-xs);
+    }
+
+    /* Lock message responsive */
+    .lock-message {
+        font-size: var(--font-size-xs);
+        padding: var(--space-xs) var(--space-sm);
+    }
+
+    /* Verify email responsive */
+    .verify-email-icon {
+        width: 55px;
+        height: 55px;
+    }
+    .verify-email-icon svg {
+        width: 30px;
+        height: 30px;
+    }
+    .verify-email-text {
+        font-size: 14px;
+    }
+    .verify-email-hint p {
+        font-size: 12px;
     }
 }
 
@@ -1031,8 +1303,9 @@
     
     .pin-box {
         min-width: 32px;
+        max-width: 42px;
         font-size: var(--font-size-md);
-        border-radius: var(--radius-sm);
+        border-width: 2px;
     }
     
     .auth-input {
@@ -1094,21 +1367,46 @@
         height: 30px;
     }
 
-    .forgot-message {
+    .otp-attempt-counter {
         font-size: var(--font-size-xs);
-        padding: var(--space-xs) var(--space-sm);
-        border-radius: var(--radius-sm);
-        gap: var(--space-xs);
     }
 
-    .forgot-message svg {
-        width: 16px;
-        height: 16px;
+    /* PIN toggle responsive mobile */
+    .pin-toggle-btn {
+        padding: var(--space-xs) var(--space-sm);
+        font-size: var(--font-size-xs);
+        gap: var(--space-xs);
+    }
+    
+    .pin-toggle-btn span {
+        font-size: var(--font-size-xs);
+    }
+
+    /* Lock message responsive mobile */
+    .lock-message {
+        font-size: var(--font-size-xs);
+        padding: var(--space-xs) var(--space-sm);
+    }
+
+    /* Verify email responsive mobile */
+    .verify-email-icon {
+        width: 50px;
+        height: 50px;
+    }
+    .verify-email-icon svg {
+        width: 28px;
+        height: 28px;
+    }
+    .verify-email-text {
+        font-size: 13px;
+    }
+    .verify-email-hint p {
+        font-size: 11px;
     }
 }
 
 /* =========================================================
-   23. REDUCED MOTION
+   27. REDUCED MOTION
    ========================================================= */
 @media (prefers-reduced-motion: reduce) {
     *,
@@ -1131,10 +1429,6 @@
         transform: none !important;
     }
 
-    .forgot-message {
-        animation: none !important;
-    }
-
     .modal-overlay,
     .modal-box,
     .session-expired-overlay,
@@ -1144,7 +1438,7 @@
 }
 
 /* =========================================================
-   24. UTILITY – HỖ TRỢ
+   28. UTILITY – HỖ TRỢ
    ========================================================= */
 .text-center {
     text-align: center;
@@ -1175,5 +1469,5 @@
 }
 
 /* =========================================================
-   END – USER AUTH PREMIUM ULTIMATE EDITION
+   END – USER AUTH SILVER PREMIUM EDITION
    ========================================================= */
