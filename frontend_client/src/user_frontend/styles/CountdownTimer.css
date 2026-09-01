@@ -1,10 +1,11 @@
 /* =========================================================
-   COUNTDOWN TIMER - SILVER EDITION (ĐỒNG BỘ INDEX.CSS)
+   COUNTDOWN TIMER - SILVER EDITION (CĂN GIỮA, NGANG HÀNG)
 ========================================================= */
 
 .countdown-wrapper {
     display: flex;
     align-items: center;
+    justify-content: center; /* Căn giữa theo chiều ngang */
     gap: var(--space-md);
     width: 100%;
     margin-bottom: var(--space-lg);
@@ -18,10 +19,7 @@
     background: rgba(255, 255, 255, 0.02);
 }
 
-/* =========================================================
-   SILVER GLOW EFFECT
-========================================================= */
-
+/* Silver Glow Effect */
 .countdown-wrapper::before {
     content: "";
     position: absolute;
@@ -33,10 +31,7 @@
     pointer-events: none;
 }
 
-/* =========================================================
-   ICON
-========================================================= */
-
+/* Icon */
 .countdown-icon {
     flex-shrink: 0;
     width: 58px;
@@ -51,17 +46,16 @@
     box-shadow: 0 0 18px rgba(232, 232, 232, 0.18), inset 0 0 10px rgba(232, 232, 232, 0.08);
 }
 
-/* =========================================================
-   CONTENT
-========================================================= */
-
+/* Content - Nằm ngang hàng với nhau */
 .countdown-content {
     display: flex;
-    flex-direction: column;
+    flex-direction: row; /* Chuyển từ dọc sang ngang */
+    align-items: center; /* Căn giữa theo chiều dọc */
+    gap: var(--space-sm); /* Khoảng cách giữa chữ và thời gian */
 }
 
 .countdown-label {
-    margin: 0 0 var(--space-xs);
+    margin: 0; /* Bỏ margin dưới */
     font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
     letter-spacing: 1.5px;

@@ -1,257 +1,713 @@
-/* =========================================================
-   MOMO APP - SILVER EDITION (ĐỒNG BỘ INDEX.CSS)
-========================================================= */
+/* ============================================================
+   MOMO APP - CINEMATIC DARK SILVER EDITION
+   ĐỒNG BỘ VỚI INDEX.CSS VÀ BANKAPP
+   ============================================================ */
 
-.momo-payment-wrapper {
+/* ============================================================
+   PAGE WRAPPER
+   ============================================================ */
+.momo-checkout-page {
+    min-height: 100dvh;
+    background: var(--main-background);
+    padding: var(--space-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ============================================================
+   MAIN CONTAINER
+   ============================================================ */
+.momo-checkout-container {
     width: 100%;
-    min-height: 100%;
+    max-width: 1340px;
+    min-height: 80vh;
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    gap: var(--space-xl);
+    background: transparent;
+    border-radius: var(--radius-xl);
+    position: relative;
+}
+
+/* ============================================================
+   SIDEBAR WRAPPER
+   ============================================================ */
+.momo-sidebar-wrapper {
+    position: sticky;
+    top: var(--space-lg);
+    align-self: flex-start;
+    height: fit-content;
+    max-height: calc(100dvh - var(--space-2xl));
+    overflow-y: auto;
+}
+
+/* ============================================================
+   OTP SECTION
+   ============================================================ */
+.momo-otp-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-lg);
+}
+
+/* ============================================================
+   OTP CARD
+   ============================================================ */
+.otp-card {
+    width: 100%;
+    max-width: 480px;
+    padding: var(--space-2xl);
+    border-radius: var(--radius-xl);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--border-premium);
+    box-shadow: var(--glass-shadow);
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: var(--space-lg);
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Glow effect */
+.otp-card::before {
+    content: '';
+    position: absolute;
+    top: -80px;
+    right: -80px;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(166, 193, 217, 0.06), transparent 70%);
+    pointer-events: none;
+}
+
+.otp-card::after {
+    content: '';
+    position: absolute;
+    bottom: -60px;
+    left: -60px;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(166, 193, 217, 0.04), transparent 70%);
+    pointer-events: none;
+}
+
+/* ============================================================
+   QR WRAPPER (MOMO)
+   ============================================================ */
+.momo-qr-wrapper {
+    position: relative;
+    width: 180px;
+    height: 180px;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--bg-elevated);
+    border: var(--border-premium);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    flex-shrink: 0;
+}
+
+.momo-qr {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    transition: all var(--transition-normal);
+}
+
+/* Scan line animation */
+.momo-qr-wrapper .qr-scan-line {
+    position: absolute;
+    left: 0;
+    top: -10%;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--accent-ice), transparent);
+    box-shadow: 0 0 20px rgba(166, 193, 217, 0.5);
+    animation: qrScan 2.5s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes qrScan {
+    0% {
+        top: -5%;
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        top: 105%;
+        opacity: 0;
+    }
+}
+
+/* ============================================================
+   OTP TITLE & SUB
+   ============================================================ */
+.otp-title {
+    font-size: var(--font-size-h3);
+    font-weight: var(--fw-extrabold);
+    color: var(--text-heading);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0;
+    text-align: center;
+}
+
+.otp-sub {
+    font-size: var(--font-size-base);
+    color: var(--text-secondary);
+    text-align: center;
+    margin: 0;
+    line-height: var(--line-height-base);
+}
+
+.otp-sub strong {
+    color: var(--silver-primary);
+    font-weight: var(--fw-semibold);
+}
+
+/* ============================================================
+   OTP CIRCLE INPUTS
+   ============================================================ */
+.otp-circle-container {
+    display: flex;
+    gap: var(--space-sm);
     justify-content: center;
+    width: 100%;
+    padding: var(--space-sm) 0;
+}
+
+.otp-circle {
+    width: 52px;
+    height: 62px;
+    border-radius: var(--radius-md);
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-subtle);
+    color: var(--text-heading);
+    font-size: 24px;
+    font-weight: var(--fw-bold);
+    text-align: center;
+    transition: all var(--transition-fast);
+    outline: none;
+    font-family: var(--font-primary);
+    caret-color: var(--accent-ice);
+}
+
+.otp-circle:focus {
+    border-color: var(--accent-ice);
+    background: var(--bg-elevated);
+    box-shadow: 0 0 0 3px rgba(166, 193, 217, 0.15);
+    transform: scale(1.05);
+}
+
+.otp-circle:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.otp-circle:not(:disabled):hover {
+    border-color: var(--silver-dark);
+}
+
+/* ============================================================
+   TIMER BOX
+   ============================================================ */
+.momo-timer-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.03);
+    border: var(--border-subtle);
+    font-size: var(--font-size-base);
+    color: var(--text-secondary);
+    width: 100%;
+    min-height: 44px;
+}
+
+.momo-timer-box span {
+    font-weight: var(--fw-bold);
+    color: var(--silver-primary);
+    font-size: var(--font-size-h4);
+    min-width: 56px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.momo-timer-box .time-warning {
+    color: #ffd93d;
+}
+
+.momo-timer-box .time-danger {
+    color: #ff6b6b;
+    animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+/* ============================================================
+   RESEND BUTTON WRAPPER
+   ============================================================ */
+.momo-resend-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.btn-resend-otp {
+    background: transparent;
+    border: none;
+    color: var(--accent-ice);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-semibold);
+    padding: var(--space-sm) var(--space-lg);
+    border-radius: var(--radius-round);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    letter-spacing: 0.03em;
+    position: relative;
+}
+
+.btn-resend-otp:hover:not(:disabled) {
+    color: var(--silver-primary);
+    background: rgba(166, 193, 217, 0.08);
+    transform: translateY(-1px);
+}
+
+.btn-resend-otp:active:not(:disabled) {
+    transform: scale(0.96);
+}
+
+.btn-resend-otp:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* ============================================================
+   CONFIRM PAYMENT BUTTON
+   ============================================================ */
+.btn-confirm-payment {
+    width: 100%;
+    padding: 14px 32px;
+    border-radius: var(--radius-round);
+    background: var(--btn-silver-bg);
+    color: var(--bg-primary) !important;
+    font-weight: var(--fw-extrabold);
+    font-size: var(--font-size-base);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border: none;
+    box-shadow: var(--btn-silver-shadow);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+    min-height: 52px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+}
+
+.btn-confirm-payment:hover:not(:disabled) {
+    filter: brightness(1.08);
+    box-shadow: 0 4px 32px rgba(159, 183, 210, 0.35);
+    transform: translateY(-2px);
+}
+
+.btn-confirm-payment:active:not(:disabled) {
+    transform: scale(0.97);
+}
+
+.btn-confirm-payment:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+    filter: none !important;
+}
+
+/* Spinner trong button */
+.btn-confirm-payment .spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-top-color: var(--bg-primary);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin-right: var(--space-sm);
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   MODAL OVERRIDE (nếu cần)
+   ============================================================ */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-md);
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    animation: fadeIn 0.25s ease;
+}
+
+.modal-content {
+    max-width: 460px;
+    width: 100%;
     padding: var(--space-2xl);
     border-radius: var(--radius-xl);
     background: var(--bg-card);
     border: var(--border-premium);
     box-shadow: var(--glass-shadow);
-    position: relative;
-    overflow: hidden;
+    animation: slideUp 0.3s ease;
 }
 
-/* Glow bạc */
-.momo-payment-wrapper::before {
-    content: "";
-    position: absolute;
-    top: -120px;
-    right: -120px;
-    width: 280px;
-    height: 280px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(232, 232, 232, 0.12), transparent 70%);
-    pointer-events: none;
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
-/* =========================================================
-   TITLE
-========================================================= */
-
-.momo-title-box {
-    text-align: center;
-    margin-bottom: var(--space-xl);
-    z-index: 2;
-}
-
-.momo-title-box h2 {
-    margin: 0 0 var(--space-sm);
-    font-size: var(--font-size-h2);
-    font-weight: var(--fw-extrabold);
-    color: var(--text-heading);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-}
-
-.momo-title-box p {
-    margin: 0;
-    color: var(--text-secondary);
-    font-size: var(--font-size-base);
-}
-
-.momo-title-box strong {
-    color: var(--silver-light);
-}
-
-/* =========================================================
-   QR CARD
-========================================================= */
-
-.qr-card {
-    width: 100%;
-    max-width: 420px;
-    padding: var(--space-lg);
-    border-radius: var(--radius-xl);
-    background: var(--bg-card);
-    border: var(--border-premium);
-    box-shadow: var(--glass-shadow);
-    position: relative;
-    z-index: 2;
-}
-
-/* =========================================================
-   QR WRAPPER
-========================================================= */
-
-.qr-wrapper {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    overflow: hidden;
-    border-radius: var(--radius-lg);
-    background: var(--silver-light);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.qr-wrapper img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    transition: all var(--transition-normal);
-}
-
-/* =========================================================
-   SCAN LINE
-========================================================= */
-
-.scan-line {
-    position: absolute;
-    left: 0;
-    top: -10%;
-    width: 100%;
-    height: 4px;
-    background: linear-gradient(90deg, transparent, var(--silver-primary), transparent);
-    box-shadow: 0 0 18px rgba(232, 232, 232, 0.7);
-    animation: qrScan 2s linear infinite;
-}
-
-@keyframes qrScan {
-    0% {
-        top: 0%;
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.96);
     }
-    100% {
-        top: 100%;
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
     }
 }
 
-/* =========================================================
-   CONFIRM OVERLAY
-========================================================= */
-
-.confirm-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.75);
-    backdrop-filter: blur(8px);
-    border-radius: var(--radius-lg);
-}
-
-.confirm-overlay p {
-    margin-top: var(--space-md);
-    color: var(--text-body);
-    font-size: var(--font-size-base);
-    font-weight: var(--fw-semibold);
-    text-align: center;
-}
-
-/* =========================================================
-   LOADER
-========================================================= */
-
-.loader {
-    width: 58px;
-    height: 58px;
-    border-radius: 50%;
-    border: 4px solid rgba(255, 255, 255, 0.15);
-    border-top: 4px solid var(--silver-primary);
-    animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-/* =========================================================
-   HELP TEXT
-========================================================= */
-
-.help-text {
-    margin-top: var(--space-lg);
-    text-align: center;
-    color: var(--text-secondary);
-    font-size: var(--font-size-base);
-    line-height: var(--line-height-base);
-    z-index: 2;
-}
-
-/* =========================================================
+/* ============================================================
    RESPONSIVE
-========================================================= */
+   ============================================================ */
 
 /* --- 1200px --- */
 @media (max-width: 1200px) {
-    .qr-card {
-        max-width: 380px;
+    .momo-checkout-container {
+        grid-template-columns: 360px 1fr;
+        gap: var(--space-lg);
     }
 }
 
 /* --- 992px --- */
 @media (max-width: 992px) {
-    .momo-payment-wrapper {
-        padding: var(--space-lg);
+    .momo-checkout-page {
+        padding: var(--space-md);
     }
-    .qr-card {
-        max-width: 420px;
+
+    .momo-checkout-container {
+        grid-template-columns: 1fr;
+        gap: var(--space-lg);
+        min-height: auto;
+    }
+
+    .momo-sidebar-wrapper {
+        position: static;
+        max-height: none;
+        overflow-y: visible;
+        order: 2;
+    }
+
+    .momo-otp-section {
+        order: 1;
+        padding: 0;
+    }
+
+    .otp-card {
+        max-width: 500px;
+        padding: var(--space-xl);
+    }
+
+    .momo-qr-wrapper {
+        width: 150px;
+        height: 150px;
+    }
+
+    .otp-circle {
+        width: 48px;
+        height: 56px;
+        font-size: 20px;
     }
 }
 
 /* --- 768px --- */
 @media (max-width: 768px) {
-    .momo-payment-wrapper {
+    .momo-checkout-page {
+        padding: var(--space-sm);
+    }
+
+    .momo-checkout-container {
+        gap: var(--space-md);
+    }
+
+    .otp-card {
         padding: var(--space-lg);
         border-radius: var(--radius-lg);
     }
-    .momo-title-box h2 {
-        font-size: var(--font-size-h3);
+
+    .otp-title {
+        font-size: var(--font-size-h4);
     }
-    .momo-title-box p {
+
+    .otp-sub {
         font-size: var(--font-size-base);
     }
-    .qr-card {
-        padding: var(--space-md);
-        border-radius: var(--radius-lg);
+
+    .momo-qr-wrapper {
+        width: 130px;
+        height: 130px;
     }
-    .help-text {
+
+    .otp-circle-container {
+        gap: var(--space-xs);
+    }
+
+    .otp-circle {
+        width: 42px;
+        height: 50px;
+        font-size: 18px;
+        border-radius: var(--radius-sm);
+    }
+
+    .momo-timer-box {
         font-size: var(--font-size-base);
+        padding: var(--space-xs) var(--space-md);
+        min-height: 38px;
+    }
+
+    .momo-timer-box span {
+        font-size: var(--font-size-base);
+        min-width: 48px;
+    }
+
+    .btn-confirm-payment {
+        padding: 12px 24px;
+        font-size: var(--font-size-base);
+        min-height: 46px;
+    }
+
+    .btn-resend-otp {
+        font-size: var(--font-size-base);
+        padding: var(--space-xs) var(--space-md);
+    }
+
+    .modal-content {
+        padding: var(--space-xl);
+        margin: var(--space-sm);
     }
 }
 
 /* --- 480px --- */
 @media (max-width: 480px) {
-    .momo-payment-wrapper {
+    .momo-checkout-page {
+        padding: var(--space-xs);
+    }
+
+    .momo-checkout-container {
+        gap: var(--space-sm);
+    }
+
+    .otp-card {
         padding: var(--space-md);
+        border-radius: var(--radius-md);
+        gap: var(--space-md);
+    }
+
+    .otp-title {
+        font-size: var(--font-size-h5);
+        letter-spacing: 0.04em;
+    }
+
+    .otp-sub {
+        font-size: 0.875rem;
+    }
+
+    .momo-qr-wrapper {
+        width: 110px;
+        height: 110px;
+        border-radius: var(--radius-md);
+    }
+
+    .otp-circle-container {
+        gap: 4px;
+    }
+
+    .otp-circle {
+        width: 36px;
+        height: 44px;
+        font-size: 16px;
+        border-radius: var(--radius-xs);
+        border-width: 1.5px;
+    }
+
+    .momo-timer-box {
+        font-size: 0.875rem;
+        padding: var(--space-xs) var(--space-sm);
+        min-height: 34px;
+        border-radius: var(--radius-sm);
+    }
+
+    .momo-timer-box span {
+        font-size: 0.875rem;
+        min-width: 40px;
+    }
+
+    .btn-confirm-payment {
+        padding: 10px 20px;
+        font-size: 0.875rem;
+        min-height: 42px;
+        letter-spacing: 0.04em;
+    }
+
+    .btn-resend-otp {
+        font-size: 0.875rem;
+        padding: var(--space-xs) var(--space-sm);
+    }
+
+    .modal-content {
+        padding: var(--space-lg);
         border-radius: var(--radius-lg);
     }
-    .momo-title-box {
-        margin-bottom: var(--space-lg);
-    }
-    .momo-title-box h2 {
+
+    .modal-content h3 {
         font-size: var(--font-size-h4);
     }
-    .momo-title-box p {
-        font-size: var(--font-size-base);
+
+    .modal-content p {
+        font-size: 0.875rem;
     }
-    .qr-card {
-        padding: var(--space-sm);
-        border-radius: var(--radius-md);
+
+    .modal-content .modal-actions button {
+        padding: 8px 20px;
+        font-size: 0.875rem;
     }
-    .qr-wrapper {
-        border-radius: var(--radius-md);
+}
+
+/* --- 360px --- */
+@media (max-width: 360px) {
+    .otp-circle {
+        width: 30px;
+        height: 38px;
+        font-size: 14px;
     }
-    .loader {
-        width: 48px;
-        height: 48px;
+
+    .otp-circle-container {
+        gap: 3px;
     }
-    .confirm-overlay p {
-        font-size: var(--font-size-base);
+
+    .momo-qr-wrapper {
+        width: 90px;
+        height: 90px;
     }
-    .help-text {
-        margin-top: var(--space-md);
-        font-size: var(--font-size-base);
+
+    .btn-confirm-payment {
+        font-size: 0.8rem;
+        padding: 8px 16px;
+        min-height: 38px;
+    }
+}
+
+/* ============================================================
+   SCROLLBAR CUSTOMIZATION (RIÊNG CHO MOMO)
+   ============================================================ */
+.momo-sidebar-wrapper::-webkit-scrollbar {
+    width: 6px;
+}
+
+.momo-sidebar-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.momo-sidebar-wrapper::-webkit-scrollbar-thumb {
+    background: var(--silver-dark);
+    border-radius: var(--radius-round);
+}
+
+.momo-sidebar-wrapper::-webkit-scrollbar-thumb:hover {
+    background: var(--silver-primary);
+}
+
+/* ============================================================
+   UTILITY - HIDE SPINNER TRONG INPUT NUMBER
+   ============================================================ */
+input[type="text"]::-webkit-outer-spin-button,
+input[type="text"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="text"] {
+    -moz-appearance: textfield;
+}
+
+/* ============================================================
+   SELECTION
+   ============================================================ */
+.momo-checkout-page ::selection {
+    background: var(--accent-ice);
+    color: var(--bg-primary);
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+    .momo-qr-wrapper .qr-scan-line {
+        animation: none;
+        display: none;
+    }
+
+    .otp-circle:focus {
+        transform: none;
+    }
+
+    .btn-confirm-payment:hover:not(:disabled) {
+        transform: none;
+    }
+
+    .modal-content {
+        animation: none;
+    }
+
+    .modal-overlay {
+        animation: none;
+    }
+
+    .momo-timer-box .time-danger {
+        animation: none;
+    }
+
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
     }
 }

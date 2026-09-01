@@ -1,3 +1,8 @@
+// ============================================================
+// PAYMENT PAGE
+// Bước 4: THANH TOÁN
+// ============================================================
+
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../../api/api';
@@ -7,6 +12,7 @@ import Modal from '../components/Modal';
 import BookingSidebar from '../components/BookingSidebar';
 import LoadingButton from '../components/LoadingButton';
 import PaymentPinModal from '../components/PaymentPinModal';
+import BookingProgress from '../components/BookingProgress';
 
 // STYLES
 import '../styles/Payment.css';
@@ -15,23 +21,31 @@ const Payment = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
-    // Lấy dữ liệu từ location.state hoặc từ localStorage
+    // ============================================================
+    // LẤY DỮ LIỆU BOOKING
+    // ============================================================
+
     const getStateData = () => {
         const stateData = location.state || {};
-        
-        // Nếu không có state, thử đọc từ localStorage
-        if (!stateData.selectedSeats || stateData.selectedSeats.length === 0) {
+
+        if (
+            !stateData.selectedSeats ||
+            stateData.selectedSeats.length === 0
+        ) {
             try {
                 const savedBooking = localStorage.getItem('booking_temp');
+
                 if (savedBooking) {
-                    const parsed = JSON.parse(savedBooking);
-                    return parsed;
+                    return JSON.parse(savedBooking);
                 }
             } catch (err) {
-                console.error('Lỗi đọc booking_temp từ localStorage:', err);
+                console.error(
+                    'Lỗi đọc booking_temp từ localStorage:',
+                    err
+                );
             }
         }
-        
+
         return stateData;
     };
 
@@ -47,21 +61,26 @@ const Payment = () => {
         foods = initialData.foods || [],
         totalTicketPrice = initialData.totalTicketPrice || 0,
         totalFoodPrice = initialData.totalFoodPrice || 0,
-        showtimeDetail = initialData.showtimeDetail || {}
+        showtimeDetail = initialData.showtimeDetail || {},
     } = location.state || initialData;
 
-    // =========================
+    // ============================================================
     // STATES
-    // =========================
+    // ============================================================
+
     const [user, setUser] = useState(null);
     const [isLoadingUser, setIsLoadingUser] = useState(true);
+
     const [couponCode, setCouponCode] = useState('');
     const [discountAmount, setDiscountAmount] = useState(0);
     const [appliedCouponId, setAppliedCouponId] = useState(null);
+
     const [paymentMethod, setPaymentMethod] = useState('bank');
+
     const [isTimerActive, setIsTimerActive] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+
     const [tempBookingId, setTempBookingId] = useState(() => {
         return localStorage.getItem('tempBookingId') || null;
     });
@@ -70,7 +89,7 @@ const Payment = () => {
         user_id: '',
         full_name: '',
         email: '',
-        phone: ''
+        phone: '',
     });
 
     const [modal, setModal] = useState({
@@ -78,7 +97,7 @@ const Payment = () => {
         type: '',
         title: '',
         message: '',
-        onConfirm: null
+        onConfirm: null,
     });
 
     const [showPinModal, setShowPinModal] = useState(false);
@@ -86,90 +105,136 @@ const Payment = () => {
     const [pinError, setPinError] = useState('');
     const [isVerifyingPin, setIsVerifyingPin] = useState(false);
 
-    const showtimeId = selectedShowtime?.showtime_id || selectedShowtime?.id;
+    const showtimeId =
+        selectedShowtime?.showtime_id ||
+        selectedShowtime?.id;
 
-    // =========================
-    // NOTICE
-    // =========================
-    const showNotice = (type, title, message, onConfirm = null) => {
+    // ============================================================
+    // NOTICE MODAL
+    // ============================================================
+
+    const showNotice = (
+        type,
+        title,
+        message,
+        onConfirm = null
+    ) => {
         setModal({
             show: true,
             type,
             title,
             message,
-            onConfirm: onConfirm || (() => setModal(prev => ({ ...prev, show: false })))
+            onConfirm:
+                onConfirm ||
+                (() =>
+                    setModal(prev => ({
+                        ...prev,
+                        show: false,
+                    }))),
         });
     };
 
-    // =========================
+    // ============================================================
     // TOTAL
-    // =========================
-    const subTotal = Number(totalTicketPrice || 0) + Number(totalFoodPrice || 0);
-    const grandTotal = subTotal - Number(discountAmount || 0);
+    // ============================================================
 
-    // =========================
-    // CHECK SESSION FROM COOKIE
-    // =========================
+    const subTotal =
+        Number(totalTicketPrice || 0) +
+        Number(totalFoodPrice || 0);
+
+    const grandTotal = Math.max(
+        0,
+        subTotal - Number(discountAmount || 0)
+    );
+
+    // ============================================================
+    // CHECK SESSION
+    // ============================================================
+
     const checkSession = async () => {
         setIsLoadingUser(true);
+
         try {
             const response = await api.get('/api/auth/me');
+
             const userData = response.data?.user;
-            
+
             if (userData && userData.user_id) {
                 setUser(userData);
+
                 setUserInfo({
                     user_id: userData.user_id,
                     full_name: userData.full_name || '',
                     email: userData.email || '',
-                    phone: userData.phone || ''
+                    phone: userData.phone || '',
                 });
+
                 return true;
-            } else {
-                throw new Error('Invalid session');
             }
+
+            throw new Error('Invalid session');
         } catch (error) {
             if (error.response?.status === 401) {
                 showNotice(
                     'error',
                     'YÊU CẦU ĐĂNG NHẬP',
                     'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
-                    () => navigate('/login', { state: { from: location.pathname } })
+                    () =>
+                        navigate('/login', {
+                            state: {
+                                from: location.pathname,
+                            },
+                        })
                 );
             }
+
             return false;
         } finally {
             setIsLoadingUser(false);
         }
     };
 
-    // =========================
-    // QUAY LẠI TỪ FORGOT PIN - MỞ LẠI MODAL PIN
-    // =========================
+    // ============================================================
+    // QUAY LẠI TỪ FORGOT PIN
+    // ============================================================
+
     useEffect(() => {
         if (location.state?.fromForgotPin) {
             setShowPinModal(true);
             setPin('');
             setPinError('');
-            window.history.replaceState({}, document.title);
+
+            window.history.replaceState(
+                {},
+                document.title
+            );
         }
     }, [location.state]);
 
-    // =========================
+    // ============================================================
     // INIT
-    // =========================
+    // ============================================================
+
     useEffect(() => {
         window.scrollTo(0, 0);
 
-        if (!movie || !selectedSeats || selectedSeats.length === 0) {
-            // Thử đọc lại từ localStorage
+        if (
+            !movie ||
+            !selectedSeats ||
+            selectedSeats.length === 0
+        ) {
             try {
-                const savedBooking = localStorage.getItem('booking_temp');
+                const savedBooking =
+                    localStorage.getItem('booking_temp');
+
                 if (savedBooking) {
-                    const parsed = JSON.parse(savedBooking);
-                    if (parsed.selectedSeats && parsed.selectedSeats.length > 0) {
-                        // Có dữ liệu, tiếp tục
-                    } else {
+                    const parsed =
+                        JSON.parse(savedBooking);
+
+                    if (
+                        !parsed.selectedSeats ||
+                        parsed.selectedSeats.length === 0
+                    ) {
                         navigate('/');
                         return;
                     }
@@ -183,7 +248,10 @@ const Payment = () => {
             }
         }
 
-        // Xóa các key liên quan đến bank từ localStorage
+        // --------------------------------------------------------
+        // XÓA STATE BANK CŨ
+        // --------------------------------------------------------
+
         const bankKeys = [
             'lastSuccessTicket',
             'bankHasSentOtp',
@@ -193,21 +261,31 @@ const Payment = () => {
             'bankLastOtpSentAt',
             'paymentCompleted',
             'completedBookingId',
-            'paymentInitiated'
+            'paymentInitiated',
         ];
 
         bankKeys.forEach(key => {
             localStorage.removeItem(key);
         });
 
-        // Đọc tempBookingId từ localStorage
-        const savedTempId = localStorage.getItem('tempBookingId');
+        // --------------------------------------------------------
+        // TEMP BOOKING ID
+        // --------------------------------------------------------
+
+        const savedTempId =
+            localStorage.getItem('tempBookingId');
+
         if (savedTempId) {
             setTempBookingId(savedTempId);
         }
 
+        // --------------------------------------------------------
+        // VERIFY SESSION
+        // --------------------------------------------------------
+
         const verifySession = async () => {
             const isValid = await checkSession();
+
             if (!isValid) return;
 
             if (localStorage.getItem('holdExpiresAt')) {
@@ -217,33 +295,69 @@ const Payment = () => {
 
         verifySession();
 
-        const handleSessionExpired = (event) => {
-            console.log('🔴 Session expired event received:', event.detail);
+        // --------------------------------------------------------
+        // SESSION EXPIRED EVENT
+        // --------------------------------------------------------
+
+        const handleSessionExpired = event => {
+            console.log(
+                '🔴 Session expired event received:',
+                event.detail
+            );
+
             showNotice(
                 'error',
                 'PHIÊN ĐĂNG NHẬP HẾT HẠN',
-                event.detail?.message || 'Vui lòng đăng nhập lại để tiếp tục.',
-                () => navigate('/login', { state: { from: location.pathname } })
+                event.detail?.message ||
+                    'Vui lòng đăng nhập lại để tiếp tục.',
+                () =>
+                    navigate('/login', {
+                        state: {
+                            from: location.pathname,
+                        },
+                    })
             );
         };
 
-        window.addEventListener('sessionExpired', handleSessionExpired);
-        return () => window.removeEventListener('sessionExpired', handleSessionExpired);
-    }, [movie, selectedSeats, navigate, location.pathname]);
+        window.addEventListener(
+            'sessionExpired',
+            handleSessionExpired
+        );
 
-    // =========================
-    // TIMER EXPIRE (giữ ghế)
-    // =========================
+        return () => {
+            window.removeEventListener(
+                'sessionExpired',
+                handleSessionExpired
+            );
+        };
+    }, [
+        movie,
+        selectedSeats,
+        navigate,
+        location.pathname,
+    ]);
+
+    // ============================================================
+    // TIMER EXPIRE
+    // ============================================================
+
     const handleTimeExpire = async () => {
         if (tempBookingId) {
             try {
-                await api.post('/api/bank/cancel-timeout', { tempBookingId });
+                await api.post(
+                    '/api/bank/cancel-timeout',
+                    {
+                        tempBookingId,
+                    }
+                );
             } catch (err) {
-                console.error('Lỗi hủy temp booking:', err);
+                console.error(
+                    'Lỗi hủy temp booking:',
+                    err
+                );
             }
         }
 
-        // Xóa tất cả dữ liệu liên quan đến booking từ localStorage
         const keysToRemove = [
             'selectedSeats',
             'holdExpiresAt',
@@ -261,7 +375,7 @@ const Payment = () => {
             'booking_temp',
             'tempBookingId',
             'lastSuccessTicket',
-            'paymentInitiated'
+            'paymentInitiated',
         ];
 
         keysToRemove.forEach(key => {
@@ -270,8 +384,8 @@ const Payment = () => {
 
         showNotice(
             'error',
-            'HẾT THỜI GIAN',
-            'Phiên đặt vé đã hết hạn.',
+            'HẾT THỜI GIAN GIỮ GHẾ',
+            'Thời gian giữ ghế đã kết thúc. Vui lòng chọn lại ghế để tiếp tục.',
             () => {
                 navigate('/');
                 window.location.reload();
@@ -279,56 +393,105 @@ const Payment = () => {
         );
     };
 
-    // =========================
+    // ============================================================
     // APPLY COUPON
-    // =========================
+    // ============================================================
+
     const handleApplyCoupon = async () => {
-        const inputCode = couponCode.toUpperCase().trim();
+        const inputCode =
+            couponCode.toUpperCase().trim();
+
         if (!inputCode) {
-            showNotice('error', 'THIẾU THÔNG TIN', 'Vui lòng nhập mã giảm giá.');
+            showNotice(
+                'error',
+                'THIẾU THÔNG TIN',
+                'Vui lòng nhập mã giảm giá.'
+            );
             return;
         }
 
         if (!userInfo.user_id) {
-            showNotice('error', 'LỖI', 'Vui lòng đăng nhập lại.');
+            showNotice(
+                'error',
+                'LỖI',
+                'Vui lòng đăng nhập lại.'
+            );
             return;
         }
 
         setIsApplyingCoupon(true);
+
         try {
-            const res = await api.post('/api/coupons/check', {
-                code: inputCode,
-                userId: userInfo.user_id
-            });
+            const res = await api.post(
+                '/api/coupons/check',
+                {
+                    code: inputCode,
+                    userId: userInfo.user_id,
+                }
+            );
 
             if (res.data.success) {
-                const { discount_value, coupon_id } = res.data.data;
-                setDiscountAmount(Number(discount_value));
+                const {
+                    discount_value,
+                    coupon_id,
+                } = res.data.data;
+
+                setDiscountAmount(
+                    Number(discount_value)
+                );
+
                 setAppliedCouponId(coupon_id);
-                showNotice('success', 'THÀNH CÔNG', 'Áp dụng mã giảm giá thành công.');
+
+                showNotice(
+                    'success',
+                    'THÀNH CÔNG',
+                    'Áp dụng mã giảm giá thành công.'
+                );
             }
         } catch (err) {
             showNotice(
                 'error',
                 'THÔNG BÁO',
-                err.response?.data?.message || 'Mã không hợp lệ.'
+                err.response?.data?.message ||
+                    'Mã không hợp lệ.'
             );
         } finally {
             setIsApplyingCoupon(false);
         }
     };
 
-    // =========================
-    // KIỂM TRA MÃ PIN TRƯỚC KHI THANH TOÁN
-    // =========================
+    // ============================================================
+    // CLICK THANH TOÁN
+    // ============================================================
+
     const onConfirmPaymentClick = () => {
         if (!userInfo.user_id) {
-            showNotice('error', 'YÊU CẦU ĐĂNG NHẬP', 'Vui lòng đăng nhập để tiếp tục.', () => navigate('/login', { state: { from: location.pathname } }));
+            showNotice(
+                'error',
+                'YÊU CẦU ĐĂNG NHẬP',
+                'Vui lòng đăng nhập để tiếp tục.',
+                () =>
+                    navigate('/login', {
+                        state: {
+                            from: location.pathname,
+                        },
+                    })
+            );
+
             return;
         }
 
-        if (!userInfo.full_name || !userInfo.email || !userInfo.phone) {
-            showNotice('error', 'THIẾU THÔNG TIN', 'Vui lòng nhập đầy đủ thông tin nhận vé.');
+        if (
+            !userInfo.full_name ||
+            !userInfo.email ||
+            !userInfo.phone
+        ) {
+            showNotice(
+                'error',
+                'THIẾU THÔNG TIN',
+                'Vui lòng nhập đầy đủ thông tin nhận vé.'
+            );
+
             return;
         }
 
@@ -337,12 +500,16 @@ const Payment = () => {
         setPinError('');
     };
 
-    // =========================
-    // XÁC THỰC MÃ PIN VÀ TIẾP TỤC
-    // =========================
-    const handleVerifyPinAndProceed = async (e) => {
+    // ============================================================
+    // VERIFY PIN
+    // ============================================================
+
+    const handleVerifyPinAndProceed = async () => {
         if (!/^\d{6}$/.test(pin)) {
-            setPinError('Vui lòng nhập mã PIN gồm 6 chữ số');
+            setPinError(
+                'Vui lòng nhập mã PIN gồm 6 chữ số'
+            );
+
             return;
         }
 
@@ -350,41 +517,105 @@ const Payment = () => {
         setPinError('');
 
         try {
-            const pinResponse = await api.post('/api/users/verify-pin', { pin });
+            const pinResponse = await api.post(
+                '/api/users/verify-pin',
+                { pin }
+            );
 
             if (pinResponse.data.success) {
                 setShowPinModal(false);
                 setPin('');
+
                 await handleProceed();
             }
         } catch (err) {
-            console.error('Verify PIN Error:', err);
-            setPinError(err.response?.data?.message || 'Mã PIN không đúng');
+            console.error(
+                'Verify PIN Error:',
+                err
+            );
+
+            setPinError(
+                err.response?.data?.message ||
+                    'Mã PIN không đúng'
+            );
         } finally {
             setIsVerifyingPin(false);
         }
     };
 
-    // =========================
-    // PAYMENT – GỌI API /payment/process
-    // =========================
+    // ============================================================
+    // PAYMENT PROCESS
+    // ============================================================
+
     const handleProceed = async () => {
-        if (!userInfo.user_id) {
-            showNotice('error', 'YÊU CẦU ĐĂNG NHẬP', 'Vui lòng đăng nhập để tiếp tục.', () => navigate('/login', { state: { from: location.pathname } }));
+        // --------------------------------------------------------
+        // CHECK HOLD TIME
+        // --------------------------------------------------------
+
+        const holdExpiry =
+            localStorage.getItem('holdExpiresAt');
+
+        if (
+            holdExpiry &&
+            Date.now() > parseInt(holdExpiry, 10)
+        ) {
+            showNotice(
+                'error',
+                'HẾT THỜI GIAN',
+                'Thời gian giữ ghế đã kết thúc. Vui lòng chọn lại ghế.'
+            );
+
+            handleTimeExpire();
+
             return;
         }
 
-        const email = userInfo.email.trim();
-        const fullName = userInfo.full_name.trim();
-        const phone = userInfo.phone.trim();
-        const userId = userInfo.user_id;
+        // --------------------------------------------------------
+        // CHECK USER
+        // --------------------------------------------------------
+
+        if (!userInfo.user_id) {
+            showNotice(
+                'error',
+                'YÊU CẦU ĐĂNG NHẬP',
+                'Vui lòng đăng nhập để tiếp tục.',
+                () =>
+                    navigate('/login', {
+                        state: {
+                            from: location.pathname,
+                        },
+                    })
+            );
+
+            return;
+        }
+
+        const email =
+            userInfo.email.trim();
+
+        const fullName =
+            userInfo.full_name.trim();
+
+        const phone =
+            userInfo.phone.trim();
+
+        const userId =
+            userInfo.user_id;
 
         if (!fullName || !email || !phone) {
-            showNotice('error', 'THIẾU THÔNG TIN', 'Vui lòng nhập đầy đủ thông tin nhận vé.');
+            showNotice(
+                'error',
+                'THIẾU THÔNG TIN',
+                'Vui lòng nhập đầy đủ thông tin nhận vé.'
+            );
+
             return;
         }
 
-        // Xóa các key liên quan đến bank từ localStorage
+        // --------------------------------------------------------
+        // RESET BANK STATE
+        // --------------------------------------------------------
+
         const bankKeys = [
             'bankHasSentOtp',
             'bankHasVisited',
@@ -394,7 +625,7 @@ const Payment = () => {
             'paymentCompleted',
             'completedBookingId',
             'paymentInitiated',
-            'lastSuccessTicket'
+            'lastSuccessTicket',
         ];
 
         bankKeys.forEach(key => {
@@ -404,114 +635,266 @@ const Payment = () => {
         setIsProcessing(true);
 
         try {
-            const seatsWithPrice = selectedSeats.map(seat => ({
-                seat_id: seat.seat_id,
-                seat_row: seat.seat_row || '',
-                seat_number: seat.seat_number || '',
-                price: seat.price || 0
-            }));
+            // ----------------------------------------------------
+            // SEATS
+            // ----------------------------------------------------
 
-            const foodsWithQuantity = (selectedFoods || []).map(food => ({
-                product_id: food.product_id,
-                product_name: food.product_name || '',
-                quantity: food.quantity || 1,
-                price: food.price || 0
-            }));
+            const seatsWithPrice =
+                selectedSeats.map(seat => ({
+                    seat_id: seat.seat_id,
+                    seat_row:
+                        seat.seat_row || '',
+                    seat_number:
+                        seat.seat_number || '',
+                    price: seat.price || 0,
+                }));
+
+            // ----------------------------------------------------
+            // FOODS
+            // ----------------------------------------------------
+
+            const foodsWithQuantity =
+                (selectedFoods || []).map(food => ({
+                    product_id:
+                        food.product_id,
+                    product_name:
+                        food.product_name || '',
+                    quantity:
+                        food.quantity || 1,
+                    price:
+                        food.price || 0,
+                }));
+
+            // ----------------------------------------------------
+            // REQUEST DATA
+            // ----------------------------------------------------
 
             const postData = {
-                userId: userId,
-                showtimeId: showtimeId,
-                totalAmount: Number(grandTotal),
-                discountAmount: Number(discountAmount),
-                couponId: appliedCouponId || null,
-                selectedSeats: seatsWithPrice,
-                selectedFoods: foodsWithQuantity,
-                customerEmail: email,
-                customerName: fullName,
-                customerPhone: phone,
-                movieTitle: movie?.title || '',
-                cinemaName: selectedCinema?.cinema_name || '',
-                startTime: selectedShowtime?.start_time || ''
+                userId,
+                showtimeId,
+
+                totalAmount:
+                    Number(grandTotal),
+
+                discountAmount:
+                    Number(discountAmount),
+
+                couponId:
+                    appliedCouponId || null,
+
+                selectedSeats:
+                    seatsWithPrice,
+
+                selectedFoods:
+                    foodsWithQuantity,
+
+                customerEmail:
+                    email,
+
+                customerName:
+                    fullName,
+
+                customerPhone:
+                    phone,
+
+                movieTitle:
+                    movie?.title || '',
+
+                cinemaName:
+                    selectedCinema?.cinema_name || '',
+
+                startTime:
+                    selectedShowtime?.start_time || '',
             };
 
-            const response = await api.post('/api/payment/process', postData);
+            // ----------------------------------------------------
+            // PROCESS PAYMENT
+            // ----------------------------------------------------
+
+            const response =
+                await api.post(
+                    '/api/payment/process',
+                    postData
+                );
 
             if (response.data.success) {
-                const tempId = response.data.tempBookingId;
+                const tempId =
+                    response.data.tempBookingId;
+
                 setTempBookingId(tempId);
-                localStorage.setItem('tempBookingId', tempId);
+
+                localStorage.setItem(
+                    'tempBookingId',
+                    tempId
+                );
+
+                // ------------------------------------------------
+                // FINAL STATE
+                // ------------------------------------------------
 
                 const finalState = {
                     tempBookingId: tempId,
-                    totalAmount: Number(grandTotal),
-                    customerName: fullName,
-                    customerEmail: email,
-                    customerPhone: phone,
+
+                    totalAmount:
+                        Number(grandTotal),
+
+                    customerName:
+                        fullName,
+
+                    customerEmail:
+                        email,
+
+                    customerPhone:
+                        phone,
+
                     movie,
+
                     selectedCinema,
+
                     selectedDate,
+
                     selectedShowtime,
+
                     selectedSeats,
+
                     selectedFoods,
+
                     foods,
+
                     totalTicketPrice,
+
                     totalFoodPrice,
-                    showtimeDetail
+
+                    showtimeDetail,
                 };
 
-                localStorage.setItem('lastSuccessTicket', JSON.stringify(finalState));
+                localStorage.setItem(
+                    'lastSuccessTicket',
+                    JSON.stringify(finalState)
+                );
 
-                // Xóa dữ liệu giữ ghế
-                localStorage.removeItem('holdExpiresAt');
-                localStorage.removeItem('selectedSeats');
-                localStorage.removeItem('currentShowtimeId');
+                // ------------------------------------------------
+                // CLEAR HOLD
+                // ------------------------------------------------
+
+                localStorage.removeItem(
+                    'holdExpiresAt'
+                );
+
+                localStorage.removeItem(
+                    'selectedSeats'
+                );
+
+                localStorage.removeItem(
+                    'currentShowtimeId'
+                );
+
                 setIsTimerActive(false);
 
+                // ------------------------------------------------
+                // REDIRECT PAYMENT APP
+                // ------------------------------------------------
+
                 if (paymentMethod === 'bank') {
-                    localStorage.setItem('paymentInitiated', 'true');
-                    navigate('/bank-app', { state: finalState });
+                    localStorage.setItem(
+                        'paymentInitiated',
+                        'true'
+                    );
+
+                    navigate('/bank-app', {
+                        state: finalState,
+                    });
                 } else {
-                    localStorage.removeItem('paymentInitiated');
-                    navigate('/momo-app', { state: finalState });
+                    localStorage.removeItem(
+                        'paymentInitiated'
+                    );
+
+                    navigate('/momo-app', {
+                        state: finalState,
+                    });
                 }
             } else {
-                localStorage.removeItem('paymentInitiated');
-                showNotice('error', 'LỖI', response.data?.message || 'Không thể xử lý thanh toán.');
+                localStorage.removeItem(
+                    'paymentInitiated'
+                );
+
+                showNotice(
+                    'error',
+                    'LỖI',
+                    response.data?.message ||
+                        'Không thể xử lý thanh toán.'
+                );
             }
         } catch (err) {
-            console.error('Lỗi thanh toán:', err);
-            
+            console.error(
+                'Lỗi thanh toán:',
+                err
+            );
+
             if (err.response?.status === 401) {
-                localStorage.removeItem('paymentInitiated');
+                localStorage.removeItem(
+                    'paymentInitiated'
+                );
+
                 return;
             }
-            
-            const errorMessage = err.response?.data?.message || err.message || 'Không thể xử lý thanh toán.';
-            localStorage.removeItem('paymentInitiated');
-            showNotice('error', 'LỖI', errorMessage);
+
+            const errorMessage =
+                err.response?.data?.message ||
+                err.message ||
+                'Không thể xử lý thanh toán.';
+
+            localStorage.removeItem(
+                'paymentInitiated'
+            );
+
+            showNotice(
+                'error',
+                'LỖI',
+                errorMessage
+            );
         } finally {
             setIsProcessing(false);
         }
     };
 
-    // =========================
+    // ============================================================
     // RENDER
-    // =========================
+    // ============================================================
+
     return (
-        <div className="booking-wrapper">
+        <div className="payment-page">
+
+            {/* ====================================================
+                MODAL
+            ==================================================== */}
+
             <Modal
                 show={modal.show}
                 type={modal.type}
                 title={modal.title}
                 message={modal.message}
                 onConfirm={modal.onConfirm}
-                onCancel={() => setModal({ ...modal, show: false })}
+                onCancel={() =>
+                    setModal(prev => ({
+                        ...prev,
+                        show: false,
+                    }))
+                }
             />
+
+            {/* ====================================================
+                PIN MODAL
+            ==================================================== */}
 
             <PaymentPinModal
                 isOpen={showPinModal}
-                onClose={() => setShowPinModal(false)}
-                onConfirm={handleVerifyPinAndProceed}
+                onClose={() =>
+                    setShowPinModal(false)
+                }
+                onConfirm={
+                    handleVerifyPinAndProceed
+                }
                 pin={pin}
                 setPin={setPin}
                 error={pinError}
@@ -519,125 +902,464 @@ const Payment = () => {
                 email={userInfo.email}
             />
 
-            <div className="booking-container">
-                <BookingSidebar
-                    movie={movie}
-                    showtimeDetail={showtimeDetail}
-                    selectedCinema={selectedCinema}
-                    selectedDate={selectedDate}
-                    selectedShowtime={selectedShowtime}
-                    selectedSeats={Array.isArray(selectedSeats) ? selectedSeats : []}
-                    foods={Array.isArray(foods) ? foods : []}
-                    selectedFoods={Array.isArray(selectedFoods) ? selectedFoods : []}
-                    totalTicketPrice={totalTicketPrice}
-                    totalFoodPrice={totalFoodPrice}
-                    grandTotal={grandTotal}
-                    isTimerActive={isTimerActive}
-                    onExpire={handleTimeExpire}
-                    showFoodSection={true}
-                />
+            {/* ====================================================
+                MAIN CONTAINER
+            ==================================================== */}
 
-                <section className="main-booking-area">
-                    {isLoadingUser && (
-                        <div className="payment-card">
-                            <h3>⏳ ĐANG KIỂM TRA ĐĂNG NHẬP...</h3>
-                            <div className="loading-spinner" style={{ textAlign: 'center', padding: '20px' }}>
-                                Vui lòng chờ...
-                            </div>
-                        </div>
-                    )}
+            <div className="payment-container">
+              {/* ==================================================
+                    PROGRESS
+                ================================================== */}
+                <div className="payment-progress-wrapper">
+                    <BookingProgress currentStep={4} />
+                </div>
 
-                    {!isLoadingUser && userInfo.user_id && (
-                        <>
-                            <div className="payment-card">
-                                <h3>MÃ GIẢM GIÁ</h3>
-                                <div className="coupon-group">
-                                    <input
-                                        type="text"
-                                        placeholder="Nhập mã giảm giá..."
-                                        value={couponCode}
-                                        onChange={e => setCouponCode(e.target.value)}
-                                        disabled={isApplyingCoupon}
-                                    />
-                                    <LoadingButton
-                                        type="button"
-                                        loading={isApplyingCoupon}
-                                        loadingText="Đang áp dụng..."
-                                        onClick={handleApplyCoupon}
-                                        disabled={isApplyingCoupon}
-                                        className="coupon-btn"
-                                        spinnerColor="#ffffff"
-                                    >
-                                        ÁP DỤNG
-                                    </LoadingButton>
-                                </div>
-                            </div>
+                {/* ==================================================
+                    BOOKING CONTENT
+                ================================================== */}
 
-                            <div className="payment-card">
-                                <h3>THÔNG TIN NHẬN VÉ</h3>
-                                <div className="form-grid">
-                                    <input
-                                        type="text"
-                                        placeholder="Họ và tên"
-                                        value={userInfo.full_name}
-                                        onChange={e => setUserInfo({ ...userInfo, full_name: e.target.value })}
-                                    />
-                                    <input
-                                        type="text"
-                                        placeholder="Số điện thoại"
-                                        value={userInfo.phone}
-                                        onChange={e => setUserInfo({ ...userInfo, phone: e.target.value })}
-                                    />
-                                </div>
-                                <input
-                                    type="email"
-                                    placeholder="Email nhận vé"
-                                    value={userInfo.email}
-                                    onChange={e => setUserInfo({ ...userInfo, email: e.target.value })}
-                                />
-                            </div>
+                <div className="payment-layout">
 
-                            <div className="payment-card">
-                                <h3>HÌNH THỨC THANH TOÁN</h3>
-                                <div className="payment-methods">
-                                    <label className={`payment-method ${paymentMethod === 'bank' ? 'active' : ''}`}>
-                                        <input
-                                            type="radio"
-                                            checked={paymentMethod === 'bank'}
-                                            onChange={() => setPaymentMethod('bank')}
-                                        />
-                                        <span>VietQR</span>
-                                    </label>
-                                    <label className={`payment-method ${paymentMethod === 'momo' ? 'active' : ''}`}>
-                                        <input
-                                            type="radio"
-                                            checked={paymentMethod === 'momo'}
-                                            onChange={() => setPaymentMethod('momo')}
-                                        />
-                                        <span>MoMo</span>
-                                    </label>
+                    {/* =================================================
+                        MAIN - BÊN TRÁI (THÔNG TIN)
+                    ================================================= */}
+
+                    <main className="main-booking-area">
+
+                        {/* ==============================================
+                            LOADING USER
+                        ============================================== */}
+
+                        {isLoadingUser && (
+                            <div className="payment-card loading-card">
+
+                                <div className="payment-section-heading">
+                                    <span className="payment-section-number">
+                                        04
+                                    </span>
+
+                                    <div>
+                                        <h3>
+                                            KIỂM TRA PHIÊN ĐĂNG NHẬP
+                                        </h3>
+
+                                        <p>
+                                            Vui lòng chờ trong giây lát...
+                                        </p>
+                                    </div>
                                 </div>
 
-                                <LoadingButton
-                                    type="button"
-                                    loading={isProcessing}
-                                    loadingText="Đang xử lý..."
-                                    onClick={onConfirmPaymentClick}
-                                    disabled={isProcessing}
-                                    className="btn-next"
-                                    spinnerColor="#ffffff"
-                                >
-                                    XÁC NHẬN THANH TOÁN
-                                </LoadingButton>
+                                <div className="loading-spinner">
+                                    Đang kiểm tra đăng nhập...
+                                </div>
 
-                                <button className="btn-back" onClick={() => navigate(-1)}>
-                                    QUAY LẠI
-                                </button>
                             </div>
-                        </>
-                    )}
-                </section>
+                        )}
+
+                        {/* ==============================================
+                            PAYMENT CONTENT
+                        ============================================== */}
+
+                        {!isLoadingUser &&
+                            userInfo.user_id && (
+                                <>
+
+                                    {/* ====================================
+                                        COUPON
+                                    ==================================== */}
+
+                                    <div className="payment-card">
+
+                                        <div className="payment-section-heading">
+
+                                            <span className="payment-section-number">
+                                                01
+                                            </span>
+
+                                            <div>
+                                                <h3>
+                                                    MÃ GIẢM GIÁ
+                                                </h3>
+
+                                                <p>
+                                                    Nhập mã ưu đãi nếu bạn có
+                                                </p>
+                                            </div>
+
+                                        </div>
+
+                                        <div className="coupon-group">
+
+                                            <input
+                                                type="text"
+                                                placeholder="Nhập mã giảm giá..."
+                                                value={
+                                                    couponCode
+                                                }
+                                                onChange={e =>
+                                                    setCouponCode(
+                                                        e.target.value
+                                                    )
+                                                }
+                                                disabled={
+                                                    isApplyingCoupon
+                                                }
+                                            />
+
+                                            <LoadingButton
+                                                type="button"
+                                                loading={
+                                                    isApplyingCoupon
+                                                }
+                                                loadingText="Đang áp dụng..."
+                                                onClick={
+                                                    handleApplyCoupon
+                                                }
+                                                disabled={
+                                                    isApplyingCoupon
+                                                }
+                                                className="coupon-btn"
+                                                spinnerColor="#ffffff"
+                                            >
+                                                ÁP DỤNG
+                                            </LoadingButton>
+
+                                        </div>
+
+                                    </div>
+
+                                    {/* ====================================
+                                        CUSTOMER INFO
+                                    ==================================== */}
+
+                                    <div className="payment-card">
+
+                                        <div className="payment-section-heading">
+
+                                            <span className="payment-section-number">
+                                                02
+                                            </span>
+
+                                            <div>
+                                                <h3>
+                                                    THÔNG TIN NHẬN VÉ
+                                                </h3>
+
+                                                <p>
+                                                    Thông tin dùng để gửi vé điện tử
+                                                </p>
+                                            </div>
+
+                                        </div>
+
+                                        <div className="form-grid">
+
+                                            <div className="payment-field">
+                                                <label>
+                                                    HỌ VÀ TÊN
+                                                </label>
+
+                                                <input
+                                                    type="text"
+                                                    placeholder="Nhập họ và tên"
+                                                    value={
+                                                        userInfo.full_name
+                                                    }
+                                                    onChange={e =>
+                                                        setUserInfo({
+                                                            ...userInfo,
+                                                            full_name:
+                                                                e.target.value,
+                                                        })
+                                                    }
+                                                />
+                                            </div>
+
+                                            <div className="payment-field">
+                                                <label>
+                                                    SỐ ĐIỆN THOẠI
+                                                </label>
+
+                                                <input
+                                                    type="text"
+                                                    placeholder="Nhập số điện thoại"
+                                                    value={
+                                                        userInfo.phone
+                                                    }
+                                                    onChange={e =>
+                                                        setUserInfo({
+                                                            ...userInfo,
+                                                            phone:
+                                                                e.target.value,
+                                                        })
+                                                    }
+                                                />
+                                            </div>
+
+                                        </div>
+
+                                        <div className="payment-field">
+
+                                            <label>
+                                                EMAIL NHẬN VÉ
+                                            </label>
+
+                                            <input
+                                                type="email"
+                                                placeholder="Nhập email nhận vé"
+                                                value={
+                                                    userInfo.email
+                                                }
+                                                onChange={e =>
+                                                    setUserInfo({
+                                                        ...userInfo,
+                                                        email:
+                                                            e.target.value,
+                                                    })
+                                                }
+                                            />
+
+                                        </div>
+
+                                    </div>
+
+                                    {/* ====================================
+                                        PAYMENT METHOD
+                                    ==================================== */}
+
+                                    <div className="payment-card">
+
+                                        <div className="payment-section-heading">
+
+                                            <span className="payment-section-number">
+                                                03
+                                            </span>
+
+                                            <div>
+                                                <h3>
+                                                    HÌNH THỨC THANH TOÁN
+                                                </h3>
+
+                                                <p>
+                                                    Chọn phương thức thanh toán
+                                                </p>
+                                            </div>
+
+                                        </div>
+
+                                        <div className="payment-methods">
+
+                                            <label
+                                                className={`payment-method ${
+                                                    paymentMethod ===
+                                                    'bank'
+                                                        ? 'active'
+                                                        : ''
+                                                }`}
+                                            >
+
+                                                <input
+                                                    type="radio"
+                                                    checked={
+                                                        paymentMethod ===
+                                                        'bank'
+                                                    }
+                                                    onChange={() =>
+                                                        setPaymentMethod(
+                                                            'bank'
+                                                        )
+                                                    }
+                                                />
+
+                                                <div className="payment-method-info">
+
+                                                    <strong>
+                                                        VietQR
+                                                    </strong>
+
+                                                    <span>
+                                                        Thanh toán qua ngân hàng
+                                                    </span>
+
+                                                </div>
+
+                                                <span className="payment-method-check">
+                                                    {paymentMethod ===
+                                                        'bank' &&
+                                                        '✓'}
+                                                </span>
+
+                                            </label>
+
+                                            <label
+                                                className={`payment-method ${
+                                                    paymentMethod ===
+                                                    'momo'
+                                                        ? 'active'
+                                                        : ''
+                                                }`}
+                                            >
+
+                                                <input
+                                                    type="radio"
+                                                    checked={
+                                                        paymentMethod ===
+                                                        'momo'
+                                                    }
+                                                    onChange={() =>
+                                                        setPaymentMethod(
+                                                            'momo'
+                                                        )
+                                                    }
+                                                />
+
+                                                <div className="payment-method-info">
+
+                                                    <strong>
+                                                        MoMo
+                                                    </strong>
+
+                                                    <span>
+                                                        Thanh toán qua ví điện tử
+                                                    </span>
+
+                                                </div>
+
+                                                <span className="payment-method-check">
+                                                    {paymentMethod ===
+                                                        'momo' &&
+                                                        '✓'}
+                                                </span>
+
+                                            </label>
+
+                                        </div>
+
+                                        {/* ==============================
+                                            PAYMENT TOTAL
+                                        ============================== */}
+
+                                        <div className="payment-total">
+
+                                            <span>
+                                                TỔNG THANH TOÁN
+                                            </span>
+
+                                            <strong>
+                                                {grandTotal.toLocaleString(
+                                                    'vi-VN'
+                                                )}{' '}
+                                                ₫
+                                            </strong>
+
+                                        </div>
+
+                                        {/* ==============================
+                                            ACTIONS
+                                        ============================== */}
+
+                                        <div className="payment-actions">
+
+                                            <LoadingButton
+                                                type="button"
+                                                loading={
+                                                    isProcessing
+                                                }
+                                                loadingText="ĐANG XỬ LÝ..."
+                                                onClick={
+                                                    onConfirmPaymentClick
+                                                }
+                                                disabled={
+                                                    isProcessing
+                                                }
+                                                className="btn-next"
+                                                spinnerColor="#ffffff"
+                                            >
+                                                XÁC NHẬN THANH TOÁN
+                                            </LoadingButton>
+
+                                            <button
+                                                type="button"
+                                                className="btn-back"
+                                                onClick={() =>
+                                                    navigate(-1)
+                                                }
+                                            >
+                                                ← QUAY LẠI
+                                            </button>
+
+                                        </div>
+
+                                    </div>
+
+                                </>
+                            )}
+
+                    </main>
+
+                    {/* =================================================
+                        SIDEBAR - BÊN PHẢI
+                    ================================================= */}
+
+                    <aside className="payment-sidebar">
+
+                        <BookingSidebar
+                            movie={movie}
+                            showtimeDetail={
+                                showtimeDetail
+                            }
+                            selectedCinema={
+                                selectedCinema
+                            }
+                            selectedDate={
+                                selectedDate
+                            }
+                            selectedShowtime={
+                                selectedShowtime
+                            }
+                            selectedSeats={
+                                Array.isArray(
+                                    selectedSeats
+                                )
+                                    ? selectedSeats
+                                    : []
+                            }
+                            foods={
+                                Array.isArray(foods)
+                                    ? foods
+                                    : []
+                            }
+                            selectedFoods={
+                                Array.isArray(
+                                    selectedFoods
+                                )
+                                    ? selectedFoods
+                                    : []
+                            }
+                            totalTicketPrice={
+                                totalTicketPrice
+                            }
+                            totalFoodPrice={
+                                totalFoodPrice
+                            }
+                            grandTotal={
+                                grandTotal
+                            }
+                            isTimerActive={
+                                isTimerActive
+                            }
+                            onExpire={
+                                handleTimeExpire
+                            }
+                            showFoodSection={true}
+                        />
+
+                    </aside>
+
+                </div>
+
             </div>
+
         </div>
     );
 };

@@ -1,188 +1,580 @@
-/* =========================================
-   PAYMENT PAGE - SILVER EDITION (ĐỒNG BỘ INDEX.CSS)
-========================================= */
+/* ============================================================
+   PAYMENT PAGE
+   BƯỚC 4 - THANH TOÁN
+   MAX WIDTH: 1300PX
+   SILVER / BLACK PREMIUM
+   USING GLOBAL VARIABLES FROM INDEX.CSS
+   CHỈ CÓ 1 SCROLLBAR DUY NHẤT (BÊN NGOÀI)
+============================================================ */
+
+/* ============================================================
+   SCROLLBAR - DUY NHẤT 1 THANH CHO TOÀN TRANG
+============================================================ */
+
+/* Firefox */
+.payment-page {
+    scrollbar-width: auto;
+    scrollbar-color: var(--silver-primary) var(--bg-primary);
+}
+
+/* Chrome / Edge / Safari */
+.payment-page::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+}
+
+.payment-page::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+    border-radius: var(--radius-sm);
+}
+
+.payment-page::-webkit-scrollbar-thumb {
+    background: linear-gradient(
+        180deg,
+        var(--silver-dark) 0%,
+        var(--silver-primary) 50%,
+        var(--silver-dark) 100%
+    );
+    border: 3px solid var(--bg-primary);
+    border-radius: var(--radius-round);
+    background-clip: padding-box;
+    min-height: 60px;
+    min-width: 60px;
+    transition: background 0.2s ease;
+}
+
+.payment-page::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(
+        180deg,
+        var(--silver-primary) 0%,
+        var(--silver-light) 50%,
+        var(--silver-primary) 100%
+    );
+    background-clip: padding-box;
+}
+
+.payment-page::-webkit-scrollbar-thumb:active {
+    background: var(--silver-light);
+    background-clip: padding-box;
+}
+
+.payment-page::-webkit-scrollbar-corner {
+    background: var(--bg-primary);
+}
+
+/* ============================================================
+   LOẠI BỎ SCROLLBAR BÊN TRONG - CHỈ ẨN ELEMENT BÊN TRONG
+   KHÔNG ẢNH HƯỞNG ĐẾN SCROLLBAR CỦA TRANG
+============================================================ */
+
+/* CHỈ ẨN SCROLLBAR CỦA CÁC ELEMENT BÊN TRONG */
+.payment-card,
+.payment-methods,
+.payment-method,
+.form-grid,
+.coupon-group {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    overflow: visible !important;
+    max-height: none !important;
+}
+
+.payment-card::-webkit-scrollbar,
+.payment-methods::-webkit-scrollbar,
+.payment-method::-webkit-scrollbar,
+.form-grid::-webkit-scrollbar,
+.coupon-group::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* ============================================================
+   PAGE
+============================================================ */
+
+.payment-page {
+    width: 100%;
+    min-height: 100vh;
+    padding: var(--space-xl) var(--space-lg) var(--space-2xl);
+    box-sizing: border-box;
+    background:
+        radial-gradient(circle at 10% 5%, rgba(255,255,255,.035), transparent 28%),
+        radial-gradient(circle at 90% 10%, rgba(255,255,255,.025), transparent 30%),
+        var(--bg-primary);
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+/* ============================================================
+   CONTAINER
+============================================================ */
+
+.payment-container {
+    width: 100%;
+    max-width: 1300px;
+    margin: 0 auto;
+}
+
+/* ============================================================
+   BOOKING PROGRESS WRAPPER - CÓ KHOẢNG CÁCH PHÍA DƯỚI
+============================================================ */
+
+.payment-progress-wrapper {
+    width: 100%;
+    max-width: 1300px;
+    margin: 0 auto 24px;
+}
+
+/* ============================================================
+   LAYOUT - SIDEBAR BÊN PHẢI, MAIN BÊN TRÁI
+============================================================ */
+
+.payment-layout {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: var(--space-lg);
+    align-items: start;
+    margin-top: 0;
+}
+
+/* ============================================================
+   SIDEBAR - BÊN PHẢI
+============================================================ */
+
+.payment-sidebar {
+    min-width: 0;
+    grid-column: 2;
+    grid-row: 1;
+    position: sticky;
+    top: var(--space-lg);
+}
+
+/* ============================================================
+   MAIN - BÊN TRÁI
+============================================================ */
 
 .main-booking-area {
-    flex: 1;
+    min-width: 0;
+    grid-column: 1;
+    grid-row: 1;
     display: flex;
     flex-direction: column;
     gap: var(--space-lg);
 }
 
-/* =========================================
-   CARD
-========================================= */
+/* ============================================================
+   PAYMENT CARD
+============================================================ */
 
 .payment-card {
     position: relative;
     overflow: hidden;
-    background: var(--bg-card);
+    width: 100%;
+    box-sizing: border-box;
+    background:
+        linear-gradient(145deg, rgba(255,255,255,.045), rgba(255,255,255,.015));
     border: var(--border-premium);
     border-radius: var(--radius-xl);
     padding: var(--space-xl);
-    backdrop-filter: blur(18px);
-    box-shadow: var(--glass-shadow);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    box-shadow:
+        0 18px 55px rgba(0,0,0,.22),
+        inset 0 1px 0 rgba(255,255,255,.045);
+    overflow: visible !important;
+    max-height: none !important;
 }
 
-/* Glow bạc */
 .payment-card::before {
     content: '';
     position: absolute;
-    width: 220px;
-    height: 220px;
-    top: -90px;
-    right: -90px;
+    width: 260px;
+    height: 260px;
+    top: -130px;
+    right: -120px;
     border-radius: 50%;
-    background: rgba(232, 232, 232, 0.06);
-    filter: blur(80px);
+    background: rgba(232, 232, 232, 0.055);
+    filter: blur(85px);
     pointer-events: none;
 }
 
-.payment-card h3 {
-    margin: 0 0 var(--space-lg);
-    font-size: var(--font-size-base);
-    font-weight: var(--fw-extrabold);
-    color: var(--text-body);
-    letter-spacing: 1px;
+.payment-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(232,232,232,.55), transparent);
+    opacity: .65;
+    pointer-events: none;
 }
 
-/* =========================================
-   INPUTS
-========================================= */
+/* ============================================================
+   SECTION HEADING
+============================================================ */
+
+.payment-section-heading {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+}
+
+/* ============================================================
+   SECTION NUMBER
+============================================================ */
+
+.payment-section-number {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    background: var(--premium-gradient);
+    color: var(--bg-primary);
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-extrabold);
+    box-shadow: var(--btn-silver-shadow);
+}
+
+/* ============================================================
+   HEADING TEXT
+============================================================ */
+
+.payment-section-heading h3 {
+    margin: 0 0 4px;
+    color: var(--text-body);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-extrabold);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.payment-section-heading p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-small);
+    font-weight: var(--fw-medium);
+}
+
+/* ============================================================
+   INPUT BASE
+============================================================ */
 
 .payment-card input {
+    box-sizing: border-box;
     width: 100%;
     height: 56px;
     padding: 0 var(--space-md);
     border-radius: var(--radius-md);
     border: var(--border-premium);
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(255, 255, 255, 0.035);
     color: var(--text-body);
     font-size: var(--font-size-h6);
     font-weight: var(--fw-medium);
     outline: none;
-    transition: all var(--transition-normal);
+    transition:
+        border-color var(--transition-normal),
+        background var(--transition-normal),
+        box-shadow var(--transition-normal);
 }
 
 .payment-card input:focus {
     border-color: var(--silver-primary);
-    background: rgba(232, 232, 232, 0.05);
-    box-shadow: 0 0 0 4px rgba(232, 232, 232, 0.12);
+    background: rgba(232, 232, 232, 0.055);
+    box-shadow: 0 0 0 4px rgba(232, 232, 232, 0.10);
 }
 
 .payment-card input::placeholder {
     color: var(--text-muted);
 }
 
-/* =========================================
+.payment-card input:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* ============================================================
+   FIELD
+============================================================ */
+
+.payment-field {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.payment-field label {
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: var(--fw-extrabold);
+    letter-spacing: 0.9px;
+    text-transform: uppercase;
+}
+
+/* ============================================================
    FORM GRID
-========================================= */
+============================================================ */
 
 .form-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-md);
     margin-bottom: var(--space-md);
+    overflow: visible !important;
+    max-height: none !important;
 }
 
-/* =========================================
+/* ============================================================
    COUPON
-========================================= */
+============================================================ */
 
 .coupon-group {
-    display: flex;
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: var(--space-sm);
+    overflow: visible !important;
+    max-height: none !important;
 }
 
-.coupon-group button {
-    white-space: nowrap;
+.coupon-group input {
+    min-width: 0;
+}
+
+/* ============================================================
+   COUPON BUTTON
+============================================================ */
+
+.coupon-btn {
+    min-width: 145px;
     height: 56px;
     padding: 0 var(--space-lg);
     border: none;
     border-radius: var(--radius-md);
     background: var(--premium-gradient);
     color: var(--bg-primary);
-    font-size: var(--font-size-h6);
+    font-size: var(--font-size-small);
     font-weight: var(--fw-extrabold);
     cursor: pointer;
-    transition: all var(--transition-normal);
     box-shadow: var(--btn-silver-shadow);
+    transition:
+        transform var(--transition-normal),
+        box-shadow var(--transition-normal),
+        opacity var(--transition-normal);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.coupon-group button:hover {
+.coupon-btn:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: var(--card-shadow-hover);
+    box-shadow: 0 4px 28px rgba(159, 183, 210, 0.40);
 }
 
-/* =========================================
+.coupon-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ============================================================
    PAYMENT METHODS
-========================================= */
+============================================================ */
 
 .payment-methods {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
-    margin-bottom: var(--space-lg);
+    margin-bottom: var(--space-xl);
+    overflow: visible !important;
+    max-height: none !important;
 }
 
+/* ============================================================
+   PAYMENT METHOD
+============================================================ */
+
 .payment-method {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-md) var(--space-md);
+    width: 100%;
+    min-height: 76px;
+    box-sizing: border-box;
+    padding: var(--space-md) var(--space-lg);
     border-radius: var(--radius-lg);
     border: var(--border-premium);
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, 0.025);
     cursor: pointer;
-    transition: all var(--transition-normal);
+    transition:
+        transform var(--transition-normal),
+        border-color var(--transition-normal),
+        background var(--transition-normal),
+        box-shadow var(--transition-normal);
+    overflow: visible !important;
+    max-height: none !important;
 }
 
 .payment-method:hover {
-    background: rgba(232, 232, 232, 0.06);
-    border-color: rgba(232, 232, 232, 0.22);
     transform: translateY(-1px);
+    border-color: rgba(232, 232, 232, 0.25);
+    background: rgba(232, 232, 232, 0.055);
 }
 
-/* ACTIVE */
+/* ============================================================
+   ACTIVE PAYMENT METHOD
+============================================================ */
+
 .payment-method.active {
     border-color: var(--silver-primary);
-    background: linear-gradient(135deg, rgba(232, 232, 232, 0.14), rgba(200, 200, 200, 0.16));
-    box-shadow: 0 0 0 1px rgba(232, 232, 232, 0.2), var(--glass-shadow);
+    background:
+        linear-gradient(
+            135deg,
+            rgba(232, 232, 232, 0.12),
+            rgba(200, 200, 200, 0.055)
+        );
+    box-shadow:
+        0 0 0 1px rgba(232, 232, 232, 0.14),
+        var(--glass-shadow);
 }
+
+/* ============================================================
+   RADIO
+============================================================ */
 
 .payment-method input {
-    width: 18px;
-    height: 18px;
+    flex-shrink: 0;
+    width: 19px;
+    height: 19px;
+    margin: 0 14px 0 0;
     accent-color: var(--silver-primary);
+    cursor: pointer;
 }
 
-.payment-method span {
+/* ============================================================
+   PAYMENT INFO
+============================================================ */
+
+.payment-method-info {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.payment-method-info strong {
     color: var(--text-body);
-    font-weight: var(--fw-bold);
-    letter-spacing: 0.4px;
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-extrabold);
+    letter-spacing: 0.3px;
 }
 
-/* =========================================
-   BUTTONS
-========================================= */
+.payment-method-info span {
+    color: var(--text-muted);
+    font-size: var(--font-size-small);
+    font-weight: var(--fw-medium);
+}
+
+/* ============================================================
+   PAYMENT CHECK
+============================================================ */
+
+.payment-method-check {
+    margin-left: auto;
+    width: 25px;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--bg-primary);
+    background: var(--silver-primary);
+    font-size: 13px;
+    font-weight: var(--fw-extrabold);
+}
+
+/* ============================================================
+   TOTAL
+============================================================ */
+
+.payment-total {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    padding: var(--space-lg) 0;
+    margin-bottom: var(--space-lg);
+    border-top: var(--border-premium);
+    border-bottom: var(--border-premium);
+}
+
+.payment-total span {
+    color: var(--text-secondary);
+    font-size: var(--font-size-small);
+    font-weight: var(--fw-extrabold);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+.payment-total strong {
+    color: var(--silver-primary);
+    font-size: var(--font-size-h4);
+    font-weight: var(--fw-extrabold);
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+/* ============================================================
+   ACTIONS
+============================================================ */
+
+.payment-actions {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+/* ============================================================
+   NEXT BUTTON
+============================================================ */
 
 .btn-next {
     width: 100%;
-    height: 58px;
+    min-height: 58px;
     border: none;
     border-radius: var(--radius-lg);
     background: var(--premium-gradient);
     color: var(--bg-primary);
-    font-size: var(--font-size-h6);
+    font-size: var(--font-size-small);
     font-weight: var(--fw-extrabold);
+    letter-spacing: 0.7px;
     cursor: pointer;
-    transition: all var(--transition-normal);
     box-shadow: var(--btn-silver-shadow);
+    transition:
+        transform var(--transition-normal),
+        box-shadow var(--transition-normal),
+        opacity var(--transition-normal);
+    text-transform: uppercase;
 }
 
-.btn-next:hover {
+.btn-next:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: var(--card-shadow-hover);
+    box-shadow: 0 4px 28px rgba(159, 183, 210, 0.40);
 }
 
 .btn-next:disabled {
@@ -191,55 +583,136 @@
     transform: none;
 }
 
+/* ============================================================
+   BACK BUTTON
+============================================================ */
+
 .btn-back {
     width: 100%;
-    height: 54px;
-    margin-top: var(--space-sm);
+    min-height: 52px;
     border-radius: var(--radius-md);
     border: var(--border-premium);
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(255, 255, 255, 0.035);
     color: var(--text-secondary);
+    font-size: var(--font-size-small);
     font-weight: var(--fw-bold);
+    letter-spacing: 0.4px;
     cursor: pointer;
-    transition: all var(--transition-normal);
+    transition:
+        background var(--transition-normal),
+        border-color var(--transition-normal),
+        color var(--transition-normal),
+        transform var(--transition-normal);
 }
 
 .btn-back:hover {
-    background: rgba(232, 232, 232, 0.06);
+    background: rgba(232, 232, 232, 0.055);
     border-color: var(--silver-primary);
     color: var(--text-body);
+    transform: translateY(-1px);
 }
 
-/* =========================================
-   RESPONSIVE
-========================================= */
+/* ============================================================
+   LOADING
+============================================================ */
 
-/* --- 1200px --- */
+.loading-card {
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.loading-spinner {
+    position: relative;
+    z-index: 1;
+    padding: var(--space-lg);
+    text-align: center;
+    color: var(--text-muted);
+    font-size: var(--font-size-small);
+}
+
+/* ============================================================
+   RESPONSIVE - 1200PX
+============================================================ */
+
 @media (max-width: 1200px) {
+    .payment-page {
+        padding-left: var(--space-md);
+        padding-right: var(--space-md);
+    }
+
+    .payment-layout {
+        grid-template-columns: minmax(0, 1fr) 290px;
+        gap: var(--space-lg);
+    }
+
     .payment-card {
         padding: var(--space-lg);
     }
 }
 
-/* --- 992px --- */
+/* ============================================================
+   RESPONSIVE - 992PX
+============================================================ */
+
 @media (max-width: 992px) {
+    .payment-layout {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-lg);
+    }
+
     .main-booking-area {
         width: 100%;
+        order: 2;
+    }
+
+    .payment-sidebar {
+        width: 100%;
+        order: 1;
+        position: static;
     }
 }
 
-/* --- 768px --- */
+/* ============================================================
+   RESPONSIVE - 768PX
+============================================================ */
+
 @media (max-width: 768px) {
+    .payment-page {
+        padding:
+            var(--space-lg)
+            var(--space-md)
+            var(--space-xl);
+    }
+
+    .payment-progress-wrapper {
+        margin-bottom: 16px;
+    }
+
+    .payment-section-heading {
+        gap: var(--space-sm);
+        margin-bottom: var(--space-lg);
+    }
+
+    .payment-section-number {
+        width: 43px;
+        height: 43px;
+        font-size: 13px;
+    }
+
     .form-grid {
         grid-template-columns: 1fr;
     }
 
     .coupon-group {
-        flex-direction: column;
+        grid-template-columns: 1fr;
     }
 
-    .coupon-group button {
+    .coupon-btn {
         width: 100%;
+        min-width: 0;
     }
 
     .payment-card {
@@ -247,30 +720,118 @@
         border-radius: var(--radius-lg);
     }
 
-    .payment-card h3 {
-        font-size: var(--font-size-base);
+    .payment-method {
+        padding: var(--space-md);
+        min-height: 68px;
     }
 }
 
-/* --- 480px --- */
+/* ============================================================
+   RESPONSIVE - 480PX
+============================================================ */
+
 @media (max-width: 480px) {
+    .payment-page {
+        padding:
+            var(--space-md)
+            var(--space-sm)
+            var(--space-lg);
+    }
+
+    .payment-progress-wrapper {
+        margin-bottom: 12px;
+    }
+
     .payment-card {
         padding: var(--space-md);
         border-radius: var(--radius-md);
     }
 
-    .payment-card input {
-        height: 52px;
-        font-size: var(--font-size-h6);
+    .payment-section-heading {
+        align-items: flex-start;
     }
 
-    .btn-next,
-    .btn-back {
-        height: 50px;
-        font-size: var(--font-size-h6);
+    .payment-section-number {
+        width: 38px;
+        height: 38px;
+        font-size: 12px;
+    }
+
+    .payment-section-heading h3 {
+        font-size: var(--font-size-small);
+        letter-spacing: 0.6px;
+    }
+
+    .payment-section-heading p {
+        font-size: 11px;
+    }
+
+    .payment-card input {
+        height: 52px;
+        font-size: var(--font-size-small);
+        padding: 0 var(--space-sm);
     }
 
     .payment-method {
-        padding: var(--space-md);
+        min-height: 62px;
+        padding: var(--space-sm) var(--space-md);
+    }
+
+    .payment-method-info strong {
+        font-size: var(--font-size-small);
+    }
+
+    .payment-method-info span {
+        font-size: 11px;
+    }
+
+    .payment-total {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: var(--space-sm);
+    }
+
+    .payment-total strong {
+        font-size: var(--font-size-h5);
+    }
+
+    .btn-next {
+        min-height: 52px;
+        font-size: 11px;
+    }
+
+    .btn-back {
+        min-height: 48px;
+        font-size: 11px;
+    }
+}
+
+/* ============================================================
+   REDUCE MOTION
+============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+    .payment-card,
+    .payment-method,
+    .coupon-btn,
+    .btn-next,
+    .btn-back {
+        transition: none;
+    }
+
+    .payment-method:hover {
+        transform: none;
+    }
+
+    .coupon-btn:hover:not(:disabled) {
+        transform: none;
+    }
+
+    .btn-next:hover:not(:disabled) {
+        transform: none;
+    }
+
+    .btn-back:hover {
+        transform: none;
     }
 }

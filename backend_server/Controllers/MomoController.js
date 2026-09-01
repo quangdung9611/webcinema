@@ -1,52 +1,184 @@
 const MomoService = require("../Services/MomoService");
-const db = require("../Config/db");
+const { PURPOSE } = require("../Services/OtpService");
 
-exports.createPayment = async (req, res) => {
-  try {
-    const { bookingId, amount } = req.body;
-    const result = await MomoService.createPayment(bookingId, amount);
-    return res.json(result);
-  } catch (error) {
-    console.error("❌ createPayment error:", error);
-    return res.status(500).json({ success: false, message: "Không thể tạo giao dịch MoMo" });
-  }
+/*=========================================================
+    PROCESS ORDER - TẠO TEMP BOOKING + QR MOMO
+=========================================================*/
+exports.processOrder = async (req, res) => {
+    try {
+        const result = await MomoService.processOrder(req.body);
+        return res.status(200).json({
+            success: true,
+            tempBookingId: result.tempBookingId,
+            momoQR: result.momoQR,
+            qrCodeUrl: result.qrCodeUrl,
+            expiresIn: result.expiresIn,
+            message: "Đã tạo phiên đặt vé và QR MoMo. Vui lòng xác thực OTP để hoàn tất."
+        });
+    } catch (error) {
+        console.error("❌ processOrder error:", error);
+        return res.status(500).json({
+            success: false,
+            message: error.message || "Lỗi máy chủ"
+        });
+    }
 };
 
-exports.confirmMomoFast = async (req, res) => {
-  const connection = await db.getConnection();
-  try {
-    const { bookingId } = req.body;
-    await connection.beginTransaction();
-    await MomoService.confirmMomoFast(connection, bookingId);
-    await connection.commit();
-    return res.json({ success: true, message: "Thanh toán thành công" });
-  } catch (error) {
-    await connection.rollback();
-    console.error("❌ confirmMomoFast error:", error);
-    return res.status(500).json({ success: false, message: error.message });
-  } finally {
-    connection.release();
-  }
+/*=========================================================
+    SEND OTP
+=========================================================*/
+exports.sendOTP = async (req, res) => {
+    try {
+        const { email, tempBookingId } = req.body;
+        if (!email || !tempBookingId) {
+            return res.status(400).json({
+                success: false,
+                message: "Thiếu email hoặc tempBookingId"
+            });
+        }
+
+        const result = await MomoService.sendPaymentOTP(email, tempBookingId);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("❌ sendOTP error:", error);
+        const statusCode = error.statusCode || 500;
+        return res.status(statusCode).json({
+            success: false,
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
+        });
+    }
 };
 
+/*=========================================================
+    VERIFY OTP + COMMIT
+=========================================================*/
+exports.verifyOTP = async (req, res) => {
+    try {
+        const { email, otp, tempBookingId } = req.body;
+
+        if (!email || !otp || !tempBookingId) {
+            return res.status(400).json({
+                success: false,
+                message: "Thiếu email, otp hoặc tempBookingId"
+            });
+        }
+
+        const result = await MomoService.verifyOTPAndCommit(email, otp, tempBookingId);
+        return res.status(200).json(result);
+
+    } catch (error) {
+        console.error("❌ verifyOTP error:", error);
+
+        // Xử lý lỗi OTP lock
+        if (error.code === 'OTP_LOCKED' || error.message?.includes('khóa')) {
+            return res.status(429).json({
+                success: false,
+                message: error.message || "OTP bị khóa do nhập sai quá nhiều lần",
+                code: 'OTP_LOCKED',
+                data: error.data || { lockDuration: 300, remainingSeconds: 300 }
+            });
+        }
+
+        const statusCode = error.statusCode || 500;
+        return res.status(statusCode).json({
+            success: false,
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
+        });
+    }
+};
+
+/*=========================================================
+    RESEND OTP
+=========================================================*/
+exports.resendOtp = async (req, res) => {
+    try {
+        const { email, tempBookingId } = req.body;
+
+        if (!email || !tempBookingId) {
+            return res.status(400).json({
+                success: false,
+                message: "Thiếu email hoặc tempBookingId"
+            });
+        }
+
+        const result = await MomoService.resendOtpPayment(email, tempBookingId);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("❌ resendOtp error:", error);
+        const statusCode = error.statusCode || 500;
+        return res.status(statusCode).json({
+            success: false,
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
+        });
+    }
+};
+
+/*=========================================================
+    CHECK TTL
+=========================================================*/
+exports.checkTTL = async (req, res) => {
+    try {
+        const { tempBookingId } = req.params;
+        if (!tempBookingId) {
+            return res.status(400).json({
+                success: false,
+                message: "Thiếu tempBookingId"
+            });
+        }
+
+        const result = await MomoService.checkTTL(tempBookingId);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("❌ checkTTL error:", error);
+        const statusCode = error.statusCode || 500;
+        return res.status(statusCode).json({
+            success: false,
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
+        });
+    }
+};
+
+/*=========================================================
+    CANCEL BOOKING
+=========================================================*/
+exports.cancelBooking = async (req, res) => {
+    try {
+        const { tempBookingId } = req.body;
+        if (!tempBookingId) {
+            return res.status(400).json({
+                success: false,
+                message: "Thiếu tempBookingId"
+            });
+        }
+
+        const result = await MomoService.cancelBooking(tempBookingId);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("❌ cancelBooking error:", error);
+        return res.status(500).json({
+            success: false,
+            message: error.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
+    MOMO CALLBACK (TỪ MOMO)
+=========================================================*/
 exports.callback = async (req, res) => {
-  const { orderId, resultCode } = req.body;
-
-  if (resultCode !== 0) {
-    return res.status(204).send();
-  }
-
-  const connection = await db.getConnection();
-  try {
-    await connection.beginTransaction();
-    await MomoService.completeMomoPayment(connection, orderId);
-    await connection.commit();
-  } catch (error) {
-    await connection.rollback();
-    console.error("❌ MOMO CALLBACK ERROR:", error);
-  } finally {
-    connection.release();
-  }
-
-  return res.status(204).send();
+    try {
+        const handled = await MomoService.handleCallback(req.body);
+        if (handled) {
+            console.log("✅ MoMo callback processed successfully");
+        }
+        // Luôn trả về 204 cho MoMo
+        return res.status(204).send();
+    } catch (error) {
+        console.error("❌ MoMo callback error:", error);
+        return res.status(204).send();
+    }
 };

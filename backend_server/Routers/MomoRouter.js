@@ -1,15 +1,26 @@
 const express = require('express');
 const router = express.Router();
-// Dùng đường dẫn tương đối để lùi 1 cấp ra ngoài folder Routers rồi vào Controllers
-const MomoController = require('../Controllers/MomoController'); 
+const MomoController = require('../Controllers/MomoController');
 
-// 1. Route tạo QR (MoMo thật)
-router.post('/create', MomoController.createPayment);
+// 1. Tạo đơn hàng tạm + QR MoMo
+router.post('/process', MomoController.processOrder);
 
-// 2. Route xác nhận "thần tốc" để GỬI EMAIL (Frontend giả lập gọi cái này)
-router.post('/confirm-fast', MomoController.confirmMomoFast);
+// 2. Gửi OTP
+router.post('/send-otp', MomoController.sendOTP);
 
-// 3. Route nhận tín hiệu từ MoMo thật
+// 3. Xác thực OTP + Commit DB
+router.post('/verify-otp', MomoController.verifyOTP);
+
+// 4. Gửi lại OTP
+router.post('/resend-otp', MomoController.resendOtp);
+
+// 5. Check TTL
+router.get('/check-ttl/:tempBookingId', MomoController.checkTTL);
+
+// 6. Hủy phiên đặt vé
+router.post('/cancel', MomoController.cancelBooking);
+
+// 7. Callback từ MoMo (GIỮ NGUYÊN)
 router.post('/callback', MomoController.callback);
 
 module.exports = router;
