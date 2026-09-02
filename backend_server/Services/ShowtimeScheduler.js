@@ -1,42 +1,24 @@
 /**
  * ============================================================
- * SHOWTIME SCHEDULER
+ * SHOWTIME SCHEDULER V6 - PHÂN BỔ HỢP LÝ
  * ============================================================
  *
- * NHIỆM VỤ:
- * - Tự động tính lịch chiếu.
- * - 1 phim.
- * - 1 rạp.
- * - Nhiều phòng.
- * - Nhiều ngày.
- * - Khung giờ mặc định: 09:00 -> 24:00.
- * - Tự tính slot theo duration phim.
- * - Có buffer giữa 2 suất.
- * - Có mức phân bổ:
- *      low
- *      medium
- *      high
- *
- * QUAN TRỌNG:
- * - File này KHÔNG truy cập database.
- * - File này KHÔNG INSERT database.
- * - File này chỉ tạo lịch đề xuất.
- *
- * FLOW:
- *
- * ShowtimeService
- *       ↓
- * ShowtimeScheduler
- *       ↓
- * lịch đề xuất
- *       ↓
- * ShowtimeRepository
- *       ↓
- * kiểm tra lịch hiện tại trong DB
- *       ↓
- * loại suất bị trùng
- *       ↓
- * INSERT suất hợp lệ
+ * LOGIC PHÂN BỔ:
+ * 
+ * 1. PHIM HOT:
+ *    - Tần suất: 30 phút/suất
+ *    - Số phòng: Tất cả phòng
+ *    - Số suất/ngày: Tối đa
+ * 
+ * 2. PHIM NORMAL:
+ *    - Tần suất: 45 phút/suất
+ *    - Số phòng: 50% số phòng (tối thiểu 1)
+ *    - Số suất/ngày: Vừa phải (khoảng 8-12 suất)
+ * 
+ * 3. PHIM COLD:
+ *    - Tần suất: 60 phút/suất
+ *    - Số phòng: 1 phòng duy nhất
+ *    - Số suất/ngày: Ít (khoảng 4-6 suất)
  *
  * ============================================================
  */
@@ -48,203 +30,33 @@ class ShowtimeScheduler {
     ======================================================== */
 
     static DEFAULT_CONFIG = {
-        startTime: "09:00",
-        endTime: "24:00",
+        // Khung giờ
+        weekdayStart: "08:00",
+        weekdayEnd: "23:30",
+        weekendStart: "08:00",
+        weekendEnd: "24:00",
 
-        // Khoảng nghỉ tối thiểu giữa 2 suất
+        // Buffer giữa các suất (phút)
         bufferMinutes: 15,
 
-        // Mức phân bổ mặc định
-        distributionLevel: "medium"
+        // Tần suất theo độ hot
+        hotInterval: 30,
+        normalInterval: 45,
+        coldInterval: 60,
+
+        // Số phòng tối đa cho từng loại
+        hotMaxRooms: 999,
+        normalMaxRooms: 2,
+        coldMaxRooms: 1,
+
+        // Số suất tối thiểu/tối đa mỗi ngày
+        minSlotsPerDay: 3,
+        maxSlotsPerDay: 20,
+
+        // Ngưỡng xác định độ hot
+        hotThreshold: 100,
+        normalThreshold: 50
     };
-
-
-    /* ========================================================
-        DISTRIBUTION RATIO
-    ========================================================
-
-        Đây là TỶ LỆ sử dụng slot khả dụng.
-
-        low:
-            khoảng 40%
-
-        medium:
-            khoảng 70%
-
-        high:
-            khoảng 90%
-
-        Không phải số suất cố định.
-
-    ======================================================== */
-
-    static DISTRIBUTION_RATIO = {
-        low: 0.40,
-        medium: 0.70,
-        high: 0.90
-    };
-
-
-    /* ========================================================
-        NORMALIZE CONFIG
-    ======================================================== */
-
-    static normalizeConfig(config = {}) {
-
-        const merged = {
-            ...this.DEFAULT_CONFIG,
-            ...config
-        };
-
-        const startTime = this.normalizeTime(
-            merged.startTime
-        );
-
-        const endTime = this.normalizeTime(
-            merged.endTime
-        );
-
-        const startMinutes =
-            this.timeToMinutes(startTime);
-
-        const endMinutes =
-            endTime === "24:00"
-                ? 24 * 60
-                : this.timeToMinutes(endTime);
-
-        let bufferMinutes = Number.parseInt(
-            merged.bufferMinutes,
-            10
-        );
-
-        if (
-            !Number.isFinite(bufferMinutes) ||
-            bufferMinutes < 0
-        ) {
-            bufferMinutes =
-                this.DEFAULT_CONFIG.bufferMinutes;
-        }
-
-        let distributionLevel = String(
-            merged.distributionLevel || "medium"
-        )
-            .trim()
-            .toLowerCase();
-
-        if (
-            !Object.prototype.hasOwnProperty.call(
-                this.DISTRIBUTION_RATIO,
-                distributionLevel
-            )
-        ) {
-            distributionLevel = "medium";
-        }
-
-        if (endMinutes <= startMinutes) {
-            throw new Error(
-                "Khung giờ chiếu không hợp lệ: giờ kết thúc phải lớn hơn giờ bắt đầu."
-            );
-        }
-
-        return {
-            startTime,
-            endTime,
-            startMinutes,
-            endMinutes,
-            bufferMinutes,
-            distributionLevel
-        };
-    }
-
-
-    /* ========================================================
-        NORMALIZE TIME
-    ======================================================== */
-
-    static normalizeTime(value) {
-
-        if (!value) {
-            return "00:00";
-        }
-
-        const text = String(value).trim();
-
-        if (text === "24:00") {
-            return "24:00";
-        }
-
-        const match = text.match(
-            /^(\d{1,2}):(\d{2})$/
-        );
-
-        if (!match) {
-            throw new Error(
-                `Thời gian không hợp lệ: ${value}`
-            );
-        }
-
-        const hour = Number(match[1]);
-        const minute = Number(match[2]);
-
-        if (
-            hour < 0 ||
-            hour > 23 ||
-            minute < 0 ||
-            minute > 59
-        ) {
-            throw new Error(
-                `Thời gian không hợp lệ: ${value}`
-            );
-        }
-
-        return (
-            `${String(hour).padStart(2, "0")}:` +
-            `${String(minute).padStart(2, "0")}`
-        );
-    }
-
-
-    /* ========================================================
-        TIME -> MINUTES
-    ======================================================== */
-
-    static timeToMinutes(time) {
-
-        if (time === "24:00") {
-            return 24 * 60;
-        }
-
-        const [hour, minute] =
-            String(time)
-                .split(":")
-                .map(Number);
-
-        return hour * 60 + minute;
-    }
-
-
-    /* ========================================================
-        MINUTES -> TIME
-    ======================================================== */
-
-    static minutesToTime(totalMinutes) {
-
-        if (totalMinutes === 24 * 60) {
-            return "24:00";
-        }
-
-        const hour = Math.floor(
-            totalMinutes / 60
-        );
-
-        const minute =
-            totalMinutes % 60;
-
-        return (
-            `${String(hour).padStart(2, "0")}:` +
-            `${String(minute).padStart(2, "0")}`
-        );
-    }
 
 
     /* ========================================================
@@ -252,318 +64,273 @@ class ShowtimeScheduler {
     ======================================================== */
 
     static parseDate(date) {
-
-        if (!date) {
-            throw new Error(
-                "Thiếu ngày."
-            );
-        }
-
-        const value =
-            String(date).trim();
-
-        const match =
-            value.match(
-                /^(\d{4})-(\d{2})-(\d{2})$/
-            );
-
-        if (!match) {
-            throw new Error(
-                `Ngày không hợp lệ: ${date}`
-            );
-        }
+        if (!date) throw new Error("Thiếu ngày.");
+        const value = String(date).trim();
+        const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!match) throw new Error(`Ngày không hợp lệ: ${date}`);
 
         const year = Number(match[1]);
         const month = Number(match[2]);
         const day = Number(match[3]);
 
-        const result =
-            new Date(
-                Date.UTC(
-                    year,
-                    month - 1,
-                    day
-                )
-            );
-
+        const result = new Date(Date.UTC(year, month - 1, day));
         if (
             result.getUTCFullYear() !== year ||
             result.getUTCMonth() !== month - 1 ||
             result.getUTCDate() !== day
         ) {
-            throw new Error(
-                `Ngày không hợp lệ: ${date}`
-            );
+            throw new Error(`Ngày không hợp lệ: ${date}`);
         }
 
         return result;
     }
-
 
     static formatDate(date) {
-
         return (
             `${date.getUTCFullYear()}-` +
-            `${String(
-                date.getUTCMonth() + 1
-            ).padStart(2, "0")}-` +
-            `${String(
-                date.getUTCDate()
-            ).padStart(2, "0")}`
+            `${String(date.getUTCMonth() + 1).padStart(2, "0")}-` +
+            `${String(date.getUTCDate()).padStart(2, "0")}`
         );
     }
 
-
     static addDays(date, days) {
-
-        const result =
-            new Date(date);
-
-        result.setUTCDate(
-            result.getUTCDate() + days
-        );
-
+        const result = new Date(date);
+        result.setUTCDate(result.getUTCDate() + days);
         return result;
     }
 
+    static isWeekend(date) {
+        const day = new Date(date).getUTCDay();
+        return day === 0 || day === 6;
+    }
+
 
     /* ========================================================
-        BUILD DATETIME
+        TIME HELPERS
     ======================================================== */
 
-    static buildDateTime(
+    static timeToMinutes(time) {
+        if (time === "24:00") return 24 * 60;
+        const [hour, minute] = String(time).split(":").map(Number);
+        return hour * 60 + minute;
+    }
+
+    static minutesToTime(totalMinutes) {
+        if (totalMinutes === 24 * 60) return "24:00";
+        const hour = Math.floor(totalMinutes / 60);
+        const minute = totalMinutes % 60;
+        return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+    }
+
+    static buildDateTime(date, minutes) {
+        return `${date} ${this.minutesToTime(minutes)}`;
+    }
+
+
+    /* ========================================================
+        LẤY KHUNG GIỜ THEO NGÀY
+    ======================================================== */
+
+    static getTimeRangeForDate(date, config) {
+        const isWeekend = this.isWeekend(date);
+        const startTime = isWeekend ? config.weekendStart : config.weekdayStart;
+        const endTime = isWeekend ? config.weekendEnd : config.weekdayEnd;
+
+        return {
+            startTime,
+            endTime,
+            startMinutes: this.timeToMinutes(startTime),
+            endMinutes: this.timeToMinutes(endTime),
+            isWeekend
+        };
+    }
+
+
+    /* ========================================================
+        XÁC ĐỊNH ĐỘ HOT CỦA PHIM
+    ======================================================== */
+
+    static getMovieHotLevel(movie, stats = {}) {
+        const ticketSold = stats[movie.movie_id]?.ticketSold || 0;
+        const viewCount = stats[movie.movie_id]?.viewCount || 0;
+        const rating = stats[movie.movie_id]?.rating || 0;
+
+        let hotScore = 0;
+        hotScore += ticketSold * 0.5;
+        hotScore += viewCount * 0.3;
+        hotScore += rating * 10;
+
+        if (hotScore >= this.DEFAULT_CONFIG.hotThreshold) {
+            return "hot";
+        } else if (hotScore >= this.DEFAULT_CONFIG.normalThreshold) {
+            return "normal";
+        } else {
+            return "cold";
+        }
+    }
+
+
+    /* ========================================================
+        LẤY INTERVAL THEO ĐỘ HOT
+    ======================================================== */
+
+    static getInterval(movie, stats = {}) {
+        const hotLevel = this.getMovieHotLevel(movie, stats);
+        switch (hotLevel) {
+            case "hot": return this.DEFAULT_CONFIG.hotInterval;
+            case "normal": return this.DEFAULT_CONFIG.normalInterval;
+            case "cold": return this.DEFAULT_CONFIG.coldInterval;
+            default: return this.DEFAULT_CONFIG.normalInterval;
+        }
+    }
+
+
+    /* ========================================================
+        LẤY SỐ PHÒNG TỐI ĐA CHO TỪNG LOẠI PHIM
+    ======================================================== */
+
+    static getMaxRoomsForMovie(movie, stats = {}, totalRooms = 1) {
+        const hotLevel = this.getMovieHotLevel(movie, stats);
+        switch (hotLevel) {
+            case "hot":
+                return Math.min(totalRooms, this.DEFAULT_CONFIG.hotMaxRooms);
+            case "normal":
+                return Math.min(
+                    Math.max(1, Math.ceil(totalRooms / 2)),
+                    this.DEFAULT_CONFIG.normalMaxRooms
+                );
+            case "cold":
+                return 1;
+            default:
+                return 1;
+        }
+    }
+
+
+    /* ========================================================
+        TÍNH SỐ SUẤT HỢP LÝ CHO 1 PHIM TRONG 1 NGÀY
+    ======================================================== */
+
+    static calculateOptimalSlotsPerDay(date, movie, config) {
+        const timeRange = this.getTimeRangeForDate(date, config);
+        const duration = movie.duration;
+        const interval = this.getInterval(movie);
+        const buffer = config.bufferMinutes;
+
+        const availableMinutes = timeRange.endMinutes - timeRange.startMinutes;
+        const slotDuration = duration + buffer;
+        const maxSlots = Math.floor(availableMinutes / slotDuration);
+
+        let optimalSlots;
+        const hotLevel = this.getMovieHotLevel(movie);
+
+        switch (hotLevel) {
+            case "hot":
+                optimalSlots = Math.min(maxSlots, 15);
+                break;
+            case "normal":
+                optimalSlots = Math.min(Math.max(6, Math.floor(maxSlots * 0.5)), 12);
+                break;
+            case "cold":
+                optimalSlots = Math.min(Math.max(3, Math.floor(maxSlots * 0.3)), 6);
+                break;
+            default:
+                optimalSlots = Math.min(maxSlots, 8);
+        }
+
+        return Math.max(3, Math.min(optimalSlots, config.maxSlotsPerDay));
+    }
+
+
+    /* ========================================================
+        TẠO SUẤT CHIẾU CHO 1 PHIM - PHÂN BỔ HỢP LÝ
+    ======================================================== */
+
+    static generateSlotsForMovie({
         date,
-        minutes
-    ) {
-
-        return (
-            `${date} ` +
-            this.minutesToTime(minutes)
-        );
-    }
-
-
-    /* ========================================================
-        DATETIME -> MINUTES
-    ======================================================== */
-
-    static dateTimeToMinutes(value) {
-
-        if (!value) {
-            return null;
-        }
-
-        const text =
-            String(value)
-                .trim()
-                .replace("T", " ");
-
-        const parts =
-            text.split(" ");
-
-        if (parts.length < 2) {
-            return null;
-        }
-
-        const time =
-            parts[1].substring(0, 5);
-
-        return this.timeToMinutes(time);
-    }
-
-
-    /* ========================================================
-        CALCULATE DAILY CAPACITY
-    ========================================================
-
-        Ví dụ:
-
-        09:00 -> 24:00
-        duration = 120
-        buffer = 15
-
-        Mỗi chu kỳ:
-
-            120 phút phim
-            +
-            15 phút buffer
-
-            = 135 phút
-
-    ======================================================== */
-
-    static calculateDailyCapacity(
-        duration,
-        config
-    ) {
-
-        duration =
-            Number.parseInt(
-                duration,
-                10
-            );
-
-        if (
-            !Number.isFinite(duration) ||
-            duration <= 0
-        ) {
-            throw new Error(
-                "Duration phim không hợp lệ."
-            );
-        }
-
-        const availableMinutes =
-            config.endMinutes -
-            config.startMinutes;
-
-        if (availableMinutes <= 0) {
-            throw new Error(
-                "Khung giờ chiếu không hợp lệ."
-            );
-        }
-
-        /*
-         * Suất cuối cùng chỉ cần:
-         *
-         * start + duration <= end
-         *
-         * Buffer chỉ dùng để tính
-         * thời điểm bắt đầu suất tiếp theo.
-         */
-
-        let count = 0;
-        let current =
-            config.startMinutes;
-
-        while (
-            current + duration <=
-            config.endMinutes
-        ) {
-            count++;
-
-            current +=
-                duration +
-                config.bufferMinutes;
-        }
-
-        return count;
-    }
-
-
-    /* ========================================================
-        CALCULATE TARGET COUNT
-    ======================================================== */
-
-    static calculateTargetCount(
-        capacity,
-        distributionLevel
-    ) {
-
-        if (capacity <= 0) {
-            return 0;
-        }
-
-        const ratio =
-            this.DISTRIBUTION_RATIO[
-                distributionLevel
-            ] ?? 0.70;
-
-        /*
-         * Luôn có ít nhất 1 suất
-         * nếu phòng có thể chứa suất.
-         */
-
-        return Math.max(
-            1,
-            Math.floor(
-                capacity * ratio
-            )
-        );
-    }
-
-
-    /* ========================================================
-        GENERATE ALL CANDIDATE SLOTS
-    ========================================================
-
-        Ví dụ:
-
-        Phim 120 phút
-        buffer 15
-
-        09:00
-        11:15
-        13:30
-        15:45
-        18:00
-        ...
-
-    ======================================================== */
-
-    static generateCandidateSlots({
-        date,
-        duration,
+        movie,
+        rooms,
+        existingShowtimes = [],
+        scheduledSlots = [],
         config
     }) {
-
-        duration =
-            Number.parseInt(
-                duration,
-                10
-            );
-
-        if (
-            !Number.isFinite(duration) ||
-            duration <= 0
-        ) {
-            throw new Error(
-                "Duration phim không hợp lệ."
-            );
-        }
+        const timeRange = this.getTimeRangeForDate(date, config);
+        const duration = movie.duration;
+        const interval = this.getInterval(movie);
+        const buffer = config.bufferMinutes;
 
         const slots = [];
 
-        let current =
-            config.startMinutes;
+        const allExisting = [
+            ...existingShowtimes.filter(s => s.date === date),
+            ...scheduledSlots.filter(s => s.date === date)
+        ];
+
+        const movieSlotsToday = allExisting.filter(
+            s => s.movie_id === movie.movie_id
+        ).length;
+
+        const targetSlots = this.calculateOptimalSlotsPerDay(date, movie, config);
+
+        if (movieSlotsToday >= targetSlots) {
+            return slots;
+        }
+
+        const maxRooms = this.getMaxRoomsForMovie(movie, {}, rooms.length);
+        const allowedRooms = rooms.slice(0, maxRooms);
+
+        let currentTime;
+        const lastSlot = allExisting
+            .filter(s => s.movie_id === movie.movie_id)
+            .sort((a, b) => b.startMinutes - a.startMinutes)[0];
+
+        if (lastSlot) {
+            currentTime = lastSlot.startMinutes + duration + buffer;
+        } else {
+            currentTime = Math.max(
+                timeRange.startMinutes,
+                this.timeToMinutes("08:00")
+            );
+        }
+
+        let createdSlots = 0;
+        let roomIndex = 0;
 
         while (
-            current + duration <=
-            config.endMinutes
+            currentTime + duration <= timeRange.endMinutes &&
+            createdSlots < targetSlots - movieSlotsToday
         ) {
+            const end = currentTime + duration;
 
-            const end =
-                current + duration;
+            const room = allowedRooms[roomIndex % allowedRooms.length];
+            const roomId = room.room_id;
 
-            slots.push({
-                date,
-
-                startMinutes:
-                    current,
-
-                endMinutes:
-                    end,
-
-                start_time:
-                    this.buildDateTime(
-                        date,
-                        current
-                    ),
-
-                end_time:
-                    this.buildDateTime(
-                        date,
-                        end
-                    ),
-
-                duration,
-
-                buffer_minutes:
-                    config.bufferMinutes
+            const isConflict = allExisting.some(existing => {
+                if (existing.room_id !== roomId) return false;
+                const existingStart = existing.startMinutes;
+                const existingEnd = existing.startMinutes + existing.duration;
+                return (currentTime < existingEnd && end > existingStart);
             });
 
-            current +=
-                duration +
-                config.bufferMinutes;
+            if (!isConflict) {
+                slots.push({
+                    room_id: roomId,
+                    date: date,
+                    movie_id: movie.movie_id,
+                    start_time: this.buildDateTime(date, currentTime),
+                    end_time: this.buildDateTime(date, end),
+                    startMinutes: currentTime,
+                    endMinutes: end,
+                    duration: duration,
+                    title: movie.title,
+                    hotLevel: this.getMovieHotLevel(movie)
+                });
+
+                createdSlots++;
+                roomIndex++;
+            }
+
+            currentTime += interval;
         }
 
         return slots;
@@ -571,800 +338,197 @@ class ShowtimeScheduler {
 
 
     /* ========================================================
-        APPLY DISTRIBUTION
-    ========================================================
-
-        Không random.
-
-        Scheduler cố gắng trải đều
-        các suất trong cả ngày.
-
-    ======================================================== */
-
-    static applyDistribution(
-        slots,
-        distributionLevel
-    ) {
-
-        if (
-            !Array.isArray(slots) ||
-            !slots.length
-        ) {
-            return [];
-        }
-
-        const targetCount =
-            this.calculateTargetCount(
-                slots.length,
-                distributionLevel
-            );
-
-        if (
-            targetCount >= slots.length
-        ) {
-            return [...slots];
-        }
-
-        if (targetCount === 1) {
-
-            return [
-                slots[
-                    Math.floor(
-                        slots.length / 2
-                    )
-                ]
-            ];
-        }
-
-        const selected = [];
-
-        const step =
-            (slots.length - 1) /
-            (targetCount - 1);
-
-        const usedIndexes =
-            new Set();
-
-        for (
-            let i = 0;
-            i < targetCount;
-            i++
-        ) {
-
-            let index =
-                Math.round(
-                    i * step
-                );
-
-            while (
-                usedIndexes.has(index) &&
-                index < slots.length - 1
-            ) {
-                index++;
-            }
-
-            if (
-                !usedIndexes.has(index)
-            ) {
-
-                usedIndexes.add(index);
-
-                selected.push(
-                    slots[index]
-                );
-            }
-        }
-
-        return selected.sort(
-            (a, b) =>
-                a.startMinutes -
-                b.startMinutes
-        );
-    }
-
-
-    /* ========================================================
-        GENERATE ONE ROOM / ONE DAY
-    ======================================================== */
-
-    static generateForRoomAndDate({
-        date,
-        roomId,
-        movieId,
-        duration,
-        config
-    }) {
-
-        const candidates =
-            this.generateCandidateSlots({
-                date,
-                duration,
-                config
-            });
-
-        const selected =
-            this.applyDistribution(
-                candidates,
-                config.distributionLevel
-            );
-
-        return selected.map(
-            slot => ({
-                movie_id:
-                    Number(movieId),
-
-                room_id:
-                    Number(roomId),
-
-                date,
-
-                start_time:
-                    slot.start_time,
-
-                end_time:
-                    slot.end_time,
-
-                duration:
-                    slot.duration,
-
-                buffer_minutes:
-                    slot.buffer_minutes,
-
-                distribution_level:
-                    config.distributionLevel
-            })
-        );
-    }
-
-
-    /* ========================================================
-        CHECK SINGLE OVERLAP
-    ========================================================
-
-        Hai khoảng thời gian overlap khi:
-
-            newStart < oldEnd
-            &&
-            newEnd > oldStart
-
-    ======================================================== */
-
-    static isOverlap(
-        newStart,
-        newEnd,
-        oldStart,
-        oldEnd
-    ) {
-
-        return (
-            newStart < oldEnd &&
-            newEnd > oldStart
-        );
-    }
-
-
-    /* ========================================================
-        CHECK OVERLAP IN MEMORY
-    ======================================================== */
-
-    static hasOverlap(slots) {
-
-        if (
-            !Array.isArray(slots) ||
-            slots.length < 2
-        ) {
-            return false;
-        }
-
-        const grouped =
-            new Map();
-
-        for (
-            const slot of slots
-        ) {
-
-            const key =
-                `${slot.room_id}_${slot.date}`;
-
-            if (
-                !grouped.has(key)
-            ) {
-                grouped.set(
-                    key,
-                    []
-                );
-            }
-
-            grouped
-                .get(key)
-                .push(slot);
-        }
-
-        for (
-            const roomSlots
-            of grouped.values()
-        ) {
-
-            roomSlots.sort(
-                (a, b) =>
-                    a.start_time.localeCompare(
-                        b.start_time
-                    )
-            );
-
-            for (
-                let i = 1;
-                i < roomSlots.length;
-                i++
-            ) {
-
-                const previous =
-                    roomSlots[i - 1];
-
-                const current =
-                    roomSlots[i];
-
-                if (
-                    this.isOverlap(
-                        current.start_time,
-                        current.end_time,
-                        previous.start_time,
-                        previous.end_time
-                    )
-                ) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-
-    /* ========================================================
-        FILTER EXISTING CONFLICTS
-    ========================================================
-
-        Đây là phần rất quan trọng.
-
-        Khi thêm phim mới:
-
-        Phim A đã có:
-
-        Room 1
-        09:00 -> 11:00
-
-        Phim B muốn:
-
-        Room 1
-        09:00 -> 11:00
-
-        => loại.
-
-        Nhưng nếu:
-
-        Phim B:
-        11:15 -> 13:15
-
-        => hợp lệ.
-
-    ======================================================== */
-
-    static filterExistingConflicts(
-        generatedSlots,
-        existingShowtimes = []
-    ) {
-
-        if (
-            !Array.isArray(generatedSlots) ||
-            !generatedSlots.length
-        ) {
-            return {
-                available: [],
-                conflicts: []
-            };
-        }
-
-        if (
-            !Array.isArray(existingShowtimes) ||
-            !existingShowtimes.length
-        ) {
-            return {
-                available: [
-                    ...generatedSlots
-                ],
-                conflicts: []
-            };
-        }
-
-        const available = [];
-        const conflicts = [];
-
-        for (
-            const generated
-            of generatedSlots
-        ) {
-
-            const conflict =
-                existingShowtimes.some(
-                    existing => {
-
-                        if (
-                            Number(
-                                existing.room_id
-                            ) !==
-                            Number(
-                                generated.room_id
-                            )
-                        ) {
-                            return false;
-                        }
-
-                        /*
-                         * Nếu có date thì kiểm tra
-                         * cùng ngày trước.
-                         */
-
-                        if (
-                            existing.date &&
-                            generated.date &&
-                            String(
-                                existing.date
-                            ).substring(0, 10) !==
-                            String(
-                                generated.date
-                            ).substring(0, 10)
-                        ) {
-                            return false;
-                        }
-
-                        const existingStart =
-                            String(
-                                existing.start_time
-                            )
-                                .replace("T", " ")
-                                .substring(0, 16);
-
-                        let existingEnd =
-                            existing.end_time
-                                ? String(
-                                    existing.end_time
-                                )
-                                    .replace("T", " ")
-                                    .substring(0, 16)
-                                : null;
-
-                        /*
-                         * Nếu DB chỉ trả start_time
-                         * thì dùng duration của
-                         * suất hiện tại để tính end.
-                         */
-
-                        if (
-                            !existingEnd
-                        ) {
-
-                            const existingDuration =
-                                Number.parseInt(
-                                    existing.duration,
-                                    10
-                                );
-
-                            if (
-                                Number.isFinite(
-                                    existingDuration
-                                ) &&
-                                existingDuration > 0
-                            ) {
-
-                                const startMinutes =
-                                    this.dateTimeToMinutes(
-                                        existingStart
-                                    );
-
-                                if (
-                                    startMinutes !== null
-                                ) {
-
-                                    const endMinutes =
-                                        startMinutes +
-                                        existingDuration;
-
-                                    const date =
-                                        existingStart
-                                            .substring(
-                                                0,
-                                                10
-                                            );
-
-                                    existingEnd =
-                                        this.buildDateTime(
-                                            date,
-                                            endMinutes
-                                        );
-                                }
-                            }
-                        }
-
-                        /*
-                         * Nếu vẫn không tính được
-                         * end_time thì ít nhất
-                         * chặn cùng giờ bắt đầu.
-                         */
-
-                        if (!existingEnd) {
-
-                            return (
-                                existingStart ===
-                                generated.start_time
-                            );
-                        }
-
-                        return this.isOverlap(
-                            generated.start_time,
-                            generated.end_time,
-                            existingStart,
-                            existingEnd
-                        );
-                    }
-                );
-
-            if (conflict) {
-
-                conflicts.push({
-                    ...generated,
-                    conflict: true
-                });
-
-            } else {
-
-                available.push(
-                    generated
-                );
-            }
-        }
-
-        return {
-            available,
-            conflicts
-        };
-    }
-
-
-    /* ========================================================
-        REMOVE DUPLICATE GENERATED SLOTS
-    ======================================================== */
-
-    static removeDuplicateSlots(
-        slots
-    ) {
-
-        const seen =
-            new Set();
-
-        const result = [];
-
-        for (
-            const slot of slots
-        ) {
-
-            const key =
-                [
-                    slot.room_id,
-                    slot.date,
-                    slot.start_time
-                ].join("_");
-
-            if (
-                seen.has(key)
-            ) {
-                continue;
-            }
-
-            seen.add(key);
-
-            result.push(slot);
-        }
-
-        return result;
-    }
-
-
-    /* ========================================================
-        GENERATE MULTIPLE ROOMS / MULTIPLE DAYS
+        MAIN - TẠO LỊCH CHO TẤT CẢ PHIM
     ======================================================== */
 
     static generate({
-        movieId,
-        roomIds,
+        movies = [],
+        rooms = [],
         startDate,
         endDate,
-
-        duration,
-
-        startTime = "09:00",
-        endTime = "24:00",
-
-        bufferMinutes = 15,
-
-        distributionLevel = "medium"
+        config = {},
+        movieStats = {},
+        existingShowtimes = []
     }) {
-
-        /* ====================================================
-            VALIDATE
-        ==================================================== */
-
-        if (!movieId) {
-            throw new Error(
-                "Thiếu movieId."
-            );
+        // VALIDATE
+        if (!movies || movies.length === 0) {
+            throw new Error("Phải có ít nhất một phim.");
         }
 
-        if (
-            !Array.isArray(roomIds) ||
-            !roomIds.length
-        ) {
-            throw new Error(
-                "Phải chọn ít nhất một phòng."
-            );
+        if (!rooms || rooms.length === 0) {
+            throw new Error("Phải có ít nhất một phòng.");
         }
 
-        const fromDate =
-            this.parseDate(
-                startDate
-            );
-
-        const toDate =
-            this.parseDate(
-                endDate
-            );
-
-        if (
-            fromDate > toDate
-        ) {
-            throw new Error(
-                "Ngày bắt đầu không được lớn hơn ngày kết thúc."
-            );
+        if (!startDate || !endDate) {
+            throw new Error("Thiếu ngày.");
         }
 
-        const config =
-            this.normalizeConfig({
-                startTime,
-                endTime,
-                bufferMinutes,
-                distributionLevel
-            });
-
-
-        /* ====================================================
-            DURATION
-        ==================================================== */
-
-        duration =
-            Number.parseInt(
-                duration,
-                10
-            );
-
-        if (
-            !Number.isFinite(duration) ||
-            duration <= 0
-        ) {
-            throw new Error(
-                "Duration phim không hợp lệ."
-            );
+        const fromDate = this.parseDate(startDate);
+        const toDate = this.parseDate(endDate);
+        if (fromDate > toDate) {
+            throw new Error("Ngày bắt đầu phải <= ngày kết thúc.");
         }
 
+        // MERGE CONFIG
+        const mergedConfig = {
+            ...this.DEFAULT_CONFIG,
+            ...config
+        };
 
-        /* ====================================================
-            NORMALIZE ROOM IDS
-        ==================================================== */
-
-        const normalizedRoomIds =
-            [
-                ...new Set(
-                    roomIds
-                        .map(Number)
-                        .filter(
-                            id =>
-                                Number.isInteger(id) &&
-                                id > 0
-                        )
-                )
-            ];
-
-        if (
-            !normalizedRoomIds.length
-        ) {
-            throw new Error(
-                "Danh sách phòng không hợp lệ."
-            );
-        }
-
-
-        /* ====================================================
-            GENERATE
-        ==================================================== */
-
-        let result = [];
-
-        let currentDate =
-            new Date(fromDate);
-
-        while (
-            currentDate <= toDate
-        ) {
-
-            const date =
-                this.formatDate(
-                    currentDate
-                );
-
-            for (
-                const roomId
-                of normalizedRoomIds
-            ) {
-
-                const roomSlots =
-                    this.generateForRoomAndDate({
-                        date,
-                        roomId,
-                        movieId,
-                        duration,
-                        config
-                    });
-
-                result.push(
-                    ...roomSlots
-                );
+        // CHUẨN HÓA
+        for (const movie of movies) {
+            movie.duration = Number.parseInt(movie.duration, 10);
+            if (!Number.isFinite(movie.duration) || movie.duration <= 0) {
+                throw new Error(`Thời lượng phim "${movie.title}" không hợp lệ.`);
             }
-
-            currentDate =
-                this.addDays(
-                    currentDate,
-                    1
-                );
         }
 
-
-        /* ====================================================
-            REMOVE DUPLICATES
-        ==================================================== */
-
-        result =
-            this.removeDuplicateSlots(
-                result
-            );
-
-
-        /* ====================================================
-            SORT
-        ==================================================== */
-
-        result.sort(
-            (a, b) => {
-
-                if (
-                    a.date !==
-                    b.date
-                ) {
-                    return a.date.localeCompare(
-                        b.date
-                    );
-                }
-
-                if (
-                    a.room_id !==
-                    b.room_id
-                ) {
-                    return (
-                        a.room_id -
-                        b.room_id
-                    );
-                }
-
-                return a.start_time.localeCompare(
-                    b.start_time
-                );
+        for (const room of rooms) {
+            room.room_id = Number.parseInt(room.room_id, 10);
+            if (!Number.isInteger(room.room_id) || room.room_id <= 0) {
+                throw new Error(`ID phòng không hợp lệ: ${room.room_id}`);
             }
-        );
-
-
-        /* ====================================================
-            FINAL OVERLAP CHECK
-        ==================================================== */
-
-        if (
-            this.hasOverlap(result)
-        ) {
-            throw new Error(
-                "Scheduler phát hiện lịch chiếu bị chồng thời gian."
-            );
         }
 
+        // SẮP XẾP PHIM THEO ĐỘ HOT
+        const sortedMovies = [...movies].sort((a, b) => {
+            const hotA = this.getMovieHotLevel(a, movieStats);
+            const hotB = this.getMovieHotLevel(b, movieStats);
+            const priority = { hot: 3, normal: 2, cold: 1 };
+            return priority[hotB] - priority[hotA];
+        });
 
-        /* ====================================================
-            SUMMARY
-        ==================================================== */
+        // TẠO LỊCH
+        const allResults = [];
+        const dateList = [];
 
-        const days =
-            Math.floor(
-                (
-                    toDate -
-                    fromDate
-                ) /
-                (
-                    24 *
-                    60 *
-                    60 *
-                    1000
-                )
-            ) + 1;
+        let currentDate = this.parseDate(startDate);
+        while (currentDate <= toDate) {
+            dateList.push(this.formatDate(currentDate));
+            currentDate = this.addDays(currentDate, 1);
+        }
 
-        const capacityPerRoomPerDay =
-            this.calculateDailyCapacity(
-                duration,
-                config
-            );
+        for (const date of dateList) {
+            const scheduledSlots = [];
 
-        const targetPerRoomPerDay =
-            this.calculateTargetCount(
-                capacityPerRoomPerDay,
-                config.distributionLevel
-            );
+            for (const movie of sortedMovies) {
+                const slots = this.generateSlotsForMovie({
+                    date,
+                    movie,
+                    rooms,
+                    existingShowtimes,
+                    scheduledSlots,
+                    config: mergedConfig
+                });
 
+                for (const slot of slots) {
+                    allResults.push(slot);
+                    scheduledSlots.push(slot);
+                }
+            }
+        }
 
-        /* ====================================================
-            RETURN
-        ==================================================== */
+        // SẮP XẾP THEO THỜI GIAN
+        allResults.sort((a, b) => {
+            if (a.date !== b.date) return a.date.localeCompare(b.date);
+            if (a.room_id !== b.room_id) return a.room_id - b.room_id;
+            return a.startMinutes - b.startMinutes;
+        });
 
-        return {
+        // THỐNG KÊ
+        const stats = {
+            totalMovies: movies.length,
+            totalRooms: rooms.length,
+            totalDays: dateList.length,
+            totalGenerated: allResults.length,
 
-            data: result,
-
+            byMovie: {},
+            byRoom: {},
+            byDate: {},
+            byHotLevel: {
+                hot: { count: 0, movies: [] },
+                normal: { count: 0, movies: [] },
+                cold: { count: 0, movies: [] }
+            },
             summary: {
+                hot: { totalSlots: 0, avgPerDay: 0, avgPerMovie: 0 },
+                normal: { totalSlots: 0, avgPerDay: 0, avgPerMovie: 0 },
+                cold: { totalSlots: 0, avgPerDay: 0, avgPerMovie: 0 }
+            }
+        };
 
-                movieId:
-                    Number(movieId),
+        for (const movie of movies) {
+            const count = allResults.filter(s => s.movie_id === movie.movie_id).length;
+            const hotLevel = this.getMovieHotLevel(movie, movieStats);
+            
+            stats.byMovie[movie.movie_id] = {
+                title: movie.title,
+                count,
+                hotLevel,
+                avgPerDay: (count / dateList.length).toFixed(1)
+            };
 
-                roomCount:
-                    normalizedRoomIds.length,
+            stats.byHotLevel[hotLevel].count += count;
+            stats.byHotLevel[hotLevel].movies.push(movie.title);
+            stats.summary[hotLevel].totalSlots += count;
+        }
 
-                days,
+        for (const room of rooms) {
+            const count = allResults.filter(s => s.room_id === room.room_id).length;
+            stats.byRoom[room.room_id] = {
+                name: room.room_name || `Phòng ${room.room_id}`,
+                count,
+                avgPerDay: (count / dateList.length).toFixed(1)
+            };
+        }
 
-                duration,
+        for (const date of dateList) {
+            const count = allResults.filter(s => s.date === date).length;
+            stats.byDate[date] = count;
+        }
 
-                startTime:
-                    config.startTime,
+        for (const level of ['hot', 'normal', 'cold']) {
+            const movieCount = movies.filter(m => this.getMovieHotLevel(m, movieStats) === level).length;
+            stats.summary[level].avgPerMovie = movieCount > 0 
+                ? (stats.summary[level].totalSlots / movieCount).toFixed(1) 
+                : 0;
+            stats.summary[level].avgPerDay = dateList.length > 0
+                ? (stats.summary[level].totalSlots / dateList.length).toFixed(1)
+                : 0;
+        }
 
-                endTime:
-                    config.endTime,
-
-                bufferMinutes:
-                    config.bufferMinutes,
-
-                distributionLevel:
-                    config.distributionLevel,
-
-                distributionRatio:
-                    this.DISTRIBUTION_RATIO[
-                        config.distributionLevel
-                    ],
-
-                capacityPerRoomPerDay,
-
-                targetPerRoomPerDay,
-
-                totalGenerated:
-                    result.length
+        // RETURN
+        return {
+            data: allResults,
+            stats,
+            config: mergedConfig,
+            dateRange: {
+                startDate,
+                endDate,
+                totalDays: dateList.length
+            },
+            distribution: {
+                hot: {
+                    movies: movies.filter(m => this.getMovieHotLevel(m, movieStats) === 'hot').map(m => m.title),
+                    interval: mergedConfig.hotInterval,
+                    maxRooms: this.getMaxRoomsForMovie({}, {}, rooms.length),
+                    targetSlotsPerDay: 12
+                },
+                normal: {
+                    movies: movies.filter(m => this.getMovieHotLevel(m, movieStats) === 'normal').map(m => m.title),
+                    interval: mergedConfig.normalInterval,
+                    maxRooms: Math.min(2, Math.ceil(rooms.length / 2)),
+                    targetSlotsPerDay: 8
+                },
+                cold: {
+                    movies: movies.filter(m => this.getMovieHotLevel(m, movieStats) === 'cold').map(m => m.title),
+                    interval: mergedConfig.coldInterval,
+                    maxRooms: 1,
+                    targetSlotsPerDay: 4
+                }
             }
         };
     }
 }
-
-
-/* ============================================================
-    EXPORT
-============================================================ */
 
 module.exports = ShowtimeScheduler;

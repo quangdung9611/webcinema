@@ -10,7 +10,8 @@ import {
     MapPin,
     Clock,
     Layers3,
-    Sparkles
+    Sparkles,
+    Info
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -32,8 +33,8 @@ const initialScheduleData = {
     start_date: '',
     end_date: '',
 
-    operating_start: '09:00',
-    operating_end: '24:00',
+    operating_start: '08:00',
+    operating_end: '23:30',
 
     distribution_level: 'medium'
 };
@@ -157,7 +158,6 @@ const ShowTimePage = () => {
         }
 
         const [year, month, day] = datePart.split('-');
-
         const [hour, minute] = timePart.split(':');
 
         return {
@@ -425,9 +425,11 @@ const ShowTimePage = () => {
 
         setEditingShowtime(null);
 
-        setScheduleData(
-            initialScheduleData
-        );
+        setScheduleData({
+            ...initialScheduleData,
+            operating_start: '08:00',
+            operating_end: '23:30'
+        });
 
         setRooms([]);
 
@@ -476,9 +478,9 @@ const ShowTimePage = () => {
                     st.start_time?.slice(0, 10) || '',
 
                 operating_start:
-                    st.start_time?.slice(11, 16) || '09:00',
+                    st.start_time?.slice(11, 16) || '08:00',
 
-                operating_end: '24:00',
+                operating_end: '23:30',
 
                 distribution_level: 'manual'
             });
@@ -583,7 +585,6 @@ const ShowTimePage = () => {
                 const currentRoomIds = prev.room_ids || [];
 
                 if (checked) {
-                    // Thêm phòng
                     if (!currentRoomIds.includes(roomId)) {
                         return {
                             ...prev,
@@ -592,7 +593,6 @@ const ShowTimePage = () => {
                     }
                     return prev;
                 } else {
-                    // Xóa phòng
                     return {
                         ...prev,
                         room_ids: currentRoomIds.filter(id => id !== roomId)
@@ -840,10 +840,16 @@ const ShowTimePage = () => {
             };
 
 
+            console.log('📤 Payload gửi lên:', payload);
+
+
             const res = await api.post(
                 '/api/showtimes/schedule',
                 payload
             );
+
+
+            console.log('📥 Response:', res.data);
 
 
             setIsFormOpen(false);
@@ -855,10 +861,24 @@ const ShowTimePage = () => {
             );
 
 
+            // Hiển thị thông báo chi tiết
+            const data = res.data?.data;
+            let message = res.data?.message || 'Tạo lịch chiếu thành công.';
+
+            if (data) {
+                const created = data.data?.length || 0;
+                const conflicts = data.conflicts?.length || 0;
+                const skipped = data.skippedPast?.length || 0;
+
+                message += `\n✅ Đã tạo: ${created} suất`;
+                if (conflicts > 0) message += `\n⚠️ Bỏ qua: ${conflicts} suất bị trùng`;
+                if (skipped > 0) message += `\n⏭️ Bỏ qua: ${skipped} suất trong quá khứ`;
+            }
+
+
             showAlert(
                 'Tạo lịch chiếu thành công',
-                res.data?.message ||
-                'Hệ thống đã tự động phân bổ suất chiếu.',
+                message,
                 'success'
             );
 
@@ -1170,7 +1190,7 @@ const ShowTimePage = () => {
 
 
     // ======================================================
-    // FORM FIELDS - Đã đổi room_ids thành checkbox-select
+    // FORM FIELDS
     // ======================================================
 
     const formFields = [
@@ -1217,11 +1237,10 @@ const ShowTimePage = () => {
         },
 
 
-        // 👇 Đã đổi thành checkbox-select (có scrollbar như select)
         {
             label: 'Phòng chiếu',
             name: 'room_ids',
-            type: 'checkbox-select',  // Đã đổi từ checkbox sang checkbox-select
+            type: 'checkbox-select',
             options: rooms.map(room => ({
                 label: `${room.room_name} (${room.room_type})`,
                 value: room.room_id
@@ -1244,14 +1263,14 @@ const ShowTimePage = () => {
 
 
         {
-            label: 'Bắt đầu hoạt động',
+            label: 'Giờ bắt đầu hoạt động',
             name: 'operating_start',
             type: 'time'
         },
 
 
         {
-            label: 'Kết thúc hoạt động',
+            label: 'Giờ kết thúc hoạt động',
             name: 'operating_end',
             type: 'time'
         },
@@ -1265,18 +1284,18 @@ const ShowTimePage = () => {
             options: [
 
                 {
-                    label: 'Ít - phim ít ưu tiên',
-                    value: 'low'
+                    label: '📊 Ít - phim ít ưu tiên (60p/suất)',
+                    value: 'cold'
                 },
 
                 {
-                    label: 'Trung bình - mức mặc định',
-                    value: 'medium'
+                    label: '📊 Trung bình - mức mặc định (45p/suất)',
+                    value: 'normal'
                 },
 
                 {
-                    label: 'Nhiều - phim được ưu tiên',
-                    value: 'high'
+                    label: '📊 Nhiều - phim được ưu tiên (30p/suất)',
+                    value: 'hot'
                 }
 
             ]
@@ -1428,8 +1447,17 @@ const ShowTimePage = () => {
                             các phòng được chọn và mức độ phân bổ
                             để tự tạo lịch chiếu.
 
-
                             <br />
+
+                            <strong>Mức độ phân bổ:</strong>
+                            <br />
+                            🔥 <strong>Nhiều (Hot)</strong>: 30 phút/suất - Phim được ưu tiên
+                            <br />
+                            📊 <strong>Trung bình</strong>: 45 phút/suất - Mức mặc định
+                            <br />
+                            ❄️ <strong>Ít (Cold)</strong>: 60 phút/suất - Phim ít ưu tiên
+
+                            <br /><br />
 
                             Đồng thời tự kiểm tra lịch hiện có
                             để tránh trùng suất trong cùng phòng.
@@ -1486,7 +1514,7 @@ const ShowTimePage = () => {
                             }}
                         >
 
-                            <Layers3 size={16} />
+                            <Info size={16} />
 
                             <strong>
                                 Ví dụ:
@@ -1494,17 +1522,14 @@ const ShowTimePage = () => {
 
                         </div>
 
-
                         Phim 120 phút + nghỉ 15 phút,
-                        hoạt động từ 09:00 đến 24:00,
+                        hoạt động từ 08:00 đến 23:30,
                         chọn 3 phòng và mức
                         <strong> "Nhiều"</strong>.
 
-
                         <br />
 
-
-                        Hệ thống sẽ tự tính các mốc suất phù hợp
+                        Hệ thống sẽ tự tính các mốc suất cách nhau 30 phút
                         cho từng phòng và bỏ qua các khoảng thời gian
                         đang bị trùng lịch.
 
