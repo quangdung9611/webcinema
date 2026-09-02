@@ -22,18 +22,18 @@ router.get("/seat-types", PriceConfigController.getDistinctSeatTypes);
 // Lấy giá vé theo room_type + start_time + date + seat_type
 router.get("/price", PriceConfigController.getPrice);
 
-// Lấy theo ID
-router.get("/:id", PriceConfigController.getById);
-
 // ==========================================================
 // ADMIN ROUTES (Yêu cầu đăng nhập admin)
 // ==========================================================
 
+// Lấy tất cả có phân trang - PHẢI ĐẶT TRƯỚC ROUTE /:id
+router.get("/paginated", authenticateAdmin, PriceConfigController.getAllWithPagination);
+
 // Lấy tất cả (cho admin) - KHÔNG PHÂN TRANG
 router.get("/", authenticateAdmin, PriceConfigController.getAll);
 
-// Lấy tất cả có phân trang
-router.get("/paginated", authenticateAdmin, PriceConfigController.getAllWithPagination);
+// Lấy theo ID - ĐẶT SAU CÙNG
+router.get("/:id", PriceConfigController.getById);
 
 // Tạo mới
 router.post("/", authenticateAdmin, PriceConfigController.create);
