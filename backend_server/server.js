@@ -50,6 +50,8 @@ const forgotPasswordRoutes = require("./Routers/ForgotPassRouter");
 const testimonialRoutes = require("./Routers/TestimonialRouter");
 const bannerRoutes = require("./Routers/BannerRouter");
 const dashboardRouter = require("./Routers/DashboardRouter");
+// Import routes
+const priceConfigRoutes = require("./Routers/PriceConfigRouter");
 
 const app = express();
 const server = http.createServer(app);
@@ -320,6 +322,8 @@ app.use("/api/blog-cinema", blogCinemaRoutes);
 app.use("/api/forgot-password", forgotPasswordRoutes);
 app.use("/api/testimonials", testimonialRoutes);
 app.use("/api/banners", bannerRoutes);
+// Register routes
+app.use("/api/price-config", priceConfigRoutes);
 
 app.use("/admin/api/dashboard", dashboardRouter);
 

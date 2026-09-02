@@ -1,96 +1,269 @@
 /* =========================================================
-   PAYMENT PIN MODAL - 6 Ô NHẬP MÃ PIN
+   PAYMENT PIN MODAL - PREMIUM SILVER EDITION
+   6 Ô NHẬP MÃ PIN - MÀU BẠC
+========================================================= */
+
+/* =========================================================
+   MODAL WRAPPER
+========================================================= */
+
+.payment-pin-modal .modal-content {
+    max-width: 480px;
+    padding: var(--space-2xl);
+}
+
+/* =========================================================
+   BODY
 ========================================================= */
 
 .pin-modal-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-lg);
+    padding: var(--space-md) 0;
     text-align: center;
-    padding: 10px 0;
 }
 
-/* Icon ổ khóa */
+/* =========================================================
+   ICON Ổ KHÓA - MÀU BẠC
+========================================================= */
+
 .pin-modal-icon {
     width: 64px;
     height: 64px;
     border-radius: 50%;
-    background: rgba(245, 158, 11, 0.15);
+    background: var(--accent-ice-bg);
+    border: var(--border-ice);
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 15px;
+    margin: 0 auto;
+    color: var(--accent-ice);
 }
 
-/* Mô tả */
+/* =========================================================
+   MÔ TẢ
+========================================================= */
+
 .pin-modal-description {
     color: var(--text-secondary);
     line-height: 1.6;
-    margin-bottom: 20px;
-    font-size: 14px;
+    font-size: var(--font-size-base);
+    margin: 0;
 }
 
-/* Container chứa 6 ô */
+/* =========================================================
+   PIN INPUT - 6 Ô MÀU BẠC
+========================================================= */
+
 .pin-boxes-container {
     display: flex;
     justify-content: center;
-    gap: 10px;
-    margin-bottom: 15px;
+    gap: var(--space-sm);
+    width: 100%;
 }
 
-/* Từng ô nhập */
 .pin-box {
-    width: 48px;
-    height: 56px;
-    border-radius: 10px;
-    border: 1px solid var(--border-premium);
-    background: rgba(255, 255, 255, 0.05);
+    width: 52px;
+    height: 62px;
+    border-radius: var(--radius-md);
+    border: 2px solid rgba(255, 255, 255, 0.12);
+    background: var(--bg-tertiary);
     text-align: center;
     font-size: 24px;
-    font-weight: bold;
-    color: var(--text-body);
+    font-weight: var(--fw-extrabold);
+    font-family: var(--font-primary);
+    color: var(--silver-primary);
     outline: none;
-    transition: all 0.2s ease;
+    transition: all var(--transition-normal);
+    caret-color: var(--silver-primary);
 }
 
-/* Hiệu ứng hover và focus */
-.pin-box:hover {
-    border-color: var(--border-premium-hover);
+/* Hover */
+.pin-box:hover:not(:disabled) {
+    border-color: rgba(255, 255, 255, 0.25);
 }
 
+/* Focus - MÀU BẠC, KHÔNG PHẢI VÀNG */
 .pin-box:focus {
-    border-color: #f59e0b;
-    background: rgba(245, 158, 11, 0.1);
-    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+    border-color: var(--silver-primary);
+    background: var(--bg-elevated);
+    box-shadow: 0 0 0 3px rgba(212, 212, 212, 0.15), 0 4px 20px rgba(0, 0, 0, 0.3);
     transform: scale(1.05);
 }
 
-/* Ô bị lỗi */
+/* Filled - Có nhập số */
+.pin-box.filled {
+    border-color: var(--silver-primary);
+    background: var(--bg-elevated);
+    color: var(--silver-light);
+}
+
+/* Error - VẪN GIỮ MÀU ĐỎ CHO LỖI */
 .pin-box-error {
     border-color: rgba(248, 113, 113, 0.6);
     background: rgba(248, 113, 113, 0.1);
+    animation: pinShake 0.4s ease;
 }
 
 .pin-box-error:focus {
+    border-color: #f87171;
     box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.2);
 }
 
-/* Thông báo lỗi */
+@keyframes pinShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+}
+
+/* Disabled */
+.pin-box:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* =========================================================
+   ERROR MESSAGE
+========================================================= */
+
 .pin-modal-error {
     color: #f87171;
     text-align: center;
-    margin-top: 5px;
-    margin-bottom: 10px;
-    font-size: 13px;
-    font-weight: 500;
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-medium);
+    margin: 0;
+    padding: var(--space-xs) var(--space-md);
+    border-radius: var(--radius-sm);
+    background: rgba(248, 113, 113, 0.1);
+    border: 1px solid rgba(248, 113, 113, 0.15);
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
 }
 
-/* Responsive cho mobile */
+/* =========================================================
+   FORGOT PIN LINK - MÀU BẠC
+========================================================= */
+
+.forgot-pin-link {
+    background: none;
+    border: none;
+    color: var(--silver-dark);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-medium);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    text-decoration-color: rgba(255, 255, 255, 0.1);
+    padding: var(--space-xs) var(--space-sm);
+}
+
+.forgot-pin-link:hover:not(:disabled) {
+    color: var(--silver-primary);
+    text-decoration-color: var(--silver-primary);
+}
+
+.forgot-pin-link:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* =========================================================
+   BUTTONS - CÓ LOADING
+========================================================= */
+
+.btn-pin-cancel,
+.btn-pin-confirm {
+    flex: 1;
+    height: 52px;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-extrabold);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    border: none;
+}
+
+.btn-pin-confirm {
+    background: var(--premium-gradient);
+    color: var(--bg-primary);
+    box-shadow: var(--btn-silver-shadow);
+    min-width: 140px;
+}
+
+.btn-pin-confirm:hover:not(:disabled) {
+    box-shadow: 0 4px 28px rgba(159, 183, 210, 0.40);
+    transform: translateY(-2px);
+}
+
+.btn-pin-confirm:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
 @media (max-width: 480px) {
+    .payment-pin-modal .modal-content {
+        padding: var(--space-lg);
+    }
+
     .pin-boxes-container {
-        gap: 6px;
+        gap: var(--space-xs);
     }
 
     .pin-box {
-        width: 42px;
+        width: 40px;
         height: 50px;
-        font-size: 20px;
+        font-size: 18px;
+        border-radius: var(--radius-sm);
+    }
+
+    .btn-pin-cancel,
+    .btn-pin-confirm {
+        height: 48px;
+        font-size: var(--font-size-base);
+        min-width: 100px;
+    }
+}
+
+@media (max-width: 360px) {
+    .pin-box {
+        width: 34px;
+        height: 44px;
+        font-size: 16px;
+    }
+
+    .pin-boxes-container {
+        gap: 4px;
+    }
+}
+
+/* =========================================================
+   REDUCE MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+    .pin-box-error {
+        animation: none;
+    }
+
+    .pin-box:focus {
+        transform: none;
     }
 }

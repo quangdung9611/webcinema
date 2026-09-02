@@ -2,7 +2,14 @@
    MOVIE DETAIL – SILVER PREMIUM EDITION
    RESPONSIVE OPTIMIZED
    ========================================================= */
+.spinner {
+    animation: spin 1s linear infinite;
+}
 
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
 .cinema-movie-detail-page {
     width: 100%;
     background: var(--bg-primary);
@@ -862,8 +869,8 @@
 
 .mini-comment-card:hover {
     transform: translateY(-3px);
-    border-color: rgba(201,168,76,0.35);
-    background: rgba(201,168,76,0.05);
+    border-color: var(--silver-primary);      /* 👈 DÙNG BIẾN SILVER */
+    background: rgba(212, 212, 212, 0.05);
 }
 
 .comment-user-meta-header {

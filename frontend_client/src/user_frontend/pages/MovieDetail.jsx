@@ -19,7 +19,30 @@ import {
     Film,
     Ticket,
     Play,
-    X
+    X,
+    MapPin,
+    CalendarDays,
+    Theater,
+    Clapperboard,
+    Users,
+    Globe,
+    Languages,
+    User,
+    Eye,
+    ThumbsUp,
+    MessageSquare,
+    ChevronRight,
+    ChevronLeft,
+    Popcorn,
+    Coffee,
+    UtensilsCrossed,
+    Building2,
+    Sparkles,
+    Heart,
+    Share2,
+    AlertCircle,
+    CheckCircle,
+    Loader2
 } from 'lucide-react';
 
 import Modal from '../components/Modal';
@@ -262,7 +285,6 @@ const MovieDetail = () => {
                     }
                 });
                 setShowtimesData(res.data?.data || {});
-                // Reset showtime indexes khi dữ liệu thay đổi
                 setShowtimeIndexes({});
             } catch (err) {
                 console.error("Lỗi tải lịch chiếu:", err);
@@ -452,7 +474,7 @@ const MovieDetail = () => {
                     return (
                         <Star
                             key={starValue}
-                            size={24}
+                            size={28}
                             className={`interactive-star ${isActive ? 'active' : ''}`}
                             color={isActive ? "#f5b50a" : "#444"}
                             fill={isActive ? "#f5b50a" : "none"}
@@ -498,6 +520,7 @@ const MovieDetail = () => {
     if (loading) {
         return (
             <div className="movie-loading-wrapper">
+                <Loader2 size={32} className="spinner" />
                 <span>Đang tải thông tin phim...</span>
             </div>
         );
@@ -506,6 +529,7 @@ const MovieDetail = () => {
     if (!movie) {
         return (
             <div className="movie-error-wrapper">
+                <AlertCircle size={24} />
                 Không tìm thấy dữ liệu bộ phim yêu cầu.
             </div>
         );
@@ -683,7 +707,7 @@ const MovieDetail = () => {
                                     <Play size={20} /> Xem trailer
                                 </button>
                                 <button className="btn-review" onClick={openRatingModal}>
-                                    <Star size={20} fill="none" /> Đánh giá
+                                    <Star size={20} /> Đánh giá
                                 </button>
                             </div>
                         </div>
@@ -700,12 +724,11 @@ const MovieDetail = () => {
                     </div>
 
                     <div className="showtimes-filter-bar">
-                        {/* HÀNG 1: Chọn rạp + Chọn ngày - Cùng hàng */}
+                        {/* HÀNG 1: Chọn rạp + Chọn ngày */}
                         <div className="showtimes-filter-row">
-                            {/* Ô CHỌN RẠP - cùng kích thước với các ô ngày */}
                             <div className="filter-cinema-wrapper">
                                 <label className="filter-label-cinema">
-                                    <span className="label-icon">🎬</span> CHỌN RẠP
+                                    <Theater size={16} /> CHỌN RẠP
                                 </label>
                                 <select
                                     className="cinema-select-box"
@@ -725,10 +748,9 @@ const MovieDetail = () => {
                                 </select>
                             </div>
 
-                           {/* CHỌN NGÀY - Các ô ngày */}
                             <div className="filter-date-wrapper">
                                 <label className="filter-label-date">
-                                    <span className="label-icon">📅</span> CHỌN NGÀY
+                                    <CalendarDays size={16} /> CHỌN NGÀY
                                 </label>
                                 <div className="date-navigation-wrapper">
                                     <button 
@@ -737,7 +759,7 @@ const MovieDetail = () => {
                                         disabled={dateIndex === 0}
                                         aria-label="Ngày trước"
                                     >
-                                        ‹
+                                        <ChevronLeft size={20} />
                                     </button>
                                     
                                     <div className="date-slider-horizontal">
@@ -770,7 +792,7 @@ const MovieDetail = () => {
                                         disabled={dateIndex >= availableDates.length - VISIBLE_DAYS}
                                         aria-label="Ngày tiếp theo"
                                     >
-                                        ›
+                                        <ChevronRight size={20} />
                                     </button>
                                 </div>
                             </div>
@@ -781,13 +803,13 @@ const MovieDetail = () => {
                             <div className="filter-info-row">
                                 <div className="showtime-stats">
                                     <span className="stat-item">
-                                        <span className="stat-icon">🎥</span>
+                                        <Clapperboard size={16} />
                                         <span className="stat-text">
                                             {Object.values(showtimesData).reduce((acc, items) => acc + items.length, 0)} suất chiếu
                                         </span>
                                     </span>
                                     <span className="stat-item">
-                                        <span className="stat-icon">🏛️</span>
+                                        <Building2 size={16} />
                                         <span className="stat-text">
                                             {Object.keys(showtimesData).length} phòng chiếu
                                         </span>
@@ -795,10 +817,10 @@ const MovieDetail = () => {
                                 </div>
                                 <div className="selected-info">
                                     <span className="info-badge">
-                                        📍 {selectedCinema?.cinema_name}
+                                        <MapPin size={14} /> {selectedCinema?.cinema_name}
                                     </span>
                                     <span className="info-badge">
-                                        📅 {new Date(selectedDate).toLocaleDateString('vi-VN', { 
+                                        <CalendarDays size={14} /> {new Date(selectedDate).toLocaleDateString('vi-VN', { 
                                             weekday: 'long', 
                                             day: 'numeric', 
                                             month: 'long', 
@@ -813,12 +835,12 @@ const MovieDetail = () => {
                     <div className="showtimes-result-list">
                         {!selectedCinema ? (
                             <div className="empty-showtimes-msg">
-                                <span className="empty-icon">🎬</span>
+                                <Theater size={48} className="empty-icon" />
                                 <p>Vui lòng chọn rạp chiếu để xem lịch chiếu</p>
                             </div>
                         ) : Object.keys(showtimesData).length === 0 ? (
                             <div className="empty-showtimes-msg">
-                                <span className="empty-icon">📭</span>
+                                <CalendarDays size={48} className="empty-icon" />
                                 <p>Không có suất chiếu nào cho ngày này</p>
                                 <span className="empty-sub">Vui lòng chọn ngày khác</span>
                             </div>
@@ -832,7 +854,7 @@ const MovieDetail = () => {
                                     <div key={roomType} className="room-type-block">
                                         <div className="room-type-header">
                                             <div className="room-type-info">
-                                                <span className="room-icon">🎞️</span>
+                                                <Film size={20} className="room-icon" />
                                                 <h4 className="room-type-title">{roomType}</h4>
                                                 <span className="room-count">{items.length} suất</span>
                                             </div>
@@ -845,7 +867,7 @@ const MovieDetail = () => {
                                                 disabled={currentIndex === 0}
                                                 aria-label="Suất chiếu trước"
                                             >
-                                                ‹
+                                                <ChevronLeft size={20} />
                                             </button>
                                             
                                             <div className="showtimes-grid-items">
@@ -865,7 +887,6 @@ const MovieDetail = () => {
                                                         <span className="st-time">{st.start_time}</span>
                                                         <span className="st-room">{st.room_name}</span>
                                                         <span className="st-price">{st.priceDisplay}</span>
-                                                      
                                                     </button>
                                                 ))}
                                             </div>
@@ -876,7 +897,7 @@ const MovieDetail = () => {
                                                 disabled={currentIndex >= maxIndex}
                                                 aria-label="Suất chiếu tiếp theo"
                                             >
-                                                ›
+                                                <ChevronRight size={20} />
                                             </button>
                                         </div>
                                     </div>
@@ -906,7 +927,7 @@ const MovieDetail = () => {
                         <h2 className="section-title-label">DIỄN VIÊN</h2>
                         <div className="filmgenre-line" />
                         <span className="view-all-link-gold" onClick={() => navigate('/actors')}>
-                            Xem tất cả ❯
+                            Xem tất cả <ChevronRight size={16} />
                         </span>
                     </div>
 
@@ -941,6 +962,7 @@ const MovieDetail = () => {
                             })
                         ) : (
                             <div className="empty-reviews-placeholder">
+                                <Users size={24} />
                                 Thông tin về dàn diễn viên của bộ phim đang được cập nhật...
                             </div>
                         )}
@@ -976,6 +998,7 @@ const MovieDetail = () => {
                             ))
                         ) : (
                             <div className="empty-reviews-placeholder">
+                                <Film size={24} />
                                 Chưa có trailer khác.
                             </div>
                         )}
@@ -987,7 +1010,9 @@ const MovieDetail = () => {
                     <div className="section-header-row">
                         <h2 className="section-title-label">ĐÁNH GIÁ TỪ KHÁN GIẢ</h2>
                         <div className="filmgenre-line" />
-                        <button className="btn-write-review-small" onClick={openRatingModal}>Viết đánh giá</button>
+                        <button className="btn-write-review-small" onClick={openRatingModal}>
+                            <MessageSquare size={16} /> Viết đánh giá
+                        </button>
                     </div>
 
                     <div className="split-right-column-box">
@@ -1021,6 +1046,7 @@ const MovieDetail = () => {
                         <div className="mini-comments-list-viewport">
                             {reviews.length === 0 ? (
                                 <div className="empty-reviews-placeholder">
+                                    <MessageSquare size={24} />
                                     Chưa có bình luận nào. Hãy là người đầu tiên đánh giá!
                                 </div>
                             ) : (
@@ -1032,7 +1058,9 @@ const MovieDetail = () => {
                                                 {avatarUrl ? (
                                                     <img src={avatarUrl} alt={rev.username || "Khán giả"} className="comment-avatar" loading="lazy" />
                                                 ) : (
-                                                    <div className="user-avatar-placeholder-small" />
+                                                    <div className="user-avatar-placeholder-small">
+                                                        <User size={20} />
+                                                    </div>
                                                 )}
                                                 <div className="user-name-title-box">
                                                     <span className="comment-username">{rev.username || "Khán giả"}</span>

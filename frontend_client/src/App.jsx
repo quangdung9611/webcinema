@@ -45,7 +45,6 @@ const lazyRetry = (componentImport, maxRetries = 2) => {
                     console.warn(`🔄 Lazy load failed (attempt ${retries}/${maxRetries}), retrying...`, error);
                     
                     if (retries < maxRetries) {
-                        // Thử lại sau 1 giây
                         setTimeout(tryLoad, 1000 * retries);
                     } else {
                         sessionStorage.removeItem('lazyRetried');
@@ -128,6 +127,12 @@ const FoodPage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin
 const BlogCinemaPage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/BlogCinema/BlogCinemaPage")));
 const PromotionPage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/Promotion/PromotionPage")));
 const BannerPage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/Banner/BannerPage")));
+
+// ============================================================
+// 🔥 LAZY LOAD - NEW ADMIN PAGES (PRICE CONFIG & SHOWTIME CONFIG)
+// ============================================================
+const PriceConfigPage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/PriceConfig/PriceConfigPage")));
+
 
 // ============================================================
 // HELPER COMPONENTS
@@ -289,7 +294,7 @@ const MAIN_ROUTES = [
     { path: "momo-app", element: <UserRouteGuard><MomoApp /></UserRouteGuard> },
 ];
 
-// ✅ Admin Routes
+// ✅ Admin Routes (Đã bổ sung PriceConfig & ShowtimeConfig)
 const ADMIN_ROUTES = [
     { path: "dashboard", element: <Navigate to="/" replace /> },
     { path: "users", element: <UserPage /> },
@@ -302,6 +307,9 @@ const ADMIN_ROUTES = [
     { path: "genres", element: <GenresPage /> },
     { path: "cinemas", element: <CinemaPage /> },
     { path: "showtimes", element: <ShowTimePage /> },
+    // 🔥 THÊM MỚI: Cấu hình giá vé & khung giờ
+    { path: "price-config", element: <PriceConfigPage /> },
+  
     { path: "seats", element: <SeatList /> },
     { path: "movie-genres", element: <MovieGenrePage /> },
     { path: "movie-actors", element: <MovieActorPage /> },

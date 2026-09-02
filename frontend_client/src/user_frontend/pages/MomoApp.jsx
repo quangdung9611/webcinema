@@ -13,21 +13,50 @@ const MomoApp = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
-    // Lấy dữ liệu từ location.state hoặc từ localStorage
+    // ============================================================
+    // LẤY DỮ LIỆU BOOKING
+    // ============================================================
+
     const getBookingData = () => {
         const stateData = location.state || {};
-        
-        if (!stateData.tempBookingId) {
-            try {
-                const savedTicket = localStorage.getItem('lastSuccessTicket');
-                if (savedTicket) {
-                    return JSON.parse(savedTicket);
-                }
-            } catch (err) {
-                console.error('Lỗi đọc lastSuccessTicket từ localStorage:', err);
-            }
+        if (stateData.tempBookingId) {
+            return stateData;
         }
-        
+
+        try {
+            const tempId = localStorage.getItem('momoTempBookingId');
+            if (tempId) {
+                return {
+                    tempBookingId: tempId,
+                    customerEmail: localStorage.getItem('momoCustomerEmail') || '',
+                    customerName: localStorage.getItem('momoCustomerName') || '',
+                    customerPhone: localStorage.getItem('momoCustomerPhone') || '',
+                    totalAmount: parseFloat(localStorage.getItem('momoTotalAmount') || '0'),
+                    movie: JSON.parse(localStorage.getItem('momoMovie') || '{}'),
+                    selectedCinema: JSON.parse(localStorage.getItem('momoSelectedCinema') || '{}'),
+                    selectedDate: localStorage.getItem('momoSelectedDate') || '',
+                    selectedShowtime: JSON.parse(localStorage.getItem('momoSelectedShowtime') || '{}'),
+                    selectedSeats: JSON.parse(localStorage.getItem('momoSelectedSeats') || '[]'),
+                    selectedFoods: JSON.parse(localStorage.getItem('momoSelectedFoods') || '[]'),
+                    foods: JSON.parse(localStorage.getItem('momoFoods') || '[]'),
+                    totalTicketPrice: parseFloat(localStorage.getItem('momoTotalTicketPrice') || '0'),
+                    totalFoodPrice: parseFloat(localStorage.getItem('momoTotalFoodPrice') || '0'),
+                    showtimeDetail: JSON.parse(localStorage.getItem('momoShowtimeDetail') || '{}')
+                };
+            }
+        } catch (err) {
+            console.error('Lỗi đọc momo data từ localStorage:', err);
+        }
+
+        try {
+            const savedTicket = localStorage.getItem('lastSuccessTicket');
+            if (savedTicket) {
+                return JSON.parse(savedTicket);
+            }
+        } catch (err) {
+            console.error('Lỗi đọc lastSuccessTicket:', err);
+        }
+
         return stateData;
     };
 
@@ -75,34 +104,19 @@ const MomoApp = () => {
     const otpInputsRef = useRef([]);
     const hasShownModalRef = useRef(false);
     const timerCheckRef = useRef(null);
-    const isTimerSyncedRef = useRef(false);
     const otpExpiredRef = useRef(false);
     const otpAttemptsRef = useRef(parseInt(localStorage.getItem('momoOtpAttempts') || '0'));
     const isLockedRef = useRef(localStorage.getItem('momoIsLocked') === 'true');
 
     // =========================
-    // STATES
+    // STATES - CHỈ GIỮ REDIS TIMER
     // =========================
-    const [timeLeft, setTimeLeft] = useState(() => {
-        const saved = localStorage.getItem('momoOtpTimeLeft');
-        return saved ? parseInt(saved, 10) : 300;
-    });
-
+    const [timeLeft, setTimeLeft] = useState(300);
     const [otp, setOtp] = useState(() => localStorage.getItem('momoOtpInput') || '');
     const [loadingVerify, setLoadingVerify] = useState(false);
     const [loadingSendOtp, setLoadingSendOtp] = useState(false);
     const [showBackConfirm, setShowBackConfirm] = useState(false);
-    const [isSyncing, setIsSyncing] = useState(true);
-    const [resendCooldown, setResendCooldown] = useState(() => {
-        const saved = localStorage.getItem('momoResendCooldown');
-        if (saved) {
-            const remaining = parseInt(saved, 10);
-            if (remaining > 0) return remaining;
-        }
-        return 0;
-    });
 
-    // Lock state - Đọc thời gian kết thúc khóa từ localStorage để không bị reset khi F5
     const [isLocked, setIsLocked] = useState(() => {
         const saved = localStorage.getItem('momoIsLocked') === 'true';
         const lockEndTime = parseInt(localStorage.getItem('momoLockTime') || '0');
@@ -163,34 +177,19 @@ const MomoApp = () => {
         const hasOtp = localStorage.getItem('momoOtpInput');
         if (hasOtp) return;
 
-        if (isTimerSyncedRef.current) return;
-        
-        setIsSyncing(true);
         try {
             const redisTime = await fetchTimeFromRedis();
             if (redisTime !== null) {
                 if (redisTime > 0) {
                     setTimeLeft(redisTime);
-                    localStorage.setItem('momoOtpTimeLeft', String(redisTime));
-                    isTimerSyncedRef.current = true;
                     otpExpiredRef.current = false;
                 } else {
                     setTimeLeft(0);
-                    localStorage.setItem('momoOtpTimeLeft', '0');
                     otpExpiredRef.current = true;
-                }
-            } else {
-                const saved = localStorage.getItem('momoOtpTimeLeft');
-                if (saved) {
-                    const time = parseInt(saved, 10);
-                    if (time > 0) setTimeLeft(time);
-                    else otpExpiredRef.current = true;
                 }
             }
         } catch (error) {
             console.error('❌ Lỗi đồng bộ timer:', error);
-        } finally {
-            setIsSyncing(false);
         }
     };
 
@@ -228,25 +227,43 @@ const MomoApp = () => {
     // HÀM XÓA TOÀN BỘ DỮ LIỆU BOOKING
     // =========================
     const clearAllBookingData = () => {
-        const keysToRemove = [
-            'momoHasSentOtp', 'momoHasVisited', 'momoOtpTimeLeft', 'momoOtpInput',
+        const momoKeys = [
+            'momoHasSentOtp', 'momoHasVisited', 'momoOtpInput',
             'momoLastOtpSentAt', 'momoPaymentInitiated', 'momoPaymentCompleted', 'momoCompletedBookingId',
             'momoHoldExpiresAt', 'momoSelectedSeats', 'momoCurrentShowtimeId', 'momoLastSuccessTicket',
             'momoTempBookingId', 'momoSelectedFoods', 'momoBookingTemp', 'momoIsLocked',
-            'momoLockTime', 'momoOtpAttempts', 'momoResendCooldown'
+            'momoLockTime', 'momoOtpAttempts',
+            'momoCustomerEmail', 'momoCustomerName', 'momoCustomerPhone', 'momoTotalAmount',
+            'momoMovie', 'momoSelectedCinema', 'momoSelectedDate', 'momoSelectedShowtime',
+            'momoSelectedSeats', 'momoSelectedFoods', 'momoFoods', 'momoTotalTicketPrice',
+            'momoTotalFoodPrice', 'momoShowtimeDetail'
         ];
 
-        keysToRemove.forEach(key => {
+        momoKeys.forEach(key => {
+            localStorage.removeItem(key);
+        });
+
+        const commonKeys = [
+            'lastSuccessTicket',
+            'booking_temp',
+            'tempBookingId',
+            'selectedSeats',
+            'selectedFoods',
+            'holdExpiresAt',
+            'currentShowtimeId',
+            'paymentInitiated',
+            'paymentCompleted',
+            'completedBookingId'
+        ];
+
+        commonKeys.forEach(key => {
             localStorage.removeItem(key);
         });
         
-        // Đặt lại state về mặc định
         setTimeLeft(300);
-        setResendCooldown(0);
         setOtp('');
 
         hasShownModalRef.current = false;
-        isTimerSyncedRef.current = false;
         otpExpiredRef.current = false;
         resetLockState();
     };
@@ -297,9 +314,7 @@ const MomoApp = () => {
     // =========================
     // SAVE STATE TO LOCALSTORAGE
     // =========================
-    useEffect(() => { localStorage.setItem('momoOtpTimeLeft', String(timeLeft)); }, [timeLeft]);
     useEffect(() => { localStorage.setItem('momoOtpInput', otp); }, [otp]);
-    useEffect(() => { localStorage.setItem('momoResendCooldown', String(resendCooldown)); }, [resendCooldown]);
 
     // =========================
     // CALL API CANCEL BOOKING
@@ -408,7 +423,7 @@ const MomoApp = () => {
     };
 
     // =========================
-    // SEND OTP API (Lần đầu)
+    // SEND OTP API
     // =========================
     const sendOtpApi = async () => {
         setLoadingSendOtp(true);
@@ -431,17 +446,12 @@ const MomoApp = () => {
             const redisTime = await fetchTimeFromRedis();
             if (redisTime !== null && redisTime > 0) {
                 setTimeLeft(redisTime);
-                localStorage.setItem('momoOtpTimeLeft', String(redisTime));
-                isTimerSyncedRef.current = true;
                 otpExpiredRef.current = false;
             } else {
                 setTimeLeft(300);
-                localStorage.setItem('momoOtpTimeLeft', '300');
                 otpExpiredRef.current = false;
             }
 
-            setResendCooldown(300);
-            localStorage.setItem('momoResendCooldown', '300');
             return true;
         } catch (err) {
             const errorMsg = err.response?.data?.message || 'Không thể gửi mã OTP. Vui lòng thử lại.';
@@ -458,10 +468,6 @@ const MomoApp = () => {
     const handleResendOtp = async () => {
         if (isLocked) {
             openModal('error', 'TÀI KHOẢN BỊ KHÓA', `Tài khoản đã bị khóa do nhập sai OTP quá 5 lần. Vui lòng thử lại sau ${formatTime(lockTimeLeft)}.`);
-            return;
-        }
-        if (resendCooldown > 0) {
-            openModal('info', 'THÔNG BÁO', `Vui lòng đợi ${formatTime(resendCooldown)} trước khi gửi lại.`);
             return;
         }
         if (paymentCompletedRef.current) {
@@ -489,25 +495,18 @@ const MomoApp = () => {
 
                 if (response.data.data?.expiresIn) {
                     setTimeLeft(response.data.data.expiresIn);
-                    localStorage.setItem('momoOtpTimeLeft', String(response.data.data.expiresIn));
-                    isTimerSyncedRef.current = true;
                     otpExpiredRef.current = false;
                 } else {
                     const redisTime = await fetchTimeFromRedis();
                     if (redisTime !== null && redisTime > 0) {
                         setTimeLeft(redisTime);
-                        localStorage.setItem('momoOtpTimeLeft', String(redisTime));
-                        isTimerSyncedRef.current = true;
                         otpExpiredRef.current = false;
                     } else {
                         setTimeLeft(300);
-                        localStorage.setItem('momoOtpTimeLeft', '300');
                         otpExpiredRef.current = false;
                     }
                 }
 
-                setResendCooldown(300);
-                localStorage.setItem('momoResendCooldown', '300');
                 setOtp('');
                 localStorage.setItem('momoOtpInput', '');
                 openModal('success', 'THÀNH CÔNG', 'Mã OTP mới đã được gửi tới email của bạn.');
@@ -526,33 +525,12 @@ const MomoApp = () => {
     };
 
     // =========================
-    // COOLDOWN TIMER
-    // =========================
-    useEffect(() => {
-        if (resendCooldown <= 0) return;
-        const timer = setInterval(() => {
-            setResendCooldown(prev => {
-                if (prev <= 1) {
-                    localStorage.removeItem('momoResendCooldown');
-                    return 0;
-                }
-                const newVal = prev - 1;
-                localStorage.setItem('momoResendCooldown', String(newVal));
-                return newVal;
-            });
-        }, 1000);
-        return () => clearInterval(timer);
-    }, [resendCooldown]);
-
-    // =========================
     // LOCK TIMER
     // =========================
     useEffect(() => {
         if (!isLocked || lockTimeLeft <= 0) {
             if (isLocked && lockTimeLeft === 0) {
                 resetLockState();
-                setResendCooldown(0);
-                localStorage.removeItem('momoResendCooldown');
                 if (!modalConfig.show && !hasShownModalRef.current) openModal('info', 'MỞ KHÓA TÀI KHOẢN', 'Tài khoản đã được mở khóa. Bạn có thể gửi lại OTP.', () => closeModal());
             }
             return;
@@ -563,8 +541,6 @@ const MomoApp = () => {
                 const newTime = prev - 1;
                 if (newTime <= 0) {
                     resetLockState();
-                    setResendCooldown(0);
-                    localStorage.removeItem('momoResendCooldown');
                     if (!modalConfig.show && !hasShownModalRef.current) openModal('info', 'MỞ KHÓA TÀI KHOẢN', 'Tài khoản đã được mở khóa. Bạn có thể gửi lại OTP.', () => closeModal());
                     return 0;
                 }
@@ -587,7 +563,7 @@ const MomoApp = () => {
             const hasOtp = hasOtpInStorage || hasSentOtpFlag;
 
             if (hasOtp) {
-                if (!isTimerSyncedRef.current) await syncTimerWithRedis();
+                await syncTimerWithRedis();
                 return;
             }
 
@@ -621,53 +597,32 @@ const MomoApp = () => {
     }, [customerEmail, tempBookingId]);
 
     // =========================
-    // TIMER
+    // REDIS TIMER - CHỈ CHECK TỪ SERVER
     // =========================
     useEffect(() => {
         if (paymentCompletedRef.current) return;
 
-        if (isTimerSyncedRef.current && timeLeft > 0) {
-            timerCheckRef.current = setInterval(async () => {
-                const redisTime = await fetchTimeFromRedis();
-                if (redisTime !== null && redisTime > 0) {
-                    if (Math.abs(redisTime - timeLeft) > 5) {
-                        setTimeLeft(redisTime);
-                        localStorage.setItem('momoOtpTimeLeft', String(redisTime));
-                    }
-                } else if (redisTime === 0) {
+        // Check Redis mỗi 30s
+        timerCheckRef.current = setInterval(async () => {
+            const redisTime = await fetchTimeFromRedis();
+            if (redisTime !== null) {
+                if (redisTime > 0) {
+                    setTimeLeft(redisTime);
+                    otpExpiredRef.current = false;
+                } else {
                     setTimeLeft(0);
-                    localStorage.setItem('momoOtpTimeLeft', '0');
                     otpExpiredRef.current = true;
-                    if (!modalConfig.show && !hasShownModalRef.current && !isLocked) openModal('warning', 'OTP HẾT HẠN', 'Mã OTP đã hết hạn. Vui lòng bấm "Gửi lại OTP" để nhận mã mới.', () => closeModal());
+                    if (!modalConfig.show && !hasShownModalRef.current && !isLocked) {
+                        openModal('warning', 'OTP HẾT HẠN', 'Mã OTP đã hết hạn. Vui lòng bấm "Gửi lại OTP" để nhận mã mới.', () => closeModal());
+                    }
                 }
-            }, 30000);
-        }
-
-        if (timeLeft <= 0) {
-            if (otpExpiredRef.current === false && !paymentCompletedRef.current && !isLocked) {
-                otpExpiredRef.current = true;
-                if (!modalConfig.show && !hasShownModalRef.current) openModal('warning', 'OTP HẾT HẠN', 'Mã OTP đã hết hạn. Vui lòng bấm "Gửi lại OTP" để nhận mã mới.', () => closeModal());
             }
-            return;
-        }
-
-        const timer = setInterval(() => {
-            setTimeLeft(prev => {
-                const newTime = prev - 1;
-                if (newTime <= 0) {
-                    otpExpiredRef.current = true;
-                    if (!modalConfig.show && !hasShownModalRef.current && !paymentCompletedRef.current && !isLocked) openModal('warning', 'OTP HẾT HẠN', 'Mã OTP đã hết hạn. Vui lòng bấm "Gửi lại OTP" để nhận mã mới.', () => closeModal());
-                    return 0;
-                }
-                return newTime;
-            });
-        }, 1000);
+        }, 30000);
 
         return () => {
-            clearInterval(timer);
             if (timerCheckRef.current) clearInterval(timerCheckRef.current);
         };
-    }, [timeLeft, tempBookingId, customerEmail, navigate]);
+    }, [tempBookingId]);
 
     // =========================
     // VERIFY OTP
@@ -701,7 +656,6 @@ const MomoApp = () => {
                 localStorage.setItem('momoCompletedBookingId', String(realBookingId));
                 paymentCompletedRef.current = true;
 
-                // XÓA TOÀN BỘ DỮ LIỆU (Bao gồm momoOtpTimeLeft & momoResendCooldown)
                 clearAllBookingData();
 
                 openModal('success', 'THANH TOÁN THÀNH CÔNG', 'Cảm ơn bạn đã đặt vé! Vui lòng kiểm tra email để nhận vé.', () => {
@@ -878,9 +832,9 @@ const MomoApp = () => {
                                 type="button"
                                 className="btn-resend-otp"
                                 onClick={handleResendOtp}
-                                disabled={loadingSendOtp || paymentCompletedRef.current || resendCooldown > 0 || isLocked}
+                                disabled={loadingSendOtp || paymentCompletedRef.current || isLocked}
                             >
-                                {loadingSendOtp ? 'Đang gửi...' : isLocked ? `🔒 Đã khóa (${formatTime(lockTimeLeft)})` : resendCooldown > 0 ? `⏳ Gửi lại sau ${formatTime(resendCooldown)}` : '🔄 GỬI LẠI OTP'}
+                                {loadingSendOtp ? 'Đang gửi...' : isLocked ? `🔒 Đã khóa (${formatTime(lockTimeLeft)})` : '🔄 GỬI LẠI OTP'}
                             </button>
                         </div>
 

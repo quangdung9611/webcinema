@@ -1,7 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Lock } from 'lucide-react';
+import { Lock, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Modal from './Modal';
+import LoadingButton from './LoadingButton';
 import '../styles/PaymentPinModal.css';
 
 const PaymentPinModal = ({
@@ -16,12 +17,14 @@ const PaymentPinModal = ({
 }) => {
     const navigate = useNavigate();
     const inputRefs = useRef([]);
+    const [localError, setLocalError] = useState('');
 
     useEffect(() => {
         if (isOpen) {
+            setLocalError('');
             setTimeout(() => {
                 inputRefs.current[0]?.focus();
-            }, 100);
+            }, 150);
         }
     }, [isOpen]);
 
@@ -37,29 +40,54 @@ const PaymentPinModal = ({
     };
 
     const handleKeyDown = (index, e) => {
-        if (e.key === 'Backspace' && !pin[index] && index > 0) {
+        if (e.key === 'Backspace') {
+            if (!pin[index] && index > 0) {
+                const newPin = pin.split('');
+                newPin[index - 1] = '';
+                setPin(newPin.join(''));
+                inputRefs.current[index - 1]?.focus();
+            } else if (pin[index]) {
+                const newPin = pin.split('');
+                newPin[index] = '';
+                setPin(newPin.join(''));
+            }
+        }
+
+        if (e.key === 'ArrowLeft' && index > 0) {
             inputRefs.current[index - 1]?.focus();
+        }
+
+        if (e.key === 'ArrowRight' && index < 5) {
+            inputRefs.current[index + 1]?.focus();
+        }
+
+        if (e.key === 'Enter' && pin.length === 6) {
+            onConfirm();
         }
     };
 
     const handlePaste = (e) => {
         e.preventDefault();
         const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-        setPin(pasted);
-        inputRefs.current[Math.min(pasted.length, 5)]?.focus();
+        if (pasted) {
+            setPin(pasted);
+            const lastIndex = Math.min(pasted.length - 1, 5);
+            inputRefs.current[lastIndex]?.focus();
+        }
     };
 
-    // ✅ CHUYỂN THẲNG ĐẾN TRANG FORGOT-PIN
     const handleForgotPin = () => {
         onClose();
-        navigate('/forgot-pin', { 
-            state: { 
+        navigate('/forgot-pin', {
+            state: {
                 returnTo: '/payment',
                 fromPayment: true,
-                email: email 
-            } 
+                email: email
+            }
         });
     };
+
+    const displayError = error || localError;
 
     if (!isOpen) return null;
 
@@ -74,10 +102,23 @@ const PaymentPinModal = ({
             confirmText="XÁC NHẬN"
             cancelText="HỦY"
             className="payment-pin-modal"
+            confirmButton={({ onClick, disabled }) => (
+                <LoadingButton
+                    type="button"
+                    loading={isLoading}
+                    loadingText="ĐANG XÁC NHẬN..."
+                    onClick={onConfirm}
+                    disabled={pin.length !== 6 || isLoading}
+                    className="btn-pin-confirm"
+                    spinnerColor="#0a0a0a"
+                >
+                    XÁC NHẬN
+                </LoadingButton>
+            )}
         >
             <div className="pin-modal-body">
                 <div className="pin-modal-icon">
-                    <Lock size={36} color="#f59e0b" />
+                    <Lock size={36} strokeWidth={1.5} color="var(--accent-ice)" />
                 </div>
 
                 <p className="pin-modal-description">
@@ -96,21 +137,25 @@ const PaymentPinModal = ({
                             onChange={(e) => handleChange(index, e.target.value)}
                             onKeyDown={(e) => handleKeyDown(index, e)}
                             onPaste={handlePaste}
-                            className={`pin-box ${error ? 'pin-box-error' : ''}`}
+                            className={`pin-box ${pin[index] ? 'filled' : ''} ${displayError ? 'pin-box-error' : ''}`}
                             disabled={isLoading}
                             autoComplete="one-time-code"
                         />
                     ))}
                 </div>
 
-                {error && (
-                    <p className="pin-modal-error">{error}</p>
+                {displayError && (
+                    <p className="pin-modal-error">
+                        <AlertCircle size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'middle' }} />
+                        {displayError}
+                    </p>
                 )}
 
                 <button
                     type="button"
                     className="forgot-pin-link"
                     onClick={handleForgotPin}
+                    disabled={isLoading}
                 >
                     Quên mã PIN?
                 </button>

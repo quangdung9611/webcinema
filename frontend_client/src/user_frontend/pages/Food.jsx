@@ -1,4 +1,3 @@
-
 // =========================================================
 // FOOD.JS
 // PREMIUM SILVER BOOKING FLOW
@@ -16,6 +15,21 @@ import {
 } from 'react-router-dom';
 
 import api from '../../api/api';
+
+// =========================================================
+// LUCIDE REACT ICONS
+// =========================================================
+
+import {
+    Popcorn,
+    Plus,
+    Minus,
+    ChevronLeft,
+    ChevronRight,
+    Ticket,
+    Coffee,
+    UtensilsCrossed
+} from 'lucide-react';
 
 // =========================================================
 // COMPONENTS
@@ -555,7 +569,7 @@ const Food = () => {
                 <div className="food-empty">
 
                     <div className="food-empty-icon">
-                        🍿
+                        <Popcorn size={48} strokeWidth={1.5} />
                     </div>
 
                     <h3>
@@ -611,7 +625,7 @@ const Food = () => {
                             ) : (
 
                                 <div className="food-no-image">
-                                    🍿
+                                    <UtensilsCrossed size={40} strokeWidth={1.5} />
                                 </div>
 
                             )}
@@ -661,7 +675,7 @@ const Food = () => {
 
                         <div className="food-action-row">
 
-                            <span className="quantity-label">
+                            <span className="food-quantity-label">
                                 SỐ LƯỢNG
                             </span>
 
@@ -670,7 +684,7 @@ const Food = () => {
 
                                 <button
                                     type="button"
-                                    className="qty-btn qty-minus"
+                                    className="food-qty-btn food-qty-minus"
                                     onClick={() =>
                                         updateQty(
                                             item.product_id,
@@ -679,7 +693,7 @@ const Food = () => {
                                     }
                                     aria-label={`Giảm ${item.product_name}`}
                                 >
-                                    −
+                                    <Minus size={16} strokeWidth={2.5} />
                                 </button>
 
 
@@ -690,7 +704,7 @@ const Food = () => {
 
                                 <button
                                     type="button"
-                                    className="qty-btn qty-plus"
+                                    className="food-qty-btn food-qty-plus"
                                     onClick={() =>
                                         updateQty(
                                             item.product_id,
@@ -699,7 +713,7 @@ const Food = () => {
                                     }
                                     aria-label={`Tăng ${item.product_name}`}
                                 >
-                                    +
+                                    <Plus size={16} strokeWidth={2.5} />
                                 </button>
 
                             </div>
@@ -743,7 +757,7 @@ const Food = () => {
 
     return (
 
-        <div className="booking-wrapper">
+        <div className="food-wrapper">
 
             {/* =================================================
                 EXPIRED MODAL
@@ -769,10 +783,6 @@ const Food = () => {
 
 
                 {/* =================================================
-                    PAGE TITLE
-                ================================================= */}
-
-                {/* =================================================
                     BOOKING PROGRESS
                     FOOD = BƯỚC 03 / THỨC ĂN
                 ================================================= */}
@@ -780,14 +790,14 @@ const Food = () => {
                     <BookingProgress currentStep={3} />
                 </div>
 
-                <div className="food-booking-layout">
+                <div className="food-layout">
 
 
                     {/* =================================================
                         SIDEBAR
                     ================================================= */}
 
-                    <aside className="food-sidebar">
+                    <aside className="food-sidebar-wrapper">
 
                         <BookingSidebar
 
@@ -894,7 +904,7 @@ const Food = () => {
                         MAIN FOOD AREA
                     ================================================= */}
 
-                    <main className="food-main">
+                    <main className="food-main-area">
 
 
                         {/* =================================================
@@ -904,10 +914,10 @@ const Food = () => {
                         <section className="food-intro-card">
 
                             <div className="food-intro-icon">
-                                🍿
+                                <Popcorn size={32} strokeWidth={1.5} />
                             </div>
 
-                            <div>
+                            <div className="food-intro-content">
 
                                 <h2>
                                     CHỌN COMBO YÊU THÍCH
@@ -918,6 +928,11 @@ const Food = () => {
                                     các combo vào đơn hàng.
                                 </p>
 
+                            </div>
+
+                            <div className="food-count-badge">
+                                <strong>{foods.length}</strong>
+                                <span>SẢN PHẨM</span>
                             </div>
 
                         </section>
@@ -934,25 +949,13 @@ const Food = () => {
                                 <div>
 
                                     <span className="food-section-label">
-                                        FOOD & DRINK
+                                        <Coffee size={12} strokeWidth={2} />
+                                        FOOD &amp; DRINK
                                     </span>
 
                                     <h2>
                                         COMBO ĐANG CÓ
                                     </h2>
-
-                                </div>
-
-
-                                <div className="food-count">
-
-                                    <strong>
-                                        {foods.length}
-                                    </strong>
-
-                                    <span>
-                                        sản phẩm
-                                    </span>
 
                                 </div>
 
@@ -1000,6 +1003,7 @@ const Food = () => {
                                     navigate(-1)
                                 }
                             >
+                                <ChevronLeft size={14} strokeWidth={2.5} />
                                 QUAY LẠI
                             </button>
 
@@ -1015,6 +1019,7 @@ const Food = () => {
                                     ? 'ĐANG XỬ LÝ...'
                                     : 'TIẾP TỤC'
                                 }
+                                <ChevronRight size={14} strokeWidth={2.5} />
 
                             </button>
 
@@ -1032,4 +1037,3 @@ const Food = () => {
 
 
 export default Food;
-

@@ -20,7 +20,10 @@ import {
     Popcorn,
     BookOpen,
     Gift,
-    Image,            // 👈 Thêm cho Banner
+    Image,
+    DollarSign,        // 👈 Thêm cho Price Config
+    Calendar,          // 👈 Thêm cho Showtime Config
+    Settings,          // 👈 Thêm cho Config (nếu cần)
 } from 'lucide-react';
 
 import '../styles/Sidebar.css';
@@ -71,14 +74,11 @@ const AdminSidebar = ({
             icon: <Gift size={20} />,
             label: 'Quản lý Khuyến mãi'
         },
-
-        // 🔥 BANNER – THÊM MỚI
         {
             path: '/banners',
             icon: <Image size={20} />,
             label: 'Quản lý Banner'
         },
-
         {
             path: '/actors',
             icon: <Star size={20} />,
@@ -117,11 +117,23 @@ const AdminSidebar = ({
             label: 'Quản lý Ghế Ngồi'
         },
 
-        // ===== QUẢN LÝ VÉ & SUẤT CHIẾU =====
+        // ===== QUẢN LÝ SUẤT CHIẾU & CẤU HÌNH =====
         {
             path: '/showtimes',
             icon: <Clock size={20} />,
             label: 'Quản lý Suất Chiếu'
+        },
+        // 🔥 PRICE CONFIG - THÊM MỚI
+        {
+            path: '/price-config',
+            icon: <DollarSign size={20} />,
+            label: 'Cấu hình Giá Vé'
+        },
+        // 🔥 SHOWTIME CONFIG - THÊM MỚI
+        {
+            path: '/showtime-config',
+            icon: <Calendar size={20} />,
+            label: 'Cấu hình Khung Giờ'
         },
         {
             path: '/tickets',

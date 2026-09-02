@@ -269,6 +269,44 @@ const Payment = () => {
         });
 
         // --------------------------------------------------------
+        // XÓA STATE MOMO CŨ
+        // --------------------------------------------------------
+
+        const momoKeys = [
+            'momoHasSentOtp',
+            'momoHasVisited',
+            'momoOtpTimeLeft',
+            'momoOtpInput',
+            'momoLastOtpSentAt',
+            'momoPaymentCompleted',
+            'momoCompletedBookingId',
+            'momoPaymentInitiated',
+            'momoTempBookingId',
+            'momoCustomerEmail',
+            'momoCustomerName',
+            'momoCustomerPhone',
+            'momoTotalAmount',
+            'momoMovie',
+            'momoSelectedCinema',
+            'momoSelectedDate',
+            'momoSelectedShowtime',
+            'momoSelectedSeats',
+            'momoSelectedFoods',
+            'momoFoods',
+            'momoTotalTicketPrice',
+            'momoTotalFoodPrice',
+            'momoShowtimeDetail',
+            'momoIsLocked',
+            'momoLockTime',
+            'momoOtpAttempts',
+            'momoResendCooldown',
+        ];
+
+        momoKeys.forEach(key => {
+            localStorage.removeItem(key);
+        });
+
+        // --------------------------------------------------------
         // TEMP BOOKING ID
         // --------------------------------------------------------
 
@@ -632,6 +670,44 @@ const Payment = () => {
             localStorage.removeItem(key);
         });
 
+        // --------------------------------------------------------
+        // RESET MOMO STATE
+        // --------------------------------------------------------
+
+        const momoKeys = [
+            'momoHasSentOtp',
+            'momoHasVisited',
+            'momoOtpTimeLeft',
+            'momoOtpInput',
+            'momoLastOtpSentAt',
+            'momoPaymentCompleted',
+            'momoCompletedBookingId',
+            'momoPaymentInitiated',
+            'momoTempBookingId',
+            'momoCustomerEmail',
+            'momoCustomerName',
+            'momoCustomerPhone',
+            'momoTotalAmount',
+            'momoMovie',
+            'momoSelectedCinema',
+            'momoSelectedDate',
+            'momoSelectedShowtime',
+            'momoSelectedSeats',
+            'momoSelectedFoods',
+            'momoFoods',
+            'momoTotalTicketPrice',
+            'momoTotalFoodPrice',
+            'momoShowtimeDetail',
+            'momoIsLocked',
+            'momoLockTime',
+            'momoOtpAttempts',
+            'momoResendCooldown',
+        ];
+
+        momoKeys.forEach(key => {
+            localStorage.removeItem(key);
+        });
+
         setIsProcessing(true);
 
         try {
@@ -792,10 +868,11 @@ const Payment = () => {
                 setIsTimerActive(false);
 
                 // ------------------------------------------------
-                // REDIRECT PAYMENT APP
+                // REDIRECT BASED ON PAYMENT METHOD
                 // ------------------------------------------------
 
                 if (paymentMethod === 'bank') {
+                    // Lưu state cho Bank
                     localStorage.setItem(
                         'paymentInitiated',
                         'true'
@@ -805,9 +882,28 @@ const Payment = () => {
                         state: finalState,
                     });
                 } else {
-                    localStorage.removeItem(
-                        'paymentInitiated'
-                    );
+                    // ✅ LƯU STATE CHO MOMO VÀO LOCALSTORAGE
+                    localStorage.setItem('momoTempBookingId', tempId);
+                    localStorage.setItem('momoCustomerEmail', email);
+                    localStorage.setItem('momoCustomerName', fullName);
+                    localStorage.setItem('momoCustomerPhone', phone);
+                    localStorage.setItem('momoTotalAmount', String(grandTotal));
+                    localStorage.setItem('momoPaymentInitiated', 'true');
+                    
+                    // Lưu các dữ liệu khác
+                    localStorage.setItem('momoMovie', JSON.stringify(movie));
+                    localStorage.setItem('momoSelectedCinema', JSON.stringify(selectedCinema));
+                    localStorage.setItem('momoSelectedDate', selectedDate || '');
+                    localStorage.setItem('momoSelectedShowtime', JSON.stringify(selectedShowtime));
+                    localStorage.setItem('momoSelectedSeats', JSON.stringify(selectedSeats));
+                    localStorage.setItem('momoSelectedFoods', JSON.stringify(selectedFoods));
+                    localStorage.setItem('momoFoods', JSON.stringify(foods));
+                    localStorage.setItem('momoTotalTicketPrice', String(totalTicketPrice));
+                    localStorage.setItem('momoTotalFoodPrice', String(totalFoodPrice));
+                    localStorage.setItem('momoShowtimeDetail', JSON.stringify(showtimeDetail));
+
+                    // Xóa key paymentInitiated (không dùng cho MoMo)
+                    localStorage.removeItem('paymentInitiated');
 
                     navigate('/momo-app', {
                         state: finalState,
