@@ -12,31 +12,15 @@ import {
     Edit,
     Trash2,
     Loader2,
-    Plus,
-    RefreshCw,
-    CheckCircle,
-    XCircle,
-    Search,
-    ChevronLeft,
-    ChevronRight,
-    X
+    RefreshCw
 } from 'lucide-react';
 
-import '../../../styles/PriceConfig.css';
+import AdminPage from '../../../components/AdminPage';
+import AdminTable from '../../../components/AdminTable';
+import AdminModal from '../../../components/AdminModal';
+import AdminForm from '../../../components/AdminForm';
+import AdminPagination from '../../../components/AdminPagination';
 
-
-// ==========================================================
-// INITIAL FORM DATA
-// ==========================================================
-
-const initialFormData = {
-    room_type: '2D',
-    time_slot: 'MORNING',
-    day_type: 'WEEKDAY',
-    seat_type: 'STANDARD',
-    price: 50000,
-    status: 1
-};
 
 
 // ==========================================================
@@ -49,15 +33,15 @@ const DAY_TYPES = ['WEEKDAY', 'WEEKEND'];
 const SEAT_TYPES = ['STANDARD', 'VIP', 'DELUXE', 'RECLINER', 'COUPLE'];
 
 const TIME_SLOT_LABELS = {
-    'MORNING': '🕐 Sáng (6h-12h)',
-    'AFTERNOON': '🕐 Chiều (12h-17h)',
-    'EVENING': '🕐 Tối (17h-20h)',
-    'NIGHT': '🕐 Đêm (20h-24h)'
+    'MORNING': 'Sáng (6h-12h)',
+    'AFTERNOON': 'Chiều (12h-17h)',
+    'EVENING': 'Tối (17h-20h)',
+    'NIGHT': 'Đêm (20h-24h)'
 };
 
 const DAY_TYPE_LABELS = {
-    'WEEKDAY': '📅 Ngày thường (T2-T6)',
-    'WEEKEND': '📅 Cuối tuần (T7-CN)'
+    'WEEKDAY': 'Ngày thường (T2-T6)',
+    'WEEKEND': 'Cuối tuần (T7-CN)'
 };
 
 const SEAT_TYPE_LABELS = {
@@ -74,6 +58,20 @@ const SEAT_TYPE_COLORS = {
     'DELUXE': '#B8C0C9',
     'RECLINER': '#6F8FA8',
     'COUPLE': '#B86BC7'
+};
+
+
+// ==========================================================
+// INITIAL FORM DATA
+// ==========================================================
+
+const initialFormData = {
+    room_type: '2D',
+    time_slot: 'MORNING',
+    day_type: 'WEEKDAY',
+    seat_type: 'STANDARD',
+    price: 50000,
+    status: 1
 };
 
 
@@ -187,10 +185,20 @@ const PriceConfigPage = () => {
 
     const fetchPriceConfigs = useCallback(
         async (page = 1, keyword = '') => {
+
+            // ----------------------------------------------
+            // CHỐNG FETCH TRÙNG
+            // ----------------------------------------------
+
             if (isFetching.current) {
                 console.log('⏳ Đang fetch, bỏ qua lần gọi mới');
                 return;
             }
+
+
+            // ----------------------------------------------
+            // HỦY REQUEST CŨ
+            // ----------------------------------------------
 
             if (abortControllerRef.current) {
                 abortControllerRef.current.abort();
@@ -202,8 +210,13 @@ const PriceConfigPage = () => {
             setLoading(true);
 
             try {
+
+                // ------------------------------------------
+                // API
+                // ------------------------------------------
+
                 const res = await api.get(
-                    '/api/price-config',
+                    '/api/price-config/paginated',  // <-- SỬA: Thêm /paginated
                     {
                         params: {
                             page,
@@ -214,9 +227,19 @@ const PriceConfigPage = () => {
                     }
                 );
 
+
+                // ------------------------------------------
+                // PRICE CONFIGS DATA
+                // ------------------------------------------
+
                 const data = Array.isArray(res.data?.data)
                     ? res.data.data
                     : [];
+
+
+                // ------------------------------------------
+                // PAGINATION DATA
+                // ------------------------------------------
 
                 const paginationData = res.data?.pagination || {
                     page: 1,
@@ -231,6 +254,11 @@ const PriceConfigPage = () => {
                 setPagination(paginationData);
 
             } catch (error) {
+
+                // ------------------------------------------
+                // REQUEST BỊ HỦY
+                // ------------------------------------------
+
                 if (
                     error.name === 'AbortError' ||
                     error.code === 'ERR_CANCELED'
@@ -238,6 +266,11 @@ const PriceConfigPage = () => {
                     console.log('🛑 Request price config bị hủy');
                     return;
                 }
+
+
+                // ------------------------------------------
+                // ERROR
+                // ------------------------------------------
 
                 console.error('FETCH PRICE CONFIG ERROR:', error);
                 setPriceConfigs([]);
@@ -259,6 +292,7 @@ const PriceConfigPage = () => {
             } finally {
                 setLoading(false);
                 isFetching.current = false;
+
                 if (abortControllerRef.current === controller) {
                     abortControllerRef.current = null;
                 }
@@ -467,7 +501,8 @@ const PriceConfigPage = () => {
                 setEditingConfig(null);
                 setFormErrors({});
 
-                fetchPriceConfigs(pagination.page, search);
+                // Sau khi thêm, quay về trang 1
+                fetchPriceConfigs(1, search);
 
                 setTimeout(() => {
                     showAlert(
@@ -652,445 +687,325 @@ const PriceConfigPage = () => {
 
 
     // ======================================================
+    // TABLE COLUMNS
+    // ======================================================
+
+    const columns = [
+        {
+            title: 'ID',
+            key: 'price_config_id',
+            render: (row) => `#${row.price_config_id}`
+        },
+        {
+            title: 'Loại phòng',
+            key: 'room_type',
+            render: (row) => (
+                <span className="room-type-badge">
+                    {row.room_type}
+                </span>
+            )
+        },
+        {
+            title: 'Khung giờ',
+            key: 'time_slot',
+            render: (row) => getTimeSlotLabel(row.time_slot)
+        },
+        {
+            title: 'Ngày',
+            key: 'day_type',
+            render: (row) => getDayTypeLabel(row.day_type)
+        },
+        {
+            title: 'Loại ghế',
+            key: 'seat_type',
+            render: (row) => (
+                <span 
+                    className="seat-type-badge"
+                    style={{
+                        backgroundColor: `${getSeatTypeColor(row.seat_type)}22`,
+                        color: getSeatTypeColor(row.seat_type),
+                        borderColor: getSeatTypeColor(row.seat_type)
+                    }}
+                >
+                    {getSeatTypeLabel(row.seat_type)}
+                </span>
+            )
+        },
+        {
+            title: 'Giá vé',
+            key: 'price',
+            render: (row) => (
+                <strong className="price-cell">
+                    {Number(row.price).toLocaleString()}₫
+                </strong>
+            )
+        },
+        {
+            title: 'Trạng thái',
+            key: 'status',
+            render: (row) => (
+                <span className={`status-badge ${row.status === 1 ? 'active' : 'inactive'}`}>
+                    {row.status === 1 ? '✅ Hoạt động' : '❌ Đã khóa'}
+                </span>
+            )
+        },
+        {
+            title: 'Thao tác',
+            key: 'actions',
+            render: (row) => (
+                <div className="admin-table-actions">
+                    <button
+                        type="button"
+                        className="admin-action-btn edit-btn"
+                        onClick={() => handleOpenEdit(row)}
+                        title="Chỉnh sửa"
+                    >
+                        <Edit size={16} />
+                    </button>
+
+                    <button
+                        type="button"
+                        className={`admin-action-btn toggle-btn ${row.status === 1 ? 'active' : 'inactive'}`}
+                        onClick={() => handleToggleStatus(row)}
+                        title={row.status === 1 ? 'Vô hiệu hóa' : 'Kích hoạt'}
+                    >
+                        {row.status === 1 ? '🔒' : '🔓'}
+                    </button>
+
+                    <button
+                        type="button"
+                        className="admin-action-btn delete-btn"
+                        onClick={() => handleDelete(row)}
+                        title="Xóa"
+                    >
+                        <Trash2 size={16} />
+                    </button>
+                </div>
+            )
+        }
+    ];
+
+
+    // ======================================================
+    // FORM FIELDS
+    // ======================================================
+
+    const formFields = [
+        {
+            label: 'Loại phòng',
+            name: 'room_type',
+            type: 'select',
+            required: true,
+            options: ROOM_TYPES.map(type => ({
+                label: type,
+                value: type
+            }))
+        },
+        {
+            label: 'Khung giờ',
+            name: 'time_slot',
+            type: 'select',
+            required: true,
+            options: TIME_SLOTS.map(slot => ({
+                label: TIME_SLOT_LABELS[slot],
+                value: slot
+            }))
+        },
+        {
+            label: 'Loại ngày',
+            name: 'day_type',
+            type: 'select',
+            required: true,
+            options: DAY_TYPES.map(type => ({
+                label: DAY_TYPE_LABELS[type],
+                value: type
+            }))
+        },
+        {
+            label: 'Loại ghế',
+            name: 'seat_type',
+            type: 'select',
+            required: true,
+            options: SEAT_TYPES.map(type => ({
+                label: SEAT_TYPE_LABELS[type],
+                value: type
+            }))
+        },
+        {
+            label: 'Giá vé (₫)',
+            name: 'price',
+            type: 'number',
+            placeholder: 'Nhập giá vé',
+            required: true,
+            min: 0,
+            step: 1000
+        },
+        {
+            label: 'Trạng thái',
+            name: 'status',
+            type: 'select',
+            required: true,
+            options: [
+                { label: '✅ Hoạt động', value: 1 },
+                { label: '❌ Đã khóa', value: 0 }
+            ]
+        }
+    ];
+
+
+    // ======================================================
+    // ALERT VARIANT
+    // ======================================================
+
+    const alertVariant = alertModal.onConfirm ? 'confirm' : 'alert';
+
+
+    // ======================================================
     // RENDER
     // ======================================================
 
     return (
-        <div className="price-config-page">
-
+        <>
             {/* ==================================================
-                HEADER
+                ADMIN PAGE
             ================================================== */}
 
-            <div className="price-config-header">
-                <div className="price-config-header-left">
-                    <div className="price-config-icon">
-                        <DollarSign size={28} />
-                    </div>
-                    <div>
-                        <h1>💰 Quản lý giá vé</h1>
-                        <p>Quản lý giá vé theo loại phòng, khung giờ, ngày chiếu và loại ghế</p>
-                    </div>
-                </div>
-
-                <div className="price-config-header-right">
+            <AdminPage
+                title="💰 Quản lý giá vé"
+                subtitle="Quản lý giá vé theo loại phòng, khung giờ, ngày chiếu và loại ghế"
+                icon={<DollarSign size={30} />}
+                buttonText="Thêm cấu hình giá"
+                onAdd={handleOpenAdd}
+                searchValue={search}
+                onSearchChange={setSearch}
+                extraButtons={
                     <button
                         type="button"
-                        className="btn btn-seed"
+                        className="admin-extra-btn seed-btn"
                         onClick={handleSeed}
+                        title="Seed dữ liệu mặc định"
                     >
                         <RefreshCw size={16} />
                         Seed dữ liệu
                     </button>
+                }
+            >
+                {/* ==============================================
+                    LOADING
+                ============================================== */}
 
-                    <button
-                        type="button"
-                        className="btn btn-primary"
-                        onClick={handleOpenAdd}
-                    >
-                        <Plus size={16} />
-                        Thêm cấu hình giá
-                    </button>
-                </div>
-            </div>
-
-            {/* ==================================================
-                SEARCH BAR
-            ================================================== */}
-
-            <div className="price-config-search">
-                <div className="search-wrapper">
-                    <Search size={18} className="search-icon" />
-                    <input
-                        type="text"
-                        placeholder="Tìm kiếm theo loại phòng, khung giờ, loại ghế..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
-                    {search && (
-                        <button
-                            className="search-clear"
-                            onClick={() => setSearch('')}
-                        >
-                            <X size={16} />
-                        </button>
-                    )}
-                </div>
-            </div>
-
-            {/* ==================================================
-                TABLE
-            ================================================== */}
-
-            {loading ? (
-                <div className="price-config-loading">
-                    <Loader2 size={32} className="spin-icon" />
-                    <span>Đang tải dữ liệu...</span>
-                </div>
-            ) : (
-                <>
-                    <div className="price-config-table-wrapper">
-                        <table className="price-config-table">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Loại phòng</th>
-                                    <th>Khung giờ</th>
-                                    <th>Ngày</th>
-                                    <th>Loại ghế</th>
-                                    <th>Giá vé</th>
-                                    <th>Trạng thái</th>
-                                    <th>Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {priceConfigs.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="8" className="empty-cell">
-                                            <div className="empty-state">
-                                                <DollarSign size={48} />
-                                                <h3>Chưa có cấu hình giá</h3>
-                                                <p>Nhấn "Thêm cấu hình giá" để tạo mới</p>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    priceConfigs.map((config, index) => (
-                                        <tr key={config.price_config_id}>
-                                            <td>
-                                                {(pagination.page - 1) * pagination.limit + index + 1}
-                                            </td>
-                                            <td>
-                                                <span className="room-type-badge">
-                                                    {config.room_type}
-                                                </span>
-                                            </td>
-                                            <td>{getTimeSlotLabel(config.time_slot)}</td>
-                                            <td>{getDayTypeLabel(config.day_type)}</td>
-                                            <td>
-                                                <span 
-                                                    className="seat-type-badge"
-                                                    style={{
-                                                        backgroundColor: `${getSeatTypeColor(config.seat_type)}22`,
-                                                        color: getSeatTypeColor(config.seat_type),
-                                                        borderColor: getSeatTypeColor(config.seat_type)
-                                                    }}
-                                                >
-                                                    {getSeatTypeLabel(config.seat_type)}
-                                                </span>
-                                            </td>
-                                            <td className="price-cell">
-                                                {Number(config.price).toLocaleString()}₫
-                                            </td>
-                                            <td>
-                                                <span className={`status-badge ${config.status === 1 ? 'active' : 'inactive'}`}>
-                                                    {config.status === 1 ? (
-                                                        <>
-                                                            <CheckCircle size={14} />
-                                                            Hoạt động
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <XCircle size={14} />
-                                                            Đã khóa
-                                                        </>
-                                                    )}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div className="table-actions">
-                                                    <button
-                                                        type="button"
-                                                        className="action-btn edit-btn"
-                                                        onClick={() => handleOpenEdit(config)}
-                                                        title="Chỉnh sửa"
-                                                    >
-                                                        <Edit size={16} />
-                                                    </button>
-
-                                                    <button
-                                                        type="button"
-                                                        className={`action-btn toggle-btn ${config.status === 1 ? 'active' : 'inactive'}`}
-                                                        onClick={() => handleToggleStatus(config)}
-                                                        title={config.status === 1 ? 'Vô hiệu hóa' : 'Kích hoạt'}
-                                                    >
-                                                        {config.status === 1 ? '🔒' : '🔓'}
-                                                    </button>
-
-                                                    <button
-                                                        type="button"
-                                                        className="action-btn delete-btn"
-                                                        onClick={() => handleDelete(config)}
-                                                        title="Xóa"
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
+                {loading ? (
+                    <div className="admin-loading">
+                        <Loader2 size={32} className="spin-icon" />
+                        <span>Đang tải dữ liệu...</span>
                     </div>
+                ) : (
+                    <>
+                        {/* ==========================================
+                            TABLE
+                        ========================================== */}
 
-                    {/* ==============================================
-                        PAGINATION
-                    ============================================== */}
+                        <AdminTable
+                            columns={columns}
+                            data={priceConfigs}
+                            emptyMessage="Chưa có cấu hình giá nào"
+                        />
 
-                    {pagination.totalPages > 1 && (
-                        <div className="price-config-pagination">
-                            <button
-                                className="page-btn"
-                                disabled={!pagination.hasPreviousPage}
-                                onClick={() => handlePageChange(pagination.page - 1)}
-                            >
-                                <ChevronLeft size={16} />
-                            </button>
 
-                            <span className="page-info">
-                                Trang {pagination.page} / {pagination.totalPages}
-                            </span>
+                        {/* ==========================================
+                            PAGINATION
+                        ========================================== */}
 
-                            <button
-                                className="page-btn"
-                                disabled={!pagination.hasNextPage}
-                                onClick={() => handlePageChange(pagination.page + 1)}
-                            >
-                                <ChevronRight size={16} />
-                            </button>
+                        <AdminPagination
+                            currentPage={pagination.page}
+                            totalPages={pagination.totalPages}
+                            onPageChange={handlePageChange}
+                        />
+
+
+                        {/* ==========================================
+                            STATS
+                        ========================================== */}
+
+                        <div className="admin-stats">
+                            <div className="stat-item">
+                                <span className="stat-label">Tổng cấu hình:</span>
+                                <span className="stat-value">{pagination.total}</span>
+                            </div>
+                            <div className="stat-item">
+                                <span className="stat-label">Đang hoạt động:</span>
+                                <span className="stat-value text-success">
+                                    {priceConfigs.filter(c => c.status === 1).length}
+                                </span>
+                            </div>
+                            <div className="stat-item">
+                                <span className="stat-label">Đã khóa:</span>
+                                <span className="stat-value text-danger">
+                                    {priceConfigs.filter(c => c.status === 0).length}
+                                </span>
+                            </div>
+                            <div className="stat-item">
+                                <span className="stat-label">Trang hiện tại:</span>
+                                <span className="stat-value">{pagination.page}/{pagination.totalPages}</span>
+                            </div>
                         </div>
-                    )}
-
-                    {/* ==============================================
-                        STATS
-                    ============================================== */}
-
-                    <div className="price-config-stats">
-                        <div className="stat-item">
-                            <span className="stat-label">Tổng cấu hình:</span>
-                            <span className="stat-value">{priceConfigs.length}</span>
-                        </div>
-                        <div className="stat-item">
-                            <span className="stat-label">Đang hoạt động:</span>
-                            <span className="stat-value text-success">
-                                {priceConfigs.filter(c => c.status === 1).length}
-                            </span>
-                        </div>
-                        <div className="stat-item">
-                            <span className="stat-label">Đã khóa:</span>
-                            <span className="stat-value text-danger">
-                                {priceConfigs.filter(c => c.status === 0).length}
-                            </span>
-                        </div>
-                        <div className="stat-item">
-                            <span className="stat-label">Loại ghế:</span>
-                            <span className="stat-value">
-                                {[...new Set(priceConfigs.map(c => c.seat_type))].length}
-                            </span>
-                        </div>
-                    </div>
-                </>
-            )}
+                    </>
+                )}
+            </AdminPage>
 
             {/* ==================================================
                 FORM MODAL
             ================================================== */}
 
-            {isFormOpen && (
-                <div className="modal-overlay" onClick={handleCloseForm}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h2>
-                                {editingConfig ? '✏️ Cập nhật cấu hình giá' : '➕ Thêm cấu hình giá mới'}
-                            </h2>
-                            <button className="modal-close" onClick={handleCloseForm}>
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        <form className="modal-body" onSubmit={handleSubmit}>
-                            <div className="form-row">
-                                <div className="form-group half">
-                                    <label>Loại phòng <span className="required">*</span></label>
-                                    <select
-                                        name="room_type"
-                                        value={formData.room_type}
-                                        onChange={handleChange}
-                                        className={formErrors.room_type ? 'error' : ''}
-                                    >
-                                        {ROOM_TYPES.map(type => (
-                                            <option key={type} value={type}>{type}</option>
-                                        ))}
-                                    </select>
-                                    {formErrors.room_type && (
-                                        <span className="error-text">{formErrors.room_type}</span>
-                                    )}
-                                </div>
-
-                                <div className="form-group half">
-                                    <label>Khung giờ <span className="required">*</span></label>
-                                    <select
-                                        name="time_slot"
-                                        value={formData.time_slot}
-                                        onChange={handleChange}
-                                        className={formErrors.time_slot ? 'error' : ''}
-                                    >
-                                        {TIME_SLOTS.map(slot => (
-                                            <option key={slot} value={slot}>
-                                                {TIME_SLOT_LABELS[slot]}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {formErrors.time_slot && (
-                                        <span className="error-text">{formErrors.time_slot}</span>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="form-row">
-                                <div className="form-group half">
-                                    <label>Loại ngày <span className="required">*</span></label>
-                                    <select
-                                        name="day_type"
-                                        value={formData.day_type}
-                                        onChange={handleChange}
-                                        className={formErrors.day_type ? 'error' : ''}
-                                    >
-                                        {DAY_TYPES.map(type => (
-                                            <option key={type} value={type}>
-                                                {DAY_TYPE_LABELS[type]}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {formErrors.day_type && (
-                                        <span className="error-text">{formErrors.day_type}</span>
-                                    )}
-                                </div>
-
-                                <div className="form-group half">
-                                    <label>Loại ghế <span className="required">*</span></label>
-                                    <select
-                                        name="seat_type"
-                                        value={formData.seat_type}
-                                        onChange={handleChange}
-                                        className={formErrors.seat_type ? 'error' : ''}
-                                    >
-                                        {SEAT_TYPES.map(type => (
-                                            <option key={type} value={type}>
-                                                {SEAT_TYPE_LABELS[type]}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {formErrors.seat_type && (
-                                        <span className="error-text">{formErrors.seat_type}</span>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="form-group">
-                                <label>Giá vé (₫) <span className="required">*</span></label>
-                                <input
-                                    type="number"
-                                    name="price"
-                                    value={formData.price}
-                                    onChange={handleChange}
-                                    placeholder="Nhập giá vé"
-                                    min="0"
-                                    step="1000"
-                                    className={formErrors.price ? 'error' : ''}
-                                />
-                                {formErrors.price && (
-                                    <span className="error-text">{formErrors.price}</span>
-                                )}
-                            </div>
-
-                            <div className="form-group">
-                                <label>Trạng thái <span className="required">*</span></label>
-                                <select
-                                    name="status"
-                                    value={formData.status}
-                                    onChange={handleChange}
-                                    className={formErrors.status ? 'error' : ''}
-                                >
-                                    <option value={1}>✅ Hoạt động</option>
-                                    <option value={0}>❌ Đã khóa</option>
-                                </select>
-                                {formErrors.status && (
-                                    <span className="error-text">{formErrors.status}</span>
-                                )}
-                            </div>
-
-                            <div className="modal-footer">
-                                <button
-                                    type="button"
-                                    className="btn btn-secondary"
-                                    onClick={handleCloseForm}
-                                    disabled={submitLoading}
-                                >
-                                    Hủy
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="btn btn-primary"
-                                    disabled={submitLoading}
-                                >
-                                    {submitLoading ? (
-                                        <>
-                                            <Loader2 size={16} className="spin-icon" />
-                                            Đang xử lý...
-                                        </>
-                                    ) : (
-                                        editingConfig ? 'Cập nhật' : 'Thêm mới'
-                                    )}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+            <AdminModal
+                open={isFormOpen}
+                onClose={handleCloseForm}
+                title={
+                    editingConfig
+                        ? '✏️ Cập nhật cấu hình giá'
+                        : '➕ Thêm cấu hình giá mới'
+                }
+                type="default"
+                variant="custom"
+                size="lg"
+            >
+                <AdminForm
+                    fields={formFields}
+                    formData={formData}
+                    errors={formErrors}
+                    onChange={handleChange}
+                    onSubmit={handleSubmit}
+                    loading={submitLoading}
+                    submitText={
+                        editingConfig
+                            ? 'Lưu thay đổi'
+                            : 'Thêm cấu hình giá'
+                    }
+                />
+            </AdminModal>
 
             {/* ==================================================
                 ALERT / CONFIRM MODAL
             ================================================== */}
 
-            {alertModal.open && (
-                <div className="modal-overlay" onClick={closeAlert}>
-                    <div className={`modal-content alert-modal ${alertModal.type}`} onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h2>{alertModal.title}</h2>
-                            <button className="modal-close" onClick={closeAlert}>
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        <div className="modal-body">
-                            <p>{alertModal.message}</p>
-                        </div>
-
-                        <div className="modal-footer">
-                            {alertModal.onCancel && (
-                                <button
-                                    type="button"
-                                    className="btn btn-secondary"
-                                    onClick={alertModal.onCancel}
-                                >
-                                    Hủy
-                                </button>
-                            )}
-                            <button
-                                type="button"
-                                className="btn btn-primary"
-                                onClick={alertModal.onConfirm || closeAlert}
-                            >
-                                Xác nhận
-                            </button>
-                        </div>
-                    </div>
+            <AdminModal
+                open={alertModal.open}
+                onClose={closeAlert}
+                title={alertModal.title}
+                type={alertModal.type}
+                variant={alertVariant}
+                size="sm"
+                onConfirm={alertModal.onConfirm || closeAlert}
+                onCancel={alertModal.onCancel || closeAlert}
+                confirmText="Xác nhận"
+                cancelText="Hủy"
+            >
+                <div className="admin-alert-content">
+                    <p>{alertModal.message}</p>
                 </div>
-            )}
+            </AdminModal>
 
-        </div>
+        </>
     );
 };
 

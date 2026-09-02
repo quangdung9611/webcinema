@@ -2,7 +2,7 @@ const db = require("../Config/db");
 
 class PriceConfigRepository {
     // ==========================================================
-    // LẤY TẤT CẢ CẤU HÌNH GIÁ
+    // LẤY TẤT CẢ CẤU HÌNH GIÁ - KHÔNG PHÂN TRANG
     // ==========================================================
 
     async findAll() {
@@ -10,6 +10,80 @@ class PriceConfigRepository {
             `SELECT * FROM price_config ORDER BY room_type, time_slot, day_type, seat_type`
         );
         return rows;
+    }
+
+    // ==========================================================
+    // LẤY TẤT CẢ CẤU HÌNH GIÁ - CÓ PHÂN TRANG
+    // ==========================================================
+
+    async findAllWithPagination(page = 1, limit = 20, search = "") {
+        page = Number.parseInt(page, 10);
+        limit = Number.parseInt(limit, 10);
+
+        if (page < 1) page = 1;
+        if (limit < 1) limit = 20;
+        if (limit > 100) limit = 100;
+
+        search = typeof search === "string" ? search.trim() : "";
+
+        let whereClause = "";
+        const queryParams = [];
+
+        if (search) {
+            whereClause = `
+                WHERE
+                    room_type LIKE ?
+                    OR time_slot LIKE ?
+                    OR day_type LIKE ?
+                    OR seat_type LIKE ?
+                    OR CAST(price AS CHAR) LIKE ?
+            `;
+
+            const keyword = `%${search}%`;
+            queryParams.push(keyword, keyword, keyword, keyword, keyword);
+        }
+
+        const offset = (page - 1) * limit;
+
+        const [rows] = await db.query(
+            `
+            SELECT
+                price_config_id,
+                room_type,
+                time_slot,
+                day_type,
+                seat_type,
+                price,
+                status,
+                created_at,
+                updated_at
+            FROM price_config
+            ${whereClause}
+            ORDER BY room_type, time_slot, day_type, seat_type
+            LIMIT ? OFFSET ?
+            `,
+            [...queryParams, limit, offset]
+        );
+
+        const [countRows] = await db.query(
+            `SELECT COUNT(*) AS total FROM price_config ${whereClause}`,
+            queryParams
+        );
+
+        const total = Number(countRows[0]?.total || 0);
+        const totalPages = Math.ceil(total / limit) || 1;
+
+        return {
+            data: rows,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: totalPages > 0 ? totalPages : 1,
+                hasPreviousPage: page > 1,
+                hasNextPage: page < totalPages
+            }
+        };
     }
 
     // ==========================================================

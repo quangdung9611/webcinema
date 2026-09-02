@@ -22,8 +22,6 @@ import {
     Gift,
     Image,
     DollarSign,        // 👈 Thêm cho Price Config
-    Calendar,          // 👈 Thêm cho Showtime Config
-    Settings,          // 👈 Thêm cho Config (nếu cần)
 } from 'lucide-react';
 
 import '../styles/Sidebar.css';
@@ -129,12 +127,7 @@ const AdminSidebar = ({
             icon: <DollarSign size={20} />,
             label: 'Cấu hình Giá Vé'
         },
-        // 🔥 SHOWTIME CONFIG - THÊM MỚI
-        {
-            path: '/showtime-config',
-            icon: <Calendar size={20} />,
-            label: 'Cấu hình Khung Giờ'
-        },
+       
         {
             path: '/tickets',
             icon: <Ticket size={20} />,

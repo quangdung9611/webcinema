@@ -2,7 +2,7 @@ const PriceConfigService = require("../Services/PriceConfigService");
 
 class PriceConfigController {
     // ==========================================================
-    // LẤY TẤT CẢ (ADMIN)
+    // LẤY TẤT CẢ - KHÔNG PHÂN TRANG (ADMIN)
     // ==========================================================
 
     async getAll(req, res) {
@@ -15,6 +15,29 @@ class PriceConfigController {
             });
         } catch (err) {
             console.error("❌ getAll error:", err);
+            return res.status(err.statusCode || 500).json({
+                success: false,
+                message: err.message || "Lỗi máy chủ"
+            });
+        }
+    }
+
+    // ==========================================================
+    // LẤY TẤT CẢ - CÓ PHÂN TRANG (ADMIN)
+    // ==========================================================
+
+    async getAllWithPagination(req, res) {
+        try {
+            const { page = 1, limit = 20, search = "" } = req.query;
+            const result = await PriceConfigService.getAllWithPagination(page, limit, search);
+
+            return res.status(200).json({
+                success: true,
+                data: result.data,
+                pagination: result.pagination
+            });
+        } catch (err) {
+            console.error("❌ getAllWithPagination error:", err);
             return res.status(err.statusCode || 500).json({
                 success: false,
                 message: err.message || "Lỗi máy chủ"

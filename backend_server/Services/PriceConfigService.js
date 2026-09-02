@@ -2,11 +2,19 @@ const PriceConfigRepository = require("../Repositories/PriceConfigRepository");
 
 class PriceConfigService {
     // ==========================================================
-    // LẤY TẤT CẢ
+    // LẤY TẤT CẢ - KHÔNG PHÂN TRANG
     // ==========================================================
 
     async getAll() {
         return await PriceConfigRepository.findAll();
+    }
+
+    // ==========================================================
+    // LẤY TẤT CẢ - CÓ PHÂN TRANG
+    // ==========================================================
+
+    async getAllWithPagination(page = 1, limit = 20, search = "") {
+        return await PriceConfigRepository.findAllWithPagination(page, limit, search);
     }
 
     // ==========================================================

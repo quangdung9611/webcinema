@@ -6,7 +6,10 @@ class TicketRepository {
         return await db.getConnection();
     }
 
-    // Lấy danh sách vé có phân trang (admin)
+    // ==========================================================
+    // LẤY DANH SÁCH VÉ CÓ PHÂN TRANG (ADMIN)
+    // ==========================================================
+
     async findAll(connection, page = 1, limit = 20) {
         page = Number.parseInt(page, 10);
         limit = Number.parseInt(limit, 10);
@@ -19,7 +22,17 @@ class TicketRepository {
         const [rows] = await connection.query(
             `
             SELECT
-                t.*,
+                t.ticket_id,
+                t.booking_id,
+                t.showtime_id,
+                t.room_id,
+                t.cinema_id,
+                t.seat_id,
+                t.ticket_code,
+                t.price,
+                t.seat_status,
+                t.ticket_status,
+                t.created_at,
                 t.updated_at,
                 s.seat_row,
                 s.seat_number,
@@ -58,7 +71,10 @@ class TicketRepository {
         };
     }
 
-    // Lấy vé theo booking (không phân trang)
+    // ==========================================================
+    // LẤY VÉ THEO BOOKING
+    // ==========================================================
+
     async findByBookingId(connection, bookingId) {
         const [rows] = await connection.query(
             `
@@ -84,12 +100,25 @@ class TicketRepository {
         return rows;
     }
 
-    // Lấy vé theo suất chiếu (dùng cho seat map)
+    // ==========================================================
+    // LẤY VÉ THEO SUẤT CHIẾU
+    // ==========================================================
+
     async findByShowtimeId(connection, showtimeId) {
         const [rows] = await connection.query(
             `
             SELECT
-                t.*,
+                t.ticket_id,
+                t.booking_id,
+                t.showtime_id,
+                t.room_id,
+                t.cinema_id,
+                t.seat_id,
+                t.ticket_code,
+                t.price,
+                t.seat_status,
+                t.ticket_status,
+                t.created_at,
                 t.updated_at,
                 s.seat_row,
                 s.seat_number,
@@ -115,12 +144,26 @@ class TicketRepository {
         return rows;
     }
 
-    // Tìm vé theo mã code
+    // ==========================================================
+    // TÌM VÉ THEO MÃ CODE
+    // ==========================================================
+
     async findByCode(connection, ticketCode) {
         const [rows] = await connection.query(
             `
             SELECT
-                t.*,
+                t.ticket_id,
+                t.booking_id,
+                t.showtime_id,
+                t.room_id,
+                t.cinema_id,
+                t.seat_id,
+                t.ticket_code,
+                t.price,
+                t.seat_status,
+                t.ticket_status,
+                t.created_at,
+                t.updated_at,
                 s.seat_row,
                 s.seat_number,
                 s.seat_type,
@@ -146,7 +189,10 @@ class TicketRepository {
         return rows[0] || null;
     }
 
-    // Lấy sơ đồ ghế theo suất chiếu (giữ nguyên)
+    // ==========================================================
+    // LẤY SƠ ĐỒ GHẾ THEO SUẤT CHIẾU
+    // ==========================================================
+
     async getSeatMapByShowtime(connection, showtimeId) {
         const [rows] = await connection.query(
             `
@@ -173,7 +219,10 @@ class TicketRepository {
         return rows;
     }
 
-    // Bulk insert vé (giữ nguyên)
+    // ==========================================================
+    // BULK INSERT VÉ
+    // ==========================================================
+
     async createBulk(connection, ticketsData) {
         if (!ticketsData.length) return 0;
         const [result] = await connection.query(
@@ -187,7 +236,10 @@ class TicketRepository {
         return result.affectedRows;
     }
 
-    // Đánh dấu vé đã sử dụng (check‑in) - Tự động cập nhật updated_at
+    // ==========================================================
+    // ĐÁNH DẤU VÉ ĐÃ SỬ DỤNG (CHECK-IN)
+    // ==========================================================
+
     async markUsed(connection, ticketId) {
         const [result] = await connection.execute(
             `UPDATE tickets SET ticket_status = 'Used', updated_at = NOW() WHERE ticket_id = ?`,
@@ -196,7 +248,10 @@ class TicketRepository {
         return result.affectedRows;
     }
 
-    // Lấy thông tin booking (để tạo vé)
+    // ==========================================================
+    // LẤY THÔNG TIN BOOKING (ĐỂ TẠO VÉ)
+    // ==========================================================
+
     async getBookingInfo(connection, bookingId) {
         const [rows] = await connection.query(
             `
@@ -210,13 +265,54 @@ class TicketRepository {
         return rows[0] || null;
     }
 
-    // Lấy danh sách ghế từ booking_details
+    // ==========================================================
+    // LẤY DANH SÁCH GHẾ TỪ BOOKING_DETAILS
+    // ==========================================================
+
     async getSeatDetails(connection, bookingId) {
         const [rows] = await connection.query(
             `SELECT seat_id, price FROM booking_details WHERE booking_id = ? AND seat_id IS NOT NULL`,
             [bookingId]
         );
         return rows;
+    }
+
+    // ==========================================================
+    // LẤY THÔNG TIN SHOWTIME ĐỂ TÍNH GIÁ
+    // ==========================================================
+
+    async getShowtimeInfo(connection, showtimeId) {
+        const [rows] = await connection.query(
+            `
+            SELECT 
+                sh.*,
+                r.room_type,
+                r.room_name,
+                m.duration
+            FROM showtimes sh
+            LEFT JOIN rooms r ON sh.room_id = r.room_id
+            LEFT JOIN movies m ON sh.movie_id = m.movie_id
+            WHERE sh.showtime_id = ?
+            `,
+            [showtimeId]
+        );
+        return rows[0] || null;
+    }
+
+    // ==========================================================
+    // LẤY THÔNG TIN GHẾ ĐỂ BIẾT SEAT_TYPE
+    // ==========================================================
+
+    async getSeatInfo(connection, seatId) {
+        const [rows] = await connection.query(
+            `
+            SELECT seat_id, seat_row, seat_number, seat_type, room_id, cinema_id
+            FROM seats
+            WHERE seat_id = ?
+            `,
+            [seatId]
+        );
+        return rows[0] || null;
     }
 }
 

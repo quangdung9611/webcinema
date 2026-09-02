@@ -29,8 +29,11 @@ router.get("/:id", PriceConfigController.getById);
 // ADMIN ROUTES (Yêu cầu đăng nhập admin)
 // ==========================================================
 
-// Lấy tất cả (cho admin)
+// Lấy tất cả (cho admin) - KHÔNG PHÂN TRANG
 router.get("/", authenticateAdmin, PriceConfigController.getAll);
+
+// Lấy tất cả có phân trang
+router.get("/paginated", authenticateAdmin, PriceConfigController.getAllWithPagination);
 
 // Tạo mới
 router.post("/", authenticateAdmin, PriceConfigController.create);
