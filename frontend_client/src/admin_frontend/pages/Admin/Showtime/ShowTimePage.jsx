@@ -1,4 +1,3 @@
-
 import React, {
     useEffect,
     useState,
@@ -30,6 +29,10 @@ import AdminPagination from '../../../components/AdminPagination';
 // ==========================================================
 // ROOM TYPES
 // ==========================================================
+//
+// Auto scheduling chỉ cho phép chọn HẠNG PHÒNG.
+// Backend sẽ tự tìm room_id thực tế.
+// ==========================================================
 
 const ROOM_TYPES = [
     {
@@ -56,6 +59,26 @@ const ROOM_TYPES = [
 
 
 // ==========================================================
+// DISTRIBUTION
+// ==========================================================
+
+const DISTRIBUTION_OPTIONS = [
+    {
+        value: 'cold',
+        label: '❄️ Ít - COLD (120 phút/suất)'
+    },
+    {
+        value: 'normal',
+        label: '📊 Trung bình - NORMAL (75 phút/suất)'
+    },
+    {
+        value: 'hot',
+        label: '🔥 Nhiều - HOT (45 phút/suất)'
+    }
+];
+
+
+// ==========================================================
 // INITIAL DATA
 // ==========================================================
 
@@ -63,17 +86,17 @@ const initialScheduleData = {
     movie_id: '',
     cinema_id: '',
 
-    // TỰ ĐỘNG: chọn hạng phòng
+    // AUTO
     room_types: [],
 
-    // EDIT: chọn phòng cụ thể
+    // EDIT
     room_ids: [],
 
     start_date: '',
     end_date: '',
 
+    // Chỉ dùng cho EDIT
     operating_start: '08:00',
-    operating_end: '23:30',
 
     distribution_level: 'normal'
 };
@@ -142,6 +165,10 @@ const ShowTimePage = () => {
     });
 
 
+    // ======================================================
+    // ALERT
+    // ======================================================
+
     const showAlert = (
         title,
         message,
@@ -181,23 +208,35 @@ const ShowTimePage = () => {
     const formatDateTime = (dateStr) => {
 
         if (!dateStr) {
+
             return {
                 date: '--/--/----',
                 time: '--:--'
             };
+
         }
 
-        const [datePart, timePart] = dateStr.split(' ');
+        let normalized = String(dateStr);
+
+        normalized = normalized.replace('T', ' ');
+
+        const [datePart, timePart] =
+            normalized.split(' ');
 
         if (!datePart || !timePart) {
+
             return {
                 date: '--/--/----',
                 time: '--:--'
             };
+
         }
 
-        const [year, month, day] = datePart.split('-');
-        const [hour, minute] = timePart.split(':');
+        const [year, month, day] =
+            datePart.split('-');
+
+        const [hour, minute] =
+            timePart.split(':');
 
         return {
             date: `${day}/${month}/${year}`,
@@ -212,7 +251,10 @@ const ShowTimePage = () => {
     // ======================================================
 
     const fetchShowtimes = useCallback(
-        async (page = 1, keyword = '') => {
+        async (
+            page = 1,
+            keyword = ''
+        ) => {
 
             if (isFetching.current) {
                 return;
@@ -222,9 +264,11 @@ const ShowTimePage = () => {
                 abortControllerRef.current.abort();
             }
 
-            const controller = new AbortController();
+            const controller =
+                new AbortController();
 
-            abortControllerRef.current = controller;
+            abortControllerRef.current =
+                controller;
 
             isFetching.current = true;
 
@@ -257,9 +301,13 @@ const ShowTimePage = () => {
                         hasNextPage: false
                     };
 
-                setShowtimes(showtimesData);
+                setShowtimes(
+                    showtimesData
+                );
 
-                setPagination(paginationData);
+                setPagination(
+                    paginationData
+                );
 
             } catch (error) {
 
@@ -290,9 +338,13 @@ const ShowTimePage = () => {
                 isFetching.current = false;
 
                 if (
-                    abortControllerRef.current === controller
+                    abortControllerRef.current ===
+                    controller
                 ) {
-                    abortControllerRef.current = null;
+
+                    abortControllerRef.current =
+                        null;
+
                 }
 
             }
@@ -306,79 +358,83 @@ const ShowTimePage = () => {
     // FETCH MOVIES + CINEMAS
     // ======================================================
 
-    const fetchInitialData = useCallback(
-        async () => {
+    const fetchInitialData =
+        useCallback(
+            async () => {
 
-            try {
+                try {
 
-                const [
-                    movieRes,
-                    cinemaRes
-                ] = await Promise.all([
-                    api.get('/api/movies'),
-                    api.get('/api/cinemas')
-                ]);
+                    const [
+                        movieRes,
+                        cinemaRes
+                    ] = await Promise.all([
+                        api.get('/api/movies'),
+                        api.get('/api/cinemas')
+                    ]);
 
-                setMovies(
-                    movieRes.data?.data || []
-                );
+                    setMovies(
+                        movieRes.data?.data || []
+                    );
 
-                setCinemas(
-                    cinemaRes.data?.data || []
-                );
+                    setCinemas(
+                        cinemaRes.data?.data || []
+                    );
 
-            } catch (error) {
+                } catch (error) {
 
-                console.error(
-                    'FETCH INITIAL DATA ERROR:',
-                    error
-                );
+                    console.error(
+                        'FETCH INITIAL DATA ERROR:',
+                        error
+                    );
 
-            }
+                }
 
-        },
-        []
-    );
+            },
+            []
+        );
 
 
     // ======================================================
     // FETCH ROOMS
     // ======================================================
 
-    const fetchRoomsByCinema = useCallback(
-        async (cinemaId) => {
+    const fetchRoomsByCinema =
+        useCallback(
+            async (cinemaId) => {
 
-            if (!cinemaId) {
+                if (!cinemaId) {
 
-                setRooms([]);
+                    setRooms([]);
 
-                return;
-            }
+                    return;
 
-            try {
+                }
 
-                const res = await api.get(
-                    `/api/rooms/cinema/${cinemaId}`
-                );
+                try {
 
-                setRooms(
-                    res.data?.data || []
-                );
+                    const res =
+                        await api.get(
+                            `/api/rooms/cinema/${cinemaId}`
+                        );
 
-            } catch (error) {
+                    setRooms(
+                        res.data?.data || []
+                    );
 
-                console.error(
-                    'FETCH ROOMS ERROR:',
-                    error
-                );
+                } catch (error) {
 
-                setRooms([]);
+                    console.error(
+                        'FETCH ROOMS ERROR:',
+                        error
+                    );
 
-            }
+                    setRooms([]);
 
-        },
-        []
-    );
+                }
+
+            },
+            []
+        );
 
 
     // ======================================================
@@ -388,12 +444,17 @@ const ShowTimePage = () => {
     useEffect(() => {
 
         fetchShowtimes(1, '');
+
         fetchInitialData();
 
         return () => {
 
-            if (abortControllerRef.current) {
+            if (
+                abortControllerRef.current
+            ) {
+
                 abortControllerRef.current.abort();
+
             }
 
         };
@@ -408,32 +469,39 @@ const ShowTimePage = () => {
     // SEARCH
     // ======================================================
 
-    const prevSearchRef = useRef('');
+    const prevSearchRef =
+        useRef('');
 
     useEffect(() => {
 
-        const currentSearch = search;
+        const currentSearch =
+            search;
 
         const previousSearch =
             prevSearchRef.current;
 
-        if (currentSearch === previousSearch) {
+        if (
+            currentSearch ===
+            previousSearch
+        ) {
             return;
         }
 
         prevSearchRef.current =
             currentSearch;
 
-        const timer = setTimeout(() => {
+        const timer =
+            setTimeout(() => {
 
-            fetchShowtimes(
-                1,
-                currentSearch
-            );
+                fetchShowtimes(
+                    1,
+                    currentSearch
+                );
 
-        }, 400);
+            }, 400);
 
-        return () => clearTimeout(timer);
+        return () =>
+            clearTimeout(timer);
 
     }, [
         search,
@@ -466,13 +534,16 @@ const ShowTimePage = () => {
         setScheduleData({
             ...initialScheduleData,
 
-            operating_start: '08:00',
-            operating_end: '23:30',
-
             room_types: [],
             room_ids: [],
 
-            distribution_level: 'normal'
+            start_date: '',
+            end_date: '',
+
+            operating_start: '08:00',
+
+            distribution_level:
+                'normal'
         });
 
         setRooms([]);
@@ -488,80 +559,86 @@ const ShowTimePage = () => {
     // OPEN EDIT
     // ======================================================
 
-    const handleOpenEdit = async (showtime) => {
+    const handleOpenEdit =
+        async (showtime) => {
 
-        try {
+            try {
 
-            setLoading(true);
+                setLoading(true);
 
-            const res = await api.get(
-                `/api/showtimes/detail/${showtime.showtime_id}`
-            );
+                const res =
+                    await api.get(
+                        `/api/showtimes/detail/${showtime.showtime_id}`
+                    );
 
-            const st =
-                res.data?.data ||
-                res.data;
+                const st =
+                    res.data?.data ||
+                    res.data;
 
-            await fetchRoomsByCinema(
-                st.cinema_id
-            );
+                await fetchRoomsByCinema(
+                    st.cinema_id
+                );
 
-            setEditingShowtime(st);
+                setEditingShowtime(st);
 
-            setFormErrors({});
+                setFormErrors({});
 
-            setScheduleData({
+                setScheduleData({
 
-                movie_id: st.movie_id,
+                    movie_id:
+                        st.movie_id,
 
-                cinema_id: st.cinema_id,
+                    cinema_id:
+                        st.cinema_id,
 
-                room_ids: [
-                    Number(st.room_id)
-                ],
+                    room_ids: [
+                        Number(st.room_id)
+                    ],
 
-                room_types: [],
+                    room_types: [],
 
-                start_date:
-                    st.start_time?.slice(0, 10) || '',
+                    start_date:
+                        st.start_time
+                            ?.slice(0, 10) ||
+                        '',
 
-                end_date:
-                    st.start_time?.slice(0, 10) || '',
+                    end_date:
+                        st.start_time
+                            ?.slice(0, 10) ||
+                        '',
 
-                operating_start:
-                    st.start_time?.slice(11, 16) ||
-                    '08:00',
+                    operating_start:
+                        st.start_time
+                            ?.slice(11, 16) ||
+                        '08:00',
 
-                operating_end:
-                    '23:30',
+                    distribution_level:
+                        'normal'
 
-                distribution_level:
-                    'manual'
+                });
 
-            });
+                setIsFormOpen(true);
 
-            setIsFormOpen(true);
+            } catch (error) {
 
-        } catch (error) {
+                console.error(
+                    'FETCH SHOWTIME DETAIL ERROR:',
+                    error
+                );
 
-            console.error(
-                'FETCH SHOWTIME DETAIL ERROR:',
-                error
-            );
+                showAlert(
+                    'Lỗi',
+                    'Không thể tải dữ liệu suất chiếu.',
+                    'error'
+                );
 
-            showAlert(
-                'Lỗi',
-                'Không thể tải dữ liệu suất chiếu.',
-                'error'
-            );
+            } finally {
 
-        } finally {
+                setLoading(false);
 
-            setLoading(false);
+            }
 
-        }
-
-    };
+        };
 
 
     // ======================================================
@@ -620,14 +697,16 @@ const ShowTimePage = () => {
                 cinema_id: value,
 
                 room_types: [],
-
                 room_ids: []
 
             }));
 
-            await fetchRoomsByCinema(value);
+            await fetchRoomsByCinema(
+                value
+            );
 
             return;
+
         }
 
 
@@ -640,33 +719,44 @@ const ShowTimePage = () => {
             setScheduleData(prev => {
 
                 const currentTypes =
-                    Array.isArray(prev.room_types)
+                    Array.isArray(
+                        prev.room_types
+                    )
                         ? prev.room_types
                         : [];
 
-                const nextTypes = checked
-                    ? (
-                        currentTypes.includes(value)
-                            ? currentTypes
-                            : [...currentTypes, value]
-                    )
-                    : currentTypes.filter(
-                        type => type !== value
-                    );
+                const nextTypes =
+                    checked
+                        ? (
+                            currentTypes.includes(
+                                value
+                            )
+                                ? currentTypes
+                                : [
+                                    ...currentTypes,
+                                    value
+                                ]
+                        )
+                        : currentTypes.filter(
+                            type =>
+                                type !== value
+                        );
 
                 return {
                     ...prev,
-                    room_types: nextTypes
+                    room_types:
+                        nextTypes
                 };
 
             });
 
             return;
+
         }
 
 
         // ==================================================
-        // ROOM ID - EDIT
+        // ROOM ID
         // ==================================================
 
         if (name === 'room_ids') {
@@ -677,28 +767,39 @@ const ShowTimePage = () => {
             setScheduleData(prev => {
 
                 const currentRoomIds =
-                    Array.isArray(prev.room_ids)
+                    Array.isArray(
+                        prev.room_ids
+                    )
                         ? prev.room_ids
                         : [];
 
-                const nextRoomIds = checked
-                    ? (
-                        currentRoomIds.includes(roomId)
-                            ? currentRoomIds
-                            : [...currentRoomIds, roomId]
-                    )
-                    : currentRoomIds.filter(
-                        id => id !== roomId
-                    );
+                const nextRoomIds =
+                    checked
+                        ? (
+                            currentRoomIds.includes(
+                                roomId
+                            )
+                                ? currentRoomIds
+                                : [
+                                    ...currentRoomIds,
+                                    roomId
+                                ]
+                        )
+                        : currentRoomIds.filter(
+                            id =>
+                                id !== roomId
+                        );
 
                 return {
                     ...prev,
-                    room_ids: nextRoomIds
+                    room_ids:
+                        nextRoomIds
                 };
 
             });
 
             return;
+
         }
 
 
@@ -716,44 +817,49 @@ const ShowTimePage = () => {
 
     // ======================================================
     // ROOM TYPE TOGGLE
-    //
-    // Tách riêng khỏi AdminForm để đảm bảo:
-    // click 1 hạng = chỉ toggle đúng hạng đó.
     // ======================================================
 
-    const handleRoomTypeToggle = (roomType) => {
+    const handleRoomTypeToggle =
+        (roomType) => {
 
-        setFormErrors(prev => ({
-            ...prev,
-            room_types: ''
-        }));
-
-        setScheduleData(prev => {
-
-            const currentTypes =
-                Array.isArray(prev.room_types)
-                    ? prev.room_types
-                    : [];
-
-            const exists =
-                currentTypes.includes(roomType);
-
-            return {
+            setFormErrors(prev => ({
                 ...prev,
+                room_types: ''
+            }));
 
-                room_types: exists
-                    ? currentTypes.filter(
-                        type => type !== roomType
+            setScheduleData(prev => {
+
+                const currentTypes =
+                    Array.isArray(
+                        prev.room_types
                     )
-                    : [
-                        ...currentTypes,
+                        ? prev.room_types
+                        : [];
+
+                const exists =
+                    currentTypes.includes(
                         roomType
-                    ]
-            };
+                    );
 
-        });
+                return {
+                    ...prev,
 
-    };
+                    room_types:
+                        exists
+                            ? currentTypes.filter(
+                                type =>
+                                    type !==
+                                    roomType
+                            )
+                            : [
+                                ...currentTypes,
+                                roomType
+                            ]
+                };
+
+            });
+
+        };
 
 
     // ======================================================
@@ -765,6 +871,10 @@ const ShowTimePage = () => {
         const errors = {};
 
 
+        // ==================================================
+        // MOVIE
+        // ==================================================
+
         if (!scheduleData.movie_id) {
 
             errors.movie_id =
@@ -772,6 +882,10 @@ const ShowTimePage = () => {
 
         }
 
+
+        // ==================================================
+        // CINEMA
+        // ==================================================
 
         if (!scheduleData.cinema_id) {
 
@@ -782,13 +896,15 @@ const ShowTimePage = () => {
 
 
         // ==================================================
-        // CREATE
+        // ROOM TYPE - AUTO
         // ==================================================
 
         if (!editingShowtime) {
 
             if (
-                !Array.isArray(scheduleData.room_types) ||
+                !Array.isArray(
+                    scheduleData.room_types
+                ) ||
                 scheduleData.room_types.length === 0
             ) {
 
@@ -801,13 +917,15 @@ const ShowTimePage = () => {
 
 
         // ==================================================
-        // EDIT
+        // ROOM ID - EDIT
         // ==================================================
 
         if (editingShowtime) {
 
             if (
-                !Array.isArray(scheduleData.room_ids) ||
+                !Array.isArray(
+                    scheduleData.room_ids
+                ) ||
                 scheduleData.room_ids.length === 0
             ) {
 
@@ -819,6 +937,10 @@ const ShowTimePage = () => {
         }
 
 
+        // ==================================================
+        // START DATE
+        // ==================================================
+
         if (!scheduleData.start_date) {
 
             errors.start_date =
@@ -827,6 +949,10 @@ const ShowTimePage = () => {
         }
 
 
+        // ==================================================
+        // END DATE
+        // ==================================================
+
         if (!scheduleData.end_date) {
 
             errors.end_date =
@@ -834,6 +960,10 @@ const ShowTimePage = () => {
 
         }
 
+
+        // ==================================================
+        // DATE RANGE
+        // ==================================================
 
         if (
             scheduleData.start_date &&
@@ -848,38 +978,26 @@ const ShowTimePage = () => {
         }
 
 
-        if (!scheduleData.operating_start) {
-
-            errors.operating_start =
-                'Vui lòng chọn giờ bắt đầu';
-
-        }
-
-
-        if (!scheduleData.operating_end) {
-
-            errors.operating_end =
-                'Vui lòng chọn giờ kết thúc';
-
-        }
-
+        // ==================================================
+        // EDIT TIME
+        // ==================================================
 
         if (
-            scheduleData.operating_start &&
-            scheduleData.operating_end &&
-            scheduleData.operating_start >=
-            scheduleData.operating_end
+            editingShowtime &&
+            !scheduleData.operating_start
         ) {
 
-            errors.operating_end =
-                'Giờ kết thúc phải lớn hơn giờ bắt đầu';
+            errors.operating_start =
+                'Vui lòng chọn giờ';
 
         }
 
 
         setFormErrors(errors);
 
-        return Object.keys(errors).length === 0;
+        return (
+            Object.keys(errors).length === 0
+        );
 
     };
 
@@ -900,19 +1018,11 @@ const ShowTimePage = () => {
         if (editingShowtime) {
 
             if (
-                !scheduleData.start_date ||
-                !scheduleData.operating_start
+                !validateSchedule()
             ) {
 
-                setFormErrors({
-                    start_date:
-                        'Vui lòng chọn ngày',
-
-                    operating_start:
-                        'Vui lòng chọn giờ'
-                });
-
                 return;
+
             }
 
 
@@ -921,6 +1031,7 @@ const ShowTimePage = () => {
                 setSubmitLoading(true);
 
                 setFormErrors({});
+
 
                 await api.put(
                     `/api/showtimes/${editingShowtime.showtime_id}`,
@@ -938,7 +1049,8 @@ const ShowTimePage = () => {
 
                         room_id:
                             Number(
-                                scheduleData.room_ids[0]
+                                scheduleData
+                                    .room_ids[0]
                             ),
 
                         start_time:
@@ -949,6 +1061,7 @@ const ShowTimePage = () => {
 
 
                 setIsFormOpen(false);
+
 
                 await fetchShowtimes(
                     pagination.page,
@@ -988,7 +1101,7 @@ const ShowTimePage = () => {
 
 
         // ==================================================
-        // CREATE AUTOMATIC
+        // CREATE AUTO
         // ==================================================
 
         if (!validateSchedule()) {
@@ -1003,6 +1116,23 @@ const ShowTimePage = () => {
             setFormErrors({});
 
 
+            // ==================================================
+            // BACKEND SCHEDULER PAYLOAD
+            // ==================================================
+            //
+            // Không gửi room_ids.
+            // Không gửi operating_start/end.
+            //
+            // Backend tự quyết định:
+            //
+            // Weekday:
+            // 08:00 -> 23:30
+            //
+            // Weekend:
+            // 08:00 -> 24:00
+            //
+            // ==================================================
+
             const payload = {
 
                 movie_id:
@@ -1016,7 +1146,9 @@ const ShowTimePage = () => {
                     ),
 
                 room_types:
-                    [...scheduleData.room_types],
+                    [
+                        ...scheduleData.room_types
+                    ],
 
                 start_date:
                     scheduleData.start_date,
@@ -1024,32 +1156,28 @@ const ShowTimePage = () => {
                 end_date:
                     scheduleData.end_date,
 
-                start_hour:
-                    scheduleData.operating_start,
-
-                end_hour:
-                    scheduleData.operating_end,
-
                 distribution:
-                    scheduleData.distribution_level
+                    scheduleData
+                        .distribution_level
 
             };
 
 
             console.log(
-                '📤 Payload tạo lịch:',
+                '📤 AUTO SCHEDULE PAYLOAD:',
                 payload
             );
 
 
-            const res = await api.post(
-                '/api/showtimes/schedule',
-                payload
-            );
+            const res =
+                await api.post(
+                    '/api/showtimes/schedule',
+                    payload
+                );
 
 
             console.log(
-                '📥 Response:',
+                '📥 AUTO SCHEDULE RESPONSE:',
                 res.data
             );
 
@@ -1063,6 +1191,10 @@ const ShowTimePage = () => {
             );
 
 
+            // ==================================================
+            // RESPONSE MESSAGE
+            // ==================================================
+
             const data =
                 res.data?.data;
 
@@ -1074,13 +1206,38 @@ const ShowTimePage = () => {
             if (data) {
 
                 const created =
-                    data.data?.length || 0;
+                    Array.isArray(
+                        data.data
+                    )
+                        ? data.data.length
+                        : (
+                            data.createdCount ||
+                            0
+                        );
+
 
                 const conflicts =
-                    data.conflicts?.length || 0;
+                    Array.isArray(
+                        data.conflicts
+                    )
+                        ? data.conflicts.length
+                        : 0;
+
+
+                const skippedPast =
+                    Array.isArray(
+                        data.skippedPast
+                    )
+                        ? data.skippedPast.length
+                        : 0;
+
 
                 const skipped =
-                    data.skippedPast?.length || 0;
+                    Array.isArray(
+                        data.skipped
+                    )
+                        ? data.skipped.length
+                        : 0;
 
 
                 message +=
@@ -1095,10 +1252,18 @@ const ShowTimePage = () => {
                 }
 
 
+                if (skippedPast > 0) {
+
+                    message +=
+                        `\n⏭️ Bỏ qua: ${skippedPast} suất trong quá khứ`;
+
+                }
+
+
                 if (skipped > 0) {
 
                     message +=
-                        `\n⏭️ Bỏ qua: ${skipped} suất trong quá khứ`;
+                        `\n⏭️ Bỏ qua: ${skipped} suất không thể xếp`;
 
                 }
 
@@ -1121,6 +1286,7 @@ const ShowTimePage = () => {
 
             const backendField =
                 error.response?.data?.field;
+
 
             const message =
                 error.response?.data?.message ||
@@ -1157,68 +1323,71 @@ const ShowTimePage = () => {
     // DELETE
     // ======================================================
 
-    const handleDelete = (showtime) => {
+    const handleDelete =
+        (showtime) => {
 
-        showAlert(
-            'Xác nhận xóa',
-            `Bạn có chắc muốn xóa suất chiếu phim "${showtime.title}"?`,
-            'warning',
+            showAlert(
+                'Xác nhận xóa',
+                `Bạn có chắc muốn xóa suất chiếu phim "${showtime.title}"?`,
+                'warning',
 
-            async () => {
+                async () => {
 
-                try {
+                    try {
 
-                    await api.delete(
-                        `/api/showtimes/${showtime.showtime_id}`
-                    );
-
-                    closeAlert();
-
-                    const currentPage =
-                        pagination.page;
-
-                    const newPage =
-                        showtimes.length === 1 &&
-                        currentPage > 1
-                            ? currentPage - 1
-                            : currentPage;
-
-
-                    await fetchShowtimes(
-                        newPage,
-                        search
-                    );
-
-
-                    showAlert(
-                        'Thành công',
-                        'Xóa suất chiếu thành công.',
-                        'success'
-                    );
-
-                } catch (error) {
-
-                    closeAlert();
-
-                    setTimeout(() => {
-
-                        showAlert(
-                            'Lỗi',
-                            error.response?.data?.message ||
-                            'Không thể xóa suất chiếu.',
-                            'error'
+                        await api.delete(
+                            `/api/showtimes/${showtime.showtime_id}`
                         );
 
-                    }, 100);
+                        closeAlert();
 
-                }
 
-            },
+                        const currentPage =
+                            pagination.page;
 
-            closeAlert
-        );
 
-    };
+                        const newPage =
+                            showtimes.length === 1 &&
+                            currentPage > 1
+                                ? currentPage - 1
+                                : currentPage;
+
+
+                        await fetchShowtimes(
+                            newPage,
+                            search
+                        );
+
+
+                        showAlert(
+                            'Thành công',
+                            'Xóa suất chiếu thành công.',
+                            'success'
+                        );
+
+                    } catch (error) {
+
+                        closeAlert();
+
+                        setTimeout(() => {
+
+                            showAlert(
+                                'Lỗi',
+                                error.response?.data?.message ||
+                                'Không thể xóa suất chiếu.',
+                                'error'
+                            );
+
+                        }, 100);
+
+                    }
+
+                },
+
+                closeAlert
+            );
+
+        };
 
 
     // ======================================================
@@ -1226,6 +1395,10 @@ const ShowTimePage = () => {
     // ======================================================
 
     const columns = [
+
+        // ==================================================
+        // MOVIE
+        // ==================================================
 
         {
             title: 'Phim',
@@ -1283,6 +1456,10 @@ const ShowTimePage = () => {
         },
 
 
+        // ==================================================
+        // CINEMA / ROOM
+        // ==================================================
+
         {
             title: 'Rạp / Phòng',
             key: 'cinema_name',
@@ -1329,6 +1506,10 @@ const ShowTimePage = () => {
         },
 
 
+        // ==================================================
+        // DATE
+        // ==================================================
+
         {
             title: 'Ngày chiếu',
             key: 'start_time',
@@ -1340,6 +1521,10 @@ const ShowTimePage = () => {
 
         },
 
+
+        // ==================================================
+        // TIME
+        // ==================================================
 
         {
             title: 'Giờ chiếu',
@@ -1370,6 +1555,10 @@ const ShowTimePage = () => {
 
         },
 
+
+        // ==================================================
+        // ACTIONS
+        // ==================================================
 
         {
             title: 'Thao tác',
@@ -1473,39 +1662,44 @@ const ShowTimePage = () => {
 
 
         // ==================================================
-        // CREATE ONLY
-        // 
-        // room_types KHÔNG ĐƯA VÀO AdminForm
-        // ==================================================
-
-        // ==================================================
-        // EDIT ONLY
+        // EDIT ONLY - ROOM
         // ==================================================
 
         ...(editingShowtime
             ? [
+
                 {
                     label: 'Phòng chiếu',
                     name: 'room_ids',
                     type: 'checkbox-select',
 
                     options:
-                        rooms.map(room => ({
+                        rooms
+                            .filter(room =>
+                                ROOM_TYPES.some(
+                                    type =>
+                                        type.value ===
+                                        room.room_type
+                                )
+                            )
+                            .map(room => ({
 
-                            label:
-                                `${room.room_name} (${room.room_type})`,
+                                label:
+                                    `${room.room_name} (${room.room_type})`,
 
-                            value:
-                                room.room_id
+                                value:
+                                    room.room_id
 
-                        }))
+                            }))
+
                 }
+
             ]
             : []),
 
 
         // ==================================================
-        // DATES
+        // START DATE
         // ==================================================
 
         {
@@ -1515,6 +1709,10 @@ const ShowTimePage = () => {
         },
 
 
+        // ==================================================
+        // END DATE
+        // ==================================================
+
         {
             label: 'Ngày kết thúc',
             name: 'end_date',
@@ -1523,62 +1721,39 @@ const ShowTimePage = () => {
 
 
         // ==================================================
-        // OPERATING TIME
+        // EDIT ONLY - START TIME
         // ==================================================
 
-        {
-            label: 'Giờ bắt đầu hoạt động',
-            name: 'operating_start',
-            type: 'time'
-        },
+        ...(editingShowtime
+            ? [
 
+                {
+                    label: 'Giờ chiếu',
+                    name: 'operating_start',
+                    type: 'time'
+                }
 
-        {
-            label: 'Giờ kết thúc hoạt động',
-            name: 'operating_end',
-            type: 'time'
-        },
+            ]
+            : []),
 
 
         // ==================================================
-        // DISTRIBUTION
+        // AUTO DISTRIBUTION
         // ==================================================
 
         ...(!editingShowtime
             ? [
+
                 {
                     label: 'Mức độ phân bổ',
                     name: 'distribution_level',
                     type: 'select',
 
-                    options: [
+                    options:
+                        DISTRIBUTION_OPTIONS
 
-                        {
-                            label:
-                                '❄️ Ít - COLD (120 phút/suất)',
-
-                            value:
-                                'cold'
-                        },
-
-                        {
-                            label:
-                                '📊 Trung bình - NORMAL (75 phút/suất)',
-
-                            value:
-                                'normal'
-                        },
-
-                        {
-                            label:
-                                '🔥 Nhiều - HOT (45 phút/suất)',
-
-                            value:
-                                'hot'
-                        }
-
-                    ]
                 }
+
             ]
             : [])
 
@@ -1593,11 +1768,15 @@ const ShowTimePage = () => {
 
         <>
 
+            {/* ==================================================
+                MAIN PAGE
+            ================================================== */}
+
             <AdminPage
 
                 title="Quản lý lịch chiếu"
 
-                subtitle="Tự động phân bổ suất chiếu theo phim, rạp, hạng phòng, thời gian và mức độ ưu tiên"
+                subtitle="Tự động phân bổ suất chiếu theo phim, rạp, hạng phòng và mức độ ưu tiên"
 
                 icon={
                     <CalendarDays size={30} />
@@ -1684,6 +1863,11 @@ const ShowTimePage = () => {
 
             >
 
+
+                {/* ==================================================
+                    AUTO INFO
+                ================================================== */}
+
                 {!editingShowtime && (
 
                     <div
@@ -1723,17 +1907,22 @@ const ShowTimePage = () => {
                             }}
                         >
 
-                            Hệ thống sẽ tự chọn phòng thực tế
-                            dựa trên <strong>hạng phòng</strong>
-                            mà bạn chọn.
+                            Hệ thống sẽ tự chọn
+                            <strong> phòng thực tế </strong>
+                            dựa trên
+                            <strong> hạng phòng </strong>
+                            bạn chọn.
 
                             <br />
 
-                            Không cần chọn từng phòng cụ thể.
+                            Bạn không cần chọn từng phòng.
 
                             <br /><br />
 
-                            <strong>Hạng phòng hỗ trợ:</strong>
+
+                            <strong>
+                                Hạng phòng hỗ trợ:
+                            </strong>
 
                             <br />
 
@@ -1753,7 +1942,10 @@ const ShowTimePage = () => {
 
                             <br /><br />
 
-                            <strong>Mức độ phân bổ:</strong>
+
+                            <strong>
+                                Mức độ phân bổ:
+                            </strong>
 
                             <br />
 
@@ -1770,18 +1962,16 @@ const ShowTimePage = () => {
                             ❄️ <strong>COLD</strong>:
                             120 phút/suất
 
-                            <br /><br />
-
-                            Hệ thống sẽ tự kiểm tra lịch hiện có,
-                            tránh trùng phòng và tự chọn phòng
-                            phù hợp trong từng hạng.
-
                         </div>
 
                     </div>
 
                 )}
 
+
+                {/* ==================================================
+                    FORM
+                ================================================== */}
 
                 <AdminForm
 
@@ -1846,9 +2036,12 @@ const ShowTimePage = () => {
                                     Array.isArray(
                                         scheduleData.room_types
                                     ) &&
-                                    scheduleData.room_types.includes(
-                                        type.value
-                                    );
+                                    scheduleData
+                                        .room_types
+                                        .includes(
+                                            type.value
+                                        );
+
 
                                 return (
 
@@ -1867,30 +2060,37 @@ const ShowTimePage = () => {
                                             alignItems: 'center',
                                             gap: '10px',
 
-                                            padding: '13px 15px',
+                                            padding:
+                                                '13px 15px',
 
-                                            borderRadius: '10px',
+                                            borderRadius:
+                                                '10px',
 
-                                            border: selected
-                                                ? '2px solid #2563eb'
-                                                : '1px solid #cbd5e1',
+                                            border:
+                                                selected
+                                                    ? '2px solid #2563eb'
+                                                    : '1px solid #cbd5e1',
 
-                                            background: selected
-                                                ? 'rgba(37, 99, 235, 0.08)'
-                                                : '#ffffff',
+                                            background:
+                                                selected
+                                                    ? 'rgba(37, 99, 235, 0.08)'
+                                                    : '#ffffff',
 
-                                            color: selected
-                                                ? '#1d4ed8'
-                                                : '#334155',
+                                            color:
+                                                selected
+                                                    ? '#1d4ed8'
+                                                    : '#334155',
 
-                                            cursor: 'pointer',
+                                            cursor:
+                                                'pointer',
 
                                             fontWeight:
                                                 selected
                                                     ? '600'
                                                     : '500',
 
-                                            textAlign: 'left',
+                                            textAlign:
+                                                'left',
 
                                             transition:
                                                 'all 0.15s ease'
@@ -1899,7 +2099,8 @@ const ShowTimePage = () => {
 
                                         <span
                                             style={{
-                                                fontSize: '20px'
+                                                fontSize:
+                                                    '20px'
                                             }}
                                         >
                                             {type.icon}
@@ -1913,25 +2114,52 @@ const ShowTimePage = () => {
 
                                         <span
                                             style={{
-                                                marginLeft: 'auto',
-                                                width: '18px',
-                                                height: '18px',
-                                                borderRadius: '5px',
-                                                border: selected
-                                                    ? 'none'
-                                                    : '2px solid #94a3b8',
-                                                background: selected
-                                                    ? '#2563eb'
-                                                    : '#ffffff',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                color: '#ffffff',
-                                                fontSize: '12px',
-                                                fontWeight: '700'
+                                                marginLeft:
+                                                    'auto',
+
+                                                width:
+                                                    '18px',
+
+                                                height:
+                                                    '18px',
+
+                                                borderRadius:
+                                                    '5px',
+
+                                                border:
+                                                    selected
+                                                        ? 'none'
+                                                        : '2px solid #94a3b8',
+
+                                                background:
+                                                    selected
+                                                        ? '#2563eb'
+                                                        : '#ffffff',
+
+                                                display:
+                                                    'flex',
+
+                                                alignItems:
+                                                    'center',
+
+                                                justifyContent:
+                                                    'center',
+
+                                                color:
+                                                    '#ffffff',
+
+                                                fontSize:
+                                                    '12px',
+
+                                                fontWeight:
+                                                    '700'
                                             }}
                                         >
-                                            {selected ? '✓' : ''}
+                                            {
+                                                selected
+                                                    ? '✓'
+                                                    : ''
+                                            }
                                         </span>
 
                                     </button>
@@ -1943,42 +2171,74 @@ const ShowTimePage = () => {
                         </div>
 
 
+                        {/* ERROR */}
+
                         {formErrors.room_types && (
 
                             <div
                                 style={{
-                                    marginTop: '8px',
-                                    color: '#dc2626',
-                                    fontSize: '13px'
+                                    marginTop:
+                                        '8px',
+
+                                    color:
+                                        '#dc2626',
+
+                                    fontSize:
+                                        '13px'
                                 }}
                             >
-                                {formErrors.room_types}
+                                {
+                                    formErrors.room_types
+                                }
                             </div>
 
                         )}
 
 
+                        {/* SELECTED COUNT */}
+
                         <div
                             style={{
-                                marginTop: '9px',
-                                fontSize: '12px',
-                                color: '#64748b'
+                                marginTop:
+                                    '9px',
+
+                                fontSize:
+                                    '12px',
+
+                                color:
+                                    '#64748b'
                             }}
                         >
 
                             Đã chọn:{' '}
 
                             <strong>
-                                {scheduleData.room_types?.length || 0}
+                                {
+                                    scheduleData
+                                        .room_types
+                                        ?.length || 0
+                                }
                             </strong>
 
                             {' '}hạng phòng
 
-                            {scheduleData.room_types?.length > 0 && (
+
+                            {scheduleData
+                                .room_types
+                                ?.length > 0 && (
+
                                 <>
+
                                     {' — '}
-                                    {scheduleData.room_types.join(' + ')}
+
+                                    {
+                                        scheduleData
+                                            .room_types
+                                            .join(' + ')
+                                    }
+
                                 </>
+
                             )}
 
                         </div>
@@ -1988,6 +2248,10 @@ const ShowTimePage = () => {
                 )}
 
 
+                {/* ==================================================
+                    AUTO SCHEDULER INFO
+                ================================================== */}
+
                 {!editingShowtime && (
 
                     <div
@@ -1995,9 +2259,12 @@ const ShowTimePage = () => {
                             marginTop: '16px',
                             padding: '14px',
                             borderRadius: '10px',
-                            background: '#f8fafc',
-                            fontSize: '13px',
-                            color: '#64748b'
+                            background:
+                                '#f8fafc',
+                            fontSize:
+                                '13px',
+                            color:
+                                '#64748b'
                         }}
                     >
 
@@ -2019,42 +2286,86 @@ const ShowTimePage = () => {
                         </div>
 
 
-                        Ví dụ bạn chọn:
+                        Hệ thống sẽ tự động lấy toàn bộ
+                        phòng thuộc các hạng bạn chọn
+                        tại rạp.
 
-                        <br />
-
-                        🎬 <strong>2D + VIP</strong>
-
-                        <br />
-
-                        🔥 <strong>HOT</strong>
-
-                        <br />
-
-                        ⏰ <strong>08:00 → 23:30</strong>
 
                         <br /><br />
 
-                        Hệ thống sẽ lấy toàn bộ phòng
-                        <strong> 2D + VIP </strong>
-                        đang có tại rạp và tự động phân bổ
-                        suất chiếu.
+
+                        <strong>
+                            🕐 Giờ hoạt động:
+                        </strong>
+
+                        <br />
+
+                        Thứ 2 → Thứ 6:
+                        <strong> 08:00 → 23:30</strong>
+
+                        <br />
+
+                        Thứ 7 → Chủ nhật:
+                        <strong> 08:00 → 24:00</strong>
+
 
                         <br /><br />
 
-                        Các mốc thời gian HOT sẽ cách nhau
-                        <strong> 45 phút</strong>.
+
+                        <strong>
+                            Khoảng cách suất:
+                        </strong>
 
                         <br />
 
-                        Phòng nào đang bận thì bỏ qua phòng đó
-                        và thử phòng khác.
+                        🔥 HOT:
+                        <strong> 45 phút</strong>
 
                         <br />
+
+                        📊 NORMAL:
+                        <strong> 75 phút</strong>
+
+                        <br />
+
+                        ❄️ COLD:
+                        <strong> 120 phút</strong>
+
+
+                        <br /><br />
+
+
+                        Phòng nào đang bận thì hệ thống
+                        sẽ thử phòng khác.
+
+
+                        <br />
+
 
                         Phòng chỉ được sử dụng lại sau khi
-                        phim trước kết thúc +
-                        <strong> 15 phút</strong>.
+                        phim trước kết thúc
+                        <strong> + 15 phút</strong>.
+
+
+                        <br /><br />
+
+
+                        <strong>
+                            Ví dụ:
+                        </strong>
+
+                        <br />
+
+                        Chọn <strong>2D + VIP</strong>
+                        + <strong>HOT</strong>
+
+
+                        <br />
+
+                        Hệ thống sẽ tự tìm các phòng
+                        <strong> 2D/VIP </strong>
+                        phù hợp và phân bổ các mốc
+                        cách nhau <strong>45 phút</strong>.
 
                     </div>
 
@@ -2113,4 +2424,3 @@ const ShowTimePage = () => {
 
 
 export default ShowTimePage;
-

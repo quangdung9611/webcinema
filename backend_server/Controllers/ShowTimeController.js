@@ -226,29 +226,6 @@ exports.getShowtimesForMovieDetail = async (req, res) => {
 
 
 /*=========================================================
-    ADMIN - CREATE SINGLE SHOWTIME
-=========================================================*/
-exports.createShowtime = async (req, res) => {
-    try {
-        const showtimeId = await ShowtimeService.createShowtime(req.body);
-
-        return res.status(201).json({
-            success: true,
-            message: "Thêm suất chiếu thành công",
-            data: { showtime_id: showtimeId }
-        });
-    } catch (err) {
-        console.error("Create Showtime Error:", err);
-        return res.status(err.statusCode || 400).json({
-            success: false,
-            field: err.field || null,
-            message: err.message || "Lỗi máy chủ"
-        });
-    }
-};
-
-
-/*=========================================================
     ADMIN - AUTO GENERATE SHOWTIMES
 =========================================================*/
 exports.createAutoSchedule = async (req, res) => {

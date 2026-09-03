@@ -82,11 +82,6 @@ router.get(
 
 // ==========================================================
 // AUTO SHOWTIME SCHEDULER
-//
-// POST /api/showtimes/schedule
-//
-// Controller:
-// ShowtimeController.createAutoSchedule
 // ==========================================================
 router.post(
     "/schedule",
@@ -100,14 +95,6 @@ router.get(
     "/:showtime_id",
     authenticateAdmin,
     ShowtimeController.getShowtimeDetail
-);
-
-
-// CREATE SINGLE SHOWTIME
-router.post(
-    "/",
-    authenticateAdmin,
-    ShowtimeController.createShowtime
 );
 
 

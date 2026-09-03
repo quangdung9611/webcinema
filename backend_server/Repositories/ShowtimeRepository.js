@@ -215,7 +215,7 @@ class ShowtimeRepository {
 
 
     /*=========================================================
-        FIND ROOM
+        FIND ROOM IN CINEMA
     =========================================================*/
     async findRoomInCinema(roomId, cinemaId) {
         const [rows] = await db.query(
@@ -229,6 +229,27 @@ class ShowtimeRepository {
         );
 
         return rows[0] || null;
+    }
+
+
+    /*=========================================================
+        FIND ROOMS BY CINEMA - DÙNG CHO AUTO SCHEDULER
+    =========================================================*/
+    async findRoomsByCinema(cinemaId) {
+        const [rows] = await db.query(
+            `
+            SELECT 
+                room_id,
+                room_name,
+                room_type
+            FROM rooms
+            WHERE cinema_id = ?
+            ORDER BY room_name ASC
+            `,
+            [cinemaId]
+        );
+
+        return rows;
     }
 
 
@@ -324,7 +345,7 @@ class ShowtimeRepository {
 
 
     /*=========================================================
-        GET EXISTING SHOWTIMES - THÊM MỚI
+        GET EXISTING SHOWTIMES
     =========================================================*/
     async getExistingShowtimes({ cinemaId, startDate, endDate, roomIds = [] }) {
         let sql = `
@@ -367,35 +388,8 @@ class ShowtimeRepository {
     }
 
 
-   /*=========================================================
-    GET MOVIE TICKET STATS - KHÔNG DÙNG movie_views
-=========================================================*/
-// async getMovieTicketStats(movieId) {
-//     const [rows] = await db.query(
-//         `
-//         SELECT
-//             COUNT(DISTINCT t.ticket_id) AS ticketSold,
-//             COALESCE(AVG(r.rating), 0) AS rating,
-//             0 AS viewCount
-//         FROM movies m
-//         LEFT JOIN showtimes s ON m.movie_id = s.movie_id
-//         LEFT JOIN tickets t ON s.showtime_id = t.showtime_id
-//         LEFT JOIN (
-//             SELECT movie_id, AVG(rating) AS rating
-//             FROM reviews
-//             GROUP BY movie_id
-//         ) r ON m.movie_id = r.movie_id
-//         WHERE m.movie_id = ?
-//         GROUP BY m.movie_id
-//         `,
-//         [movieId]
-//     );
-
-//     return rows[0] || { ticketSold: 0, rating: 0, viewCount: 0 };
-// }
-
     /*=========================================================
-        QUICK BOOKING - MOVIES
+        GET QUICK BOOKING - MOVIES
     =========================================================*/
     async getQuickBookingMovies() {
         const [rows] = await db.query(
@@ -412,7 +406,7 @@ class ShowtimeRepository {
 
 
     /*=========================================================
-        QUICK BOOKING - CINEMAS
+        GET QUICK BOOKING - CINEMAS
     =========================================================*/
     async getQuickBookingCinemas(movieId) {
         const [rows] = await db.query(
@@ -430,7 +424,7 @@ class ShowtimeRepository {
 
 
     /*=========================================================
-        QUICK BOOKING - DATES
+        GET QUICK BOOKING - DATES
     =========================================================*/
     async getQuickBookingDates(movieId, cinemaId) {
         const [rows] = await db.query(
@@ -448,7 +442,7 @@ class ShowtimeRepository {
 
 
     /*=========================================================
-        QUICK BOOKING - TIMES
+        GET QUICK BOOKING - TIMES
     =========================================================*/
     async getQuickBookingTimes(movieId, cinemaId, date) {
         const [rows] = await db.query(
@@ -470,7 +464,7 @@ class ShowtimeRepository {
 
 
     /*=========================================================
-        SHOWTIMES FOR BOOKING
+        GET SHOWTIMES FOR BOOKING
     =========================================================*/
     async getShowtimesForBooking(movieId, cinemaId, date) {
         const [rows] = await db.query(
