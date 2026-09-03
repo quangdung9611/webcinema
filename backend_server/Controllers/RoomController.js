@@ -97,7 +97,7 @@ exports.getRoomsByCinema = async (req, res) => {
 };
 
 /*=========================================================
-    ADMIN - CREATE ROOM
+    ADMIN - CREATE ROOM (1 PHÒNG)
 =========================================================*/
 exports.createRoom = async (req, res) => {
     try {
@@ -109,6 +109,30 @@ exports.createRoom = async (req, res) => {
         });
     } catch (err) {
         console.error("Create room error:", err);
+        return res.status(err.statusCode || 400).json({
+            success: false,
+            field: err.field || null,
+            message: err.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
+    ADMIN - CREATE BULK ROOMS (TẠO NHIỀU PHÒNG HÀNG LOẠT) 🆕
+=========================================================*/
+exports.createRoomsBulk = async (req, res) => {
+    try {
+        const result = await RoomService.createRoomsBulk(req.body);
+        
+        const message = `Tạo thành công ${result.created}/${result.total} phòng`;
+        
+        return res.status(201).json({
+            success: true,
+            message,
+            data: result
+        });
+    } catch (err) {
+        console.error("Create rooms bulk error:", err);
         return res.status(err.statusCode || 400).json({
             success: false,
             field: err.field || null,

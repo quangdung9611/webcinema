@@ -12,7 +12,10 @@ import {
     CircleDot,
     Tv2,
     Crown,
-    Sparkles
+    Sparkles,
+    Zap,
+    CheckSquare,
+    Square
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -45,6 +48,14 @@ const roomTypeConfig = {
     '3D': { bg: '#ede9fe', color: '#7c3aed', icon: <Layers3 size={14} /> },
     'IMAX': { bg: '#dcfce7', color: '#16a34a', icon: <Tv2 size={14} /> },
     'VIP': { bg: '#fce4ec', color: '#e91e63', icon: <Crown size={14} /> }
+};
+
+// Cấu hình số lượng phòng mặc định cho từng hạng
+const DEFAULT_ROOM_COUNT = {
+    '2D': 10,
+    '3D': 5,
+    'VIP': 3,
+    'IMAX': 2
 };
 
 // ==========================================================
@@ -96,6 +107,15 @@ const RoomPage = () => {
     const [editingRoom, setEditingRoom] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
     const [formErrors, setFormErrors] = useState({});
+
+    // ======================================================
+    // BULK CREATE 🆕
+    // ======================================================
+
+    const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+    const [bulkCinemaId, setBulkCinemaId] = useState('');
+    const [selectedRoomTypes, setSelectedRoomTypes] = useState([]);
+    const [bulkLoading, setBulkLoading] = useState(false);
 
     // ======================================================
     // ALERT / CONFIRM MODAL
@@ -385,7 +405,7 @@ const RoomPage = () => {
             console.error('SUBMIT ROOM ERROR:', error);
 
             const backendField = error.response?.data?.field;
-            const backendError = error.response?.data?.error || 'Đã xảy ra lỗi.';
+            const backendError = error.response?.data?.message || 'Đã xảy ra lỗi.';
 
             if (backendField) {
                 setFormErrors({ [backendField]: backendError });
@@ -430,7 +450,7 @@ const RoomPage = () => {
                     setTimeout(() => {
                         showAlert(
                             'Lỗi',
-                            error.response?.data?.error || 'Không thể xóa phòng chiếu.',
+                            error.response?.data?.message || 'Không thể xóa phòng chiếu.',
                             'error'
                         );
                     }, 100);
@@ -438,6 +458,75 @@ const RoomPage = () => {
             },
             closeAlert
         );
+    };
+
+    // ======================================================
+    // BULK CREATE HANDLERS 🆕
+    // ======================================================
+
+    const handleOpenBulkModal = () => {
+        setBulkCinemaId('');
+        setSelectedRoomTypes([]);
+        setIsBulkModalOpen(true);
+    };
+
+    const handleToggleRoomType = (type) => {
+        setSelectedRoomTypes(prev => {
+            if (prev.includes(type)) {
+                return prev.filter(t => t !== type);
+            } else {
+                return [...prev, type];
+            }
+        });
+    };
+
+    const handleSelectAllRoomTypes = () => {
+        const allTypes = Object.keys(DEFAULT_ROOM_COUNT);
+        if (selectedRoomTypes.length === allTypes.length) {
+            setSelectedRoomTypes([]);
+        } else {
+            setSelectedRoomTypes(allTypes);
+        }
+    };
+
+    const handleBulkCreate = async () => {
+        if (!bulkCinemaId) {
+            showAlert('Lỗi', 'Vui lòng chọn rạp chiếu.', 'error');
+            return;
+        }
+
+        if (selectedRoomTypes.length === 0) {
+            showAlert('Lỗi', 'Vui lòng chọn ít nhất một loại phòng.', 'error');
+            return;
+        }
+
+        setBulkLoading(true);
+
+        try {
+            const res = await api.post('/api/rooms/bulk', {
+                cinema_id: Number(bulkCinemaId),
+                room_types: selectedRoomTypes
+            });
+
+            setIsBulkModalOpen(false);
+
+            const createdCount = res.data?.data?.created || 0;
+            const totalCount = res.data?.data?.total || 0;
+
+            const successMessage = `Tạo thành công ${createdCount}/${totalCount} phòng. Ghế đã được tự động tạo cho từng phòng!`;
+
+            setTimeout(() => {
+                showAlert('Thành công', successMessage, 'success');
+            }, 100);
+
+            fetchRooms(1, search);
+
+        } catch (error) {
+            console.error('BULK CREATE ERROR:', error);
+            showAlert('Lỗi', error.response?.data?.message || 'Không thể tạo phòng hàng loạt.', 'error');
+        } finally {
+            setBulkLoading(false);
+        }
     };
 
     // ======================================================
@@ -636,6 +725,22 @@ const RoomPage = () => {
                 onAdd={handleOpenAdd}
                 searchValue={search}
                 onSearchChange={setSearch}
+                extraButton={
+                    <button
+                        className="admin-btn admin-btn-primary"
+                        onClick={handleOpenBulkModal}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+                            border: 'none'
+                        }}
+                    >
+                        <Zap size={18} />
+                        Tạo hàng loạt
+                    </button>
+                }
             >
                 {loading ? (
                     <div className="admin-loading">
@@ -675,6 +780,188 @@ const RoomPage = () => {
                     loading={submitLoading}
                     submitText={editingRoom ? 'Lưu thay đổi' : 'Thêm phòng chiếu'}
                 />
+            </AdminModal>
+
+            {/* ==================================================
+                BULK CREATE MODAL 🆕
+            ================================================== */}
+
+            <AdminModal
+                open={isBulkModalOpen}
+                onClose={() => {
+                    if (!bulkLoading) setIsBulkModalOpen(false);
+                }}
+                title="Tạo phòng hàng loạt"
+                type="default"
+                variant="custom"
+                size="lg"
+            >
+                <div className="bulk-create-container">
+                    <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
+                        Hệ thống sẽ tự động tạo số lượng phòng cho từng hạng và tự động tạo ghế tương ứng.
+                    </p>
+
+                    {/* Chọn rạp */}
+                    <div className="form-group" style={{ marginBottom: '20px' }}>
+                        <label style={{ fontWeight: '600', display: 'block', marginBottom: '6px' }}>
+                            Chọn rạp <span style={{ color: 'red' }}>*</span>
+                        </label>
+                        <select
+                            className="form-control"
+                            value={bulkCinemaId}
+                            onChange={(e) => setBulkCinemaId(e.target.value)}
+                            disabled={bulkLoading}
+                            style={{
+                                width: '100%',
+                                padding: '10px 14px',
+                                borderRadius: '8px',
+                                border: '1px solid var(--border-color)',
+                                fontSize: '14px'
+                            }}
+                        >
+                            <option value="">-- Chọn rạp --</option>
+                            {cinemas.map(c => (
+                                <option key={c.cinema_id} value={c.cinema_id}>
+                                    {c.cinema_name} ({c.city})
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Chọn hạng phòng */}
+                    <div style={{ marginBottom: '16px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                            <label style={{ fontWeight: '600' }}>
+                                Chọn hạng phòng <span style={{ color: 'red' }}>*</span>
+                            </label>
+                            <button
+                                type="button"
+                                onClick={handleSelectAllRoomTypes}
+                                disabled={bulkLoading}
+                                style={{
+                                    background: 'transparent',
+                                    border: 'none',
+                                    color: 'var(--primary-color)',
+                                    cursor: 'pointer',
+                                    fontWeight: '600',
+                                    fontSize: '13px'
+                                }}
+                            >
+                                {selectedRoomTypes.length === Object.keys(DEFAULT_ROOM_COUNT).length ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
+                            </button>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '10px' }}>
+                            {Object.keys(DEFAULT_ROOM_COUNT).map(type => {
+                                const config = roomTypeConfig[type];
+                                const isChecked = selectedRoomTypes.includes(type);
+                                const count = DEFAULT_ROOM_COUNT[type];
+
+                                return (
+                                    <div
+                                        key={type}
+                                        onClick={() => !bulkLoading && handleToggleRoomType(type)}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '10px',
+                                            padding: '12px 16px',
+                                            borderRadius: '10px',
+                                            border: isChecked ? `2px solid ${config.color}` : '2px solid var(--border-color)',
+                                            background: isChecked ? `${config.bg}66` : 'var(--bg-card)',
+                                            cursor: bulkLoading ? 'not-allowed' : 'pointer',
+                                            transition: 'all 0.2s ease',
+                                            opacity: bulkLoading ? 0.6 : 1
+                                        }}
+                                    >
+                                        <span style={{ color: config.color, fontSize: '18px' }}>
+                                            {isChecked ? <CheckSquare size={20} /> : <Square size={20} />}
+                                        </span>
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            {config.icon}
+                                            <span style={{ fontWeight: '600' }}>{roomTypeMap[type]}</span>
+                                        </span>
+                                        <span style={{
+                                            background: '#e2e8f0',
+                                            color: '#475569',
+                                            padding: '2px 10px',
+                                            borderRadius: '20px',
+                                            fontSize: '12px',
+                                            fontWeight: '700',
+                                            marginLeft: 'auto'
+                                        }}>
+                                            {count} phòng
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Thông tin tóm tắt */}
+                    {selectedRoomTypes.length > 0 && (
+                        <div style={{
+                            padding: '14px 18px',
+                            borderRadius: '10px',
+                            background: 'var(--bg-secondary)',
+                            marginTop: '16px',
+                            marginBottom: '20px'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                                <span style={{ fontWeight: '600' }}>
+                                    Tổng số phòng sẽ tạo:
+                                </span>
+                                <span style={{ fontWeight: '700', color: 'var(--primary-color)' }}>
+                                    {selectedRoomTypes.reduce((sum, type) => sum + DEFAULT_ROOM_COUNT[type], 0)} phòng
+                                </span>
+                            </div>
+                            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '6px' }}>
+                                {selectedRoomTypes.map(type => (
+                                    <span key={type} style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                                        {roomTypeMap[type]}: <strong>{DEFAULT_ROOM_COUNT[type]}</strong>
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Nút hành động */}
+                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                        <button
+                            type="button"
+                            className="admin-btn admin-btn-secondary"
+                            onClick={() => setIsBulkModalOpen(false)}
+                            disabled={bulkLoading}
+                        >
+                            Hủy
+                        </button>
+                        <button
+                            type="button"
+                            className="admin-btn admin-btn-primary"
+                            onClick={handleBulkCreate}
+                            disabled={bulkLoading || !bulkCinemaId || selectedRoomTypes.length === 0}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+                                border: 'none'
+                            }}
+                        >
+                            {bulkLoading ? (
+                                <>
+                                    <Loader2 size={18} className="spin-icon" />
+                                    Đang tạo...
+                                </>
+                            ) : (
+                                <>
+                                    <Zap size={18} />
+                                    Tạo {selectedRoomTypes.reduce((sum, type) => sum + DEFAULT_ROOM_COUNT[type], 0)} phòng
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </div>
             </AdminModal>
 
             {/* ==================================================

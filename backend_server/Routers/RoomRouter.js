@@ -21,8 +21,11 @@ router.get("/paginated", authenticateAdmin, RoomController.getRoomsWithPaginatio
 // Lấy chi tiết phòng theo ID (đặt TRƯỚC /cinema/:cinema_id để tránh xung đột)
 router.get("/:room_id", authenticateAdmin, RoomController.getRoomById);
 
-// Tạo phòng mới
+// Tạo phòng mới (1 phòng)
 router.post("/", authenticateAdmin, RoomController.createRoom);
+
+// 🆕 Tạo nhiều phòng hàng loạt
+router.post("/bulk", authenticateAdmin, RoomController.createRoomsBulk);
 
 // Cập nhật phòng
 router.put("/:room_id", authenticateAdmin, RoomController.updateRoom);
