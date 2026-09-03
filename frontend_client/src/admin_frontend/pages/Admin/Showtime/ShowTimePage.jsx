@@ -1,4 +1,11 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+
+import React, {
+    useEffect,
+    useState,
+    useRef,
+    useCallback
+} from 'react';
+
 import api from '../../../../api/api';
 
 import {
@@ -22,12 +29,45 @@ import AdminPagination from '../../../components/AdminPagination';
 
 
 // ==========================================================
+// ROOM TYPES
+// ==========================================================
+
+const ROOM_TYPES = [
+    {
+        value: '2D',
+        label: '2D',
+        icon: '🎬'
+    },
+    {
+        value: '3D',
+        label: '3D',
+        icon: '🕶️'
+    },
+    {
+        value: 'VIP',
+        label: 'VIP',
+        icon: '👑'
+    },
+    {
+        value: 'IMAX',
+        label: 'IMAX',
+        icon: '🌌'
+    }
+];
+
+
+// ==========================================================
 // INITIAL DATA
 // ==========================================================
 
 const initialScheduleData = {
     movie_id: '',
     cinema_id: '',
+
+    // TỰ ĐỘNG: chọn hạng phòng
+    room_types: [],
+
+    // Dùng cho EDIT
     room_ids: [],
 
     start_date: '',
@@ -36,7 +76,7 @@ const initialScheduleData = {
     operating_start: '08:00',
     operating_end: '23:30',
 
-    distribution_level: 'medium'
+    distribution_level: 'normal'
 };
 
 
@@ -304,6 +344,9 @@ const ShowTimePage = () => {
 
     // ======================================================
     // FETCH ROOMS
+    //
+    // Chỉ dùng khi EDIT.
+    // Tạo tự động không cần lấy room_id.
     // ======================================================
 
     const fetchRoomsByCinema = useCallback(
@@ -349,7 +392,6 @@ const ShowTimePage = () => {
     useEffect(() => {
 
         fetchShowtimes(1, '');
-
         fetchInitialData();
 
         return () => {
@@ -418,7 +460,7 @@ const ShowTimePage = () => {
 
 
     // ======================================================
-    // OPEN CREATE SCHEDULE
+    // OPEN CREATE
     // ======================================================
 
     const handleOpenAdd = () => {
@@ -427,8 +469,14 @@ const ShowTimePage = () => {
 
         setScheduleData({
             ...initialScheduleData,
+
             operating_start: '08:00',
-            operating_end: '23:30'
+            operating_end: '23:30',
+
+            room_types: [],
+            room_ids: [],
+
+            distribution_level: 'normal'
         });
 
         setRooms([]);
@@ -467,9 +515,17 @@ const ShowTimePage = () => {
             setFormErrors({});
 
             setScheduleData({
+
                 movie_id: st.movie_id,
+
                 cinema_id: st.cinema_id,
-                room_ids: [st.room_id],
+
+                room_ids: [
+                    Number(st.room_id)
+                ],
+
+                // EDIT không dùng room_types
+                room_types: [],
 
                 start_date:
                     st.start_time?.slice(0, 10) || '',
@@ -478,11 +534,15 @@ const ShowTimePage = () => {
                     st.start_time?.slice(0, 10) || '',
 
                 operating_start:
-                    st.start_time?.slice(11, 16) || '08:00',
+                    st.start_time?.slice(11, 16) ||
+                    '08:00',
 
-                operating_end: '23:30',
+                operating_end:
+                    '23:30',
 
-                distribution_level: 'manual'
+                distribution_level:
+                    'manual'
+
             });
 
             setIsFormOpen(true);
@@ -554,15 +614,20 @@ const ShowTimePage = () => {
         }
 
 
-        // ----------------------------------------------
+        // ==================================================
         // CINEMA
-        // ----------------------------------------------
+        // ==================================================
 
         if (name === 'cinema_id') {
 
             setScheduleData(prev => ({
                 ...prev,
                 cinema_id: value,
+
+                // Tạo tự động
+                room_types: [],
+
+                // Edit
                 room_ids: []
             }));
 
@@ -572,32 +637,47 @@ const ShowTimePage = () => {
         }
 
 
-        // ----------------------------------------------
-        // ROOM CHECKBOX
-        // ----------------------------------------------
+        // ==================================================
+        // ROOM TYPE CHECKBOX
+        // ==================================================
 
-        if (name === 'room_ids') {
-
-            const roomId = Number(value);
+        if (name === 'room_types') {
 
             setScheduleData(prev => {
 
-                const currentRoomIds = prev.room_ids || [];
+                const currentTypes =
+                    prev.room_types || [];
 
                 if (checked) {
-                    if (!currentRoomIds.includes(roomId)) {
+
+                    if (
+                        !currentTypes.includes(value)
+                    ) {
+
                         return {
                             ...prev,
-                            room_ids: [...currentRoomIds, roomId]
+
+                            room_types: [
+                                ...currentTypes,
+                                value
+                            ]
                         };
+
                     }
+
                     return prev;
-                } else {
-                    return {
-                        ...prev,
-                        room_ids: currentRoomIds.filter(id => id !== roomId)
-                    };
+
                 }
+
+                return {
+                    ...prev,
+
+                    room_types:
+                        currentTypes.filter(
+                            type =>
+                                type !== value
+                        )
+                };
 
             });
 
@@ -605,9 +685,61 @@ const ShowTimePage = () => {
         }
 
 
-        // ----------------------------------------------
+        // ==================================================
+        // ROOM CHECKBOX
+        //
+        // Chỉ dùng khi EDIT.
+        // ==================================================
+
+        if (name === 'room_ids') {
+
+            const roomId =
+                Number(value);
+
+            setScheduleData(prev => {
+
+                const currentRoomIds =
+                    prev.room_ids || [];
+
+                if (checked) {
+
+                    if (
+                        !currentRoomIds.includes(roomId)
+                    ) {
+
+                        return {
+                            ...prev,
+
+                            room_ids: [
+                                ...currentRoomIds,
+                                roomId
+                            ]
+                        };
+
+                    }
+
+                    return prev;
+                }
+
+                return {
+                    ...prev,
+
+                    room_ids:
+                        currentRoomIds.filter(
+                            id =>
+                                id !== roomId
+                        )
+                };
+
+            });
+
+            return;
+        }
+
+
+        // ==================================================
         // NORMAL
-        // ----------------------------------------------
+        // ==================================================
 
         setScheduleData(prev => ({
             ...prev,
@@ -627,37 +759,72 @@ const ShowTimePage = () => {
 
 
         if (!scheduleData.movie_id) {
+
             errors.movie_id =
                 'Vui lòng chọn phim';
+
         }
 
 
         if (!scheduleData.cinema_id) {
+
             errors.cinema_id =
                 'Vui lòng chọn rạp';
+
         }
 
 
-        if (
-            !scheduleData.room_ids ||
-            scheduleData.room_ids.length === 0
-        ) {
+        // ==================================================
+        // TẠO TỰ ĐỘNG
+        // ==================================================
 
-            errors.room_ids =
-                'Vui lòng chọn ít nhất một phòng';
+        if (!editingShowtime) {
+
+            if (
+                !scheduleData.room_types ||
+                scheduleData.room_types.length === 0
+            ) {
+
+                errors.room_types =
+                    'Vui lòng chọn ít nhất một hạng phòng';
+
+            }
+
+        }
+
+
+        // ==================================================
+        // EDIT
+        // ==================================================
+
+        if (editingShowtime) {
+
+            if (
+                !scheduleData.room_ids ||
+                scheduleData.room_ids.length === 0
+            ) {
+
+                errors.room_ids =
+                    'Vui lòng chọn phòng chiếu';
+
+            }
 
         }
 
 
         if (!scheduleData.start_date) {
+
             errors.start_date =
                 'Vui lòng chọn ngày bắt đầu';
+
         }
 
 
         if (!scheduleData.end_date) {
+
             errors.end_date =
                 'Vui lòng chọn ngày kết thúc';
+
         }
 
 
@@ -686,6 +853,28 @@ const ShowTimePage = () => {
 
             errors.operating_end =
                 'Vui lòng chọn giờ kết thúc';
+
+        }
+
+
+        // ==================================================
+        // TIME RANGE
+        // ==================================================
+
+        if (
+            scheduleData.operating_start &&
+            scheduleData.operating_end
+        ) {
+
+            if (
+                scheduleData.operating_start >=
+                scheduleData.operating_end
+            ) {
+
+                errors.operating_end =
+                    'Giờ kết thúc phải lớn hơn giờ bắt đầu';
+
+            }
 
         }
 
@@ -720,12 +909,12 @@ const ShowTimePage = () => {
                 setFormErrors({
                     start_date:
                         'Vui lòng chọn ngày',
+
                     operating_start:
                         'Vui lòng chọn giờ'
                 });
 
                 return;
-
             }
 
 
@@ -739,22 +928,31 @@ const ShowTimePage = () => {
                 await api.put(
                     `/api/showtimes/${editingShowtime.showtime_id}`,
                     {
+
                         movie_id:
-                            scheduleData.movie_id,
+                            Number(
+                                scheduleData.movie_id
+                            ),
 
                         cinema_id:
-                            scheduleData.cinema_id,
+                            Number(
+                                scheduleData.cinema_id
+                            ),
 
                         room_id:
-                            scheduleData.room_ids[0],
+                            Number(
+                                scheduleData.room_ids[0]
+                            ),
 
                         start_time:
                             `${scheduleData.start_date} ${scheduleData.operating_start}`
+
                     }
                 );
 
 
                 setIsFormOpen(false);
+
 
                 await fetchShowtimes(
                     pagination.page,
@@ -768,6 +966,7 @@ const ShowTimePage = () => {
                     'success'
                 );
 
+
             } catch (error) {
 
                 console.error(
@@ -779,11 +978,13 @@ const ShowTimePage = () => {
                     error.response?.data?.message ||
                     'Không thể cập nhật suất chiếu.';
 
+
                 showAlert(
                     'Lỗi',
                     message,
                     'error'
                 );
+
 
             } finally {
 
@@ -792,6 +993,7 @@ const ShowTimePage = () => {
             }
 
             return;
+
         }
 
 
@@ -811,16 +1013,27 @@ const ShowTimePage = () => {
             setFormErrors({});
 
 
+            // ==================================================
+            // PAYLOAD MỚI
+            //
+            // KHÔNG GỬI room_ids
+            // GỬI room_types
+            // ==================================================
+
             const payload = {
 
                 movie_id:
-                    Number(scheduleData.movie_id),
+                    Number(
+                        scheduleData.movie_id
+                    ),
 
                 cinema_id:
-                    Number(scheduleData.cinema_id),
+                    Number(
+                        scheduleData.cinema_id
+                    ),
 
-                room_ids:
-                    scheduleData.room_ids.map(Number),
+                room_types:
+                    scheduleData.room_types,
 
                 start_date:
                     scheduleData.start_date,
@@ -840,7 +1053,10 @@ const ShowTimePage = () => {
             };
 
 
-            console.log('📤 Payload gửi lên:', payload);
+            console.log(
+                '📤 Payload tạo lịch:',
+                payload
+            );
 
 
             const res = await api.post(
@@ -849,7 +1065,10 @@ const ShowTimePage = () => {
             );
 
 
-            console.log('📥 Response:', res.data);
+            console.log(
+                '📥 Response:',
+                res.data
+            );
 
 
             setIsFormOpen(false);
@@ -861,18 +1080,49 @@ const ShowTimePage = () => {
             );
 
 
-            // Hiển thị thông báo chi tiết
-            const data = res.data?.data;
-            let message = res.data?.message || 'Tạo lịch chiếu thành công.';
+            // ==================================================
+            // RESPONSE
+            // ==================================================
+
+            const data =
+                res.data?.data;
+
+            let message =
+                res.data?.message ||
+                'Tạo lịch chiếu thành công.';
+
 
             if (data) {
-                const created = data.data?.length || 0;
-                const conflicts = data.conflicts?.length || 0;
-                const skipped = data.skippedPast?.length || 0;
 
-                message += `\n✅ Đã tạo: ${created} suất`;
-                if (conflicts > 0) message += `\n⚠️ Bỏ qua: ${conflicts} suất bị trùng`;
-                if (skipped > 0) message += `\n⏭️ Bỏ qua: ${skipped} suất trong quá khứ`;
+                const created =
+                    data.data?.length || 0;
+
+                const conflicts =
+                    data.conflicts?.length || 0;
+
+                const skipped =
+                    data.skippedPast?.length || 0;
+
+
+                message +=
+                    `\n\n✅ Đã tạo: ${created} suất`;
+
+
+                if (conflicts > 0) {
+
+                    message +=
+                        `\n⚠️ Bỏ qua: ${conflicts} suất bị trùng`;
+
+                }
+
+
+                if (skipped > 0) {
+
+                    message +=
+                        `\n⏭️ Bỏ qua: ${skipped} suất trong quá khứ`;
+
+                }
+
             }
 
 
@@ -932,6 +1182,7 @@ const ShowTimePage = () => {
     const handleDelete = (showtime) => {
 
         showAlert(
+
             'Xác nhận xóa',
 
             `Bạn có chắc muốn xóa suất chiếu phim "${showtime.title}"?`,
@@ -971,6 +1222,7 @@ const ShowTimePage = () => {
                         'success'
                     );
 
+
                 } catch (error) {
 
                     closeAlert();
@@ -978,12 +1230,14 @@ const ShowTimePage = () => {
                     setTimeout(() => {
 
                         showAlert(
+
                             'Lỗi',
 
                             error.response?.data?.message ||
                             'Không thể xóa suất chiếu.',
 
                             'error'
+
                         );
 
                     }, 100);
@@ -993,6 +1247,7 @@ const ShowTimePage = () => {
             },
 
             closeAlert
+
         );
 
     };
@@ -1195,6 +1450,10 @@ const ShowTimePage = () => {
 
     const formFields = [
 
+        // ==================================================
+        // MOVIE
+        // ==================================================
+
         {
             label: 'Phim',
             name: 'movie_id',
@@ -1208,13 +1467,22 @@ const ShowTimePage = () => {
                 },
 
                 ...movies.map(movie => ({
-                    label: movie.title,
-                    value: movie.movie_id
+
+                    label:
+                        movie.title,
+
+                    value:
+                        movie.movie_id
+
                 }))
 
             ]
         },
 
+
+        // ==================================================
+        // CINEMA
+        // ==================================================
 
         {
             label: 'Rạp chiếu',
@@ -1229,24 +1497,78 @@ const ShowTimePage = () => {
                 },
 
                 ...cinemas.map(cinema => ({
-                    label: cinema.cinema_name,
-                    value: cinema.cinema_id
+
+                    label:
+                        cinema.cinema_name,
+
+                    value:
+                        cinema.cinema_id
+
                 }))
 
             ]
         },
 
 
-        {
-            label: 'Phòng chiếu',
-            name: 'room_ids',
-            type: 'checkbox-select',
-            options: rooms.map(room => ({
-                label: `${room.room_name} (${room.room_type})`,
-                value: room.room_id
-            }))
-        },
+        // ==================================================
+        // ROOM TYPE
+        //
+        // TỰ ĐỘNG
+        // ==================================================
 
+        ...(!editingShowtime
+            ? [
+                {
+                    label: 'Hạng phòng',
+                    name: 'room_types',
+                    type: 'checkbox-select',
+
+                    options:
+                        ROOM_TYPES.map(type => ({
+
+                            label:
+                                `${type.icon} ${type.label}`,
+
+                            value:
+                                type.value
+
+                        }))
+                }
+            ]
+            : []),
+
+
+        // ==================================================
+        // ROOM
+        //
+        // EDIT
+        // ==================================================
+
+        ...(editingShowtime
+            ? [
+                {
+                    label: 'Phòng chiếu',
+                    name: 'room_ids',
+                    type: 'checkbox-select',
+
+                    options:
+                        rooms.map(room => ({
+
+                            label:
+                                `${room.room_name} (${room.room_type})`,
+
+                            value:
+                                room.room_id
+
+                        }))
+                }
+            ]
+            : []),
+
+
+        // ==================================================
+        // DATES
+        // ==================================================
 
         {
             label: 'Ngày bắt đầu',
@@ -1262,6 +1584,10 @@ const ShowTimePage = () => {
         },
 
 
+        // ==================================================
+        // OPERATING TIME
+        // ==================================================
+
         {
             label: 'Giờ bắt đầu hoạt động',
             name: 'operating_start',
@@ -1276,30 +1602,47 @@ const ShowTimePage = () => {
         },
 
 
-        {
-            label: 'Mức độ phân bổ',
-            name: 'distribution_level',
-            type: 'select',
+        // ==================================================
+        // DISTRIBUTION
+        // ==================================================
 
-            options: [
-
+        ...(!editingShowtime
+            ? [
                 {
-                    label: '📊 Ít - phim ít ưu tiên (60p/suất)',
-                    value: 'cold'
-                },
+                    label: 'Mức độ phân bổ',
+                    name: 'distribution_level',
+                    type: 'select',
 
-                {
-                    label: '📊 Trung bình - mức mặc định (45p/suất)',
-                    value: 'normal'
-                },
+                    options: [
 
-                {
-                    label: '📊 Nhiều - phim được ưu tiên (30p/suất)',
-                    value: 'hot'
+                        {
+                            label:
+                                '❄️ Ít - COLD (120 phút/suất)',
+
+                            value:
+                                'cold'
+                        },
+
+                        {
+                            label:
+                                '📊 Trung bình - NORMAL (75 phút/suất)',
+
+                            value:
+                                'normal'
+                        },
+
+                        {
+                            label:
+                                '🔥 Nhiều - HOT (45 phút/suất)',
+
+                            value:
+                                'hot'
+                        }
+
+                    ]
                 }
-
             ]
-        }
+            : [])
 
     ];
 
@@ -1316,7 +1659,7 @@ const ShowTimePage = () => {
 
                 title="Quản lý lịch chiếu"
 
-                subtitle="Tự động phân bổ suất chiếu theo phim, rạp, phòng, thời gian và mức độ ưu tiên"
+                subtitle="Tự động phân bổ suất chiếu theo phim, rạp, hạng phòng, thời gian và mức độ ưu tiên"
 
                 icon={
                     <CalendarDays size={30} />
@@ -1442,25 +1785,55 @@ const ShowTimePage = () => {
                             }}
                         >
 
-                            Hệ thống sẽ dựa vào thời lượng phim,
-                            khoảng thời gian hoạt động,
-                            các phòng được chọn và mức độ phân bổ
-                            để tự tạo lịch chiếu.
+                            Hệ thống sẽ tự chọn phòng thực tế
+                            dựa trên <strong>hạng phòng</strong>
+                            mà bạn chọn.
 
                             <br />
 
-                            <strong>Mức độ phân bổ:</strong>
-                            <br />
-                            🔥 <strong>Nhiều (Hot)</strong>: 30 phút/suất - Phim được ưu tiên
-                            <br />
-                            📊 <strong>Trung bình</strong>: 45 phút/suất - Mức mặc định
-                            <br />
-                            ❄️ <strong>Ít (Cold)</strong>: 60 phút/suất - Phim ít ưu tiên
+                            Không cần chọn từng phòng cụ thể.
 
                             <br /><br />
 
-                            Đồng thời tự kiểm tra lịch hiện có
-                            để tránh trùng suất trong cùng phòng.
+                            <strong>Hạng phòng hỗ trợ:</strong>
+
+                            <br />
+
+                            🎬 <strong>2D</strong>
+                            <br />
+
+                            🕶️ <strong>3D</strong>
+                            <br />
+
+                            👑 <strong>VIP</strong>
+                            <br />
+
+                            🌌 <strong>IMAX</strong>
+
+                            <br /><br />
+
+                            <strong>Mức độ phân bổ:</strong>
+
+                            <br />
+
+                            🔥 <strong>HOT</strong>:
+                            45 phút/suất
+
+                            <br />
+
+                            📊 <strong>NORMAL</strong>:
+                            75 phút/suất
+
+                            <br />
+
+                            ❄️ <strong>COLD</strong>:
+                            120 phút/suất
+
+                            <br /><br />
+
+                            Hệ thống sẽ tự kiểm tra lịch hiện có,
+                            tránh trùng phòng và tự chọn phòng
+                            phù hợp trong từng hạng.
 
                         </div>
 
@@ -1517,21 +1890,47 @@ const ShowTimePage = () => {
                             <Info size={16} />
 
                             <strong>
-                                Ví dụ:
+                                Cách hoạt động:
                             </strong>
 
                         </div>
 
-                        Phim 120 phút + nghỉ 15 phút,
-                        hoạt động từ 08:00 đến 23:30,
-                        chọn 3 phòng và mức
-                        <strong> "Nhiều"</strong>.
+
+                        Ví dụ bạn chọn:
 
                         <br />
 
-                        Hệ thống sẽ tự tính các mốc suất cách nhau 30 phút
-                        cho từng phòng và bỏ qua các khoảng thời gian
-                        đang bị trùng lịch.
+                        🎬 <strong>2D + VIP</strong>
+
+                        <br />
+
+                        🔥 <strong>HOT</strong>
+
+                        <br />
+
+                        ⏰ <strong>08:00 → 23:30</strong>
+
+                        <br /><br />
+
+                        Hệ thống sẽ lấy toàn bộ phòng
+                        <strong> 2D + VIP </strong>
+                        đang có tại rạp và tự động phân bổ
+                        suất chiếu.
+
+                        <br /><br />
+
+                        Các mốc thời gian HOT sẽ cách nhau
+                        <strong> 45 phút</strong>.
+
+                        <br />
+
+                        Phòng nào đang bận thì bỏ qua phòng đó
+                        và thử phòng khác.
+
+                        <br />
+
+                        Phòng chỉ được sử dụng lại sau khi
+                        phim trước kết thúc + <strong>15 phút</strong>.
 
                     </div>
 
@@ -1590,3 +1989,4 @@ const ShowTimePage = () => {
 
 
 export default ShowTimePage;
+

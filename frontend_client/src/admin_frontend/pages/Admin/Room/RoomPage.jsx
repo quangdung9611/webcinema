@@ -31,20 +31,18 @@ const initialFormData = {
     room_type: ''
 };
 
-// Map giá trị room_type sang tên hiển thị (đúng với CSDL)
+// ✅ Map giá trị room_type sang tên hiển thị (ĐÃ XÓA 4DMAX)
 const roomTypeMap = {
     '2D': 'Phòng 2D',
     '3D': 'Phòng 3D',
-    '4DMAX': 'Phòng 4DMAX',
     'IMAX': 'Phòng IMAX',
     'VIP': 'Phòng VIP'
 };
 
-// Cấu hình màu sắc và icon cho từng loại phòng
+// ✅ Cấu hình màu sắc và icon cho từng loại phòng (ĐÃ XÓA 4DMAX)
 const roomTypeConfig = {
     '2D': { bg: '#e0f2fe', color: '#0284c7', icon: <CircleDot size={14} /> },
     '3D': { bg: '#ede9fe', color: '#7c3aed', icon: <Layers3 size={14} /> },
-    '4DMAX': { bg: '#fef3c7', color: '#d97706', icon: <Sparkles size={14} /> },
     'IMAX': { bg: '#dcfce7', color: '#16a34a', icon: <Tv2 size={14} /> },
     'VIP': { bg: '#fce4ec', color: '#e91e63', icon: <Crown size={14} /> }
 };
@@ -595,7 +593,6 @@ const RoomPage = () => {
                 { label: '-- Chọn loại phòng --', value: '' },
                 { label: 'Phòng 2D', value: '2D' },
                 { label: 'Phòng 3D', value: '3D' },
-                { label: 'Phòng 4DMAX', value: '4DMAX' },
                 { label: 'Phòng IMAX', value: 'IMAX' },
                 { label: 'Phòng VIP', value: 'VIP' }
             ]

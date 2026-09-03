@@ -14,10 +14,10 @@ const validateRoom = (data) => {
         return { field: "room_name", message: "Tên phòng quá ngắn (tối thiểu 2 ký tự)" };
     }
 
-    // Đồng bộ với CSDL (enum trong bảng rooms)
-    const validRoomTypes = ["2D", "3D", "4DMAX", "IMAX", "VIP"];
+    // ✅ Đồng bộ với CSDL (enum trong bảng rooms) - ĐÃ XÓA 4DMAX
+    const validRoomTypes = ["2D", "3D", "IMAX", "VIP"];  // 👈 Đã xóa 4DMAX
     if (!validRoomTypes.includes(room_type)) {
-        return { field: "room_type", message: "Loại phòng không hợp lệ" };
+        return { field: "room_type", message: "Loại phòng không hợp lệ. Chấp nhận: 2D, 3D, IMAX, VIP" };
     }
 
     return null;
@@ -75,7 +75,7 @@ class RoomService {
         if (dup) {
             const err = new Error("Tên phòng này đã tồn tại trong rạp này");
             err.statusCode = 400;
-            err.field = "room_name"; // 👈 field cụ thể
+            err.field = "room_name";
             throw err;
         }
 

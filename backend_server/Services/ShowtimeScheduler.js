@@ -7,27 +7,34 @@
  * LOGIC:
  *
  * 🔥 HOT
- * - Khoảng cách giữa các suất của CÙNG PHIM: 30 phút
- * - Dùng tất cả phòng được admin chọn
- * - Xoay vòng phòng
- * - Mục tiêu: 15 suất/ngày
+ * - Khoảng cách giữa các suất của CÙNG PHIM: 45 phút
  *
  * 🟡 NORMAL
- * - Khoảng cách giữa các suất: 45 phút
- * - Dùng khoảng 50% số phòng
- * - Mục tiêu: 9 suất/ngày
+ * - Khoảng cách giữa các suất của CÙNG PHIM: 75 phút
  *
  * ❄️ COLD
- * - Khoảng cách giữa các suất: 60 phút
- * - Dùng 1 phòng
- * - Mục tiêu: 5 suất/ngày
+ * - Khoảng cách giữa các suất của CÙNG PHIM: 120 phút
+ *
+ * ============================================================
+ *
+ * ROOM TYPE:
+ *
+ * Admin chọn loại phòng:
+ * - 2D
+ * - 3D
+ * - VIP
+ * - IMAX
+ *
+ * Scheduler tự chọn room_id thực tế thuộc loại phòng đó.
+ *
+ * ============================================================
  *
  * QUAN TRỌNG:
  *
  * interval !== duration
  *
  * interval:
- *   khoảng cách giữa GIỜ BẮT ĐẦU các suất
+ *   khoảng cách giữa GIỜ BẮT ĐẦU các suất của cùng phim
  *
  * duration:
  *   thời lượng phim
@@ -35,17 +42,15 @@
  * buffer:
  *   thời gian đệm giữa 2 suất trong cùng phòng
  *
- * Ví dụ HOT:
+ * ============================================================
  *
- * 08:00 P1
- * 08:30 P2
- * 09:00 P3
- * 09:30 P4
- * 10:00 P1
- * 10:30 P2
+ * KHUNG GIỜ:
  *
- * Dù phim dài 120 phút vẫn hợp lệ vì các suất
- * được phân bổ sang các phòng khác nhau.
+ * Thứ 2 → Thứ 6:
+ *   08:00 → 23:30
+ *
+ * Thứ 7 → Chủ nhật:
+ *   08:00 → 24:00
  *
  * ============================================================
  */
@@ -58,9 +63,9 @@ class ShowtimeScheduler {
 
     static DEFAULT_CONFIG = {
 
-        // ====================================================
-        // KHUNG GIỜ MẶC ĐỊNH
-        // ====================================================
+        // ----------------------------------------------------
+        // KHUNG GIỜ
+        // ----------------------------------------------------
 
         weekdayStart: "08:00",
         weekdayEnd: "23:30",
@@ -68,53 +73,46 @@ class ShowtimeScheduler {
         weekendStart: "08:00",
         weekendEnd: "24:00",
 
-        // ====================================================
-        // BUFFER
-        // ====================================================
+        // ----------------------------------------------------
+        // BUFFER GIỮA 2 SUẤT CÙNG PHÒNG
+        // ----------------------------------------------------
 
         bufferMinutes: 15,
 
-        // ====================================================
-        // INTERVAL
-        // ====================================================
+        // ----------------------------------------------------
+        // INTERVAL THEO ĐỘ HOT
+        // ----------------------------------------------------
 
-        hotInterval: 30,
-        normalInterval: 45,
-        coldInterval: 60,
+        hotInterval: 45,
+        normalInterval: 75,
+        coldInterval: 120,
 
-        // ====================================================
-        // SỐ PHÒNG
-        // ====================================================
+        // ----------------------------------------------------
+        // GIỮ LẠI CÁC CONFIG CŨ ĐỂ TƯƠNG THÍCH
+        // NHƯNG KHÔNG CÒN DÙNG ĐỂ ÉP PHÒNG
+        // ----------------------------------------------------
 
         hotMaxRooms: 999,
-        normalMaxRooms: 2,
-        coldMaxRooms: 1,
+        normalMaxRooms: 999,
+        coldMaxRooms: 999,
 
-        // ====================================================
-        // SỐ SUẤT MỤC TIÊU / NGÀY
+        // ----------------------------------------------------
+        // GIỮ LẠI CÁC CONFIG CŨ ĐỂ TƯƠNG THÍCH
         //
-        // Đây là điểm thay đổi quan trọng.
-        //
-        // Không còn:
-        // 80% x số interval trong ngày
-        //
-        // Mà dùng target cố định.
-        // ====================================================
+        // Scheduler mới KHÔNG dùng số này để giới hạn
+        // số suất.
+        // ----------------------------------------------------
 
-        hotSlotsPerDay: 15,
-        normalSlotsPerDay: 9,
-        coldSlotsPerDay: 5,
+        hotSlotsPerDay: 999,
+        normalSlotsPerDay: 999,
+        coldSlotsPerDay: 999,
 
-        // ====================================================
-        // FALLBACK
-        // ====================================================
+        minSlotsPerDay: 0,
+        maxSlotsPerDay: 999,
 
-        minSlotsPerDay: 3,
-        maxSlotsPerDay: 30,
-
-        // ====================================================
+        // ----------------------------------------------------
         // HOT LEVEL
-        // ====================================================
+        // ----------------------------------------------------
 
         hotThreshold: 100,
         normalThreshold: 50
@@ -133,10 +131,14 @@ class ShowtimeScheduler {
 
         const value = String(date).trim();
 
-        const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        const match = value.match(
+            /^(\d{4})-(\d{2})-(\d{2})$/
+        );
 
         if (!match) {
-            throw new Error(`Ngày không hợp lệ: ${date}`);
+            throw new Error(
+                `Ngày không hợp lệ: ${date}`
+            );
         }
 
         const year = Number(match[1]);
@@ -144,7 +146,11 @@ class ShowtimeScheduler {
         const day = Number(match[3]);
 
         const result = new Date(
-            Date.UTC(year, month - 1, day)
+            Date.UTC(
+                year,
+                month - 1,
+                day
+            )
         );
 
         if (
@@ -152,7 +158,9 @@ class ShowtimeScheduler {
             result.getUTCMonth() !== month - 1 ||
             result.getUTCDate() !== day
         ) {
-            throw new Error(`Ngày không hợp lệ: ${date}`);
+            throw new Error(
+                `Ngày không hợp lệ: ${date}`
+            );
         }
 
         return result;
@@ -163,8 +171,12 @@ class ShowtimeScheduler {
 
         return (
             `${date.getUTCFullYear()}-` +
-            `${String(date.getUTCMonth() + 1).padStart(2, "0")}-` +
-            `${String(date.getUTCDate()).padStart(2, "0")}`
+            `${String(
+                date.getUTCMonth() + 1
+            ).padStart(2, "0")}-` +
+            `${String(
+                date.getUTCDate()
+            ).padStart(2, "0")}`
         );
     }
 
@@ -183,9 +195,13 @@ class ShowtimeScheduler {
 
     static isWeekend(date) {
 
-        const day = new Date(date).getUTCDay();
+        const day =
+            new Date(date).getUTCDay();
 
-        return day === 0 || day === 6;
+        return (
+            day === 0 ||
+            day === 6
+        );
     }
 
 
@@ -199,11 +215,31 @@ class ShowtimeScheduler {
             return 24 * 60;
         }
 
-        const [hour, minute] = String(time)
-            .split(":")
-            .map(Number);
+        const parts =
+            String(time)
+                .split(":")
+                .map(Number);
 
-        return hour * 60 + minute;
+        const hour = parts[0];
+        const minute = parts[1];
+
+        if (
+            !Number.isInteger(hour) ||
+            !Number.isInteger(minute) ||
+            hour < 0 ||
+            hour > 23 ||
+            minute < 0 ||
+            minute > 59
+        ) {
+            throw new Error(
+                `Giờ không hợp lệ: ${time}`
+            );
+        }
+
+        return (
+            hour * 60 +
+            minute
+        );
     }
 
 
@@ -213,9 +249,11 @@ class ShowtimeScheduler {
             return "24:00";
         }
 
-        const hour = Math.floor(totalMinutes / 60);
+        const hour =
+            Math.floor(totalMinutes / 60);
 
-        const minute = totalMinutes % 60;
+        const minute =
+            totalMinutes % 60;
 
         return (
             `${String(hour).padStart(2, "0")}:` +
@@ -226,7 +264,34 @@ class ShowtimeScheduler {
 
     static buildDateTime(date, minutes) {
 
-        return `${date} ${this.minutesToTime(minutes)}`;
+        /*
+         * Nếu vượt qua 24:00 thì chuyển sang ngày kế tiếp.
+         *
+         * Ví dụ:
+         * 24:00 => ngày hôm sau 00:00
+         */
+
+        if (minutes >= 24 * 60) {
+
+            const overflow =
+                minutes - 24 * 60;
+
+            const nextDate =
+                this.addDays(
+                    this.parseDate(date),
+                    1
+                );
+
+            return (
+                `${this.formatDate(nextDate)} ` +
+                `${this.minutesToTime(overflow)}`
+            );
+        }
+
+        return (
+            `${date} ` +
+            `${this.minutesToTime(minutes)}`
+        );
     }
 
 
@@ -234,17 +299,23 @@ class ShowtimeScheduler {
        TIME RANGE
     ======================================================== */
 
-    static getTimeRangeForDate(date, config) {
+    static getTimeRangeForDate(
+        date,
+        config
+    ) {
 
-        const isWeekend = this.isWeekend(date);
+        const isWeekend =
+            this.isWeekend(date);
 
-        const startTime = isWeekend
-            ? config.weekendStart
-            : config.weekdayStart;
+        const startTime =
+            isWeekend
+                ? config.weekendStart
+                : config.weekdayStart;
 
-        const endTime = isWeekend
-            ? config.weekendEnd
-            : config.weekdayEnd;
+        const endTime =
+            isWeekend
+                ? config.weekendEnd
+                : config.weekdayEnd;
 
         return {
 
@@ -253,10 +324,14 @@ class ShowtimeScheduler {
             endTime,
 
             startMinutes:
-                this.timeToMinutes(startTime),
+                this.timeToMinutes(
+                    startTime
+                ),
 
             endMinutes:
-                this.timeToMinutes(endTime),
+                this.timeToMinutes(
+                    endTime
+                ),
 
             isWeekend
         };
@@ -267,55 +342,88 @@ class ShowtimeScheduler {
        HOT LEVEL
     ======================================================== */
 
-    static getMovieHotLevel(movie, stats = {}) {
+    static getMovieHotLevel(
+        movie,
+        stats = {}
+    ) {
 
-        // ----------------------------------------------------
-        // Ưu tiên distribution do Admin chọn
-        // ----------------------------------------------------
+        /*
+         * Ưu tiên distribution do Admin truyền xuống.
+         */
 
         if (
             movie &&
             movie.distribution &&
-            ["hot", "normal", "cold"]
-                .includes(movie.distribution)
+            [
+                "hot",
+                "normal",
+                "cold"
+            ].includes(
+                String(
+                    movie.distribution
+                ).toLowerCase()
+            )
         ) {
-            return movie.distribution;
+
+            return String(
+                movie.distribution
+            ).toLowerCase();
         }
 
-        // ----------------------------------------------------
-        // Fallback tính từ statistics
-        // ----------------------------------------------------
 
-        const movieId = movie?.movie_id;
+        /*
+         * Nếu không có distribution,
+         * tự tính từ statistics.
+         */
+
+        const movieId =
+            movie?.movie_id;
+
+        const movieStats =
+            stats?.[movieId] || {};
 
         const ticketSold =
-            stats[movieId]?.ticketSold || 0;
+            Number(
+                movieStats.ticketSold || 0
+            );
 
         const viewCount =
-            stats[movieId]?.viewCount || 0;
+            Number(
+                movieStats.viewCount || 0
+            );
 
         const rating =
-            stats[movieId]?.rating || 0;
+            Number(
+                movieStats.rating || 0
+            );
 
         let hotScore = 0;
 
-        hotScore += ticketSold * 0.5;
+        hotScore +=
+            ticketSold * 0.5;
 
-        hotScore += viewCount * 0.3;
+        hotScore +=
+            viewCount * 0.3;
 
-        hotScore += rating * 10;
+        hotScore +=
+            rating * 10;
+
 
         if (
-            hotScore >= this.DEFAULT_CONFIG.hotThreshold
+            hotScore >=
+            this.DEFAULT_CONFIG.hotThreshold
         ) {
             return "hot";
         }
 
+
         if (
-            hotScore >= this.DEFAULT_CONFIG.normalThreshold
+            hotScore >=
+            this.DEFAULT_CONFIG.normalThreshold
         ) {
             return "normal";
         }
+
 
         return "cold";
     }
@@ -332,21 +440,32 @@ class ShowtimeScheduler {
     ) {
 
         const hotLevel =
-            this.getMovieHotLevel(movie, stats);
+            this.getMovieHotLevel(
+                movie,
+                stats
+            );
 
         switch (hotLevel) {
 
             case "hot":
-                return Number(config.hotInterval);
+                return Number(
+                    config.hotInterval
+                );
 
             case "normal":
-                return Number(config.normalInterval);
+                return Number(
+                    config.normalInterval
+                );
 
             case "cold":
-                return Number(config.coldInterval);
+                return Number(
+                    config.coldInterval
+                );
 
             default:
-                return Number(config.normalInterval);
+                return Number(
+                    config.normalInterval
+                );
         }
     }
 
@@ -362,39 +481,21 @@ class ShowtimeScheduler {
         config = this.DEFAULT_CONFIG
     ) {
 
-        const hotLevel =
-            this.getMovieHotLevel(movie, stats);
+        /*
+         * Scheduler mới KHÔNG giới hạn số phòng
+         * theo HOT / NORMAL / COLD.
+         *
+         * Room thực tế được quyết định bởi:
+         *
+         * roomTypes
+         *
+         * và room nào đang rảnh.
+         */
 
-        switch (hotLevel) {
-
-            case "hot":
-
-                return Math.min(
-                    totalRooms,
-                    Number(config.hotMaxRooms)
-                );
-
-            case "normal":
-
-                return Math.min(
-                    Math.max(
-                        1,
-                        Math.ceil(totalRooms / 2)
-                    ),
-                    Number(config.normalMaxRooms)
-                );
-
-            case "cold":
-
-                return Math.min(
-                    1,
-                    Number(config.coldMaxRooms)
-                );
-
-            default:
-
-                return 1;
-        }
+        return Math.max(
+            0,
+            Number(totalRooms) || 0
+        );
     }
 
 
@@ -407,84 +508,76 @@ class ShowtimeScheduler {
         config = this.DEFAULT_CONFIG
     ) {
 
-        const hotLevel =
-            this.getMovieHotLevel(movie);
+        /*
+         * Không còn target cố định:
+         *
+         * HOT    = 15
+         * NORMAL = 9
+         * COLD   = 5
+         *
+         * Scheduler chạy xuyên suốt khung giờ
+         * và tự dừng khi:
+         *
+         * start + duration > closing
+         */
 
-        let target;
-
-        switch (hotLevel) {
-
-            case "hot":
-                target =
-                    Number(config.hotSlotsPerDay);
-                break;
-
-            case "normal":
-                target =
-                    Number(config.normalSlotsPerDay);
-                break;
-
-            case "cold":
-                target =
-                    Number(config.coldSlotsPerDay);
-                break;
-
-            default:
-                target =
-                    Number(config.normalSlotsPerDay);
-        }
-
-        target = Math.max(
-            Number(config.minSlotsPerDay),
-            target
-        );
-
-        target = Math.min(
-            Number(config.maxSlotsPerDay),
-            target
-        );
-
-        return target;
+        return Infinity;
     }
 
 
     /* ========================================================
-       NORMALIZE EXISTING SHOWTIME
+       NORMALIZE SHOWTIME
     ======================================================== */
 
-    static normalizeShowtime(showtime) {
+    static normalizeShowtime(
+        showtime
+    ) {
 
         if (!showtime) {
             return null;
         }
 
         let date =
-            showtime.date ||
-            null;
+            showtime.date || null;
 
         let startMinutes =
-            Number(showtime.startMinutes);
+            Number(
+                showtime.startMinutes
+            );
 
         let duration =
-            Number(showtime.duration);
+            Number(
+                showtime.duration
+            );
 
-        // ----------------------------------------------------
-        // Nếu startMinutes chưa có thì lấy start_time
-        // ----------------------------------------------------
+
+        /*
+         * Nếu chưa có startMinutes,
+         * lấy từ start_time.
+         */
 
         if (
-            !Number.isFinite(startMinutes) &&
+            !Number.isFinite(
+                startMinutes
+            ) &&
             showtime.start_time
         ) {
 
             const raw =
-                String(showtime.start_time)
-                    .replace("T", " ");
+                String(
+                    showtime.start_time
+                ).replace(
+                    "T",
+                    " "
+                );
 
             const parts =
                 raw.split(" ");
 
-            if (!date && parts[0]) {
+            if (
+                !date &&
+                parts[0]
+            ) {
                 date = parts[0];
             }
 
@@ -497,19 +590,33 @@ class ShowtimeScheduler {
                 );
         }
 
-        // ----------------------------------------------------
-        // Nếu duration chưa có thì thử duration phim
-        // ----------------------------------------------------
 
-        if (!Number.isFinite(duration)) {
+        /*
+         * Nếu chưa có duration,
+         * lấy duration của phim.
+         */
+
+        if (
+            !Number.isFinite(
+                duration
+            )
+        ) {
 
             duration =
-                Number(showtime.movie_duration);
+                Number(
+                    showtime.movie_duration
+                );
         }
 
-        if (!Number.isFinite(duration)) {
+
+        if (
+            !Number.isFinite(
+                duration
+            )
+        ) {
             duration = 0;
         }
+
 
         return {
 
@@ -518,10 +625,14 @@ class ShowtimeScheduler {
             date,
 
             room_id:
-                Number(showtime.room_id),
+                Number(
+                    showtime.room_id
+                ),
 
             movie_id:
-                Number(showtime.movie_id),
+                Number(
+                    showtime.movie_id
+                ),
 
             startMinutes,
 
@@ -538,76 +649,95 @@ class ShowtimeScheduler {
         roomId,
         startMinutes,
         endMinutes,
-        existingShowtimes = []
+        existingShowtimes = [],
+        bufferMinutes = 15
     }) {
 
-        return existingShowtimes.some(existingRaw => {
+        return existingShowtimes.some(
+            existingRaw => {
 
-            const existing =
-                this.normalizeShowtime(
-                    existingRaw
+                const existing =
+                    this.normalizeShowtime(
+                        existingRaw
+                    );
+
+                if (!existing) {
+                    return false;
+                }
+
+
+                /*
+                 * Không cùng phòng
+                 * => không conflict.
+                 */
+
+                if (
+                    Number(
+                        existing.room_id
+                    ) !== Number(roomId)
+                ) {
+                    return false;
+                }
+
+
+                if (
+                    !Number.isFinite(
+                        existing.startMinutes
+                    )
+                ) {
+                    return false;
+                }
+
+
+                const existingStart =
+                    existing.startMinutes;
+
+                /*
+                 * Quan trọng:
+                 *
+                 * existingEnd = thời điểm phim kết thúc
+                 *
+                 * + buffer 15 phút
+                 *
+                 * để phòng không bị dùng lại quá sớm.
+                 */
+
+                const existingEnd =
+                    existingStart +
+                    existing.duration +
+                    Number(
+                        bufferMinutes || 0
+                    );
+
+
+                /*
+                 * Candidate bị conflict nếu
+                 * khoảng thời gian của nó giao
+                 * với khoảng thời gian phòng đang bận.
+                 */
+
+                return (
+                    startMinutes <
+                        existingEnd &&
+                    endMinutes >
+                        existingStart
                 );
-
-            if (!existing) {
-                return false;
             }
-
-            if (
-                Number(existing.room_id) !==
-                Number(roomId)
-            ) {
-                return false;
-            }
-
-            if (
-                !Number.isFinite(
-                    existing.startMinutes
-                )
-            ) {
-                return false;
-            }
-
-            const existingStart =
-                existing.startMinutes;
-
-            const existingEnd =
-                existingStart +
-                existing.duration;
-
-            return (
-                startMinutes < existingEnd &&
-                endMinutes > existingStart
-            );
-        });
+        );
     }
 
 
     /* ========================================================
        FIND AVAILABLE ROOM
-       
-       Quan trọng:
-       Không cố định roomIndex rồi skip.
-       
-       Mỗi candidate time sẽ thử TẤT CẢ allowed rooms.
-       
-       Nhờ vậy:
-       
-       08:00 P1
-       08:30 P2
-       09:00 P3
-       09:30 P4
-       
-       Nếu P2 bận lúc 08:30,
-       scheduler sẽ tìm P3/P4/P1 thay vì bỏ luôn
-       candidate 08:30.
     ======================================================== */
 
     static findAvailableRoom({
         rooms,
-        roomStartIndex,
+        roomStartIndex = 0,
         startMinutes,
         endMinutes,
-        existingShowtimes
+        existingShowtimes = [],
+        bufferMinutes = 15
     }) {
 
         if (
@@ -617,11 +747,19 @@ class ShowtimeScheduler {
             return null;
         }
 
-        const totalRooms = rooms.length;
 
-        // ----------------------------------------------------
-        // Thử từ roomStartIndex để phân bổ round-robin
-        // ----------------------------------------------------
+        const totalRooms =
+            rooms.length;
+
+
+        /*
+         * Round-robin:
+         *
+         * Không cố định room đầu tiên.
+         *
+         * Mỗi lần tạo suất sẽ ưu tiên
+         * phòng kế tiếp.
+         */
 
         for (
             let offset = 0;
@@ -630,21 +768,29 @@ class ShowtimeScheduler {
         ) {
 
             const index =
-                (roomStartIndex + offset) %
-                totalRooms;
+                (
+                    roomStartIndex +
+                    offset
+                ) % totalRooms;
 
             const room =
                 rooms[index];
 
             const roomId =
-                Number(room.room_id);
+                Number(
+                    room.room_id
+                );
+
 
             if (
-                !Number.isInteger(roomId) ||
+                !Number.isInteger(
+                    roomId
+                ) ||
                 roomId <= 0
             ) {
                 continue;
             }
+
 
             const conflict =
                 this.hasRoomConflict({
@@ -655,8 +801,11 @@ class ShowtimeScheduler {
 
                     endMinutes,
 
-                    existingShowtimes
+                    existingShowtimes,
+
+                    bufferMinutes
                 });
+
 
             if (!conflict) {
 
@@ -669,21 +818,108 @@ class ShowtimeScheduler {
             }
         }
 
+
         return null;
     }
 
 
     /* ========================================================
-       GENERATE SLOTS FOR ONE MOVIE / ONE DAY
+       FILTER ROOMS BY TYPE
+    ======================================================== */
+
+    static filterRoomsByType(
+        rooms,
+        roomTypes = []
+    ) {
+
+        if (
+            !Array.isArray(rooms)
+        ) {
+            return [];
+        }
+
+
+        /*
+         * Không truyền roomTypes
+         * => cho phép toàn bộ phòng.
+         */
+
+        if (
+            !Array.isArray(
+                roomTypes
+            ) ||
+            roomTypes.length === 0
+        ) {
+
+            return rooms.filter(
+                room =>
+                    Number.isInteger(
+                        Number(
+                            room.room_id
+                        )
+                    )
+            );
+        }
+
+
+        const normalizedTypes =
+            roomTypes
+                .map(type =>
+                    String(type)
+                        .trim()
+                        .toUpperCase()
+                )
+                .filter(Boolean);
+
+
+        return rooms.filter(
+            room => {
+
+                const roomType =
+                    String(
+                        room.room_type ||
+                        ""
+                    )
+                    .trim()
+                    .toUpperCase();
+
+                return (
+                    normalizedTypes.includes(
+                        roomType
+                    ) &&
+                    Number.isInteger(
+                        Number(
+                            room.room_id
+                        )
+                    )
+                );
+            }
+        );
+    }
+
+
+    /* ========================================================
+       GENERATE SLOTS
+       ONE MOVIE / ONE DAY
     ======================================================== */
 
     static generateSlotsForMovie({
+
         date,
+
         movie,
+
         rooms,
+
+        roomTypes = [],
+
         existingShowtimes = [],
+
         scheduledSlots = [],
-        config = {}
+
+        config = {},
+
+        movieStats = {}
     }) {
 
         const mergedConfig = {
@@ -693,36 +929,116 @@ class ShowtimeScheduler {
             ...config
         };
 
+
+        /*
+         * Time range
+         */
+
         const timeRange =
             this.getTimeRangeForDate(
                 date,
                 mergedConfig
             );
 
+
+        /*
+         * Duration
+         */
+
         const duration =
-            Number(movie.duration);
+            Number(
+                movie.duration
+            );
+
+
+        if (
+            !Number.isFinite(
+                duration
+            ) ||
+            duration <= 0
+        ) {
+
+            console.warn(
+                `⚠️ ${movie.title}: ` +
+                `duration không hợp lệ`
+            );
+
+            return [];
+        }
+
+
+        /*
+         * Buffer
+         */
 
         const buffer =
-            Number(mergedConfig.bufferMinutes);
+            Number(
+                mergedConfig.bufferMinutes
+            ) || 0;
+
+
+        /*
+         * Interval
+         */
 
         const interval =
             this.getInterval(
                 movie,
-                {},
+                movieStats,
                 mergedConfig
             );
 
-        const targetSlots =
-            this.getTargetSlotsPerDay(
-                movie,
-                mergedConfig
+
+        if (
+            !Number.isFinite(
+                interval
+            ) ||
+            interval <= 0
+        ) {
+
+            console.warn(
+                `⚠️ ${movie.title}: ` +
+                `interval không hợp lệ`
             );
 
-        const slots = [];
+            return [];
+        }
 
-        // ----------------------------------------------------
-        // Gộp lịch DB + lịch vừa generate
-        // ----------------------------------------------------
+
+        /*
+         * ====================================================
+         * FILTER ROOM THEO ROOM TYPE
+         * ====================================================
+         */
+
+        const allowedRooms =
+            this.filterRoomsByType(
+                rooms,
+                roomTypes
+            );
+
+
+        if (
+            allowedRooms.length === 0
+        ) {
+
+            console.warn(
+                `⚠️ ${movie.title}: ` +
+                `không có phòng phù hợp ` +
+                `roomTypes=${JSON.stringify(
+                    roomTypes
+                )}`
+            );
+
+            return [];
+        }
+
+
+        /*
+         * ====================================================
+         * GỘP LỊCH DB + LỊCH VỪA GENERATE
+         * ====================================================
+         */
 
         const allExisting = [
 
@@ -731,113 +1047,72 @@ class ShowtimeScheduler {
             ...scheduledSlots
 
         ]
-
             .map(item =>
-                this.normalizeShowtime(item)
+                this.normalizeShowtime(
+                    item
+                )
             )
+            .filter(Boolean);
 
-            .filter(Boolean)
 
-            .filter(item =>
-                item.date === date
+        /*
+         * ====================================================
+         * CHỈ LẤY LỊCH TRONG NGÀY ĐANG XỬ LÝ
+         * ====================================================
+         */
+
+        const existingToday =
+            allExisting.filter(
+                item =>
+                    item.date === date
             );
 
-        // ----------------------------------------------------
-        // Số suất phim đã tồn tại
-        // ----------------------------------------------------
+
+        /*
+         * ====================================================
+         * PHIM ĐÃ CÓ BAO NHIÊU SUẤT
+         * ====================================================
+         */
 
         const movieSlotsToday =
-            allExisting.filter(item =>
-                Number(item.movie_id) ===
-                Number(movie.movie_id)
+            existingToday.filter(
+                item =>
+                    Number(
+                        item.movie_id
+                    ) ===
+                    Number(
+                        movie.movie_id
+                    )
             ).length;
 
-        // ----------------------------------------------------
-        // Đã đủ suất thì không tạo nữa
-        // ----------------------------------------------------
 
-        if (
-            movieSlotsToday >=
-            targetSlots
-        ) {
-
-            console.log(
-                `ℹ️ ${movie.title} - ${date}: ` +
-                `đã đủ ${movieSlotsToday}/${targetSlots} suất`
-            );
-
-            return slots;
-        }
-
-        // ----------------------------------------------------
-        // Lấy số phòng
-        // ----------------------------------------------------
-
-        const maxRooms =
-            this.getMaxRoomsForMovie(
-                movie,
-                {},
-                rooms.length,
-                mergedConfig
-            );
-
-        const allowedRooms =
-            rooms
-                .slice(0, maxRooms)
-                .filter(room =>
-                    Number.isInteger(
-                        Number(room.room_id)
-                    )
-                );
-
-        if (allowedRooms.length === 0) {
-
-            console.warn(
-                `⚠️ ${movie.title}: ` +
-                `không có phòng hợp lệ`
-            );
-
-            return slots;
-        }
-
-        // ----------------------------------------------------
-        // Số suất cần tạo
-        // ----------------------------------------------------
-
-        const remainingSlots =
-            targetSlots -
-            movieSlotsToday;
-
-        // ----------------------------------------------------
-        // Bắt đầu từ giờ mở cửa
-        //
-        // Không lấy "lastSlot + duration + buffer"
-        // như logic cũ.
-        //
-        // Vì HOT phải tạo chuỗi giờ:
-        //
-        // 08:00
-        // 08:30
-        // 09:00
-        // 09:30
-        //
-        // trên toàn rạp.
-        // ----------------------------------------------------
+        /*
+         * ====================================================
+         * BẮT ĐẦU TỪ GIỜ MỞ CỬA
+         * ====================================================
+         */
 
         let currentTime =
             timeRange.startMinutes;
 
-        let createdSlots = 0;
 
-        // ----------------------------------------------------
-        // Round-robin room
-        // ----------------------------------------------------
+        const slots = [];
+
+
+        /*
+         * ====================================================
+         * ROUND ROBIN ROOM
+         * ====================================================
+         */
 
         let roomStartIndex = 0;
 
-        // ----------------------------------------------------
-        // Guard chống loop vô hạn
-        // ----------------------------------------------------
+
+        /*
+         * ====================================================
+         * SAFETY GUARD
+         * ====================================================
+         */
 
         let safetyCounter = 0;
 
@@ -846,21 +1121,47 @@ class ShowtimeScheduler {
                 (
                     timeRange.endMinutes -
                     timeRange.startMinutes
-                ) / Math.max(interval, 1)
-            ) + 10;
+                ) /
+                Math.max(
+                    interval,
+                    1
+                )
+            ) + 20;
 
-        // ----------------------------------------------------
-        // GENERATE
-        // ----------------------------------------------------
+
+        /*
+         * ====================================================
+         * GENERATE
+         * ====================================================
+         *
+         * Ví dụ HOT:
+         *
+         * 08:00
+         * 08:45
+         * 09:30
+         * 10:15
+         * 11:00
+         * ...
+         *
+         * Nếu 08:45 phòng đang bận:
+         *
+         * 08:45 vẫn được thử.
+         *
+         * Scheduler tìm phòng khác.
+         *
+         * Nếu toàn bộ phòng đều bận:
+         *
+         * bỏ candidate 08:45
+         * và chuyển sang 09:30.
+         *
+         * ====================================================
+         */
 
         while (
 
             currentTime +
                 duration <=
                 timeRange.endMinutes &&
-
-            createdSlots <
-                remainingSlots &&
 
             safetyCounter <
                 maxIterations
@@ -869,18 +1170,23 @@ class ShowtimeScheduler {
 
             safetyCounter++;
 
+
             const endMinutes =
                 currentTime +
                 duration;
 
-            // ------------------------------------------------
-            // Tìm phòng còn trống
-            // ------------------------------------------------
+
+            /*
+             * =================================================
+             * TÌM PHÒNG TRỐNG
+             * =================================================
+             */
 
             const availableRoom =
                 this.findAvailableRoom({
 
-                    rooms: allowedRooms,
+                    rooms:
+                        allowedRooms,
 
                     roomStartIndex,
 
@@ -890,30 +1196,51 @@ class ShowtimeScheduler {
                     endMinutes,
 
                     existingShowtimes:
-                        allExisting
+                        allExisting,
+
+                    bufferMinutes:
+                        buffer
                 });
 
-            // ------------------------------------------------
-            // Có phòng
-            // ------------------------------------------------
 
-            if (availableRoom) {
+            /*
+             * =================================================
+             * NẾU CÓ PHÒNG
+             * =================================================
+             */
+
+            if (
+                availableRoom
+            ) {
 
                 const room =
                     availableRoom.room;
 
                 const roomId =
-                    Number(room.room_id);
+                    Number(
+                        room.room_id
+                    );
+
 
                 const slot = {
 
                     room_id:
                         roomId,
 
+                    room_name:
+                        room.room_name ||
+                        null,
+
+                    room_type:
+                        room.room_type ||
+                        null,
+
                     date,
 
                     movie_id:
-                        Number(movie.movie_id),
+                        Number(
+                            movie.movie_id
+                        ),
 
                     start_time:
                         this.buildDateTime(
@@ -939,21 +1266,39 @@ class ShowtimeScheduler {
 
                     hotLevel:
                         this.getMovieHotLevel(
-                            movie
+                            movie,
+                            movieStats
                         )
                 };
 
-                slots.push(slot);
 
-                allExisting.push(
-                    this.normalizeShowtime(slot)
+                /*
+                 * Thêm vào danh sách kết quả.
+                 */
+
+                slots.push(
+                    slot
                 );
 
-                createdSlots++;
 
-                // ------------------------------------------------
-                // Slot tiếp theo ưu tiên room kế tiếp
-                // ------------------------------------------------
+                /*
+                 * Thêm vào allExisting
+                 * để các candidate tiếp theo
+                 * biết phòng này đã được sử dụng.
+                 */
+
+                allExisting.push(
+                    this.normalizeShowtime(
+                        slot
+                    )
+                );
+
+
+                /*
+                 * =================================================
+                 * ROUND ROBIN
+                 * =================================================
+                 */
 
                 roomStartIndex =
                     (
@@ -962,41 +1307,63 @@ class ShowtimeScheduler {
                     ) %
                     allowedRooms.length;
 
+
                 console.log(
-                    `🎬 [${slot.hotLevel?.toUpperCase()}] ` +
+                    `🎬 [` +
+                    `${slot.hotLevel?.toUpperCase()}` +
+                    `] ` +
                     `${movie.title} | ` +
-                    `${slot.start_time} | ` +
-                    `P${roomId}`
+                    `${slot.start_time} → ` +
+                    `${slot.end_time} | ` +
+                    `${room.room_name || `P${roomId}`} ` +
+                    `(${room.room_type || "N/A"})`
                 );
             }
 
-            // ------------------------------------------------
-            // DÙ CÓ HAY KHÔNG CÓ PHÒNG
-            //
-            // candidate time vẫn tăng interval.
-            //
-            // Đây chính là:
-            //
-            // HOT     = 30 phút
-            // NORMAL  = 45 phút
-            // COLD    = 60 phút
-            // ------------------------------------------------
 
-            currentTime += interval;
+            /*
+             * =================================================
+             * CANDIDATE TIME TIẾP THEO
+             * =================================================
+             *
+             * Dù có phòng hay không,
+             * candidate time vẫn tăng interval.
+             */
+
+            currentTime +=
+                interval;
         }
 
-        // ----------------------------------------------------
-        // Log
-        // ----------------------------------------------------
+
+        /*
+         * ====================================================
+         * LOG
+         * ====================================================
+         */
 
         console.log(
+
             `📊 ${movie.title} - ${date}: ` +
-            `target=${targetSlots}, ` +
+
             `existing=${movieSlotsToday}, ` +
+
             `created=${slots.length}, ` +
+
             `interval=${interval}m, ` +
-            `rooms=${allowedRooms.length}`
+
+            `duration=${duration}m, ` +
+
+            `buffer=${buffer}m, ` +
+
+            `rooms=${allowedRooms.length}, ` +
+
+            `roomTypes=${
+                roomTypes.length
+                    ? roomTypes.join(", ")
+                    : "ALL"
+            }`
         );
+
 
         return slots;
     }
@@ -1020,53 +1387,72 @@ class ShowtimeScheduler {
 
         movieStats = {},
 
-        existingShowtimes = []
+        existingShowtimes = [],
 
+        roomTypes = []
     }) {
 
-        // ====================================================
-        // VALIDATE
-        // ====================================================
+        /* ====================================================
+           VALIDATE
+        ==================================================== */
 
         if (
-            !movies ||
+            !Array.isArray(movies) ||
             movies.length === 0
         ) {
+
             throw new Error(
                 "Phải có ít nhất một phim."
             );
         }
 
+
         if (
-            !rooms ||
+            !Array.isArray(rooms) ||
             rooms.length === 0
         ) {
+
             throw new Error(
                 "Phải có ít nhất một phòng."
             );
         }
 
-        if (!startDate || !endDate) {
+
+        if (
+            !startDate ||
+            !endDate
+        ) {
+
             throw new Error(
                 "Thiếu ngày."
             );
         }
 
+
         const fromDate =
-            this.parseDate(startDate);
+            this.parseDate(
+                startDate
+            );
 
         const toDate =
-            this.parseDate(endDate);
+            this.parseDate(
+                endDate
+            );
 
-        if (fromDate > toDate) {
+
+        if (
+            fromDate > toDate
+        ) {
+
             throw new Error(
                 "Ngày bắt đầu phải <= ngày kết thúc."
             );
         }
 
-        // ====================================================
-        // MERGE CONFIG
-        // ====================================================
+
+        /* ====================================================
+           MERGE CONFIG
+        ==================================================== */
 
         const mergedConfig = {
 
@@ -1075,84 +1461,185 @@ class ShowtimeScheduler {
             ...config
         };
 
-        // ====================================================
-        // NORMALIZE MOVIES
-        // ====================================================
+
+        /*
+         * Ép đúng interval mới.
+         *
+         * Nếu Service gửi config cũ,
+         * scheduler vẫn ưu tiên logic mới.
+         */
+
+        mergedConfig.hotInterval =
+            45;
+
+        mergedConfig.normalInterval =
+            75;
+
+        mergedConfig.coldInterval =
+            120;
+
+        mergedConfig.bufferMinutes =
+            Number(
+                mergedConfig.bufferMinutes
+            ) || 15;
+
+
+        /* ====================================================
+           NORMALIZE MOVIES
+        ==================================================== */
 
         const normalizedMovies =
-            movies.map(movie => {
+            movies.map(
+                movie => {
 
-                const normalized = {
-                    ...movie
-                };
+                    const normalized = {
+                        ...movie
+                    };
 
-                normalized.movie_id =
-                    Number(normalized.movie_id);
 
-                normalized.duration =
-                    Number.parseInt(
-                        normalized.duration,
-                        10
-                    );
+                    normalized.movie_id =
+                        Number(
+                            normalized.movie_id
+                        );
 
-                if (
-                    !Number.isInteger(
-                        normalized.movie_id
-                    ) ||
-                    normalized.movie_id <= 0
-                ) {
-                    throw new Error(
-                        `ID phim không hợp lệ: ${movie.movie_id}`
-                    );
+
+                    normalized.duration =
+                        Number.parseInt(
+                            normalized.duration,
+                            10
+                        );
+
+
+                    if (
+                        !Number.isInteger(
+                            normalized.movie_id
+                        ) ||
+                        normalized.movie_id <= 0
+                    ) {
+
+                        throw new Error(
+                            `ID phim không hợp lệ: ` +
+                            `${movie.movie_id}`
+                        );
+                    }
+
+
+                    if (
+                        !Number.isFinite(
+                            normalized.duration
+                        ) ||
+                        normalized.duration <= 0
+                    ) {
+
+                        throw new Error(
+                            `Thời lượng phim ` +
+                            `"${movie.title}" ` +
+                            `không hợp lệ.`
+                        );
+                    }
+
+
+                    return normalized;
                 }
+            );
 
-                if (
-                    !Number.isFinite(
-                        normalized.duration
-                    ) ||
-                    normalized.duration <= 0
-                ) {
-                    throw new Error(
-                        `Thời lượng phim "${movie.title}" không hợp lệ.`
-                    );
-                }
 
-                return normalized;
-            });
-
-        // ====================================================
-        // NORMALIZE ROOMS
-        // ====================================================
+        /* ====================================================
+           NORMALIZE ROOMS
+        ==================================================== */
 
         const normalizedRooms =
-            rooms.map(room => {
+            rooms.map(
+                room => {
 
-                const normalized = {
-                    ...room
-                };
+                    const normalized = {
+                        ...room
+                    };
 
-                normalized.room_id =
-                    Number(normalized.room_id);
 
-                if (
-                    !Number.isInteger(
-                        normalized.room_id
-                    ) ||
-                    normalized.room_id <= 0
-                ) {
-                    throw new Error(
-                        `ID phòng không hợp lệ: ${room.room_id}`
-                    );
+                    normalized.room_id =
+                        Number(
+                            normalized.room_id
+                        );
+
+
+                    if (
+                        !Number.isInteger(
+                            normalized.room_id
+                        ) ||
+                        normalized.room_id <= 0
+                    ) {
+
+                        throw new Error(
+                            `ID phòng không hợp lệ: ` +
+                            `${room.room_id}`
+                        );
+                    }
+
+
+                    normalized.room_type =
+                        normalized.room_type
+                            ? String(
+                                normalized.room_type
+                            )
+                                .trim()
+                                .toUpperCase()
+                            : null;
+
+
+                    return normalized;
                 }
+            );
 
-                return normalized;
-            });
 
-        // ====================================================
-        // SORT MOVIES BY HOT LEVEL
-        //
-        // HOT trước để được ưu tiên phòng/khung giờ.
-        // ====================================================
+        /* ====================================================
+           NORMALIZE ROOM TYPES
+        ==================================================== */
+
+        const normalizedRoomTypes =
+            Array.isArray(roomTypes)
+                ? roomTypes
+                    .map(type =>
+                        String(type)
+                            .trim()
+                            .toUpperCase()
+                    )
+                    .filter(Boolean)
+                : [];
+
+
+        /*
+         * Nếu admin truyền roomTypes,
+         * kiểm tra có ít nhất một phòng phù hợp.
+         */
+
+        if (
+            normalizedRoomTypes.length > 0
+        ) {
+
+            const eligibleRooms =
+                this.filterRoomsByType(
+                    normalizedRooms,
+                    normalizedRoomTypes
+                );
+
+
+            if (
+                eligibleRooms.length === 0
+            ) {
+
+                throw new Error(
+                    `Không có phòng thuộc ` +
+                    `loại: ` +
+                    `${normalizedRoomTypes.join(", ")}`
+                );
+            }
+        }
+
+
+        /* ====================================================
+           SORT MOVIES BY HOT LEVEL
+        ==================================================== */
 
         const priority = {
 
@@ -1163,37 +1650,45 @@ class ShowtimeScheduler {
             cold: 1
         };
 
+
         const sortedMovies =
-            [...normalizedMovies].sort(
-                (a, b) => {
+            [...normalizedMovies]
+                .sort(
+                    (a, b) => {
 
-                    const hotA =
-                        this.getMovieHotLevel(
-                            a,
-                            movieStats
+                        const hotA =
+                            this.getMovieHotLevel(
+                                a,
+                                movieStats
+                            );
+
+                        const hotB =
+                            this.getMovieHotLevel(
+                                b,
+                                movieStats
+                            );
+
+
+                        return (
+                            priority[hotB] -
+                            priority[hotA]
                         );
+                    }
+                );
 
-                    const hotB =
-                        this.getMovieHotLevel(
-                            b,
-                            movieStats
-                        );
 
-                    return (
-                        priority[hotB] -
-                        priority[hotA]
-                    );
-                }
-            );
-
-        // ====================================================
-        // DATE LIST
-        // ====================================================
+        /* ====================================================
+           DATE LIST
+        ==================================================== */
 
         const dateList = [];
 
+
         let currentDate =
-            this.parseDate(startDate);
+            this.parseDate(
+                startDate
+            );
+
 
         while (
             currentDate <= toDate
@@ -1205,6 +1700,7 @@ class ShowtimeScheduler {
                 )
             );
 
+
             currentDate =
                 this.addDays(
                     currentDate,
@@ -1212,21 +1708,25 @@ class ShowtimeScheduler {
                 );
         }
 
-        // ====================================================
-        // GENERATE
-        // ====================================================
+
+        /* ====================================================
+           GENERATE
+        ==================================================== */
 
         const allResults = [];
+
 
         for (
             const date of dateList
         ) {
 
-            // ------------------------------------------------
-            // Lịch vừa tạo trong ngày
-            // ------------------------------------------------
+            /*
+             * Những slot vừa được scheduler
+             * tạo trong ngày này.
+             */
 
             const scheduledSlots = [];
+
 
             for (
                 const movie of sortedMovies
@@ -1242,60 +1742,77 @@ class ShowtimeScheduler {
                         rooms:
                             normalizedRooms,
 
+                        roomTypes:
+                            normalizedRoomTypes,
+
                         existingShowtimes,
 
                         scheduledSlots,
 
                         config:
-                            mergedConfig
+                            mergedConfig,
+
+                        movieStats
                     });
+
 
                 for (
                     const slot of slots
                 ) {
 
-                    allResults.push(slot);
+                    allResults.push(
+                        slot
+                    );
 
-                    scheduledSlots.push(slot);
+                    scheduledSlots.push(
+                        slot
+                    );
                 }
             }
         }
 
-        // ====================================================
-        // SORT RESULT
-        // ====================================================
+
+        /* ====================================================
+           SORT RESULT
+        ==================================================== */
 
         allResults.sort(
             (a, b) => {
 
                 if (
-                    a.date !== b.date
+                    a.date !==
+                    b.date
                 ) {
+
                     return a.date.localeCompare(
                         b.date
                     );
                 }
 
+
                 if (
                     a.startMinutes !==
                     b.startMinutes
                 ) {
+
                     return (
                         a.startMinutes -
                         b.startMinutes
                     );
                 }
 
+
                 return (
-                    a.room_id -
-                    b.room_id
+                    Number(a.room_id) -
+                    Number(b.room_id)
                 );
             }
         );
 
-        // ====================================================
-        // STATS
-        // ====================================================
+
+        /* ====================================================
+           STATS
+        ==================================================== */
 
         const stats = {
 
@@ -1304,6 +1821,12 @@ class ShowtimeScheduler {
 
             totalRooms:
                 normalizedRooms.length,
+
+            eligibleRooms:
+                this.filterRoomsByType(
+                    normalizedRooms,
+                    normalizedRoomTypes
+                ).length,
 
             totalDays:
                 dateList.length,
@@ -1357,9 +1880,10 @@ class ShowtimeScheduler {
             }
         };
 
-        // ====================================================
-        // BY MOVIE
-        // ====================================================
+
+        /* ====================================================
+           BY MOVIE
+        ==================================================== */
 
         for (
             const movie of normalizedMovies
@@ -1368,15 +1892,21 @@ class ShowtimeScheduler {
             const count =
                 allResults.filter(
                     slot =>
-                        Number(slot.movie_id) ===
-                        Number(movie.movie_id)
+                        Number(
+                            slot.movie_id
+                        ) ===
+                        Number(
+                            movie.movie_id
+                        )
                 ).length;
+
 
             const hotLevel =
                 this.getMovieHotLevel(
                     movie,
                     movieStats
                 );
+
 
             stats.byMovie[
                 movie.movie_id
@@ -1390,15 +1920,19 @@ class ShowtimeScheduler {
                 hotLevel,
 
                 avgPerDay:
-                    (
-                        count /
-                        dateList.length
-                    ).toFixed(1)
+                    dateList.length > 0
+                        ? (
+                            count /
+                            dateList.length
+                        ).toFixed(1)
+                        : "0.0"
             };
+
 
             stats.byHotLevel[
                 hotLevel
             ].count += count;
+
 
             stats.byHotLevel[
                 hotLevel
@@ -1406,14 +1940,16 @@ class ShowtimeScheduler {
                 movie.title
             );
 
+
             stats.summary[
                 hotLevel
             ].totalSlots += count;
         }
 
-        // ====================================================
-        // BY ROOM
-        // ====================================================
+
+        /* ====================================================
+           BY ROOM
+        ==================================================== */
 
         for (
             const room of normalizedRooms
@@ -1422,9 +1958,14 @@ class ShowtimeScheduler {
             const count =
                 allResults.filter(
                     slot =>
-                        Number(slot.room_id) ===
-                        Number(room.room_id)
+                        Number(
+                            slot.room_id
+                        ) ===
+                        Number(
+                            room.room_id
+                        )
                 ).length;
+
 
             stats.byRoom[
                 room.room_id
@@ -1434,34 +1975,44 @@ class ShowtimeScheduler {
                     room.room_name ||
                     `Phòng ${room.room_id}`,
 
+                roomType:
+                    room.room_type ||
+                    null,
+
                 count,
 
                 avgPerDay:
-                    (
-                        count /
-                        dateList.length
-                    ).toFixed(1)
+                    dateList.length > 0
+                        ? (
+                            count /
+                            dateList.length
+                        ).toFixed(1)
+                        : "0.0"
             };
         }
 
-        // ====================================================
-        // BY DATE
-        // ====================================================
+
+        /* ====================================================
+           BY DATE
+        ==================================================== */
 
         for (
             const date of dateList
         ) {
 
-            stats.byDate[date] =
+            stats.byDate[
+                date
+            ] =
                 allResults.filter(
                     slot =>
                         slot.date === date
                 ).length;
         }
 
-        // ====================================================
-        // SUMMARY
-        // ====================================================
+
+        /* ====================================================
+           SUMMARY
+        ==================================================== */
 
         for (
             const level of [
@@ -1480,6 +2031,7 @@ class ShowtimeScheduler {
                         ) === level
                 ).length;
 
+
             stats.summary[
                 level
             ].avgPerMovie =
@@ -1490,7 +2042,8 @@ class ShowtimeScheduler {
                         ].totalSlots /
                         movieCount
                     ).toFixed(1)
-                    : 0;
+                    : "0.0";
+
 
             stats.summary[
                 level
@@ -1502,12 +2055,13 @@ class ShowtimeScheduler {
                         ].totalSlots /
                         dateList.length
                     ).toFixed(1)
-                    : 0;
+                    : "0.0";
         }
 
-        // ====================================================
-        // DISTRIBUTION INFO
-        // ====================================================
+
+        /* ====================================================
+           DISTRIBUTION INFO
+        ==================================================== */
 
         const hotMovies =
             normalizedMovies.filter(
@@ -1518,6 +2072,7 @@ class ShowtimeScheduler {
                     ) === "hot"
             );
 
+
         const normalMovies =
             normalizedMovies.filter(
                 movie =>
@@ -1526,6 +2081,7 @@ class ShowtimeScheduler {
                         movieStats
                     ) === "normal"
             );
+
 
         const coldMovies =
             normalizedMovies.filter(
@@ -1536,9 +2092,17 @@ class ShowtimeScheduler {
                     ) === "cold"
             );
 
-        // ====================================================
-        // RETURN
-        // ====================================================
+
+        const eligibleRoomCount =
+            this.filterRoomsByType(
+                normalizedRooms,
+                normalizedRoomTypes
+            ).length;
+
+
+        /* ====================================================
+           RETURN
+        ==================================================== */
 
         return {
 
@@ -1549,6 +2113,11 @@ class ShowtimeScheduler {
 
             config:
                 mergedConfig,
+
+            roomTypes:
+                normalizedRoomTypes,
+
+            eligibleRoomCount,
 
             dateRange: {
 
@@ -1573,15 +2142,24 @@ class ShowtimeScheduler {
                     interval:
                         mergedConfig.hotInterval,
 
+                    /*
+                     * Không còn giới hạn phòng.
+                     */
+
                     maxRooms:
-                        Math.min(
-                            normalizedRooms.length,
-                            mergedConfig.hotMaxRooms
-                        ),
+                        eligibleRoomCount,
+
+                    /*
+                     * Không còn target cố định.
+                     */
 
                     targetSlotsPerDay:
-                        mergedConfig.hotSlotsPerDay
+                        null,
+
+                    scheduling:
+                        "FULL_OPERATING_HOURS"
                 },
+
 
                 normal: {
 
@@ -1595,20 +2173,15 @@ class ShowtimeScheduler {
                         mergedConfig.normalInterval,
 
                     maxRooms:
-                        Math.min(
-                            mergedConfig.normalMaxRooms,
-                            Math.max(
-                                1,
-                                Math.ceil(
-                                    normalizedRooms.length /
-                                    2
-                                )
-                            )
-                        ),
+                        eligibleRoomCount,
 
                     targetSlotsPerDay:
-                        mergedConfig.normalSlotsPerDay
+                        null,
+
+                    scheduling:
+                        "FULL_OPERATING_HOURS"
                 },
+
 
                 cold: {
 
@@ -1622,10 +2195,13 @@ class ShowtimeScheduler {
                         mergedConfig.coldInterval,
 
                     maxRooms:
-                        1,
+                        eligibleRoomCount,
 
                     targetSlotsPerDay:
-                        mergedConfig.coldSlotsPerDay
+                        null,
+
+                    scheduling:
+                        "FULL_OPERATING_HOURS"
                 }
             }
         };
@@ -1633,4 +2209,9 @@ class ShowtimeScheduler {
 }
 
 
-module.exports = ShowtimeScheduler;
+/* ============================================================
+   EXPORT
+============================================================ */
+
+module.exports =
+    ShowtimeScheduler;

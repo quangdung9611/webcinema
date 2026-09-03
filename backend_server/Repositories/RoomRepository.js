@@ -39,7 +39,7 @@ class RoomRepository {
         `;
 
         const [rows] = await db.query(sql, queryParams);
-        return rows; // 👈 TRẢ VỀ THẲNG rows[], không bọc object
+        return rows;
     }
 
     /*=========================================================
