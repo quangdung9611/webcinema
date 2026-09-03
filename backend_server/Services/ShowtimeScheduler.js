@@ -8,17 +8,17 @@
  * 1. PHIM HOT:
  *    - Tần suất: 30 phút/suất
  *    - Số phòng: Tất cả phòng
- *    - Số suất/ngày: Tối đa
+ *    - Số suất/ngày: 70-80% khung giờ
  * 
  * 2. PHIM NORMAL:
  *    - Tần suất: 45 phút/suất
- *    - Số phòng: 50% số phòng (tối thiểu 1)
- *    - Số suất/ngày: Vừa phải (khoảng 8-12 suất)
+ *    - Số phòng: 50% số phòng
+ *    - Số suất/ngày: 50-60% khung giờ
  * 
  * 3. PHIM COLD:
  *    - Tần suất: 60 phút/suất
  *    - Số phòng: 1 phòng duy nhất
- *    - Số suất/ngày: Ít (khoảng 4-6 suất)
+ *    - Số suất/ngày: 30-40% khung giờ
  *
  * ============================================================
  */
@@ -51,7 +51,7 @@ class ShowtimeScheduler {
 
         // Số suất tối thiểu/tối đa mỗi ngày
         minSlotsPerDay: 3,
-        maxSlotsPerDay: 20,
+        maxSlotsPerDay: 30,
 
         // Ngưỡng xác định độ hot
         hotThreshold: 100,
@@ -151,6 +151,12 @@ class ShowtimeScheduler {
     ======================================================== */
 
     static getMovieHotLevel(movie, stats = {}) {
+        // Nếu có stats từ Admin (hot/normal/cold) thì dùng
+        if (movie.distribution) {
+            return movie.distribution;
+        }
+        
+        // Fallback: nếu không có distribution, tính từ stats
         const ticketSold = stats[movie.movie_id]?.ticketSold || 0;
         const viewCount = stats[movie.movie_id]?.viewCount || 0;
         const rating = stats[movie.movie_id]?.rating || 0;
@@ -209,6 +215,7 @@ class ShowtimeScheduler {
 
     /* ========================================================
         TÍNH SỐ SUẤT HỢP LÝ CHO 1 PHIM TRONG 1 NGÀY
+        ✅ FIX: Tính dựa trên INTERVAL (khoảng cách giữa các suất)
     ======================================================== */
 
     static calculateOptimalSlotsPerDay(date, movie, config) {
@@ -218,27 +225,36 @@ class ShowtimeScheduler {
         const buffer = config.bufferMinutes;
 
         const availableMinutes = timeRange.endMinutes - timeRange.startMinutes;
-        const slotDuration = duration + buffer;
-        const maxSlots = Math.floor(availableMinutes / slotDuration);
+        
+        // ✅ Sử dụng interval (khoảng cách giữa các suất) để tính số suất
+        const maxSlots = Math.floor(availableMinutes / interval);
 
         let optimalSlots;
         const hotLevel = this.getMovieHotLevel(movie);
 
         switch (hotLevel) {
             case "hot":
-                optimalSlots = Math.min(maxSlots, 15);
+                // 🔥 HOT: 70-80% khung giờ
+                optimalSlots = Math.floor(maxSlots * 0.8);
                 break;
             case "normal":
-                optimalSlots = Math.min(Math.max(6, Math.floor(maxSlots * 0.5)), 12);
+                // 📊 NORMAL: 50-60% khung giờ
+                optimalSlots = Math.floor(maxSlots * 0.6);
                 break;
             case "cold":
-                optimalSlots = Math.min(Math.max(3, Math.floor(maxSlots * 0.3)), 6);
+                // ❄️ COLD: 30-40% khung giờ
+                optimalSlots = Math.floor(maxSlots * 0.4);
                 break;
             default:
-                optimalSlots = Math.min(maxSlots, 8);
+                optimalSlots = Math.floor(maxSlots * 0.6);
         }
 
-        return Math.max(3, Math.min(optimalSlots, config.maxSlotsPerDay));
+        // Giới hạn số suất
+        if (optimalSlots < 3) optimalSlots = 3;
+        if (optimalSlots > 30) optimalSlots = 30;
+
+        console.log(`📊 ${movie.title} HOT=${hotLevel}: maxSlots=${maxSlots}, optimal=${optimalSlots}`);
+        return optimalSlots;
     }
 
 
@@ -272,6 +288,8 @@ class ShowtimeScheduler {
 
         const targetSlots = this.calculateOptimalSlotsPerDay(date, movie, config);
 
+        console.log(`📊 ${movie.title} - ${date}: target=${targetSlots}, existing=${movieSlotsToday}`);
+
         if (movieSlotsToday >= targetSlots) {
             return slots;
         }
@@ -287,10 +305,7 @@ class ShowtimeScheduler {
         if (lastSlot) {
             currentTime = lastSlot.startMinutes + duration + buffer;
         } else {
-            currentTime = Math.max(
-                timeRange.startMinutes,
-                this.timeToMinutes("08:00")
-            );
+            currentTime = timeRange.startMinutes;
         }
 
         let createdSlots = 0;
@@ -330,9 +345,11 @@ class ShowtimeScheduler {
                 roomIndex++;
             }
 
+            // Bước nhảy là interval (30/45/60 phút)
             currentTime += interval;
         }
 
+        console.log(`📊 Đã tạo ${slots.length} suất cho ${movie.title} ngày ${date}`);
         return slots;
     }
 
@@ -512,19 +529,19 @@ class ShowtimeScheduler {
                     movies: movies.filter(m => this.getMovieHotLevel(m, movieStats) === 'hot').map(m => m.title),
                     interval: mergedConfig.hotInterval,
                     maxRooms: this.getMaxRoomsForMovie({}, {}, rooms.length),
-                    targetSlotsPerDay: 12
+                    targetSlotsPerDay: Math.floor(80 / 30 * 12) // 30 phút/suất
                 },
                 normal: {
                     movies: movies.filter(m => this.getMovieHotLevel(m, movieStats) === 'normal').map(m => m.title),
                     interval: mergedConfig.normalInterval,
                     maxRooms: Math.min(2, Math.ceil(rooms.length / 2)),
-                    targetSlotsPerDay: 8
+                    targetSlotsPerDay: Math.floor(60 / 45 * 8)
                 },
                 cold: {
                     movies: movies.filter(m => this.getMovieHotLevel(m, movieStats) === 'cold').map(m => m.title),
                     interval: mergedConfig.coldInterval,
                     maxRooms: 1,
-                    targetSlotsPerDay: 4
+                    targetSlotsPerDay: Math.floor(40 / 60 * 4)
                 }
             }
         };
