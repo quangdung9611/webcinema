@@ -1,4 +1,5 @@
 const RoomRepository = require("../Repositories/RoomRepository");
+const SeatService = require("./SeatService"); // 👈 THÊM DÒNG NÀY
 
 // ==========================================================
 // VALIDATE
@@ -14,8 +15,7 @@ const validateRoom = (data) => {
         return { field: "room_name", message: "Tên phòng quá ngắn (tối thiểu 2 ký tự)" };
     }
 
-    // ✅ Đồng bộ với CSDL (enum trong bảng rooms) - ĐÃ XÓA 4DMAX
-    const validRoomTypes = ["2D", "3D", "IMAX", "VIP"];  // 👈 Đã xóa 4DMAX
+    const validRoomTypes = ["2D", "3D", "IMAX", "VIP"];
     if (!validRoomTypes.includes(room_type)) {
         return { field: "room_type", message: "Loại phòng không hợp lệ. Chấp nhận: 2D, 3D, IMAX, VIP" };
     }
@@ -28,17 +28,14 @@ const validateRoom = (data) => {
 // ==========================================================
 class RoomService {
 
-    // ----- GET ALL (không phân trang) -----
     async getAllRoomsAll(search = "") {
         return await RoomRepository.findAllAll(search);
     }
 
-    // ----- GET ALL (có phân trang) -----
     async getAllRoomsPaginated(page = 1, limit = 20, search = "") {
         return await RoomRepository.findAll(page, limit, search);
     }
 
-    // ----- GET BY ID -----
     async getRoomById(roomId) {
         const room = await RoomRepository.findById(roomId);
         if (!room) {
@@ -50,16 +47,16 @@ class RoomService {
         return room;
     }
 
-    // ----- GET BY CINEMA -----
     async getRoomsByCinema(cinemaId) {
         return await RoomRepository.findByCinema(cinemaId);
     }
 
-    // ----- CREATE -----
+    // ==========================================================
+    // CREATE - TỰ ĐỘNG TẠO GHẾ
+    // ==========================================================
     async createRoom(data) {
         const { room_name, cinema_id, room_type } = data;
 
-        // Validate
         const validation = validateRoom(data);
         if (validation) {
             const err = new Error(validation.message);
@@ -70,7 +67,6 @@ class RoomService {
 
         const name = room_name.trim();
 
-        // Kiểm tra trùng tên phòng trong cùng rạp
         const dup = await RoomRepository.findByNameInCinema(name, cinema_id);
         if (dup) {
             const err = new Error("Tên phòng này đã tồn tại trong rạp này");
@@ -79,21 +75,33 @@ class RoomService {
             throw err;
         }
 
-        // Tạo mới
-        const newId = await RoomRepository.create({
+        // Tạo phòng mới
+        const newRoomId = await RoomRepository.create({
             room_name: name,
             cinema_id,
             room_type
         });
 
-        return newId;
+        // 🔥 TỰ ĐỘNG TẠO GHẾ CHO PHÒNG MỚI
+        try {
+            const seatResult = await SeatService.initRoomSeats(
+                newRoomId,
+                room_type,
+                cinema_id
+            );
+            
+            console.log(`✅ Tạo phòng ${name} (${room_type}) thành công với ${seatResult.totalSeats} ghế`);
+            console.log(`📊 Phân bố ghế:`, seatResult.seatTypes);
+        } catch (seatErr) {
+            console.warn(`⚠️ Tạo phòng thành công nhưng tạo ghế thất bại: ${seatErr.message}`);
+        }
+
+        return newRoomId;
     }
 
-    // ----- UPDATE -----
     async updateRoom(roomId, data) {
         const { room_name, cinema_id, room_type } = data;
 
-        // Kiểm tra tồn tại
         const existing = await RoomRepository.findById(roomId);
         if (!existing) {
             const err = new Error("Không tìm thấy phòng");
@@ -102,7 +110,6 @@ class RoomService {
             throw err;
         }
 
-        // Validate
         const validation = validateRoom(data);
         if (validation) {
             const err = new Error(validation.message);
@@ -113,7 +120,6 @@ class RoomService {
 
         const name = room_name.trim();
 
-        // Kiểm tra trùng tên phòng (trừ chính nó)
         const dup = await RoomRepository.findByNameInCinema(name, cinema_id, roomId);
         if (dup) {
             const err = new Error("Tên phòng này đã tồn tại trong rạp này");
@@ -122,7 +128,6 @@ class RoomService {
             throw err;
         }
 
-        // Cập nhật
         const affected = await RoomRepository.update(roomId, {
             room_name: name,
             cinema_id,
@@ -139,7 +144,6 @@ class RoomService {
         return true;
     }
 
-    // ----- DELETE -----
     async deleteRoom(roomId) {
         const existing = await RoomRepository.findById(roomId);
         if (!existing) {
