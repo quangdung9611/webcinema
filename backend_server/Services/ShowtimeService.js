@@ -203,6 +203,7 @@ class ShowtimeService {
 
     /*=========================================================
         AUTO SCHEDULE SHOWTIMES - DÙNG SCHEDULER
+        ❌ ĐÃ BỎ movieStats và getMovieTicketStats()
     =========================================================*/
     async scheduleShowtimes(data) {
         if (!data) {
@@ -328,7 +329,7 @@ class ShowtimeService {
             throw err;
         }
 
-        // VALIDATE DISTRIBUTION
+        // VALIDATE DISTRIBUTION - hot, normal, cold
         const allowedDistribution = ["hot", "normal", "cold"];
         const scheduleDistribution = distribution || "normal";
 
@@ -386,15 +387,8 @@ class ShowtimeService {
             roomIds: normalizedRoomIds
         });
 
-        // TẠO MOVIE STATS
-        const movieStats = {};
-        const ticketStats = await ShowtimeRepository.getMovieTicketStats(movieId);
-
-        movieStats[movieId] = {
-            ticketSold: ticketStats?.ticketSold || 0,
-            viewCount: ticketStats?.viewCount || 0,
-            rating: ticketStats?.rating || 0
-        };
+        // ❌ KHÔNG CẦN movieStats NỮA - Admin đã chọn distribution
+        // const movieStats = {};
 
         // CẤU HÌNH SCHEDULER
         const config = {
@@ -422,15 +416,15 @@ class ShowtimeService {
             duration: duration
         }];
 
-        // GỌI SCHEDULER
+        // GỌI SCHEDULER - KHÔNG truyền movieStats
         const generated = ShowtimeScheduler.generate({
             movies: moviesForScheduler,
             rooms: rooms,
             startDate: start_date,
             endDate: end_date,
             config: config,
-            movieStats: movieStats,
             existingShowtimes: existingShowtimes
+            // ❌ KHÔNG CÓ movieStats
         });
 
         // INSERT CÁC SUẤT HỢP LỆ
@@ -529,6 +523,7 @@ class ShowtimeService {
             }
         }
 
+        // RETURN
         return {
             success: true,
             data: created,
