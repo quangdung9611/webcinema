@@ -210,14 +210,16 @@ const getTimeRangeForDate = (date, config) => {
 };
 
 // ==========================================================
-// MOVIE HOT LEVEL - GIỮ NGUYÊN LOGIC CŨ
+// MOVIE HOT LEVEL - ƯU TIÊN DISTRIBUTION TỪ FRONTEND
 // ==========================================================
 
 const getMovieHotLevel = (movie, stats = {}, config = SCHEDULER_CONFIG) => {
+    // ✅ ƯU TIÊN distribution từ frontend (nếu có)
     if (movie && movie.distribution && ALLOWED_DISTRIBUTIONS.includes(String(movie.distribution).toLowerCase())) {
         return String(movie.distribution).toLowerCase();
     }
 
+    // Nếu không có distribution, tính theo điểm HOT
     const movieId = movie?.movie_id;
     const movieStats = stats?.[movieId] || {};
     const ticketSold = Number(movieStats.ticketSold || 0);
@@ -235,7 +237,7 @@ const getMovieHotLevel = (movie, stats = {}, config = SCHEDULER_CONFIG) => {
 };
 
 // ==========================================================
-// GET INTERVAL - GIỮ NGUYÊN
+// GET INTERVAL - LẤY KHOẢNG CÁCH DỰA TRÊN LEVEL
 // ==========================================================
 
 const getInterval = (movie, stats = {}, config = SCHEDULER_CONFIG) => {
@@ -261,7 +263,7 @@ const calculateHotScore = (movie, stats = {}) => {
 };
 
 // ==========================================================
-// PHÂN BỔ PHÒNG THEO PHẦN TRĂM - LUÂN PHIÊN ROUND ROBIN 🆕
+// PHÂN BỔ PHÒNG THEO PHẦN TRĂM - LUÂN PHIÊN ROUND ROBIN
 // ==========================================================
 
 const allocateRoomsByPercentage = (movies, rooms, stats = {}) => {
@@ -288,7 +290,7 @@ const allocateRoomsByPercentage = (movies, rooms, stats = {}) => {
 
     scoredMovies.sort((a, b) => b.hotScore - a.hotScore);
 
-    // 🔥 Lưu vị trí bắt đầu cho từng hạng phòng
+    // 🔥 Lưu vị trí bắt đầu cho từng hạng phòng (toàn cục)
     const startIndexMap = {};
 
     const allocated = scoredMovies.map(movie => {
@@ -591,6 +593,7 @@ const generateSchedule = ({ movies = [], rooms = [], startDate, endDate, config 
 
     const allResults = [];
 
+    // 🔥 Reset startIndexMap mỗi ngày để luân phiên đều
     for (const date of dateList) {
         const scheduledSlots = [];
 
@@ -901,7 +904,7 @@ class ShowtimeService {
             movie_id: movieId,
             title: movie.title || `Phim ${movieId}`,
             duration,
-            distribution: scheduleDistribution,
+            distribution: scheduleDistribution, // ✅ Truyền distribution từ frontend
             roomTypes: allRoomTypes
         }];
 
