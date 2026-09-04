@@ -100,13 +100,14 @@ class PriceConfigRepository {
 
     // ==========================================================
     // LẤY CẤU HÌNH GIÁ THEO ROOM_TYPE + TIME_SLOT + DAY_TYPE + SEAT_TYPE
+    // ✅ ĐÃ SỬA: XÓA priority
     // ==========================================================
 
     async findByRoomTimeDaySeat(roomType, timeSlot, dayType, seatType) {
         const [rows] = await db.query(
             `SELECT * FROM price_config 
              WHERE room_type = ? AND time_slot = ? AND day_type = ? AND seat_type = ? AND status = 1
-             ORDER BY priority DESC LIMIT 1`,
+             ORDER BY price_config_id DESC LIMIT 1`,
             [roomType, timeSlot, dayType, seatType]
         );
         return rows[0] || null;
