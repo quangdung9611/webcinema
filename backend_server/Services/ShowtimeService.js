@@ -34,41 +34,61 @@ const DAY_TYPE_LABELS = {
 const SCHEDULER_CONFIG = {
     weekdayStart: "08:00",
     weekdayEnd: "23:30",
+
     weekendStart: "08:00",
     weekendEnd: "24:00",
+
     bufferMinutes: 15,
+
     hotInterval: 45,
     normalInterval: 75,
     coldInterval: 120,
+
     hotThreshold: 100,
     normalThreshold: 50
 };
 
 // ==========================================================
-// CẤU HÌNH PHÂN BỔ PHÒNG THEO PHẦN TRĂM (FULL 3 MỨC)
+// ROOM ALLOCATION
 // ==========================================================
+//
+// HOT
+// 2D  = 40%
+// 3D  = 30%
+// VIP = 20%
+// IMAX = 10%
+//
+// NORMAL
+// 2D = 60%
+// 3D = 40%
+//
+// COLD
+// 2D = 50%
+//
 
 const ROOM_ALLOCATION_PERCENTAGE = {
     hot: {
-        roomTypes: ['2D', '3D', 'VIP', 'IMAX'],
+        roomTypes: ["2D", "3D", "VIP", "IMAX"],
         percentage: {
-            '2D': 0.40,
-            '3D': 0.30,
-            'VIP': 0.20,
-            'IMAX': 0.10
+            "2D": 0.40,
+            "3D": 0.30,
+            "VIP": 0.20,
+            "IMAX": 0.10
         }
     },
+
     normal: {
-        roomTypes: ['2D', '3D'],
+        roomTypes: ["2D", "3D"],
         percentage: {
-            '2D': 0.60,
-            '3D': 0.40
+            "2D": 0.60,
+            "3D": 0.40
         }
     },
+
     cold: {
-        roomTypes: ['2D'],
+        roomTypes: ["2D"],
         percentage: {
-            '2D': 0.50
+            "2D": 0.50
         }
     }
 };
@@ -79,7 +99,10 @@ const ROOM_ALLOCATION_PERCENTAGE = {
 
 const formatDateTime = (dateTime) => {
     if (!dateTime) return null;
-    return String(dateTime).replace("T", " ").substring(0, 16);
+
+    return String(dateTime)
+        .replace("T", " ")
+        .substring(0, 16);
 };
 
 // ==========================================================
@@ -87,11 +110,27 @@ const formatDateTime = (dateTime) => {
 // ==========================================================
 
 const getTimeSlot = (startTime) => {
-    if (!startTime) return "MORNING";
-    const hour = parseInt(String(startTime).split(":")[0], 10);
-    if (hour >= 6 && hour < 12) return "MORNING";
-    if (hour >= 12 && hour < 17) return "AFTERNOON";
-    if (hour >= 17 && hour < 20) return "EVENING";
+    if (!startTime) {
+        return "MORNING";
+    }
+
+    const hour = parseInt(
+        String(startTime).split(":")[0],
+        10
+    );
+
+    if (hour >= 6 && hour < 12) {
+        return "MORNING";
+    }
+
+    if (hour >= 12 && hour < 17) {
+        return "AFTERNOON";
+    }
+
+    if (hour >= 17 && hour < 20) {
+        return "EVENING";
+    }
+
     return "NIGHT";
 };
 
@@ -100,9 +139,18 @@ const getTimeSlot = (startTime) => {
 // ==========================================================
 
 const getDayType = (date) => {
-    if (!date) return "WEEKDAY";
+    if (!date) {
+        return "WEEKDAY";
+    }
+
     const dayOfWeek = new Date(date).getDay();
-    return (dayOfWeek === 0 || dayOfWeek === 6) ? "WEEKEND" : "WEEKDAY";
+
+    return (
+        dayOfWeek === 0 ||
+        dayOfWeek === 6
+    )
+        ? "WEEKEND"
+        : "WEEKDAY";
 };
 
 // ==========================================================
@@ -110,12 +158,23 @@ const getDayType = (date) => {
 // ==========================================================
 
 const normalizeRoomTypes = (roomTypes) => {
-    if (!Array.isArray(roomTypes)) return [];
-    return [...new Set(
-        roomTypes
-            .map(type => String(type).trim().toUpperCase())
-            .filter(type => ALLOWED_ROOM_TYPES.includes(type))
-    )];
+    if (!Array.isArray(roomTypes)) {
+        return [];
+    }
+
+    return [
+        ...new Set(
+            roomTypes
+                .map((type) =>
+                    String(type)
+                        .trim()
+                        .toUpperCase()
+                )
+                .filter((type) =>
+                    ALLOWED_ROOM_TYPES.includes(type)
+                )
+        )
+    ];
 };
 
 // ==========================================================
@@ -123,10 +182,25 @@ const normalizeRoomTypes = (roomTypes) => {
 // ==========================================================
 
 const validateShowtime = (data) => {
-    const { movie_id, cinema_id, room_id, start_time } = data;
-    if (!movie_id || !cinema_id || !room_id || !start_time) {
-        return "Vui lòng chọn đầy đủ: Phim, Rạp, Phòng và Thời gian chiếu";
+    const {
+        movie_id,
+        cinema_id,
+        room_id,
+        start_time
+    } = data;
+
+    if (
+        !movie_id ||
+        !cinema_id ||
+        !room_id ||
+        !start_time
+    ) {
+        return (
+            "Vui lòng chọn đầy đủ: " +
+            "Phim, Rạp, Phòng và Thời gian chiếu"
+        );
     }
+
     return null;
 };
 
@@ -135,31 +209,76 @@ const validateShowtime = (data) => {
 // ==========================================================
 
 const parseDate = (date) => {
-    if (!date) throw new Error("Thiếu ngày.");
-    const value = String(date).trim();
-    const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (!match) throw new Error(`Ngày không hợp lệ: ${date}`);
-    const year = Number(match[1]), month = Number(match[2]), day = Number(match[3]);
-    const result = new Date(Date.UTC(year, month - 1, day));
-    if (result.getUTCFullYear() !== year || result.getUTCMonth() !== month - 1 || result.getUTCDate() !== day) {
-        throw new Error(`Ngày không hợp lệ: ${date}`);
+    if (!date) {
+        throw new Error("Thiếu ngày.");
     }
+
+    const value = String(date).trim();
+
+    const match = value.match(
+        /^(\d{4})-(\d{2})-(\d{2})$/
+    );
+
+    if (!match) {
+        throw new Error(
+            `Ngày không hợp lệ: ${date}`
+        );
+    }
+
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+
+    const result = new Date(
+        Date.UTC(
+            year,
+            month - 1,
+            day
+        )
+    );
+
+    if (
+        result.getUTCFullYear() !== year ||
+        result.getUTCMonth() !== month - 1 ||
+        result.getUTCDate() !== day
+    ) {
+        throw new Error(
+            `Ngày không hợp lệ: ${date}`
+        );
+    }
+
     return result;
 };
 
 const formatDate = (date) => {
-    return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+    return (
+        `${date.getUTCFullYear()}-` +
+        `${String(
+            date.getUTCMonth() + 1
+        ).padStart(2, "0")}-` +
+        `${String(
+            date.getUTCDate()
+        ).padStart(2, "0")}`
+    );
 };
 
 const addDays = (date, days) => {
     const result = new Date(date);
-    result.setUTCDate(result.getUTCDate() + days);
+
+    result.setUTCDate(
+        result.getUTCDate() + days
+    );
+
     return result;
 };
 
 const isWeekend = (date) => {
     const day = new Date(date).getUTCDay();
-    return day === 0 || day === 6;
+
+    return (
+        day === 0 ||
+        day === 6
+    );
 };
 
 // ==========================================================
@@ -167,188 +286,523 @@ const isWeekend = (date) => {
 // ==========================================================
 
 const timeToMinutes = (time) => {
-    if (time === "24:00") return 24 * 60;
-    const parts = String(time).split(":").map(Number);
-    const hour = parts[0], minute = parts[1];
-    if (!Number.isInteger(hour) || !Number.isInteger(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
-        throw new Error(`Giờ không hợp lệ: ${time}`);
+    if (time === "24:00") {
+        return 24 * 60;
     }
-    return hour * 60 + minute;
+
+    const parts = String(time)
+        .split(":")
+        .map(Number);
+
+    const hour = parts[0];
+    const minute = parts[1];
+
+    if (
+        !Number.isInteger(hour) ||
+        !Number.isInteger(minute) ||
+        hour < 0 ||
+        hour > 23 ||
+        minute < 0 ||
+        minute > 59
+    ) {
+        throw new Error(
+            `Giờ không hợp lệ: ${time}`
+        );
+    }
+
+    return (
+        hour * 60 +
+        minute
+    );
 };
+
+// ==========================================================
+// MINUTES TO TIME
+// ==========================================================
 
 const minutesToTime = (totalMinutes) => {
-    if (totalMinutes === 24 * 60) return "24:00";
-    const hour = Math.floor(totalMinutes / 60);
-    const minute = totalMinutes % 60;
-    return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+    if (totalMinutes === 24 * 60) {
+        return "24:00";
+    }
+
+    const hour = Math.floor(
+        totalMinutes / 60
+    );
+
+    const minute =
+        totalMinutes % 60;
+
+    return (
+        `${String(hour).padStart(2, "0")}:` +
+        `${String(minute).padStart(2, "0")}`
+    );
 };
 
-const buildDateTime = (date, minutes) => {
+// ==========================================================
+// BUILD DATETIME
+// ==========================================================
+
+const buildDateTime = (
+    date,
+    minutes
+) => {
     if (minutes >= 24 * 60) {
-        const overflow = minutes - 24 * 60;
-        const nextDate = addDays(parseDate(date), 1);
-        return `${formatDate(nextDate)} ${minutesToTime(overflow)}`;
+        const overflow =
+            minutes - 24 * 60;
+
+        const nextDate = addDays(
+            parseDate(date),
+            1
+        );
+
+        return (
+            `${formatDate(nextDate)} ` +
+            `${minutesToTime(overflow)}`
+        );
     }
-    return `${date} ${minutesToTime(minutes)}`;
+
+    return (
+        `${date} ` +
+        `${minutesToTime(minutes)}`
+    );
 };
 
 // ==========================================================
 // GET TIME RANGE
 // ==========================================================
 
-const getTimeRangeForDate = (date, config) => {
-    const weekend = isWeekend(date);
-    const startTime = weekend ? config.weekendStart : config.weekdayStart;
-    const endTime = weekend ? config.weekendEnd : config.weekdayEnd;
+const getTimeRangeForDate = (
+    date,
+    config
+) => {
+    const weekend =
+        isWeekend(date);
+
+    const startTime = weekend
+        ? config.weekendStart
+        : config.weekdayStart;
+
+    const endTime = weekend
+        ? config.weekendEnd
+        : config.weekdayEnd;
+
     return {
         startTime,
         endTime,
-        startMinutes: timeToMinutes(startTime),
-        endMinutes: timeToMinutes(endTime),
+
+        startMinutes:
+            timeToMinutes(startTime),
+
+        endMinutes:
+            timeToMinutes(endTime),
+
         isWeekend: weekend
     };
 };
 
 // ==========================================================
-// MOVIE HOT LEVEL - ƯU TIÊN DISTRIBUTION TỪ FRONTEND
+// MOVIE HOT LEVEL
 // ==========================================================
 
-const getMovieHotLevel = (movie, stats = {}, config = SCHEDULER_CONFIG) => {
-    // ✅ ƯU TIÊN distribution từ frontend (nếu có)
-    if (movie && movie.distribution && ALLOWED_DISTRIBUTIONS.includes(String(movie.distribution).toLowerCase())) {
-        return String(movie.distribution).toLowerCase();
+const getMovieHotLevel = (
+    movie,
+    stats = {},
+    config = SCHEDULER_CONFIG
+) => {
+    // ------------------------------------------------------
+    // ƯU TIÊN DISTRIBUTION TỪ FRONTEND
+    // ------------------------------------------------------
+
+    if (
+        movie &&
+        movie.distribution &&
+        ALLOWED_DISTRIBUTIONS.includes(
+            String(
+                movie.distribution
+            ).toLowerCase()
+        )
+    ) {
+        return String(
+            movie.distribution
+        ).toLowerCase();
     }
 
-    // Nếu không có distribution, tính theo điểm HOT
-    const movieId = movie?.movie_id;
-    const movieStats = stats?.[movieId] || {};
-    const ticketSold = Number(movieStats.ticketSold || 0);
-    const viewCount = Number(movieStats.viewCount || 0);
-    const rating = Number(movieStats.rating || 0);
+    // ------------------------------------------------------
+    // NẾU KHÔNG CÓ DISTRIBUTION
+    // TỰ TÍNH HOT SCORE
+    // ------------------------------------------------------
 
-    let hotScore = 0;
-    hotScore += ticketSold * 0.5;
-    hotScore += viewCount * 0.3;
-    hotScore += rating * 10;
+    const movieId =
+        movie?.movie_id;
 
-    if (hotScore >= config.hotThreshold) return "hot";
-    if (hotScore >= config.normalThreshold) return "normal";
+    const movieStats =
+        stats?.[movieId] || {};
+
+    const ticketSold =
+        Number(
+            movieStats.ticketSold || 0
+        );
+
+    const viewCount =
+        Number(
+            movieStats.viewCount || 0
+        );
+
+    const rating =
+        Number(
+            movieStats.rating || 0
+        );
+
+    const hotScore =
+        ticketSold * 0.5 +
+        viewCount * 0.3 +
+        rating * 10;
+
+    if (
+        hotScore >=
+        Number(config.hotThreshold)
+    ) {
+        return "hot";
+    }
+
+    if (
+        hotScore >=
+        Number(config.normalThreshold)
+    ) {
+        return "normal";
+    }
+
     return "cold";
 };
 
 // ==========================================================
-// GET INTERVAL - LẤY KHOẢNG CÁCH DỰA TRÊN LEVEL
+// GET INTERVAL
 // ==========================================================
 
-const getInterval = (movie, stats = {}, config = SCHEDULER_CONFIG) => {
-    const level = getMovieHotLevel(movie, stats, config);
+const getInterval = (
+    movie,
+    stats = {},
+    config = SCHEDULER_CONFIG
+) => {
+    const level =
+        getMovieHotLevel(
+            movie,
+            stats,
+            config
+        );
+
     switch (level) {
-        case "hot": return 45;
-        case "normal": return 75;
-        case "cold": return 120;
-        default: return 75;
+        case "hot":
+            return Number(
+                config.hotInterval
+            ) || 45;
+
+        case "normal":
+            return Number(
+                config.normalInterval
+            ) || 75;
+
+        case "cold":
+            return Number(
+                config.coldInterval
+            ) || 120;
+
+        default:
+            return Number(
+                config.normalInterval
+            ) || 75;
     }
 };
 
 // ==========================================================
-// TÍNH ĐIỂM HOT
+// CALCULATE HOT SCORE
 // ==========================================================
 
-const calculateHotScore = (movie, stats = {}) => {
-    const movieStats = stats?.[movie.movie_id] || {};
-    const ticketSold = Number(movieStats.ticketSold || 0);
-    const viewCount = Number(movieStats.viewCount || 0);
-    const rating = Number(movieStats.rating || 0);
-    return ticketSold * 0.5 + viewCount * 0.3 + rating * 10;
+const calculateHotScore = (
+    movie,
+    stats = {}
+) => {
+    const movieStats =
+        stats?.[movie.movie_id] || {};
+
+    const ticketSold =
+        Number(
+            movieStats.ticketSold || 0
+        );
+
+    const viewCount =
+        Number(
+            movieStats.viewCount || 0
+        );
+
+    const rating =
+        Number(
+            movieStats.rating || 0
+        );
+
+    return (
+        ticketSold * 0.5 +
+        viewCount * 0.3 +
+        rating * 10
+    );
 };
 
 // ==========================================================
-// PHÂN BỔ PHÒNG THEO PHẦN TRĂM - LUÂN PHIÊN ROUND ROBIN
+// ALLOCATE ROOMS BY PERCENTAGE
 // ==========================================================
 
-const allocateRoomsByPercentage = (movies, rooms, stats = {}) => {
+const allocateRoomsByPercentage = (
+    movies,
+    rooms,
+    stats = {}
+) => {
     const roomsByType = {};
+
+    // ------------------------------------------------------
+    // GROUP ROOM BY TYPE
+    // ------------------------------------------------------
+
     for (const room of rooms) {
-        const type = String(room.room_type || '').trim().toUpperCase();
-        if (!roomsByType[type]) roomsByType[type] = [];
+        const type = String(
+            room.room_type || ""
+        )
+            .trim()
+            .toUpperCase();
+
+        if (!roomsByType[type]) {
+            roomsByType[type] = [];
+        }
+
         roomsByType[type].push(room);
     }
 
-    console.log('📋 SỐ LƯỢNG PHÒNG THEO HẠNG:');
-    for (const [type, list] of Object.entries(roomsByType)) {
-        console.log(`  ${type}: ${list.length} phòng`);
+    console.log(
+        "📋 SỐ LƯỢNG PHÒNG THEO HẠNG:"
+    );
+
+    for (
+        const [
+            type,
+            list
+        ] of Object.entries(
+            roomsByType
+        )
+    ) {
+        console.log(
+            `  ${type}: ${list.length} phòng`
+        );
     }
 
-    const scoredMovies = movies.map(movie => {
-        const level = getMovieHotLevel(movie, stats);
-        return {
-            ...movie,
-            level,
-            hotScore: calculateHotScore(movie, stats)
-        };
-    });
+    // ------------------------------------------------------
+    // CALCULATE MOVIE SCORE
+    // ------------------------------------------------------
 
-    scoredMovies.sort((a, b) => b.hotScore - a.hotScore);
+    const scoredMovies =
+        movies.map((movie) => {
+            const level =
+                getMovieHotLevel(
+                    movie,
+                    stats
+                );
 
-    // 🔥 Lưu vị trí bắt đầu cho từng hạng phòng (toàn cục)
+            return {
+                ...movie,
+
+                level,
+
+                hotScore:
+                    calculateHotScore(
+                        movie,
+                        stats
+                    )
+            };
+        });
+
+    // ------------------------------------------------------
+    // HOT MOVIE ĐƯỢC ƯU TIÊN
+    // ------------------------------------------------------
+
+    scoredMovies.sort(
+        (a, b) =>
+            b.hotScore -
+            a.hotScore
+    );
+
+    // ------------------------------------------------------
+    // ROUND ROBIN INDEX
+    // ------------------------------------------------------
+
     const startIndexMap = {};
 
-    const allocated = scoredMovies.map(movie => {
-        const config = ROOM_ALLOCATION_PERCENTAGE[movie.level] || ROOM_ALLOCATION_PERCENTAGE.normal;
-        const allowedTypes = config.roomTypes;
-        const percentages = config.percentage || {};
+    const allocated =
+        scoredMovies.map(
+            (movie) => {
+                const allocationConfig =
+                    ROOM_ALLOCATION_PERCENTAGE[
+                        movie.level
+                    ] ||
+                    ROOM_ALLOCATION_PERCENTAGE.normal;
 
-        let totalRoomsAllocated = 0;
-        const roomAllocation = {};
+                const allowedTypes =
+                    allocationConfig.roomTypes;
 
-        for (const type of allowedTypes) {
-            const availableRooms = roomsByType[type] || [];
-            const percent = percentages[type] || 0.3;
-            
-            let allocatedCount = Math.round(availableRooms.length * percent);
-            if (allocatedCount === 0 && availableRooms.length > 0 && percent > 0) {
-                allocatedCount = 1;
+                const percentages =
+                    allocationConfig.percentage;
+
+                const roomAllocation = {};
+
+                let totalRoomsAllocated = 0;
+
+                for (
+                    const type of allowedTypes
+                ) {
+                    const availableRooms =
+                        roomsByType[type] ||
+                        [];
+
+                    if (
+                        availableRooms.length === 0
+                    ) {
+                        roomAllocation[type] = {
+                            count: 0,
+                            rooms: []
+                        };
+
+                        continue;
+                    }
+
+                    const percent =
+                        Number(
+                            percentages[type] ||
+                            0
+                        );
+
+                    let allocatedCount =
+                        Math.round(
+                            availableRooms.length *
+                                percent
+                        );
+
+                    // Nếu phần trăm > 0 nhưng
+                    // số lượng tính ra = 0
+                    // thì vẫn lấy ít nhất 1 phòng
+                    if (
+                        allocatedCount === 0 &&
+                        percent > 0
+                    ) {
+                        allocatedCount = 1;
+                    }
+
+                    // Không được vượt quá
+                    // số phòng thực tế
+                    allocatedCount =
+                        Math.min(
+                            allocatedCount,
+                            availableRooms.length
+                        );
+
+                    if (
+                        startIndexMap[type] ===
+                        undefined
+                    ) {
+                        startIndexMap[type] = 0;
+                    }
+
+                    const startIndex =
+                        startIndexMap[type];
+
+                    const selectedRooms = [];
+
+                    for (
+                        let i = 0;
+                        i < allocatedCount;
+                        i++
+                    ) {
+                        const index =
+                            (
+                                startIndex + i
+                            ) %
+                            availableRooms.length;
+
+                        selectedRooms.push(
+                            availableRooms[index]
+                        );
+                    }
+
+                    startIndexMap[type] =
+                        (
+                            startIndex +
+                            allocatedCount
+                        ) %
+                        availableRooms.length;
+
+                    roomAllocation[type] = {
+                        count:
+                            allocatedCount,
+
+                        rooms:
+                            selectedRooms
+                    };
+
+                    totalRoomsAllocated +=
+                        allocatedCount;
+                }
+
+                return {
+                    ...movie,
+
+                    allocatedRooms:
+                        totalRoomsAllocated,
+
+                    roomAllocation,
+
+                    allowedTypes
+                };
             }
-            
-            // Khởi tạo startIndex cho loại phòng này nếu chưa có
-            if (startIndexMap[type] === undefined) {
-                startIndexMap[type] = 0;
-            }
-            const startIdx = startIndexMap[type];
-            
-            // 🔥 Lấy phòng từ vị trí startIdx, luân phiên vòng tròn
-            const selectedRooms = [];
-            for (let i = 0; i < allocatedCount; i++) {
-                const idx = (startIdx + i) % availableRooms.length;
-                selectedRooms.push(availableRooms[idx]);
-            }
-            
-            // 🔥 Cập nhật vị trí bắt đầu cho lần sau
-            startIndexMap[type] = (startIdx + allocatedCount) % availableRooms.length;
-            
-            roomAllocation[type] = {
-                count: allocatedCount,
-                rooms: selectedRooms
-            };
-            totalRoomsAllocated += allocatedCount;
-        }
+        );
 
-        return {
-            ...movie,
-            allocatedRooms: totalRoomsAllocated,
-            roomAllocation: roomAllocation,
-            allowedTypes: allowedTypes
-        };
-    });
+    // ------------------------------------------------------
+    // LOG
+    // ------------------------------------------------------
 
-    // 🔥 LOG KẾT QUẢ CHI TIẾT
-    console.log('📊 PHÂN BỔ PHÒNG THEO PHẦN TRĂM (LUÂN PHIÊN):');
-    for (const movie of allocated) {
-        console.log(`  🔹 ${movie.title} (${movie.level.toUpperCase()}) - ${movie.allocatedRooms} phòng:`);
-        for (const [type, data] of Object.entries(movie.roomAllocation)) {
-            if (data.count > 0) {
-                const roomNames = data.rooms.map(r => r.room_name || r.room_id).join(', ');
-                console.log(`      ${type}: ${data.count} phòng (${roomNames})`);
+    console.log(
+        "📊 PHÂN BỔ PHÒNG THEO PHẦN TRĂM:"
+    );
+
+    for (
+        const movie of allocated
+    ) {
+        console.log(
+            `  🔹 ${movie.title} ` +
+            `(${movie.level.toUpperCase()}) ` +
+            `- ${movie.allocatedRooms} phòng`
+        );
+
+        for (
+            const [
+                type,
+                data
+            ] of Object.entries(
+                movie.roomAllocation
+            )
+        ) {
+            if (
+                data.count > 0
+            ) {
+                const roomNames =
+                    data.rooms
+                        .map(
+                            (room) =>
+                                room.room_name ||
+                                room.room_id
+                        )
+                        .join(", ");
+
+                console.log(
+                    `      ${type}: ` +
+                    `${data.count} phòng ` +
+                    `(${roomNames})`
+                );
             }
         }
     }
@@ -360,29 +814,107 @@ const allocateRoomsByPercentage = (movies, rooms, stats = {}) => {
 // NORMALIZE SHOWTIME
 // ==========================================================
 
-const normalizeShowtime = (showtime) => {
-    if (!showtime) return null;
-    let date = showtime.date || null;
-    let startMinutes = Number(showtime.startMinutes);
-    let duration = Number(showtime.duration);
-
-    if (!Number.isFinite(startMinutes) && showtime.start_time) {
-        const raw = String(showtime.start_time).replace("T", " ");
-        const parts = raw.split(" ");
-        if (!date && parts[0]) date = parts[0];
-        const time = parts[1] || "00:00";
-        startMinutes = timeToMinutes(time.substring(0, 5));
+const normalizeShowtime = (
+    showtime
+) => {
+    if (!showtime) {
+        return null;
     }
 
-    if (!Number.isFinite(duration)) duration = Number(showtime.movie_duration);
-    if (!Number.isFinite(duration)) duration = 0;
+    let date =
+        showtime.date || null;
+
+    let startMinutes =
+        Number(
+            showtime.startMinutes
+        );
+
+    let duration =
+        Number(
+            showtime.duration
+        );
+
+    // ------------------------------------------------------
+    // PARSE START TIME
+    // ------------------------------------------------------
+
+    if (
+        !Number.isFinite(
+            startMinutes
+        ) &&
+        showtime.start_time
+    ) {
+        const raw =
+            String(
+                showtime.start_time
+            ).replace(
+                "T",
+                " "
+            );
+
+        const parts =
+            raw.split(" ");
+
+        if (
+            !date &&
+            parts[0]
+        ) {
+            date = parts[0];
+        }
+
+        const time =
+            parts[1] ||
+            "00:00";
+
+        startMinutes =
+            timeToMinutes(
+                time.substring(
+                    0,
+                    5
+                )
+            );
+    }
+
+    // ------------------------------------------------------
+    // DURATION
+    // ------------------------------------------------------
+
+    if (
+        !Number.isFinite(
+            duration
+        )
+    ) {
+        duration =
+            Number(
+                showtime.movie_duration
+            );
+    }
+
+    if (
+        !Number.isFinite(
+            duration
+        )
+    ) {
+        duration = 0;
+    }
 
     return {
         ...showtime,
+
         date,
-        room_id: Number(showtime.room_id),
-        movie_id: Number(showtime.movie_id),
+
+        room_id:
+            Number(
+                showtime.room_id
+            ),
+
+        movie_id:
+            Number(
+                showtime.movie_id
+            ),
+
         startMinutes,
+
         duration
     };
 };
@@ -391,45 +923,128 @@ const normalizeShowtime = (showtime) => {
 // ROOM CONFLICT
 // ==========================================================
 
-const hasRoomConflict = ({ roomId, startMinutes, endMinutes, existingShowtimes = [], bufferMinutes = 15 }) => {
-    return existingShowtimes.some(existingRaw => {
-        const existing = normalizeShowtime(existingRaw);
-        if (!existing) return false;
-        if (Number(existing.room_id) !== Number(roomId)) return false;
-        if (!Number.isFinite(existing.startMinutes)) return false;
-        const existingStart = existing.startMinutes;
-        const existingEnd = existingStart + existing.duration + Number(bufferMinutes || 0);
-        return startMinutes < existingEnd && endMinutes > existingStart;
-    });
+const hasRoomConflict = ({
+    roomId,
+    startMinutes,
+    endMinutes,
+    existingShowtimes = [],
+    bufferMinutes = 15
+}) => {
+    return existingShowtimes.some(
+        (existingRaw) => {
+            const existing =
+                normalizeShowtime(
+                    existingRaw
+                );
+
+            if (!existing) {
+                return false;
+            }
+
+            if (
+                Number(
+                    existing.room_id
+                ) !== Number(roomId)
+            ) {
+                return false;
+            }
+
+            if (
+                !Number.isFinite(
+                    existing.startMinutes
+                )
+            ) {
+                return false;
+            }
+
+            const existingStart =
+                existing.startMinutes;
+
+            const existingEnd =
+                existingStart +
+                existing.duration +
+                Number(
+                    bufferMinutes || 0
+                );
+
+            return (
+                startMinutes <
+                    existingEnd &&
+                endMinutes >
+                    existingStart
+            );
+        }
+    );
 };
 
 // ==========================================================
 // FIND AVAILABLE ROOM
 // ==========================================================
 
-const findAvailableRoom = ({ rooms, roomStartIndex = 0, startMinutes, endMinutes, existingShowtimes = [], bufferMinutes = 15 }) => {
-    if (!Array.isArray(rooms) || rooms.length === 0) return null;
-    const totalRooms = rooms.length;
+const findAvailableRoom = ({
+    rooms,
+    roomStartIndex = 0,
+    startMinutes,
+    endMinutes,
+    existingShowtimes = [],
+    bufferMinutes = 15
+}) => {
+    if (
+        !Array.isArray(rooms) ||
+        rooms.length === 0
+    ) {
+        return null;
+    }
 
-    for (let offset = 0; offset < totalRooms; offset++) {
-        const index = (roomStartIndex + offset) % totalRooms;
-        const room = rooms[index];
-        const roomId = Number(room.room_id);
+    const totalRooms =
+        rooms.length;
 
-        if (!Number.isInteger(roomId) || roomId <= 0) continue;
+    for (
+        let offset = 0;
+        offset < totalRooms;
+        offset++
+    ) {
+        const index =
+            (
+                roomStartIndex +
+                offset
+            ) %
+            totalRooms;
 
-        const conflict = hasRoomConflict({
-            roomId,
-            startMinutes,
-            endMinutes,
-            existingShowtimes,
-            bufferMinutes
-        });
+        const room =
+            rooms[index];
+
+        const roomId =
+            Number(
+                room.room_id
+            );
+
+        if (
+            !Number.isInteger(
+                roomId
+            ) ||
+            roomId <= 0
+        ) {
+            continue;
+        }
+
+        const conflict =
+            hasRoomConflict({
+                roomId,
+                startMinutes,
+                endMinutes,
+                existingShowtimes,
+                bufferMinutes
+            });
 
         if (!conflict) {
-            return { room, index };
+            return {
+                room,
+                index
+            };
         }
     }
+
     return null;
 };
 
@@ -437,81 +1052,278 @@ const findAvailableRoom = ({ rooms, roomStartIndex = 0, startMinutes, endMinutes
 // FILTER ROOMS BY TYPE
 // ==========================================================
 
-const filterRoomsByType = (rooms, roomTypes = []) => {
-    if (!Array.isArray(rooms)) return [];
-    if (!Array.isArray(roomTypes) || roomTypes.length === 0) {
-        return rooms.filter(room => Number.isInteger(Number(room.room_id)));
+const filterRoomsByType = (
+    rooms,
+    roomTypes = []
+) => {
+    if (!Array.isArray(rooms)) {
+        return [];
     }
 
-    const normalizedTypes = normalizeRoomTypes(roomTypes);
-    return rooms.filter(room => {
-        const roomType = String(room.room_type || "").trim().toUpperCase();
-        return normalizedTypes.includes(roomType) && Number.isInteger(Number(room.room_id));
-    });
+    if (
+        !Array.isArray(roomTypes) ||
+        roomTypes.length === 0
+    ) {
+        return rooms.filter(
+            (room) =>
+                Number.isInteger(
+                    Number(
+                        room.room_id
+                    )
+                )
+        );
+    }
+
+    const normalizedTypes =
+        normalizeRoomTypes(
+            roomTypes
+        );
+
+    return rooms.filter(
+        (room) => {
+            const roomType =
+                String(
+                    room.room_type || ""
+                )
+                    .trim()
+                    .toUpperCase();
+
+            return (
+                normalizedTypes.includes(
+                    roomType
+                ) &&
+                Number.isInteger(
+                    Number(
+                        room.room_id
+                    )
+                )
+            );
+        }
+    );
 };
 
 // ==========================================================
-// GENERATE SLOTS FOR ONE MOVIE / ONE DAY
+// GENERATE SLOTS
 // ==========================================================
 
-const generateSlotsForMovie = ({ date, movie, rooms, roomTypes = [], existingShowtimes = [], scheduledSlots = [], config = {}, movieStats = {}, maxRoomsPerMovie = 4 }) => {
-    const mergedConfig = { ...SCHEDULER_CONFIG, ...config };
-    const timeRange = getTimeRangeForDate(date, mergedConfig);
-    const duration = Number(movie.duration);
-    if (!Number.isFinite(duration) || duration <= 0) return [];
+const generateSlotsForMovie = ({
+    date,
+    movie,
+    rooms,
+    roomTypes = [],
+    existingShowtimes = [],
+    scheduledSlots = [],
+    config = {},
+    movieStats = {},
+    maxRoomsPerMovie = 4
+}) => {
+    const mergedConfig = {
+        ...SCHEDULER_CONFIG,
+        ...config
+    };
 
-    const interval = getInterval(movie, movieStats, mergedConfig);
-    const buffer = Number(mergedConfig.bufferMinutes) || 15;
+    const timeRange =
+        getTimeRangeForDate(
+            date,
+            mergedConfig
+        );
 
-    let allowedRooms = filterRoomsByType(rooms, roomTypes);
-    if (allowedRooms.length === 0) return [];
+    const duration =
+        Number(movie.duration);
 
-    // Giới hạn số phòng cho phim này
-    const movieRooms = allowedRooms.slice(0, maxRoomsPerMovie);
+    if (
+        !Number.isFinite(
+            duration
+        ) ||
+        duration <= 0
+    ) {
+        return [];
+    }
 
-    const allExisting = [...existingShowtimes, ...scheduledSlots].map(item => normalizeShowtime(item)).filter(Boolean);
-    const existingToday = allExisting.filter(item => item.date === date);
+    // ------------------------------------------------------
+    // INTERVAL THEO HOT LEVEL
+    // ------------------------------------------------------
 
-    let currentTime = timeRange.startMinutes;
+    const interval =
+        getInterval(
+            movie,
+            movieStats,
+            mergedConfig
+        );
+
+    const buffer =
+        Number(
+            mergedConfig.bufferMinutes
+        ) || 15;
+
+    // ------------------------------------------------------
+    // LỌC PHÒNG
+    // ------------------------------------------------------
+
+    let allowedRooms =
+        filterRoomsByType(
+            rooms,
+            roomTypes
+        );
+
+    if (
+        allowedRooms.length === 0
+    ) {
+        return [];
+    }
+
+    // ------------------------------------------------------
+    // GIỚI HẠN PHÒNG
+    // ------------------------------------------------------
+
+    const movieRooms =
+        allowedRooms.slice(
+            0,
+            maxRoomsPerMovie
+        );
+
+    // ------------------------------------------------------
+    // EXISTING SHOWTIMES
+    // ------------------------------------------------------
+
+    const allExisting = [
+        ...existingShowtimes,
+        ...scheduledSlots
+    ]
+        .map(
+            (item) =>
+                normalizeShowtime(item)
+        )
+        .filter(Boolean);
+
+    let currentTime =
+        timeRange.startMinutes;
+
     const slots = [];
+
     let roomStartIndex = 0;
+
     let safetyCounter = 0;
-    const maxIterations = Math.ceil((timeRange.endMinutes - timeRange.startMinutes) / Math.max(interval, 1)) + 20;
 
-    while (currentTime + duration <= timeRange.endMinutes && safetyCounter < maxIterations) {
+    const maxIterations =
+        Math.ceil(
+            (
+                timeRange.endMinutes -
+                timeRange.startMinutes
+            ) /
+                Math.max(
+                    interval,
+                    1
+                )
+        ) + 20;
+
+    // ------------------------------------------------------
+    // GENERATE
+    // ------------------------------------------------------
+
+    while (
+        currentTime + duration <=
+            timeRange.endMinutes &&
+        safetyCounter <
+            maxIterations
+    ) {
         safetyCounter++;
-        const endMinutes = currentTime + duration;
 
-        const availableRoom = findAvailableRoom({
-            rooms: movieRooms,
-            roomStartIndex,
-            startMinutes: currentTime,
-            endMinutes,
-            existingShowtimes: allExisting,
-            bufferMinutes: buffer
-        });
+        const endMinutes =
+            currentTime +
+            duration;
+
+        const availableRoom =
+            findAvailableRoom({
+                rooms: movieRooms,
+
+                roomStartIndex,
+
+                startMinutes:
+                    currentTime,
+
+                endMinutes,
+
+                existingShowtimes:
+                    allExisting,
+
+                bufferMinutes:
+                    buffer
+            });
 
         if (availableRoom) {
-            const room = availableRoom.room;
-            const roomId = Number(room.room_id);
+            const room =
+                availableRoom.room;
+
+            const roomId =
+                Number(
+                    room.room_id
+                );
+
             const slot = {
-                room_id: roomId,
-                room_name: room.room_name || null,
-                room_type: room.room_type || null,
+                room_id:
+                    roomId,
+
+                room_name:
+                    room.room_name ||
+                    null,
+
+                room_type:
+                    room.room_type ||
+                    null,
+
                 date,
-                movie_id: Number(movie.movie_id),
-                start_time: buildDateTime(date, currentTime),
-                end_time: buildDateTime(date, endMinutes),
-                startMinutes: currentTime,
+
+                movie_id:
+                    Number(
+                        movie.movie_id
+                    ),
+
+                start_time:
+                    buildDateTime(
+                        date,
+                        currentTime
+                    ),
+
+                end_time:
+                    buildDateTime(
+                        date,
+                        endMinutes
+                    ),
+
+                startMinutes:
+                    currentTime,
+
                 endMinutes,
+
                 duration,
-                title: movie.title,
-                hotLevel: getMovieHotLevel(movie, movieStats, mergedConfig)
+
+                title:
+                    movie.title,
+
+                hotLevel:
+                    getMovieHotLevel(
+                        movie,
+                        movieStats,
+                        mergedConfig
+                    )
             };
 
             slots.push(slot);
-            allExisting.push(normalizeShowtime(slot));
-            roomStartIndex = (availableRoom.index + 1) % movieRooms.length;
+
+            allExisting.push(
+                normalizeShowtime(
+                    slot
+                )
+            );
+
+            // Round robin phòng
+            roomStartIndex =
+                (
+                    availableRoom.index +
+                    1
+                ) %
+                movieRooms.length;
         }
 
         currentTime += interval;
@@ -521,48 +1333,199 @@ const generateSlotsForMovie = ({ date, movie, rooms, roomTypes = [], existingSho
 };
 
 // ==========================================================
-// AUTO SCHEDULER MAIN
+// GENERATE SCHEDULE
 // ==========================================================
 
-const generateSchedule = ({ movies = [], rooms = [], startDate, endDate, config = {}, movieStats = {}, existingShowtimes = [], roomTypes = [] }) => {
-    if (!Array.isArray(movies) || movies.length === 0) throw new Error("Phải có ít nhất một phim.");
-    if (!Array.isArray(rooms) || rooms.length === 0) throw new Error("Phải có ít nhất một phòng.");
-    if (!startDate || !endDate) throw new Error("Thiếu ngày.");
+const generateSchedule = ({
+    movies = [],
+    rooms = [],
+    startDate,
+    endDate,
+    config = {},
+    movieStats = {},
+    existingShowtimes = [],
+    roomTypes = []
+}) => {
+    // ------------------------------------------------------
+    // BASIC VALIDATION
+    // ------------------------------------------------------
 
-    const fromDate = parseDate(startDate);
-    const toDate = parseDate(endDate);
-    if (fromDate > toDate) throw new Error("Ngày bắt đầu phải <= ngày kết thúc.");
+    if (
+        !Array.isArray(movies) ||
+        movies.length === 0
+    ) {
+        throw new Error(
+            "Phải có ít nhất một phim."
+        );
+    }
 
-    const mergedConfig = { ...SCHEDULER_CONFIG, ...config };
-    mergedConfig.bufferMinutes = Number(mergedConfig.bufferMinutes) || 15;
+    if (
+        !Array.isArray(rooms) ||
+        rooms.length === 0
+    ) {
+        throw new Error(
+            "Phải có ít nhất một phòng."
+        );
+    }
 
-    const normalizedMovies = movies.map(movie => {
-        const normalized = { ...movie };
-        normalized.movie_id = Number(normalized.movie_id);
-        normalized.duration = Number.parseInt(normalized.duration, 10);
-        if (!Number.isInteger(normalized.movie_id) || normalized.movie_id <= 0) {
-            throw new Error(`ID phim không hợp lệ: ${movie.movie_id}`);
-        }
-        if (!Number.isFinite(normalized.duration) || normalized.duration <= 0) {
-            throw new Error(`Thời lượng phim "${movie.title}" không hợp lệ.`);
-        }
-        return normalized;
-    });
+    if (
+        !startDate ||
+        !endDate
+    ) {
+        throw new Error(
+            "Thiếu ngày."
+        );
+    }
 
-    const normalizedRooms = rooms.map(room => {
-        const normalized = { ...room };
-        normalized.room_id = Number(normalized.room_id);
-        if (!Number.isInteger(normalized.room_id) || normalized.room_id <= 0) {
-            throw new Error(`ID phòng không hợp lệ: ${room.room_id}`);
-        }
-        normalized.room_type = normalized.room_type ? String(normalized.room_type).trim().toUpperCase() : null;
-        return normalized;
-    });
+    const fromDate =
+        parseDate(startDate);
 
-    const normalizedRoomTypes = normalizeRoomTypes(roomTypes);
-    const eligibleRooms = filterRoomsByType(normalizedRooms, normalizedRoomTypes);
+    const toDate =
+        parseDate(endDate);
 
-    if (eligibleRooms.length === 0) {
+    if (
+        fromDate > toDate
+    ) {
+        throw new Error(
+            "Ngày bắt đầu phải <= ngày kết thúc."
+        );
+    }
+
+    // ------------------------------------------------------
+    // CONFIG
+    // ------------------------------------------------------
+
+    const mergedConfig = {
+        ...SCHEDULER_CONFIG,
+        ...config
+    };
+
+    mergedConfig.bufferMinutes =
+        Number(
+            mergedConfig.bufferMinutes
+        ) || 15;
+
+    mergedConfig.hotInterval =
+        Number(
+            mergedConfig.hotInterval
+        ) || 45;
+
+    mergedConfig.normalInterval =
+        Number(
+            mergedConfig.normalInterval
+        ) || 75;
+
+    mergedConfig.coldInterval =
+        Number(
+            mergedConfig.coldInterval
+        ) || 120;
+
+    // ------------------------------------------------------
+    // NORMALIZE MOVIES
+    // ------------------------------------------------------
+
+    const normalizedMovies =
+        movies.map(
+            (movie) => {
+                const normalized = {
+                    ...movie
+                };
+
+                normalized.movie_id =
+                    Number(
+                        normalized.movie_id
+                    );
+
+                normalized.duration =
+                    Number.parseInt(
+                        normalized.duration,
+                        10
+                    );
+
+                if (
+                    !Number.isInteger(
+                        normalized.movie_id
+                    ) ||
+                    normalized.movie_id <= 0
+                ) {
+                    throw new Error(
+                        `ID phim không hợp lệ: ${movie.movie_id}`
+                    );
+                }
+
+                if (
+                    !Number.isFinite(
+                        normalized.duration
+                    ) ||
+                    normalized.duration <= 0
+                ) {
+                    throw new Error(
+                        `Thời lượng phim "${movie.title}" không hợp lệ.`
+                    );
+                }
+
+                return normalized;
+            }
+        );
+
+    // ------------------------------------------------------
+    // NORMALIZE ROOMS
+    // ------------------------------------------------------
+
+    const normalizedRooms =
+        rooms.map(
+            (room) => {
+                const normalized = {
+                    ...room
+                };
+
+                normalized.room_id =
+                    Number(
+                        normalized.room_id
+                    );
+
+                normalized.room_type =
+                    normalized.room_type
+                        ? String(
+                              normalized.room_type
+                          )
+                              .trim()
+                              .toUpperCase()
+                        : null;
+
+                if (
+                    !Number.isInteger(
+                        normalized.room_id
+                    ) ||
+                    normalized.room_id <= 0
+                ) {
+                    throw new Error(
+                        `ID phòng không hợp lệ: ${room.room_id}`
+                    );
+                }
+
+                return normalized;
+            }
+        );
+
+    // ------------------------------------------------------
+    // ROOM TYPES
+    // ------------------------------------------------------
+
+    const normalizedRoomTypes =
+        normalizeRoomTypes(
+            roomTypes
+        );
+
+    const eligibleRooms =
+        filterRoomsByType(
+            normalizedRooms,
+            normalizedRoomTypes
+        );
+
+    if (
+        eligibleRooms.length === 0
+    ) {
         throw new Error(
             normalizedRoomTypes.length > 0
                 ? `Không có phòng thuộc loại: ${normalizedRoomTypes.join(", ")}`
@@ -570,130 +1533,424 @@ const generateSchedule = ({ movies = [], rooms = [], startDate, endDate, config 
         );
     }
 
-    // 🔥 PHÂN BỔ PHÒNG THEO PHẦN TRĂM (LUÂN PHIÊN)
-    const allocation = allocateRoomsByPercentage(normalizedMovies, eligibleRooms, movieStats);
-    
+    // ------------------------------------------------------
+    // ROOM ALLOCATION
+    // ------------------------------------------------------
+
+    const allocation =
+        allocateRoomsByPercentage(
+            normalizedMovies,
+            eligibleRooms,
+            movieStats
+        );
+
     const allocationMap = {};
-    for (const item of allocation) {
-        allocationMap[item.movie_id] = item;
+
+    for (
+        const item of allocation
+    ) {
+        allocationMap[
+            item.movie_id
+        ] = item;
     }
 
-    const sortedMovies = [...normalizedMovies].sort((a, b) => {
-        const scoreA = calculateHotScore(a, movieStats);
-        const scoreB = calculateHotScore(b, movieStats);
-        return scoreB - scoreA;
-    });
+    // ------------------------------------------------------
+    // SORT MOVIES BY HOT SCORE
+    // ------------------------------------------------------
+
+    const sortedMovies =
+        [...normalizedMovies].sort(
+            (a, b) => {
+                const scoreA =
+                    calculateHotScore(
+                        a,
+                        movieStats
+                    );
+
+                const scoreB =
+                    calculateHotScore(
+                        b,
+                        movieStats
+                    );
+
+                return (
+                    scoreB -
+                    scoreA
+                );
+            }
+        );
+
+    // ------------------------------------------------------
+    // CREATE DATE LIST
+    // ------------------------------------------------------
 
     const dateList = [];
-    let currentDate = parseDate(startDate);
-    while (currentDate <= toDate) {
-        dateList.push(formatDate(currentDate));
-        currentDate = addDays(currentDate, 1);
+
+    let currentDate =
+        parseDate(startDate);
+
+    while (
+        currentDate <= toDate
+    ) {
+        dateList.push(
+            formatDate(
+                currentDate
+            )
+        );
+
+        currentDate =
+            addDays(
+                currentDate,
+                1
+            );
     }
+
+    // ------------------------------------------------------
+    // RESULT
+    // ------------------------------------------------------
 
     const allResults = [];
 
-    // 🔥 Reset startIndexMap mỗi ngày để luân phiên đều
-    for (const date of dateList) {
+    // ------------------------------------------------------
+    // GENERATE EACH DAY
+    // ------------------------------------------------------
+
+    for (
+        const date of dateList
+    ) {
         const scheduledSlots = [];
 
-        for (const movie of sortedMovies) {
-            const movieId = movie.movie_id;
-            const alloc = allocationMap[movieId];
-            
+        // ----------------------------------------------
+        // HOT MOVIE -> NORMAL -> COLD
+        // ----------------------------------------------
+
+        for (
+            const movie of sortedMovies
+        ) {
+            const movieId =
+                movie.movie_id;
+
+            const alloc =
+                allocationMap[
+                    movieId
+                ];
+
             let movieRooms = [];
-            if (alloc && alloc.roomAllocation) {
-                for (const [type, data] of Object.entries(alloc.roomAllocation)) {
-                    if (data.rooms && data.rooms.length > 0) {
-                        movieRooms.push(...data.rooms);
+
+            if (
+                alloc &&
+                alloc.roomAllocation
+            ) {
+                for (
+                    const [
+                        type,
+                        data
+                    ] of Object.entries(
+                        alloc.roomAllocation
+                    )
+                ) {
+                    if (
+                        data.rooms &&
+                        data.rooms.length > 0
+                    ) {
+                        movieRooms.push(
+                            ...data.rooms
+                        );
                     }
                 }
             }
-            
-            if (movieRooms.length === 0) {
-                console.warn(`⚠️ ${movie.title}: không có phòng nào được phân bổ!`);
+
+            if (
+                movieRooms.length === 0
+            ) {
+                console.warn(
+                    `⚠️ ${movie.title}: không có phòng được phân bổ!`
+                );
+
                 continue;
             }
 
-            const slots = generateSlotsForMovie({
-                date,
-                movie,
-                rooms: movieRooms,
-                roomTypes: normalizedRoomTypes,
-                existingShowtimes,
-                scheduledSlots,
-                config: mergedConfig,
-                movieStats,
-                maxRoomsPerMovie: movieRooms.length
-            });
+            const slots =
+                generateSlotsForMovie({
+                    date,
 
-            for (const slot of slots) {
-                allResults.push(slot);
-                scheduledSlots.push(slot);
+                    movie,
+
+                    rooms:
+                        movieRooms,
+
+                    roomTypes:
+                        normalizedRoomTypes,
+
+                    existingShowtimes,
+
+                    scheduledSlots,
+
+                    config:
+                        mergedConfig,
+
+                    movieStats,
+
+                    maxRoomsPerMovie:
+                        movieRooms.length
+                });
+
+            for (
+                const slot of slots
+            ) {
+                allResults.push(
+                    slot
+                );
+
+                scheduledSlots.push(
+                    slot
+                );
             }
         }
     }
 
-    allResults.sort((a, b) => {
-        if (a.date !== b.date) return a.date.localeCompare(b.date);
-        if (a.startMinutes !== b.startMinutes) return a.startMinutes - b.startMinutes;
-        return Number(a.room_id) - Number(b.room_id);
-    });
+    // ------------------------------------------------------
+    // SORT RESULT
+    // ------------------------------------------------------
+
+    allResults.sort(
+        (a, b) => {
+            if (
+                a.date !== b.date
+            ) {
+                return a.date.localeCompare(
+                    b.date
+                );
+            }
+
+            if (
+                a.startMinutes !==
+                b.startMinutes
+            ) {
+                return (
+                    a.startMinutes -
+                    b.startMinutes
+                );
+            }
+
+            return (
+                Number(a.room_id) -
+                Number(b.room_id)
+            );
+        }
+    );
+
+    // ------------------------------------------------------
+    // STATISTICS
+    // ------------------------------------------------------
 
     const stats = {
-        totalMovies: normalizedMovies.length,
-        totalRooms: normalizedRooms.length,
-        eligibleRooms: eligibleRooms.length,
-        totalDays: dateList.length,
-        totalGenerated: allResults.length,
+        totalMovies:
+            normalizedMovies.length,
+
+        totalRooms:
+            normalizedRooms.length,
+
+        eligibleRooms:
+            eligibleRooms.length,
+
+        totalDays:
+            dateList.length,
+
+        totalGenerated:
+            allResults.length,
+
         byMovie: {},
+
         byRoom: {},
+
         byDate: {},
-        byHotLevel: { hot: { count: 0, movies: [] }, normal: { count: 0, movies: [] }, cold: { count: 0, movies: [] } },
-        allocation: allocation.map(item => ({
-            movie_id: item.movie_id,
-            title: item.title,
-            hotScore: item.hotScore,
-            allocatedRooms: item.allocatedRooms,
-            roomAllocation: item.roomAllocation
-        }))
+
+        byHotLevel: {
+            hot: {
+                count: 0,
+                movies: []
+            },
+
+            normal: {
+                count: 0,
+                movies: []
+            },
+
+            cold: {
+                count: 0,
+                movies: []
+            }
+        },
+
+        allocation:
+            allocation.map(
+                (item) => ({
+                    movie_id:
+                        item.movie_id,
+
+                    title:
+                        item.title,
+
+                    hotScore:
+                        item.hotScore,
+
+                    level:
+                        item.level,
+
+                    allocatedRooms:
+                        item.allocatedRooms,
+
+                    roomAllocation:
+                        item.roomAllocation
+                })
+            )
     };
 
-    for (const movie of normalizedMovies) {
-        const count = allResults.filter(slot => Number(slot.movie_id) === Number(movie.movie_id)).length;
-        const hotLevel = getMovieHotLevel(movie, movieStats, mergedConfig);
-        stats.byMovie[movie.movie_id] = {
-            title: movie.title,
+    // ------------------------------------------------------
+    // BY MOVIE
+    // ------------------------------------------------------
+
+    for (
+        const movie of normalizedMovies
+    ) {
+        const count =
+            allResults.filter(
+                (slot) =>
+                    Number(
+                        slot.movie_id
+                    ) ===
+                    Number(
+                        movie.movie_id
+                    )
+            ).length;
+
+        const hotLevel =
+            getMovieHotLevel(
+                movie,
+                movieStats,
+                mergedConfig
+            );
+
+        stats.byMovie[
+            movie.movie_id
+        ] = {
+            title:
+                movie.title,
+
             count,
+
             hotLevel,
-            avgPerDay: dateList.length > 0 ? (count / dateList.length).toFixed(1) : "0.0"
+
+            hotScore:
+                calculateHotScore(
+                    movie,
+                    movieStats
+                ),
+
+            avgPerDay:
+                dateList.length > 0
+                    ? (
+                          count /
+                          dateList.length
+                      ).toFixed(1)
+                    : "0.0"
         };
-        stats.byHotLevel[hotLevel].count += count;
-        stats.byHotLevel[hotLevel].movies.push(movie.title);
+
+        stats.byHotLevel[
+            hotLevel
+        ].count += count;
+
+        stats.byHotLevel[
+            hotLevel
+        ].movies.push(
+            movie.title
+        );
     }
 
-    for (const room of normalizedRooms) {
-        const count = allResults.filter(slot => Number(slot.room_id) === Number(room.room_id)).length;
-        stats.byRoom[room.room_id] = {
-            name: room.room_name || `Phòng ${room.room_id}`,
-            roomType: room.room_type || null,
+    // ------------------------------------------------------
+    // BY ROOM
+    // ------------------------------------------------------
+
+    for (
+        const room of normalizedRooms
+    ) {
+        const count =
+            allResults.filter(
+                (slot) =>
+                    Number(
+                        slot.room_id
+                    ) ===
+                    Number(
+                        room.room_id
+                    )
+            ).length;
+
+        stats.byRoom[
+            room.room_id
+        ] = {
+            name:
+                room.room_name ||
+                `Phòng ${room.room_id}`,
+
+            roomType:
+                room.room_type ||
+                null,
+
             count,
-            avgPerDay: dateList.length > 0 ? (count / dateList.length).toFixed(1) : "0.0"
+
+            avgPerDay:
+                dateList.length > 0
+                    ? (
+                          count /
+                          dateList.length
+                      ).toFixed(1)
+                    : "0.0"
         };
     }
 
-    for (const date of dateList) {
-        stats.byDate[date] = allResults.filter(slot => slot.date === date).length;
+    // ------------------------------------------------------
+    // BY DATE
+    // ------------------------------------------------------
+
+    for (
+        const date of dateList
+    ) {
+        stats.byDate[
+            date
+        ] = allResults.filter(
+            (slot) =>
+                slot.date === date
+        ).length;
     }
+
+    // ------------------------------------------------------
+    // RETURN
+    // ------------------------------------------------------
 
     return {
-        data: allResults,
+        data:
+            allResults,
+
         stats,
-        config: mergedConfig,
-        roomTypes: normalizedRoomTypes,
-        eligibleRoomCount: eligibleRooms.length,
-        dateRange: { startDate, endDate, totalDays: dateList.length },
-        allocation: allocation
+
+        config:
+            mergedConfig,
+
+        roomTypes:
+            normalizedRoomTypes,
+
+        eligibleRoomCount:
+            eligibleRooms.length,
+
+        dateRange: {
+            startDate,
+            endDate,
+            totalDays:
+                dateList.length
+        },
+
+        allocation
     };
 };
 
@@ -703,465 +1960,1454 @@ const generateSchedule = ({ movies = [], rooms = [], startDate, endDate, config 
 
 class ShowtimeService {
 
-    async getAllShowtimesAll(search = "") {
-        return await ShowtimeRepository.findAllAll(search);
+    // ======================================================
+    // GET ALL SHOWTIMES
+    // ======================================================
+
+    async getAllShowtimesAll(
+        search = ""
+    ) {
+        return await ShowtimeRepository.findAllAll(
+            search
+        );
     }
 
-    async getAllShowtimesPaginated(page = 1, limit = 20, search = "") {
-        return await ShowtimeRepository.findAll(page, limit, search);
+    // ======================================================
+    // GET PAGINATED SHOWTIMES
+    // ======================================================
+
+    async getAllShowtimesPaginated(
+        page = 1,
+        limit = 20,
+        search = ""
+    ) {
+        return await ShowtimeRepository.findAll(
+            page,
+            limit,
+            search
+        );
     }
 
-    async getShowtimesByCinemaAndRoom(cinema_id, room_id) {
-        return await ShowtimeRepository.findByCinemaAndRoom(cinema_id, room_id);
+    // ======================================================
+    // GET SHOWTIMES BY CINEMA + ROOM
+    // ======================================================
+
+    async getShowtimesByCinemaAndRoom(
+        cinema_id,
+        room_id
+    ) {
+        return await ShowtimeRepository.findByCinemaAndRoom(
+            cinema_id,
+            room_id
+        );
     }
 
-    async getShowtimeDetail(showtimeId) {
-        const showtime = await ShowtimeRepository.findById(showtimeId);
+    // ======================================================
+    // GET SHOWTIME DETAIL
+    // ======================================================
+
+    async getShowtimeDetail(
+        showtimeId
+    ) {
+        const showtime =
+            await ShowtimeRepository.findById(
+                showtimeId
+            );
+
         if (!showtime) {
-            const err = new Error("Không tìm thấy suất chiếu");
+            const err =
+                new Error(
+                    "Không tìm thấy suất chiếu"
+                );
+
             err.statusCode = 404;
+
             throw err;
         }
+
         return showtime;
     }
 
-    async getShowtimesByMovie(movieId) {
-        return await ShowtimeRepository.findByMovie(movieId);
+    // ======================================================
+    // GET SHOWTIMES BY MOVIE
+    // ======================================================
+
+    async getShowtimesByMovie(
+        movieId
+    ) {
+        return await ShowtimeRepository.findByMovie(
+            movieId
+        );
     }
 
-    async getShowtimesForMovieDetail(movieId, cinemaId, date) {
-        const showtimes = await ShowtimeRepository.findByMovieCinemaDateForDetail(movieId, cinemaId, date);
-        const enrichedShowtimes = showtimes.map(showtime => {
-            const timeSlot = getTimeSlot(showtime.start_time);
-            const dayType = getDayType(date);
-            return {
-                ...showtime,
-                time_slot: timeSlot,
-                time_slot_label: TIME_SLOT_LABELS[timeSlot] || timeSlot,
-                day_type: dayType,
-                day_type_label: DAY_TYPE_LABELS[dayType] || dayType
-            };
-        });
-        const grouped = enrichedShowtimes.reduce((acc, item) => {
-            const key = item.room_type || "UNKNOWN";
-            if (!acc[key]) acc[key] = [];
-            acc[key].push(item);
-            return acc;
-        }, {});
-        return grouped;
+    // ======================================================
+    // MOVIE DETAIL SHOWTIMES
+    // ======================================================
+
+    async getShowtimesForMovieDetail(
+        movieId,
+        cinemaId,
+        date
+    ) {
+        const showtimes =
+            await ShowtimeRepository.findByMovieCinemaDateForDetail(
+                movieId,
+                cinemaId,
+                date
+            );
+
+        const enrichedShowtimes =
+            showtimes.map(
+                (showtime) => {
+                    const timeSlot =
+                        getTimeSlot(
+                            showtime.start_time
+                        );
+
+                    const dayType =
+                        getDayType(
+                            date
+                        );
+
+                    return {
+                        ...showtime,
+
+                        time_slot:
+                            timeSlot,
+
+                        time_slot_label:
+                            TIME_SLOT_LABELS[
+                                timeSlot
+                            ] ||
+                            timeSlot,
+
+                        day_type:
+                            dayType,
+
+                        day_type_label:
+                            DAY_TYPE_LABELS[
+                                dayType
+                            ] ||
+                            dayType
+                    };
+                }
+            );
+
+        // --------------------------------------------------
+        // GROUP BY ROOM TYPE
+        // --------------------------------------------------
+
+        return enrichedShowtimes.reduce(
+            (acc, item) => {
+                const key =
+                    item.room_type ||
+                    "UNKNOWN";
+
+                if (!acc[key]) {
+                    acc[key] = [];
+                }
+
+                acc[key].push(
+                    item
+                );
+
+                return acc;
+            },
+            {}
+        );
     }
 
-    async createShowtime(data) {
-        let { movie_id, cinema_id, room_id, start_time } = data;
-        start_time = formatDateTime(start_time);
-        movie_id = Number(movie_id);
-        cinema_id = Number(cinema_id);
-        room_id = Number(room_id);
+    // ======================================================
+    // CREATE SHOWTIME MANUALLY
+    // ======================================================
 
-        const validationError = validateShowtime({ movie_id, cinema_id, room_id, start_time });
+    async createShowtime(
+        data
+    ) {
+        let {
+            movie_id,
+            cinema_id,
+            room_id,
+            start_time
+        } = data;
+
+        start_time =
+            formatDateTime(
+                start_time
+            );
+
+        movie_id =
+            Number(movie_id);
+
+        cinema_id =
+            Number(cinema_id);
+
+        room_id =
+            Number(room_id);
+
+        // --------------------------------------------------
+        // VALIDATION
+        // --------------------------------------------------
+
+        const validationError =
+            validateShowtime({
+                movie_id,
+                cinema_id,
+                room_id,
+                start_time
+            });
+
         if (validationError) {
-            const err = new Error(validationError);
+            const err =
+                new Error(
+                    validationError
+                );
+
             err.statusCode = 400;
+
             throw err;
         }
 
-        const isPast = await ShowtimeRepository.isPastTime(start_time);
+        // --------------------------------------------------
+        // PAST CHECK
+        // --------------------------------------------------
+
+        const isPast =
+            await ShowtimeRepository.isPastTime(
+                start_time
+            );
+
         if (isPast) {
-            const err = new Error("Không thể tạo suất chiếu trong quá khứ");
+            const err =
+                new Error(
+                    "Không thể tạo suất chiếu trong quá khứ"
+                );
+
             err.statusCode = 400;
             err.field = "start_time";
+
             throw err;
         }
 
-        const conflict = await ShowtimeRepository.findConflict(room_id, start_time);
+        // --------------------------------------------------
+        // CONFLICT
+        // --------------------------------------------------
+
+        const conflict =
+            await ShowtimeRepository.findConflict(
+                room_id,
+                start_time
+            );
+
         if (conflict) {
-            const err = new Error("Phòng này đã có lịch chiếu vào giờ đó");
+            const err =
+                new Error(
+                    "Phòng này đã có lịch chiếu vào giờ đó"
+                );
+
             err.statusCode = 400;
             err.field = "start_time";
+
             throw err;
         }
 
-        return await ShowtimeRepository.create({ movie_id, cinema_id, room_id, start_time });
+        return await ShowtimeRepository.create({
+            movie_id,
+            cinema_id,
+            room_id,
+            start_time
+        });
     }
 
-    async scheduleShowtimes(data) {
+    // ======================================================
+    // AUTO SCHEDULE SHOWTIMES
+    // ======================================================
+
+    async scheduleShowtimes(
+        data
+    ) {
         if (!data) {
-            const err = new Error("Dữ liệu tạo lịch chiếu không hợp lệ");
+            const err =
+                new Error(
+                    "Dữ liệu tạo lịch chiếu không hợp lệ"
+                );
+
             err.statusCode = 400;
+
             throw err;
         }
 
-        const { movie_id, cinema_id, start_date, end_date, distribution } = data;
+        const {
+            movie_id,
+            cinema_id,
+            start_date,
+            end_date,
+            distribution
+        } = data;
 
-        const movieId = Number(movie_id);
-        const cinemaId = Number(cinema_id);
+        const movieId =
+            Number(movie_id);
 
-        if (!Number.isInteger(movieId) || movieId <= 0) {
-            const err = new Error("Vui lòng chọn phim");
+        const cinemaId =
+            Number(cinema_id);
+
+        // --------------------------------------------------
+        // MOVIE
+        // --------------------------------------------------
+
+        if (
+            !Number.isInteger(
+                movieId
+            ) ||
+            movieId <= 0
+        ) {
+            const err =
+                new Error(
+                    "Vui lòng chọn phim"
+                );
+
             err.statusCode = 400;
             err.field = "movie_id";
+
             throw err;
         }
 
-        if (!Number.isInteger(cinemaId) || cinemaId <= 0) {
-            const err = new Error("Vui lòng chọn rạp");
+        // --------------------------------------------------
+        // CINEMA
+        // --------------------------------------------------
+
+        if (
+            !Number.isInteger(
+                cinemaId
+            ) ||
+            cinemaId <= 0
+        ) {
+            const err =
+                new Error(
+                    "Vui lòng chọn rạp"
+                );
+
             err.statusCode = 400;
             err.field = "cinema_id";
+
             throw err;
         }
 
+        // --------------------------------------------------
+        // DATE
+        // --------------------------------------------------
+
         if (!start_date) {
-            const err = new Error("Vui lòng chọn ngày bắt đầu");
+            const err =
+                new Error(
+                    "Vui lòng chọn ngày bắt đầu"
+                );
+
             err.statusCode = 400;
             err.field = "start_date";
+
             throw err;
         }
 
         if (!end_date) {
-            const err = new Error("Vui lòng chọn ngày kết thúc");
+            const err =
+                new Error(
+                    "Vui lòng chọn ngày kết thúc"
+                );
+
             err.statusCode = 400;
             err.field = "end_date";
+
             throw err;
         }
 
-        const startDate = parseDate(start_date);
-        const endDate = parseDate(end_date);
-        if (endDate < startDate) {
-            const err = new Error("Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu");
+        const startDate =
+            parseDate(start_date);
+
+        const endDate =
+            parseDate(end_date);
+
+        if (
+            endDate < startDate
+        ) {
+            const err =
+                new Error(
+                    "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu"
+                );
+
             err.statusCode = 400;
             err.field = "end_date";
+
             throw err;
         }
 
-        const scheduleDistribution = String(distribution || "normal").toLowerCase();
-        if (!ALLOWED_DISTRIBUTIONS.includes(scheduleDistribution)) {
-            const err = new Error("Mức độ phân bổ không hợp lệ. Chấp nhận: hot, normal, cold");
+        // --------------------------------------------------
+        // DISTRIBUTION
+        // --------------------------------------------------
+
+        const scheduleDistribution =
+            String(
+                distribution ||
+                    "normal"
+            ).toLowerCase();
+
+        if (
+            !ALLOWED_DISTRIBUTIONS.includes(
+                scheduleDistribution
+            )
+        ) {
+            const err =
+                new Error(
+                    "Mức độ phân bổ không hợp lệ. Chấp nhận: hot, normal, cold"
+                );
+
             err.statusCode = 400;
             err.field = "distribution";
+
             throw err;
         }
 
-        const movie = await ShowtimeRepository.getMovieDuration(movieId);
+        // --------------------------------------------------
+        // GET MOVIE
+        // --------------------------------------------------
+
+        const movie =
+            await ShowtimeRepository.getMovieDuration(
+                movieId
+            );
+
         if (!movie) {
-            const err = new Error("Không tìm thấy phim");
+            const err =
+                new Error(
+                    "Không tìm thấy phim"
+                );
+
             err.statusCode = 404;
             err.field = "movie_id";
+
             throw err;
         }
 
-        const duration = Number(movie.duration);
-        if (!Number.isFinite(duration) || duration <= 0) {
-            const err = new Error("Thời lượng phim không hợp lệ");
+        const duration =
+            Number(
+                movie.duration
+            );
+
+        if (
+            !Number.isFinite(
+                duration
+            ) ||
+            duration <= 0
+        ) {
+            const err =
+                new Error(
+                    "Thời lượng phim không hợp lệ"
+                );
+
             err.statusCode = 400;
             err.field = "movie_id";
+
             throw err;
         }
+
+        // --------------------------------------------------
+        // GET ROOMS
+        // --------------------------------------------------
 
         let rooms = [];
-        if (typeof ShowtimeRepository.findRoomsByCinema === "function") {
-            rooms = await ShowtimeRepository.findRoomsByCinema(cinemaId);
+
+        if (
+            typeof ShowtimeRepository.findRoomsByCinema ===
+            "function"
+        ) {
+            rooms =
+                await ShowtimeRepository.findRoomsByCinema(
+                    cinemaId
+                );
         }
 
-        rooms = rooms.map(room => ({
-            ...room,
-            room_id: Number(room.room_id),
-            room_type: String(room.room_type || "").trim().toUpperCase()
-        })).filter(room => Number.isInteger(room.room_id) && room.room_id > 0);
+        rooms = rooms
+            .map(
+                (room) => ({
+                    ...room,
 
-        if (rooms.length === 0) {
-            const err = new Error("Rạp không có phòng chiếu nào.");
+                    room_id:
+                        Number(
+                            room.room_id
+                        ),
+
+                    room_type:
+                        String(
+                            room.room_type ||
+                                ""
+                        )
+                            .trim()
+                            .toUpperCase()
+                })
+            )
+            .filter(
+                (room) =>
+                    Number.isInteger(
+                        room.room_id
+                    ) &&
+                    room.room_id > 0
+            );
+
+        if (
+            rooms.length === 0
+        ) {
+            const err =
+                new Error(
+                    "Rạp không có phòng chiếu nào."
+                );
+
             err.statusCode = 400;
             err.field = "cinema_id";
+
             throw err;
         }
 
-        const allRoomTypes = [...new Set(rooms.map(r => r.room_type))];
-        console.log(`📋 Rạp có các hạng phòng: ${allRoomTypes.join(', ')}`);
+        // --------------------------------------------------
+        // ROOM TYPES
+        // --------------------------------------------------
 
-        const schedulerRoomIds = rooms.map(room => Number(room.room_id));
+        const allRoomTypes =
+            [
+                ...new Set(
+                    rooms.map(
+                        (room) =>
+                            room.room_type
+                    )
+                )
+            ].filter(Boolean);
 
-        const existingShowtimes = await ShowtimeRepository.getExistingShowtimes({
-            cinemaId,
-            startDate: start_date,
-            endDate: end_date,
-            roomIds: schedulerRoomIds
-        });
+        console.log(
+            `📋 Rạp có các hạng phòng: ${allRoomTypes.join(", ")}`
+        );
+
+        const schedulerRoomIds =
+            rooms.map(
+                (room) =>
+                    Number(
+                        room.room_id
+                    )
+            );
+
+        // --------------------------------------------------
+        // EXISTING SHOWTIMES
+        // --------------------------------------------------
+
+        const existingShowtimes =
+            await ShowtimeRepository.getExistingShowtimes(
+                {
+                    cinemaId,
+
+                    startDate:
+                        start_date,
+
+                    endDate:
+                        end_date,
+
+                    roomIds:
+                        schedulerRoomIds
+                }
+            );
+
+        // --------------------------------------------------
+        // SCHEDULER CONFIG
+        // --------------------------------------------------
 
         const config = {
             ...SCHEDULER_CONFIG,
-            weekdayStart: "08:00",
-            weekdayEnd: "23:30",
-            weekendStart: "08:00",
-            weekendEnd: "24:00",
-            bufferMinutes: 15,
-            hotInterval: 45,
-            normalInterval: 75,
-            coldInterval: 120,
-            roomTypes: allRoomTypes
+
+            weekdayStart:
+                "08:00",
+
+            weekdayEnd:
+                "23:30",
+
+            weekendStart:
+                "08:00",
+
+            weekendEnd:
+                "24:00",
+
+            bufferMinutes:
+                15,
+
+            hotInterval:
+                45,
+
+            normalInterval:
+                75,
+
+            coldInterval:
+                120,
+
+            roomTypes:
+                allRoomTypes
         };
 
-        const moviesForScheduler = [{
-            movie_id: movieId,
-            title: movie.title || `Phim ${movieId}`,
-            duration,
-            distribution: scheduleDistribution, // ✅ Truyền distribution từ frontend
-            roomTypes: allRoomTypes
-        }];
+        // --------------------------------------------------
+        // MOVIE FOR SCHEDULER
+        // --------------------------------------------------
 
-        const generated = generateSchedule({
-            movies: moviesForScheduler,
-            rooms,
-            roomTypes: allRoomTypes,
-            startDate: start_date,
-            endDate: end_date,
-            config,
-            existingShowtimes,
-            movieStats: {}
-        });
+        const moviesForScheduler =
+            [
+                {
+                    movie_id:
+                        movieId,
+
+                    title:
+                        movie.title ||
+                        `Phim ${movieId}`,
+
+                    duration,
+
+                    // Quan trọng:
+                    // distribution frontend
+                    distribution:
+                        scheduleDistribution,
+
+                    roomTypes:
+                        allRoomTypes
+                }
+            ];
+
+        // --------------------------------------------------
+        // GENERATE
+        // --------------------------------------------------
+
+        const generated =
+            generateSchedule({
+                movies:
+                    moviesForScheduler,
+
+                rooms,
+
+                roomTypes:
+                    allRoomTypes,
+
+                startDate:
+                    start_date,
+
+                endDate:
+                    end_date,
+
+                config,
+
+                existingShowtimes,
+
+                movieStats: {}
+            });
+
+        // --------------------------------------------------
+        // RESULT ARRAYS
+        // --------------------------------------------------
 
         const created = [];
+
         const conflicts = [];
+
         const skippedPast = [];
 
+        // --------------------------------------------------
+        // TIME SLOT STATS
+        // --------------------------------------------------
+
         const timeSlotStats = {
-            MORNING: { count: 0, slots: [] },
-            AFTERNOON: { count: 0, slots: [] },
-            EVENING: { count: 0, slots: [] },
-            NIGHT: { count: 0, slots: [] }
+            MORNING: {
+                count: 0,
+                slots: []
+            },
+
+            AFTERNOON: {
+                count: 0,
+                slots: []
+            },
+
+            EVENING: {
+                count: 0,
+                slots: []
+            },
+
+            NIGHT: {
+                count: 0,
+                slots: []
+            }
         };
+
+        // --------------------------------------------------
+        // DAY TYPE STATS
+        // --------------------------------------------------
 
         const dayTypeStats = {
-            WEEKDAY: { count: 0, slots: [] },
-            WEEKEND: { count: 0, slots: [] }
+            WEEKDAY: {
+                count: 0,
+                slots: []
+            },
+
+            WEEKEND: {
+                count: 0,
+                slots: []
+            }
         };
 
-        for (const slot of generated.data) {
-            const roomId = Number(slot.room_id);
-            const slotStartTime = formatDateTime(slot.start_time);
-            const slotEndTime = formatDateTime(slot.end_time);
-            const date = slot.date;
-            const timeSlot = getTimeSlot(slotStartTime?.split(" ")[1] || "09:00");
-            const dayType = getDayType(date);
-            const roomInfo = rooms.find(room => Number(room.room_id) === roomId);
-            const roomType = slot.room_type || roomInfo?.room_type || null;
+        // --------------------------------------------------
+        // SAVE GENERATED SHOWTIMES
+        // --------------------------------------------------
 
-            if (!Number.isInteger(roomId) || roomId <= 0 || !slotStartTime) {
-                conflicts.push({ ...slot, reason: "Suất chiếu không hợp lệ" });
-                continue;
-            }
+        for (
+            const slot of generated.data
+        ) {
+            const roomId =
+                Number(
+                    slot.room_id
+                );
 
-            const isPast = await ShowtimeRepository.isPastTime(slotStartTime);
-            if (isPast) {
-                skippedPast.push({ ...slot, room_type: roomType, reason: "Suất chiếu nằm trong quá khứ" });
-                continue;
-            }
+            const slotStartTime =
+                formatDateTime(
+                    slot.start_time
+                );
 
-            const conflict = await ShowtimeRepository.findConflict(roomId, slotStartTime, slotEndTime);
-            if (conflict) {
-                conflicts.push({ ...slot, room_type: roomType, reason: "Phòng đã có suất chiếu bị trùng thời gian" });
-                continue;
-            }
+            const slotEndTime =
+                formatDateTime(
+                    slot.end_time
+                );
 
-            try {
-                const showtimeId = await ShowtimeRepository.create({
-                    movie_id: movieId,
-                    cinema_id: cinemaId,
-                    room_id: roomId,
-                    start_time: slotStartTime
+            const date =
+                slot.date;
+
+            const timeSlot =
+                getTimeSlot(
+                    slotStartTime
+                        ?.split(" ")[1] ||
+                        "09:00"
+                );
+
+            const dayType =
+                getDayType(
+                    date
+                );
+
+            const roomInfo =
+                rooms.find(
+                    (room) =>
+                        Number(
+                            room.room_id
+                        ) ===
+                        roomId
+                );
+
+            const roomType =
+                slot.room_type ||
+                roomInfo?.room_type ||
+                null;
+
+            // ------------------------------------------------
+            // VALIDATION
+            // ------------------------------------------------
+
+            if (
+                !Number.isInteger(
+                    roomId
+                ) ||
+                roomId <= 0 ||
+                !slotStartTime
+            ) {
+                conflicts.push({
+                    ...slot,
+
+                    reason:
+                        "Suất chiếu không hợp lệ"
                 });
 
+                continue;
+            }
+
+            // ------------------------------------------------
+            // PAST
+            // ------------------------------------------------
+
+            const isPast =
+                await ShowtimeRepository.isPastTime(
+                    slotStartTime
+                );
+
+            if (isPast) {
+                skippedPast.push({
+                    ...slot,
+
+                    room_type:
+                        roomType,
+
+                    reason:
+                        "Suất chiếu nằm trong quá khứ"
+                });
+
+                continue;
+            }
+
+            // ------------------------------------------------
+            // CONFLICT
+            // ------------------------------------------------
+
+            const conflict =
+                await ShowtimeRepository.findConflict(
+                    roomId,
+                    slotStartTime,
+                    slotEndTime
+                );
+
+            if (conflict) {
+                conflicts.push({
+                    ...slot,
+
+                    room_type:
+                        roomType,
+
+                    reason:
+                        "Phòng đã có suất chiếu bị trùng thời gian"
+                });
+
+                continue;
+            }
+
+            // ------------------------------------------------
+            // CREATE
+            // ------------------------------------------------
+
+            try {
+                const showtimeId =
+                    await ShowtimeRepository.create(
+                        {
+                            movie_id:
+                                movieId,
+
+                            cinema_id:
+                                cinemaId,
+
+                            room_id:
+                                roomId,
+
+                            start_time:
+                                slotStartTime
+                        }
+                    );
+
                 const createdSlot = {
-                    showtime_id: showtimeId,
-                    movie_id: movieId,
-                    cinema_id: cinemaId,
-                    room_id: roomId,
-                    room_type: roomType,
-                    start_time: slotStartTime,
-                    end_time: slotEndTime,
+                    showtime_id:
+                        showtimeId,
+
+                    movie_id:
+                        movieId,
+
+                    cinema_id:
+                        cinemaId,
+
+                    room_id:
+                        roomId,
+
+                    room_type:
+                        roomType,
+
+                    start_time:
+                        slotStartTime,
+
+                    end_time:
+                        slotEndTime,
+
                     duration,
-                    time_slot: timeSlot,
-                    time_slot_label: TIME_SLOT_LABELS[timeSlot],
-                    day_type: dayType,
-                    day_type_label: DAY_TYPE_LABELS[dayType]
+
+                    time_slot:
+                        timeSlot,
+
+                    time_slot_label:
+                        TIME_SLOT_LABELS[
+                            timeSlot
+                        ],
+
+                    day_type:
+                        dayType,
+
+                    day_type_label:
+                        DAY_TYPE_LABELS[
+                            dayType
+                        ]
                 };
 
-                created.push(createdSlot);
-                if (timeSlotStats[timeSlot]) {
-                    timeSlotStats[timeSlot].count++;
-                    timeSlotStats[timeSlot].slots.push(createdSlot);
-                }
-                if (dayTypeStats[dayType]) {
-                    dayTypeStats[dayType].count++;
-                    dayTypeStats[dayType].slots.push(createdSlot);
+                created.push(
+                    createdSlot
+                );
+
+                // --------------------------------------------
+                // TIME SLOT STAT
+                // --------------------------------------------
+
+                if (
+                    timeSlotStats[
+                        timeSlot
+                    ]
+                ) {
+                    timeSlotStats[
+                        timeSlot
+                    ].count++;
+
+                    timeSlotStats[
+                        timeSlot
+                    ].slots.push(
+                        createdSlot
+                    );
                 }
 
+                // --------------------------------------------
+                // DAY TYPE STAT
+                // --------------------------------------------
+
+                if (
+                    dayTypeStats[
+                        dayType
+                    ]
+                ) {
+                    dayTypeStats[
+                        dayType
+                    ].count++;
+
+                    dayTypeStats[
+                        dayType
+                    ].slots.push(
+                        createdSlot
+                    );
+                }
             } catch (error) {
-                conflicts.push({ ...slot, room_type: roomType, reason: error.message || "Không thể tạo suất chiếu" });
+                conflicts.push({
+                    ...slot,
+
+                    room_type:
+                        roomType,
+
+                    reason:
+                        error.message ||
+                        "Không thể tạo suất chiếu"
+                });
             }
         }
+
+        // --------------------------------------------------
+        // SUMMARY
+        // --------------------------------------------------
 
         return {
             success: true,
-            data: created,
+
+            data:
+                created,
+
             conflicts,
+
             skippedPast,
+
             summary: {
                 movieId,
+
                 cinemaId,
-                roomCount: rooms.length,
-                roomTypes: allRoomTypes,
-                roomIds: rooms.map(room => room.room_id),
-                generatedCount: generated.data.length,
-                createdCount: created.length,
-                conflictCount: conflicts.length,
-                skippedPastCount: skippedPast.length,
+
+                roomCount:
+                    rooms.length,
+
+                roomTypes:
+                    allRoomTypes,
+
+                roomIds:
+                    rooms.map(
+                        (room) =>
+                            room.room_id
+                    ),
+
+                generatedCount:
+                    generated.data.length,
+
+                createdCount:
+                    created.length,
+
+                conflictCount:
+                    conflicts.length,
+
+                skippedPastCount:
+                    skippedPast.length,
+
                 duration,
-                startDate: start_date,
-                endDate: end_date,
-                startTime: "08:00",
-                endTime: "23:30",
-                distribution: scheduleDistribution,
-                byRoomType: created.reduce((acc, slot) => {
-                    const type = slot.room_type || "UNKNOWN";
-                    acc[type] = (acc[type] || 0) + 1;
-                    return acc;
-                }, {}),
+
+                startDate:
+                    start_date,
+
+                endDate:
+                    end_date,
+
+                startTime:
+                    "08:00",
+
+                endTime:
+                    "23:30",
+
+                distribution:
+                    scheduleDistribution,
+
+                byRoomType:
+                    created.reduce(
+                        (acc, slot) => {
+                            const type =
+                                slot.room_type ||
+                                "UNKNOWN";
+
+                            acc[type] =
+                                (
+                                    acc[type] ||
+                                    0
+                                ) + 1;
+
+                            return acc;
+                        },
+                        {}
+                    ),
+
                 byTimeSlot: {
-                    MORNING: timeSlotStats.MORNING.count,
-                    AFTERNOON: timeSlotStats.AFTERNOON.count,
-                    EVENING: timeSlotStats.EVENING.count,
-                    NIGHT: timeSlotStats.NIGHT.count
+                    MORNING:
+                        timeSlotStats
+                            .MORNING
+                            .count,
+
+                    AFTERNOON:
+                        timeSlotStats
+                            .AFTERNOON
+                            .count,
+
+                    EVENING:
+                        timeSlotStats
+                            .EVENING
+                            .count,
+
+                    NIGHT:
+                        timeSlotStats
+                            .NIGHT
+                            .count
                 },
+
                 byDayType: {
-                    WEEKDAY: dayTypeStats.WEEKDAY.count,
-                    WEEKEND: dayTypeStats.WEEKEND.count
+                    WEEKDAY:
+                        dayTypeStats
+                            .WEEKDAY
+                            .count,
+
+                    WEEKEND:
+                        dayTypeStats
+                            .WEEKEND
+                            .count
                 },
-                allocation: generated.allocation || []
+
+                allocation:
+                    generated.allocation ||
+                    []
             },
-            schedulerStats: generated.stats || null,
-            schedulerDistribution: generated.distribution || null,
-            roomTypes: allRoomTypes
+
+            schedulerStats:
+                generated.stats ||
+                null,
+
+            schedulerDistribution:
+                generated.distribution ||
+                null,
+
+            roomTypes:
+                allRoomTypes
         };
     }
 
-    async updateShowtime(showtimeId, data) {
-        let { movie_id, cinema_id, room_id, start_time } = data;
+    // ======================================================
+    // UPDATE SHOWTIME
+    // ======================================================
 
-        const existing = await ShowtimeRepository.findById(showtimeId);
+    async updateShowtime(
+        showtimeId,
+        data
+    ) {
+        let {
+            movie_id,
+            cinema_id,
+            room_id,
+            start_time
+        } = data;
+
+        // --------------------------------------------------
+        // EXISTING
+        // --------------------------------------------------
+
+        const existing =
+            await ShowtimeRepository.findById(
+                showtimeId
+            );
+
         if (!existing) {
-            const err = new Error("Không tìm thấy suất chiếu");
+            const err =
+                new Error(
+                    "Không tìm thấy suất chiếu"
+                );
+
             err.statusCode = 404;
+
             throw err;
         }
 
-        start_time = formatDateTime(start_time);
-        movie_id = Number(movie_id);
-        cinema_id = Number(cinema_id);
-        room_id = Number(room_id);
+        start_time =
+            formatDateTime(
+                start_time
+            );
 
-        const validationError = validateShowtime({ movie_id, cinema_id, room_id, start_time });
+        movie_id =
+            Number(movie_id);
+
+        cinema_id =
+            Number(cinema_id);
+
+        room_id =
+            Number(room_id);
+
+        // --------------------------------------------------
+        // VALIDATION
+        // --------------------------------------------------
+
+        const validationError =
+            validateShowtime({
+                movie_id,
+                cinema_id,
+                room_id,
+                start_time
+            });
+
         if (validationError) {
-            const err = new Error(validationError);
+            const err =
+                new Error(
+                    validationError
+                );
+
             err.statusCode = 400;
+
             throw err;
         }
 
-        const isPast = await ShowtimeRepository.isPastTime(start_time);
+        // --------------------------------------------------
+        // PAST
+        // --------------------------------------------------
+
+        const isPast =
+            await ShowtimeRepository.isPastTime(
+                start_time
+            );
+
         if (isPast) {
-            const err = new Error("Không thể cập nhật suất chiếu trong quá khứ");
+            const err =
+                new Error(
+                    "Không thể cập nhật suất chiếu trong quá khứ"
+                );
+
             err.statusCode = 400;
             err.field = "start_time";
+
             throw err;
         }
 
-        const conflict = await ShowtimeRepository.findConflict(room_id, start_time, showtimeId);
+        // --------------------------------------------------
+        // CONFLICT
+        // --------------------------------------------------
+
+        const conflict =
+            await ShowtimeRepository.findConflict(
+                room_id,
+                start_time,
+                showtimeId
+            );
+
         if (conflict) {
-            const err = new Error("Phòng này đã có lịch chiếu giờ đó");
+            const err =
+                new Error(
+                    "Phòng này đã có lịch chiếu giờ đó"
+                );
+
             err.statusCode = 400;
             err.field = "start_time";
+
             throw err;
         }
 
-        const affected = await ShowtimeRepository.update(showtimeId, { movie_id, cinema_id, room_id, start_time });
-        if (affected === 0) {
-            const err = new Error("Không thể cập nhật suất chiếu");
+        // --------------------------------------------------
+        // UPDATE
+        // --------------------------------------------------
+
+        const affected =
+            await ShowtimeRepository.update(
+                showtimeId,
+                {
+                    movie_id,
+                    cinema_id,
+                    room_id,
+                    start_time
+                }
+            );
+
+        if (
+            affected === 0
+        ) {
+            const err =
+                new Error(
+                    "Không thể cập nhật suất chiếu"
+                );
+
             err.statusCode = 500;
+
             throw err;
         }
 
         return true;
     }
 
-    async deleteShowtime(showtimeId) {
-        const existing = await ShowtimeRepository.findById(showtimeId);
+    // ======================================================
+    // DELETE SHOWTIME
+    // ======================================================
+
+    async deleteShowtime(
+        showtimeId
+    ) {
+        const existing =
+            await ShowtimeRepository.findById(
+                showtimeId
+            );
+
         if (!existing) {
-            const err = new Error("Không tìm thấy suất chiếu");
+            const err =
+                new Error(
+                    "Không tìm thấy suất chiếu"
+                );
+
             err.statusCode = 404;
+
             throw err;
         }
 
-        const hasTickets = await ShowtimeRepository.hasTickets(showtimeId);
+        // --------------------------------------------------
+        // CHECK TICKETS
+        // --------------------------------------------------
+
+        const hasTickets =
+            await ShowtimeRepository.hasTickets(
+                showtimeId
+            );
+
         if (hasTickets) {
-            const err = new Error("Suất chiếu này đã có vé bán, không thể xóa");
+            const err =
+                new Error(
+                    "Suất chiếu này đã có vé bán, không thể xóa"
+                );
+
             err.statusCode = 400;
+
             throw err;
         }
 
-        const affected = await ShowtimeRepository.delete(showtimeId);
-        if (affected === 0) {
-            const err = new Error("Không thể xóa suất chiếu");
+        // --------------------------------------------------
+        // DELETE
+        // --------------------------------------------------
+
+        const affected =
+            await ShowtimeRepository.delete(
+                showtimeId
+            );
+
+        if (
+            affected === 0
+        ) {
+            const err =
+                new Error(
+                    "Không thể xóa suất chiếu"
+                );
+
             err.statusCode = 500;
+
             throw err;
         }
 
         return true;
     }
 
-    async getQuickBookingData(movie_id, cinema_id, date) {
-        if (!movie_id && !cinema_id && !date) {
+    // ======================================================
+    // QUICK BOOKING DATA
+    // ======================================================
+
+    async getQuickBookingData(
+        movie_id,
+        cinema_id,
+        date
+    ) {
+        // ----------------------------------------------
+        // STEP 1: MOVIES
+        // ----------------------------------------------
+
+        if (
+            !movie_id &&
+            !cinema_id &&
+            !date
+        ) {
             return await ShowtimeRepository.getQuickBookingMovies();
         }
-        if (movie_id && !cinema_id && !date) {
-            return await ShowtimeRepository.getQuickBookingCinemas(movie_id);
+
+        // ----------------------------------------------
+        // STEP 2: CINEMAS
+        // ----------------------------------------------
+
+        if (
+            movie_id &&
+            !cinema_id &&
+            !date
+        ) {
+            return await ShowtimeRepository.getQuickBookingCinemas(
+                movie_id
+            );
         }
-        if (movie_id && cinema_id && !date) {
-            return await ShowtimeRepository.getQuickBookingDates(movie_id, cinema_id);
+
+        // ----------------------------------------------
+        // STEP 3: DATES
+        // ----------------------------------------------
+
+        if (
+            movie_id &&
+            cinema_id &&
+            !date
+        ) {
+            return await ShowtimeRepository.getQuickBookingDates(
+                movie_id,
+                cinema_id
+            );
         }
-        if (movie_id && cinema_id && date) {
-            return await ShowtimeRepository.getQuickBookingTimes(movie_id, cinema_id, date);
+
+        // ----------------------------------------------
+        // STEP 4: TIMES
+        // ----------------------------------------------
+
+        if (
+            movie_id &&
+            cinema_id &&
+            date
+        ) {
+            return await ShowtimeRepository.getQuickBookingTimes(
+                movie_id,
+                cinema_id,
+                date
+            );
         }
+
         return [];
     }
 
-    async getShowtimesForBooking(movie_id, cinema_id, date) {
-        if (!movie_id || !cinema_id || !date) {
-            const err = new Error("Vui lòng chọn phim, rạp và ngày");
+    // ======================================================
+    // SHOWTIMES FOR BOOKING
+    // ======================================================
+
+    async getShowtimesForBooking(
+        movie_id,
+        cinema_id,
+        date
+    ) {
+        if (
+            !movie_id ||
+            !cinema_id ||
+            !date
+        ) {
+            const err =
+                new Error(
+                    "Vui lòng chọn phim, rạp và ngày"
+                );
+
             err.statusCode = 400;
+
             throw err;
         }
 
-        const showtimes = await ShowtimeRepository.getShowtimesForBooking(movie_id, cinema_id, date);
-        return showtimes.map(showtime => {
-            const timeSlot = getTimeSlot(showtime.start_time);
-            const dayType = getDayType(date);
-            return {
-                ...showtime,
-                time_slot: timeSlot,
-                time_slot_label: TIME_SLOT_LABELS[timeSlot],
-                day_type: dayType,
-                day_type_label: DAY_TYPE_LABELS[dayType]
-            };
-        });
+        const showtimes =
+            await ShowtimeRepository.getShowtimesForBooking(
+                movie_id,
+                cinema_id,
+                date
+            );
+
+        return showtimes.map(
+            (showtime) => {
+                const timeSlot =
+                    getTimeSlot(
+                        showtime.start_time
+                    );
+
+                const dayType =
+                    getDayType(
+                        date
+                    );
+
+                return {
+                    ...showtime,
+
+                    time_slot:
+                        timeSlot,
+
+                    time_slot_label:
+                        TIME_SLOT_LABELS[
+                            timeSlot
+                        ],
+
+                    day_type:
+                        dayType,
+
+                    day_type_label:
+                        DAY_TYPE_LABELS[
+                            dayType
+                        ]
+                };
+            }
+        );
     }
 
-    async filterShowtimes(movie_id, room_id, date) {
-        if (!movie_id || !room_id || !date) {
-            const err = new Error("Thiếu dữ liệu lọc");
+    // ======================================================
+    // FILTER SHOWTIMES
+    // ======================================================
+
+    async filterShowtimes(
+        movie_id,
+        room_id,
+        date
+    ) {
+        if (
+            !movie_id ||
+            !room_id ||
+            !date
+        ) {
+            const err =
+                new Error(
+                    "Thiếu dữ liệu lọc"
+                );
+
             err.statusCode = 400;
+
             throw err;
         }
-        return await ShowtimeRepository.filterShowtimes(movie_id, room_id, date);
+
+        return await ShowtimeRepository.filterShowtimes(
+            movie_id,
+            room_id,
+            date
+        );
     }
 }
 
-module.exports = new ShowtimeService();
+// ==========================================================
+// EXPORT
+// ==========================================================
+
+module.exports =
+    new ShowtimeService();
