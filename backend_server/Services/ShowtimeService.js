@@ -605,7 +605,7 @@ const generateSchedule = ({ movies = [], rooms = [], startDate, endDate, config 
             const slots = generateSlotsForMovie({
                 date,
                 movie,
-                rooms: movieRooms, // 👈 ĐÃ SỬA: truyền danh sách phòng từ phân bổ
+                rooms: movieRooms,
                 roomTypes: normalizedRoomTypes,
                 existingShowtimes,
                 scheduledSlots,
@@ -773,6 +773,7 @@ class ShowtimeService {
         return await ShowtimeRepository.create({ movie_id, cinema_id, room_id, start_time });
     }
 
+    // ✅ ĐÃ BỎ room_types - TỰ ĐỘNG LẤY TẤT CẢ PHÒNG CỦA RẠP
     async scheduleShowtimes(data) {
         if (!data) {
             const err = new Error("Dữ liệu tạo lịch chiếu không hợp lệ");
@@ -780,21 +781,13 @@ class ShowtimeService {
             throw err;
         }
 
-        const { movie_id, cinema_id, room_types, roomTypes, room_ids, start_date, end_date, start_hour, end_hour, distribution } = data;
+        // ✅ CHỈ LẤY NHỮNG FIELD CẦN THIẾT - BỎ room_types
+        const { movie_id, cinema_id, start_date, end_date, distribution } = data;
 
         const movieId = Number(movie_id);
         const cinemaId = Number(cinema_id);
 
-        const requestedRoomTypes = Array.isArray(room_types) ? room_types : Array.isArray(roomTypes) ? roomTypes : [];
-        const normalizedRoomTypes = normalizeRoomTypes(requestedRoomTypes);
-
-        if (requestedRoomTypes.length > 0 && normalizedRoomTypes.length === 0) {
-            const err = new Error("Loại phòng không hợp lệ. Chấp nhận: 2D, 3D, VIP, IMAX");
-            err.statusCode = 400;
-            err.field = "room_types";
-            throw err;
-        }
-
+        // ✅ VALIDATE MOVIE
         if (!Number.isInteger(movieId) || movieId <= 0) {
             const err = new Error("Vui lòng chọn phim");
             err.statusCode = 400;
@@ -802,6 +795,7 @@ class ShowtimeService {
             throw err;
         }
 
+        // ✅ VALIDATE CINEMA
         if (!Number.isInteger(cinemaId) || cinemaId <= 0) {
             const err = new Error("Vui lòng chọn rạp");
             err.statusCode = 400;
@@ -809,13 +803,7 @@ class ShowtimeService {
             throw err;
         }
 
-        if (normalizedRoomTypes.length === 0) {
-            const err = new Error("Vui lòng chọn ít nhất một loại phòng chiếu");
-            err.statusCode = 400;
-            err.field = "room_types";
-            throw err;
-        }
-
+        // ✅ VALIDATE DATE
         if (!start_date) {
             const err = new Error("Vui lòng chọn ngày bắt đầu");
             err.statusCode = 400;
@@ -839,33 +827,7 @@ class ShowtimeService {
             throw err;
         }
 
-        const scheduleStartHour = start_hour || "08:00";
-        const scheduleEndHour = end_hour || "23:30";
-        const timeRegex = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
-
-        if (!timeRegex.test(scheduleStartHour)) {
-            const err = new Error("Giờ bắt đầu không hợp lệ");
-            err.statusCode = 400;
-            err.field = "start_hour";
-            throw err;
-        }
-
-        if (!timeRegex.test(scheduleEndHour)) {
-            const err = new Error("Giờ kết thúc không hợp lệ");
-            err.statusCode = 400;
-            err.field = "end_hour";
-            throw err;
-        }
-
-        const startMinutes = timeToMinutes(scheduleStartHour);
-        const endMinutes = timeToMinutes(scheduleEndHour);
-        if (endMinutes <= startMinutes) {
-            const err = new Error("Giờ kết thúc phải lớn hơn giờ bắt đầu");
-            err.statusCode = 400;
-            err.field = "end_hour";
-            throw err;
-        }
-
+        // ✅ VALIDATE DISTRIBUTION
         const scheduleDistribution = String(distribution || "normal").toLowerCase();
         if (!ALLOWED_DISTRIBUTIONS.includes(scheduleDistribution)) {
             const err = new Error("Mức độ phân bổ không hợp lệ. Chấp nhận: hot, normal, cold");
@@ -874,6 +836,7 @@ class ShowtimeService {
             throw err;
         }
 
+        // ✅ GET MOVIE
         const movie = await ShowtimeRepository.getMovieDuration(movieId);
         if (!movie) {
             const err = new Error("Không tìm thấy phim");
@@ -890,23 +853,10 @@ class ShowtimeService {
             throw err;
         }
 
+        // ✅ LẤY TẤT CẢ PHÒNG CỦA RẠP - KHÔNG FILTER
         let rooms = [];
         if (typeof ShowtimeRepository.findRoomsByCinema === "function") {
             rooms = await ShowtimeRepository.findRoomsByCinema(cinemaId);
-        } else {
-            if (Array.isArray(room_ids) && room_ids.length > 0) {
-                const normalizedRoomIds = [...new Set(room_ids.map(Number).filter(id => Number.isInteger(id) && id > 0))];
-                for (const roomId of normalizedRoomIds) {
-                    const room = await ShowtimeRepository.findRoomInCinema(roomId, cinemaId);
-                    if (room) {
-                        rooms.push({
-                            room_id: Number(room.room_id),
-                            room_name: room.room_name,
-                            room_type: String(room.room_type || "").trim().toUpperCase()
-                        });
-                    }
-                }
-            }
         }
 
         rooms = rooms.map(room => ({
@@ -915,15 +865,18 @@ class ShowtimeService {
             room_type: String(room.room_type || "").trim().toUpperCase()
         })).filter(room => Number.isInteger(room.room_id) && room.room_id > 0);
 
-        rooms = filterRoomsByType(rooms, normalizedRoomTypes);
-
         if (rooms.length === 0) {
-            const err = new Error("Rạp không có phòng thuộc loại đã chọn: " + normalizedRoomTypes.join(", "));
+            const err = new Error("Rạp không có phòng chiếu nào.");
             err.statusCode = 400;
-            err.field = "room_types";
+            err.field = "cinema_id";
             throw err;
         }
 
+        // ✅ TỰ ĐỘNG LẤY DANH SÁCH HẠNG PHÒNG TỪ ROOMS
+        const allRoomTypes = [...new Set(rooms.map(r => r.room_type))];
+        console.log(`📋 Rạp có các hạng phòng: ${allRoomTypes.join(', ')}`);
+
+        // ✅ EXISTING SHOWTIMES
         const schedulerRoomIds = rooms.map(room => Number(room.room_id));
 
         const existingShowtimes = await ShowtimeRepository.getExistingShowtimes({
@@ -933,37 +886,44 @@ class ShowtimeService {
             roomIds: schedulerRoomIds
         });
 
+        // ✅ CONFIG
         const config = {
             ...SCHEDULER_CONFIG,
-            weekdayStart: scheduleStartHour,
-            weekdayEnd: scheduleEndHour,
-            weekendStart: scheduleStartHour,
-            weekendEnd: scheduleEndHour,
+            weekdayStart: "08:00",
+            weekdayEnd: "23:30",
+            weekendStart: "08:00",
+            weekendEnd: "24:00",
             bufferMinutes: 15,
             hotInterval: 45,
             normalInterval: 75,
             coldInterval: 120,
-            roomTypes: normalizedRoomTypes
+            roomTypes: allRoomTypes
         };
 
+        // ✅ MOVIES FOR SCHEDULER
         const moviesForScheduler = [{
             movie_id: movieId,
             title: movie.title || `Phim ${movieId}`,
             duration,
             distribution: scheduleDistribution,
-            roomTypes: normalizedRoomTypes
+            roomTypes: allRoomTypes
         }];
 
+        // ✅ GENERATE
         const generated = generateSchedule({
             movies: moviesForScheduler,
             rooms,
-            roomTypes: normalizedRoomTypes,
+            roomTypes: allRoomTypes,
             startDate: start_date,
             endDate: end_date,
             config,
             existingShowtimes,
             movieStats: {}
         });
+
+        // ==========================================================
+        // INSERT - GIỮ NGUYÊN
+        // ==========================================================
 
         const created = [];
         const conflicts = [];
@@ -1055,7 +1015,7 @@ class ShowtimeService {
                 movieId,
                 cinemaId,
                 roomCount: rooms.length,
-                roomTypes: normalizedRoomTypes,
+                roomTypes: allRoomTypes,
                 roomIds: rooms.map(room => room.room_id),
                 generatedCount: generated.data.length,
                 createdCount: created.length,
@@ -1064,8 +1024,8 @@ class ShowtimeService {
                 duration,
                 startDate: start_date,
                 endDate: end_date,
-                startTime: scheduleStartHour,
-                endTime: scheduleEndHour,
+                startTime: "08:00",
+                endTime: "23:30",
                 distribution: scheduleDistribution,
                 byRoomType: created.reduce((acc, slot) => {
                     const type = slot.room_type || "UNKNOWN";
@@ -1086,7 +1046,7 @@ class ShowtimeService {
             },
             schedulerStats: generated.stats || null,
             schedulerDistribution: generated.distribution || null,
-            roomTypes: normalizedRoomTypes
+            roomTypes: allRoomTypes
         };
     }
 

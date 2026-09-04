@@ -19,17 +19,6 @@ import AdminForm from '../../../components/AdminForm';
 import AdminPagination from '../../../components/AdminPagination';
 
 // ==========================================================
-// ROOM TYPES
-// ==========================================================
-
-const ROOM_TYPES = [
-    { value: '2D', label: '2D', icon: '🎬' },
-    { value: '3D', label: '3D', icon: '🕶️' },
-    { value: 'VIP', label: 'VIP', icon: '👑' },
-    { value: 'IMAX', label: 'IMAX', icon: '🌌' }
-];
-
-// ==========================================================
 // DISTRIBUTION
 // ==========================================================
 
@@ -40,13 +29,12 @@ const DISTRIBUTION_OPTIONS = [
 ];
 
 // ==========================================================
-// INITIAL DATA
+// INITIAL DATA - KHÔNG CÓ room_types
 // ==========================================================
 
 const initialScheduleData = {
     movie_id: '',
     cinema_id: '',
-    room_types: [],
     room_ids: [],
     start_date: '',
     end_date: '',
@@ -59,10 +47,6 @@ const initialScheduleData = {
 // ==========================================================
 
 const ShowTimePage = () => {
-
-    // ======================================================
-    // STATES
-    // ======================================================
 
     const [showtimes, setShowtimes] = useState([]);
     const [movies, setMovies] = useState([]);
@@ -84,18 +68,10 @@ const ShowTimePage = () => {
     const isFetching = useRef(false);
     const abortControllerRef = useRef(null);
 
-    // ======================================================
-    // MODAL
-    // ======================================================
-
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingShowtime, setEditingShowtime] = useState(null);
     const [scheduleData, setScheduleData] = useState(initialScheduleData);
     const [formErrors, setFormErrors] = useState({});
-
-    // ======================================================
-    // ALERT MODAL
-    // ======================================================
 
     const [alertModal, setAlertModal] = useState({
         open: false,
@@ -106,10 +82,6 @@ const ShowTimePage = () => {
         onCancel: null
     });
 
-    // ======================================================
-    // ALERT
-    // ======================================================
-
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
         setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
     };
@@ -117,10 +89,6 @@ const ShowTimePage = () => {
     const closeAlert = () => {
         setAlertModal(prev => ({ ...prev, open: false, onConfirm: null, onCancel: null }));
     };
-
-    // ======================================================
-    // TIME HELPERS
-    // ======================================================
 
     const formatDateTime = (dateStr) => {
         if (!dateStr) return { date: '--/--/----', time: '--:--' };
@@ -131,10 +99,6 @@ const ShowTimePage = () => {
         const [hour, minute] = timePart.split(':');
         return { date: `${day}/${month}/${year}`, time: `${hour}:${minute}` };
     };
-
-    // ======================================================
-    // FETCH SHOWTIMES
-    // ======================================================
 
     const fetchShowtimes = useCallback(async (page = 1, keyword = '') => {
         if (isFetching.current) return;
@@ -173,10 +137,6 @@ const ShowTimePage = () => {
         }
     }, []);
 
-    // ======================================================
-    // FETCH MOVIES + CINEMAS
-    // ======================================================
-
     const fetchInitialData = useCallback(async () => {
         try {
             const [movieRes, cinemaRes] = await Promise.all([
@@ -189,10 +149,6 @@ const ShowTimePage = () => {
             console.error('FETCH INITIAL DATA ERROR:', error);
         }
     }, []);
-
-    // ======================================================
-    // FETCH ROOMS BY CINEMA
-    // ======================================================
 
     const fetchRoomsByCinema = useCallback(async (cinemaId) => {
         if (!cinemaId) {
@@ -208,19 +164,11 @@ const ShowTimePage = () => {
         }
     }, []);
 
-    // ======================================================
-    // MOUNT
-    // ======================================================
-
     useEffect(() => {
         fetchShowtimes(1, '');
         fetchInitialData();
         return () => { if (abortControllerRef.current) abortControllerRef.current.abort(); };
     }, [fetchShowtimes, fetchInitialData]);
-
-    // ======================================================
-    // SEARCH
-    // ======================================================
 
     const prevSearchRef = useRef('');
 
@@ -237,23 +185,14 @@ const ShowTimePage = () => {
         return () => clearTimeout(timer);
     }, [search, fetchShowtimes]);
 
-    // ======================================================
-    // PAGE
-    // ======================================================
-
     const handlePageChange = (page) => {
         fetchShowtimes(page, search);
     };
-
-    // ======================================================
-    // OPEN CREATE
-    // ======================================================
 
     const handleOpenAdd = () => {
         setEditingShowtime(null);
         setScheduleData({
             ...initialScheduleData,
-            room_types: [],
             room_ids: [],
             start_date: '',
             end_date: '',
@@ -264,10 +203,6 @@ const ShowTimePage = () => {
         setFormErrors({});
         setIsFormOpen(true);
     };
-
-    // ======================================================
-    // OPEN EDIT
-    // ======================================================
 
     const handleOpenEdit = async (showtime) => {
         try {
@@ -282,7 +217,6 @@ const ShowTimePage = () => {
                 movie_id: st.movie_id,
                 cinema_id: st.cinema_id,
                 room_ids: [Number(st.room_id)],
-                room_types: [],
                 start_date: st.start_time?.slice(0, 10) || '',
                 end_date: st.start_time?.slice(0, 10) || '',
                 operating_start: st.start_time?.slice(11, 16) || '08:00',
@@ -298,10 +232,6 @@ const ShowTimePage = () => {
         }
     };
 
-    // ======================================================
-    // CLOSE FORM
-    // ======================================================
-
     const handleCloseForm = () => {
         if (submitLoading) return;
         setIsFormOpen(false);
@@ -309,10 +239,6 @@ const ShowTimePage = () => {
         setFormErrors({});
         setRooms([]);
     };
-
-    // ======================================================
-    // CHANGE
-    // ======================================================
 
     const handleChange = async (e) => {
         const { name, value, checked } = e.target;
@@ -322,21 +248,8 @@ const ShowTimePage = () => {
         }
 
         if (name === 'cinema_id') {
-            setScheduleData(prev => ({ ...prev, cinema_id: value, room_types: [], room_ids: [] }));
+            setScheduleData(prev => ({ ...prev, cinema_id: value, room_ids: [] }));
             await fetchRoomsByCinema(value);
-            return;
-        }
-
-        if (name === 'room_types') {
-            setScheduleData(prev => {
-                const currentTypes = Array.isArray(prev.room_types) ? prev.room_types : [];
-                const normalizedValue = String(value).trim().toUpperCase();
-                const nextTypes = checked
-                    ? (currentTypes.some(type => String(type).trim().toUpperCase() === normalizedValue)
-                        ? currentTypes : [...currentTypes, normalizedValue])
-                    : currentTypes.filter(type => String(type).trim().toUpperCase() !== normalizedValue);
-                return { ...prev, room_types: nextTypes };
-            });
             return;
         }
 
@@ -355,21 +268,12 @@ const ShowTimePage = () => {
         setScheduleData(prev => ({ ...prev, [name]: value }));
     };
 
-    // ======================================================
-    // VALIDATE
-    // ======================================================
-
+    // ✅ VALIDATE - KHÔNG CÓ room_types
     const validateSchedule = () => {
         const errors = {};
 
         if (!scheduleData.movie_id) errors.movie_id = 'Vui lòng chọn phim';
         if (!scheduleData.cinema_id) errors.cinema_id = 'Vui lòng chọn rạp';
-
-        if (!editingShowtime) {
-            if (!Array.isArray(scheduleData.room_types) || scheduleData.room_types.length === 0) {
-                errors.room_types = 'Vui lòng chọn ít nhất một hạng phòng';
-            }
-        }
 
         if (editingShowtime) {
             if (!Array.isArray(scheduleData.room_ids) || scheduleData.room_ids.length === 0) {
@@ -392,14 +296,9 @@ const ShowTimePage = () => {
         return Object.keys(errors).length === 0;
     };
 
-    // ======================================================
-    // SUBMIT
-    // ======================================================
-
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // EDIT
         if (editingShowtime) {
             if (!validateSchedule()) return;
 
@@ -427,7 +326,7 @@ const ShowTimePage = () => {
             return;
         }
 
-        // CREATE AUTO
+        // ✅ CREATE AUTO - KHÔNG CÓ room_types
         if (!validateSchedule()) return;
 
         try {
@@ -437,7 +336,6 @@ const ShowTimePage = () => {
             const payload = {
                 movie_id: Number(scheduleData.movie_id),
                 cinema_id: Number(scheduleData.cinema_id),
-                room_types: scheduleData.room_types.map(type => String(type).trim().toUpperCase()),
                 start_date: scheduleData.start_date,
                 end_date: scheduleData.end_date,
                 distribution: scheduleData.distribution_level
@@ -465,7 +363,6 @@ const ShowTimePage = () => {
                 if (skippedPast > 0) message += `\n⏭️ Bỏ qua: ${skippedPast} suất trong quá khứ`;
                 if (skipped > 0) message += `\n⏭️ Bỏ qua: ${skipped} suất không thể xếp`;
 
-                // 🔥 HIỂN THỊ THÔNG TIN PHÂN BỔ PHÒNG THEO PHẦN TRĂM
                 if (data.summary?.allocation && data.summary.allocation.length > 0) {
                     message += `\n\n📊 PHÂN BỔ PHÒNG THEO HẠNG:`;
                     for (const alloc of data.summary.allocation) {
@@ -502,10 +399,6 @@ const ShowTimePage = () => {
         }
     };
 
-    // ======================================================
-    // DELETE
-    // ======================================================
-
     const handleDelete = (showtime) => {
         showAlert(
             'Xác nhận xóa',
@@ -529,10 +422,6 @@ const ShowTimePage = () => {
             closeAlert
         );
     };
-
-    // ======================================================
-    // TABLE COLUMNS
-    // ======================================================
 
     const columns = [
         {
@@ -595,10 +484,7 @@ const ShowTimePage = () => {
         }
     ];
 
-    // ======================================================
-    // FORM FIELDS
-    // ======================================================
-
+    // ✅ FORM FIELDS - KHÔNG CÓ room_types
     const formFields = [
         {
             label: 'Phim',
@@ -612,19 +498,14 @@ const ShowTimePage = () => {
             type: 'select',
             options: [{ label: '-- Chọn rạp --', value: '' }, ...cinemas.map(cinema => ({ label: cinema.cinema_name, value: cinema.cinema_id }))]
         },
-        ...(!editingShowtime ? [{
-            label: 'Hạng phòng',
-            name: 'room_types',
-            type: 'checkbox',
-            required: true,
-            options: ROOM_TYPES.map(type => ({ label: `${type.icon} ${type.label}`, value: type.value }))
-        }] : []),
         ...(editingShowtime ? [{
             label: 'Phòng chiếu',
             name: 'room_ids',
             type: 'checkbox-select',
-            options: rooms.filter(room => ROOM_TYPES.some(type => type.value === String(room.room_type || '').trim().toUpperCase()))
-                .map(room => ({ label: `${room.room_name} (${String(room.room_type || '').trim().toUpperCase()})`, value: room.room_id }))
+            options: rooms.map(room => ({ 
+                label: `${room.room_name} (${String(room.room_type || '').trim().toUpperCase()})`, 
+                value: room.room_id 
+            }))
         }] : []),
         { label: 'Ngày bắt đầu', name: 'start_date', type: 'date' },
         { label: 'Ngày kết thúc', name: 'end_date', type: 'date' },
@@ -637,15 +518,11 @@ const ShowTimePage = () => {
         }] : [])
     ];
 
-    // ======================================================
-    // RENDER
-    // ======================================================
-
     return (
         <>
             <AdminPage
                 title="Quản lý lịch chiếu"
-                subtitle="Tự động phân bổ suất chiếu theo phim, rạp, hạng phòng và mức độ ưu tiên"
+                subtitle="Tự động phân bổ suất chiếu theo phim, rạp và mức độ ưu tiên"
                 icon={<CalendarDays size={30} />}
                 buttonText="Tạo lịch chiếu"
                 onAdd={handleOpenAdd}
@@ -678,24 +555,21 @@ const ShowTimePage = () => {
                             <Sparkles size={18} /> Phân bổ suất chiếu tự động
                         </div>
                         <div style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.6' }}>
-                            Hệ thống sẽ tự chọn <strong>phòng thực tế</strong> dựa trên <strong>hạng phòng</strong> bạn chọn.
-                            <br />Bạn không cần chọn từng phòng.
+                            <strong>Hệ thống sẽ tự động phân bổ phòng theo mức độ ưu tiên:</strong>
                             <br /><br />
-                            <strong>Hạng phòng hỗ trợ:</strong>
-                            <br />🎬 <strong>2D</strong> | 🕶️ <strong>3D</strong> | 👑 <strong>VIP</strong> | 🌌 <strong>IMAX</strong>
+                            🔥 <strong>HOT</strong>: 45 phút/suất
+                            <br />
+                            &nbsp;&nbsp;&nbsp;→ 2D(40%) + 3D(30%) + VIP(20%) + IMAX(10%)
                             <br /><br />
-                            <strong>Mức độ phân bổ:</strong>
-                            <br />🔥 <strong>HOT</strong>: 45 phút/suất
-                            <br />📊 <strong>NORMAL</strong>: 75 phút/suất
-                            <br />❄️ <strong>COLD</strong>: 120 phút/suất
+                            📊 <strong>NORMAL</strong>: 75 phút/suất
+                            <br />
+                            &nbsp;&nbsp;&nbsp;→ 2D(60%) + 3D(40%)
                             <br /><br />
-                            <strong>Phân bổ phòng theo phần trăm:</strong>
-                            <br />🔹 <strong>HOT</strong>: 2D(40%) + 3D(30%) + VIP(20%) + IMAX(10%)
-                            <br />🔹 <strong>NORMAL</strong>: 2D(60%) + 3D(40%)
-                            <br />🔹 <strong>COLD</strong>: 2D(50%)
+                            ❄️ <strong>COLD</strong>: 120 phút/suất
+                            <br />
+                            &nbsp;&nbsp;&nbsp;→ 2D(50%)
                             <br /><br />
-                            <strong>Ví dụ:</strong> Rạp có 2D=10, 3D=5, VIP=3, IMAX=2
-                            <br />→ Phim HOT sẽ được: 2D(4) + 3D(2) + VIP(1) + IMAX(1) = 8 phòng
+                            <strong>💡 Bạn chỉ cần chọn mức độ ưu tiên, hệ thống sẽ tự động phân bổ hạng phòng!</strong>
                         </div>
                     </div>
                 )}
@@ -715,7 +589,7 @@ const ShowTimePage = () => {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '7px' }}>
                             <Info size={16} /> <strong>Cách hoạt động:</strong>
                         </div>
-                        Hệ thống sẽ tự động lấy toàn bộ phòng thuộc các hạng bạn chọn tại rạp.
+                        Hệ thống sẽ tự động lấy toàn bộ phòng thuộc các hạng phù hợp với mức ưu tiên bạn chọn.
                         <br /><br />
                         <strong>🕐 Giờ hoạt động:</strong>
                         <br />Thứ 2 → Thứ 6: <strong>08:00 → 23:30</strong>
@@ -726,11 +600,6 @@ const ShowTimePage = () => {
                         <br /><br />
                         Phòng nào đang bận thì hệ thống sẽ thử phòng khác.
                         <br />Phòng chỉ được sử dụng lại sau khi phim trước kết thúc <strong>+ 15 phút</strong>.
-                        <br /><br />
-                        <strong>📊 Phân bổ phòng:</strong>
-                        <br />🔹 <strong>HOT</strong>: 2D(40%) + 3D(30%) + VIP(20%) + IMAX(10%)
-                        <br />🔹 <strong>NORMAL</strong>: 2D(60%) + 3D(40%)
-                        <br />🔹 <strong>COLD</strong>: 2D(50%)
                     </div>
                 )}
             </AdminModal>
