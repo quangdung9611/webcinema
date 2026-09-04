@@ -49,22 +49,8 @@ const SCHEDULER_CONFIG = {
 };
 
 // ==========================================================
-// ROOM ALLOCATION
+// ROOM ALLOCATION PERCENTAGE
 // ==========================================================
-//
-// HOT
-// 2D  = 40%
-// 3D  = 30%
-// VIP = 20%
-// IMAX = 10%
-//
-// NORMAL
-// 2D = 60%
-// 3D = 40%
-//
-// COLD
-// 2D = 50%
-//
 
 const ROOM_ALLOCATION_PERCENTAGE = {
     hot: {
@@ -88,7 +74,7 @@ const ROOM_ALLOCATION_PERCENTAGE = {
     cold: {
         roomTypes: ["2D"],
         percentage: {
-            "2D": 0.50
+            "2D": 1.00
         }
     }
 };
@@ -110,9 +96,7 @@ const formatDateTime = (dateTime) => {
 // ==========================================================
 
 const getTimeSlot = (startTime) => {
-    if (!startTime) {
-        return "MORNING";
-    }
+    if (!startTime) return "MORNING";
 
     const hour = parseInt(
         String(startTime).split(":")[0],
@@ -139,9 +123,7 @@ const getTimeSlot = (startTime) => {
 // ==========================================================
 
 const getDayType = (date) => {
-    if (!date) {
-        return "WEEKDAY";
-    }
+    if (!date) return "WEEKDAY";
 
     const dayOfWeek = new Date(date).getDay();
 
@@ -165,12 +147,12 @@ const normalizeRoomTypes = (roomTypes) => {
     return [
         ...new Set(
             roomTypes
-                .map((type) =>
+                .map(type =>
                     String(type)
                         .trim()
                         .toUpperCase()
                 )
-                .filter((type) =>
+                .filter(type =>
                     ALLOWED_ROOM_TYPES.includes(type)
                 )
         )
@@ -195,10 +177,7 @@ const validateShowtime = (data) => {
         !room_id ||
         !start_time
     ) {
-        return (
-            "Vui lòng chọn đầy đủ: " +
-            "Phim, Rạp, Phòng và Thời gian chiếu"
-        );
+        return "Vui lòng chọn đầy đủ: Phim, Rạp, Phòng và Thời gian chiếu";
     }
 
     return null;
@@ -310,15 +289,8 @@ const timeToMinutes = (time) => {
         );
     }
 
-    return (
-        hour * 60 +
-        minute
-    );
+    return hour * 60 + minute;
 };
-
-// ==========================================================
-// MINUTES TO TIME
-// ==========================================================
 
 const minutesToTime = (totalMinutes) => {
     if (totalMinutes === 24 * 60) {
@@ -337,10 +309,6 @@ const minutesToTime = (totalMinutes) => {
         `${String(minute).padStart(2, "0")}`
     );
 };
-
-// ==========================================================
-// BUILD DATETIME
-// ==========================================================
 
 const buildDateTime = (
     date,
@@ -375,8 +343,7 @@ const getTimeRangeForDate = (
     date,
     config
 ) => {
-    const weekend =
-        isWeekend(date);
+    const weekend = isWeekend(date);
 
     const startTime = weekend
         ? config.weekendStart
@@ -409,10 +376,6 @@ const getMovieHotLevel = (
     stats = {},
     config = SCHEDULER_CONFIG
 ) => {
-    // ------------------------------------------------------
-    // ƯU TIÊN DISTRIBUTION TỪ FRONTEND
-    // ------------------------------------------------------
-
     if (
         movie &&
         movie.distribution &&
@@ -426,11 +389,6 @@ const getMovieHotLevel = (
             movie.distribution
         ).toLowerCase();
     }
-
-    // ------------------------------------------------------
-    // NẾU KHÔNG CÓ DISTRIBUTION
-    // TỰ TÍNH HOT SCORE
-    // ------------------------------------------------------
 
     const movieId =
         movie?.movie_id;
@@ -453,21 +411,27 @@ const getMovieHotLevel = (
             movieStats.rating || 0
         );
 
-    const hotScore =
-        ticketSold * 0.5 +
-        viewCount * 0.3 +
+    let hotScore = 0;
+
+    hotScore +=
+        ticketSold * 0.5;
+
+    hotScore +=
+        viewCount * 0.3;
+
+    hotScore +=
         rating * 10;
 
     if (
         hotScore >=
-        Number(config.hotThreshold)
+        config.hotThreshold
     ) {
         return "hot";
     }
 
     if (
         hotScore >=
-        Number(config.normalThreshold)
+        config.normalThreshold
     ) {
         return "normal";
     }
@@ -494,23 +458,23 @@ const getInterval = (
     switch (level) {
         case "hot":
             return Number(
-                config.hotInterval
-            ) || 45;
+                config.hotInterval || 45
+            );
 
         case "normal":
             return Number(
-                config.normalInterval
-            ) || 75;
+                config.normalInterval || 75
+            );
 
         case "cold":
             return Number(
-                config.coldInterval
-            ) || 120;
+                config.coldInterval || 120
+            );
 
         default:
             return Number(
-                config.normalInterval
-            ) || 75;
+                config.normalInterval || 75
+            );
     }
 };
 
@@ -548,7 +512,104 @@ const calculateHotScore = (
 };
 
 // ==========================================================
-// ALLOCATE ROOMS BY PERCENTAGE
+// NATURAL ROOM SORT
+//
+// 2D01
+// 2D02
+// ...
+// 2D09
+// 2D10
+//
+// Không để sort kiểu:
+// 2D01, 2D10, 2D2...
+// ==========================================================
+
+const sortRoomsNaturally = (rooms) => {
+    return [...rooms].sort(
+        (a, b) => {
+            const nameA =
+                String(
+                    a.room_name ||
+                    a.room_id ||
+                    ""
+                );
+
+            const nameB =
+                String(
+                    b.room_name ||
+                    b.room_id ||
+                    ""
+                );
+
+            return nameA.localeCompare(
+                nameB,
+                undefined,
+                {
+                    numeric: true,
+                    sensitivity: "base"
+                }
+            );
+        }
+    );
+};
+
+// ==========================================================
+// GROUP ROOMS BY TYPE
+// ==========================================================
+
+const groupRoomsByType = (
+    rooms
+) => {
+    const result = {};
+
+    for (const room of rooms) {
+        const type =
+            String(
+                room.room_type || ""
+            )
+                .trim()
+                .toUpperCase();
+
+        if (
+            !ALLOWED_ROOM_TYPES.includes(
+                type
+            )
+        ) {
+            continue;
+        }
+
+        if (!result[type]) {
+            result[type] = [];
+        }
+
+        result[type].push(room);
+    }
+
+    for (const type of Object.keys(result)) {
+        result[type] =
+            sortRoomsNaturally(
+                result[type]
+            );
+    }
+
+    return result;
+};
+
+// ==========================================================
+// ROOM ALLOCATION PLAN
+//
+// ⚠️ QUAN TRỌNG:
+//
+// Hàm này KHÔNG còn chọn:
+// 2D01 -> 2D06
+//
+// Nó chỉ tạo PLAN tỷ lệ phòng.
+//
+// Toàn bộ phòng 2D01 -> 2D10
+// vẫn được giữ trong roomPools.
+//
+// Cursor thật sự được xử lý
+// trong generateSchedule.
 // ==========================================================
 
 const allocateRoomsByPercentage = (
@@ -556,49 +617,36 @@ const allocateRoomsByPercentage = (
     rooms,
     stats = {}
 ) => {
-    const roomsByType = {};
-
-    // ------------------------------------------------------
-    // GROUP ROOM BY TYPE
-    // ------------------------------------------------------
-
-    for (const room of rooms) {
-        const type = String(
-            room.room_type || ""
-        )
-            .trim()
-            .toUpperCase();
-
-        if (!roomsByType[type]) {
-            roomsByType[type] = [];
-        }
-
-        roomsByType[type].push(room);
-    }
+    const roomsByType =
+        groupRoomsByType(rooms);
 
     console.log(
-        "📋 SỐ LƯỢNG PHÒNG THEO HẠNG:"
+        "\n📋 SỐ LƯỢNG PHÒNG THEO HẠNG:"
     );
 
-    for (
-        const [
-            type,
-            list
-        ] of Object.entries(
-            roomsByType
-        )
-    ) {
+    for (const [
+        type,
+        list
+    ] of Object.entries(
+        roomsByType
+    )) {
         console.log(
             `  ${type}: ${list.length} phòng`
         );
+
+        console.log(
+            `     ${list
+                .map(
+                    room =>
+                        room.room_name ||
+                        room.room_id
+                )
+                .join(" → ")}`
+        );
     }
 
-    // ------------------------------------------------------
-    // CALCULATE MOVIE SCORE
-    // ------------------------------------------------------
-
     const scoredMovies =
-        movies.map((movie) => {
+        movies.map(movie => {
             const level =
                 getMovieHotLevel(
                     movie,
@@ -607,9 +655,7 @@ const allocateRoomsByPercentage = (
 
             return {
                 ...movie,
-
                 level,
-
                 hotScore:
                     calculateHotScore(
                         movie,
@@ -618,192 +664,116 @@ const allocateRoomsByPercentage = (
             };
         });
 
-    // ------------------------------------------------------
-    // HOT MOVIE ĐƯỢC ƯU TIÊN
-    // ------------------------------------------------------
-
     scoredMovies.sort(
         (a, b) =>
             b.hotScore -
             a.hotScore
     );
 
-    // ------------------------------------------------------
-    // ROUND ROBIN INDEX
-    // ------------------------------------------------------
-
-    const startIndexMap = {};
-
     const allocated =
-        scoredMovies.map(
-            (movie) => {
-                const allocationConfig =
-                    ROOM_ALLOCATION_PERCENTAGE[
-                        movie.level
-                    ] ||
-                    ROOM_ALLOCATION_PERCENTAGE.normal;
+        scoredMovies.map(movie => {
+            const config =
+                ROOM_ALLOCATION_PERCENTAGE[
+                    movie.level
+                ] ||
+                ROOM_ALLOCATION_PERCENTAGE.normal;
 
-                const allowedTypes =
-                    allocationConfig.roomTypes;
+            const allowedTypes =
+                config.roomTypes.filter(
+                    type =>
+                        Array.isArray(
+                            roomsByType[type]
+                        ) &&
+                        roomsByType[type]
+                            .length > 0
+                );
 
-                const percentages =
-                    allocationConfig.percentage;
+            const roomAllocation = {};
 
-                const roomAllocation = {};
+            let totalRooms =
+                0;
 
-                let totalRoomsAllocated = 0;
+            for (const type of allowedTypes) {
+                const availableRooms =
+                    roomsByType[type];
 
-                for (
-                    const type of allowedTypes
-                ) {
-                    const availableRooms =
-                        roomsByType[type] ||
-                        [];
+                const percentage =
+                    Number(
+                        config.percentage[
+                            type
+                        ] || 0
+                    );
 
-                    if (
-                        availableRooms.length === 0
-                    ) {
-                        roomAllocation[type] = {
-                            count: 0,
-                            rooms: []
-                        };
-
-                        continue;
-                    }
-
-                    const percent =
-                        Number(
-                            percentages[type] ||
-                            0
-                        );
-
-                    let allocatedCount =
+                const targetCount =
+                    Math.max(
+                        1,
                         Math.round(
                             availableRooms.length *
-                                percent
-                        );
+                            percentage
+                        )
+                    );
 
-                    // Nếu phần trăm > 0 nhưng
-                    // số lượng tính ra = 0
-                    // thì vẫn lấy ít nhất 1 phòng
-                    if (
-                        allocatedCount === 0 &&
-                        percent > 0
-                    ) {
-                        allocatedCount = 1;
-                    }
+                roomAllocation[type] = {
+                    count: targetCount,
 
-                    // Không được vượt quá
-                    // số phòng thực tế
-                    allocatedCount =
-                        Math.min(
-                            allocatedCount,
-                            availableRooms.length
-                        );
+                    // ⚠️ TOÀN BỘ POOL
+                    rooms:
+                        [...availableRooms],
 
-                    if (
-                        startIndexMap[type] ===
-                        undefined
-                    ) {
-                        startIndexMap[type] = 0;
-                    }
-
-                    const startIndex =
-                        startIndexMap[type];
-
-                    const selectedRooms = [];
-
-                    for (
-                        let i = 0;
-                        i < allocatedCount;
-                        i++
-                    ) {
-                        const index =
-                            (
-                                startIndex + i
-                            ) %
-                            availableRooms.length;
-
-                        selectedRooms.push(
-                            availableRooms[index]
-                        );
-                    }
-
-                    startIndexMap[type] =
-                        (
-                            startIndex +
-                            allocatedCount
-                        ) %
-                        availableRooms.length;
-
-                    roomAllocation[type] = {
-                        count:
-                            allocatedCount,
-
-                        rooms:
-                            selectedRooms
-                    };
-
-                    totalRoomsAllocated +=
-                        allocatedCount;
-                }
-
-                return {
-                    ...movie,
-
-                    allocatedRooms:
-                        totalRoomsAllocated,
-
-                    roomAllocation,
-
-                    allowedTypes
+                    percentage
                 };
-            }
-        );
 
-    // ------------------------------------------------------
-    // LOG
-    // ------------------------------------------------------
+                totalRooms +=
+                    targetCount;
+            }
+
+            return {
+                ...movie,
+
+                allocatedRooms:
+                    totalRooms,
+
+                roomAllocation,
+
+                allowedTypes,
+
+                // Toàn bộ phòng theo loại
+                roomPools:
+                    allowedTypes.reduce(
+                        (acc, type) => {
+                            acc[type] =
+                                roomsByType[
+                                    type
+                                ];
+
+                            return acc;
+                        },
+                        {}
+                    )
+            };
+        });
 
     console.log(
-        "📊 PHÂN BỔ PHÒNG THEO PHẦN TRĂM:"
+        "\n📊 ROOM ALLOCATION PLAN:"
     );
 
-    for (
-        const movie of allocated
-    ) {
+    for (const movie of allocated) {
         console.log(
-            `  🔹 ${movie.title} ` +
-            `(${movie.level.toUpperCase()}) ` +
-            `- ${movie.allocatedRooms} phòng`
+            `  🎬 ${movie.title} ` +
+            `(${movie.level.toUpperCase()})`
         );
 
-        for (
-            const [
-                type,
-                data
-            ] of Object.entries(
-                movie.roomAllocation
-            )
-        ) {
-            if (
-                data.count > 0
-            ) {
-                const roomNames =
-                    data.rooms
-                        .map(
-                            (room) =>
-                                room.room_name ||
-                                room.room_id
-                        )
-                        .join(", ");
-
-                console.log(
-                    `      ${type}: ` +
-                    `${data.count} phòng ` +
-                    `(${roomNames})`
-                );
-            }
+        for (const [
+            type,
+            data
+        ] of Object.entries(
+            movie.roomAllocation
+        )) {
+            console.log(
+                `     ${type}: ` +
+                `${data.count} suất mục tiêu / ` +
+                `${data.rooms.length} phòng khả dụng`
+            );
         }
     }
 
@@ -833,10 +803,6 @@ const normalizeShowtime = (
         Number(
             showtime.duration
         );
-
-    // ------------------------------------------------------
-    // PARSE START TIME
-    // ------------------------------------------------------
 
     if (
         !Number.isFinite(
@@ -874,10 +840,6 @@ const normalizeShowtime = (
                 )
             );
     }
-
-    // ------------------------------------------------------
-    // DURATION
-    // ------------------------------------------------------
 
     if (
         !Number.isFinite(
@@ -931,7 +893,7 @@ const hasRoomConflict = ({
     bufferMinutes = 15
 }) => {
     return existingShowtimes.some(
-        (existingRaw) => {
+        existingRaw => {
             const existing =
                 normalizeShowtime(
                     existingRaw
@@ -979,6 +941,11 @@ const hasRoomConflict = ({
 
 // ==========================================================
 // FIND AVAILABLE ROOM
+//
+// roomStartIndex được truyền từ cursor
+// bên ngoài.
+//
+// Hàm này KHÔNG reset cursor.
 // ==========================================================
 
 const findAvailableRoom = ({
@@ -999,6 +966,16 @@ const findAvailableRoom = ({
     const totalRooms =
         rooms.length;
 
+    const normalizedStart =
+        (
+            Number(
+                roomStartIndex
+            ) %
+            totalRooms +
+            totalRooms
+        ) %
+        totalRooms;
+
     for (
         let offset = 0;
         offset < totalRooms;
@@ -1006,7 +983,7 @@ const findAvailableRoom = ({
     ) {
         const index =
             (
-                roomStartIndex +
+                normalizedStart +
                 offset
             ) %
             totalRooms;
@@ -1065,7 +1042,7 @@ const filterRoomsByType = (
         roomTypes.length === 0
     ) {
         return rooms.filter(
-            (room) =>
+            room =>
                 Number.isInteger(
                     Number(
                         room.room_id
@@ -1080,10 +1057,11 @@ const filterRoomsByType = (
         );
 
     return rooms.filter(
-        (room) => {
+        room => {
             const roomType =
                 String(
-                    room.room_type || ""
+                    room.room_type ||
+                    ""
                 )
                     .trim()
                     .toUpperCase();
@@ -1103,7 +1081,117 @@ const filterRoomsByType = (
 };
 
 // ==========================================================
-// GENERATE SLOTS
+// BUILD ROOM TYPE CYCLE
+//
+// Ví dụ HOT:
+//
+// 2D 40%
+// 3D 30%
+// VIP 20%
+// IMAX 10%
+//
+// Tạo cycle:
+//
+// 2D, 2D, 2D, 2D,
+// 3D, 3D, 3D,
+// VIP, VIP,
+// IMAX
+//
+// Sau đó cursor loại phòng cũng được
+// giữ xuyên suốt toàn bộ lịch.
+// ==========================================================
+
+const buildRoomTypeCycle = (
+    level,
+    availableTypes
+) => {
+    const config =
+        ROOM_ALLOCATION_PERCENTAGE[
+            level
+        ] ||
+        ROOM_ALLOCATION_PERCENTAGE.normal;
+
+    const cycle = [];
+
+    for (const type of config.roomTypes) {
+        if (
+            !availableTypes.includes(
+                type
+            )
+        ) {
+            continue;
+        }
+
+        const percentage =
+            Number(
+                config.percentage[
+                    type
+                ] || 0
+            );
+
+        if (percentage <= 0) {
+            continue;
+        }
+
+        const count =
+            Math.max(
+                1,
+                Math.round(
+                    percentage * 10
+                )
+            );
+
+        for (
+            let i = 0;
+            i < count;
+            i++
+        ) {
+            cycle.push(type);
+        }
+    }
+
+    return cycle;
+};
+
+// ==========================================================
+// GET NEXT ROOM TYPE
+// ==========================================================
+
+const getNextRoomType = ({
+    cycle,
+    cursor = 0
+}) => {
+    if (
+        !Array.isArray(cycle) ||
+        cycle.length === 0
+    ) {
+        return null;
+    }
+
+    const index =
+        (
+            Number(cursor) %
+            cycle.length +
+            cycle.length
+        ) %
+        cycle.length;
+
+    return {
+        type: cycle[index],
+        index
+    };
+};
+
+// ==========================================================
+// GENERATE SLOTS FOR ONE MOVIE / ONE DAY
+//
+// ⭐⭐ PHẦN QUAN TRỌNG NHẤT ⭐⭐
+//
+// roomCursorByType được truyền từ
+// generateSchedule.
+//
+// KHÔNG reset về 0 khi sang phim.
+// KHÔNG reset về 0 khi sang ngày.
 // ==========================================================
 
 const generateSlotsForMovie = ({
@@ -1115,7 +1203,9 @@ const generateSlotsForMovie = ({
     scheduledSlots = [],
     config = {},
     movieStats = {},
-    maxRoomsPerMovie = 4
+    roomCursorByType = {},
+    roomTypeCursor = {},
+    roomTypeCycle = []
 }) => {
     const mergedConfig = {
         ...SCHEDULER_CONFIG,
@@ -1129,7 +1219,9 @@ const generateSlotsForMovie = ({
         );
 
     const duration =
-        Number(movie.duration);
+        Number(
+            movie.duration
+        );
 
     if (
         !Number.isFinite(
@@ -1139,10 +1231,6 @@ const generateSlotsForMovie = ({
     ) {
         return [];
     }
-
-    // ------------------------------------------------------
-    // INTERVAL THEO HOT LEVEL
-    // ------------------------------------------------------
 
     const interval =
         getInterval(
@@ -1156,11 +1244,7 @@ const generateSlotsForMovie = ({
             mergedConfig.bufferMinutes
         ) || 15;
 
-    // ------------------------------------------------------
-    // LỌC PHÒNG
-    // ------------------------------------------------------
-
-    let allowedRooms =
+    const allowedRooms =
         filterRoomsByType(
             rooms,
             roomTypes
@@ -1172,27 +1256,25 @@ const generateSlotsForMovie = ({
         return [];
     }
 
-    // ------------------------------------------------------
-    // GIỚI HẠN PHÒNG
-    // ------------------------------------------------------
+    // ======================================================
+    // GROUP TOÀN BỘ PHÒNG
+    // ======================================================
 
-    const movieRooms =
-        allowedRooms.slice(
-            0,
-            maxRoomsPerMovie
+    const roomsByType =
+        groupRoomsByType(
+            allowedRooms
         );
 
-    // ------------------------------------------------------
+    // ======================================================
     // EXISTING SHOWTIMES
-    // ------------------------------------------------------
+    // ======================================================
 
     const allExisting = [
         ...existingShowtimes,
         ...scheduledSlots
     ]
-        .map(
-            (item) =>
-                normalizeShowtime(item)
+        .map(item =>
+            normalizeShowtime(item)
         )
         .filter(Boolean);
 
@@ -1200,8 +1282,6 @@ const generateSlotsForMovie = ({
         timeRange.startMinutes;
 
     const slots = [];
-
-    let roomStartIndex = 0;
 
     let safetyCounter = 0;
 
@@ -1211,15 +1291,15 @@ const generateSlotsForMovie = ({
                 timeRange.endMinutes -
                 timeRange.startMinutes
             ) /
-                Math.max(
-                    interval,
-                    1
-                )
+            Math.max(
+                interval,
+                1
+            )
         ) + 20;
 
-    // ------------------------------------------------------
+    // ======================================================
     // GENERATE
-    // ------------------------------------------------------
+    // ======================================================
 
     while (
         currentTime + duration <=
@@ -1233,25 +1313,178 @@ const generateSlotsForMovie = ({
             currentTime +
             duration;
 
-        const availableRoom =
-            findAvailableRoom({
-                rooms: movieRooms,
+        // ==================================================
+        // CHỌN LOẠI PHÒNG THEO CYCLE
+        // ==================================================
 
-                roomStartIndex,
+        let selectedRoomType = null;
 
-                startMinutes:
-                    currentTime,
+        if (
+            roomTypeCycle.length > 0
+        ) {
+            const typeResult =
+                getNextRoomType({
+                    cycle:
+                        roomTypeCycle,
+                    cursor:
+                        roomTypeCursor.value
+                });
 
-                endMinutes,
+            if (typeResult) {
+                selectedRoomType =
+                    typeResult.type;
+            }
+        }
 
-                existingShowtimes:
-                    allExisting,
+        // ==================================================
+        // FALLBACK
+        // ==================================================
 
-                bufferMinutes:
-                    buffer
-            });
+        if (
+            !selectedRoomType ||
+            !roomsByType[
+                selectedRoomType
+            ] ||
+            roomsByType[
+                selectedRoomType
+            ].length === 0
+        ) {
+            selectedRoomType =
+                Object.keys(
+                    roomsByType
+                )[0];
+        }
 
-        if (availableRoom) {
+        // ==================================================
+        // TÌM PHÒNG THEO CURSOR CỦA
+        // TỪNG HẠNG
+        // ==================================================
+
+        let availableRoom = null;
+
+        let selectedRooms =
+            roomsByType[
+                selectedRoomType
+            ] || [];
+
+        if (
+            selectedRooms.length > 0
+        ) {
+            const currentCursor =
+                Number(
+                    roomCursorByType[
+                        selectedRoomType
+                    ] || 0
+                );
+
+            availableRoom =
+                findAvailableRoom({
+                    rooms:
+                        selectedRooms,
+
+                    roomStartIndex:
+                        currentCursor,
+
+                    startMinutes:
+                        currentTime,
+
+                    endMinutes,
+
+                    existingShowtimes:
+                        allExisting,
+
+                    bufferMinutes:
+                        buffer
+                });
+        }
+
+        // ==================================================
+        // NẾU HẠNG ĐANG CHỌN FULL
+        // THỬ CÁC HẠNG KHÁC
+        // ==================================================
+
+        if (
+            !availableRoom
+        ) {
+            const fallbackTypes =
+                [
+                    ...roomTypeCycle,
+                    ...Object.keys(
+                        roomsByType
+                    )
+                ];
+
+            const uniqueTypes = [
+                ...new Set(
+                    fallbackTypes
+                )
+            ];
+
+            for (
+                const fallbackType
+                of uniqueTypes
+            ) {
+                const fallbackRooms =
+                    roomsByType[
+                        fallbackType
+                    ];
+
+                if (
+                    !fallbackRooms ||
+                    fallbackRooms.length === 0
+                ) {
+                    continue;
+                }
+
+                const fallbackCursor =
+                    Number(
+                        roomCursorByType[
+                            fallbackType
+                        ] || 0
+                    );
+
+                const result =
+                    findAvailableRoom({
+                        rooms:
+                            fallbackRooms,
+
+                        roomStartIndex:
+                            fallbackCursor,
+
+                        startMinutes:
+                            currentTime,
+
+                        endMinutes,
+
+                        existingShowtimes:
+                            allExisting,
+
+                        bufferMinutes:
+                            buffer
+                    });
+
+                if (result) {
+                    selectedRoomType =
+                        fallbackType;
+
+                    selectedRooms =
+                        fallbackRooms;
+
+                    availableRoom =
+                        result;
+
+                    break;
+                }
+            }
+        }
+
+        // ==================================================
+        // CÓ PHÒNG
+        // ==================================================
+
+        if (
+            availableRoom
+        ) {
             const room =
                 availableRoom.room;
 
@@ -1261,8 +1494,7 @@ const generateSlotsForMovie = ({
                 );
 
             const slot = {
-                room_id:
-                    roomId,
+                room_id: roomId,
 
                 room_name:
                     room.room_name ||
@@ -1270,6 +1502,7 @@ const generateSlotsForMovie = ({
 
                 room_type:
                     room.room_type ||
+                    selectedRoomType ||
                     null,
 
                 date,
@@ -1317,14 +1550,66 @@ const generateSlotsForMovie = ({
                 )
             );
 
-            // Round robin phòng
-            roomStartIndex =
+            // ==============================================
+            // ⭐ ADVANCE ROOM CURSOR
+            //
+            // Ví dụ:
+            //
+            // Phim 1:
+            // 2D01 -> 2D02 -> ...
+            //
+            // Phim 2:
+            // cursor vẫn đang ở 2D07
+            //
+            // => 2D07 -> 2D08...
+            // ==============================================
+
+            const roomCount =
+                selectedRooms.length;
+
+            roomCursorByType[
+                selectedRoomType
+            ] =
                 (
                     availableRoom.index +
                     1
-                ) %
-                movieRooms.length;
+                ) % roomCount;
+
+            // ==============================================
+            // ADVANCE ROOM TYPE CURSOR
+            // ==============================================
+
+            if (
+                roomTypeCycle.length > 0
+            ) {
+                const currentTypeIndex =
+                    roomTypeCycle.indexOf(
+                        selectedRoomType
+                    );
+
+                if (
+                    currentTypeIndex >= 0
+                ) {
+                    roomTypeCursor.value =
+                        (
+                            currentTypeIndex +
+                            1
+                        ) %
+                        roomTypeCycle.length;
+                } else {
+                    roomTypeCursor.value =
+                        (
+                            roomTypeCursor.value +
+                            1
+                        ) %
+                        roomTypeCycle.length;
+                }
+            }
         }
+
+        // ==================================================
+        // NEXT TIME
+        // ==================================================
 
         currentTime += interval;
     }
@@ -1333,7 +1618,7 @@ const generateSlotsForMovie = ({
 };
 
 // ==========================================================
-// GENERATE SCHEDULE
+// AUTO SCHEDULER MAIN
 // ==========================================================
 
 const generateSchedule = ({
@@ -1346,10 +1631,6 @@ const generateSchedule = ({
     existingShowtimes = [],
     roomTypes = []
 }) => {
-    // ------------------------------------------------------
-    // BASIC VALIDATION
-    // ------------------------------------------------------
-
     if (
         !Array.isArray(movies) ||
         movies.length === 0
@@ -1391,10 +1672,6 @@ const generateSchedule = ({
         );
     }
 
-    // ------------------------------------------------------
-    // CONFIG
-    // ------------------------------------------------------
-
     const mergedConfig = {
         ...SCHEDULER_CONFIG,
         ...config
@@ -1405,112 +1682,93 @@ const generateSchedule = ({
             mergedConfig.bufferMinutes
         ) || 15;
 
-    mergedConfig.hotInterval =
-        Number(
-            mergedConfig.hotInterval
-        ) || 45;
-
-    mergedConfig.normalInterval =
-        Number(
-            mergedConfig.normalInterval
-        ) || 75;
-
-    mergedConfig.coldInterval =
-        Number(
-            mergedConfig.coldInterval
-        ) || 120;
-
-    // ------------------------------------------------------
+    // ======================================================
     // NORMALIZE MOVIES
-    // ------------------------------------------------------
+    // ======================================================
 
     const normalizedMovies =
-        movies.map(
-            (movie) => {
-                const normalized = {
-                    ...movie
-                };
+        movies.map(movie => {
+            const normalized = {
+                ...movie
+            };
 
-                normalized.movie_id =
-                    Number(
-                        normalized.movie_id
-                    );
+            normalized.movie_id =
+                Number(
+                    normalized.movie_id
+                );
 
-                normalized.duration =
-                    Number.parseInt(
-                        normalized.duration,
-                        10
-                    );
+            normalized.duration =
+                Number.parseInt(
+                    normalized.duration,
+                    10
+                );
 
-                if (
-                    !Number.isInteger(
-                        normalized.movie_id
-                    ) ||
-                    normalized.movie_id <= 0
-                ) {
-                    throw new Error(
-                        `ID phim không hợp lệ: ${movie.movie_id}`
-                    );
-                }
-
-                if (
-                    !Number.isFinite(
-                        normalized.duration
-                    ) ||
-                    normalized.duration <= 0
-                ) {
-                    throw new Error(
-                        `Thời lượng phim "${movie.title}" không hợp lệ.`
-                    );
-                }
-
-                return normalized;
+            if (
+                !Number.isInteger(
+                    normalized.movie_id
+                ) ||
+                normalized.movie_id <= 0
+            ) {
+                throw new Error(
+                    `ID phim không hợp lệ: ${movie.movie_id}`
+                );
             }
-        );
 
-    // ------------------------------------------------------
+            if (
+                !Number.isFinite(
+                    normalized.duration
+                ) ||
+                normalized.duration <= 0
+            ) {
+                throw new Error(
+                    `Thời lượng phim "${movie.title}" không hợp lệ.`
+                );
+            }
+
+            return normalized;
+        });
+
+    // ======================================================
     // NORMALIZE ROOMS
-    // ------------------------------------------------------
+    // ======================================================
 
     const normalizedRooms =
-        rooms.map(
-            (room) => {
-                const normalized = {
-                    ...room
-                };
+        rooms.map(room => {
+            const normalized = {
+                ...room
+            };
 
-                normalized.room_id =
-                    Number(
-                        normalized.room_id
-                    );
+            normalized.room_id =
+                Number(
+                    normalized.room_id
+                );
 
-                normalized.room_type =
-                    normalized.room_type
-                        ? String(
-                              normalized.room_type
-                          )
-                              .trim()
-                              .toUpperCase()
-                        : null;
-
-                if (
-                    !Number.isInteger(
-                        normalized.room_id
-                    ) ||
-                    normalized.room_id <= 0
-                ) {
-                    throw new Error(
-                        `ID phòng không hợp lệ: ${room.room_id}`
-                    );
-                }
-
-                return normalized;
+            if (
+                !Number.isInteger(
+                    normalized.room_id
+                ) ||
+                normalized.room_id <= 0
+            ) {
+                throw new Error(
+                    `ID phòng không hợp lệ: ${room.room_id}`
+                );
             }
-        );
 
-    // ------------------------------------------------------
+            normalized.room_type =
+                normalized.room_type
+                    ? String(
+                        normalized.room_type
+                    )
+                        .trim()
+                        .toUpperCase()
+                    : null;
+
+            return normalized;
+        });
+
+    // ======================================================
     // ROOM TYPES
-    // ------------------------------------------------------
+    // ======================================================
 
     const normalizedRoomTypes =
         normalizeRoomTypes(
@@ -1533,9 +1791,18 @@ const generateSchedule = ({
         );
     }
 
-    // ------------------------------------------------------
-    // ROOM ALLOCATION
-    // ------------------------------------------------------
+    // ======================================================
+    // ROOM POOLS
+    // ======================================================
+
+    const roomsByType =
+        groupRoomsByType(
+            eligibleRooms
+        );
+
+    // ======================================================
+    // ALLOCATION PLAN
+    // ======================================================
 
     const allocation =
         allocateRoomsByPercentage(
@@ -1554,12 +1821,14 @@ const generateSchedule = ({
         ] = item;
     }
 
-    // ------------------------------------------------------
+    // ======================================================
     // SORT MOVIES BY HOT SCORE
-    // ------------------------------------------------------
+    // ======================================================
 
     const sortedMovies =
-        [...normalizedMovies].sort(
+        [
+            ...normalizedMovies
+        ].sort(
             (a, b) => {
                 const scoreA =
                     calculateHotScore(
@@ -1574,15 +1843,14 @@ const generateSchedule = ({
                     );
 
                 return (
-                    scoreB -
-                    scoreA
+                    scoreB - scoreA
                 );
             }
         );
 
-    // ------------------------------------------------------
-    // CREATE DATE LIST
-    // ------------------------------------------------------
+    // ======================================================
+    // DATE LIST
+    // ======================================================
 
     const dateList = [];
 
@@ -1605,24 +1873,62 @@ const generateSchedule = ({
             );
     }
 
-    // ------------------------------------------------------
-    // RESULT
-    // ------------------------------------------------------
+    // ======================================================
+    // ⭐ GLOBAL ROOM CURSOR
+    //
+    // Cực kỳ quan trọng.
+    //
+    // Không reset theo phim.
+    // Không reset theo ngày.
+    //
+    // Ví dụ:
+    //
+    // 2D01 -> 2D02 -> ... -> 2D10
+    //
+    // Phim tiếp:
+    //
+    // 2D01 nếu cursor đã quay vòng,
+    // hoặc 2D07 nếu phim trước dừng ở 2D06.
+    // ======================================================
+
+    const roomCursorByType = {};
+
+    for (
+        const type of Object.keys(
+            roomsByType
+        )
+    ) {
+        roomCursorByType[type] = 0;
+    }
+
+    // ======================================================
+    // ⭐ GLOBAL ROOM TYPE CURSOR
+    // ======================================================
+
+    const roomTypeCursorByLevel = {
+        hot: { value: 0 },
+        normal: { value: 0 },
+        cold: { value: 0 }
+    };
+
+    // ======================================================
+    // RESULTS
+    // ======================================================
 
     const allResults = [];
 
-    // ------------------------------------------------------
-    // GENERATE EACH DAY
-    // ------------------------------------------------------
+    // ======================================================
+    // GENERATE EACH DATE
+    // ======================================================
 
     for (
         const date of dateList
     ) {
         const scheduledSlots = [];
 
-        // ----------------------------------------------
-        // HOT MOVIE -> NORMAL -> COLD
-        // ----------------------------------------------
+        // ================================================
+        // EACH MOVIE
+        // ================================================
 
         for (
             const movie of sortedMovies
@@ -1635,40 +1941,104 @@ const generateSchedule = ({
                     movieId
                 ];
 
-            let movieRooms = [];
+            if (!alloc) {
+                console.warn(
+                    `⚠️ ${movie.title}: không có allocation`
+                );
+
+                continue;
+            }
+
+            // ============================================
+            // ROOM TYPES CỦA PHIM
+            // ============================================
+
+            let movieRoomTypes =
+                alloc.allowedTypes ||
+                [];
+
+            // Chỉ lấy các loại phòng
+            // thực sự tồn tại
+            movieRoomTypes =
+                movieRoomTypes.filter(
+                    type =>
+                        roomsByType[
+                            type
+                        ] &&
+                        roomsByType[
+                            type
+                        ].length > 0
+                );
 
             if (
-                alloc &&
-                alloc.roomAllocation
+                movieRoomTypes.length === 0
             ) {
-                for (
-                    const [
-                        type,
-                        data
-                    ] of Object.entries(
-                        alloc.roomAllocation
-                    )
-                ) {
-                    if (
-                        data.rooms &&
-                        data.rooms.length > 0
-                    ) {
-                        movieRooms.push(
-                            ...data.rooms
-                        );
-                    }
-                }
+                console.warn(
+                    `⚠️ ${movie.title}: không có loại phòng phù hợp`
+                );
+
+                continue;
             }
+
+            // ============================================
+            // ROOM TYPE CYCLE
+            // ============================================
+
+            const level =
+                getMovieHotLevel(
+                    movie,
+                    movieStats,
+                    mergedConfig
+                );
+
+            const roomTypeCycle =
+                buildRoomTypeCycle(
+                    level,
+                    movieRoomTypes
+                );
+
+            if (
+                roomTypeCursorByLevel[
+                    level
+                ] === undefined
+            ) {
+                roomTypeCursorByLevel[
+                    level
+                ] = {
+                    value: 0
+                };
+            }
+
+            // ============================================
+            // ⭐ DÙNG TOÀN BỘ PHÒNG
+            //
+            // KHÔNG:
+            //
+            // slice(0, maxRoomsPerMovie)
+            //
+            // ============================================
+
+            const movieRooms =
+                movieRoomTypes.flatMap(
+                    type =>
+                        roomsByType[
+                            type
+                        ] || []
+                );
 
             if (
                 movieRooms.length === 0
             ) {
                 console.warn(
-                    `⚠️ ${movie.title}: không có phòng được phân bổ!`
+                    `⚠️ ${movie.title}: không có phòng nào`
                 );
 
                 continue;
             }
+
+            // ============================================
+            // GENERATE
+            // ============================================
 
             const slots =
                 generateSlotsForMovie({
@@ -1680,7 +2050,7 @@ const generateSchedule = ({
                         movieRooms,
 
                     roomTypes:
-                        normalizedRoomTypes,
+                        movieRoomTypes,
 
                     existingShowtimes,
 
@@ -1691,9 +2061,19 @@ const generateSchedule = ({
 
                     movieStats,
 
-                    maxRoomsPerMovie:
-                        movieRooms.length
+                    roomCursorByType,
+
+                    roomTypeCursor:
+                        roomTypeCursorByLevel[
+                            level
+                        ],
+
+                    roomTypeCycle
                 });
+
+            // ============================================
+            // SAVE
+            // ============================================
 
             for (
                 const slot of slots
@@ -1709,9 +2089,9 @@ const generateSchedule = ({
         }
     }
 
-    // ------------------------------------------------------
-    // SORT RESULT
-    // ------------------------------------------------------
+    // ======================================================
+    // SORT RESULTS
+    // ======================================================
 
     allResults.sort(
         (a, b) => {
@@ -1740,9 +2120,9 @@ const generateSchedule = ({
         }
     );
 
-    // ------------------------------------------------------
-    // STATISTICS
-    // ------------------------------------------------------
+    // ======================================================
+    // STATS
+    // ======================================================
 
     const stats = {
         totalMovies:
@@ -1785,7 +2165,7 @@ const generateSchedule = ({
 
         allocation:
             allocation.map(
-                (item) => ({
+                item => ({
                     movie_id:
                         item.movie_id,
 
@@ -1795,28 +2175,59 @@ const generateSchedule = ({
                     hotScore:
                         item.hotScore,
 
-                    level:
-                        item.level,
-
                     allocatedRooms:
                         item.allocatedRooms,
 
                     roomAllocation:
-                        item.roomAllocation
+                        Object.entries(
+                            item.roomAllocation ||
+                            {}
+                        ).reduce(
+                            (
+                                acc,
+                                [
+                                    type,
+                                    data
+                                ]
+                            ) => {
+                                acc[type] = {
+                                    count:
+                                        data.count,
+
+                                    percentage:
+                                        data.percentage,
+
+                                    roomCount:
+                                        data.rooms
+                                            ?.length ||
+                                        0,
+
+                                    rooms:
+                                        data.rooms?.map(
+                                            room =>
+                                                room.room_name ||
+                                                room.room_id
+                                        ) || []
+                                };
+
+                                return acc;
+                            },
+                            {}
+                        )
                 })
             )
     };
 
-    // ------------------------------------------------------
+    // ======================================================
     // BY MOVIE
-    // ------------------------------------------------------
+    // ======================================================
 
     for (
         const movie of normalizedMovies
     ) {
         const count =
             allResults.filter(
-                (slot) =>
+                slot =>
                     Number(
                         slot.movie_id
                     ) ===
@@ -1842,18 +2253,12 @@ const generateSchedule = ({
 
             hotLevel,
 
-            hotScore:
-                calculateHotScore(
-                    movie,
-                    movieStats
-                ),
-
             avgPerDay:
                 dateList.length > 0
                     ? (
-                          count /
-                          dateList.length
-                      ).toFixed(1)
+                        count /
+                        dateList.length
+                    ).toFixed(1)
                     : "0.0"
         };
 
@@ -1868,16 +2273,16 @@ const generateSchedule = ({
         );
     }
 
-    // ------------------------------------------------------
+    // ======================================================
     // BY ROOM
-    // ------------------------------------------------------
+    // ======================================================
 
     for (
         const room of normalizedRooms
     ) {
         const count =
             allResults.filter(
-                (slot) =>
+                slot =>
                     Number(
                         slot.room_id
                     ) ===
@@ -1902,31 +2307,33 @@ const generateSchedule = ({
             avgPerDay:
                 dateList.length > 0
                     ? (
-                          count /
-                          dateList.length
-                      ).toFixed(1)
+                        count /
+                        dateList.length
+                    ).toFixed(1)
                     : "0.0"
         };
     }
 
-    // ------------------------------------------------------
+    // ======================================================
     // BY DATE
-    // ------------------------------------------------------
+    // ======================================================
 
     for (
         const date of dateList
     ) {
         stats.byDate[
             date
-        ] = allResults.filter(
-            (slot) =>
-                slot.date === date
-        ).length;
+        ] =
+            allResults.filter(
+                slot =>
+                    slot.date ===
+                    date
+            ).length;
     }
 
-    // ------------------------------------------------------
+    // ======================================================
     // RETURN
-    // ------------------------------------------------------
+    // ======================================================
 
     return {
         data:
@@ -1946,6 +2353,7 @@ const generateSchedule = ({
         dateRange: {
             startDate,
             endDate,
+
             totalDays:
                 dateList.length
         },
@@ -1961,7 +2369,7 @@ const generateSchedule = ({
 class ShowtimeService {
 
     // ======================================================
-    // GET ALL SHOWTIMES
+    // GET ALL
     // ======================================================
 
     async getAllShowtimesAll(
@@ -1973,7 +2381,7 @@ class ShowtimeService {
     }
 
     // ======================================================
-    // GET PAGINATED SHOWTIMES
+    // GET PAGINATED
     // ======================================================
 
     async getAllShowtimesPaginated(
@@ -1989,7 +2397,7 @@ class ShowtimeService {
     }
 
     // ======================================================
-    // GET SHOWTIMES BY CINEMA + ROOM
+    // GET BY CINEMA + ROOM
     // ======================================================
 
     async getShowtimesByCinemaAndRoom(
@@ -2003,7 +2411,7 @@ class ShowtimeService {
     }
 
     // ======================================================
-    // GET SHOWTIME DETAIL
+    // GET DETAIL
     // ======================================================
 
     async getShowtimeDetail(
@@ -2029,7 +2437,7 @@ class ShowtimeService {
     }
 
     // ======================================================
-    // GET SHOWTIMES BY MOVIE
+    // GET BY MOVIE
     // ======================================================
 
     async getShowtimesByMovie(
@@ -2041,7 +2449,7 @@ class ShowtimeService {
     }
 
     // ======================================================
-    // MOVIE DETAIL SHOWTIMES
+    // GET MOVIE DETAIL
     // ======================================================
 
     async getShowtimesForMovieDetail(
@@ -2058,7 +2466,7 @@ class ShowtimeService {
 
         const enrichedShowtimes =
             showtimes.map(
-                (showtime) => {
+                showtime => {
                     const timeSlot =
                         getTimeSlot(
                             showtime.start_time
@@ -2093,32 +2501,34 @@ class ShowtimeService {
                 }
             );
 
-        // --------------------------------------------------
-        // GROUP BY ROOM TYPE
-        // --------------------------------------------------
-
-        return enrichedShowtimes.reduce(
-            (acc, item) => {
-                const key =
-                    item.room_type ||
-                    "UNKNOWN";
-
-                if (!acc[key]) {
-                    acc[key] = [];
-                }
-
-                acc[key].push(
+        const grouped =
+            enrichedShowtimes.reduce(
+                (
+                    acc,
                     item
-                );
+                ) => {
+                    const key =
+                        item.room_type ||
+                        "UNKNOWN";
 
-                return acc;
-            },
-            {}
-        );
+                    if (!acc[key]) {
+                        acc[key] = [];
+                    }
+
+                    acc[key].push(
+                        item
+                    );
+
+                    return acc;
+                },
+                {}
+            );
+
+        return grouped;
     }
 
     // ======================================================
-    // CREATE SHOWTIME MANUALLY
+    // CREATE SHOWTIME
     // ======================================================
 
     async createShowtime(
@@ -2145,10 +2555,6 @@ class ShowtimeService {
         room_id =
             Number(room_id);
 
-        // --------------------------------------------------
-        // VALIDATION
-        // --------------------------------------------------
-
         const validationError =
             validateShowtime({
                 movie_id,
@@ -2168,10 +2574,6 @@ class ShowtimeService {
             throw err;
         }
 
-        // --------------------------------------------------
-        // PAST CHECK
-        // --------------------------------------------------
-
         const isPast =
             await ShowtimeRepository.isPastTime(
                 start_time
@@ -2188,10 +2590,6 @@ class ShowtimeService {
 
             throw err;
         }
-
-        // --------------------------------------------------
-        // CONFLICT
-        // --------------------------------------------------
 
         const conflict =
             await ShowtimeRepository.findConflict(
@@ -2251,9 +2649,9 @@ class ShowtimeService {
         const cinemaId =
             Number(cinema_id);
 
-        // --------------------------------------------------
-        // MOVIE
-        // --------------------------------------------------
+        // ==================================================
+        // VALIDATE MOVIE
+        // ==================================================
 
         if (
             !Number.isInteger(
@@ -2272,9 +2670,9 @@ class ShowtimeService {
             throw err;
         }
 
-        // --------------------------------------------------
-        // CINEMA
-        // --------------------------------------------------
+        // ==================================================
+        // VALIDATE CINEMA
+        // ==================================================
 
         if (
             !Number.isInteger(
@@ -2293,9 +2691,9 @@ class ShowtimeService {
             throw err;
         }
 
-        // --------------------------------------------------
-        // DATE
-        // --------------------------------------------------
+        // ==================================================
+        // VALIDATE START DATE
+        // ==================================================
 
         if (!start_date) {
             const err =
@@ -2308,6 +2706,10 @@ class ShowtimeService {
 
             throw err;
         }
+
+        // ==================================================
+        // VALIDATE END DATE
+        // ==================================================
 
         if (!end_date) {
             const err =
@@ -2322,10 +2724,14 @@ class ShowtimeService {
         }
 
         const startDate =
-            parseDate(start_date);
+            parseDate(
+                start_date
+            );
 
         const endDate =
-            parseDate(end_date);
+            parseDate(
+                end_date
+            );
 
         if (
             endDate < startDate
@@ -2341,14 +2747,14 @@ class ShowtimeService {
             throw err;
         }
 
-        // --------------------------------------------------
+        // ==================================================
         // DISTRIBUTION
-        // --------------------------------------------------
+        // ==================================================
 
         const scheduleDistribution =
             String(
                 distribution ||
-                    "normal"
+                "normal"
             ).toLowerCase();
 
         if (
@@ -2362,14 +2768,15 @@ class ShowtimeService {
                 );
 
             err.statusCode = 400;
-            err.field = "distribution";
+            err.field =
+                "distribution";
 
             throw err;
         }
 
-        // --------------------------------------------------
+        // ==================================================
         // GET MOVIE
-        // --------------------------------------------------
+        // ==================================================
 
         const movie =
             await ShowtimeRepository.getMovieDuration(
@@ -2410,9 +2817,9 @@ class ShowtimeService {
             throw err;
         }
 
-        // --------------------------------------------------
+        // ==================================================
         // GET ROOMS
-        // --------------------------------------------------
+        // ==================================================
 
         let rooms = [];
 
@@ -2426,9 +2833,9 @@ class ShowtimeService {
                 );
         }
 
-        rooms = rooms
-            .map(
-                (room) => ({
+        rooms =
+            rooms
+                .map(room => ({
                     ...room,
 
                     room_id:
@@ -2439,19 +2846,21 @@ class ShowtimeService {
                     room_type:
                         String(
                             room.room_type ||
-                                ""
+                            ""
                         )
                             .trim()
                             .toUpperCase()
-                })
-            )
-            .filter(
-                (room) =>
-                    Number.isInteger(
-                        room.room_id
-                    ) &&
-                    room.room_id > 0
-            );
+                }))
+                .filter(
+                    room =>
+                        Number.isInteger(
+                            room.room_id
+                        ) &&
+                        room.room_id > 0 &&
+                        ALLOWED_ROOM_TYPES.includes(
+                            room.room_type
+                        )
+                );
 
         if (
             rooms.length === 0
@@ -2462,40 +2871,45 @@ class ShowtimeService {
                 );
 
             err.statusCode = 400;
-            err.field = "cinema_id";
+            err.field =
+                "cinema_id";
 
             throw err;
         }
 
-        // --------------------------------------------------
-        // ROOM TYPES
-        // --------------------------------------------------
+        // ==================================================
+        // ALL ROOM TYPES
+        // ==================================================
 
         const allRoomTypes =
             [
                 ...new Set(
                     rooms.map(
-                        (room) =>
+                        room =>
                             room.room_type
                     )
                 )
-            ].filter(Boolean);
+            ];
 
         console.log(
-            `📋 Rạp có các hạng phòng: ${allRoomTypes.join(", ")}`
+            `\n📋 Rạp có các hạng phòng: ${allRoomTypes.join(", ")}`
         );
+
+        // ==================================================
+        // ROOM IDS
+        // ==================================================
 
         const schedulerRoomIds =
             rooms.map(
-                (room) =>
+                room =>
                     Number(
                         room.room_id
                     )
             );
 
-        // --------------------------------------------------
+        // ==================================================
         // EXISTING SHOWTIMES
-        // --------------------------------------------------
+        // ==================================================
 
         const existingShowtimes =
             await ShowtimeRepository.getExistingShowtimes(
@@ -2513,9 +2927,9 @@ class ShowtimeService {
                 }
             );
 
-        // --------------------------------------------------
-        // SCHEDULER CONFIG
-        // --------------------------------------------------
+        // ==================================================
+        // CONFIG
+        // ==================================================
 
         const config = {
             ...SCHEDULER_CONFIG,
@@ -2548,9 +2962,9 @@ class ShowtimeService {
                 allRoomTypes
         };
 
-        // --------------------------------------------------
+        // ==================================================
         // MOVIE FOR SCHEDULER
-        // --------------------------------------------------
+        // ==================================================
 
         const moviesForScheduler =
             [
@@ -2564,8 +2978,6 @@ class ShowtimeService {
 
                     duration,
 
-                    // Quan trọng:
-                    // distribution frontend
                     distribution:
                         scheduleDistribution,
 
@@ -2574,9 +2986,9 @@ class ShowtimeService {
                 }
             ];
 
-        // --------------------------------------------------
+        // ==================================================
         // GENERATE
-        // --------------------------------------------------
+        // ==================================================
 
         const generated =
             generateSchedule({
@@ -2601,9 +3013,9 @@ class ShowtimeService {
                 movieStats: {}
             });
 
-        // --------------------------------------------------
+        // ==================================================
         // RESULT ARRAYS
-        // --------------------------------------------------
+        // ==================================================
 
         const created = [];
 
@@ -2611,9 +3023,9 @@ class ShowtimeService {
 
         const skippedPast = [];
 
-        // --------------------------------------------------
+        // ==================================================
         // TIME SLOT STATS
-        // --------------------------------------------------
+        // ==================================================
 
         const timeSlotStats = {
             MORNING: {
@@ -2637,9 +3049,9 @@ class ShowtimeService {
             }
         };
 
-        // --------------------------------------------------
+        // ==================================================
         // DAY TYPE STATS
-        // --------------------------------------------------
+        // ==================================================
 
         const dayTypeStats = {
             WEEKDAY: {
@@ -2653,9 +3065,9 @@ class ShowtimeService {
             }
         };
 
-        // --------------------------------------------------
-        // SAVE GENERATED SHOWTIMES
-        // --------------------------------------------------
+        // ==================================================
+        // CREATE GENERATED SHOWTIMES
+        // ==================================================
 
         for (
             const slot of generated.data
@@ -2682,7 +3094,7 @@ class ShowtimeService {
                 getTimeSlot(
                     slotStartTime
                         ?.split(" ")[1] ||
-                        "09:00"
+                    "09:00"
                 );
 
             const dayType =
@@ -2692,7 +3104,7 @@ class ShowtimeService {
 
             const roomInfo =
                 rooms.find(
-                    (room) =>
+                    room =>
                         Number(
                             room.room_id
                         ) ===
@@ -2704,9 +3116,9 @@ class ShowtimeService {
                 roomInfo?.room_type ||
                 null;
 
-            // ------------------------------------------------
-            // VALIDATION
-            // ------------------------------------------------
+            // ==============================================
+            // VALIDATE
+            // ==============================================
 
             if (
                 !Number.isInteger(
@@ -2725,9 +3137,9 @@ class ShowtimeService {
                 continue;
             }
 
-            // ------------------------------------------------
+            // ==============================================
             // PAST
-            // ------------------------------------------------
+            // ==============================================
 
             const isPast =
                 await ShowtimeRepository.isPastTime(
@@ -2748,9 +3160,9 @@ class ShowtimeService {
                 continue;
             }
 
-            // ------------------------------------------------
+            // ==============================================
             // CONFLICT
-            // ------------------------------------------------
+            // ==============================================
 
             const conflict =
                 await ShowtimeRepository.findConflict(
@@ -2773,9 +3185,9 @@ class ShowtimeService {
                 continue;
             }
 
-            // ------------------------------------------------
+            // ==============================================
             // CREATE
-            // ------------------------------------------------
+            // ==============================================
 
             try {
                 const showtimeId =
@@ -2840,10 +3252,6 @@ class ShowtimeService {
                     createdSlot
                 );
 
-                // --------------------------------------------
-                // TIME SLOT STAT
-                // --------------------------------------------
-
                 if (
                     timeSlotStats[
                         timeSlot
@@ -2860,10 +3268,6 @@ class ShowtimeService {
                     );
                 }
 
-                // --------------------------------------------
-                // DAY TYPE STAT
-                // --------------------------------------------
-
                 if (
                     dayTypeStats[
                         dayType
@@ -2879,7 +3283,9 @@ class ShowtimeService {
                         createdSlot
                     );
                 }
-            } catch (error) {
+            } catch (
+                error
+            ) {
                 conflicts.push({
                     ...slot,
 
@@ -2893,9 +3299,9 @@ class ShowtimeService {
             }
         }
 
-        // --------------------------------------------------
-        // SUMMARY
-        // --------------------------------------------------
+        // ==================================================
+        // RETURN
+        // ==================================================
 
         return {
             success: true,
@@ -2920,7 +3326,7 @@ class ShowtimeService {
 
                 roomIds:
                     rooms.map(
-                        (room) =>
+                        room =>
                             room.room_id
                     ),
 
@@ -2955,7 +3361,10 @@ class ShowtimeService {
 
                 byRoomType:
                     created.reduce(
-                        (acc, slot) => {
+                        (
+                            acc,
+                            slot
+                        ) => {
                             const type =
                                 slot.room_type ||
                                 "UNKNOWN";
@@ -3038,10 +3447,6 @@ class ShowtimeService {
             start_time
         } = data;
 
-        // --------------------------------------------------
-        // EXISTING
-        // --------------------------------------------------
-
         const existing =
             await ShowtimeRepository.findById(
                 showtimeId
@@ -3072,10 +3477,6 @@ class ShowtimeService {
         room_id =
             Number(room_id);
 
-        // --------------------------------------------------
-        // VALIDATION
-        // --------------------------------------------------
-
         const validationError =
             validateShowtime({
                 movie_id,
@@ -3095,10 +3496,6 @@ class ShowtimeService {
             throw err;
         }
 
-        // --------------------------------------------------
-        // PAST
-        // --------------------------------------------------
-
         const isPast =
             await ShowtimeRepository.isPastTime(
                 start_time
@@ -3115,10 +3512,6 @@ class ShowtimeService {
 
             throw err;
         }
-
-        // --------------------------------------------------
-        // CONFLICT
-        // --------------------------------------------------
 
         const conflict =
             await ShowtimeRepository.findConflict(
@@ -3138,10 +3531,6 @@ class ShowtimeService {
 
             throw err;
         }
-
-        // --------------------------------------------------
-        // UPDATE
-        // --------------------------------------------------
 
         const affected =
             await ShowtimeRepository.update(
@@ -3193,10 +3582,6 @@ class ShowtimeService {
             throw err;
         }
 
-        // --------------------------------------------------
-        // CHECK TICKETS
-        // --------------------------------------------------
-
         const hasTickets =
             await ShowtimeRepository.hasTickets(
                 showtimeId
@@ -3212,10 +3597,6 @@ class ShowtimeService {
 
             throw err;
         }
-
-        // --------------------------------------------------
-        // DELETE
-        // --------------------------------------------------
 
         const affected =
             await ShowtimeRepository.delete(
@@ -3247,10 +3628,6 @@ class ShowtimeService {
         cinema_id,
         date
     ) {
-        // ----------------------------------------------
-        // STEP 1: MOVIES
-        // ----------------------------------------------
-
         if (
             !movie_id &&
             !cinema_id &&
@@ -3258,10 +3635,6 @@ class ShowtimeService {
         ) {
             return await ShowtimeRepository.getQuickBookingMovies();
         }
-
-        // ----------------------------------------------
-        // STEP 2: CINEMAS
-        // ----------------------------------------------
 
         if (
             movie_id &&
@@ -3273,10 +3646,6 @@ class ShowtimeService {
             );
         }
 
-        // ----------------------------------------------
-        // STEP 3: DATES
-        // ----------------------------------------------
-
         if (
             movie_id &&
             cinema_id &&
@@ -3287,10 +3656,6 @@ class ShowtimeService {
                 cinema_id
             );
         }
-
-        // ----------------------------------------------
-        // STEP 4: TIMES
-        // ----------------------------------------------
 
         if (
             movie_id &&
@@ -3339,7 +3704,7 @@ class ShowtimeService {
             );
 
         return showtimes.map(
-            (showtime) => {
+            showtime => {
                 const timeSlot =
                     getTimeSlot(
                         showtime.start_time
