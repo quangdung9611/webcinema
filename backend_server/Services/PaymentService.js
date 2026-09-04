@@ -4,12 +4,14 @@ const crypto = require("crypto");
 
 
 /*=========================================================
-    CONFIG - ĐỒNG BỘ VỚI AUTH SERVICE
+    CONFIG
 =========================================================*/
 
-const TEMP_BOOKING_TTL = 300; // 5 phút (giống OTP_EXPIRE_SECONDS)
-const RATE_LIMIT_WINDOW = 300; // 5 phút (giống forgot-password rate limit)
-const MAX_OTP_ATTEMPTS = 5; // 5 lần (giống OtpService)
+const TEMP_BOOKING_TTL = 300; // 5 phút
+const SEAT_LOCK_TTL = 10 * 60; // 10 phút
+
+const RATE_LIMIT_WINDOW = 300;
+const MAX_OTP_ATTEMPTS = 5;
 
 
 /*=========================================================
@@ -17,7 +19,10 @@ const MAX_OTP_ATTEMPTS = 5; // 5 lần (giống OtpService)
 =========================================================*/
 
 const generateTempBookingId = () => {
-    return crypto.randomBytes(8).toString("hex").toUpperCase();
+    return crypto
+        .randomBytes(8)
+        .toString("hex")
+        .toUpperCase();
 };
 
 
@@ -30,9 +35,19 @@ class PaymentService {
 
     /*=========================================================
         1. PROCESS ORDER
-        - Lấy thông tin phòng
-        - Kiểm tra ghế
-        - Lưu booking tạm vào Redis với TTL 5 phút
+
+        MỤC TIÊU:
+
+        - Lấy thông tin suất chiếu
+        - Xác nhận ghế đang thuộc Redis lock
+        - Tạo temp booking
+        - Lưu temp booking vào Redis
+
+        QUAN TRỌNG:
+
+        Không dùng SELECT từng ghế trong MySQL ở đây nữa.
+
+        Redis mới là lớp bảo vệ realtime đầu tiên.
     =========================================================*/
 
     async processOrder(data) {
@@ -49,8 +64,67 @@ class PaymentService {
             customerPhone,
             movieTitle,
             cinemaName,
-            startTime
+            startTime,
+
+            // Owner của Redis seat lock
+            ownerToken
         } = data;
+
+
+        /*=====================================================
+            VALIDATE
+        =====================================================*/
+
+        if (!showtimeId) {
+            throw new Error(
+                "showtimeId không hợp lệ"
+            );
+        }
+
+
+        if (
+            !selectedSeats ||
+            !Array.isArray(selectedSeats) ||
+            selectedSeats.length === 0
+        ) {
+
+            throw new Error(
+                "Vui lòng chọn ít nhất một ghế"
+            );
+        }
+
+
+        /*
+         * Giới hạn giống frontend hiện tại:
+         * tối đa 8 ghế.
+         *
+         * Đây chỉ là lớp bảo vệ backend.
+         */
+
+        if (selectedSeats.length > 8) {
+
+            throw new Error(
+                "Bạn chỉ được chọn tối đa 8 ghế"
+            );
+        }
+
+
+        /*
+         * ownerToken rất quan trọng.
+         *
+         * Nó phải giống token được dùng khi:
+         *
+         * Redis Seat Lock
+         *
+         * được tạo ở server.js.
+         */
+
+        if (!ownerToken) {
+
+            throw new Error(
+                "Không xác định được phiên giữ ghế. Vui lòng chọn ghế lại."
+            );
+        }
 
 
         /*=====================================================
@@ -73,53 +147,120 @@ class PaymentService {
 
 
         if (!rows.length) {
-            throw new Error("Không tìm thấy suất chiếu");
+
+            throw new Error(
+                "Không tìm thấy suất chiếu"
+            );
         }
 
 
-        const room_id = rows[0].room_id;
-        const cinema_id = rows[0].cinema_id;
-        const roomName = rows[0].room_name;
+        const room_id =
+            rows[0].room_id;
+
+        const cinema_id =
+            rows[0].cinema_id;
+
+        const roomName =
+            rows[0].room_name;
 
 
         /*=====================================================
-            KIỂM TRA GHẾ ĐÃ ĐƯỢC ĐẶT CHƯA
+            KIỂM TRA REDIS SEAT LOCK
         =====================================================*/
 
-        for (const seat of selectedSeats) {
+        /*
+         * Kiểm tra tất cả ghế song song.
+         *
+         * Không làm:
+         *
+         * await seat 1
+         * await seat 2
+         * await seat 3
+         *
+         * vì sẽ chậm hơn.
+         *
+         * Thay vào đó:
+         *
+         * Promise.all()
+         */
 
-            const [existing] = await db.execute(
-                `
-                SELECT t.ticket_id
-                FROM tickets t
+        const seatLockResults =
+            await Promise.all(
+                selectedSeats.map(
+                    async (seat) => {
 
-                JOIN bookings b
-                    ON t.booking_id = b.booking_id
+                        const lock =
+                            await RedisService.getSeatLock(
+                                showtimeId,
+                                seat.seat_id
+                            );
 
-                WHERE
-                    t.showtime_id = ?
-                    AND t.cinema_id = ?
-                    AND t.room_id = ?
-                    AND t.seat_id = ?
-                    AND b.status = 'Completed'
-                `,
-                [
-                    showtimeId,
-                    cinema_id,
-                    room_id,
-                    seat.seat_id
-                ]
+                        return {
+                            seat,
+                            lock
+                        };
+                    }
+                )
             );
 
 
-            if (existing.length > 0) {
+        /*=====================================================
+            XÁC NHẬN OWNER
+        =====================================================*/
+
+        for (const item of seatLockResults) {
+
+            const {
+                seat,
+                lock
+            } = item;
+
+
+            /*
+             * Không có Redis lock
+             */
+
+            if (
+                !lock.locked
+            ) {
 
                 throw new Error(
-                    `Ghế ${seat.seat_row}${seat.seat_number} đã được đặt. Vui lòng chọn ghế khác.`
+                    `Ghế ${seat.seat_row}${seat.seat_number} không còn được giữ. Vui lòng chọn lại ghế.`
                 );
-
             }
 
+
+            /*
+             * Lock thuộc người khác
+             */
+
+            if (
+                lock.ownerToken !==
+                ownerToken
+            ) {
+
+                throw new Error(
+                    `Ghế ${seat.seat_row}${seat.seat_number} đang được người khác giữ. Vui lòng chọn ghế khác.`
+                );
+            }
+
+
+            /*
+             * Lock sắp hết hạn.
+             *
+             * Không bắt buộc phải chặn ở đây,
+             * nhưng nếu TTL <= 0 thì chắc chắn không hợp lệ.
+             */
+
+            if (
+                !lock.ttl ||
+                lock.ttl <= 0
+            ) {
+
+                throw new Error(
+                    `Thời gian giữ ghế ${seat.seat_row}${seat.seat_number} đã hết. Vui lòng chọn lại.`
+                );
+            }
         }
 
 
@@ -127,7 +268,8 @@ class PaymentService {
             TẠO TEMP BOOKING
         =====================================================*/
 
-        const tempBookingId = generateTempBookingId();
+        const tempBookingId =
+            generateTempBookingId();
 
 
         const tempData = {
@@ -146,11 +288,13 @@ class PaymentService {
 
             totalAmount,
 
-            couponId: couponId || null,
+            couponId:
+                couponId || null,
 
             selectedSeats,
 
-            selectedFoods,
+            selectedFoods:
+                selectedFoods || [],
 
             customerEmail,
 
@@ -164,26 +308,36 @@ class PaymentService {
 
             startTime,
 
+            /*
+             * Rất quan trọng:
+             *
+             * Lưu ownerToken cùng temp booking
+             * để lúc commit có thể xác nhận
+             * người thanh toán chính là người
+             * đã giữ ghế.
+             */
+
+            ownerToken,
+
             status: "pending",
 
-            createdAt: Date.now()
-
+            createdAt:
+                Date.now()
         };
 
 
         /*=====================================================
-            LƯU REDIS VỚI TTL = 5 PHÚT (300s)
-            GIỐNG OTP_EXPIRE_SECONDS TRONG AUTH SERVICE
+            LƯU TEMP BOOKING REDIS
         =====================================================*/
 
-        const key = `temp:${tempBookingId}`;
+        const key =
+            `temp:${tempBookingId}`;
 
 
-        // ✅ SỬA: Lưu object dưới dạng JSON string
         await RedisService.set(
             key,
             tempData,
-            TEMP_BOOKING_TTL  // 300s = 5 phút
+            TEMP_BOOKING_TTL
         );
 
 
@@ -192,31 +346,59 @@ class PaymentService {
         );
 
 
+        /*=====================================================
+            RETURN
+        =====================================================*/
+
         return {
             tempBookingId
         };
-
     }
 
 
     /*=========================================================
         2. COMMIT TO DATABASE
-        - Khi OTP xác thực thành công
+
+        MỤC TIÊU:
+
+        - Lấy temp booking
+        - Kiểm tra Redis seat lock lần cuối
         - Tạo booking
-        - Tạo ticket
-        - Lưu đồ ăn
+        - Tạo booking details
+        - Tạo tickets
+        - Thêm food
         - Cộng điểm
+
+        QUAN TRỌNG:
+
+        Đây là lớp bảo vệ thứ hai sau Redis.
+
+        Redis:
+            realtime contention
+
+        MySQL:
+            dữ liệu lâu dài
     =========================================================*/
 
-    async commitToDatabase(connection, tempBookingId) {
+    async commitToDatabase(
+        connection,
+        tempBookingId
+    ) {
 
-        const key = `temp:${tempBookingId}`;
+        const key =
+            `temp:${tempBookingId}`;
 
 
-        let tempData = await RedisService.get(key);
+        /*=====================================================
+            LẤY TEMP BOOKING
+        =====================================================*/
+
+        let tempData =
+            await RedisService.get(key);
 
 
         if (!tempData) {
+
             throw new Error(
                 "Phiên đặt vé đã hết hạn. Vui lòng đặt lại."
             );
@@ -224,11 +406,32 @@ class PaymentService {
 
 
         /*=====================================================
-            HỖ TRỢ REDIS STRING / OBJECT
+            PARSE REDIS DATA
         =====================================================*/
 
-        if (typeof tempData === "string") {
-            tempData = JSON.parse(tempData);
+        if (
+            typeof tempData ===
+            "string"
+        ) {
+
+            try {
+
+                tempData =
+                    JSON.parse(
+                        tempData
+                    );
+
+            } catch (error) {
+
+                console.error(
+                    "❌ Parse temp booking error:",
+                    error
+                );
+
+                throw new Error(
+                    "Dữ liệu đặt vé không hợp lệ."
+                );
+            }
         }
 
 
@@ -262,31 +465,157 @@ class PaymentService {
 
             cinemaName,
 
-            startTime
+            startTime,
+
+            ownerToken
 
         } = tempData;
 
 
         /*=====================================================
-            KIỂM TRA GHẾ LẦN CUỐI
+            VALIDATE TEMP DATA
         =====================================================*/
 
-        for (const seat of selectedSeats) {
+        if (
+            !ownerToken
+        ) {
 
-            const [existing] = await connection.execute(
+            throw new Error(
+                "Phiên giữ ghế không hợp lệ. Vui lòng chọn ghế lại."
+            );
+        }
+
+
+        if (
+            !selectedSeats ||
+            !Array.isArray(selectedSeats) ||
+            selectedSeats.length === 0
+        ) {
+
+            throw new Error(
+                "Không tìm thấy ghế trong phiên đặt vé."
+            );
+        }
+
+
+        /*=====================================================
+            KIỂM TRA REDIS LOCK LẦN CUỐI
+
+            Đây là bước CỰC KỲ QUAN TRỌNG.
+
+            Ví dụ:
+
+            User A giữ A1
+                ↓
+            chờ OTP
+                ↓
+            lock hết hạn
+                ↓
+            User B lấy A1
+
+            Nếu A vẫn được thanh toán
+            thì sẽ xảy ra race condition.
+
+            Vì vậy khi commit:
+
+            A phải còn sở hữu Redis lock.
+        =====================================================*/
+
+        const finalSeatLocks =
+            await Promise.all(
+                selectedSeats.map(
+                    async (seat) => {
+
+                        const lock =
+                            await RedisService.getSeatLock(
+                                showtimeId,
+                                seat.seat_id
+                            );
+
+                        return {
+                            seat,
+                            lock
+                        };
+                    }
+                )
+            );
+
+
+        for (
+            const item
+            of finalSeatLocks
+        ) {
+
+            const {
+                seat,
+                lock
+            } = item;
+
+
+            if (
+                !lock.locked
+            ) {
+
+                throw new Error(
+                    `Thời gian giữ ghế ${seat.seat_row}${seat.seat_number} đã hết. Vui lòng đặt lại.`
+                );
+            }
+
+
+            if (
+                lock.ownerToken !==
+                ownerToken
+            ) {
+
+                throw new Error(
+                    `Ghế ${seat.seat_row}${seat.seat_number} không còn thuộc phiên đặt vé này.`
+                );
+            }
+
+
+            if (
+                lock.ttl <= 0
+            ) {
+
+                throw new Error(
+                    `Thời gian giữ ghế ${seat.seat_row}${seat.seat_number} đã hết. Vui lòng đặt lại.`
+                );
+            }
+        }
+
+
+        /*=====================================================
+            KIỂM TRA MYSQL LẦN CUỐI
+
+            Đây là lớp bảo vệ durable.
+
+            Redis không thay thế MySQL.
+
+            MySQL vẫn phải xác nhận ghế chưa
+            được booking Completed trước đó.
+        =====================================================*/
+
+        for (
+            const seat
+            of selectedSeats
+        ) {
+
+            const [
+                existing
+            ] = await connection.execute(
                 `
-                SELECT t.ticket_id
+                SELECT
+                    t.ticket_id
                 FROM tickets t
-
-                JOIN bookings b
+                INNER JOIN bookings b
                     ON t.booking_id = b.booking_id
-
                 WHERE
                     t.showtime_id = ?
                     AND t.cinema_id = ?
                     AND t.room_id = ?
                     AND t.seat_id = ?
                     AND b.status = 'Completed'
+                LIMIT 1
                 `,
                 [
                     showtimeId,
@@ -297,14 +626,14 @@ class PaymentService {
             );
 
 
-            if (existing.length > 0) {
+            if (
+                existing.length > 0
+            ) {
 
                 throw new Error(
                     `Ghế ${seat.seat_row}${seat.seat_number} đã được đặt. Vui lòng chọn ghế khác.`
                 );
-
             }
-
         }
 
 
@@ -312,10 +641,13 @@ class PaymentService {
             TẠO BOOKING
         =====================================================*/
 
-        const memo = `DUNG${Date.now()}`;
+        const memo =
+            `DUNG${Date.now()}`;
 
 
-        const [bookingResult] = await connection.execute(
+        const [
+            bookingResult
+        ] = await connection.execute(
             `
             INSERT INTO bookings
             (
@@ -344,18 +676,22 @@ class PaymentService {
         );
 
 
-        const bookingId = bookingResult.insertId;
+        const bookingId =
+            bookingResult.insertId;
 
 
         /*=====================================================
-            THÊM GHẾ + TẠO TICKET
+            THÊM GHẾ + TICKET
         =====================================================*/
 
-        for (const seat of selectedSeats) {
+        for (
+            const seat
+            of selectedSeats
+        ) {
 
-            /*-------------------------------------------------
-                THÊM BOOKING DETAIL
-            -------------------------------------------------*/
+            /*=================================================
+                BOOKING DETAIL
+            =================================================*/
 
             await connection.execute(
                 `
@@ -381,17 +717,17 @@ class PaymentService {
             );
 
 
-            /*-------------------------------------------------
-                TẠO MÃ VÉ
-            -------------------------------------------------*/
+            /*=================================================
+                TICKET CODE
+            =================================================*/
 
             const ticketCode =
-                `TIC-${bookingId}-${seat.seat_id}-${Date.now()}`;
+                `TIC-${bookingId}-${seat.seat_id}-${Date.now()}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
 
 
-            /*-------------------------------------------------
+            /*=================================================
                 INSERT TICKET
-            -------------------------------------------------*/
+            =================================================*/
 
             await connection.execute(
                 `
@@ -423,7 +759,6 @@ class PaymentService {
                     seat.price
                 ]
             );
-
         }
 
 
@@ -433,10 +768,14 @@ class PaymentService {
 
         if (
             selectedFoods &&
+            Array.isArray(selectedFoods) &&
             selectedFoods.length > 0
         ) {
 
-            for (const food of selectedFoods) {
+            for (
+                const food
+                of selectedFoods
+            ) {
 
                 await connection.execute(
                     `
@@ -461,9 +800,7 @@ class PaymentService {
                         food.price
                     ]
                 );
-
             }
-
         }
 
 
@@ -477,7 +814,9 @@ class PaymentService {
         if (userId) {
 
             const points =
-                Math.floor(totalAmount * 0.05);
+                Math.floor(
+                    totalAmount * 0.05
+                );
 
 
             if (points > 0) {
@@ -495,18 +834,25 @@ class PaymentService {
                 );
 
 
-                earnedPoints = points;
-
+                earnedPoints =
+                    points;
             }
-
         }
 
 
         /*=====================================================
-            XÓA TEMP BOOKING KHỎI REDIS
+            XÓA TEMP BOOKING
+
+            Chỉ xóa sau khi toàn bộ INSERT
+            trong connection đã thành công.
+
+            Transaction commit/rollback vẫn do
+            caller quản lý.
         =====================================================*/
 
-        await RedisService.delete(key);
+        await RedisService.delete(
+            key
+        );
 
 
         console.log(
@@ -515,11 +861,7 @@ class PaymentService {
 
 
         /*=====================================================
-            TRẢ VỀ TOÀN BỘ THÔNG TIN CẦN THIẾT
-
-            QUAN TRỌNG:
-            roomName được trả về ở đây để sau khi Redis bị xóa,
-            BankAppController vẫn có dữ liệu gửi Email.
+            TRẢ VỀ DỮ LIỆU
         =====================================================*/
 
         return {
@@ -556,24 +898,86 @@ class PaymentService {
 
             selectedFoods,
 
-            earnedPoints
+            earnedPoints,
 
+            ownerToken
         };
-
     }
 
 
     /*=========================================================
-        3. GET TEMP DATA
+        3. RELEASE SEAT LOCKS
+
+        Dùng sau khi booking thành công.
+
+        Hàm này được gọi ở controller/service
+        sau khi transaction COMMIT thành công.
     =========================================================*/
 
-    async getTempData(tempBookingId) {
+    async releaseBookingSeatLocks(
+        showtimeId,
+        selectedSeats,
+        ownerToken
+    ) {
 
-        const key = `temp:${tempBookingId}`;
+        if (
+            !showtimeId ||
+            !selectedSeats ||
+            !Array.isArray(selectedSeats) ||
+            !ownerToken
+        ) {
+
+            return 0;
+        }
+
+
+        let releasedCount = 0;
+
+
+        for (
+            const seat
+            of selectedSeats
+        ) {
+
+            const released =
+                await RedisService.releaseSeatLock(
+                    showtimeId,
+                    seat.seat_id,
+                    ownerToken
+                );
+
+
+            if (released) {
+                releasedCount++;
+            }
+        }
+
+
+        console.log(
+            `🔓 [PAYMENT] Released ${releasedCount}/${selectedSeats.length} seat locks`
+        );
+
+
+        return releasedCount;
+    }
+
+
+    /*=========================================================
+        4. GET TEMP DATA
+    =========================================================*/
+
+    async getTempData(
+        tempBookingId
+    ) {
+
+        const key =
+            `temp:${tempBookingId}`;
 
 
         let tempData =
-            await RedisService.get(key);
+            await RedisService.get(
+                key
+            );
 
 
         if (!tempData) {
@@ -581,16 +985,17 @@ class PaymentService {
         }
 
 
-        /*=====================================================
-            HỖ TRỢ REDIS STRING / OBJECT
-        =====================================================*/
-
-        if (typeof tempData === "string") {
+        if (
+            typeof tempData ===
+            "string"
+        ) {
 
             try {
 
                 tempData =
-                    JSON.parse(tempData);
+                    JSON.parse(
+                        tempData
+                    );
 
             } catch (error) {
 
@@ -600,29 +1005,30 @@ class PaymentService {
                 );
 
                 return null;
-
             }
-
         }
 
 
         return tempData;
-
     }
 
 
     /*=========================================================
-        4. DELETE TEMP DATA
+        5. DELETE TEMP DATA
     =========================================================*/
 
-    async deleteTempData(tempBookingId) {
+    async deleteTempData(
+        tempBookingId
+    ) {
 
         const key =
             `temp:${tempBookingId}`;
 
 
         const deleted =
-            await RedisService.delete(key);
+            await RedisService.delete(
+                key
+            );
 
 
         if (deleted) {
@@ -630,103 +1036,258 @@ class PaymentService {
             console.log(
                 `🗑️ Temp booking ${tempBookingId} deleted from Redis`
             );
-
         }
 
 
         return deleted;
-
     }
 
 
     /*=========================================================
-        5. 🆕 CHECK TEMP BOOKING TTL - GIỐNG AUTH SERVICE
-        =========================================================*/
+        6. CHECK TEMP BOOKING TTL
+    =========================================================*/
 
-    async checkTempBookingTTL(tempBookingId) {
+    async checkTempBookingTTL(
+        tempBookingId
+    ) {
 
-        const key = `temp:${tempBookingId}`;
+        const key =
+            `temp:${tempBookingId}`;
 
 
-        // Kiểm tra OTP key trước
-        const ttl = await RedisService.getTTL(key);
-        const data = await RedisService.get(key);
+        const ttl =
+            await RedisService.getTTL(
+                key
+            );
+
+
+        const data =
+            await RedisService.get(
+                key
+            );
+
 
         return {
+
             success: true,
+
             data: {
-                exists: !!data,
-                expiresIn: ttl > 0 ? ttl : 0,
-                isExpired: ttl <= 0 || !data
+
+                exists:
+                    !!data,
+
+                expiresIn:
+                    ttl > 0
+                        ? ttl
+                        : 0,
+
+                isExpired:
+                    ttl <= 0 ||
+                    !data
             }
         };
-
     }
 
 
     /*=========================================================
-        6. 🆕 RESEND OTP PAYMENT - GIỐNG AUTH SERVICE
-        =========================================================*/
+        7. RESEND OTP PAYMENT
+    =========================================================*/
 
-    async resendOtpPayment(email, tempBookingId) {
+    async resendOtpPayment(
+        email,
+        tempBookingId
+    ) {
 
-        if (!email?.trim()) {
-            throw { statusCode: 400, field: "email", message: "Email không được để trống" };
+        if (
+            !email?.trim()
+        ) {
+
+            throw {
+                statusCode: 400,
+                field: "email",
+                message:
+                    "Email không được để trống"
+            };
         }
 
-        // Kiểm tra temp booking còn tồn tại không
-        const key = `temp:${tempBookingId}`;
-        const tempData = await RedisService.get(key);
+
+        /*=====================================================
+            CHECK TEMP BOOKING
+        =====================================================*/
+
+        const key =
+            `temp:${tempBookingId}`;
+
+
+        const tempData =
+            await RedisService.get(
+                key
+            );
+
+
         if (!tempData) {
-            throw { statusCode: 404, message: "Phiên đặt vé đã hết hạn. Vui lòng đặt lại." };
+
+            throw {
+                statusCode: 404,
+                message:
+                    "Phiên đặt vé đã hết hạn. Vui lòng đặt lại."
+            };
         }
 
-        // Rate limit cho resend: 3 lần / 5 phút (giống AuthService)
-        const rateLimit = await RedisService.checkRateLimit(email, "payment-resend", 3, 300);
+
+        /*=====================================================
+            RATE LIMIT
+        =====================================================*/
+
+        const rateLimit =
+            await RedisService.checkRateLimit(
+                email,
+                "payment-resend",
+                3,
+                RATE_LIMIT_WINDOW
+            );
+
+
         if (!rateLimit.allowed) {
-            throw { 
-                statusCode: 429, 
-                message: `Bạn chỉ được gửi tối đa 3 lần trong 5 phút. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 300} giây.`,
+
+            throw {
+
+                statusCode: 429,
+
+                message:
+                    `Bạn chỉ được gửi tối đa 3 lần trong 5 phút. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 300} giây.`,
+
                 data: {
-                    remainingSeconds: rateLimit.remainingSeconds || 300,
+
+                    remainingSeconds:
+                        rateLimit.remainingSeconds ||
+                        300,
+
                     maxAttempts: 3
                 }
             };
         }
 
-        // Tạo OTP mới cho payment
-        const OtpService = require("./OtpService");
-        const otpResult = await OtpService.createOTP(email, OtpService.PURPOSE.PAYMENT);
 
-        // Cập nhật temp booking với OTP mới
-        const updatedData = typeof tempData === 'string' ? JSON.parse(tempData) : tempData;
-        updatedData.otp = otpResult.otp;
-        updatedData.otpCreatedAt = Date.now();
+        /*=====================================================
+            CREATE OTP
+        =====================================================*/
 
-        await RedisService.set(key, updatedData, 300);
+        const OtpService =
+            require("./OtpService");
 
-        // Gửi email (KHÔNG ĐỢI)
-        const MailService = require("./MailService");
+
+        const otpResult =
+            await OtpService.createOTP(
+                email,
+                OtpService.PURPOSE.PAYMENT
+            );
+
+
+        /*=====================================================
+            UPDATE TEMP BOOKING
+        =====================================================*/
+
+        const updatedData =
+            typeof tempData ===
+            "string"
+
+                ? JSON.parse(tempData)
+
+                : tempData;
+
+
+        updatedData.otp =
+            otpResult.otp;
+
+        updatedData.otpCreatedAt =
+            Date.now();
+
+
+        /*
+         * Lưu lại TTL 5 phút.
+         *
+         * ownerToken vẫn được giữ nguyên
+         * vì updatedData là object cũ.
+         */
+
+        await RedisService.set(
+            key,
+            updatedData,
+            TEMP_BOOKING_TTL
+        );
+
+
+        /*=====================================================
+            SEND EMAIL
+        =====================================================*/
+
+        const MailService =
+            require("./MailService");
+
+
         setImmediate(() => {
-            MailService.sendPaymentOTP(email, otpResult.otp, updatedData.customerName, updatedData.totalAmount)
-                .then(() => console.log(`✅ Payment OTP email sent to ${email}`))
-                .catch(err => console.error(`❌ Payment OTP email failed: ${err.message}`));
+
+            MailService
+                .sendPaymentOTP(
+                    email,
+                    otpResult.otp,
+                    updatedData.customerName,
+                    updatedData.totalAmount
+                )
+
+                .then(() => {
+
+                    console.log(
+                        `✅ Payment OTP email sent to ${email}`
+                    );
+                })
+
+                .catch((err) => {
+
+                    console.error(
+                        `❌ Payment OTP email failed: ${err.message}`
+                    );
+                });
         });
 
-        const otpKey = `otp:${email}:${OtpService.PURPOSE.PAYMENT}`;
-        const ttl = await RedisService.getTTL(otpKey);
+
+        /*=====================================================
+            OTP TTL
+        =====================================================*/
+
+        const otpKey =
+            `otp:${email}:${OtpService.PURPOSE.PAYMENT}`;
+
+
+        const ttl =
+            await RedisService.getTTL(
+                otpKey
+            );
+
 
         return {
+
             success: true,
-            message: "Mã OTP đã được gửi lại tới email.",
+
+            message:
+                "Mã OTP đã được gửi lại tới email.",
+
             data: {
-                expiresIn: ttl > 0 ? ttl : 300
+
+                expiresIn:
+                    ttl > 0
+                        ? ttl
+                        : 300
             }
         };
-
     }
-
 }
 
 
-module.exports = new PaymentService();
+/*===========================================================
+    EXPORT
+===========================================================*/
+
+module.exports =
+    new PaymentService();

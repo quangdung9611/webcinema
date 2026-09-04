@@ -26,7 +26,6 @@ import {
     Minus,
     ChevronLeft,
     ChevronRight,
-    Ticket,
     Coffee,
     UtensilsCrossed
 } from 'lucide-react';
@@ -67,39 +66,71 @@ const Food = () => {
 
     // =====================================================
     // LẤY BOOKING DATA
+    //
+    // Ưu tiên:
+    // 1. location.state
+    // 2. localStorage.booking_temp
+    //
+    // ownerToken cũng được phục hồi từ localStorage
+    // để không bị mất khi React Router state không còn.
     // =====================================================
 
     const getStateData = () => {
 
-        const stateData = location.state || {};
+        const stateData =
+            location.state || {};
 
+
+        // -------------------------------------------------
+        // LOCATION STATE CÓ ĐỦ GHẾ
+        // -------------------------------------------------
 
         if (
-            !stateData.selectedSeats ||
-            stateData.selectedSeats.length === 0
+            Array.isArray(stateData.selectedSeats) &&
+            stateData.selectedSeats.length > 0
         ) {
 
-            try {
-
-                const savedBooking =
-                    localStorage.getItem('booking_temp');
+            return stateData;
+        }
 
 
-                if (savedBooking) {
+        // -------------------------------------------------
+        // FALLBACK BOOKING_TEMP
+        // -------------------------------------------------
 
-                    const parsed =
-                        JSON.parse(savedBooking);
+        try {
 
-                    return parsed;
+            const savedBooking =
+                localStorage.getItem('booking_temp');
+
+
+            if (savedBooking) {
+
+                const parsed =
+                    JSON.parse(savedBooking);
+
+
+                if (
+                    parsed &&
+                    typeof parsed === 'object'
+                ) {
+
+                    return {
+                        ...parsed,
+
+                        // location.state có thể có
+                        // ownerToken mới hơn
+                        ...stateData
+                    };
                 }
-
-            } catch (err) {
-
-                console.error(
-                    'Lỗi đọc booking_temp từ localStorage:',
-                    err
-                );
             }
+
+        } catch (err) {
+
+            console.error(
+                '❌ [FOOD] Lỗi đọc booking_temp từ localStorage:',
+                err
+            );
         }
 
 
@@ -107,32 +138,67 @@ const Food = () => {
     };
 
 
-    const initialData = getStateData();
+    const initialData =
+        getStateData();
 
 
     // =====================================================
     // BOOKING DATA
     // =====================================================
 
-    const {
-        movie = initialData.movie || {},
+    const movie =
+        initialData.movie || {};
 
-        selectedCinema =
-            initialData.selectedCinema || {},
 
-        selectedDate =
-            initialData.selectedDate || '',
+    const selectedCinema =
+        initialData.selectedCinema || {};
 
-        selectedShowtime =
-            initialData.selectedShowtime || {},
 
-        selectedSeats =
-            initialData.selectedSeats || [],
+    const selectedDate =
+        initialData.selectedDate || '';
 
-        showtimeDetail =
-            initialData.showtimeDetail || {}
 
-    } = location.state || initialData;
+    const selectedShowtime =
+        initialData.selectedShowtime || {};
+
+
+    const selectedSeats =
+        Array.isArray(initialData.selectedSeats)
+            ? initialData.selectedSeats
+            : [];
+
+
+    const showtimeDetail =
+        initialData.showtimeDetail || {};
+
+
+    // =====================================================
+    // OWNER TOKEN
+    //
+    // Backend hiện tại:
+    //
+    // ownerToken = socket.id
+    //
+    // Booking.js sẽ truyền ownerToken sang Food.
+    // Nếu Router state không còn thì lấy từ localStorage.
+    // =====================================================
+
+    const ownerToken =
+        initialData.ownerToken ||
+        localStorage.getItem('booking_owner_token') ||
+        '';
+
+
+    // =====================================================
+    // SHOWTIME ID
+    // =====================================================
+
+    const showtimeId =
+        selectedShowtime?.showtime_id ||
+        selectedShowtime?.id ||
+        initialData.showtimeId ||
+        initialData.showtime_id ||
+        null;
 
 
     // =====================================================
@@ -149,13 +215,24 @@ const Food = () => {
 
             if (savedFoods) {
 
-                return JSON.parse(savedFoods);
+                const parsed =
+                    JSON.parse(savedFoods);
+
+
+                if (
+                    parsed &&
+                    typeof parsed === 'object' &&
+                    !Array.isArray(parsed)
+                ) {
+
+                    return parsed;
+                }
             }
 
         } catch (err) {
 
             console.error(
-                'Lỗi đọc selectedFoods từ localStorage:',
+                '❌ [FOOD] Lỗi đọc selectedFoods từ localStorage:',
                 err
             );
         }
@@ -169,19 +246,56 @@ const Food = () => {
     // STATE
     // =====================================================
 
-    const [foods, setFoods] = useState([]);
+    const [foods, setFoods] =
+        useState([]);
+
 
     const [selectedFoods, setSelectedFoods] =
         useState(getSavedFoods);
 
+
     const [isTimerActive, setIsTimerActive] =
         useState(false);
+
 
     const [loading, setLoading] =
         useState(false);
 
+
     const [loadingFoods, setLoadingFoods] =
         useState(false);
+
+
+    // =====================================================
+    // SAVE OWNER TOKEN
+    //
+    // Chỉ lưu khi có token hợp lệ.
+    // Không ghi đè token bằng chuỗi rỗng.
+    // =====================================================
+
+    useEffect(() => {
+
+        if (!ownerToken) {
+            return;
+        }
+
+
+        try {
+
+            localStorage.setItem(
+                'booking_owner_token',
+                ownerToken
+            );
+
+        } catch (err) {
+
+            console.error(
+                '❌ [FOOD] Không thể lưu booking_owner_token:',
+                err
+            );
+        }
+
+    }, [ownerToken]);
 
 
     // =====================================================
@@ -200,7 +314,7 @@ const Food = () => {
         } catch (err) {
 
             console.error(
-                'Lỗi lưu selectedFoods vào localStorage:',
+                '❌ [FOOD] Lỗi lưu selectedFoods:',
                 err
             );
         }
@@ -226,42 +340,42 @@ const Food = () => {
             selectedSeats.length === 0
         ) {
 
-            try {
+            console.warn(
+                '⚠️ [FOOD] Không có selectedSeats'
+            );
 
-                const savedBooking =
-                    localStorage.getItem('booking_temp');
-
-
-                if (savedBooking) {
-
-                    const parsed =
-                        JSON.parse(savedBooking);
+            navigate('/');
+            return;
+        }
 
 
-                    if (
-                        parsed.selectedSeats &&
-                        parsed.selectedSeats.length > 0
-                    ) {
+        // -------------------------------------------------
+        // CHECK OWNER TOKEN
+        // -------------------------------------------------
 
-                        // Có dữ liệu
+        if (!ownerToken) {
 
-                    } else {
+            console.warn(
+                '⚠️ [FOOD] Không có ownerToken'
+            );
 
-                        navigate('/');
-                        return;
-                    }
+            navigate('/');
+            return;
+        }
 
-                } else {
 
-                    navigate('/');
-                    return;
-                }
+        // -------------------------------------------------
+        // CHECK SHOWTIME
+        // -------------------------------------------------
 
-            } catch (err) {
+        if (!showtimeId) {
 
-                navigate('/');
-                return;
-            }
+            console.warn(
+                '⚠️ [FOOD] Không xác định được showtimeId'
+            );
+
+            navigate('/');
+            return;
         }
 
 
@@ -269,17 +383,47 @@ const Food = () => {
         // CHECK TIMER
         // -------------------------------------------------
 
-        if (
-            localStorage.getItem('holdExpiresAt')
-        ) {
+        const holdExpiresAt =
+            localStorage.getItem(
+                'holdExpiresAt'
+            );
 
-            setIsTimerActive(true);
 
-        } else {
+        if (!holdExpiresAt) {
+
+            console.warn(
+                '⚠️ [FOOD] Không có holdExpiresAt'
+            );
 
             navigate('/');
             return;
         }
+
+
+        const expiresAt =
+            Number(holdExpiresAt);
+
+
+        // -------------------------------------------------
+        // TIMER ĐÃ HẾT TRƯỚC KHI VÀO FOOD
+        // -------------------------------------------------
+
+        if (
+            !Number.isFinite(expiresAt) ||
+            expiresAt <= Date.now()
+        ) {
+
+            console.warn(
+                '⏰ [FOOD] holdExpiresAt đã hết hạn'
+            );
+
+            handleTimeExpireInternal();
+
+            return;
+        }
+
+
+        setIsTimerActive(true);
 
 
         // -------------------------------------------------
@@ -290,10 +434,13 @@ const Food = () => {
 
             setLoadingFoods(true);
 
+
             try {
 
                 const res =
-                    await api.get('/api/foods');
+                    await api.get(
+                        '/api/foods'
+                    );
 
 
                 if (
@@ -301,22 +448,25 @@ const Food = () => {
                     Array.isArray(res.data.data)
                 ) {
 
-                    setFoods(res.data.data);
+                    setFoods(
+                        res.data.data
+                    );
 
                 } else {
 
                     console.error(
-                        'Dữ liệu không đúng định dạng:',
+                        '❌ [FOOD] Dữ liệu foods không đúng định dạng:',
                         res.data
                     );
 
                     setFoods([]);
+
                 }
 
             } catch (err) {
 
                 console.error(
-                    'Lỗi tải thức ăn:',
+                    '❌ [FOOD] Lỗi tải thức ăn:',
                     err
                 );
 
@@ -331,7 +481,82 @@ const Food = () => {
 
         fetchFoods();
 
-    }, [selectedSeats, navigate]);
+    }, [
+        navigate,
+        selectedSeats.length,
+        ownerToken,
+        showtimeId
+    ]);
+
+
+    // =====================================================
+    // CLEAR BOOKING DATA
+    // =====================================================
+
+    const clearBookingData = () => {
+
+        const keysToRemove = [
+
+            // -------------------------------------------------
+            // SEAT
+            // -------------------------------------------------
+
+            'selectedSeats',
+            'holdExpiresAt',
+            'currentShowtimeId',
+            'booking_owner_token',
+
+            // -------------------------------------------------
+            // BOOKING
+            // -------------------------------------------------
+
+            'booking_seats',
+            'booking_showtime',
+            'booking_data',
+
+            'booking_cinema',
+            'booking_date',
+            'booking_movie',
+            'booking_showtime',
+
+            // -------------------------------------------------
+            // FOOD
+            // -------------------------------------------------
+
+            'selected_foods',
+            'food_selection',
+            'selectedFoods',
+
+            // -------------------------------------------------
+            // TEMP BOOKING
+            // -------------------------------------------------
+
+            'booking_temp'
+        ];
+
+
+        keysToRemove.forEach(
+            key =>
+                localStorage.removeItem(key)
+        );
+    };
+
+
+    // =====================================================
+    // HẾT GIỜ GIỮ GHẾ - INTERNAL
+    //
+    // Tách riêng để useEffect có thể gọi mà không phụ thuộc
+    // vào function khai báo phía dưới.
+    // =====================================================
+
+    const handleTimeExpireInternal = () => {
+
+        clearBookingData();
+
+        setIsTimerActive(false);
+
+        setShowExpiredModal(true);
+    };
 
 
     // =====================================================
@@ -340,36 +565,7 @@ const Food = () => {
 
     const handleTimeExpire = () => {
 
-        const keysToRemove = [
-
-            'selectedSeats',
-            'holdExpiresAt',
-            'currentShowtimeId',
-
-            'booking_seats',
-            'booking_showtime',
-            'booking_data',
-
-            'selected_foods',
-            'food_selection',
-
-            'booking_cinema',
-            'booking_date',
-            'booking_movie',
-            'booking_showtime',
-
-            'selectedFoods',
-
-            'booking_temp'
-        ];
-
-
-        keysToRemove.forEach(
-            key => localStorage.removeItem(key)
-        );
-
-
-        setShowExpiredModal(true);
+        handleTimeExpireInternal();
     };
 
 
@@ -389,18 +585,34 @@ const Food = () => {
     // UPDATE QUANTITY
     // =====================================================
 
-    const updateQty = (id, delta) => {
+    const updateQty = (
+        id,
+        delta
+    ) => {
 
-        setSelectedFoods(prev => ({
+        setSelectedFoods(prev => {
 
-            ...prev,
+            const currentQuantity =
+                Number(
+                    prev[id] || 0
+                );
 
-            [id]: Math.max(
-                0,
-                (prev[id] || 0) + delta
-            )
 
-        }));
+            const nextQuantity =
+                Math.max(
+                    0,
+                    currentQuantity + delta
+                );
+
+
+            return {
+
+                ...prev,
+
+                [id]:
+                    nextQuantity
+            };
+        });
     };
 
 
@@ -408,37 +620,54 @@ const Food = () => {
     // TOTAL TICKET
     // =====================================================
 
-    const totalTicketPrice = useMemo(() => {
+    const totalTicketPrice =
+        useMemo(() => {
 
-        return selectedSeats.reduce(
-            (sum, seat) =>
-                sum + Number(seat.price),
-            0
-        );
+            return selectedSeats.reduce(
+                (sum, seat) =>
+                    sum +
+                    Number(
+                        seat?.price || 0
+                    ),
+                0
+            );
 
-    }, [selectedSeats]);
+        }, [selectedSeats]);
 
 
     // =====================================================
     // TOTAL FOOD
     // =====================================================
 
-    const totalFoodPrice = useMemo(() => {
+    const totalFoodPrice =
+        useMemo(() => {
 
-        return foods.reduce(
-            (sum, item) => {
+            return foods.reduce(
+                (sum, item) => {
 
-                return (
-                    sum +
-                    Number(item.price) *
-                    (selectedFoods[item.product_id] || 0)
-                );
+                    const quantity =
+                        Number(
+                            selectedFoods[
+                                item.product_id
+                            ] || 0
+                        );
 
-            },
-            0
-        );
 
-    }, [foods, selectedFoods]);
+                    return (
+                        sum +
+                        Number(
+                            item.price || 0
+                        ) *
+                        quantity
+                    );
+                },
+                0
+            );
+
+        }, [
+            foods,
+            selectedFoods
+        ]);
 
 
     // =====================================================
@@ -456,35 +685,141 @@ const Food = () => {
 
     const handleContinue = () => {
 
+        // -------------------------------------------------
+        // PREVENT DOUBLE CLICK
+        // -------------------------------------------------
+
+        if (loading) {
+            return;
+        }
+
+
+        // -------------------------------------------------
+        // CHECK OWNER TOKEN
+        // -------------------------------------------------
+
+        if (!ownerToken) {
+
+            console.error(
+                '❌ [FOOD] Không có ownerToken khi chuyển Payment'
+            );
+
+            return;
+        }
+
+
+        // -------------------------------------------------
+        // CHECK SEATS
+        // -------------------------------------------------
+
+        if (
+            !Array.isArray(selectedSeats) ||
+            selectedSeats.length === 0
+        ) {
+
+            console.error(
+                '❌ [FOOD] Không có ghế để thanh toán'
+            );
+
+            navigate('/');
+            return;
+        }
+
+
+        // -------------------------------------------------
+        // CHECK TIMER
+        // -------------------------------------------------
+
+        const holdExpiresAt =
+            Number(
+                localStorage.getItem(
+                    'holdExpiresAt'
+                )
+            );
+
+
+        if (
+            !Number.isFinite(holdExpiresAt) ||
+            holdExpiresAt <= Date.now()
+        ) {
+
+            handleTimeExpire();
+
+            return;
+        }
+
+
         setLoading(true);
 
 
-        const finalFoods = foods
+        // -------------------------------------------------
+        // BUILD FINAL FOODS
+        // -------------------------------------------------
 
-            .filter(
-                food =>
-                    (selectedFoods[food.product_id] || 0) > 0
-            )
+        const finalFoods =
+            foods
+                .filter(
+                    food =>
+                        Number(
+                            selectedFoods[
+                                food.product_id
+                            ] || 0
+                        ) > 0
+                )
+                .map(food => ({
 
-            .map(food => ({
+                    product_id:
+                        food.product_id,
 
-                product_id:
-                    food.product_id,
+                    product_name:
+                        food.product_name,
 
-                product_name:
-                    food.product_name,
+                    quantity:
+                        Number(
+                            selectedFoods[
+                                food.product_id
+                            ]
+                        ),
 
-                quantity:
-                    selectedFoods[food.product_id],
+                    price:
+                        food.price
+                }));
 
-                price:
-                    food.price
-            }));
 
+        // -------------------------------------------------
+        // BUILD FINAL BOOKING DATA
+        // -------------------------------------------------
+        //
+        // Quan trọng:
+        // Không dùng riêng location.state.
+        //
+        // Dùng initialData để tránh mất booking data
+        // khi user refresh / quay lại bằng history.
+        //
+        // ownerToken được ép lại rõ ràng.
+        // -------------------------------------------------
 
         const finalBookingData = {
 
+            ...initialData,
+
             ...location.state,
+
+            movie,
+
+            selectedCinema,
+
+            selectedDate,
+
+            selectedShowtime,
+
+            selectedSeats,
+
+            showtimeDetail,
+
+            ownerToken,
+
+            showtimeId,
 
             selectedFoods:
                 finalFoods,
@@ -498,19 +833,56 @@ const Food = () => {
 
 
         // -------------------------------------------------
-        // SAVE BOOKING
+        // SAVE BOOKING TEMP
         // -------------------------------------------------
 
-        localStorage.setItem(
-            'booking_temp',
-            JSON.stringify(finalBookingData)
-        );
+        try {
+
+            localStorage.setItem(
+                'booking_temp',
+                JSON.stringify(
+                    finalBookingData
+                )
+            );
 
 
-        localStorage.setItem(
-            'selectedFoods',
-            JSON.stringify(selectedFoods)
-        );
+            localStorage.setItem(
+                'selectedFoods',
+                JSON.stringify(
+                    selectedFoods
+                )
+            );
+
+
+            localStorage.setItem(
+                'booking_owner_token',
+                ownerToken
+            );
+
+
+            // -------------------------------------------------
+            // ĐẢM BẢO SHOWTIME ID
+            // -------------------------------------------------
+
+            if (showtimeId) {
+
+                localStorage.setItem(
+                    'currentShowtimeId',
+                    String(showtimeId)
+                );
+            }
+
+        } catch (err) {
+
+            console.error(
+                '❌ [FOOD] Lỗi lưu booking trước Payment:',
+                err
+            );
+
+            setLoading(false);
+
+            return;
+        }
 
 
         // -------------------------------------------------
@@ -520,7 +892,8 @@ const Food = () => {
         navigate(
             '/payment',
             {
-                state: finalBookingData
+                state:
+                    finalBookingData
             }
         );
     };
@@ -569,7 +942,12 @@ const Food = () => {
                 <div className="food-empty">
 
                     <div className="food-empty-icon">
-                        <Popcorn size={48} strokeWidth={1.5} />
+
+                        <Popcorn
+                            size={48}
+                            strokeWidth={1.5}
+                        />
+
                     </div>
 
                     <h3>
@@ -592,7 +970,11 @@ const Food = () => {
         return foods.map(item => {
 
             const quantity =
-                selectedFoods[item.product_id] || 0;
+                Number(
+                    selectedFoods[
+                        item.product_id
+                    ] || 0
+                );
 
 
             return (
@@ -618,14 +1000,21 @@ const Food = () => {
 
                                 <img
                                     src={`https://api.quangdungcinema.id.vn/uploads/foods/${item.food_image}`}
-                                    alt={item.product_name}
+                                    alt={
+                                        item.product_name
+                                    }
                                     loading="lazy"
                                 />
 
                             ) : (
 
                                 <div className="food-no-image">
-                                    <UtensilsCrossed size={40} strokeWidth={1.5} />
+
+                                    <UtensilsCrossed
+                                        size={40}
+                                        strokeWidth={1.5}
+                                    />
+
                                 </div>
 
                             )}
@@ -640,6 +1029,7 @@ const Food = () => {
                             <div className="food-selected-badge">
                                 ĐÃ CHỌN
                             </div>
+
                         )}
 
                     </div>
@@ -693,7 +1083,12 @@ const Food = () => {
                                     }
                                     aria-label={`Giảm ${item.product_name}`}
                                 >
-                                    <Minus size={16} strokeWidth={2.5} />
+
+                                    <Minus
+                                        size={16}
+                                        strokeWidth={2.5}
+                                    />
+
                                 </button>
 
 
@@ -713,7 +1108,12 @@ const Food = () => {
                                     }
                                     aria-label={`Tăng ${item.product_name}`}
                                 >
-                                    <Plus size={16} strokeWidth={2.5} />
+
+                                    <Plus
+                                        size={16}
+                                        strokeWidth={2.5}
+                                    />
+
                                 </button>
 
                             </div>
@@ -734,13 +1134,18 @@ const Food = () => {
                                 </span>
 
                                 <strong>
+
                                     {(
-                                        Number(item.price) *
+                                        Number(
+                                            item.price
+                                        ) *
                                         quantity
                                     ).toLocaleString()}₫
+
                                 </strong>
 
                             </div>
+
                         )}
 
                     </div>
@@ -786,9 +1191,15 @@ const Food = () => {
                     BOOKING PROGRESS
                     FOOD = BƯỚC 03 / THỨC ĂN
                 ================================================= */}
+
                 <div className="food-progress-wrapper">
-                    <BookingProgress currentStep={3} />
+
+                    <BookingProgress
+                        currentStep={3}
+                    />
+
                 </div>
+
 
                 <div className="food-layout">
 
@@ -838,9 +1249,11 @@ const Food = () => {
                                 foods
                                     .filter(
                                         item =>
-                                            selectedFoods[
-                                                item.product_id
-                                            ] > 0
+                                            Number(
+                                                selectedFoods[
+                                                    item.product_id
+                                                ] || 0
+                                            ) > 0
                                     )
 
                                     .map(item => ({
@@ -848,9 +1261,11 @@ const Food = () => {
                                         ...item,
 
                                         quantity:
-                                            selectedFoods[
-                                                item.product_id
-                                            ]
+                                            Number(
+                                                selectedFoods[
+                                                    item.product_id
+                                                ]
+                                            )
 
                                     }))
 
@@ -893,8 +1308,9 @@ const Food = () => {
                             }
 
                             isContinueDisabled={
-                                false
+                                loading
                             }
+
                         />
 
                     </aside>
@@ -914,8 +1330,14 @@ const Food = () => {
                         <section className="food-intro-card">
 
                             <div className="food-intro-icon">
-                                <Popcorn size={32} strokeWidth={1.5} />
+
+                                <Popcorn
+                                    size={32}
+                                    strokeWidth={1.5}
+                                />
+
                             </div>
+
 
                             <div className="food-intro-content">
 
@@ -930,9 +1352,17 @@ const Food = () => {
 
                             </div>
 
+
                             <div className="food-count-badge">
-                                <strong>{foods.length}</strong>
-                                <span>SẢN PHẨM</span>
+
+                                <strong>
+                                    {foods.length}
+                                </strong>
+
+                                <span>
+                                    SẢN PHẨM
+                                </span>
+
                             </div>
 
                         </section>
@@ -949,9 +1379,16 @@ const Food = () => {
                                 <div>
 
                                     <span className="food-section-label">
-                                        <Coffee size={12} strokeWidth={2} />
+
+                                        <Coffee
+                                            size={12}
+                                            strokeWidth={2}
+                                        />
+
                                         FOOD &amp; DRINK
+
                                     </span>
+
 
                                     <h2>
                                         COMBO ĐANG CÓ
@@ -982,9 +1419,11 @@ const Food = () => {
                             </span>
 
                             <strong>
+
                                 {Number(
                                     grandTotal
                                 ).toLocaleString()}₫
+
                             </strong>
 
                         </div>
@@ -1002,16 +1441,25 @@ const Food = () => {
                                 onClick={() =>
                                     navigate(-1)
                                 }
+                                disabled={loading}
                             >
-                                <ChevronLeft size={14} strokeWidth={2.5} />
+
+                                <ChevronLeft
+                                    size={14}
+                                    strokeWidth={2.5}
+                                />
+
                                 QUAY LẠI
+
                             </button>
 
 
                             <button
                                 type="button"
                                 className="food-mobile-next"
-                                onClick={handleContinue}
+                                onClick={
+                                    handleContinue
+                                }
                                 disabled={loading}
                             >
 
@@ -1019,7 +1467,11 @@ const Food = () => {
                                     ? 'ĐANG XỬ LÝ...'
                                     : 'TIẾP TỤC'
                                 }
-                                <ChevronRight size={14} strokeWidth={2.5} />
+
+                                <ChevronRight
+                                    size={14}
+                                    strokeWidth={2.5}
+                                />
 
                             </button>
 
