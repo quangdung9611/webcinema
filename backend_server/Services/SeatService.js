@@ -1,5 +1,6 @@
+const db = require("../Config/db");  // 👈 ĐÃ THÊM
 const SeatRepository = require("../Repositories/SeatRepository");
-const PriceConfigService = require("./PriceConfigService"); // 👈 IMPORT PRICE CONFIG
+const PriceConfigService = require("./PriceConfigService");
 
 
 // ==========================================================
@@ -153,6 +154,7 @@ class SeatService {
     // ==========================================================
 
     async getShowtimeInfo(showtimeId) {
+        // ✅ ĐÃ CÓ db ở đầu file
         const [rows] = await db.query(
             `SELECT s.*, r.room_type 
              FROM showtimes s
