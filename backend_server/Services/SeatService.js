@@ -1,4 +1,3 @@
-const db = require("../Config/db");  // 👈 ĐÃ THÊM
 const SeatRepository = require("../Repositories/SeatRepository");
 const PriceConfigService = require("./PriceConfigService");
 
@@ -6,85 +5,38 @@ const PriceConfigService = require("./PriceConfigService");
 // ==========================================================
 // CẤU HÌNH GHẾ THEO TỪNG LOẠI PHÒNG
 // ==========================================================
-//
-// 🔥 QUAN TRỌNG: Giá cứng trong ROOM_CONFIG đã được XÓA
-// Giá sẽ được lấy từ price_config thông qua PriceConfigService
-// ==========================================================
 
 const ROOM_CONFIG = {
-
-    // ========================================================
-    // 2D
-    // ========================================================
-
     "2D": {
         totalSeats: 120,
         seatsPerRow: 10,
-        // ❌ XÓA: standardPrice, vipPrice, deluxePrice, reclinerPrice, couplePrice
         standardRows: [0, 1, 2, 3, 4, 5, 6],
         vipRows: [7, 8, 9],
         deluxeRows: [10],
         reclinerRows: [],
         coupleRow: 11
     },
-
-
-    // ========================================================
-    // 3D
-    // ========================================================
-
     "3D": {
         totalSeats: 80,
         seatsPerRow: 10,
-        // ❌ XÓA: standardPrice, vipPrice, deluxePrice, reclinerPrice, couplePrice
         standardRows: [0, 1],
         vipRows: [2, 3],
         deluxeRows: [4, 5],
         reclinerRows: [6],
         coupleRow: 7
     },
-
-
-    // ========================================================
-    // 4DMAX
-    // ========================================================
-
-    "4DMAX": {
-        totalSeats: 64,
-        seatsPerRow: 8,
-        // ❌ XÓA: standardPrice, vipPrice, deluxePrice, reclinerPrice, couplePrice
-        standardRows: [0, 1],
-        vipRows: [2, 3],
-        deluxeRows: [4, 5],
-        reclinerRows: [6],
-        coupleRow: 7
-    },
-
-
-    // ========================================================
-    // IMAX
-    // ========================================================
-
     "IMAX": {
         totalSeats: 48,
         seatsPerRow: 8,
-        // ❌ XÓA: standardPrice, vipPrice, deluxePrice, reclinerPrice, couplePrice
         standardRows: [],
         vipRows: [0, 1],
         deluxeRows: [2, 3],
         reclinerRows: [4],
         coupleRow: 5
     },
-
-
-    // ========================================================
-    // VIP
-    // ========================================================
-
     "VIP": {
         totalSeats: 36,
         seatsPerRow: 6,
-        // ❌ XÓA: standardPrice, vipPrice, deluxePrice, reclinerPrice, couplePrice
         standardRows: [],
         vipRows: [0, 1],
         deluxeRows: [2, 3],
@@ -103,7 +55,6 @@ class SeatService {
 
     // ==========================================================
     // PUBLIC - LẤY SƠ ĐỒ GHẾ THEO SUẤT CHIẾU
-    // 🔥 LẤY GIÁ TỪ PRICE_CONFIG
     // ==========================================================
 
     async getSeatMapByShowtime(showtimeId) {
@@ -117,8 +68,7 @@ class SeatService {
         const roomId = roomInfo.room_id;
         const seats = await SeatRepository.findSeatsByShowtime(showtimeId, roomId);
 
-        // 👇 Lấy thông tin showtime để biết room_type, start_time, date
-        const showtimeInfo = await this.getShowtimeInfo(showtimeId);
+        const showtimeInfo = await SeatRepository.getShowtimeInfo(showtimeId);
         if (!showtimeInfo) {
             return seats;
         }
@@ -127,18 +77,14 @@ class SeatService {
         const startTime = showtimeInfo.start_time ? new Date(showtimeInfo.start_time).toTimeString().slice(0, 8) : '09:00:00';
         const showDate = showtimeInfo.start_time ? new Date(showtimeInfo.start_time).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
 
-        // 🔥 LẤY GIÁ TỪ PRICE_CONFIG CHO TỪNG GHẾ
         const seatsWithPrice = await Promise.all(seats.map(async (seat) => {
             const seatType = seat.seat_type || 'STANDARD';
-            
-            // Lấy giá từ price_config theo room_type + time_slot + day_type + seat_type
             const price = await PriceConfigService.getPrice(
                 roomType,
                 startTime,
                 showDate,
                 seatType
             );
-            
             return {
                 ...seat,
                 price: price
@@ -146,23 +92,6 @@ class SeatService {
         }));
 
         return seatsWithPrice;
-    }
-
-
-    // ==========================================================
-    // LẤY THÔNG TIN SHOWTIME
-    // ==========================================================
-
-    async getShowtimeInfo(showtimeId) {
-        // ✅ ĐÃ CÓ db ở đầu file
-        const [rows] = await db.query(
-            `SELECT s.*, r.room_type 
-             FROM showtimes s
-             LEFT JOIN rooms r ON s.room_id = r.room_id
-             WHERE s.showtime_id = ?`,
-            [showtimeId]
-        );
-        return rows[0] || null;
     }
 
 
@@ -179,7 +108,6 @@ class SeatService {
 
     // ==========================================================
     // ADMIN - KHỞI TẠO GHẾ CHO PHÒNG
-    // 🔥 LẤY GIÁ TỪ PRICE_CONFIG KHI TẠO GHẾ
     // ==========================================================
 
     async initRoomSeats(roomId, roomType, cinemaId) {
@@ -200,18 +128,12 @@ class SeatService {
             coupleRow
         } = config;
 
-        // 🔥 LẤY GIÁ TỪ PRICE_CONFIG
-        // Dùng khung giờ mặc định MORNING và WEEKDAY
-        const defaultTimeSlot = 'MORNING';
-        const defaultDayType = 'WEEKDAY';
-
-        // Lấy giá cho từng loại ghế từ price_config
         const getPriceForSeatType = async (seatType) => {
             try {
                 const price = await PriceConfigService.getPrice(
                     roomType,
-                    '09:00:00', // startTime mặc định
-                    new Date().toISOString().split('T')[0], // ngày hôm nay
+                    '09:00:00',
+                    new Date().toISOString().split('T')[0],
                     seatType
                 );
                 return price;
@@ -221,7 +143,6 @@ class SeatService {
             }
         };
 
-        // Lấy giá cho từng loại ghế
         const prices = {
             standard: await getPriceForSeatType('STANDARD'),
             vip: await getPriceForSeatType('VIP'),
@@ -232,7 +153,6 @@ class SeatService {
 
         console.log(`📊 Giá cho phòng ${roomType}:`, prices);
 
-        // Xóa ghế cũ
         await SeatRepository.deleteAllByRoom(roomId);
 
         const seatsData = [];

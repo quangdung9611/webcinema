@@ -26,7 +26,6 @@ class SeatRepository {
   // ==========================================================
 
   async findSeatsByShowtime(showtimeId, roomId) {
-
     const sql = `
       SELECT
         s.*,
@@ -58,10 +57,7 @@ class SeatRepository {
         s.seat_number ASC
     `;
 
-    const [rows] = await db.query(
-      sql,
-      [showtimeId, roomId]
-    );
+    const [rows] = await db.query(sql, [showtimeId, roomId]);
 
     return rows;
   }
@@ -72,7 +68,6 @@ class SeatRepository {
   // ==========================================================
 
   async getRoomInfo(showtimeId) {
-
     const [rows] = await db.query(
       `
       SELECT room_id
@@ -87,11 +82,28 @@ class SeatRepository {
 
 
   // ==========================================================
+  // LẤY THÔNG TIN SHOWTIME + ROOM_TYPE
+  // ==========================================================
+
+  async getShowtimeInfo(showtimeId) {
+    const [rows] = await db.query(
+      `
+      SELECT s.*, r.room_type 
+      FROM showtimes s
+      LEFT JOIN rooms r ON s.room_id = r.room_id
+      WHERE s.showtime_id = ?
+      `,
+      [showtimeId]
+    );
+    return rows[0] || null;
+  }
+
+
+  // ==========================================================
   // XÓA TOÀN BỘ GHẾ TRONG PHÒNG
   // ==========================================================
 
   async deleteAllByRoom(roomId) {
-
     const [result] = await db.query(
       `
       DELETE FROM seats
@@ -106,18 +118,9 @@ class SeatRepository {
 
   // ==========================================================
   // ADMIN - LẤY THÔNG TIN GHẾ THEO SEAT ID
-  //
-  // Dùng để xác định:
-  //
-  // STANDARD / VIP / DELUXE / RECLINER
-  // → ghế đơn
-  //
-  // COUPLE
-  // → cần tìm ghế còn lại trong cặp
   // ==========================================================
 
   async findSeatById(seatId) {
-
     const [rows] = await db.query(
       `
       SELECT
@@ -142,123 +145,38 @@ class SeatRepository {
 
   // ==========================================================
   // ADMIN - CẬP NHẬT TRẠNG THÁI GHẾ
-  //
-  // LOGIC:
-  //
-  // 1. Ghế đơn:
-  //    → chỉ update chính ghế đó.
-  //
-  // 2. COUPLE:
-  //    → update cả 2 ghế vật lý trong cặp.
-  //
-  // Ví dụ:
-  //
-  // L1 + L2
-  // L3 + L4
-  // L5 + L6
-  //
-  // Nếu click L1:
-  // → L1 + L2 cùng is_active = 0
-  //
-  // Nếu click L2:
-  // → vẫn L1 + L2 cùng is_active = 0
   // ==========================================================
 
   async updateActiveStatus(seatId, isActive) {
-
-    // ========================================================
-    // LẤY GHẾ GỐC
-    // ========================================================
-
     const seat = await this.findSeatById(seatId);
+    if (!seat) return 0;
 
-    if (!seat) {
-      return 0;
-    }
-
-
-    // ========================================================
-    // GHẾ COUPLE
-    // ========================================================
-
-    if (
-      String(seat.seat_type).toUpperCase() === "COUPLE"
-    ) {
-
-      const currentNumber =
-        Number(seat.seat_number);
-
-      // ------------------------------------------------------
-      // Xác định ghế còn lại trong cặp
-      //
-      // 1 ↔ 2
-      // 3 ↔ 4
-      // 5 ↔ 6
-      // ...
-      // ------------------------------------------------------
-
-      const pairNumber =
-        currentNumber % 2 === 1
-          ? currentNumber + 1
-          : currentNumber - 1;
-
-
-      // ------------------------------------------------------
-      // Update cả cặp
-      //
-      // Phải cùng:
-      // - room_id
-      // - seat_row
-      // - seat_type = COUPLE
-      //
-      // để tránh ảnh hưởng ghế phòng/hàng khác.
-      // ------------------------------------------------------
+    if (String(seat.seat_type).toUpperCase() === "COUPLE") {
+      const currentNumber = Number(seat.seat_number);
+      const pairNumber = currentNumber % 2 === 1 ? currentNumber + 1 : currentNumber - 1;
 
       const [result] = await db.query(
         `
         UPDATE seats
-
         SET is_active = ?
-
         WHERE room_id = ?
           AND seat_row = ?
           AND seat_type = 'COUPLE'
           AND seat_number IN (?, ?)
         `,
-        [
-          isActive,
-          seat.room_id,
-          seat.seat_row,
-          currentNumber,
-          pairNumber
-        ]
+        [isActive, seat.room_id, seat.seat_row, currentNumber, pairNumber]
       );
 
       return result.affectedRows;
     }
 
-
-    // ========================================================
-    // GHẾ ĐƠN
-    //
-    // STANDARD
-    // VIP
-    // DELUXE
-    // RECLINER
-    // ========================================================
-
     const [result] = await db.query(
       `
       UPDATE seats
-
       SET is_active = ?
-
       WHERE seat_id = ?
       `,
-      [
-        isActive,
-        seatId
-      ]
+      [isActive, seatId]
     );
 
     return result.affectedRows;
@@ -269,27 +187,16 @@ class SeatRepository {
   // ADMIN - CẬP NHẬT LOẠI GHẾ + GIÁ
   // ==========================================================
 
-  async updateTypeAndPrice(
-    seatId,
-    seatType,
-    price
-  ) {
-
+  async updateTypeAndPrice(seatId, seatType, price) {
     const [result] = await db.query(
       `
       UPDATE seats
-
       SET
         seat_type = ?,
         price = ?
-
       WHERE seat_id = ?
       `,
-      [
-        seatType,
-        price,
-        seatId
-      ]
+      [seatType, price, seatId]
     );
 
     return result.affectedRows;
@@ -301,10 +208,7 @@ class SeatRepository {
   // ==========================================================
 
   async bulkInsert(seatsData) {
-
-    if (!seatsData || !seatsData.length) {
-      return 0;
-    }
+    if (!seatsData || !seatsData.length) return 0;
 
     const sql = `
       INSERT INTO seats
@@ -320,11 +224,7 @@ class SeatRepository {
       VALUES ?
     `;
 
-    const [result] = await db.query(
-      sql,
-      [seatsData]
-    );
-
+    const [result] = await db.query(sql, [seatsData]);
     return result.affectedRows;
   }
 
@@ -333,28 +233,16 @@ class SeatRepository {
   // CẬP NHẬT TỔNG SỐ GHẾ CỦA PHÒNG
   // ==========================================================
 
-  async updateRoomTotalSeats(
-    roomId,
-    totalSeats
-  ) {
-
+  async updateRoomTotalSeats(roomId, totalSeats) {
     await db.query(
       `
       UPDATE rooms
       SET total_seats = ?
       WHERE room_id = ?
       `,
-      [
-        totalSeats,
-        roomId
-      ]
+      [totalSeats, roomId]
     );
   }
 }
-
-
-// ==========================================================
-// EXPORT
-// ==========================================================
 
 module.exports = new SeatRepository();

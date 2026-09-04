@@ -1,6 +1,6 @@
 // Controllers/SeatController.js
 const SeatService = require("../Services/SeatService");
-const PriceConfigService = require("../Services/PriceConfigService"); // 👈 IMPORT
+const PriceConfigService = require("../Services/PriceConfigService");
 const db = require("../Config/db");
 
 
@@ -12,8 +12,6 @@ exports.getSeatMapByShowtime = async (req, res) => {
     try {
         const { showtimeId } = req.params;
         const data = await SeatService.getSeatMapByShowtime(showtimeId);
-
-        // data đã có price từ SeatService (đã lấy từ price_config)
 
         return res.status(200).json({
             success: true,
@@ -38,7 +36,6 @@ exports.getSeatsByRoom = async (req, res) => {
         const { roomId } = req.params;
         const data = await SeatService.getSeatsByRoom(roomId);
 
-        // Lấy thông tin phòng để biết room_type
         const [roomInfo] = await db.query(
             `SELECT room_type FROM rooms WHERE room_id = ?`,
             [roomId]
@@ -51,7 +48,6 @@ exports.getSeatsByRoom = async (req, res) => {
             const dayTypes = ['WEEKDAY', 'WEEKEND'];
             const seatTypes = ['STANDARD', 'VIP', 'DELUXE', 'RECLINER', 'COUPLE'];
 
-            // Lấy giá từ price_config cho tất cả tổ hợp
             for (const timeSlot of timeSlots) {
                 for (const dayType of dayTypes) {
                     for (const seatType of seatTypes) {
