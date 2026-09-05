@@ -1,5 +1,5 @@
 const db = require("../Config/db");
-const RedisService = require("./RedisService");
+const CacheService = require("./CacheService");
 const crypto = require("crypto");
 
 
@@ -39,15 +39,15 @@ class PaymentService {
         MỤC TIÊU:
 
         - Lấy thông tin suất chiếu
-        - Xác nhận ghế đang thuộc Redis lock
+        - Xác nhận ghế đang thuộc Cache lock
         - Tạo temp booking
-        - Lưu temp booking vào Redis
+        - Lưu temp booking vào Cache
 
         QUAN TRỌNG:
 
         Không dùng SELECT từng ghế trong MySQL ở đây nữa.
 
-        Redis mới là lớp bảo vệ realtime đầu tiên.
+        Cache mới là lớp bảo vệ realtime đầu tiên.
     =========================================================*/
 
     async processOrder(data) {
@@ -66,7 +66,7 @@ class PaymentService {
             cinemaName,
             startTime,
 
-            // Owner của Redis seat lock
+            // Owner của Cache seat lock
             ownerToken
         } = data;
 
@@ -114,7 +114,7 @@ class PaymentService {
          *
          * Nó phải giống token được dùng khi:
          *
-         * Redis Seat Lock
+         * Cache Seat Lock
          *
          * được tạo ở server.js.
          */
@@ -165,7 +165,7 @@ class PaymentService {
 
 
         /*=====================================================
-            KIỂM TRA REDIS SEAT LOCK
+            KIỂM TRA CACHE SEAT LOCK
         =====================================================*/
 
         /*
@@ -190,7 +190,7 @@ class PaymentService {
                     async (seat) => {
 
                         const lock =
-                            await RedisService.getSeatLock(
+                            await CacheService.getSeatLock(
                                 showtimeId,
                                 seat.seat_id
                             );
@@ -217,7 +217,7 @@ class PaymentService {
 
 
             /*
-             * Không có Redis lock
+             * Không có Cache lock
              */
 
             if (
@@ -327,14 +327,14 @@ class PaymentService {
 
 
         /*=====================================================
-            LƯU TEMP BOOKING REDIS
+            LƯU TEMP BOOKING CACHE
         =====================================================*/
 
         const key =
             `temp:${tempBookingId}`;
 
 
-        await RedisService.set(
+        await CacheService.set(
             key,
             tempData,
             TEMP_BOOKING_TTL
@@ -362,7 +362,7 @@ class PaymentService {
         MỤC TIÊU:
 
         - Lấy temp booking
-        - Kiểm tra Redis seat lock lần cuối
+        - Kiểm tra Cache seat lock lần cuối
         - Tạo booking
         - Tạo booking details
         - Tạo tickets
@@ -371,9 +371,9 @@ class PaymentService {
 
         QUAN TRỌNG:
 
-        Đây là lớp bảo vệ thứ hai sau Redis.
+        Đây là lớp bảo vệ thứ hai sau Cache.
 
-        Redis:
+        Cache:
             realtime contention
 
         MySQL:
@@ -394,7 +394,7 @@ class PaymentService {
         =====================================================*/
 
         let tempData =
-            await RedisService.get(key);
+            await CacheService.get(key);
 
 
         if (!tempData) {
@@ -406,7 +406,7 @@ class PaymentService {
 
 
         /*=====================================================
-            PARSE REDIS DATA
+            PARSE CACHE DATA
         =====================================================*/
 
         if (
@@ -499,7 +499,7 @@ class PaymentService {
 
 
         /*=====================================================
-            KIỂM TRA REDIS LOCK LẦN CUỐI
+            KIỂM TRA CACHE LOCK LẦN CUỐI
 
             Đây là bước CỰC KỲ QUAN TRỌNG.
 
@@ -518,7 +518,7 @@ class PaymentService {
 
             Vì vậy khi commit:
 
-            A phải còn sở hữu Redis lock.
+            A phải còn sở hữu Cache lock.
         =====================================================*/
 
         const finalSeatLocks =
@@ -527,7 +527,7 @@ class PaymentService {
                     async (seat) => {
 
                         const lock =
-                            await RedisService.getSeatLock(
+                            await CacheService.getSeatLock(
                                 showtimeId,
                                 seat.seat_id
                             );
@@ -589,7 +589,7 @@ class PaymentService {
 
             Đây là lớp bảo vệ durable.
 
-            Redis không thay thế MySQL.
+            Cache không thay thế MySQL.
 
             MySQL vẫn phải xác nhận ghế chưa
             được booking Completed trước đó.
@@ -850,7 +850,7 @@ class PaymentService {
             caller quản lý.
         =====================================================*/
 
-        await RedisService.delete(
+        await CacheService.delete(
             key
         );
 
@@ -940,7 +940,7 @@ class PaymentService {
         ) {
 
             const released =
-                await RedisService.releaseSeatLock(
+                await CacheService.releaseSeatLock(
                     showtimeId,
                     seat.seat_id,
                     ownerToken
@@ -975,7 +975,7 @@ class PaymentService {
 
 
         let tempData =
-            await RedisService.get(
+            await CacheService.get(
                 key
             );
 
@@ -1026,7 +1026,7 @@ class PaymentService {
 
 
         const deleted =
-            await RedisService.delete(
+            await CacheService.delete(
                 key
             );
 
@@ -1034,7 +1034,7 @@ class PaymentService {
         if (deleted) {
 
             console.log(
-                `🗑️ Temp booking ${tempBookingId} deleted from Redis`
+                `🗑️ Temp booking ${tempBookingId} deleted from Cache`
             );
         }
 
@@ -1056,13 +1056,13 @@ class PaymentService {
 
 
         const ttl =
-            await RedisService.getTTL(
+            await CacheService.getTTL(
                 key
             );
 
 
         const data =
-            await RedisService.get(
+            await CacheService.get(
                 key
             );
 
@@ -1120,7 +1120,7 @@ class PaymentService {
 
 
         const tempData =
-            await RedisService.get(
+            await CacheService.get(
                 key
             );
 
@@ -1140,7 +1140,7 @@ class PaymentService {
         =====================================================*/
 
         const rateLimit =
-            await RedisService.checkRateLimit(
+            await CacheService.checkRateLimit(
                 email,
                 "payment-resend",
                 3,
@@ -1211,7 +1211,7 @@ class PaymentService {
          * vì updatedData là object cũ.
          */
 
-        await RedisService.set(
+        await CacheService.set(
             key,
             updatedData,
             TEMP_BOOKING_TTL
@@ -1261,7 +1261,7 @@ class PaymentService {
 
 
         const ttl =
-            await RedisService.getTTL(
+            await CacheService.getTTL(
                 otpKey
             );
 

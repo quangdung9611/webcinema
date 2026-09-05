@@ -4,7 +4,7 @@ const Password = require("../utils/Password");
 const UserRepository = require("../Repositories/UserRepository");
 const RefreshTokenRepository = require("../Repositories/RefreshTokenRepository");
 const MailService = require("./MailService");
-const RedisService = require("./RedisService");
+const CacheService = require("./CacheService");
 const OtpService = require("./OtpService");
 
 // ============================================================
@@ -56,7 +56,7 @@ const generateAndSetTokens = (user, res, rememberMe = false) => {
 // ============================================================
 exports.checkLockStatus = async (email) => {
     if (!email) throw { statusCode: 400, message: "Thiếu email" };
-    const lockInfo = await RedisService.getLockoutInfo(email);
+    const lockInfo = await CacheService.getLockoutInfo(email);
     if (lockInfo && lockInfo.isLocked) {
         return {
             success: true,
@@ -81,7 +81,7 @@ exports.checkLockStatus = async (email) => {
 exports.login = async (email, password, rememberMe = false, req, res) => {
     validateLogin(email, password);
     
-    const loginRateLimit = await RedisService.checkRateLimit(email, "login", 5, 60);
+    const loginRateLimit = await CacheService.checkRateLimit(email, "login", 5, 60);
     if (!loginRateLimit.allowed) {
         throw {
             statusCode: 429,
@@ -93,7 +93,7 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         };
     }
 
-    const lockInfo = await RedisService.getLockoutInfo(email);
+    const lockInfo = await CacheService.getLockoutInfo(email);
     if (lockInfo && lockInfo.isLocked) {
         throw {
             statusCode: 429,
@@ -112,10 +112,10 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
 
     const user = await UserRepository.findByEmail(email);
     if (!user) {
-        const attempts = await RedisService.incrementLoginAttempts(email);
+        const attempts = await CacheService.incrementLoginAttempts(email);
         if (attempts >= 5) {
-            const newLevel = await RedisService.incrementLockoutLevel(email);
-            const { duration, text } = RedisService.getLockDuration(newLevel);
+            const newLevel = await CacheService.incrementLockoutLevel(email);
+            const { duration, text } = CacheService.getLockDuration(newLevel);
             throw {
                 statusCode: 429,
                 code: 'ACCOUNT_LOCKED',
@@ -138,10 +138,10 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
 
     const matched = await Password.compare(password, user.password);
     if (!matched) {
-        const attempts = await RedisService.incrementLoginAttempts(email);
+        const attempts = await CacheService.incrementLoginAttempts(email);
         if (attempts >= 5) {
-            const newLevel = await RedisService.incrementLockoutLevel(email);
-            const { duration, text } = RedisService.getLockDuration(newLevel);
+            const newLevel = await CacheService.incrementLockoutLevel(email);
+            const { duration, text } = CacheService.getLockDuration(newLevel);
             throw {
                 statusCode: 429,
                 code: 'ACCOUNT_LOCKED',
@@ -162,7 +162,7 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         };
     }
 
-    await RedisService.resetLoginAttempts(email);
+    await CacheService.resetLoginAttempts(email);
     if (!user.email_verified) {
         throw {
             statusCode: 403,
@@ -184,7 +184,7 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
             },
             timestamp: new Date().toISOString()
         });
-        await RedisService.deleteUserSocket(user.user_id);
+        await CacheService.deleteUserSocket(user.user_id);
     }
 
     const accessToken = generateAndSetTokens(user, res, rememberMe);
@@ -240,7 +240,7 @@ exports.logout = async (req, res) => {
         await RefreshTokenRepository.revoke(tokenHash, "Đăng xuất");
     }
     try {
-        if (req.user?.user_id) await RedisService.deleteUserSocket(req.user.user_id);
+        if (req.user?.user_id) await CacheService.deleteUserSocket(req.user.user_id);
     } catch (error) {
         console.error('❌ [LOGOUT] Lỗi khi xóa socket:', error.message);
     }
@@ -265,7 +265,7 @@ exports.changePassword = async (userId, passwordData) => {
     const user = await UserRepository.findById(userId);
     if (!user) throw { statusCode: 404, message: "Không tìm thấy người dùng" };
 
-    const rateLimit = await RedisService.checkRateLimit(user.email, "change-password", 3, 60);
+    const rateLimit = await CacheService.checkRateLimit(user.email, "change-password", 3, 60);
     if (!rateLimit.allowed) {
         throw { 
             statusCode: 429, 
@@ -287,7 +287,7 @@ exports.changePassword = async (userId, passwordData) => {
     await UserRepository.updatePassword(userId, hashedPassword);
     await RefreshTokenRepository.revokeByUser(userId, "Đổi mật khẩu");
     try {
-        await RedisService.deleteUserSocket(userId);
+        await CacheService.deleteUserSocket(userId);
     } catch (error) {
         console.error('❌ [CHANGE_PASSWORD] Lỗi khi xóa socket:', error.message);
     }
@@ -311,7 +311,7 @@ exports.forgotPassword = async (email, req) => {
     }
 
     // ✅ SỬA: 3 lần / 5 phút (300 giây)
-    const rateLimit = await RedisService.checkRateLimit(email, "password-reset", 3, 300);
+    const rateLimit = await CacheService.checkRateLimit(email, "password-reset", 3, 300);
     if (!rateLimit.allowed) {
         throw { 
             statusCode: 429, 
@@ -323,7 +323,7 @@ exports.forgotPassword = async (email, req) => {
         };
     }
 
-    // ✅ Tạo OTP và lưu Redis
+    // ✅ Tạo OTP và lưu Cache
     const otpResult = await OtpService.createOTP(email, OtpService.PURPOSE.RESET_PASSWORD);
     
     // ✅ SỬA: GỬI EMAIL KHÔNG ĐỢI (async) - GIẢM DELAY
@@ -333,9 +333,9 @@ exports.forgotPassword = async (email, req) => {
             .catch(err => console.error(`❌ Email failed: ${err.message}`));
     });
 
-    // ✅ Lấy TTL thực tế từ Redis
+    // ✅ Lấy TTL thực tế từ Cache
     const otpKey = `otp:${email}:${OtpService.PURPOSE.RESET_PASSWORD}`;
-    const ttl = await RedisService.getTTL(otpKey);
+    const ttl = await CacheService.getTTL(otpKey);
 
     return {
         success: true,
@@ -387,7 +387,7 @@ exports.submitNewPassword = async (token, newPassword) => {
     const user = await UserRepository.findByEmail(payload.email);
     if (!user) throw { statusCode: 404, message: "Không tìm thấy người dùng" };
 
-    const rateLimit = await RedisService.checkRateLimit(user.email, "submit-password", 3, 60);
+    const rateLimit = await CacheService.checkRateLimit(user.email, "submit-password", 3, 60);
     if (!rateLimit.allowed) {
         throw { 
             statusCode: 429, 
@@ -422,7 +422,7 @@ exports.submitNewPassword = async (token, newPassword) => {
 // ============================================================
 exports.verifyOtpAndReset = async (email, otp, newPassword) => {
     // 🔥 RATE LIMIT: 5 lần/60s
-    const rateLimit = await RedisService.checkRateLimit(email, "verify-otp-reset", 5, 300);
+    const rateLimit = await CacheService.checkRateLimit(email, "verify-otp-reset", 5, 300);
     if (!rateLimit.allowed) {
         throw { 
             statusCode: 429, 
@@ -475,13 +475,13 @@ exports.verifyOtpAndReset = async (email, otp, newPassword) => {
     await UserRepository.updatePassword(user.user_id, hashedPassword);
     await RefreshTokenRepository.revokeByUser(user.user_id, "Đặt lại mật khẩu");
     try {
-        await RedisService.deleteUserSocket(user.user_id);
+        await CacheService.deleteUserSocket(user.user_id);
     } catch (error) {
         console.error('❌ [RESET_PASSWORD] Lỗi khi xóa socket:', error.message);
     }
 
     // ✅ XÓA OTP sau khi đổi mật khẩu thành công
-    await RedisService.deleteOTP(email, OtpService.PURPOSE.RESET_PASSWORD);
+    await CacheService.deleteOTP(email, OtpService.PURPOSE.RESET_PASSWORD);
 
     return {
         success: true,
@@ -500,7 +500,7 @@ exports.sendVerificationEmail = async (email) => {
     if (!user) throw { statusCode: 404, message: "Không tìm thấy người dùng" };
     if (user.email_verified) throw { statusCode: 400, message: "Email đã được xác thực" };
 
-    const rateLimit = await RedisService.checkRateLimit(email, "send-verify", 3, 300);
+    const rateLimit = await CacheService.checkRateLimit(email, "send-verify", 3, 300);
     if (!rateLimit.allowed) {
         throw { 
             statusCode: 429, 
@@ -555,7 +555,7 @@ exports.verifyEmail = async (verifyToken) => {
 exports.logoutAllDevices = async (userId, res) => {
     await RefreshTokenRepository.revokeByUser(userId, "Đăng xuất tất cả thiết bị");
     try {
-        await RedisService.deleteUserSocket(userId);
+        await CacheService.deleteUserSocket(userId);
     } catch (error) {
         console.error('❌ [LOGOUT_ALL] Lỗi khi xóa socket:', error.message);
     }
@@ -677,7 +677,7 @@ exports.registerStep1 = async (data) => {
         }
     }
 
-    const rateLimit = await RedisService.checkRateLimit(email, "register", 3, 300);
+    const rateLimit = await CacheService.checkRateLimit(email, "register", 3, 300);
     if (!rateLimit.allowed) {
         throw { 
             statusCode: 429, 
@@ -709,7 +709,7 @@ exports.registerStep1 = async (data) => {
 exports.completeRegistration = async (data, req, res) => {
     const { temp_token, pin, username, full_name, email, phone, password, address } = data;
 
-    const rateLimit = await RedisService.checkRateLimit(email, "register", 3, 300);
+    const rateLimit = await CacheService.checkRateLimit(email, "register", 3, 300);
     if (!rateLimit.allowed) {
         throw { 
             statusCode: 429, 
@@ -784,7 +784,7 @@ exports.resendVerificationAfterLogin = async (userId) => {
     if (!user) throw { statusCode: 404, message: "Không tìm thấy người dùng" };
     if (user.email_verified) throw { statusCode: 400, message: "Email đã được xác thực" };
 
-    const rateLimit = await RedisService.checkRateLimit(user.email, "resend-verify", 3, 120);
+    const rateLimit = await CacheService.checkRateLimit(user.email, "resend-verify", 3, 120);
     if (!rateLimit.allowed) {
         throw { 
             statusCode: 429, 
@@ -815,13 +815,13 @@ exports.checkOtpTTL = async (email, purpose) => {
 
     // ✅ Kiểm tra OTP key trước
     const otpKey = `otp:${email}:${purpose}`;
-    let ttl = await RedisService.getTTL(otpKey);
-    let otp = await RedisService.getOTP(email, purpose);
+    let ttl = await CacheService.getTTL(otpKey);
+    let otp = await CacheService.getOTP(email, purpose);
 
     // ✅ Nếu không có OTP, kiểm tra rate limit key
     if (ttl <= 0) {
         const rateLimitKey = `otp:${email}:${purpose}:ratelimit`;
-        ttl = await RedisService.getTTL(rateLimitKey);
+        ttl = await CacheService.getTTL(rateLimitKey);
     }
 
     return {
@@ -847,7 +847,7 @@ exports.resendOtp = async (email, purpose) => {
     }
 
     // Rate limit cho resend: 3 lần / 5 phút
-    const rateLimit = await RedisService.checkRateLimit(email, `${purpose}-resend`, 3, 300);
+    const rateLimit = await CacheService.checkRateLimit(email, `${purpose}-resend`, 3, 300);
     if (!rateLimit.allowed) {
         throw { 
             statusCode: 429, 
@@ -860,7 +860,7 @@ exports.resendOtp = async (email, purpose) => {
     }
 
     // Xóa OTP cũ
-    await RedisService.deleteOTP(email, purpose);
+    await CacheService.deleteOTP(email, purpose);
 
     // Tạo OTP mới
     const otpResult = await OtpService.createOTP(email, purpose);
@@ -907,7 +907,7 @@ exports.forgotPin = async (email) => {
     }
 
     // ✅ SỬA: 3 lần / 5 phút (300 giây)
-    const rateLimit = await RedisService.checkRateLimit(email, "forgot-pin", 3, 300);
+    const rateLimit = await CacheService.checkRateLimit(email, "forgot-pin", 3, 300);
     if (!rateLimit.allowed) {
         throw { 
             statusCode: 429, 
@@ -929,7 +929,7 @@ exports.forgotPin = async (email) => {
     });
 
     const otpKey = `otp:${email}:${OtpService.PURPOSE.FORGOT_PIN}`;
-    const ttl = await RedisService.getTTL(otpKey);
+    const ttl = await CacheService.getTTL(otpKey);
 
     return {
         success: true,
@@ -945,7 +945,7 @@ exports.forgotPin = async (email) => {
 // ============================================================
 exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
     // 🔥 RATE LIMIT: 5 lần/60s
-    const rateLimit = await RedisService.checkRateLimit(email, "verify-otp-pin", 5, 300);
+    const rateLimit = await CacheService.checkRateLimit(email, "verify-otp-pin", 5, 300);
     if (!rateLimit.allowed) {
         throw { 
             statusCode: 429, 
@@ -993,7 +993,7 @@ exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
     await UserRepository.updatePinHash(user.user_id, hashedPin);
 
     // ✅ XÓA OTP sau khi đổi PIN thành công
-    await RedisService.deleteOTP(email, OtpService.PURPOSE.FORGOT_PIN);
+    await CacheService.deleteOTP(email, OtpService.PURPOSE.FORGOT_PIN);
 
     return {
         success: true,

@@ -1,6 +1,6 @@
 const crypto = require("crypto");
 const axios = require("axios");
-const RedisService = require("./RedisService");
+const CacheService = require("./CacheService");
 const OtpService = require("./OtpService");
 const { PURPOSE } = require("./OtpService");
 const MailService = require("./MailService");
@@ -79,7 +79,7 @@ class MomoService {
         // Tạo QR MoMo
         const momoResult = await this.createMomoQR(totalAmount, tempBookingId);
 
-        // Lưu vào Redis
+        // Lưu vào Cache
         const tempData = {
             tempBookingId,
             userId,
@@ -107,7 +107,7 @@ class MomoService {
             createdAt: Date.now()
         };
 
-        await RedisService.set(`temp:${tempBookingId}`, tempData, TEMP_BOOKING_TTL);
+        await CacheService.set(`temp:${tempBookingId}`, tempData, TEMP_BOOKING_TTL);
 
         return {
             tempBookingId,
@@ -172,13 +172,13 @@ class MomoService {
         }
 
         const key = `temp:${tempBookingId}`;
-        const tempData = await RedisService.get(key);
+        const tempData = await CacheService.get(key);
         if (!tempData) {
             throw { statusCode: 404, message: "Phiên đặt vé đã hết hạn. Vui lòng đặt lại." };
         }
 
         // Rate limit: 1 lần / 60 giây
-        const rateLimit = await RedisService.checkRateLimit(email, "momo-send", 1, 60);
+        const rateLimit = await CacheService.checkRateLimit(email, "momo-send", 1, 60);
         if (!rateLimit.allowed) {
             throw { 
                 statusCode: 429, 
@@ -194,7 +194,7 @@ class MomoService {
         const updatedData = typeof tempData === 'string' ? JSON.parse(tempData) : tempData;
         updatedData.otp = otpResult.otp;
         updatedData.otpCreatedAt = Date.now();
-        await RedisService.set(key, updatedData, 300);
+        await CacheService.set(key, updatedData, 300);
 
         // Gửi email (KHÔNG ĐỢI)
         setImmediate(() => {
@@ -204,7 +204,7 @@ class MomoService {
         });
 
         const otpKey = `otp:${email}:${PURPOSE.PAYMENT}`;
-        const ttl = await RedisService.getTTL(otpKey);
+        const ttl = await CacheService.getTTL(otpKey);
 
         return {
             success: true,
@@ -232,9 +232,9 @@ class MomoService {
         try {
             await connection.beginTransaction();
 
-            // Lấy temp data từ Redis
+            // Lấy temp data từ Cache
             const key = `temp:${tempBookingId}`;
-            let tempData = await RedisService.get(key);
+            let tempData = await CacheService.get(key);
             if (!tempData) {
                 throw new Error("Phiên đặt vé đã hết hạn. Vui lòng đặt lại.");
             }
@@ -323,8 +323,8 @@ class MomoService {
                 }
             }
 
-            // Xóa temp booking khỏi Redis
-            await RedisService.delete(key);
+            // Xóa temp booking khỏi Cache
+            await CacheService.delete(key);
 
             await connection.commit();
 
@@ -375,13 +375,13 @@ class MomoService {
         }
 
         const key = `temp:${tempBookingId}`;
-        const tempData = await RedisService.get(key);
+        const tempData = await CacheService.get(key);
         if (!tempData) {
             throw { statusCode: 404, message: "Phiên đặt vé đã hết hạn. Vui lòng đặt lại." };
         }
 
         // Rate limit: 3 lần / 5 phút
-        const rateLimit = await RedisService.checkRateLimit(email, "momo-resend", 3, 300);
+        const rateLimit = await CacheService.checkRateLimit(email, "momo-resend", 3, 300);
         if (!rateLimit.allowed) {
             throw { 
                 statusCode: 429, 
@@ -391,7 +391,7 @@ class MomoService {
         }
 
         // Xóa OTP cũ
-        await RedisService.deleteOTP(email, PURPOSE.PAYMENT);
+        await CacheService.deleteOTP(email, PURPOSE.PAYMENT);
 
         // Tạo OTP mới
         const otpResult = await OtpService.createOTP(email, PURPOSE.PAYMENT);
@@ -400,7 +400,7 @@ class MomoService {
         const updatedData = typeof tempData === 'string' ? JSON.parse(tempData) : tempData;
         updatedData.otp = otpResult.otp;
         updatedData.otpCreatedAt = Date.now();
-        await RedisService.set(key, updatedData, 300);
+        await CacheService.set(key, updatedData, 300);
 
         // Gửi email
         setImmediate(() => {
@@ -410,7 +410,7 @@ class MomoService {
         });
 
         const otpKey = `otp:${email}:${PURPOSE.PAYMENT}`;
-        const ttl = await RedisService.getTTL(otpKey);
+        const ttl = await CacheService.getTTL(otpKey);
 
         return {
             success: true,
@@ -428,8 +428,8 @@ class MomoService {
         }
 
         const key = `temp:${tempBookingId}`;
-        const ttl = await RedisService.getTTL(key);
-        const data = await RedisService.get(key);
+        const ttl = await CacheService.getTTL(key);
+        const data = await CacheService.get(key);
 
         return {
             success: true,
@@ -450,7 +450,7 @@ class MomoService {
         }
 
         const key = `temp:${tempBookingId}`;
-        const deleted = await RedisService.delete(key);
+        const deleted = await CacheService.delete(key);
 
         return {
             success: true,
@@ -472,10 +472,10 @@ class MomoService {
         // Lấy tempBookingId từ orderId
         const tempBookingId = orderId.replace('TEMP-', '');
         const key = `temp:${tempBookingId}`;
-        const tempData = await RedisService.get(key);
+        const tempData = await CacheService.get(key);
         
         if (!tempData) {
-            console.log(`❌ Temp booking ${tempBookingId} not found in Redis`);
+            console.log(`❌ Temp booking ${tempBookingId} not found in Cache`);
             return false;
         }
 
@@ -483,7 +483,7 @@ class MomoService {
         const data = typeof tempData === 'string' ? JSON.parse(tempData) : tempData;
         data.momo.status = 'paid';
         data.momo.paidAt = new Date().toISOString();
-        await RedisService.set(key, data, 300);
+        await CacheService.set(key, data, 300);
 
         console.log(`✅ MoMo payment successful for temp booking ${tempBookingId}`);
         return true;

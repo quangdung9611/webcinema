@@ -1,141 +1,76 @@
 import {
-  SeatNormal,
-  SeatVIP,
-  SeatDeluxe,
-  SeatRecliner,
-  SeatCouple
+    SeatNormal,
+    SeatVIP,
+    SeatDeluxe,
+    SeatRecliner,
+    SeatCouple
 } from "./SeatIcon";
 
 const Seat = ({
-  type,
-  selected,
-  sold,
-  maintenance,
-  locked,
-  heldByOther, // 🔥 THÊM PROP NÀY
-  number,
-  onClick,
-
-  // =========================================================
-  // ADMIN MODE
-  //
-  // User:
-  //   false / không truyền
-  //   → ghế bảo trì không click được
-  //
-  // Admin:
-  //   true
-  //   → vẫn click được ghế bảo trì để mở lại
-  // =========================================================
-  adminMode = false
+    type,
+    selected,
+    sold,
+    maintenance,
+    locked,
+    heldByOther,
+    number,
+    onClick,
+    adminMode = false
 }) => {
 
-  // =========================================================
-  // CHUẨN HÓA LOẠI GHẾ
-  // =========================================================
+    const seatType = type?.toUpperCase();
 
-  const seatType =
-    type?.toUpperCase();
+    let Icon = SeatNormal;
 
+    switch (seatType) {
+        case "VIP":
+            Icon = SeatVIP;
+            break;
 
-  // =========================================================
-  // CHỌN ICON THEO LOẠI GHẾ
-  // =========================================================
+        case "DELUXE":
+            Icon = SeatDeluxe;
+            break;
 
-  let Icon = SeatNormal;
+        case "RECLINER":
+            Icon = SeatRecliner;
+            break;
 
-  switch (seatType) {
+        case "COUPLE":
+            Icon = SeatCouple;
+            break;
 
-    case "VIP":
-      Icon = SeatVIP;
-      break;
+        case "STANDARD":
+        default:
+            Icon = SeatNormal;
+            break;
+    }
 
-    case "DELUXE":
-      Icon = SeatDeluxe;
-      break;
+    const isDisabled =
+        sold ||
+        locked ||
+        heldByOther ||
+        (maintenance && !adminMode);
 
-    case "RECLINER":
-      Icon = SeatRecliner;
-      break;
+    return (
+        <div
+            className={`
+                seat
+                ${seatType || "STANDARD"}
+                ${selected ? "selected" : ""}
+                ${sold ? "sold" : ""}
+                ${maintenance ? "maintenance" : ""}
+                ${locked ? "locked" : ""}
+                ${heldByOther ? "held-by-other" : ""}
+            `}
+            onClick={!isDisabled ? onClick : undefined}
+        >
+            <Icon className="seat-icon" />
 
-    case "COUPLE":
-      Icon = SeatCouple;
-      break;
-
-    case "STANDARD":
-    default:
-      Icon = SeatNormal;
-      break;
-  }
-
-
-  // =========================================================
-  // KIỂM TRA CÓ ĐƯỢC CLICK KHÔNG
-  //
-  // GHẾ ĐÃ BÁN:
-  //   → luôn không click
-  //
-  // GHẾ LOCKED:
-  //   → luôn không click (ghế đang bị giữ bởi chính user)
-  //
-  // GHẾ HELD BY OTHER:
-  //   → luôn không click (ghế đang bị người khác giữ)
-  //
-  // GHẾ BẢO TRÌ:
-  //   User:
-  //      → không click
-  //
-  //   Admin:
-  //      → được click để mở bảo trì
-  // =========================================================
-
-  const isDisabled =
-    sold ||
-    locked ||
-    heldByOther || // 🔥 THÊM ĐIỀU KIỆN NÀY
-    (maintenance && !adminMode);
-
-
-  // =========================================================
-  // RENDER
-  // =========================================================
-
-  // 🔥 THÊM CLASS held-by-other
-  return (
-    <div
-      className={`
-        seat
-        ${seatType || "STANDARD"}
-        ${selected ? "selected" : ""}
-        ${sold ? "sold" : ""}
-        ${maintenance ? "maintenance" : ""}
-        ${locked ? "locked" : ""}
-        ${heldByOther ? "held-by-other" : ""} {/* 🔥 THÊM CLASS NÀY */}
-      `}
-      onClick={
-        !isDisabled
-          ? onClick
-          : undefined
-      }
-    >
-
-      {/* =====================================================
-          SEAT ICON
-      ===================================================== */}
-
-      <Icon className="seat-icon" />
-
-
-      {/* =====================================================
-          SEAT NUMBER
-      ===================================================== */}
-
-      <span className="seat-number">
-        {number}
-      </span>
-
-    </div>
-  );
+            <span className="seat-number">
+                {number}
+            </span>
+        </div>
+    );
 };
 
 export default Seat;

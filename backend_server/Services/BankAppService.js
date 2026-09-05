@@ -4,7 +4,7 @@ const PointsService = require("./PointsService");
 const OtpService = require("./OtpService");
 const { PURPOSE } = require("./OtpService");
 const MailService = require("./MailService");
-const RedisService = require("./RedisService");
+const CacheService = require("./CacheService");
 
 
 class BankAppService {
@@ -106,8 +106,8 @@ class BankAppService {
         }
 
         const key = `temp:${tempBookingId}`;
-        const ttl = await RedisService.getTTL(key);
-        const data = await RedisService.get(key);
+        const ttl = await CacheService.getTTL(key);
+        const data = await CacheService.get(key);
 
         return {
             success: true,
@@ -133,13 +133,13 @@ class BankAppService {
 
         // Kiểm tra temp booking còn tồn tại không
         const key = `temp:${tempBookingId}`;
-        const tempData = await RedisService.get(key);
+        const tempData = await CacheService.get(key);
         if (!tempData) {
             throw { statusCode: 404, message: "Phiên đặt vé đã hết hạn. Vui lòng đặt lại." };
         }
 
         // Rate limit cho resend: 3 lần / 5 phút (giống AuthService)
-        const rateLimit = await RedisService.checkRateLimit(email, "payment-resend", 3, 300);
+        const rateLimit = await CacheService.checkRateLimit(email, "payment-resend", 3, 300);
         if (!rateLimit.allowed) {
             throw { 
                 statusCode: 429, 
@@ -152,7 +152,7 @@ class BankAppService {
         }
 
         // Xóa OTP cũ
-        await RedisService.deleteOTP(email, PURPOSE.PAYMENT);
+        await CacheService.deleteOTP(email, PURPOSE.PAYMENT);
 
         // Tạo OTP mới
         const otpResult = await OtpService.createOTP(email, PURPOSE.PAYMENT);
@@ -162,7 +162,7 @@ class BankAppService {
         updatedData.otp = otpResult.otp;
         updatedData.otpCreatedAt = Date.now();
 
-        await RedisService.set(key, updatedData, 300);
+        await CacheService.set(key, updatedData, 300);
 
         // Gửi email (KHÔNG ĐỢI)
         setImmediate(() => {
@@ -172,7 +172,7 @@ class BankAppService {
         });
 
         const otpKey = `otp:${email}:${PURPOSE.PAYMENT}`;
-        const ttl = await RedisService.getTTL(otpKey);
+        const ttl = await CacheService.getTTL(otpKey);
 
         return {
             success: true,
@@ -197,13 +197,13 @@ class BankAppService {
 
         // Kiểm tra temp booking còn tồn tại không
         const key = `temp:${tempBookingId}`;
-        const tempData = await RedisService.get(key);
+        const tempData = await CacheService.get(key);
         if (!tempData) {
             throw { statusCode: 404, message: "Phiên đặt vé đã hết hạn. Vui lòng đặt lại." };
         }
 
         // Rate limit cho send OTP: 1 lần / 60 giây
-        const rateLimit = await RedisService.checkRateLimit(email, "payment-send", 1, 60);
+        const rateLimit = await CacheService.checkRateLimit(email, "payment-send", 1, 60);
         if (!rateLimit.allowed) {
             throw { 
                 statusCode: 429, 
@@ -222,7 +222,7 @@ class BankAppService {
         updatedData.otp = otpResult.otp;
         updatedData.otpCreatedAt = Date.now();
 
-        await RedisService.set(key, updatedData, 300);
+        await CacheService.set(key, updatedData, 300);
 
         // Gửi email (KHÔNG ĐỢI)
         setImmediate(() => {
@@ -232,7 +232,7 @@ class BankAppService {
         });
 
         const otpKey = `otp:${email}:${PURPOSE.PAYMENT}`;
-        const ttl = await RedisService.getTTL(otpKey);
+        const ttl = await CacheService.getTTL(otpKey);
 
         return {
             success: true,

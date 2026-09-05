@@ -1,4 +1,4 @@
-const RedisService = require("./RedisService");
+const CacheService = require("./CacheService");
 const Otp = require("../utils/Otp");
 const OtpRepository = require("../Repositories/OtpRepository");
 
@@ -26,7 +26,7 @@ class OtpService {
         email = email.trim();
         console.log(`🔐 [CREATE OTP] email: "${email}", purpose: "${purpose}"`);
 
-        const rateLimit = await RedisService.checkRateLimit(email, purpose, 3, 300);
+        const rateLimit = await CacheService.checkRateLimit(email, purpose, 3, 300);
         if (!rateLimit.allowed) {
             throw { statusCode: 429, message: rateLimit.message };
         }
@@ -34,8 +34,8 @@ class OtpService {
         const otpCode = Otp.generate6(); 
         console.log(`📤 Generated OTP: ${otpCode}`);
 
-        await RedisService.deleteOTP(email, purpose);
-        await RedisService.saveOTP(email, purpose, otpCode, OTP_EXPIRE_SECONDS);
+        await CacheService.deleteOTP(email, purpose);
+        await CacheService.saveOTP(email, purpose, otpCode, OTP_EXPIRE_SECONDS);
         
         const otpId = await OtpRepository.create({
             email,
@@ -45,9 +45,9 @@ class OtpService {
             user_agent: null
         });
 
-        // ✅ Lấy TTL thực tế từ Redis
+        // ✅ Lấy TTL thực tế từ Cache
         const otpKey = `otp:${email}:${purpose}`;
-        const ttl = await RedisService.getTTL(otpKey);
+        const ttl = await CacheService.getTTL(otpKey);
 
         return { 
             success: true, 
@@ -65,14 +65,14 @@ class OtpService {
         email = email.trim();
         console.log(`🔑 [VERIFY OTP] email: "${email}", purpose: "${purpose}", received otp: "${otp}"`);
 
-        const isLocked = await RedisService.isOTPLocked(email, purpose, 5);
+        const isLocked = await CacheService.isOTPLocked(email, purpose, 5);
         if (isLocked) {
-            // ✅ XÓA OTP KHỎI REDIS KHI BỊ KHÓA
-            await RedisService.deleteOTP(email, purpose);
+            // ✅ XÓA OTP KHỎI CACHE KHI BỊ KHÓA
+            await CacheService.deleteOTP(email, purpose);
             return { success: false, code: "OTP_LOCKED", message: "OTP đã bị khóa do nhập sai quá nhiều lần" };
         }
 
-        const savedOTP = String(await RedisService.getOTP(email, purpose) || '').trim();
+        const savedOTP = String(await CacheService.getOTP(email, purpose) || '').trim();
         const userOTP = String(otp || '').trim();
 
         if (!savedOTP) {
@@ -80,13 +80,13 @@ class OtpService {
         }
 
         if (savedOTP !== userOTP) {
-            const attempts = await RedisService.incrementOTPAttempts(email, purpose, 300);
+            const attempts = await CacheService.incrementOTPAttempts(email, purpose, 300);
             const latestLog = await OtpRepository.findLatest(email, purpose);
             if (latestLog?.otp_id) await OtpRepository.markFailed(latestLog.otp_id);
             
             // ✅ KIỂM TRA NẾU ĐẠT 5 LẦN SAI → XÓA OTP
             if (attempts >= 5) {
-                await RedisService.deleteOTP(email, purpose);
+                await CacheService.deleteOTP(email, purpose);
                 return {
                     success: false,
                     code: "OTP_LOCKED",
@@ -103,13 +103,13 @@ class OtpService {
 
         // ✅ CHỈ XÓA OTP KHI deleteAfterVerify = true
         if (deleteAfterVerify) {
-            await RedisService.deleteOTP(email, purpose);
+            await CacheService.deleteOTP(email, purpose);
             const latestLog = await OtpRepository.findLatest(email, purpose);
             if (latestLog?.otp_id) await OtpRepository.markVerified(latestLog.otp_id);
             await OtpRepository.create({ email, purpose, status: "verified", ip_address: null, user_agent: null });
         } else {
             // ✅ KHÔNG XÓA OTP, chỉ reset số lần thử sai
-            await RedisService.resetOTPAttempts(email, purpose);
+            await CacheService.resetOTPAttempts(email, purpose);
         }
 
         return { success: true, message: "Xác thực OTP thành công" };
@@ -121,7 +121,7 @@ class OtpService {
     async deleteOTP(email, purpose) {
         if (!purpose) throw new Error("Purpose is required");
         email = email.trim();
-        await RedisService.deleteOTP(email, purpose);
+        await CacheService.deleteOTP(email, purpose);
         const latestLog = await OtpRepository.findLatest(email, purpose);
         if (latestLog && latestLog.status === 'sent') {
             await OtpRepository.markExpired(latestLog.otp_id);
@@ -138,8 +138,8 @@ class OtpService {
         email = email.trim();
         
         const otpKey = `otp:${email}:${purpose}`;
-        const ttl = await RedisService.getTTL(otpKey);
-        const otp = await RedisService.getOTP(email, purpose);
+        const ttl = await CacheService.getTTL(otpKey);
+        const otp = await CacheService.getOTP(email, purpose);
 
         return {
             exists: !!otp,

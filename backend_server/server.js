@@ -9,7 +9,7 @@ const http = require("http");
 const { Server } = require("socket.io");
 
 const db = require("./Config/db");
-const RedisService = require("./Services/RedisService");
+const CacheService = require("./Services/CacheService");
 const Jwt = require("./utils/Jwt");
 const RefreshTokenRepository = require("./Repositories/RefreshTokenRepository");
 const AuthService = require("./Services/AuthService");
@@ -411,7 +411,7 @@ io.on("connection", async (socket) => {
      *
      * Đây là ID đại diện cho socket hiện tại.
      *
-     * Redis:
+     * Cache:
      *
      * seat_lock:{showtimeId}:{seatId}
      *             ↓
@@ -466,7 +466,7 @@ io.on("connection", async (socket) => {
 
                 try {
 
-                    await RedisService.saveUserSocket(
+                    await CacheService.saveUserSocket(
                         registerUserId,
                         socketId
                     );
@@ -509,13 +509,13 @@ io.on("connection", async (socket) => {
     //
     // KHÔNG CÒN holdingSeats = []
     //
-    // Redis là nguồn dữ liệu.
+    // Cache là nguồn dữ liệu.
     // ============================================================
 
     try {
 
         const lockedSeats =
-            await RedisService.getLockedSeatsByShowtime(
+            await CacheService.getLockedSeatsByShowtime(
                 socket.handshake.query?.showtimeId
             );
 
@@ -596,11 +596,11 @@ io.on("connection", async (socket) => {
 
 
                 // =================================================
-                // REDIS ATOMIC LOCK
+                // CACHE ATOMIC LOCK
                 // =================================================
 
                 const lockResult =
-                    await RedisService.acquireSeatLock(
+                    await CacheService.acquireSeatLock(
                         showtimeId,
                         seatId,
                         ownerToken,
@@ -689,7 +689,7 @@ io.on("connection", async (socket) => {
 
 
                 console.log(
-                    `🔒 [REDIS SEAT LOCK] User ${userId || "Guest"} giữ ghế ${seatId} - Showtime ${showtimeId} - TTL ${lockResult.ttl}s`
+                    `🔒 [CACHE SEAT LOCK] User ${userId || "Guest"} giữ ghế ${seatId} - Showtime ${showtimeId} - TTL ${lockResult.ttl}s`
                 );
 
             } catch (error) {
@@ -749,7 +749,7 @@ io.on("connection", async (socket) => {
                 // =================================================
 
                 const released =
-                    await RedisService.releaseSeatLock(
+                    await CacheService.releaseSeatLock(
                         showtimeId,
                         seatId,
                         ownerToken
@@ -784,7 +784,7 @@ io.on("connection", async (socket) => {
 
 
                 console.log(
-                    `🔓 [REDIS SEAT LOCK] User ${userId || "Guest"} hủy ghế ${seatId} - Showtime ${showtimeId}`
+                    `🔓 [CACHE SEAT LOCK] User ${userId || "Guest"} hủy ghế ${seatId} - Showtime ${showtimeId}`
                 );
 
             } catch (error) {
@@ -834,7 +834,7 @@ io.on("connection", async (socket) => {
 
 
                 const lockedSeats =
-                    await RedisService.getLockedSeatsByShowtime(
+                    await CacheService.getLockedSeatsByShowtime(
                         showtimeId
                     );
 
@@ -887,7 +887,7 @@ io.on("connection", async (socket) => {
                 if (data?.showtimeId) {
 
                     clearedCount =
-                        await RedisService
+                        await CacheService
                             .releaseShowtimeSeatLocksByOwner(
                                 Number(data.showtimeId),
                                 ownerToken
@@ -896,7 +896,7 @@ io.on("connection", async (socket) => {
                 } else {
 
                     clearedCount =
-                        await RedisService
+                        await CacheService
                             .releaseAllSeatLocksByOwner(
                                 ownerToken
                             );
@@ -904,7 +904,7 @@ io.on("connection", async (socket) => {
 
 
                 /*
-                 * Sau khi Redis release thành công,
+                 * Sau khi Cache release thành công,
                  * thông báo frontend.
                  *
                  * Vì không còn holdingSeats local,
@@ -912,7 +912,7 @@ io.on("connection", async (socket) => {
                  * nếu không scan trước.
                  *
                  * Do đó request-holding-seats sẽ đồng bộ lại
-                 * trạng thái thực tế từ Redis.
+                 * trạng thái thực tế từ Cache.
                  */
 
 
@@ -933,7 +933,7 @@ io.on("connection", async (socket) => {
 
 
                 console.log(
-                    `🧹 [REDIS SEAT LOCK] Cleared ${clearedCount} seats for socket ${socketId}`
+                    `🧹 [CACHE SEAT LOCK] Cleared ${clearedCount} seats for socket ${socketId}`
                 );
 
 
@@ -945,7 +945,7 @@ io.on("connection", async (socket) => {
                 if (data?.showtimeId) {
 
                     const lockedSeats =
-                        await RedisService
+                        await CacheService
                             .getLockedSeatsByShowtime(
                                 Number(data.showtimeId)
                             );
@@ -1013,20 +1013,20 @@ io.on("connection", async (socket) => {
 
 
             // =====================================================
-            // RELEASE REDIS SEAT LOCKS
+            // RELEASE CACHE SEAT LOCKS
             // =====================================================
 
             try {
 
                 const releasedCount =
-                    await RedisService
+                    await CacheService
                         .releaseAllSeatLocksByOwner(
                             ownerToken
                         );
 
 
                 console.log(
-                    `🔓 [REDIS SEAT LOCK] Released ${releasedCount} seats from socket ${socketId}`
+                    `🔓 [CACHE SEAT LOCK] Released ${releasedCount} seats from socket ${socketId}`
                 );
 
 
@@ -1038,7 +1038,7 @@ io.on("connection", async (socket) => {
                  * Các client khác sẽ:
                  *
                  * - nhận sync request khi cần
-                 * - hoặc bước tiếp theo mình sẽ tối ưu hàm Redis
+                 * - hoặc bước tiếp theo mình sẽ tối ưu hàm Cache
                  *   để trả về danh sách seat đã release.
                  *
                  * TTL vẫn đảm bảo ghế không bị khóa vĩnh viễn.
@@ -1047,7 +1047,7 @@ io.on("connection", async (socket) => {
             } catch (error) {
 
                 console.error(
-                    "❌ [SOCKET] Failed to release Redis seat locks:",
+                    "❌ [SOCKET] Failed to release Cache seat locks:",
                     error.message
                 );
             }
@@ -1058,7 +1058,7 @@ io.on("connection", async (socket) => {
             //
             // QUAN TRỌNG:
             //
-            // Không được xóa socket mapping nếu Redis hiện tại
+            // Không được xóa socket mapping nếu Cache hiện tại
             // đã thuộc về một socket mới.
             // =====================================================
 
@@ -1067,7 +1067,7 @@ io.on("connection", async (socket) => {
                 try {
 
                     const registeredSocket =
-                        await RedisService.getUserSocket(
+                        await CacheService.getUserSocket(
                             userId
                         );
 
@@ -1077,7 +1077,7 @@ io.on("connection", async (socket) => {
                         socketId
                     ) {
 
-                        await RedisService.deleteUserSocket(
+                        await CacheService.deleteUserSocket(
                             userId
                         );
 
@@ -1148,8 +1148,8 @@ app.get(
             conn.release();
 
 
-            const redisHealthy =
-                await RedisService.ping();
+            const cacheHealthy =
+                await CacheService.ping();
 
 
             res.status(200).json({
@@ -1162,8 +1162,8 @@ app.get(
                 database:
                     "connected",
 
-                redis:
-                    redisHealthy
+                cache:
+                    cacheHealthy
                         ? "connected"
                         : "disconnected",
 
@@ -1427,25 +1427,25 @@ server.listen(
 
 
         // ========================================================
-        // REDIS
+        // CACHE
         // ========================================================
 
         try {
 
-            const redisHealthy =
-                await RedisService.ping();
+            const cacheHealthy =
+                await CacheService.ping();
 
 
             console.log(
-                redisHealthy
-                    ? "✅ Redis connected successfully!"
-                    : "⚠️ Redis connection failed!"
+                cacheHealthy
+                    ? "✅ Cache Service connected successfully!"
+                    : "⚠️ Cache Service connection failed!"
             );
 
         } catch (error) {
 
             console.error(
-                "❌ Redis Error:",
+                "❌ Cache Error:",
                 error.message
             );
         }
