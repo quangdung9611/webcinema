@@ -26,13 +26,13 @@ class CacheService {
 
         // Tìm hoặc tạo record
         let record = await db.query(
-            `SELECT * FROM rate_limits WHERE key = ? AND action = ?`,
+            `SELECT * FROM rate_limits WHERE rate_key = ? AND action = ?`,
             [key, action]
         );
 
         if (record.length === 0) {
             await db.query(
-                `INSERT INTO rate_limits (key, action, attempts, max_attempts, first_attempt_at, last_attempt_at, expires_at)
+                `INSERT INTO rate_limits (rate_key, action, attempts, max_attempts, first_attempt_at, last_attempt_at, expires_at)
                  VALUES (?, ?, ?, ?, ?, ?, ?)`,
                 [key, action, 1, maxAttempts, now, now, expiresAt]
             );
