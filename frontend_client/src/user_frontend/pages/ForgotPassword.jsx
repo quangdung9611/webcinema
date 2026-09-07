@@ -119,6 +119,7 @@ const ForgotPassword = () => {
 
         try {
             const response = await api.post('/api/auth/forgot-password', { email });
+            
             if (response.data.success) {
                 setSuccessMessage('✅ Mã OTP đã được gửi tới email của bạn.');
                 setTimeout(() => setSuccessMessage(''), 5000);
@@ -134,13 +135,25 @@ const ForgotPassword = () => {
             const status = err.response?.status;
             const errorData = err.response?.data || {};
             const errorMessage = errorData.message || 'Không thể gửi OTP';
+            const errorCode = errorData.code;
 
+            // 🔥 XỬ LÝ CÁC TRƯỜNG HỢP LỖI
             if (status === 429) {
+                // Rate limit
                 const remainingSeconds = errorData.data?.remainingSeconds || 300;
                 setIsRateLimited(true);
                 setRateLimitTimeLeft(remainingSeconds);
                 saveRateLimitToStorage(remainingSeconds);
                 setError(`⚠️ Bạn đã gửi quá nhiều lần. Vui lòng thử lại sau ${formatLockTime(remainingSeconds)}.`);
+            } else if (status === 404) {
+                // 🔥 EMAIL CHƯA ĐĂNG KÝ
+                setError('❌ Email này chưa được đăng ký trong hệ thống. Vui lòng kiểm tra lại.');
+            } else if (status === 400 && errorMessage?.toLowerCase().includes('verified')) {
+                // Email chưa xác thực
+                setError('⚠️ Tài khoản chưa được xác thực email. Vui lòng kiểm tra hộp thư để xác thực.');
+            } else if (status === 403) {
+                // Tài khoản bị khóa
+                setError('🔒 Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ để được giúp đỡ.');
             } else {
                 setError(errorMessage);
             }

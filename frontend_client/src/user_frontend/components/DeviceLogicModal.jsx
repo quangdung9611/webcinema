@@ -2,7 +2,7 @@ import React from 'react';
 import { X } from 'lucide-react';
 import '../styles/DeviceLogicModal.css';
 
-const DeviceLoginModal = ({
+const DeviceLogicModal = ({
     show,
     onClose = () => {},
     title,
@@ -67,4 +67,4 @@ const DeviceLoginModal = ({
     );
 };
 
-export default DeviceLoginModal;
+export default DeviceLogicModal;

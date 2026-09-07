@@ -254,7 +254,9 @@ exports.changePassword = async (req, res) => {
     }
 };
 
-// AuthController.js - forgotPassword
+/*=========================================================
+    FORGOT PASSWORD - CÓ KIỂM TRA EMAIL CHƯA ĐĂNG KÝ
+=========================================================*/
 exports.forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
@@ -262,6 +264,16 @@ exports.forgotPassword = async (req, res) => {
         return res.status(200).json(result);
     } catch (error) {
         console.error("Forgot Password Error:", error);
+        
+        // 🔥 XỬ LÝ LỖI 404 (EMAIL CHƯA ĐĂNG KÝ)
+        if (error.statusCode === 404) {
+            return res.status(404).json({
+                success: false,
+                field: error.field || null,
+                message: error.message || "Email này chưa được đăng ký trong hệ thống. Vui lòng kiểm tra lại."
+            });
+        }
+        
         if (error.statusCode === 429) {
             return res.status(429).json({
                 success: false,
@@ -277,6 +289,7 @@ exports.forgotPassword = async (req, res) => {
         });
     }
 };
+
 /*=========================================================
     SUBMIT NEW PASSWORD
 =========================================================*/
@@ -304,7 +317,7 @@ exports.submitNewPassword = async (req, res) => {
 };
 
 /*=========================================================
-    🆕 XÁC THỰC OTP VÀ ĐỔI MẬT KHẨU (GIỐNG VERIFY OTP CHANGE PIN)
+    🆕 XÁC THỰC OTP VÀ ĐỔI MẬT KHẨU
 =========================================================*/
 exports.verifyOtpAndReset = async (req, res) => {
     try {
@@ -316,7 +329,7 @@ exports.verifyOtpAndReset = async (req, res) => {
         if (error.statusCode === 429) {
             return res.status(429).json({
                 success: false,
-                message: error.message || 'Bạn đã thử quá nhiều lần. Vui lòng thử lại sau.',
+                message: error.message || 'Bạn đã thử OTP quá nhiều lần. Vui lòng thử lại sau.',
                 data: error.data || null
             });
         }
@@ -328,6 +341,7 @@ exports.verifyOtpAndReset = async (req, res) => {
         });
     }
 };
+
 /*=========================================================
     VERIFY RESET OTP
 =========================================================*/
@@ -455,7 +469,7 @@ exports.revokeDevice = async (req, res) => {
 };
 
 /*=========================================================
-    🆕 QUÊN MÃ PIN - GỬI OTP VỀ EMAIL
+    🆕 QUÊN MÃ PIN - CÓ KIỂM TRA EMAIL CHƯA ĐĂNG KÝ
 =========================================================*/
 exports.forgotPin = async (req, res) => {
     try {
@@ -464,6 +478,16 @@ exports.forgotPin = async (req, res) => {
         return res.status(200).json(result);
     } catch (error) {
         console.error("Forgot PIN Error:", error);
+        
+        // 🔥 XỬ LÝ LỖI 404 (EMAIL CHƯA ĐĂNG KÝ)
+        if (error.statusCode === 404) {
+            return res.status(404).json({
+                success: false,
+                field: error.field || null,
+                message: error.message || "Email này chưa được đăng ký trong hệ thống. Vui lòng kiểm tra lại."
+            });
+        }
+        
         if (error.statusCode === 429) {
             return res.status(429).json({
                 success: false,

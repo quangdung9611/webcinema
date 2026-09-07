@@ -2,17 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MailCheck, AlertCircle, CheckCircle } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
 import api from '../../api/api';
 import LoadingButton from '../components/LoadingButton';
 import '../styles/UserAuth.css';
 
 const ForgotPin = () => {
     const navigate = useNavigate();
-    const { user } = useAuth();
 
-    const email = user?.email || '';
-
+    const [email, setEmail] = useState('');
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
     const [loading, setLoading] = useState(false);
@@ -62,11 +59,6 @@ const ForgotPin = () => {
     };
 
     useEffect(() => {
-        if (!email) {
-            navigate('/login');
-            return;
-        }
-
         const restoredRateLimit = restoreRateLimitFromStorage();
         if (restoredRateLimit !== null) {
             setIsRateLimited(true);
@@ -111,6 +103,11 @@ const ForgotPin = () => {
     };
 
     const handleSendOtp = async () => {
+        if (!email.trim()) {
+            setError('Vui lòng nhập email');
+            return;
+        }
+
         if (isRateLimited) {
             setError(`⚠️ Vui lòng đợi ${formatLockTime(rateLimitTimeLeft)} trước khi thử lại.`);
             return;
@@ -138,13 +135,24 @@ const ForgotPin = () => {
             const status = err.response?.status;
             const errorData = err.response?.data || {};
             const errorMessage = errorData.message || 'Không thể gửi OTP';
+            const errorCode = errorData.code;
 
+            // 🔥 XỬ LÝ CÁC TRƯỜNG HỢP LỖI
             if (status === 429) {
                 const remainingSeconds = errorData.data?.remainingSeconds || 300;
                 setIsRateLimited(true);
                 setRateLimitTimeLeft(remainingSeconds);
                 saveRateLimitToStorage(remainingSeconds);
                 setError(`⚠️ Bạn đã gửi quá nhiều lần. Vui lòng thử lại sau ${formatLockTime(remainingSeconds)}.`);
+            } else if (status === 404) {
+                // 🔥 EMAIL CHƯA ĐĂNG KÝ
+                setError('❌ Email này chưa được đăng ký trong hệ thống. Vui lòng kiểm tra lại.');
+            } else if (status === 400 && errorMessage?.toLowerCase().includes('verified')) {
+                // Email chưa xác thực
+                setError('⚠️ Tài khoản chưa được xác thực email. Vui lòng kiểm tra hộp thư để xác thực.');
+            } else if (status === 403) {
+                // Tài khoản bị khóa
+                setError('🔒 Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ để được giúp đỡ.');
             } else {
                 setError(errorMessage);
             }
@@ -161,9 +169,7 @@ const ForgotPin = () => {
                 </div>
 
                 <h2>QUÊN MÃ PIN</h2>
-                <p className="auth-subtitle">
-                    Chúng tôi sẽ gửi mã OTP về email <strong className="text-highlight">{email}</strong>
-                </p>
+                <p className="auth-subtitle">Nhập email đăng ký để nhận mã OTP</p>
 
                 {successMessage && (
                     <div className="success-message">
@@ -178,6 +184,22 @@ const ForgotPin = () => {
                         <span>{error}</span>
                     </div>
                 )}
+
+                <div className="form-group">
+                    <label>Email đăng ký</label>
+                    <input
+                        type="email"
+                        className="auth-input"
+                        placeholder="example@gmail.com"
+                        value={email}
+                        onChange={(e) => {
+                            setEmail(e.target.value);
+                            if (error) setError('');
+                        }}
+                        disabled={loading || isRateLimited}
+                        autoComplete="email"
+                    />
+                </div>
 
                 <p className="auth-subtitle-sm">
                     Vui lòng bấm nút <strong>"GỬI OTP"</strong> để nhận mã xác thực.
@@ -205,10 +227,10 @@ const ForgotPin = () => {
                     <button
                         type="button"
                         className="btn-link back-btn"
-                        onClick={() => navigate('/profile')}
+                        onClick={() => navigate('/login')}
                         disabled={loading}
                     >
-                        ← Quay lại
+                        ← Quay lại đăng nhập
                     </button>
                 </div>
             </div>

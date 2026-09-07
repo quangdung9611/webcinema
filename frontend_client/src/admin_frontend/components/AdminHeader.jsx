@@ -1,14 +1,19 @@
-import React, { useEffect, useState, useRef } from 'react';
+// admin_frontend/components/AdminHeader.jsx
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import api from '../../api/api';
+import adminapi from '../../api/adminapi';
 import socketService from '../../api/socket';
-import SessionExpiredModal from '../../user_frontend/components/SessionExpiredModal';
+import { logout } from '../../utils/authCleanup';
 import {
     Menu,
     Search,
     Bell,
     ChevronDown,
-    LogOut
+    LogOut,
+    UserCircle,
+    LayoutDashboard,
+    Settings,
+    ShieldCheck
 } from 'lucide-react';
 
 import '../styles/AdminHeader.css';
@@ -19,97 +24,118 @@ const AdminHeader = ({ toggleSidebar }) => {
 
     const [admin, setAdmin] = useState(null);
     const [showDropdown, setShowDropdown] = useState(false);
-    const [showSessionExpiredModal, setShowSessionExpiredModal] = useState(false);
-    const [sessionExpiredMessage, setSessionExpiredMessage] = useState('');
-    const [newDevice, setNewDevice] = useState('');
-    const [countdown, setCountdown] = useState(10);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [toast, setToast] = useState({
+        show: false,
+        message: '',
+        type: 'success'
+    });
 
-    const countdownIntervalRef = useRef(null);
-    const isProcessingRef = useRef(false);
+    const dropdownRef = useRef(null);
+    const toastTimeoutRef = useRef(null);
+    const redirectTimeoutRef = useRef(null);
 
     // ============================================================
-    // 🔥 HÀM LOGOUT THỰC TẾ
+    // TOAST
     // ============================================================
-    const performLogout = async () => {
+    const showToast = useCallback((message, type = 'success') => {
+        if (toastTimeoutRef.current) {
+            clearTimeout(toastTimeoutRef.current);
+            toastTimeoutRef.current = null;
+        }
+
+        setToast({
+            show: true,
+            message,
+            type
+        });
+
+        toastTimeoutRef.current = setTimeout(() => {
+            setToast({
+                show: false,
+                message: '',
+                type: 'success'
+            });
+            toastTimeoutRef.current = null;
+        }, 4000);
+    }, []);
+
+    // ============================================================
+    // HÀM LOGOUT THỰC TẾ
+    // ============================================================
+    const performLogout = useCallback(async (redirectToLogin = true) => {
         if (isLoggingOut) return;
         setIsLoggingOut(true);
-        isProcessingRef.current = false;
 
         console.log('🔴 [ADMIN HEADER] Đang thực hiện logout...');
 
         try {
-            await api.post('/admin/api/auth/logout');
-        } catch (error) {
-            console.error('Lỗi khi logout:', error);
-        } finally {
-            localStorage.removeItem('admin_info');
-            socketService.disconnect();
-            setAdmin(null);
-            setShowDropdown(false);
-            setShowSessionExpiredModal(false);
-            setSessionExpiredMessage('');
-            setNewDevice('');
-            setCountdown(10);
-            setIsLoggingOut(false);
-            delete api.defaults.headers.common['Authorization'];
-            navigate('/login', { replace: true, state: { expired: true } });
-            console.log('✅ [ADMIN HEADER] Logout thành công, chuyển về login');
-        }
-    };
+            await logout();
+            
+            if (redirectToLogin) {
+                showToast('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'warning');
+            } else {
+                showToast('Đăng xuất thành công! Hẹn gặp lại bạn 👋', 'success');
+            }
 
-    // ============================================================
-    // 🔥 HÀM XỬ LÝ SESSION EXPIRED - DÙNG CHUNG
-    // ============================================================
-    const handleSessionExpired = (detail) => {
-        if (isProcessingRef.current || showSessionExpiredModal) {
-            console.log('⚠️ [ADMIN HEADER] Đang xử lý session expired, bỏ qua...');
-            return;
-        }
+            if (redirectTimeoutRef.current) {
+                clearTimeout(redirectTimeoutRef.current);
+                redirectTimeoutRef.current = null;
+            }
 
-        isProcessingRef.current = true;
-        console.log('🔴 [ADMIN HEADER] Xử lý session expired:', detail);
-
-        const message = detail?.message || 'Tài khoản admin đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.';
-        const device = detail?.newDevice || '';
-
-        setSessionExpiredMessage(message);
-        setNewDevice(device);
-        setShowSessionExpiredModal(true);
-        setCountdown(10);
-
-        setAdmin(null);
-        socketService.disconnect();
-
-        if (countdownIntervalRef.current) {
-            clearInterval(countdownIntervalRef.current);
-            countdownIntervalRef.current = null;
-        }
-
-        countdownIntervalRef.current = setInterval(() => {
-            setCountdown(prev => {
-                if (prev <= 1) {
-                    clearInterval(countdownIntervalRef.current);
-                    countdownIntervalRef.current = null;
-                    performLogout();
-                    return 0;
+            redirectTimeoutRef.current = setTimeout(() => {
+                localStorage.removeItem('admin_info');
+                socketService.disconnect();
+                setAdmin(null);
+                setShowDropdown(false);
+                setIsLoggingOut(false);
+                delete adminapi.defaults.headers.common['Authorization'];
+                
+                if (redirectToLogin) {
+                    navigate('/login', { 
+                        replace: true, 
+                        state: { expired: true, message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.' } 
+                    });
+                } else {
+                    navigate('/login', { 
+                        replace: true, 
+                        state: { loggedOut: true, message: 'Đăng xuất thành công!' } 
+                    });
                 }
-                return prev - 1;
-            });
-        }, 1000);
-    };
+                redirectTimeoutRef.current = null;
+            }, 1500);
+
+        } catch (error) {
+            console.error('🔴 [ADMIN HEADER] Logout error:', error);
+            showToast('Có lỗi xảy ra khi đăng xuất. Vui lòng thử lại.', 'error');
+
+            if (redirectTimeoutRef.current) {
+                clearTimeout(redirectTimeoutRef.current);
+                redirectTimeoutRef.current = null;
+            }
+
+            redirectTimeoutRef.current = setTimeout(() => {
+                localStorage.removeItem('admin_info');
+                socketService.disconnect();
+                setAdmin(null);
+                setShowDropdown(false);
+                setIsLoggingOut(false);
+                delete adminapi.defaults.headers.common['Authorization'];
+                navigate('/login', { replace: true });
+                redirectTimeoutRef.current = null;
+            }, 2000);
+        }
+    }, [isLoggingOut, navigate, showToast]);
 
     // ============================================================
-    // LOAD ADMIN INFO - ĐĂNG KÝ CALLBACK
+    // LOAD ADMIN INFO
     // ============================================================
     useEffect(() => {
         const fetchAdmin = async () => {
             try {
-                const res = await api.get('/admin/api/auth/me');
+                const res = await adminapi.get('/admin/api/auth/me');
                 const adminUser = res.data?.user || null;
                 setAdmin(adminUser);
-
-                socketService.setOnSessionExpired(handleSessionExpired);
 
                 if (adminUser) {
                     socketService.connect(adminUser.user_id);
@@ -118,52 +144,86 @@ const AdminHeader = ({ toggleSidebar }) => {
             } catch (error) {
                 console.error('Không thể lấy thông tin Admin:', error);
                 socketService.disconnect();
-                navigate('/login', { replace: true });
             }
         };
 
         fetchAdmin();
 
         return () => {
-            if (countdownIntervalRef.current) {
-                clearInterval(countdownIntervalRef.current);
-                countdownIntervalRef.current = null;
+            if (redirectTimeoutRef.current) {
+                clearTimeout(redirectTimeoutRef.current);
+                redirectTimeoutRef.current = null;
             }
-            isProcessingRef.current = false;
+            if (toastTimeoutRef.current) {
+                clearTimeout(toastTimeoutRef.current);
+                toastTimeoutRef.current = null;
+            }
         };
-    }, [navigate]);
+    }, []);
 
     // ============================================================
-    // LẮNG NGHE SỰ KIỆN WINDOW - FALLBACK
+    // LẮNG NGHE SỰ KIỆN WINDOW - GIỐNG UserHeader
     // ============================================================
     useEffect(() => {
-        const handleWindowSessionExpired = (event) => {
-            console.log('🔴 [ADMIN HEADER] Session expired event từ window:', event.detail);
-            handleSessionExpired(event.detail);
-        };
-
-        const handleTokenInvalid = () => {
-            console.log('🔴 [ADMIN HEADER] Token invalid');
+        const handleAuthCleanedUp = (event) => {
+            console.log('🧹 [ADMIN HEADER] Auth cleaned:', event?.detail);
             setAdmin(null);
-            socketService.disconnect();
-            isProcessingRef.current = false;
+            setShowDropdown(false);
+            try {
+                socketService.disconnect();
+            } catch (error) {
+                console.warn('Socket disconnect error:', error);
+            }
         };
 
-        const handleUnauthorized = () => {
-            console.log('🔴 [ADMIN HEADER] Unauthorized');
+        const handleAdminLoggedIn = (event) => {
+            console.log('🟢 [ADMIN HEADER] Admin logged in - updating immediately');
+            adminapi.get('/admin/api/auth/me', { force: true })
+                .then(res => {
+                    const adminUser = res.data?.user || null;
+                    setAdmin(adminUser);
+                    if (adminUser) {
+                        socketService.connect(adminUser.user_id);
+                    }
+                })
+                .catch(() => {});
+        };
+
+        const handleSessionExpired = (event) => {
+            console.warn('🔴 [ADMIN HEADER] Session expired:', event?.detail);
             setAdmin(null);
-            socketService.disconnect();
-            isProcessingRef.current = false;
+            setShowDropdown(false);
+            try {
+                socketService.disconnect();
+            } catch (error) {
+                console.warn('Socket disconnect error:', error);
+            }
         };
 
-        window.addEventListener('sessionExpired', handleWindowSessionExpired);
-        window.addEventListener('tokenInvalid', handleTokenInvalid);
-        window.addEventListener('unauthorized', handleUnauthorized);
+        window.addEventListener('authCleanedUp', handleAuthCleanedUp);
+        window.addEventListener('adminLoggedIn', handleAdminLoggedIn);
+        window.addEventListener('sessionExpired', handleSessionExpired);
 
         return () => {
-            window.removeEventListener('sessionExpired', handleWindowSessionExpired);
-            window.removeEventListener('tokenInvalid', handleTokenInvalid);
-            window.removeEventListener('unauthorized', handleUnauthorized);
+            window.removeEventListener('authCleanedUp', handleAuthCleanedUp);
+            window.removeEventListener('adminLoggedIn', handleAdminLoggedIn);
+            window.removeEventListener('sessionExpired', handleSessionExpired);
+        };
+    }, []);
+
+    // ============================================================
+    // CLICK OUTSIDE DROPDOWN
+    // ============================================================
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowDropdown(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
 
@@ -171,22 +231,7 @@ const AdminHeader = ({ toggleSidebar }) => {
     // LOGOUT THỦ CÔNG
     // ============================================================
     const handleLogout = async () => {
-        await performLogout();
-    };
-
-    // ============================================================
-    // HANDLE SESSION EXPIRED CONFIRM
-    // ============================================================
-    const handleSessionExpiredConfirm = () => {
-        console.log('🔴 [ADMIN HEADER] User xác nhận đăng nhập lại');
-        
-        if (countdownIntervalRef.current) {
-            clearInterval(countdownIntervalRef.current);
-            countdownIntervalRef.current = null;
-        }
-        
-        isProcessingRef.current = false;
-        performLogout();
+        await performLogout(false);
     };
 
     // ============================================================
@@ -197,10 +242,48 @@ const AdminHeader = ({ toggleSidebar }) => {
     };
 
     // ============================================================
+    // GET AVATAR URL
+    // ============================================================
+    const getAvatarUrl = (avatar) => {
+        if (!avatar) return null;
+        if (avatar.startsWith('http')) return avatar;
+        return `https://api.quangdungcinema.id.vn/uploads/avatars/${avatar}`;
+    };
+
+    const avatarSource = admin?.user_avatar || admin?.avatar;
+    const avatarUrl = getAvatarUrl(avatarSource);
+    const displayName = admin?.full_name || admin?.username || 'Quản trị viên';
+
+    // ============================================================
     // RENDER
     // ============================================================
     return (
         <>
+            {toast.show && (
+                <div className={`toast-notification toast-${toast.type}`}>
+                    <div className="toast-content">
+                        <span className="toast-icon">
+                            {toast.type === 'success' && '✅'}
+                            {toast.type === 'error' && '❌'}
+                            {toast.type === 'warning' && '⚠️'}
+                        </span>
+                        <span className="toast-message">{toast.message}</span>
+                    </div>
+                    <button 
+                        className="toast-close"
+                        onClick={() => {
+                            setToast({ show: false, message: '', type: 'success' });
+                            if (toastTimeoutRef.current) {
+                                clearTimeout(toastTimeoutRef.current);
+                                toastTimeoutRef.current = null;
+                            }
+                        }}
+                    >
+                        ✕
+                    </button>
+                </div>
+            )}
+
             <header className="admin-header-main">
 
                 <div className="admin-header-left">
@@ -212,6 +295,7 @@ const AdminHeader = ({ toggleSidebar }) => {
                         <Menu size={24} />
                     </button>
 
+                    {/* 🔥 SỬA: /dashboard → / */}
                     <Link to="/" className="admin-brand-logo">
                         <img
                             src="https://api.quangdungcinema.id.vn/uploads/logo/logocinema.png"
@@ -237,20 +321,32 @@ const AdminHeader = ({ toggleSidebar }) => {
                         <span className="admin-notification-badge">5</span>
                     </button>
 
-                    <div className="admin-user-dropdown" onClick={toggleDropdown}>
+                    <div 
+                        className="admin-user-dropdown" 
+                        ref={dropdownRef}
+                        onClick={toggleDropdown}
+                    >
                         <div className="admin-user-avatar">
-                            <img
-                                src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(
-                                    admin?.full_name || 'Admin'
-                                )}`}
-                                alt="Admin Avatar"
-                            />
+                            {avatarUrl ? (
+                                <img
+                                    src={avatarUrl}
+                                    alt="Admin Avatar"
+                                    style={{
+                                        width: '36px',
+                                        height: '36px',
+                                        borderRadius: '50%',
+                                        objectFit: 'cover'
+                                    }}
+                                />
+                            ) : (
+                                <UserCircle size={36} />
+                            )}
                         </div>
 
                         <div className="admin-user-info">
                             <span className="admin-user-greeting">Xin chào,</span>
                             <strong className="admin-user-name">
-                                {admin?.full_name || admin?.username || 'Quản trị viên'}
+                                {displayName}
                             </strong>
                         </div>
 
@@ -260,24 +356,81 @@ const AdminHeader = ({ toggleSidebar }) => {
                         />
                     </div>
 
-                    <button className="admin-logout-btn" onClick={handleLogout} type="button">
+                    {showDropdown && (
+                        <div className="admin-dropdown-content show">
+                            <div className="admin-dropdown-user-info">
+                                <p>
+                                    Chào, <strong>{displayName}</strong>
+                                </p>
+                                <span className="admin-badge">
+                                    <ShieldCheck size={14} />
+                                    Quản trị viên
+                                </span>
+                            </div>
+
+                            <div className="admin-dropdown-divider" />
+
+                            {/* 🔥 SỬA: /dashboard → / */}
+                            <div
+                                className="admin-dropdown-item"
+                                onClick={() => {
+                                    navigate('/');
+                                    setShowDropdown(false);
+                                }}
+                            >
+                                <LayoutDashboard size={18} />
+                                <span>Dashboard</span>
+                            </div>
+
+                            <div
+                                className="admin-dropdown-item"
+                                onClick={() => {
+                                    navigate('/admin/profile');
+                                    setShowDropdown(false);
+                                }}
+                            >
+                                <UserCircle size={18} />
+                                <span>Hồ sơ</span>
+                            </div>
+
+                            <div
+                                className="admin-dropdown-item"
+                                onClick={() => {
+                                    navigate('/admin/settings');
+                                    setShowDropdown(false);
+                                }}
+                            >
+                                <Settings size={18} />
+                                <span>Cài đặt</span>
+                            </div>
+
+                            <div className="admin-dropdown-divider" />
+
+                            <div
+                                className={`admin-dropdown-item admin-dropdown-logout ${isLoggingOut ? 'loading' : ''}`}
+                                onClick={handleLogout}
+                            >
+                                <LogOut size={18} />
+                                <span>
+                                    {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
+                                </span>
+                            </div>
+                        </div>
+                    )}
+
+                    <button 
+                        className="admin-logout-btn" 
+                        onClick={handleLogout} 
+                        type="button"
+                        disabled={isLoggingOut}
+                    >
                         <LogOut size={18} />
-                        <span>Đăng xuất</span>
+                        <span>{isLoggingOut ? 'Đang...' : 'Đăng xuất'}</span>
                     </button>
 
                 </div>
 
             </header>
-
-            {/* 🔥 SESSION EXPIRED MODAL - DÙNG COMPONENT CHUNG */}
-            <SessionExpiredModal
-                isOpen={showSessionExpiredModal}
-                onConfirm={handleSessionExpiredConfirm}
-                message={sessionExpiredMessage}
-                newDevice={newDevice}
-                autoRedirect={true}
-                redirectDelay={countdown}
-            />
         </>
     );
 };

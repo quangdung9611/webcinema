@@ -39,7 +39,7 @@ const validateLogin = (email, password) => {
 };
 
 // ============================================================
-// GENERATE ACCESS TOKEN (Hàm nội bộ)
+// GENERATE ACCESS TOKEN
 // ============================================================
 const generateAndSetTokens = (user, res, rememberMe = false) => {
     const accessToken = Jwt.generateAccessToken(user);
@@ -76,7 +76,7 @@ exports.checkLockStatus = async (email) => {
 };
 
 // ============================================================
-// LOGIN - CÓ RATE LIMIT (5 lần/60s) + LOCKOUT
+// LOGIN
 // ============================================================
 exports.login = async (email, password, rememberMe = false, req, res) => {
     validateLogin(email, password);
@@ -248,7 +248,7 @@ exports.logout = async (req, res) => {
 };
 
 // ============================================================
-// CHANGE PASSWORD - CÓ RATE LIMIT (3 lần/60s)
+// CHANGE PASSWORD
 // ============================================================
 exports.changePassword = async (userId, passwordData) => {
     const { currentPassword, newPassword } = passwordData;
@@ -296,21 +296,40 @@ exports.changePassword = async (userId, passwordData) => {
 };
 
 // ============================================================
-// FORGOT PASSWORD - CÓ RATE LIMIT (3 lần/5 PHÚT) + Trả về TTL
+// FORGOT PASSWORD - CÓ KIỂM TRA EMAIL CHƯA ĐĂNG KÝ
 // ============================================================
 exports.forgotPassword = async (email, req) => {
     if (!email?.trim()) throw { statusCode: 400, field: "email", message: "Email không được để trống" };
     if (!EMAIL_REGEX.test(email)) throw { statusCode: 400, field: "email", message: "Email không hợp lệ" };
 
     const user = await UserRepository.findByEmail(email);
+    
+    // 🔥 Nếu email chưa đăng ký -> trả về lỗi 404 rõ ràng
     if (!user) {
-        return {
-            success: true,
-            message: "Nếu email này tồn tại, chúng tôi đã gửi OTP đặt lại mật khẩu."
+        throw { 
+            statusCode: 404, 
+            field: "email",
+            message: "Email này chưa được đăng ký trong hệ thống. Vui lòng kiểm tra lại." 
         };
     }
 
-    // ✅ SỬA: 3 lần / 5 phút (300 giây)
+    // Kiểm tra email đã verified chưa
+    if (!user.email_verified) {
+        throw { 
+            statusCode: 400, 
+            field: "email",
+            message: "Tài khoản chưa được xác thực email. Vui lòng kiểm tra hộp thư để xác thực." 
+        };
+    }
+
+    // Kiểm tra tài khoản có bị khóa không
+    if (user.status === 'banned') {
+        throw { 
+            statusCode: 403, 
+            message: "Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ để được giúp đỡ." 
+        };
+    }
+
     const rateLimit = await CacheService.checkRateLimit(email, "password-reset", 3, 300);
     if (!rateLimit.allowed) {
         throw { 
@@ -323,17 +342,14 @@ exports.forgotPassword = async (email, req) => {
         };
     }
 
-    // ✅ Tạo OTP và lưu Cache
     const otpResult = await OtpService.createOTP(email, OtpService.PURPOSE.RESET_PASSWORD);
     
-    // ✅ SỬA: GỬI EMAIL KHÔNG ĐỢI (async) - GIẢM DELAY
     setImmediate(() => {
         MailService.sendResetPasswordOTP(email, otpResult.otp, user.full_name)
             .then(() => console.log(`✅ Email sent to ${email}`))
             .catch(err => console.error(`❌ Email failed: ${err.message}`));
     });
 
-    // ✅ Lấy TTL thực tế từ Cache
     const otpKey = `otp:${email}:${OtpService.PURPOSE.RESET_PASSWORD}`;
     const ttl = await CacheService.getTTL(otpKey);
 
@@ -365,7 +381,7 @@ exports.verifyResetToken = async (token) => {
 };
 
 // ============================================================
-// SUBMIT NEW PASSWORD (GỬI OTP) - CÓ RATE LIMIT (3 lần/60s) + Trả về TTL
+// SUBMIT NEW PASSWORD
 // ============================================================
 exports.submitNewPassword = async (token, newPassword) => {
     if (!token) throw { statusCode: 400, message: "Token không được để trống" };
@@ -418,10 +434,9 @@ exports.submitNewPassword = async (token, newPassword) => {
 };
 
 // ============================================================
-// 🆕 XÁC THỰC OTP VÀ ĐỔI MẬT KHẨU (GIỐNG VERIFY OTP CHANGE PIN)
+// VERIFY OTP AND RESET
 // ============================================================
 exports.verifyOtpAndReset = async (email, otp, newPassword) => {
-    // 🔥 RATE LIMIT: 5 lần/60s
     const rateLimit = await CacheService.checkRateLimit(email, "verify-otp-reset", 5, 300);
     if (!rateLimit.allowed) {
         throw { 
@@ -434,12 +449,11 @@ exports.verifyOtpAndReset = async (email, otp, newPassword) => {
         };
     }
 
-    // ✅ Gọi verify với deleteAfterVerify = false (KHÔNG xóa OTP)
     const otpResult = await OtpService.verifyOTP(
         email, 
         otp, 
         OtpService.PURPOSE.RESET_PASSWORD, 
-        false  // ← KHÔNG XÓA OTP
+        false
     );
     
     if (!otpResult.success) {
@@ -450,17 +464,14 @@ exports.verifyOtpAndReset = async (email, otp, newPassword) => {
         };
     }
 
-    // Nếu không có newPassword hoặc newPassword rỗng → chỉ verify OTP (KHÔNG xóa)
     if (!newPassword || newPassword.length === 0) {
         return { success: true, message: "Xác thực OTP thành công" };
     }
 
-    // Validate newPassword
     if (!Password.isStrong(newPassword)) {
         throw { statusCode: 400, field: "newPassword", message: "Mật khẩu phải có chữ hoa, chữ thường, số và ký tự đặc biệt" };
     }
 
-    // Đổi mật khẩu
     const user = await UserRepository.findByEmail(email);
     if (!user) {
         throw { statusCode: 404, message: "Không tìm thấy người dùng" };
@@ -480,7 +491,6 @@ exports.verifyOtpAndReset = async (email, otp, newPassword) => {
         console.error('❌ [RESET_PASSWORD] Lỗi khi xóa socket:', error.message);
     }
 
-    // ✅ XÓA OTP sau khi đổi mật khẩu thành công
     await CacheService.deleteOTP(email, OtpService.PURPOSE.RESET_PASSWORD);
 
     return {
@@ -490,7 +500,7 @@ exports.verifyOtpAndReset = async (email, otp, newPassword) => {
 };
 
 // ============================================================
-// SEND VERIFICATION EMAIL - CÓ RATE LIMIT (3 lần/300s)
+// SEND VERIFICATION EMAIL
 // ============================================================
 exports.sendVerificationEmail = async (email) => {
     if (!email?.trim()) throw { statusCode: 400, field: "email", message: "Email không được để trống" };
@@ -605,40 +615,132 @@ exports.revokeDeviceById = async (userId, tokenId) => {
     };
 };
 
-/* ============================================================
-   🆕 CÁC HÀM MỚI
-============================================================ */
+// ============================================================
+// QUÊN MÃ PIN - CÓ KIỂM TRA EMAIL CHƯA ĐĂNG KÝ
+// ============================================================
+exports.forgotPin = async (email) => {
+    if (!email?.trim()) {
+        throw { statusCode: 400, field: "email", message: "Email không được để trống" };
+    }
 
-// 🆕 1. ĐĂNG NHẬP SAU KHI TẠO USER
-exports.loginAfterRegistration = async (user, req, res) => {
-    const accessToken = generateAndSetTokens(user, res, false);
-    const accessTokenHash = Jwt.hashRefreshToken(accessToken);
+    const user = await UserRepository.findByEmail(email);
+    
+    // 🔥 Nếu email chưa đăng ký -> trả về lỗi 404 rõ ràng
+    if (!user) {
+        throw { 
+            statusCode: 404, 
+            field: "email",
+            message: "Email này chưa được đăng ký trong hệ thống. Vui lòng kiểm tra lại." 
+        };
+    }
 
-    await RefreshTokenRepository.create({
-        user_id: user.user_id,
-        token_hash: accessTokenHash,
-        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        ip_address: req.ip || req.connection?.remoteAddress || null,
-        user_agent: req.headers?.["user-agent"] || null,
-        device_name: req.headers?.["user-agent"]?.substring(0, 50) || "New Device"
+    // Kiểm tra email đã verified chưa
+    if (!user.email_verified) {
+        throw { 
+            statusCode: 400, 
+            field: "email",
+            message: "Tài khoản chưa được xác thực email. Vui lòng kiểm tra hộp thư để xác thực." 
+        };
+    }
+
+    // Kiểm tra tài khoản có bị khóa không
+    if (user.status === 'banned') {
+        throw { 
+            statusCode: 403, 
+            message: "Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ để được giúp đỡ." 
+        };
+    }
+
+    const rateLimit = await CacheService.checkRateLimit(email, "forgot-pin", 3, 300);
+    if (!rateLimit.allowed) {
+        throw { 
+            statusCode: 429, 
+            message: `Bạn chỉ được gửi tối đa 3 lần trong 5 phút. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 300} giây.`,
+            data: {
+                remainingSeconds: rateLimit.remainingSeconds || 300,
+                maxAttempts: 3
+            }
+        };
+    }
+
+    const otpResult = await OtpService.createOTP(email, OtpService.PURPOSE.FORGOT_PIN);
+    
+    setImmediate(() => {
+        MailService.sendForgotPinOTP(email, otpResult.otp, user.full_name)
+            .then(() => console.log(`✅ Forgot PIN email sent to ${email}`))
+            .catch(err => console.error(`❌ Forgot PIN email failed: ${err.message}`));
     });
+
+    const otpKey = `otp:${email}:${OtpService.PURPOSE.FORGOT_PIN}`;
+    const ttl = await CacheService.getTTL(otpKey);
 
     return {
         success: true,
-        user: {
-            user_id: user.user_id,
-            username: user.username,
-            full_name: user.full_name,
-            email: user.email,
-            phone: user.phone,
-            role: user.role,
-            points: user.points,
-            email_verified: user.email_verified
+        message: "Mã OTP đã được gửi tới email. Vui lòng kiểm tra hộp thư.",
+        data: {
+            expiresIn: ttl > 0 ? ttl : 300
         }
     };
 };
 
-// 🆕 2. ĐĂNG KÝ BƯỚC 1 - CÓ RATE LIMIT (3 lần/300s)
+// ============================================================
+// VERIFY OTP AND CHANGE PIN
+// ============================================================
+exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
+    const rateLimit = await CacheService.checkRateLimit(email, "verify-otp-pin", 5, 300);
+    if (!rateLimit.allowed) {
+        throw { 
+            statusCode: 429, 
+            message: `Bạn đã thử OTP quá nhiều lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 300} giây.`,
+            data: {
+                remainingSeconds: rateLimit.remainingSeconds || 300,
+                maxAttempts: 5
+            }
+        };
+    }
+
+    const otpResult = await OtpService.verifyOTP(
+        email, 
+        otp, 
+        OtpService.PURPOSE.FORGOT_PIN, 
+        false
+    );
+    
+    if (!otpResult.success) {
+        throw {
+            statusCode: otpResult.code === "OTP_LOCKED" ? 429 : 400,
+            field: "otp",
+            message: otpResult.message
+        };
+    }
+
+    if (!newPin || newPin.length === 0) {
+        return { success: true, message: "Xác thực OTP thành công" };
+    }
+
+    if (!/^\d{6}$/.test(newPin)) {
+        throw { statusCode: 400, field: "newPin", message: "Mã PIN mới phải là 6 chữ số" };
+    }
+
+    const user = await UserRepository.findByEmail(email);
+    if (!user) {
+        throw { statusCode: 404, message: "Không tìm thấy người dùng" };
+    }
+
+    const hashedPin = await Password.hash(newPin);
+    await UserRepository.updatePinHash(user.user_id, hashedPin);
+
+    await CacheService.deleteOTP(email, OtpService.PURPOSE.FORGOT_PIN);
+
+    return {
+        success: true,
+        message: "Đổi mã PIN thành công!"
+    };
+};
+
+// ============================================================
+// REGISTER STEP 1
+// ============================================================
 exports.registerStep1 = async (data) => {
     const { username, full_name, email, phone, password, address } = data;
 
@@ -705,7 +807,9 @@ exports.registerStep1 = async (data) => {
     };
 };
 
-// 🆕 3. HOÀN TẤT ĐĂNG KÝ - CÓ RATE LIMIT (3 lần/300s)
+// ============================================================
+// COMPLETE REGISTRATION
+// ============================================================
 exports.completeRegistration = async (data, req, res) => {
     const { temp_token, pin, username, full_name, email, phone, password, address } = data;
 
@@ -778,7 +882,9 @@ exports.completeRegistration = async (data, req, res) => {
     };
 };
 
-// 🆕 4. GỬI LẠI EMAIL XÁC THỰC - CÓ RATE LIMIT (3 lần/120s)
+// ============================================================
+// RESEND VERIFICATION
+// ============================================================
 exports.resendVerificationAfterLogin = async (userId) => {
     const user = await UserRepository.findById(userId);
     if (!user) throw { statusCode: 404, message: "Không tìm thấy người dùng" };
@@ -807,18 +913,16 @@ exports.resendVerificationAfterLogin = async (userId) => {
 };
 
 // ============================================================
-// 🆕 KIỂM TRA TTL OTP (DÙNG CHO TẤT CẢ PURPOSE + RATE LIMIT)
+// CHECK OTP TTL
 // ============================================================
 exports.checkOtpTTL = async (email, purpose) => {
     if (!email) throw { statusCode: 400, message: "Thiếu email" };
     if (!purpose) throw { statusCode: 400, message: "Thiếu purpose" };
 
-    // ✅ Kiểm tra OTP key trước
     const otpKey = `otp:${email}:${purpose}`;
     let ttl = await CacheService.getTTL(otpKey);
     let otp = await CacheService.getOTP(email, purpose);
 
-    // ✅ Nếu không có OTP, kiểm tra rate limit key
     if (ttl <= 0) {
         const rateLimitKey = `otp:${email}:${purpose}:ratelimit`;
         ttl = await CacheService.getTTL(rateLimitKey);
@@ -833,8 +937,9 @@ exports.checkOtpTTL = async (email, purpose) => {
         }
     };
 };
+
 // ============================================================
-// 🆕 GỬI LẠI OTP (DÙNG CHO TẤT CẢ PURPOSE)
+// RESEND OTP
 // ============================================================
 exports.resendOtp = async (email, purpose) => {
     if (!email?.trim()) {
@@ -846,7 +951,6 @@ exports.resendOtp = async (email, purpose) => {
         throw { statusCode: 404, message: "Không tìm thấy người dùng" };
     }
 
-    // Rate limit cho resend: 3 lần / 5 phút
     const rateLimit = await CacheService.checkRateLimit(email, `${purpose}-resend`, 3, 300);
     if (!rateLimit.allowed) {
         throw { 
@@ -859,13 +963,10 @@ exports.resendOtp = async (email, purpose) => {
         };
     }
 
-    // Xóa OTP cũ
     await CacheService.deleteOTP(email, purpose);
 
-    // Tạo OTP mới
     const otpResult = await OtpService.createOTP(email, purpose);
     
-    // Gửi email tùy theo purpose (KHÔNG ĐỢI)
     setImmediate(() => {
         if (purpose === OtpService.PURPOSE.FORGOT_PIN) {
             MailService.sendForgotPinOTP(email, otpResult.otp, user.full_name)
@@ -894,110 +995,33 @@ exports.resendOtp = async (email, purpose) => {
 };
 
 // ============================================================
-// 🆕 QUÊN MÃ PIN - CÓ RATE LIMIT (3 lần/5 PHÚT) + Trả về TTL
+// LOGIN AFTER REGISTRATION
 // ============================================================
-exports.forgotPin = async (email) => {
-    if (!email?.trim()) {
-        throw { statusCode: 400, field: "email", message: "Email không được để trống" };
-    }
+exports.loginAfterRegistration = async (user, req, res) => {
+    const accessToken = generateAndSetTokens(user, res, false);
+    const accessTokenHash = Jwt.hashRefreshToken(accessToken);
 
-    const user = await UserRepository.findByEmail(email);
-    if (!user) {
-        throw { statusCode: 404, message: "Không tìm thấy người dùng" };
-    }
-
-    // ✅ SỬA: 3 lần / 5 phút (300 giây)
-    const rateLimit = await CacheService.checkRateLimit(email, "forgot-pin", 3, 300);
-    if (!rateLimit.allowed) {
-        throw { 
-            statusCode: 429, 
-            message: `Bạn chỉ được gửi tối đa 3 lần trong 5 phút. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 300} giây.`,
-            data: {
-                remainingSeconds: rateLimit.remainingSeconds || 300,
-                maxAttempts: 3
-            }
-        };
-    }
-
-    const otpResult = await OtpService.createOTP(email, OtpService.PURPOSE.FORGOT_PIN);
-    
-    // ✅ SỬA: GỬI EMAIL KHÔNG ĐỢI
-    setImmediate(() => {
-        MailService.sendForgotPinOTP(email, otpResult.otp, user.full_name)
-            .then(() => console.log(`✅ Forgot PIN email sent to ${email}`))
-            .catch(err => console.error(`❌ Forgot PIN email failed: ${err.message}`));
+    await RefreshTokenRepository.create({
+        user_id: user.user_id,
+        token_hash: accessTokenHash,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        ip_address: req.ip || req.connection?.remoteAddress || null,
+        user_agent: req.headers?.["user-agent"] || null,
+        device_name: req.headers?.["user-agent"]?.substring(0, 50) || "New Device"
     });
 
-    const otpKey = `otp:${email}:${OtpService.PURPOSE.FORGOT_PIN}`;
-    const ttl = await CacheService.getTTL(otpKey);
-
     return {
         success: true,
-        message: "Mã OTP đã được gửi tới email. Vui lòng kiểm tra hộp thư.",
-        data: {
-            expiresIn: ttl > 0 ? ttl : 300
+        user: {
+            user_id: user.user_id,
+            username: user.username,
+            full_name: user.full_name,
+            email: user.email,
+            phone: user.phone,
+            role: user.role,
+            points: user.points,
+            email_verified: user.email_verified
         }
-    };
-};
-
-// ============================================================
-// 🆕 XÁC THỰC OTP VÀ ĐỔI MÃ PIN MỚI
-// ============================================================
-exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
-    // 🔥 RATE LIMIT: 5 lần/60s
-    const rateLimit = await CacheService.checkRateLimit(email, "verify-otp-pin", 5, 300);
-    if (!rateLimit.allowed) {
-        throw { 
-            statusCode: 429, 
-            message: `Bạn đã thử OTP quá nhiều lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 300} giây.`,
-            data: {
-                remainingSeconds: rateLimit.remainingSeconds || 300,
-                maxAttempts: 5
-            }
-        };
-    }
-
-    // ✅ Gọi verify với deleteAfterVerify = false (KHÔNG xóa OTP)
-    const otpResult = await OtpService.verifyOTP(
-        email, 
-        otp, 
-        OtpService.PURPOSE.FORGOT_PIN, 
-        false  // ← KHÔNG XÓA OTP
-    );
-    
-    if (!otpResult.success) {
-        throw {
-            statusCode: otpResult.code === "OTP_LOCKED" ? 429 : 400,
-            field: "otp",
-            message: otpResult.message
-        };
-    }
-
-    // Nếu không có newPin hoặc newPin rỗng → chỉ verify OTP (KHÔNG xóa)
-    if (!newPin || newPin.length === 0) {
-        return { success: true, message: "Xác thực OTP thành công" };
-    }
-
-    // Validate newPin
-    if (!/^\d{6}$/.test(newPin)) {
-        throw { statusCode: 400, field: "newPin", message: "Mã PIN mới phải là 6 chữ số" };
-    }
-
-    // Đổi PIN
-    const user = await UserRepository.findByEmail(email);
-    if (!user) {
-        throw { statusCode: 404, message: "Không tìm thấy người dùng" };
-    }
-
-    const hashedPin = await Password.hash(newPin);
-    await UserRepository.updatePinHash(user.user_id, hashedPin);
-
-    // ✅ XÓA OTP sau khi đổi PIN thành công
-    await CacheService.deleteOTP(email, OtpService.PURPOSE.FORGOT_PIN);
-
-    return {
-        success: true,
-        message: "Đổi mã PIN thành công!"
     };
 };
 

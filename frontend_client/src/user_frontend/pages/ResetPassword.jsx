@@ -1,3 +1,4 @@
+// ResetPassword.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../../api/api';
@@ -10,7 +11,6 @@ const ResetPassword = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Lấy email và otp từ state
     const email = location.state?.email || '';
     const otp = location.state?.otp || '';
 
@@ -24,11 +24,9 @@ const ResetPassword = () => {
     const [fieldErrors, setFieldErrors] = useState({});
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-    // Rate limit states - chỉ cho việc gửi request đổi mật khẩu
     const [isRateLimited, setIsRateLimited] = useState(false);
     const [rateLimitTimeLeft, setRateLimitTimeLeft] = useState(0);
 
-    // Countdown timer
     useEffect(() => {
         if (!isRateLimited || rateLimitTimeLeft <= 0) return;
 
@@ -46,7 +44,6 @@ const ResetPassword = () => {
         return () => clearInterval(timer);
     }, [isRateLimited, rateLimitTimeLeft]);
 
-    // Nếu không có email hoặc otp -> quay lại forgot-password
     useEffect(() => {
         if (!email || !otp) {
             navigate('/forgot-password');
@@ -80,7 +77,6 @@ const ResetPassword = () => {
             return;
         }
 
-        // Validate
         let hasError = false;
         const errors = {};
 
@@ -123,19 +119,27 @@ const ResetPassword = () => {
             const field = err.response?.data?.field;
             const errorData = err.response?.data || {};
             const errorMessage = errorData.message || 'Không thể đặt lại mật khẩu';
-            
+            const errorCode = errorData.code;
+
+            // 🔥 XỬ LÝ CÁC TRƯỜNG HỢP LỖI
             if (field === 'newPassword') {
                 setFieldErrors({ newPassword: errorMessage });
             } else if (field === 'confirmPassword') {
                 setFieldErrors({ confirmPassword: errorMessage });
+            } else if (status === 404) {
+                // 🔥 EMAIL CHƯA ĐĂNG KÝ
+                setMessage('❌ Email này chưa được đăng ký trong hệ thống.');
+                setMessageType('error');
             } else if (status === 429) {
-                // Rate limit khi gửi request đổi mật khẩu
                 const remainingSeconds = errorData.data?.remainingSeconds || 60;
                 const maxAttempts = errorData.data?.maxAttempts || 3;
                 setMessage(`⚠️ Bạn chỉ được gửi tối đa ${maxAttempts} lần. Vui lòng thử lại sau ${remainingSeconds} giây.`);
                 setMessageType('error');
                 setIsRateLimited(true);
                 setRateLimitTimeLeft(remainingSeconds);
+            } else if (status === 400 && errorMessage?.toLowerCase().includes('otp')) {
+                setMessage('❌ Mã OTP không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu mã mới.');
+                setMessageType('error');
             } else {
                 setMessage(errorMessage);
                 setMessageType('error');

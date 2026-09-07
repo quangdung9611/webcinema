@@ -1,3 +1,4 @@
+// ResetPin.jsx
 import React, { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Eye, EyeOff, AlertCircle } from 'lucide-react';
@@ -78,8 +79,24 @@ const ResetPin = () => {
                 setShowSuccessModal(true);
             }
         } catch (err) {
-            const errorMessage = err.response?.data?.message || 'Không thể đổi mã PIN';
-            setError(errorMessage);
+            const status = err.response?.status;
+            const errorData = err.response?.data || {};
+            const errorMessage = errorData.message || 'Không thể đổi mã PIN';
+            const field = errorData?.field;
+
+            // 🔥 XỬ LÝ CÁC TRƯỜNG HỢP LỖI
+            if (status === 404) {
+                // 🔥 EMAIL CHƯA ĐĂNG KÝ
+                setError('❌ Email này chưa được đăng ký trong hệ thống.');
+            } else if (status === 400 && errorMessage?.toLowerCase().includes('otp')) {
+                setError('❌ Mã OTP không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu mã mới.');
+            } else if (field === 'newPin') {
+                setError(errorMessage);
+            } else if (status === 403) {
+                setError('🔒 Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ.');
+            } else {
+                setError(errorMessage);
+            }
         } finally {
             setLoading(false);
         }
@@ -94,7 +111,9 @@ const ResetPin = () => {
         <div className="auth-container">
             <div className="auth-card">
                 <h2>ĐỔI MÃ PIN</h2>
-                <p className="auth-subtitle">Nhập mã PIN mới (6 số)</p>
+                <p className="auth-subtitle">
+                    Nhập mã PIN mới (6 số) cho tài khoản <strong className="text-highlight">{email}</strong>
+                </p>
 
                 {error && (
                     <div className="error-message">
