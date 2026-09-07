@@ -297,6 +297,7 @@ exports.changePassword = async (userId, passwordData) => {
 
 // ============================================================
 // FORGOT PASSWORD - CÓ KIỂM TRA EMAIL CHƯA ĐĂNG KÝ
+// 🔥 SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
 // ============================================================
 exports.forgotPassword = async (email, req) => {
     if (!email?.trim()) throw { statusCode: 400, field: "email", message: "Email không được để trống" };
@@ -304,7 +305,6 @@ exports.forgotPassword = async (email, req) => {
 
     const user = await UserRepository.findByEmail(email);
     
-    // 🔥 Nếu email chưa đăng ký -> trả về lỗi 404 rõ ràng
     if (!user) {
         throw { 
             statusCode: 404, 
@@ -313,7 +313,6 @@ exports.forgotPassword = async (email, req) => {
         };
     }
 
-    // Kiểm tra email đã verified chưa
     if (!user.email_verified) {
         throw { 
             statusCode: 400, 
@@ -322,7 +321,6 @@ exports.forgotPassword = async (email, req) => {
         };
     }
 
-    // Kiểm tra tài khoản có bị khóa không
     if (user.status === 'banned') {
         throw { 
             statusCode: 403, 
@@ -342,8 +340,8 @@ exports.forgotPassword = async (email, req) => {
         };
     }
 
-    // 🔥 Xóa OTP cũ trước khi tạo mới
-    await CacheService.deleteOTPByEmailAndPurpose(email, OtpService.PURPOSE.RESET_PASSWORD);
+    // 🔥 Đánh dấu OTP cũ là used (is_used = 1)
+    await CacheService.markOTPAsUsed(email, OtpService.PURPOSE.RESET_PASSWORD);
 
     const otpResult = await OtpService.createOTP(email, OtpService.PURPOSE.RESET_PASSWORD);
     
@@ -437,7 +435,8 @@ exports.submitNewPassword = async (token, newPassword) => {
 };
 
 // ============================================================
-// VERIFY OTP AND RESET - THÊM KIỂM TRA OTP ĐÃ BỊ VÔ HIỆU
+// VERIFY OTP AND RESET
+// 🔥 SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
 // ============================================================
 exports.verifyOtpAndReset = async (email, otp, newPassword) => {
     const rateLimit = await CacheService.checkRateLimit(email, "verify-otp-reset", 5, 300);
@@ -452,7 +451,6 @@ exports.verifyOtpAndReset = async (email, otp, newPassword) => {
         };
     }
 
-    // 🔥 KIỂM TRA OTP ĐÃ BỊ VÔ HIỆU CHƯA
     const otpData = await CacheService.getOTPData(email, OtpService.PURPOSE.RESET_PASSWORD);
     if (!otpData) {
         throw {
@@ -504,8 +502,8 @@ exports.verifyOtpAndReset = async (email, otp, newPassword) => {
         console.error('❌ [RESET_PASSWORD] Lỗi khi xóa socket:', error.message);
     }
 
-    // 🔥 ĐÁNH DẤU OTP ĐÃ SỬ DỤNG (is_used = 1)
-    await CacheService.deleteOTPByEmailAndPurpose(email, OtpService.PURPOSE.RESET_PASSWORD);
+    // 🔥 Đánh dấu OTP đã sử dụng (is_used = 1)
+    await CacheService.markOTPAsUsed(email, OtpService.PURPOSE.RESET_PASSWORD);
 
     return {
         success: true,
@@ -630,7 +628,8 @@ exports.revokeDeviceById = async (userId, tokenId) => {
 };
 
 // ============================================================
-// QUÊN MÃ PIN - CÓ KIỂM TRA EMAIL CHƯA ĐĂNG KÝ
+// QUÊN MÃ PIN
+// 🔥 SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
 // ============================================================
 exports.forgotPin = async (email) => {
     if (!email?.trim()) {
@@ -639,7 +638,6 @@ exports.forgotPin = async (email) => {
 
     const user = await UserRepository.findByEmail(email);
     
-    // 🔥 Nếu email chưa đăng ký -> trả về lỗi 404 rõ ràng
     if (!user) {
         throw { 
             statusCode: 404, 
@@ -648,7 +646,6 @@ exports.forgotPin = async (email) => {
         };
     }
 
-    // Kiểm tra email đã verified chưa
     if (!user.email_verified) {
         throw { 
             statusCode: 400, 
@@ -657,7 +654,6 @@ exports.forgotPin = async (email) => {
         };
     }
 
-    // Kiểm tra tài khoản có bị khóa không
     if (user.status === 'banned') {
         throw { 
             statusCode: 403, 
@@ -677,8 +673,8 @@ exports.forgotPin = async (email) => {
         };
     }
 
-    // 🔥 Xóa OTP cũ trước khi tạo mới
-    await CacheService.deleteOTPByEmailAndPurpose(email, OtpService.PURPOSE.FORGOT_PIN);
+    // 🔥 Đánh dấu OTP cũ là used (is_used = 1)
+    await CacheService.markOTPAsUsed(email, OtpService.PURPOSE.FORGOT_PIN);
 
     const otpResult = await OtpService.createOTP(email, OtpService.PURPOSE.FORGOT_PIN);
     
@@ -701,7 +697,8 @@ exports.forgotPin = async (email) => {
 };
 
 // ============================================================
-// VERIFY OTP AND CHANGE PIN - THÊM KIỂM TRA OTP ĐÃ BỊ VÔ HIỆU
+// VERIFY OTP AND CHANGE PIN
+// 🔥 SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
 // ============================================================
 exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
     const rateLimit = await CacheService.checkRateLimit(email, "verify-otp-pin", 5, 300);
@@ -716,7 +713,6 @@ exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
         };
     }
 
-    // 🔥 KIỂM TRA OTP ĐÃ BỊ VÔ HIỆU CHƯA
     const otpData = await CacheService.getOTPData(email, OtpService.PURPOSE.FORGOT_PIN);
     if (!otpData) {
         throw {
@@ -757,8 +753,8 @@ exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
     const hashedPin = await Password.hash(newPin);
     await UserRepository.updatePinHash(user.user_id, hashedPin);
 
-    // 🔥 ĐÁNH DẤU OTP ĐÃ SỬ DỤNG (is_used = 1)
-    await CacheService.deleteOTPByEmailAndPurpose(email, OtpService.PURPOSE.FORGOT_PIN);
+    // 🔥 Đánh dấu OTP đã sử dụng (is_used = 1)
+    await CacheService.markOTPAsUsed(email, OtpService.PURPOSE.FORGOT_PIN);
 
     return {
         success: true,
@@ -968,6 +964,7 @@ exports.checkOtpTTL = async (email, purpose) => {
 
 // ============================================================
 // RESEND OTP
+// 🔥 SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
 // ============================================================
 exports.resendOtp = async (email, purpose) => {
     if (!email?.trim()) {
@@ -991,8 +988,8 @@ exports.resendOtp = async (email, purpose) => {
         };
     }
 
-    // 🔥 Đánh dấu OTP cũ đã sử dụng trước khi tạo mới
-    await CacheService.deleteOTPByEmailAndPurpose(email, purpose);
+    // 🔥 Đánh dấu OTP cũ là used (is_used = 1)
+    await CacheService.markOTPAsUsed(email, purpose);
 
     const otpResult = await OtpService.createOTP(email, purpose);
     

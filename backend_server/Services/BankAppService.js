@@ -121,7 +121,8 @@ class BankAppService {
 
 
     /*=========================================================
-        🆕 GỬI LẠI OTP PAYMENT - 🔥 SỬA DÙNG deleteOTPByEmailAndPurpose
+        🆕 GỬI LẠI OTP PAYMENT
+        🔥 SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
     =========================================================*/
 
     async resendOtpPayment(email, tempBookingId) {
@@ -149,8 +150,8 @@ class BankAppService {
             };
         }
 
-        // 🔥 Đánh dấu OTP cũ đã sử dụng
-        await CacheService.deleteOTPByEmailAndPurpose(email, PURPOSE.PAYMENT);
+        // 🔥 Đánh dấu OTP cũ đã sử dụng (is_used = 1)
+        await CacheService.markOTPAsUsed(email, PURPOSE.PAYMENT);
 
         // Tạo OTP mới
         const otpResult = await OtpService.createOTP(email, PURPOSE.PAYMENT);
@@ -185,7 +186,8 @@ class BankAppService {
 
 
     /*=========================================================
-        🆕 GỬI OTP THANH TOÁN - 🔥 SỬA DÙNG deleteOTPByEmailAndPurpose
+        🆕 GỬI OTP THANH TOÁN
+        🔥 SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
     =========================================================*/
 
     async sendPaymentOTP(email, tempBookingId) {
@@ -212,8 +214,8 @@ class BankAppService {
             };
         }
 
-        // 🔥 Đánh dấu OTP cũ đã sử dụng (nếu có)
-        await CacheService.deleteOTPByEmailAndPurpose(email, PURPOSE.PAYMENT);
+        // 🔥 Đánh dấu OTP cũ đã sử dụng (is_used = 1)
+        await CacheService.markOTPAsUsed(email, PURPOSE.PAYMENT);
 
         // Tạo OTP mới
         const otpResult = await OtpService.createOTP(email, PURPOSE.PAYMENT);

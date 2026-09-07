@@ -604,12 +604,15 @@ exports.invalidateOtp = async (req, res) => {
         }
         
         // 🔥 Đánh dấu OTP đã sử dụng trong otp_codes (is_used = 1)
-        await CacheService.deleteOTPByEmailAndPurpose(email, purpose);
+        // ✅ SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
+        await CacheService.markOTPAsUsed(email, purpose);
         
         // 🔥 Log vào otp_logs với status 'invalidated'
+        // ✅ SỬA: Thêm trường otp
         await OtpRepository.create({
             email,
             purpose,
+            otp: null,  // 👈 THÊM: Không cần lưu OTP khi invalidate
             status: 'invalidated',
             ip_address: req.ip || req.connection?.remoteAddress || null,
             user_agent: req.headers?.['user-agent'] || null

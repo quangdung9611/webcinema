@@ -586,6 +586,10 @@ class CacheService {
         4. OTP
     =======================================================*/
 
+    /**
+     * LƯU OTP MỚI - CHỈ INSERT, KHÔNG UPDATE
+     * Mỗi OTP là 1 record riêng
+     */
     async saveOTP(
         email,
         purpose,
@@ -600,7 +604,8 @@ class CacheService {
             ttl * 1000
         );
 
-        await db.query(
+        // ✅ CHỈ INSERT, KHÔNG UPDATE
+        const [result] = await db.query(
             `
             INSERT INTO otp_codes
             (
@@ -613,13 +618,6 @@ class CacheService {
                 attempts
             )
             VALUES (?, ?, ?, ?, ?, 0, 0)
-
-            ON DUPLICATE KEY UPDATE
-                otp = VALUES(otp),
-                attempts = 0,
-                is_used = 0,
-                created_at = VALUES(created_at),
-                expires_at = VALUES(expires_at)
             `,
             [
                 email,
@@ -630,21 +628,47 @@ class CacheService {
             ]
         );
 
-        return true;
+        console.log(`✅ [CACHE] Saved OTP for ${email}, purpose: ${purpose}, id: ${result.insertId}`);
+        return result.insertId;
     }
 
 
-    /*=======================================================
-        GET OTP
-    =======================================================*/
+    /**
+     * ĐÁNH DẤU OTP ĐÃ SỬ DỤNG (is_used = 1)
+     * Dùng khi: verify thành công, resend, invalidate, lock do sai 5 lần
+     */
+    async markOTPAsUsed(email, purpose) {
 
+        const now = new Date();
+
+        const [result] = await db.query(
+            `
+            UPDATE otp_codes
+            SET is_used = 1, 
+                updated_at = ?
+            WHERE email = ?
+              AND purpose = ?
+              AND is_used = 0
+              AND expires_at > ?
+            `,
+            [now, email, purpose, now]
+        );
+
+        console.log(`🔴 [CACHE] Marked ${result.affectedRows} OTP(s) as used for ${email}, purpose: ${purpose}`);
+        return result.affectedRows > 0;
+    }
+
+
+    /**
+     * LẤY OTP MỚI NHẤT CHƯA DÙNG
+     */
     async getOTP(email, purpose) {
 
         const now = new Date();
 
         const [rows] = await db.query(
             `
-            SELECT otp
+            SELECT otp, otp_code_id
             FROM otp_codes
             WHERE email = ?
               AND purpose = ?
@@ -668,17 +692,16 @@ class CacheService {
     }
 
 
-    /*=======================================================
-        GET OTP DATA (LẤY CẢ OTP + ATTEMPTS + EXPIRES_AT)
-    =======================================================*/
-
+    /**
+     * LẤY FULL DATA OTP (OTP + ATTEMPTS + EXPIRES_AT)
+     */
     async getOTPData(email, purpose) {
 
         const now = new Date();
 
         const [rows] = await db.query(
             `
-            SELECT otp, attempts, expires_at
+            SELECT otp, attempts, expires_at, otp_code_id
             FROM otp_codes
             WHERE email = ?
               AND purpose = ?
@@ -701,15 +724,15 @@ class CacheService {
         return {
             otp: rows[0].otp,
             attempts: Number(rows[0].attempts) || 0,
-            expiresAt: rows[0].expires_at
+            expiresAt: rows[0].expires_at,
+            otpCodeId: rows[0].otp_code_id
         };
     }
 
 
-    /*=======================================================
-        DELETE OTP (XÓA VĨNH VIỄN)
-    =======================================================*/
-
+    /**
+     * XÓA OTP VĨNH VIỄN (chỉ dùng khi cần thiết)
+     */
     async deleteOTP(email, purpose) {
 
         await db.query(
@@ -728,41 +751,12 @@ class CacheService {
     }
 
 
-    /*=======================================================
-        DELETE OTP BY EMAIL AND PURPOSE (ĐÁNH DẤU IS_USED = 1)
-        🔥 DÙNG KHI USER RỜI TRANG / RESEND / VERIFY THÀNH CÔNG
-    =======================================================*/
-
-    async deleteOTPByEmailAndPurpose(email, purpose) {
-
-        const now = new Date();
-
-        const [result] = await db.query(
-            `
-            UPDATE otp_codes
-            SET is_used = 1, 
-                updated_at = ?
-            WHERE email = ?
-              AND purpose = ?
-              AND is_used = 0
-              AND expires_at > ?
-            `,
-            [now, email, purpose, now]
-        );
-
-        console.log(`🔴 [CACHE] Marked OTP as used for ${email}, purpose: ${purpose}, affected: ${result.affectedRows}`);
-        return result.affectedRows > 0;
-    }
-
-
-    /*=======================================================
-        INCREMENT OTP ATTEMPTS
-    =======================================================*/
-
+    /**
+     * TĂNG SỐ LẦN THỬ SAI CHO OTP MỚI NHẤT
+     */
     async incrementOTPAttempts(
         email,
-        purpose,
-        ttl = OTP_EXPIRE_SECONDS
+        purpose
     ) {
 
         const now = new Date();
@@ -806,18 +800,20 @@ class CacheService {
             ]
         );
 
+        console.log(`📊 [CACHE] OTP attempts: ${newAttempts} for ${email}, purpose: ${purpose}`);
         return newAttempts;
     }
 
 
-    /*=======================================================
-        RESET OTP ATTEMPTS
-    =======================================================*/
-
+    /**
+     * RESET SỐ LẦN THỬ SAI VỀ 0
+     */
     async resetOTPAttempts(
         email,
         purpose
     ) {
+
+        const now = new Date();
 
         await db.query(
             `
@@ -826,10 +822,12 @@ class CacheService {
             WHERE email = ?
               AND purpose = ?
               AND is_used = 0
+              AND expires_at > ?
             `,
             [
                 email,
-                purpose
+                purpose,
+                now
             ]
         );
 
@@ -837,10 +835,9 @@ class CacheService {
     }
 
 
-    /*=======================================================
-        CHECK OTP LOCK
-    =======================================================*/
-
+    /**
+     * KIỂM TRA OTP CÓ BỊ KHÓA DO NHẬP SAI QUÁ 5 LẦN KHÔNG
+     */
     async isOTPLocked(
         email,
         purpose,
@@ -1642,7 +1639,7 @@ class CacheService {
 
 
             // ------------------------------------------------
-            // OTP
+            // OTP - XÓA OTP ĐÃ HẾT HẠN HOẶC ĐÃ DÙNG (is_used = 1)
             // ------------------------------------------------
 
             await db.query(
