@@ -28,17 +28,14 @@ const validateRoom = (data) => {
 // ==========================================================
 class RoomService {
 
-    // ----- GET ALL (không phân trang) -----
     async getAllRoomsAll(search = "") {
         return await RoomRepository.findAllAll(search);
     }
 
-    // ----- GET ALL (có phân trang) -----
     async getAllRoomsPaginated(page = 1, limit = 20, search = "") {
         return await RoomRepository.findAll(page, limit, search);
     }
 
-    // ----- GET BY ID -----
     async getRoomById(roomId) {
         const room = await RoomRepository.findById(roomId);
         if (!room) {
@@ -50,7 +47,6 @@ class RoomService {
         return room;
     }
 
-    // ----- GET BY CINEMA -----
     async getRoomsByCinema(cinemaId) {
         return await RoomRepository.findByCinema(cinemaId);
     }
@@ -79,21 +75,14 @@ class RoomService {
             throw err;
         }
 
-        // Tạo phòng mới
         const newRoomId = await RoomRepository.create({
             room_name: name,
             cinema_id,
             room_type
         });
 
-        // 🔥 TỰ ĐỘNG TẠO GHẾ CHO PHÒNG MỚI
         try {
-            const seatResult = await SeatService.initRoomSeats(
-                newRoomId,
-                room_type,
-                cinema_id
-            );
-            
+            const seatResult = await SeatService.initRoomSeats(newRoomId, room_type, cinema_id);
             console.log(`✅ Tạo phòng ${name} (${room_type}) thành công với ${seatResult.totalSeats} ghế`);
             console.log(`📊 Phân bố ghế:`, seatResult.seatTypes);
         } catch (seatErr) {
@@ -104,12 +93,11 @@ class RoomService {
     }
 
     // ==========================================================
-    // CREATE BULK - TẠO NHIỀU PHÒNG HÀNG LOẠT 🆕
+    // CREATE BULK - TẠO NHIỀU PHÒNG HÀNG LOẠT (LINH HOẠT)
     // ==========================================================
     async createRoomsBulk(data) {
         const { cinema_id, room_types } = data;
 
-        // Validate
         if (!cinema_id) {
             const err = new Error("Vui lòng chọn rạp");
             err.statusCode = 400;
@@ -124,14 +112,6 @@ class RoomService {
             throw err;
         }
 
-        // Cấu hình số lượng phòng cho từng hạng
-        const DEFAULT_CONFIG = {
-            "2D": 10,
-            "3D": 5,
-            "VIP": 3,
-            "IMAX": 2
-        };
-
         const results = {
             success: [],
             failed: [],
@@ -140,15 +120,26 @@ class RoomService {
             errors: []
         };
 
-        for (const roomType of room_types) {
-            const count = DEFAULT_CONFIG[roomType] || 1;
-            
-            for (let i = 1; i <= count; i++) {
-                const roomName = `Phòng ${roomType} ${String(i).padStart(2, '0')}`;
+        for (const item of room_types) {
+            const roomType = item.type;
+            const count = Number(item.count) || 1;
+
+            const validRoomTypes = ["2D", "3D", "IMAX", "VIP"];
+            if (!validRoomTypes.includes(roomType)) {
+                results.errors.push(`Loại phòng không hợp lệ: ${roomType}`);
+                continue;
+            }
+
+            // Đếm số phòng hiện có để tự động đặt tên (tránh trùng)
+            const existingRooms = await RoomRepository.countByType(cinema_id, roomType);
+            let startNumber = existingRooms + 1;
+
+            for (let i = 0; i < count; i++) {
+                const roomName = `Phòng ${roomType} ${String(startNumber).padStart(2, '0')}`;
+                startNumber++;
                 results.total++;
 
                 try {
-                    // Kiểm tra trùng tên
                     const dup = await RoomRepository.findByNameInCinema(roomName, cinema_id);
                     if (dup) {
                         results.failed.push({
@@ -159,19 +150,13 @@ class RoomService {
                         continue;
                     }
 
-                    // Tạo phòng
                     const newRoomId = await RoomRepository.create({
                         room_name: roomName,
                         cinema_id,
                         room_type: roomType
                     });
 
-                    // Tạo ghế
-                    const seatResult = await SeatService.initRoomSeats(
-                        newRoomId,
-                        roomType,
-                        cinema_id
-                    );
+                    const seatResult = await SeatService.initRoomSeats(newRoomId, roomType, cinema_id);
 
                     results.created++;
                     results.success.push({

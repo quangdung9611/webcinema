@@ -5,7 +5,7 @@ import { ShieldCheck, ArrowLeft, RefreshCw, AlertCircle, CheckCircle } from 'luc
 import api from '../../api/api';
 import LoadingButton from '../components/LoadingButton';
 import LockModal from '../components/LockModal';
-import useOTPGuard from '../../hooks/useOTPGuard'; // 🔥 IMPORT
+import useOTPGuard from '../../hooks/useOTPGuard';
 import '../styles/UserAuth.css';
 
 const VerifyOtpPin = () => {
@@ -26,11 +26,9 @@ const VerifyOtpPin = () => {
 
     const purpose = location.state?.purpose || 'FORGOT_PIN';
 
-    // 🔥 SỬ DỤNG useOTPGuard - TỰ ĐỘNG INVALIDATE KHI RỜI TRANG
     const { safeNavigate, invalidateOTP } = useOTPGuard(email, purpose, {
         onInvalidate: () => {
             console.log('🔴 [VERIFY OTP PIN] OTP đã bị vô hiệu do rời trang');
-            // Xóa storage khi OTP bị invalidate
             localStorage.removeItem('verify_otp_pin_lock');
             sessionStorage.removeItem('verify_otp_pin_email');
         }
@@ -41,46 +39,37 @@ const VerifyOtpPin = () => {
     const [successMessage, setSuccessMessage] = useState('');
     const [loading, setLoading] = useState(false);
 
-    // OTP Timer (5 phút)
     const [countdown, setCountdown] = useState(0);
     const [isOtpExpired, setIsOtpExpired] = useState(false);
     const [isLoadingTTL, setIsLoadingTTL] = useState(false);
 
-    // OTP Attempts
     const [otpAttempts, setOtpAttempts] = useState(0);
     const [maxOtpAttempts] = useState(5);
     const [remainingOtpAttempts, setRemainingOtpAttempts] = useState(5);
 
-    // Lock state - quản lý lock OTP
     const [showLockModal, setShowLockModal] = useState(false);
     const [lockMessage, setLockMessage] = useState('');
     const [lockUntil, setLockUntil] = useState(null);
     const [lockInfo, setLockInfo] = useState(null);
     const [lockTimeLeft, setLockTimeLeft] = useState(0);
 
-    // Rate Limit (gửi lại OTP quá nhiều)
     const [isRateLimited, setIsRateLimited] = useState(false);
     const [rateLimitTimeLeft, setRateLimitTimeLeft] = useState(0);
 
     const otpRefs = useRef([]);
     const countdownIntervalRef = useRef(null);
     const lockIntervalRef = useRef(null);
+    const successTimeoutRef = useRef(null);
 
     const OTP_LOCK_STORAGE_KEY = 'verify_otp_pin_lock';
     const EMAIL_STORAGE_KEY = 'verify_otp_pin_email';
 
-    // ============================================================
-    // LƯU EMAIL VÀO SESSIONSTORAGE
-    // ============================================================
     useEffect(() => {
         if (email) {
             sessionStorage.setItem(EMAIL_STORAGE_KEY, email);
         }
     }, [email]);
 
-    // ============================================================
-    // LƯU OTP LOCK VÀO LOCALSTORAGE
-    // ============================================================
     const saveOtpLockToStorage = (lockData) => {
         if (lockData && lockData.lockedUntil > Date.now() && email) {
             const data = {
@@ -94,9 +83,6 @@ const VerifyOtpPin = () => {
         }
     };
 
-    // ============================================================
-    // KHÔI PHỤC OTP LOCK TỪ LOCALSTORAGE
-    // ============================================================
     const restoreOtpLockFromStorage = () => {
         try {
             const stored = localStorage.getItem(OTP_LOCK_STORAGE_KEY);
@@ -126,33 +112,23 @@ const VerifyOtpPin = () => {
         }
     };
 
-    // ============================================================
-    // CHUYỂN VỀ FORGOT-PIN KHI HẾT LOCK
-    // ============================================================
     const redirectToForgotPin = () => {
-        // Xóa tất cả storage
         localStorage.removeItem(OTP_LOCK_STORAGE_KEY);
         sessionStorage.removeItem(EMAIL_STORAGE_KEY);
-        // 🔥 DÙNG safeNavigate THAY VÌ navigate
         safeNavigate('/forgot-pin', {
             message: '⏳ OTP đã hết hạn. Vui lòng gửi lại OTP mới.'
         });
     };
 
-    // ============================================================
-    // ✅ HÀM RESET OTP INPUT (THÊM MỚI)
-    // ============================================================
     const resetOtpInput = () => {
-        setOtp(''); // Xóa trắng state
+        setOtp('');
         otpRefs.current.forEach((el) => {
-            if (el) el.value = ''; // Xóa giá trị trên DOM
+            if (el) el.value = '';
         });
-        otpRefs.current[0]?.focus(); // Focus về ô đầu tiên
+        otpRefs.current[0]?.focus();
     };
 
-    // ============================================================
-    // INIT - KHỞI TẠO VÀ KHÔI PHỤC STATE
-    // ============================================================
+    // Khởi tạo trạng thái
     useEffect(() => {
         if (!email) {
             safeNavigate('/forgot-pin');
@@ -168,7 +144,6 @@ const VerifyOtpPin = () => {
         setRemainingOtpAttempts(5);
         setShowLockModal(false);
 
-        // Khôi phục lock từ localStorage
         const restoredOtpLock = restoreOtpLockFromStorage();
         if (restoredOtpLock !== null) {
             setLockInfo(restoredOtpLock);
@@ -179,32 +154,25 @@ const VerifyOtpPin = () => {
         }
     }, [email]);
 
-    // ============================================================
-    // LOCK TIMER - CHẠY LIÊN TỤC KỂ CẢ KHI ĐÓNG MODAL
-    // ============================================================
+    // Lock timer
     useEffect(() => {
-        // Xóa interval cũ
         if (lockIntervalRef.current) {
             clearInterval(lockIntervalRef.current);
             lockIntervalRef.current = null;
         }
 
-        // Nếu không có lock hoặc đã hết lock
         if (!lockUntil || lockUntil <= Date.now()) {
             setLockTimeLeft(0);
-            // Xóa localStorage nếu hết lock -> CHUYỂN VỀ FORGOT-PIN
             if (lockUntil && lockUntil <= Date.now()) {
                 redirectToForgotPin();
             }
             return;
         }
 
-        // Cập nhật thời gian còn lại
         const updateLockTime = () => {
             const left = Math.max(0, Math.ceil((lockUntil - Date.now()) / 1000));
             setLockTimeLeft(left);
 
-            // Cập nhật localStorage mỗi 5 giây
             if (left > 0 && left % 5 === 0) {
                 const lockData = {
                     ...lockInfo,
@@ -215,7 +183,6 @@ const VerifyOtpPin = () => {
                 saveOtpLockToStorage(lockData);
             }
 
-            // Khi hết lock -> CHUYỂN VỀ FORGOT-PIN
             if (left <= 0) {
                 clearInterval(lockIntervalRef.current);
                 lockIntervalRef.current = null;
@@ -224,7 +191,6 @@ const VerifyOtpPin = () => {
                 setLockTimeLeft(0);
                 setShowLockModal(false);
                 localStorage.removeItem(OTP_LOCK_STORAGE_KEY);
-                // Chuyển về forgot-pin
                 redirectToForgotPin();
             }
         };
@@ -240,9 +206,7 @@ const VerifyOtpPin = () => {
         };
     }, [lockUntil, lockInfo]);
 
-    // ============================================================
-    // FETCH OTP TTL (THỜI GIAN CÒN LẠI CỦA OTP) - DÙNG MỐC TUYỆT ĐỐI
-    // ============================================================
+    // Fetch TTL ban đầu
     useEffect(() => {
         if (!email) {
             if (countdownIntervalRef.current) {
@@ -267,7 +231,6 @@ const VerifyOtpPin = () => {
                     const serverTime = response.data?.data?.serverTime || Date.now();
 
                     if (ttl > 0) {
-                        // ✅ Dùng mốc tuyệt đối để tính chính xác
                         const expiresAt = serverTime + (ttl * 1000);
                         setCountdown(ttl);
                         setIsOtpExpired(false);
@@ -299,9 +262,6 @@ const VerifyOtpPin = () => {
         };
     }, [email]);
 
-    // ============================================================
-    // START COUNTDOWN OTP - DÙNG MỐC TUYỆT ĐỐI
-    // ============================================================
     const startCountdown = (expiresAt) => {
         if (countdownIntervalRef.current) {
             clearInterval(countdownIntervalRef.current);
@@ -318,17 +278,12 @@ const VerifyOtpPin = () => {
                 setIsOtpExpired(true);
                 setCountdown(0);
             }
-        }, 250); // Cập nhật mỗi 250ms cho chính xác hơn
+        }, 250);
     };
 
-    // ============================================================
-    // RATE LIMIT TIMER
-    // ============================================================
+    // Rate limit timer
     useEffect(() => {
         if (!isRateLimited || rateLimitTimeLeft <= 0) {
-            if (!isRateLimited && rateLimitTimeLeft === 0) {
-                // Xóa rate limit khi hết
-            }
             return;
         }
 
@@ -345,9 +300,6 @@ const VerifyOtpPin = () => {
         return () => clearInterval(timer);
     }, [isRateLimited, rateLimitTimeLeft]);
 
-    // ============================================================
-    // HELPERS
-    // ============================================================
     const formatTime = (seconds) => {
         if (seconds <= 0) return '0:00';
         const mins = Math.floor(seconds / 60);
@@ -362,12 +314,8 @@ const VerifyOtpPin = () => {
         return `${m}:${s.toString().padStart(2, '0')}`;
     };
 
-    // Kiểm tra lock
     const isLocked = lockUntil && lockUntil > Date.now();
 
-    // ============================================================
-    // HANDLE OTP INPUT
-    // ============================================================
     const handleOtpChange = (index, value) => {
         const clean = value.replace(/\D/g, '').slice(-1);
         const newOtp = otp.split('');
@@ -384,9 +332,7 @@ const VerifyOtpPin = () => {
         }
     };
 
-    // ============================================================
-    // HANDLE RESEND OTP (ĐÃ SỬA: RESET Ô NHẬP + TIMER + SERVER TIME)
-    // ============================================================
+    // ✅ SỬA: HANDLE RESEND OTP - CHỜ EMAIL GỬI XONG MỚI RESET TIMER
     const handleResendOtp = async () => {
         if (isLocked) {
             setError(`⚠️ Bạn đã bị khóa. Vui lòng đợi ${formatLockTime(lockTimeLeft)} để thử lại.`);
@@ -414,13 +360,22 @@ const VerifyOtpPin = () => {
             });
 
             if (response.data.success) {
-                setSuccessMessage('✅ Đã gửi lại OTP mới. Vui lòng kiểm tra email.');
-                setTimeout(() => setSuccessMessage(''), 5000);
+                // ✅ CHỜ TỐI THIỂU 1.5 GIÂY ĐỂ EMAIL THỰC SỰ ĐƯỢC GỬI
+                await new Promise(resolve => setTimeout(resolve, 1500));
 
-                // ✅ SỬA: Reset ô nhập OTP về trống
+                // ✅ Hiển thị thông báo thành công sau khi email đã được gửi
+                setSuccessMessage('✅ Đã gửi lại mã OTP mới vào email. Vui lòng kiểm tra hộp thư.');
+
+                // Xóa timeout thông báo cũ nếu có
+                if (successTimeoutRef.current) {
+                    clearTimeout(successTimeoutRef.current);
+                }
+                successTimeoutRef.current = setTimeout(() => setSuccessMessage(''), 6000);
+
+                // ✅ Reset ô nhập OTP về trống
                 resetOtpInput();
 
-                // ✅ SỬA: Lấy serverTime từ Backend để đồng bộ timer tuyệt đối
+                // ✅ Lấy serverTime từ Backend để đồng bộ timer tuyệt đối
                 const ttl = response.data?.data?.expiresIn || 300;
                 const serverTime = response.data?.data?.serverTime || Date.now();
                 const expiresAt = serverTime + (ttl * 1000);
@@ -456,9 +411,7 @@ const VerifyOtpPin = () => {
         }
     };
 
-    // ============================================================
-    // HANDLE VERIFY OTP (ĐÃ SỬA: RESET Ô NHẬP KHI SAI)
-    // ============================================================
+    // HANDLE VERIFY OTP
     const handleVerifyOtp = async () => {
         if (isOtpExpired) {
             setError('⚠️ OTP đã hết hạn. Vui lòng gửi lại.');
@@ -497,7 +450,6 @@ const VerifyOtpPin = () => {
                 localStorage.removeItem(OTP_LOCK_STORAGE_KEY);
                 sessionStorage.removeItem(EMAIL_STORAGE_KEY);
 
-                // 🔥 DÙNG safeNavigate THAY VÌ navigate
                 safeNavigate('/reset-pin', {
                     email: email,
                     otp: otp,
@@ -524,7 +476,6 @@ const VerifyOtpPin = () => {
                 }
             }
 
-            // Xử lý lock OTP (nhập sai quá 5 lần)
             if (status === 429) {
                 const remainingSeconds = backendData.remainingSeconds || 300;
                 const lockDuration = backendData.lockDuration || remainingSeconds;
@@ -545,7 +496,6 @@ const VerifyOtpPin = () => {
                 setLockTimeLeft(remainingSeconds);
                 setIsRateLimited(true);
                 setRateLimitTimeLeft(remainingSeconds);
-                // Lưu vào localStorage
                 saveOtpLockToStorage(lockData);
 
                 const isOtpLock = backendData.level !== undefined ||
@@ -574,7 +524,6 @@ const VerifyOtpPin = () => {
                 errorMessage = '⚠️ OTP đã hết hạn. Vui lòng gửi lại mã mới.';
             }
 
-            // ✅ SỬA: Reset ô nhập OTP về trống khi nhập sai
             resetOtpInput();
 
             setError(errorMessage);
@@ -583,29 +532,26 @@ const VerifyOtpPin = () => {
         }
     };
 
-    // ============================================================
-    // HANDLE LOCK MODAL
-    // ============================================================
+    // Dọn dẹp timeout khi unmount
+    useEffect(() => {
+        return () => {
+            if (successTimeoutRef.current) {
+                clearTimeout(successTimeoutRef.current);
+            }
+        };
+    }, []);
+
     const handleLockModalClose = () => {
         setShowLockModal(false);
-        // KHÔNG xóa lockUntil, timer vẫn chạy ở background
     };
 
     const handleLockModalResend = () => {
         setShowLockModal(false);
-        // KHÔNG xóa lockUntil, timer vẫn chạy
-        // Gọi resend OTP
         handleResendOtp();
     };
 
-    // ============================================================
-    // CHECK DISABLED
-    // ============================================================
     const isDisabled = loading || isRateLimited || isLocked || showLockModal || isLoadingTTL;
 
-    // ============================================================
-    // GET BUTTON TEXT
-    // ============================================================
     const getResendButtonText = () => {
         if (isLocked) {
             return `⏳ Đang khóa (${formatLockTime(lockTimeLeft)})`;
@@ -626,9 +572,6 @@ const VerifyOtpPin = () => {
         return 'XÁC NHẬN';
     };
 
-    // ============================================================
-    // RENDER
-    // ============================================================
     return (
         <div className="auth-container">
             <div className="auth-card">
@@ -705,14 +648,20 @@ const VerifyOtpPin = () => {
                     </div>
                 )}
 
-                {/* RESEND BUTTON - hiển thị timer nếu đang lock */}
+                {/* RESEND BUTTON - hiển thị loading khi chờ gửi */}
                 <button
                     className="btn-user btn-outline-secondary"
                     onClick={handleResendOtp}
-                    disabled={isDisabled || (countdown > 0 && !isOtpExpired) || isLocked}
+                    disabled={isDisabled || (countdown > 0 && !isOtpExpired) || isLocked || loading}
                 >
-                    <RefreshCw size={16} />
-                    {getResendButtonText()}
+                    {loading ? (
+                        <span className="loading-spinner-small">⏳ Đang gửi lại...</span>
+                    ) : (
+                        <>
+                            <RefreshCw size={16} />
+                            {getResendButtonText()}
+                        </>
+                    )}
                 </button>
 
                 {/* BUTTON GROUP */}
@@ -722,7 +671,6 @@ const VerifyOtpPin = () => {
                         onClick={() => {
                             localStorage.removeItem(OTP_LOCK_STORAGE_KEY);
                             sessionStorage.removeItem(EMAIL_STORAGE_KEY);
-                            // 🔥 DÙNG safeNavigate
                             safeNavigate('/forgot-pin');
                         }}
                         disabled={isDisabled}

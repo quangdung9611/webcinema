@@ -121,8 +121,8 @@ const ForgotPassword = () => {
             const response = await api.post('/api/auth/forgot-password', { email });
             
             if (response.data.success) {
-                // ✅ CHỜ THÊM 1.5 GIÂY ĐỂ EMAIL THỰC SỰ ĐƯỢC GỬI VÀ HIỂN THỊ
-                await new Promise(resolve => setTimeout(resolve, 1500));
+                // ✅ CHỜ THÊM 1 GIÂY ĐỂ EMAIL THỰC SỰ ĐƯỢC GỬI VÀ HIỂN THỊ
+                await new Promise(resolve => setTimeout(resolve, 1000));
 
                 // 👇 Sau khi loading xong, hiển thị thông báo thành công
                 setSuccessMessage('✅ Mã OTP đã được gửi tới email của bạn. Vui lòng kiểm tra hộp thư.');
@@ -134,7 +134,7 @@ const ForgotPassword = () => {
                 sessionStorage.setItem('verify_otp_password_serverTime', String(serverTime));
                 sessionStorage.setItem('verify_otp_password_expiresIn', String(expiresIn));
 
-                // Chuyển trang sau khi loading xong (không cần setTimeout nữa, vì đã chờ 1.5s)
+                // Chuyển trang sau khi loading xong (không cần setTimeout nữa, vì đã chờ 1 giây ở trên)
                 setTimeout(() => {
                     navigate('/verify-otp-password', {
                         state: {

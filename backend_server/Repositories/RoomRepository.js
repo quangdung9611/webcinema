@@ -4,7 +4,6 @@ class RoomRepository {
 
     /*=========================================================
         FIND ALL - KHÔNG PHÂN TRANG (có search)
-        RETURN: rows[] (KHÔNG pagination, KHÔNG object data)
     =========================================================*/
     async findAllAll(search = "") {
         search = typeof search === "string" ? search.trim() : "";
@@ -43,8 +42,7 @@ class RoomRepository {
     }
 
     /*=========================================================
-        FIND ALL - CÓ PHÂN TRANG (ADMIN)
-        RETURN: { data: [], pagination: {} }
+        FIND ALL - CÓ PHÂN TRANG
     =========================================================*/
     async findAll(page = 1, limit = 20, search = "") {
         page = Number.parseInt(page, 10);
@@ -103,10 +101,7 @@ class RoomRepository {
         return {
             data: rows,
             pagination: {
-                page,
-                limit,
-                total,
-                totalPages,
+                page, limit, total, totalPages,
                 hasPreviousPage: page > 1,
                 hasNextPage: page < totalPages
             }
@@ -125,7 +120,7 @@ class RoomRepository {
     }
 
     /*=========================================================
-        FIND BY CINEMA (PUBLIC)
+        FIND BY CINEMA
     =========================================================*/
     async findByCinema(cinemaId) {
         const [rows] = await db.query(
@@ -152,6 +147,17 @@ class RoomRepository {
         }
         const [rows] = await db.query(sql, params);
         return rows[0] || null;
+    }
+
+    /*=========================================================
+        COUNT ROOMS BY TYPE (ĐẾM SỐ PHÒNG HIỆN CÓ THEO LOẠI)
+    =========================================================*/
+    async countByType(cinemaId, roomType) {
+        const [rows] = await db.query(
+            `SELECT COUNT(*) AS total FROM rooms WHERE cinema_id = ? AND room_type = ?`,
+            [cinemaId, roomType]
+        );
+        return Number(rows[0]?.total || 0);
     }
 
     /*=========================================================
