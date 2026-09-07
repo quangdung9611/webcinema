@@ -176,7 +176,7 @@ class OtpService {
                 email, 
                 purpose,
                 otp: savedOTP,  // 👈 Lưu OTP
-                status: "verified_pending", 
+               status: "verified",
                 ip_address: null, 
                 user_agent: null 
             });

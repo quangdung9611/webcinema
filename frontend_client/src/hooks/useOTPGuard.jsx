@@ -30,44 +30,71 @@ const useOTPGuard = (email, purpose, options = {}) => {
     }, [email, purpose, onInvalidate]);
 
     // ============================================================
-    // SAFE NAVIGATE - ĐÁNH DẤU ĐÃ NAVIGATE ĐỂ KHÔNG INVALIDATE NỮA
+    // SAFE NAVIGATE
     // ============================================================
     const safeNavigate = useCallback((path, state = {}) => {
         hasNavigatedRef.current = true;
-        // Nếu đã navigate thì không cần invalidate nữa
         navigate(path, { state, replace: true });
     }, [navigate]);
 
     // ============================================================
-    // EFFECT: LẮNG NGHE CÁC SỰ KIỆN RỜI TRANG
+    // SEND BEACON HOẶC FETCH VỚI KEEPALIVE
+    // ============================================================
+    const sendBeaconInvalidate = useCallback(() => {
+        if (hasInvalidatedRef.current) return;
+        if (!email || !purpose) return;
+
+        hasInvalidatedRef.current = true;
+
+        const payload = JSON.stringify({ email, purpose });
+
+        // ✅ Cách 1: Dùng sendBeacon với Blob
+        try {
+            const blob = new Blob([payload], { type: 'application/json' });
+            const sent = navigator.sendBeacon('/api/auth/invalidate-otp', blob);
+            if (sent) {
+                console.log(`🔴 [OTP GUARD] SendBeacon: invalidate OTP for ${email}`);
+                return;
+            }
+        } catch (e) {
+            console.warn('⚠️ [OTP GUARD] SendBeacon error:', e);
+        }
+
+        // ✅ Cách 2: Fallback dùng fetch với keepalive
+        try {
+            fetch('/api/auth/invalidate-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: payload,
+                keepalive: true,
+                credentials: 'include'  // 👈 QUAN TRỌNG: gửi cookie
+            }).catch(() => {});
+            console.log(`🔴 [OTP GUARD] Fetch keepalive: invalidate OTP for ${email}`);
+        } catch (e) {
+            console.warn('⚠️ [OTP GUARD] Fetch fallback error:', e);
+        }
+    }, [email, purpose]);
+
+    // ============================================================
+    // EFFECT
     // ============================================================
     useEffect(() => {
         isMountedRef.current = true;
 
-        // Nếu không có email hoặc purpose thì không làm gì
         if (!email || !purpose) {
             console.log('⏭️ [OTP GUARD] Skip: missing email or purpose');
             return;
         }
 
         // ========================================================
-        // 1. KHI NGƯỜI DÙNG ĐÓNG TAB / RELOAD TRANG
+        // 1. KHI ĐÓNG TAB / RELOAD
         // ========================================================
         const handleBeforeUnload = () => {
-            if (hasInvalidatedRef.current) return;
-            if (hasNavigatedRef.current) return;
-            if (!email || !purpose) return;
-
-            hasInvalidatedRef.current = true;
-            
-            // Dùng sendBeacon để gửi request khi rời trang (không block)
-            const payload = JSON.stringify({ email, purpose });
-            navigator.sendBeacon('/api/auth/invalidate-otp', payload);
-            console.log(`🔴 [OTP GUARD] SendBeacon: invalidate OTP for ${email}`);
+            sendBeaconInvalidate();
         };
 
         // ========================================================
-        // 2. KHI NGƯỜI DÙNG BẤM BACK / FORWARD
+        // 2. KHI BẤM BACK / FORWARD
         // ========================================================
         const handlePopState = () => {
             if (hasInvalidatedRef.current) return;
@@ -79,16 +106,13 @@ const useOTPGuard = (email, purpose, options = {}) => {
         };
 
         // ========================================================
-        // 3. KHI VISIBILITY CHANGE (USER CHUYỂN TAB)
+        // 3. KHI CHUYỂN TAB
         // ========================================================
         const handleVisibilityChange = () => {
             if (document.hidden) {
-                // User chuyển sang tab khác
                 console.log('👀 [OTP GUARD] Tab hidden');
             } else {
-                // User quay lại tab
                 console.log('👀 [OTP GUARD] Tab visible');
-                // Không làm gì khi quay lại
             }
         };
 
@@ -96,18 +120,11 @@ const useOTPGuard = (email, purpose, options = {}) => {
         // 4. KHI PAGEHIDE (IOS SAFARI)
         // ========================================================
         const handlePageHide = () => {
-            if (hasInvalidatedRef.current) return;
-            if (hasNavigatedRef.current) return;
-            if (!email || !purpose) return;
-
-            hasInvalidatedRef.current = true;
-            const payload = JSON.stringify({ email, purpose });
-            navigator.sendBeacon('/api/auth/invalidate-otp', payload);
-            console.log(`🔴 [OTP GUARD] PageHide: invalidate OTP for ${email}`);
+            sendBeaconInvalidate();
         };
 
         // ========================================================
-        // ĐĂNG KÝ CÁC EVENT LISTENER
+        // ĐĂNG KÝ EVENT
         // ========================================================
         window.addEventListener('beforeunload', handleBeforeUnload);
         window.addEventListener('popstate', handlePopState);
@@ -115,12 +132,11 @@ const useOTPGuard = (email, purpose, options = {}) => {
         window.addEventListener('pagehide', handlePageHide);
 
         // ========================================================
-        // CLEANUP: KHI COMPONENT UNMOUNT
+        // CLEANUP
         // ========================================================
         return () => {
             isMountedRef.current = false;
             
-            // Gọi invalidate OTP khi component unmount
             if (!hasInvalidatedRef.current && !hasNavigatedRef.current) {
                 invalidateOTP();
             }
@@ -130,19 +146,16 @@ const useOTPGuard = (email, purpose, options = {}) => {
             window.removeEventListener('visibilitychange', handleVisibilityChange);
             window.removeEventListener('pagehide', handlePageHide);
         };
-    }, [email, purpose, invalidateOTP]);
+    }, [email, purpose, invalidateOTP, sendBeaconInvalidate]);
 
     // ============================================================
-    // HÀM RESET TRẠNG THÁI (DÙNG KHI CẦN RESET)
+    // RESET
     // ============================================================
     const resetGuard = useCallback(() => {
         hasInvalidatedRef.current = false;
         hasNavigatedRef.current = false;
     }, []);
 
-    // ============================================================
-    // TRẢ VỀ
-    // ============================================================
     return {
         safeNavigate,
         invalidateOTP,
