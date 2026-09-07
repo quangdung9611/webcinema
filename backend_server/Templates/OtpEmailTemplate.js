@@ -1,4 +1,4 @@
-const OtpEmailTemplate = (otp, bookingId) => {
+const OtpEmailTemplate = (otp, bookingId, expiresAt) => {
     return `
         <div style="text-align:center;font-family:Arial, sans-serif;">
             
@@ -25,7 +25,7 @@ const OtpEmailTemplate = (otp, bookingId) => {
                 </div>
 
                 <p style="color:#777;font-size:14px;">
-                    Mã OTP có hiệu lực trong <b>5 phút</b>.
+                    ⏰ Mã OTP có hiệu lực đến <b style="color:#e74c3c;">${expiresAt}</b> (Giờ Việt Nam).
                     <br/>
                     Nếu bạn không thực hiện yêu cầu này, hãy bỏ qua email.
                 </p>

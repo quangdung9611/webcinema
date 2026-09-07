@@ -1,4 +1,4 @@
-const ForgotPasswordTemplate = (otp, fullName = "") => {
+const ForgotPasswordTemplate = (otp, fullName = "", expiresAt) => {
     return `
         <div style="text-align:center;font-family:Arial, sans-serif;">
             
@@ -32,7 +32,7 @@ const ForgotPasswordTemplate = (otp, fullName = "") => {
                 <p style="color:#777;font-size:14px;">
                     Nhập mã OTP này để xác thực và đặt mật khẩu mới cho tài khoản của bạn.
                     <br/>
-                    ⏰ Mã OTP có hiệu lực trong <b>5 phút</b>.
+                    ⏰ Mã OTP có hiệu lực đến <b style="color:#e74c3c;">${expiresAt}</b> (Giờ Việt Nam).
                 </p>
 
                 <p style="color:#999;font-size:13px;">
