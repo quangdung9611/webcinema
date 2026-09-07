@@ -185,6 +185,16 @@ const BankApp = () => {
   }, []);
 
   // ========================================================
+  // ✅ HÀM RESET OTP INPUT (THÊM MỚI)
+  // ========================================================
+
+  const resetOtpInput = useCallback(() => {
+    setOtp('');
+    localStorage.setItem('bankOtpInput', '');
+    if (otpInputsRef.current[0]) otpInputsRef.current[0].focus();
+  }, []);
+
+  // ========================================================
   // CLOSE MODAL
   // ========================================================
 
@@ -327,7 +337,7 @@ const BankApp = () => {
     keysToRemove.forEach(key => localStorage.removeItem(key));
     setTimeLeft(0);
     setResendCooldown(0);
-    setOtp('');
+    setOtp(''); // ✅ Reset ô nhập
     resetLockState();
     hasSentOtp.current = false;
     hasVisitedBankApp.current = false;
@@ -376,7 +386,7 @@ const BankApp = () => {
     ];
     keysToRemove.forEach(key => localStorage.removeItem(key));
     setTimeLeft(0);
-    setOtp('');
+    setOtp(''); // ✅ Reset ô nhập
     otpExpiredRef.current = true;
     openModal(
       'error',
@@ -503,7 +513,7 @@ const BankApp = () => {
       otpAttemptsRef.current = 0;
       localStorage.setItem('bankOtpAttempts', '0');
       resetLockState();
-      setOtp('');
+      setOtp(''); // ✅ Reset ô nhập
       localStorage.setItem('bankOtpInput', '');
       const redisTime = await fetchTimeFromRedis();
       const newTime = redisTime !== null && redisTime > 0 ? redisTime : OTP_TTL;
@@ -524,7 +534,7 @@ const BankApp = () => {
   }, [customerEmail, tempBookingId, fetchTimeFromRedis, openModal, resetLockState]);
 
   // ========================================================
-  // RESEND OTP
+  // RESEND OTP (ĐÃ SỬA: RESET Ô NHẬP + TIMER)
   // ========================================================
 
   const handleResendOtp = async () => {
@@ -567,9 +577,8 @@ const BankApp = () => {
       localStorage.setItem('bankOtpAttempts', '0');
       resetLockState();
       
-      // 🔥 Xóa OTP cũ khi gửi lại OTP mới
-      setOtp('');
-      localStorage.setItem('bankOtpInput', '');
+      // ✅ SỬA: Xóa OTP cũ khi gửi lại OTP mới
+      resetOtpInput();
       
       const responseTTL = Number(response.data?.data?.expiresIn || 0);
       const redisTime = responseTTL > 0 ? responseTTL : await fetchTimeFromRedis();
@@ -756,7 +765,7 @@ const BankApp = () => {
   }, []);
 
   // ========================================================
-  // VERIFY OTP
+  // VERIFY OTP (ĐÃ SỬA: RESET Ô NHẬP KHI SAI)
   // ========================================================
 
   const handleVerifyPayment = async () => {
@@ -842,6 +851,13 @@ const BankApp = () => {
       const errorData = response.data?.data || {};
       const remainingAttempts = errorData?.remainingAttempts;
       const message = response.data?.message || 'Mã OTP không đúng hoặc đã hết hạn.';
+
+      // ✅ SỬA: Reset ô nhập OTP khi có lỗi (trừ khi bị khóa)
+      if (!(response.data?.code === 'OTP_LOCKED' || response.data?.code === 'ACCOUNT_LOCKED' ||
+          message.toLowerCase().includes('khóa') || remainingAttempts === 0)) {
+        resetOtpInput();
+      }
+
       if (response.data?.code === 'OTP_LOCKED' || response.data?.code === 'ACCOUNT_LOCKED' ||
           message.toLowerCase().includes('khóa') || remainingAttempts === 0) {
         const lockDuration = Number(errorData?.remainingSeconds || errorData?.lockDuration || 300);
@@ -859,6 +875,13 @@ const BankApp = () => {
       console.error('❌ [BANK APP] Verify OTP Error:', error);
       const errorData = error.response?.data || {};
       const errorMessage = errorData.message || 'Mã OTP không đúng hoặc đã hết hạn.';
+      
+      // ✅ SỬA: Reset ô nhập OTP khi có lỗi (trừ khi bị khóa)
+      if (!(error.response?.status === 429 || errorData.code === 'OTP_LOCKED' ||
+          errorData.code === 'ACCOUNT_LOCKED' || errorMessage.toLowerCase().includes('khóa'))) {
+        resetOtpInput();
+      }
+
       if (error.response?.status === 429 || errorData.code === 'OTP_LOCKED' ||
           errorData.code === 'ACCOUNT_LOCKED' || errorMessage.toLowerCase().includes('khóa')) {
         const lockDuration = Number(errorData?.data?.remainingSeconds || errorData?.data?.lockDuration || 300);

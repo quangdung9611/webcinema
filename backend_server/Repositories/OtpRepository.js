@@ -65,27 +65,8 @@ class OtpRepository {
     }
 
     /*=========================================================
-        FIND BY OTP
-    =========================================================*/
-    async findByOTP(email, purpose, otp) {
-        const [rows] = await db.query(
-            `
-            SELECT *
-            FROM otp_logs
-            WHERE email = ?
-              AND purpose = ?
-              AND otp = ?
-            ORDER BY otp_id DESC
-            LIMIT 1
-            `,
-            [email, purpose, otp]
-        );
-
-        return rows[0] || null;
-    }
-
-    /*=========================================================
         EXPIRE PREVIOUS OTP LOGS
+        (Dùng để đánh dấu OTP cũ đã hết hạn khi gửi mã mới)
     =========================================================*/
     async expirePreviousOtps(email, purpose) {
         await db.query(
@@ -116,34 +97,6 @@ class OtpRepository {
     }
 
     /*=========================================================
-        MARK USED
-    =========================================================*/
-    async markUsed(otpId) {
-        await db.query(
-            `
-            UPDATE otp_logs
-            SET status = 'used'
-            WHERE otp_id = ?
-            `,
-            [otpId]
-        );
-    }
-
-    /*=========================================================
-        MARK FAILED
-    =========================================================*/
-    async markFailed(otpId) {
-        await db.query(
-            `
-            UPDATE otp_logs
-            SET status = 'failed'
-            WHERE otp_id = ?
-            `,
-            [otpId]
-        );
-    }
-
-    /*=========================================================
         MARK EXPIRED
     =========================================================*/
     async markExpired(otpId) {
@@ -151,34 +104,6 @@ class OtpRepository {
             `
             UPDATE otp_logs
             SET status = 'expired'
-            WHERE otp_id = ?
-            `,
-            [otpId]
-        );
-    }
-
-    /*=========================================================
-        MARK RESENT
-    =========================================================*/
-    async markResent(otpId) {
-        await db.query(
-            `
-            UPDATE otp_logs
-            SET status = 'resent'
-            WHERE otp_id = ?
-            `,
-            [otpId]
-        );
-    }
-
-    /*=========================================================
-        MARK LOCKED
-    =========================================================*/
-    async markLocked(otpId) {
-        await db.query(
-            `
-            UPDATE otp_logs
-            SET status = 'locked'
             WHERE otp_id = ?
             `,
             [otpId]
@@ -211,23 +136,6 @@ class OtpRepository {
             `,
             [email, purpose]
         );
-    }
-
-    /*=========================================================
-        COUNT RECENT OTPS
-    =========================================================*/
-    async countRecentOtps(email, minutes = 1) {
-        const [rows] = await db.query(
-            `
-            SELECT COUNT(*) AS total
-            FROM otp_logs
-            WHERE email = ?
-              AND created_at >= DATE_SUB(NOW(), INTERVAL ? MINUTE)
-            `,
-            [email, minutes]
-        );
-
-        return rows[0].total;
     }
 
     /*=========================================================
@@ -267,7 +175,6 @@ class OtpRepository {
 
         return result.affectedRows;
     }
-
 }
 
 module.exports = new OtpRepository();

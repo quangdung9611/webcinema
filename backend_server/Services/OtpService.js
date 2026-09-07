@@ -42,11 +42,11 @@ class OtpService {
         // ✅ Lưu OTP mới vào otp_codes (INSERT)
         const otpId = await CacheService.saveOTP(email, purpose, otpCode, OTP_EXPIRE_SECONDS);
         
-        // ✅ Log vào otp_logs với mã OTP
+        // ✅ Log vào otp_logs với mã OTP (Chỉ log trạng thái "sent" - bắt buộc giữ)
         await OtpRepository.create({
             email,
             purpose,
-            otp: otpCode,  // 👈 Lưu mã OTP
+            otp: otpCode,
             status: "sent",
             ip_address: null,
             user_agent: null
@@ -77,14 +77,8 @@ class OtpService {
         if (isLocked) {
             // 🔥 Đánh dấu OTP đã sử dụng
             await CacheService.markOTPAsUsed(email, purpose);
-            await OtpRepository.create({
-                email,
-                purpose,
-                otp: otp,  // 👈 Lưu OTP đã nhập
-                status: "locked",
-                ip_address: null,
-                user_agent: null
-            });
+            
+            // ❌ KHÔNG LOG "locked" NỮA (Vì bảng otp_codes đã ghi nhận)
             return { 
                 success: false, 
                 code: "OTP_LOCKED", 
@@ -96,12 +90,13 @@ class OtpService {
         const savedOTP = String(await CacheService.getOTP(email, purpose) || '').trim();
         const userOTP = String(otp || '').trim();
 
-        // Không tìm thấy OTP
+        // Không tìm thấy OTP (Đã hết hạn hoặc không tồn tại)
         if (!savedOTP) {
+            // ✅ Log trạng thái "expired" (bắt buộc giữ để biết lịch sử)
             await OtpRepository.create({
                 email,
                 purpose,
-                otp: userOTP,  // 👈 Lưu OTP đã nhập
+                otp: userOTP,
                 status: "expired",
                 ip_address: null,
                 user_agent: null
@@ -115,30 +110,16 @@ class OtpService {
 
         // OTP SAI
         if (savedOTP !== userOTP) {
-            // Tăng số lần thử sai
+            // Tăng số lần thử sai (Chỉ đếm trong bảng otp_codes, không log vào otp_logs)
             const attempts = await CacheService.incrementOTPAttempts(email, purpose);
             
-            // Log OTP sai
-            await OtpRepository.create({
-                email,
-                purpose,
-                otp: userOTP,  // 👈 Lưu OTP đã nhập (sai)
-                status: "failed",
-                ip_address: null,
-                user_agent: null
-            });
+            // ❌ KHÔNG LOG "failed" NỮA
             
             // Nếu đạt 5 lần sai → khóa OTP
             if (attempts >= 5) {
                 await CacheService.markOTPAsUsed(email, purpose);
-                await OtpRepository.create({
-                    email,
-                    purpose,
-                    otp: userOTP,
-                    status: "locked",
-                    ip_address: null,
-                    user_agent: null
-                });
+                
+                // ❌ KHÔNG LOG "locked" NỮA
                 return {
                     success: false,
                     code: "OTP_LOCKED",
@@ -158,11 +139,11 @@ class OtpService {
             // 🔥 Đánh dấu OTP đã sử dụng (is_used = 1)
             await CacheService.markOTPAsUsed(email, purpose);
             
-            // Log OTP đúng
+            // ✅ Log trạng thái "verified" (bắt buộc giữ)
             await OtpRepository.create({ 
                 email, 
                 purpose,
-                otp: savedOTP,  // 👈 Lưu OTP đúng
+                otp: savedOTP,
                 status: "verified", 
                 ip_address: null, 
                 user_agent: null 
@@ -171,12 +152,12 @@ class OtpService {
             // Reset attempts nhưng không đánh dấu đã dùng
             await CacheService.resetOTPAttempts(email, purpose);
             
-            // Log xác thực thành công (nhưng chưa dùng)
+            // ✅ Log trạng thái "verified" (bắt buộc giữ)
             await OtpRepository.create({ 
                 email, 
                 purpose,
-                otp: savedOTP,  // 👈 Lưu OTP
-               status: "verified",
+                otp: savedOTP,
+                status: "verified",
                 ip_address: null, 
                 user_agent: null 
             });
@@ -195,7 +176,7 @@ class OtpService {
         // 🔥 Đánh dấu OTP đã sử dụng (is_used = 1)
         await CacheService.markOTPAsUsed(email, purpose);
         
-        // Log invalidated
+        // ✅ Log trạng thái "invalidated" (bắt buộc giữ)
         await OtpRepository.create({ 
             email, 
             purpose,
@@ -224,13 +205,6 @@ class OtpService {
             expiresIn: ttl > 0 ? ttl : 0,
             purpose: purpose
         };
-    }
-
-    // ============================================================
-    // RESEND OTP - KHÔNG HỖ TRỢ (dùng createOTP mới)
-    // ============================================================
-    async resendOTP() {
-        throw new Error("Không hỗ trợ gửi lại OTP. Vui lòng bắt đầu lại giao dịch.");
     }
 
     // ============================================================

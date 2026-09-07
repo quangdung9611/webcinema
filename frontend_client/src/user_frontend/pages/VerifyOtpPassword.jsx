@@ -140,6 +140,17 @@ const VerifyOtpPassword = () => {
     };
 
     // ============================================================
+    // ✅ HÀM RESET OTP INPUT (THÊM MỚI)
+    // ============================================================
+    const resetOtpInput = () => {
+        setOtp(''); // Xóa trắng state
+        otpRefs.current.forEach((el) => {
+            if (el) el.value = ''; // Xóa giá trị trên DOM
+        });
+        otpRefs.current[0]?.focus(); // Focus về ô đầu tiên
+    };
+
+    // ============================================================
     // INIT - KHỞI TẠO VÀ KHÔI PHỤC STATE
     // ============================================================
     useEffect(() => {
@@ -373,7 +384,7 @@ const VerifyOtpPassword = () => {
     };
 
     // ============================================================
-    // HANDLE RESEND OTP
+    // HANDLE RESEND OTP (ĐÃ SỬA: RESET Ô NHẬP + TIMER)
     // ============================================================
     const handleResendOtp = async () => {
         if (isLocked) {
@@ -404,8 +415,14 @@ const VerifyOtpPassword = () => {
                 setSuccessMessage('✅ Đã gửi lại OTP mới. Vui lòng kiểm tra email.');
                 setTimeout(() => setSuccessMessage(''), 5000);
                 
-                // Reset OTP expired state
+                // ✅ SỬA: Reset ô nhập OTP về trống
+                resetOtpInput();
+
+                // ✅ SỬA: Reset Timer về đầu (5 phút = 300 giây)
                 setIsOtpExpired(false);
+                setCountdown(300);
+                startCountdown(300); 
+
                 // Xóa lock cũ nếu có
                 if (isLocked) {
                     localStorage.removeItem(OTP_LOCK_STORAGE_KEY);
@@ -434,7 +451,7 @@ const VerifyOtpPassword = () => {
     };
 
     // ============================================================
-    // HANDLE VERIFY OTP
+    // HANDLE VERIFY OTP (ĐÃ SỬA: RESET Ô NHẬP KHI SAI)
     // ============================================================
     const handleVerifyOtp = async () => {
         if (isOtpExpired) {
@@ -538,7 +555,7 @@ const VerifyOtpPassword = () => {
                     setRemainingOtpAttempts(maxOtpAttempts);
                     setError('');
                     setLoading(false);
-                    return;
+                    return; // Dừng lại, không reset ô nhập khi đã khóa
                 }
 
                 errorMessage = backendData.message || `⚠️ Bạn đã thử quá nhiều lần. Vui lòng thử lại sau ${formatLockTime(remainingSeconds)}.`;
@@ -550,6 +567,9 @@ const VerifyOtpPassword = () => {
                 setCountdown(0);
                 errorMessage = '⚠️ OTP đã hết hạn. Vui lòng gửi lại mã mới.';
             }
+
+            // ✅ SỬA: Reset ô nhập OTP về trống khi nhập sai
+            resetOtpInput();
 
             setError(errorMessage);
         } finally {

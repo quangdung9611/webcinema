@@ -199,6 +199,16 @@ const MomoApp = () => {
     });
 
     // ============================================================
+    // ✅ HÀM RESET OTP INPUT (THÊM MỚI)
+    // ============================================================
+
+    const resetOtpInput = useCallback(() => {
+        setOtp('');
+        localStorage.setItem('momoOtpInput', '');
+        if (otpInputsRef.current[0]) otpInputsRef.current[0].focus();
+    }, []);
+
+    // ============================================================
     // FORMAT TIME
     // ============================================================
 
@@ -357,7 +367,7 @@ const MomoApp = () => {
         localStorage.removeItem('bookingOwnerToken');
 
         setTimeLeft(300);
-        setOtp('');
+        setOtp(''); // ✅ Reset ô nhập
         hasShownModalRef.current = false;
         otpExpiredRef.current = false;
         resetLockState();
@@ -535,6 +545,8 @@ const MomoApp = () => {
             otpAttemptsRef.current = 0;
             localStorage.setItem('momoOtpAttempts', '0');
             resetLockState();
+            setOtp(''); // ✅ Reset ô nhập
+            localStorage.setItem('momoOtpInput', '');
             const redisTime = await fetchTimeFromRedis();
             if (redisTime !== null && redisTime > 0) {
                 setTimeLeft(redisTime);
@@ -556,7 +568,7 @@ const MomoApp = () => {
     };
 
     // ============================================================
-    // RESEND OTP
+    // RESEND OTP (ĐÃ SỬA: RESET Ô NHẬP + TIMER)
     // ============================================================
 
     const handleResendOtp = async () => {
@@ -590,9 +602,8 @@ const MomoApp = () => {
                 localStorage.setItem('momoOtpAttempts', '0');
                 resetLockState();
 
-                // 🔥 Xóa OTP cũ khi gửi lại OTP mới
-                setOtp('');
-                localStorage.setItem('momoOtpInput', '');
+                // ✅ SỬA: Xóa OTP cũ khi gửi lại OTP mới
+                resetOtpInput();
 
                 if (response.data.data?.expiresIn) {
                     setTimeLeft(response.data.data.expiresIn);
@@ -728,7 +739,7 @@ const MomoApp = () => {
     }, [tempBookingId, fetchTimeFromRedis, modalConfig.show, isLocked, openModal, closeModal]);
 
     // ============================================================
-    // VERIFY OTP
+    // VERIFY OTP (ĐÃ SỬA: RESET Ô NHẬP KHI SAI)
     // ============================================================
 
     const handleVerifyPayment = async () => {
@@ -833,6 +844,12 @@ const MomoApp = () => {
             } else {
                 const errorData = res.data?.data || {};
                 const remainingAttempts = errorData.remainingAttempts !== undefined ? errorData.remainingAttempts : 0;
+
+                // ✅ SỬA: Reset ô nhập OTP khi có lỗi (trừ khi bị khóa)
+                if (!(res.data?.message?.toLowerCase()?.includes('khóa') || remainingAttempts === 0)) {
+                    resetOtpInput();
+                }
+
                 if (res.data?.message?.toLowerCase()?.includes('khóa') || remainingAttempts === 0) {
                     const lockDuration = errorData.lockDuration || 300;
                     lockAccount(lockDuration);
@@ -849,6 +866,12 @@ const MomoApp = () => {
         } catch (err) {
             const errorData = err.response?.data || {};
             const errorMsg = errorData.message || 'Mã OTP không đúng hoặc đã hết hạn!';
+
+            // ✅ SỬA: Reset ô nhập OTP khi có lỗi (trừ khi bị khóa)
+            if (!(err.response?.status === 429 || errorMsg.toLowerCase().includes('khóa') || errorData.code === 'OTP_LOCKED')) {
+                resetOtpInput();
+            }
+
             if (err.response?.status === 429 || errorMsg.toLowerCase().includes('khóa') || errorData.code === 'OTP_LOCKED') {
                 const lockDuration = errorData?.data?.remainingSeconds || 300;
                 lockAccount(lockDuration);
