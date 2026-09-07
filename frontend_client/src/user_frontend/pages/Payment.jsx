@@ -415,7 +415,7 @@ const Payment = () => {
     };
 
     // ============================================================
-    // PAYMENT PROCESS - THÊM INVALIDATE OTP TRƯỚC KHI CHUYỂN TRANG
+    // PAYMENT PROCESS - CHỜ EMAIL GỬI XONG MỚI CHUYỂN TRANG
     // ============================================================
 
     const handleProceed = async () => {
@@ -552,10 +552,31 @@ const Payment = () => {
                 localStorage.removeItem('selectedSeats');
                 localStorage.removeItem('currentShowtimeId');
                 setIsTimerActive(false);
+
+                // ✅ CHỜ EMAIL GỬI XONG MỚI CHUYỂN (GỌI API SEND-OTP TRƯỚC)
+                showNotice('info', 'ĐANG XỬ LÝ', 'Vui lòng chờ trong giây lát để hệ thống gửi mã OTP tới email của bạn...');
+                
                 if (paymentMethod === 'bank') {
+                    // Gọi API send OTP để chắc chắn email đã được gửi
+                    const sendOtpResponse = await api.post('/api/bank/send-otp', {
+                        email,
+                        tempBookingId: tempId
+                    });
+                    if (!sendOtpResponse.data?.success) {
+                        throw new Error(sendOtpResponse.data?.message || 'Không thể gửi OTP.');
+                    }
                     localStorage.setItem('paymentInitiated', 'true');
                     navigate('/bank-app', { state: finalState });
                     return;
+                }
+
+                // MOMO
+                const sendMomoOtpResponse = await api.post('/api/momo/send-otp', {
+                    email,
+                    tempBookingId: tempId
+                });
+                if (!sendMomoOtpResponse.data?.success) {
+                    throw new Error(sendMomoOtpResponse.data?.message || 'Không thể gửi OTP.');
                 }
                 localStorage.setItem('momoTempBookingId', tempId);
                 localStorage.setItem('momoOwnerToken', ownerToken);

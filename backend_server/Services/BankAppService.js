@@ -123,6 +123,7 @@ class BankAppService {
     /*=========================================================
         🆕 GỬI LẠI OTP PAYMENT
         🔥 SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
+        ✅ THÊM: serverTime để đồng bộ timer tuyệt đối
     =========================================================*/
 
     async resendOtpPayment(email, tempBookingId) {
@@ -156,6 +157,9 @@ class BankAppService {
         // Tạo OTP mới
         const otpResult = await OtpService.createOTP(email, PURPOSE.PAYMENT);
 
+        // ✅ Lấy mốc thời gian hiện tại của server để đồng bộ timer
+        const serverTime = Date.now();
+
         // Cập nhật temp booking với OTP mới
         const updatedData = typeof tempData === 'string' ? JSON.parse(tempData) : tempData;
         updatedData.otp = otpResult.otp;
@@ -179,7 +183,8 @@ class BankAppService {
             data: {
                 expiresIn: ttl > 0 ? ttl : 300,
                 maxAttempts: 3,
-                remainingAttempts: 3
+                remainingAttempts: 3,
+                serverTime: serverTime // ✅ Gửi mốc thời gian tuyệt đối này về cho Frontend
             }
         };
     }
@@ -188,6 +193,7 @@ class BankAppService {
     /*=========================================================
         🆕 GỬI OTP THANH TOÁN
         🔥 SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
+        ✅ THÊM: serverTime để đồng bộ timer tuyệt đối
     =========================================================*/
 
     async sendPaymentOTP(email, tempBookingId) {
@@ -220,6 +226,9 @@ class BankAppService {
         // Tạo OTP mới
         const otpResult = await OtpService.createOTP(email, PURPOSE.PAYMENT);
 
+        // ✅ Lấy mốc thời gian hiện tại của server để đồng bộ timer
+        const serverTime = Date.now();
+
         // Cập nhật temp booking với OTP mới
         const updatedData = typeof tempData === 'string' ? JSON.parse(tempData) : tempData;
         updatedData.otp = otpResult.otp;
@@ -241,7 +250,8 @@ class BankAppService {
             success: true,
             message: "Mã OTP đã được gửi tới email.",
             data: {
-                expiresIn: ttl > 0 ? ttl : 300
+                expiresIn: ttl > 0 ? ttl : 300,
+                serverTime: serverTime // ✅ Gửi mốc thời gian tuyệt đối này về cho Frontend
             }
         };
     }

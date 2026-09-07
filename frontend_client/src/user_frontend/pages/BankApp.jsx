@@ -70,7 +70,6 @@ const BankApp = () => {
   const { safeNavigate, invalidateOTP } = useOTPGuard(customerEmail, 'PAYMENT', {
     onInvalidate: () => {
       console.log('🔴 [BANK APP] OTP đã bị vô hiệu do rời trang');
-      // Có thể thêm logic khác nếu cần
     }
   });
 
@@ -155,7 +154,7 @@ const BankApp = () => {
   });
 
   // ========================================================
-  // BACK CONFIRM - KHÔNG CẦN blocker VÌ useOTPGuard ĐÃ XỬ LÝ
+  // BACK CONFIRM
   // ========================================================
 
   const [showBackConfirm, setShowBackConfirm] = useState(false);
@@ -332,7 +331,7 @@ const BankApp = () => {
       'bankLastOtpSentAt', 'bankResendCooldown', 'paymentInitiated', 'paymentCompleted',
       'completedBookingId', 'holdExpiresAt', 'selectedSeats', 'currentShowtimeId',
       'selectedFoods', 'booking_temp', 'tempBookingId', 'bookingOwnerToken',
-      'bankIsLocked', 'bankLockTime', 'bankOtpAttempts',
+      'bankIsLocked', 'bankLockTime', 'bankOtpAttempts', 'bankOtpExpiresAt'
     ];
     keysToRemove.forEach(key => localStorage.removeItem(key));
     setTimeLeft(0);
@@ -375,14 +374,14 @@ const BankApp = () => {
 
   const handleTimeExpire = useCallback(async () => {
     if (paymentCompletedRef.current) return;
-    await invalidateOTP(); // 🔥 GỌI INVALIDATE OTP
+    await invalidateOTP();
     await cancelBookingOnServer();
     const keysToRemove = [
       'selectedSeats', 'holdExpiresAt', 'currentShowtimeId', 'booking_seats',
       'booking_showtime', 'booking_data', 'selected_foods', 'food_selection',
       'booking_cinema', 'booking_date', 'booking_movie', 'booking_showtime',
       'selectedFoods', 'booking_temp', 'bookingOwnerToken', 'tempBookingId',
-      'lastSuccessTicket', 'paymentInitiated',
+      'lastSuccessTicket', 'paymentInitiated', 'bankOtpExpiresAt'
     ];
     keysToRemove.forEach(key => localStorage.removeItem(key));
     setTimeLeft(0);
@@ -394,25 +393,21 @@ const BankApp = () => {
       'Thời gian giữ ghế hoặc thanh toán đã kết thúc. Vui lòng chọn lại ghế để tiếp tục.',
       () => {
         closeModal();
-        safeNavigate('/'); // 🔥 DÙNG safeNavigate
+        safeNavigate('/');
       }
     );
   }, [cancelBookingOnServer, closeModal, openModal, invalidateOTP, safeNavigate]);
 
   // ========================================================
-  // BLOCK ROUTE - BỎ blocker VÌ useOTPGuard ĐÃ XỬ LÝ
-  // ========================================================
-
-  // ========================================================
-  // CLEAR + GO HOME - DÙNG safeNavigate
+  // CLEAR + GO HOME
   // ========================================================
 
   const clearAllAndGoHome = async () => {
     setShowBackConfirm(false);
-    await invalidateOTP(); // 🔥 GỌI INVALIDATE OTP
+    await invalidateOTP();
     await cancelBookingOnServer();
     clearAllBookingData();
-    safeNavigate('/'); // 🔥 DÙNG safeNavigate
+    safeNavigate('/');
   };
 
   // ========================================================
@@ -486,7 +481,7 @@ const BankApp = () => {
   }, [resendCooldown]);
 
   // ========================================================
-  // SEND OTP
+  // SEND OTP (ĐÃ SỬA: NHẬN serverTime để đồng bộ timer)
   // ========================================================
 
   const sendOtpApi = useCallback(async () => {
@@ -513,10 +508,17 @@ const BankApp = () => {
       otpAttemptsRef.current = 0;
       localStorage.setItem('bankOtpAttempts', '0');
       resetLockState();
-      setOtp(''); // ✅ Reset ô nhập
+      setOtp(''); // Reset ô nhập
       localStorage.setItem('bankOtpInput', '');
+
+      // ✅ NHẬN serverTime VÀ expiresIn từ Backend
+      const responseTTL = Number(response.data?.data?.expiresIn || 0);
+      const serverTime = Number(response.data?.data?.serverTime || Date.now());
+      const expiresAt = serverTime + (responseTTL * 1000);
+      localStorage.setItem('bankOtpExpiresAt', String(expiresAt));
+
       const redisTime = await fetchTimeFromRedis();
-      const newTime = redisTime !== null && redisTime > 0 ? redisTime : OTP_TTL;
+      const newTime = redisTime !== null && redisTime > 0 ? redisTime : (responseTTL > 0 ? responseTTL : OTP_TTL);
       setTimeLeft(newTime);
       localStorage.setItem('bankOtpTimeLeft', String(newTime));
       otpExpiredRef.current = false;
@@ -534,7 +536,7 @@ const BankApp = () => {
   }, [customerEmail, tempBookingId, fetchTimeFromRedis, openModal, resetLockState]);
 
   // ========================================================
-  // RESEND OTP (ĐÃ SỬA: RESET Ô NHẬP + TIMER)
+  // RESEND OTP (ĐÃ SỬA: RESET Ô NHẬP + TIMER + NHẬN serverTime)
   // ========================================================
 
   const handleResendOtp = async () => {
@@ -576,13 +578,18 @@ const BankApp = () => {
       otpAttemptsRef.current = 0;
       localStorage.setItem('bankOtpAttempts', '0');
       resetLockState();
-      
+
       // ✅ SỬA: Xóa OTP cũ khi gửi lại OTP mới
       resetOtpInput();
-      
+
+      // ✅ NHẬN serverTime VÀ expiresIn từ Backend
       const responseTTL = Number(response.data?.data?.expiresIn || 0);
-      const redisTime = responseTTL > 0 ? responseTTL : await fetchTimeFromRedis();
-      const newTime = redisTime !== null && redisTime > 0 ? redisTime : OTP_TTL;
+      const serverTime = Number(response.data?.data?.serverTime || Date.now());
+      const expiresAt = serverTime + (responseTTL * 1000);
+      localStorage.setItem('bankOtpExpiresAt', String(expiresAt));
+
+      const redisTime = await fetchTimeFromRedis();
+      const newTime = redisTime !== null && redisTime > 0 ? redisTime : (responseTTL > 0 ? responseTTL : OTP_TTL);
       setTimeLeft(newTime);
       localStorage.setItem('bankOtpTimeLeft', String(newTime));
       otpExpiredRef.current = false;
@@ -643,7 +650,7 @@ const BankApp = () => {
   }, [customerEmail, tempBookingId, syncTimerWithRedis, sendOtpApi, navigate, closeModal, openModal]);
 
   // ========================================================
-  // OTP TIMER
+  // OTP TIMER (DÙNG MỐC TUYỆT ĐỐI bankOtpExpiresAt)
   // ========================================================
 
   useEffect(() => {
@@ -656,13 +663,24 @@ const BankApp = () => {
       return;
     }
     const timer = setInterval(() => {
-      setTimeLeft(previous => {
-        if (previous <= 1) {
+      // ✅ Tính thời gian còn lại dựa trên mốc tuyệt đối
+      const expiresAt = Number(localStorage.getItem('bankOtpExpiresAt') || 0);
+      if (expiresAt > 0) {
+        const remaining = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
+        setTimeLeft(remaining);
+        if (remaining <= 0) {
           otpExpiredRef.current = true;
-          return 0;
         }
-        return previous - 1;
-      });
+      } else {
+        // Fallback nếu không có mốc tuyệt đối
+        setTimeLeft(previous => {
+          if (previous <= 1) {
+            otpExpiredRef.current = true;
+            return 0;
+          }
+          return previous - 1;
+        });
+      }
     }, 1000);
     return () => clearInterval(timer);
   }, [timeLeft, isLocked, closeModal, openModal]);
@@ -709,7 +727,7 @@ const BankApp = () => {
         'Bạn đã thanh toán thành công! Vui lòng quay lại trang xác nhận.',
         () => {
           closeModal();
-          safeNavigate('/confirm-success', { state: bookingData }); // 🔥 DÙNG safeNavigate
+          safeNavigate('/confirm-success', { state: bookingData });
         }
       );
     }
@@ -729,14 +747,14 @@ const BankApp = () => {
         'Không tìm thấy thông tin đặt vé. Vui lòng đặt lại.',
         () => {
           closeModal();
-          safeNavigate('/'); // 🔥 DÙNG safeNavigate
+          safeNavigate('/');
         }
       );
     }
   }, [tempBookingId, customerEmail, closeModal, openModal, safeNavigate]);
 
   // ========================================================
-  // BEFORE UNLOAD - useOTPGuard đã xử lý qua sendBeacon
+  // BEFORE UNLOAD
   // ========================================================
 
   useEffect(() => {
@@ -752,7 +770,7 @@ const BankApp = () => {
   }, [timeLeft, otp]);
 
   // ========================================================
-  // CLEANUP - useOTPGuard đã xử lý invalidate khi unmount
+  // CLEANUP
   // ========================================================
 
   useEffect(() => {
@@ -769,41 +787,22 @@ const BankApp = () => {
   // ========================================================
 
   const handleVerifyPayment = async () => {
-    // ========================================================
-    // KIỂM TRA GIAO DỊCH ĐÃ HOÀN TẤT
-    // ========================================================
     if (paymentCompletedRef.current) {
-     openModal('info', 'THÔNG BÁO', 'Mã OTP này đã được thanh toán thành công trước đó.');
+      openModal('info', 'THÔNG BÁO', 'Mã OTP này đã được thanh toán thành công trước đó.');
       return;
     }
-
-    // ========================================================
-    // KIỂM TRA TÀI KHOẢN BỊ KHÓA
-    // ========================================================
     if (isLockedRef.current || isLocked) {
       openModal('error', 'TÀI KHOẢN BỊ KHÓA', `Tài khoản đang bị khóa. Vui lòng thử lại sau ${formatTime(lockTimeLeft)}.`);
       return;
     }
-
-    // ========================================================
-    // KIỂM TRA OTP HẾT HẠN
-    // ========================================================
     if (otpExpiredRef.current || timeLeft <= 0) {
       openModal('warning', 'OTP HẾT HẠN', 'Mã OTP đã hết hạn. Vui lòng gửi lại OTP nếu bạn chưa thanh toán.');
       return;
     }
-
-    // ========================================================
-    // KIỂM TRA OTP ĐỦ 6 SỐ
-    // ========================================================
     if (otp.length !== 6) {
       openModal('error', 'THÔNG BÁO', 'Vui lòng nhập đủ 6 số OTP.');
       return;
     }
-
-    // ========================================================
-    // KIỂM TRA THÔNG TIN
-    // ========================================================
     if (!customerEmail || !tempBookingId) {
       openModal('error', 'THIẾU THÔNG TIN', 'Không tìm thấy thông tin thanh toán.');
       return;
@@ -837,7 +836,7 @@ const BankApp = () => {
           'Cảm ơn bạn đã đặt vé! Vui lòng kiểm tra email để nhận vé.',
           () => {
             closeModal();
-            safeNavigate('/confirm-success', { state: bookingData }); // 🔥 DÙNG safeNavigate
+            safeNavigate('/confirm-success', { state: bookingData });
           }
         );
         autoNavigateRef.current = setTimeout(() => {
@@ -875,7 +874,7 @@ const BankApp = () => {
       console.error('❌ [BANK APP] Verify OTP Error:', error);
       const errorData = error.response?.data || {};
       const errorMessage = errorData.message || 'Mã OTP không đúng hoặc đã hết hạn.';
-      
+
       // ✅ SỬA: Reset ô nhập OTP khi có lỗi (trừ khi bị khóa)
       if (!(error.response?.status === 429 || errorData.code === 'OTP_LOCKED' ||
           errorData.code === 'ACCOUNT_LOCKED' || errorMessage.toLowerCase().includes('khóa'))) {

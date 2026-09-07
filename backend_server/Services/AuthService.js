@@ -297,7 +297,6 @@ exports.changePassword = async (userId, passwordData) => {
 
 // ============================================================
 // FORGOT PASSWORD - CÓ KIỂM TRA EMAIL CHƯA ĐĂNG KÝ
-// 🔥 SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
 // ============================================================
 exports.forgotPassword = async (email, req) => {
     if (!email?.trim()) throw { statusCode: 400, field: "email", message: "Email không được để trống" };
@@ -345,6 +344,9 @@ exports.forgotPassword = async (email, req) => {
 
     const otpResult = await OtpService.createOTP(email, OtpService.PURPOSE.RESET_PASSWORD);
     
+    // ⏰ Lấy mốc thời gian hiện tại của server (để Frontend đồng bộ timer)
+    const serverTime = Date.now();
+    
     setImmediate(() => {
         MailService.sendResetPasswordOTP(email, otpResult.otp, user.full_name)
             .then(() => console.log(`✅ Email sent to ${email}`))
@@ -358,7 +360,8 @@ exports.forgotPassword = async (email, req) => {
         success: true,
         message: "Mã OTP đã được gửi tới email của bạn.",
         data: {
-            expiresIn: ttl > 0 ? ttl : 300
+            expiresIn: ttl > 0 ? ttl : 300,
+            serverTime: serverTime // 👈 Gửi mốc thời gian này về cho Frontend
         }
     };
 };
@@ -418,6 +421,9 @@ exports.submitNewPassword = async (token, newPassword) => {
 
     const otpResult = await OtpService.createOTP(user.email, OtpService.PURPOSE.RESET_PASSWORD);
     
+    // ⏰ Lấy mốc thời gian hiện tại của server
+    const serverTime = Date.now();
+    
     setImmediate(() => {
         MailService.sendResetPasswordOTP(user.email, otpResult.otp, user.full_name)
             .then(() => console.log(`✅ Email sent to ${user.email}`))
@@ -429,14 +435,14 @@ exports.submitNewPassword = async (token, newPassword) => {
         message: "Mã OTP xác nhận đã được gửi tới email của bạn.",
         email: user.email,
         data: {
-            expiresIn: otpResult.expiresIn || 300
+            expiresIn: otpResult.expiresIn || 300,
+            serverTime: serverTime // 👈 Gửi mốc thời gian này về cho Frontend
         }
     };
 };
 
 // ============================================================
 // VERIFY OTP AND RESET
-// 🔥 SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
 // ============================================================
 exports.verifyOtpAndReset = async (email, otp, newPassword) => {
     const rateLimit = await CacheService.checkRateLimit(email, "verify-otp-reset", 5, 300);
@@ -628,8 +634,7 @@ exports.revokeDeviceById = async (userId, tokenId) => {
 };
 
 // ============================================================
-// QUÊN MÃ PIN
-// 🔥 SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
+// QUÊN MÃ PIN (FORGOT PIN) - CÓ SERVER TIME
 // ============================================================
 exports.forgotPin = async (email) => {
     if (!email?.trim()) {
@@ -678,6 +683,9 @@ exports.forgotPin = async (email) => {
 
     const otpResult = await OtpService.createOTP(email, OtpService.PURPOSE.FORGOT_PIN);
     
+    // ⏰ Lấy mốc thời gian hiện tại của server
+    const serverTime = Date.now();
+    
     setImmediate(() => {
         MailService.sendForgotPinOTP(email, otpResult.otp, user.full_name)
             .then(() => console.log(`✅ Forgot PIN email sent to ${email}`))
@@ -691,14 +699,14 @@ exports.forgotPin = async (email) => {
         success: true,
         message: "Mã OTP đã được gửi tới email. Vui lòng kiểm tra hộp thư.",
         data: {
-            expiresIn: ttl > 0 ? ttl : 300
+            expiresIn: ttl > 0 ? ttl : 300,
+            serverTime: serverTime // 👈 Gửi mốc thời gian này về cho Frontend
         }
     };
 };
 
 // ============================================================
 // VERIFY OTP AND CHANGE PIN
-// 🔥 SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
 // ============================================================
 exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
     const rateLimit = await CacheService.checkRateLimit(email, "verify-otp-pin", 5, 300);
@@ -963,8 +971,7 @@ exports.checkOtpTTL = async (email, purpose) => {
 };
 
 // ============================================================
-// RESEND OTP
-// 🔥 SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
+// RESEND OTP - CÓ SERVER TIME
 // ============================================================
 exports.resendOtp = async (email, purpose) => {
     if (!email?.trim()) {
@@ -993,6 +1000,9 @@ exports.resendOtp = async (email, purpose) => {
 
     const otpResult = await OtpService.createOTP(email, purpose);
     
+    // ⏰ Lấy mốc thời gian hiện tại của server
+    const serverTime = Date.now();
+    
     setImmediate(() => {
         if (purpose === OtpService.PURPOSE.FORGOT_PIN) {
             MailService.sendForgotPinOTP(email, otpResult.otp, user.full_name)
@@ -1015,7 +1025,8 @@ exports.resendOtp = async (email, purpose) => {
         success: true,
         message: "Mã OTP đã được gửi lại tới email.",
         data: {
-            expiresIn: otpResult.expiresIn || 300
+            expiresIn: otpResult.expiresIn || 300,
+            serverTime: serverTime // 👈 Gửi mốc thời gian này về cho Frontend
         }
     };
 };

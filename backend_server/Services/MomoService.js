@@ -166,6 +166,7 @@ class MomoService {
     /*=========================================================
         3. SEND OTP PAYMENT
         🔥 SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
+        ✅ THÊM: serverTime để đồng bộ timer tuyệt đối
     =========================================================*/
     async sendPaymentOTP(email, tempBookingId) {
         if (!email?.trim()) {
@@ -194,6 +195,9 @@ class MomoService {
         // Tạo OTP
         const otpResult = await OtpService.createOTP(email, PURPOSE.PAYMENT);
 
+        // ✅ Lấy mốc thời gian hiện tại của server để đồng bộ timer
+        const serverTime = Date.now();
+
         // Cập nhật temp data với OTP
         const updatedData = typeof tempData === 'string' ? JSON.parse(tempData) : tempData;
         updatedData.otp = otpResult.otp;
@@ -213,7 +217,10 @@ class MomoService {
         return {
             success: true,
             message: "Mã OTP đã được gửi tới email.",
-            data: { expiresIn: ttl > 0 ? ttl : 300 }
+            data: { 
+                expiresIn: ttl > 0 ? ttl : 300,
+                serverTime: serverTime // ✅ Gửi mốc thời gian tuyệt đối này về cho Frontend
+            }
         };
     }
 
@@ -374,6 +381,7 @@ class MomoService {
     /*=========================================================
         5. RESEND OTP
         🔥 SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
+        ✅ THÊM: serverTime để đồng bộ timer tuyệt đối
     =========================================================*/
     async resendOtpPayment(email, tempBookingId) {
         if (!email?.trim()) {
@@ -402,6 +410,9 @@ class MomoService {
         // Tạo OTP mới
         const otpResult = await OtpService.createOTP(email, PURPOSE.PAYMENT);
 
+        // ✅ Lấy mốc thời gian hiện tại của server để đồng bộ timer
+        const serverTime = Date.now();
+
         // Cập nhật temp data
         const updatedData = typeof tempData === 'string' ? JSON.parse(tempData) : tempData;
         updatedData.otp = otpResult.otp;
@@ -421,7 +432,12 @@ class MomoService {
         return {
             success: true,
             message: "Mã OTP đã được gửi lại tới email.",
-            data: { expiresIn: ttl > 0 ? ttl : 300, maxAttempts: 3, remainingAttempts: 3 }
+            data: { 
+                expiresIn: ttl > 0 ? ttl : 300, 
+                maxAttempts: 3, 
+                remainingAttempts: 3,
+                serverTime: serverTime // ✅ Gửi mốc thời gian tuyệt đối này về cho Frontend
+            }
         };
     }
 

@@ -241,7 +241,7 @@ const VerifyOtpPin = () => {
     }, [lockUntil, lockInfo]);
 
     // ============================================================
-    // FETCH OTP TTL (THỜI GIAN CÒN LẠI CỦA OTP)
+    // FETCH OTP TTL (THỜI GIAN CÒN LẠI CỦA OTP) - DÙNG MỐC TUYỆT ĐỐI
     // ============================================================
     useEffect(() => {
         if (!email) {
@@ -264,10 +264,14 @@ const VerifyOtpPin = () => {
 
                 if (response.data?.success) {
                     const ttl = response.data?.data?.expiresIn || 0;
+                    const serverTime = response.data?.data?.serverTime || Date.now();
+
                     if (ttl > 0) {
+                        // ✅ Dùng mốc tuyệt đối để tính chính xác
+                        const expiresAt = serverTime + (ttl * 1000);
                         setCountdown(ttl);
                         setIsOtpExpired(false);
-                        startCountdown(ttl);
+                        startCountdown(expiresAt);
                     } else {
                         setIsOtpExpired(true);
                         setCountdown(0);
@@ -296,27 +300,25 @@ const VerifyOtpPin = () => {
     }, [email]);
 
     // ============================================================
-    // START COUNTDOWN OTP
+    // START COUNTDOWN OTP - DÙNG MỐC TUYỆT ĐỐI
     // ============================================================
-    const startCountdown = (initialTTL) => {
+    const startCountdown = (expiresAt) => {
         if (countdownIntervalRef.current) {
             clearInterval(countdownIntervalRef.current);
             countdownIntervalRef.current = null;
         }
 
-        let currentTime = initialTTL;
-
         countdownIntervalRef.current = setInterval(() => {
-            currentTime -= 1;
-            setCountdown(currentTime);
+            const remaining = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
+            setCountdown(remaining);
 
-            if (currentTime <= 0) {
+            if (remaining <= 0) {
                 clearInterval(countdownIntervalRef.current);
                 countdownIntervalRef.current = null;
                 setIsOtpExpired(true);
                 setCountdown(0);
             }
-        }, 1000);
+        }, 250); // Cập nhật mỗi 250ms cho chính xác hơn
     };
 
     // ============================================================
@@ -383,7 +385,7 @@ const VerifyOtpPin = () => {
     };
 
     // ============================================================
-    // HANDLE RESEND OTP (ĐÃ SỬA: RESET Ô NHẬP + TIMER)
+    // HANDLE RESEND OTP (ĐÃ SỬA: RESET Ô NHẬP + TIMER + SERVER TIME)
     // ============================================================
     const handleResendOtp = async () => {
         if (isLocked) {
@@ -410,17 +412,22 @@ const VerifyOtpPin = () => {
                 email,
                 purpose: purpose
             });
+
             if (response.data.success) {
                 setSuccessMessage('✅ Đã gửi lại OTP mới. Vui lòng kiểm tra email.');
                 setTimeout(() => setSuccessMessage(''), 5000);
-                
+
                 // ✅ SỬA: Reset ô nhập OTP về trống
                 resetOtpInput();
 
-                // ✅ SỬA: Reset Timer về đầu (5 phút = 300 giây)
+                // ✅ SỬA: Lấy serverTime từ Backend để đồng bộ timer tuyệt đối
+                const ttl = response.data?.data?.expiresIn || 300;
+                const serverTime = response.data?.data?.serverTime || Date.now();
+                const expiresAt = serverTime + (ttl * 1000);
+
                 setIsOtpExpired(false);
-                setCountdown(300);
-                startCountdown(300); 
+                setCountdown(ttl);
+                startCountdown(expiresAt);
 
                 // Xóa lock cũ nếu có
                 if (isLocked) {

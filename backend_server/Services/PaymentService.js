@@ -467,6 +467,7 @@ class PaymentService {
     /*=========================================================
         7. RESEND OTP PAYMENT
         🔥 SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
+        ✅ THÊM: serverTime để đồng bộ timer tuyệt đối
     =========================================================*/
 
     async resendOtpPayment(email, tempBookingId) {
@@ -523,6 +524,9 @@ class PaymentService {
 
         const otpResult = await OtpService.createOTP(email, OtpService.PURPOSE.PAYMENT);
 
+        // ✅ Lấy mốc thời gian hiện tại của server để đồng bộ timer
+        const serverTime = Date.now();
+
         /*=====================================================
             UPDATE TEMP BOOKING
         =====================================================*/
@@ -560,7 +564,8 @@ class PaymentService {
             success: true,
             message: "Mã OTP đã được gửi lại tới email.",
             data: {
-                expiresIn: ttl > 0 ? ttl : 300
+                expiresIn: ttl > 0 ? ttl : 300,
+                serverTime: serverTime // ✅ Gửi mốc thời gian tuyệt đối này về cho Frontend
             }
         };
     }

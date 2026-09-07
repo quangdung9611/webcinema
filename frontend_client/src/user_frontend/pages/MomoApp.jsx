@@ -353,7 +353,8 @@ const MomoApp = () => {
             'momoBookingTemp', 'momoIsLocked', 'momoLockTime', 'momoOtpAttempts',
             'momoCustomerEmail', 'momoCustomerName', 'momoCustomerPhone', 'momoTotalAmount',
             'momoMovie', 'momoSelectedCinema', 'momoSelectedDate', 'momoSelectedShowtime',
-            'momoFoods', 'momoTotalTicketPrice', 'momoTotalFoodPrice', 'momoShowtimeDetail'
+            'momoFoods', 'momoTotalTicketPrice', 'momoTotalFoodPrice', 'momoShowtimeDetail',
+            'momoOtpExpiresAt' // ✅ THÊM KEY NÀY
         ];
         momoKeys.forEach(key => localStorage.removeItem(key));
 
@@ -518,7 +519,7 @@ const MomoApp = () => {
     };
 
     // ============================================================
-    // SEND OTP
+    // SEND OTP (ĐÃ SỬA: NHẬN serverTime để đồng bộ timer)
     // ============================================================
 
     const sendOtpApi = async () => {
@@ -547,12 +548,19 @@ const MomoApp = () => {
             resetLockState();
             setOtp(''); // ✅ Reset ô nhập
             localStorage.setItem('momoOtpInput', '');
+
+            // ✅ NHẬN serverTime VÀ expiresIn từ Backend
+            const responseTTL = Number(response.data?.data?.expiresIn || 0);
+            const serverTime = Number(response.data?.data?.serverTime || Date.now());
+            const expiresAt = serverTime + (responseTTL * 1000);
+            localStorage.setItem('momoOtpExpiresAt', String(expiresAt));
+
             const redisTime = await fetchTimeFromRedis();
             if (redisTime !== null && redisTime > 0) {
                 setTimeLeft(redisTime);
                 otpExpiredRef.current = false;
             } else {
-                setTimeLeft(300);
+                setTimeLeft(responseTTL > 0 ? responseTTL : 300);
                 otpExpiredRef.current = false;
             }
             return true;
@@ -568,7 +576,7 @@ const MomoApp = () => {
     };
 
     // ============================================================
-    // RESEND OTP (ĐÃ SỬA: RESET Ô NHẬP + TIMER)
+    // RESEND OTP (ĐÃ SỬA: RESET Ô NHẬP + TIMER + NHẬN serverTime)
     // ============================================================
 
     const handleResendOtp = async () => {
@@ -605,8 +613,14 @@ const MomoApp = () => {
                 // ✅ SỬA: Xóa OTP cũ khi gửi lại OTP mới
                 resetOtpInput();
 
-                if (response.data.data?.expiresIn) {
-                    setTimeLeft(response.data.data.expiresIn);
+                // ✅ NHẬN serverTime VÀ expiresIn từ Backend
+                const responseTTL = Number(response.data?.data?.expiresIn || 0);
+                const serverTime = Number(response.data?.data?.serverTime || Date.now());
+                const expiresAt = serverTime + (responseTTL * 1000);
+                localStorage.setItem('momoOtpExpiresAt', String(expiresAt));
+
+                if (responseTTL > 0) {
+                    setTimeLeft(responseTTL);
                     otpExpiredRef.current = false;
                 } else {
                     const redisTime = await fetchTimeFromRedis();

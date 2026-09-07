@@ -121,15 +121,26 @@ const ForgotPin = () => {
             const response = await api.post('/api/auth/forgot-pin', { email });
 
             if (response.data.success) {
-                setSuccessMessage('✅ Mã OTP đã được gửi tới email của bạn.');
-                setTimeout(() => setSuccessMessage(''), 5000);
+                // 👇 Đợi thành công rồi mới chuyển trang
+                setSuccessMessage('✅ Mã OTP đã được gửi tới email của bạn. Vui lòng kiểm tra hộp thư.');
 
-                navigate('/verify-otp-pin', {
-                    state: {
-                        email: email,
-                        purpose: 'FORGOT_PIN'
-                    }
-                });
+                // Lấy dữ liệu cần thiết để truyền sang Verify
+                const { expiresIn = 300, serverTime = Date.now() } = response.data?.data || {};
+
+                // Lưu vào sessionStorage để Verify lấy được
+                sessionStorage.setItem('verify_otp_pin_serverTime', String(serverTime));
+                sessionStorage.setItem('verify_otp_pin_expiresIn', String(expiresIn));
+
+                setTimeout(() => {
+                    navigate('/verify-otp-pin', {
+                        state: {
+                            email: email,
+                            purpose: 'FORGOT_PIN',
+                            serverTime: serverTime,
+                            expiresIn: expiresIn
+                        }
+                    });
+                }, 800); // Chờ 0.8s hiển thị thông báo rồi chuyển
             }
         } catch (err) {
             const status = err.response?.status;
@@ -209,7 +220,7 @@ const ForgotPin = () => {
                     <LoadingButton
                         type="button"
                         loading={loading}
-                        loadingText="Đang gửi..."
+                        loadingText="Đang gửi và chờ email vào hộp thư..."
                         onClick={handleSendOtp}
                         disabled={loading || isRateLimited}
                         className="btn-user btn-user-silver"

@@ -121,15 +121,26 @@ const ForgotPassword = () => {
             const response = await api.post('/api/auth/forgot-password', { email });
             
             if (response.data.success) {
-                setSuccessMessage('✅ Mã OTP đã được gửi tới email của bạn.');
-                setTimeout(() => setSuccessMessage(''), 5000);
+                // 👇 Đợi response thành công rồi mới chuyển trang
+                setSuccessMessage('✅ Mã OTP đã được gửi tới email của bạn. Vui lòng kiểm tra hộp thư.');
+                
+                // Lấy dữ liệu cần thiết để truyền sang Verify
+                const { expiresIn = 300, serverTime = Date.now() } = response.data?.data || {};
 
-                navigate('/verify-otp-password', {
-                    state: {
-                        email: email,
-                        purpose: 'RESET_PASSWORD'
-                    }
-                });
+                // Lưu serverTime và expiresIn vào sessionStorage để Verify lấy được
+                sessionStorage.setItem('verify_otp_password_serverTime', String(serverTime));
+                sessionStorage.setItem('verify_otp_password_expiresIn', String(expiresIn));
+
+                setTimeout(() => {
+                    navigate('/verify-otp-password', {
+                        state: {
+                            email: email,
+                            purpose: 'RESET_PASSWORD',
+                            serverTime: serverTime,
+                            expiresIn: expiresIn
+                        }
+                    });
+                }, 800); // Chờ 0.8s để hiển thị thông báo thành công rồi chuyển trang
             }
         } catch (err) {
             const status = err.response?.status;
@@ -206,7 +217,7 @@ const ForgotPassword = () => {
                     <LoadingButton
                         type="button"
                         loading={loading}
-                        loadingText="Đang gửi..."
+                        loadingText="Đang gửi và chờ email vào hộp thư..."
                         onClick={handleSendOtp}
                         disabled={loading || isRateLimited}
                         className="btn-user btn-user-silver"

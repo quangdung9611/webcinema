@@ -18,12 +18,15 @@ const ForgotPinTemplate = require("../Templates/ForgotPinTemplate");
 // =========================================================
 const getVNTime = (addMinutes = 0) => {
     const now = new Date(Date.now() + addMinutes * 60 * 1000);
-    return now.toLocaleTimeString("vi-VN", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-        timeZone: "Asia/Ho_Chi_Minh"
-    });
+    return {
+        timestamp: now.getTime(), // Mốc thời gian tuyệt đối (cho Frontend)
+        display: now.toLocaleTimeString("vi-VN", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+            timeZone: "Asia/Ho_Chi_Minh"
+        })
+    };
 };
 
 // =========================================================
@@ -54,7 +57,7 @@ const MailService = {
                 from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
                 to: email,
                 subject: `[${otp}] Mã xác thực thanh toán Dũng Cinema`,
-                html: OtpEmailTemplate(otp, bookingId, expiresAt) // 👈 Truyền giờ hết hạn
+                html: OtpEmailTemplate(otp, bookingId, expiresAt.display) // 👈 Truyền giờ hiển thị
 
             });
 
@@ -103,7 +106,7 @@ const MailService = {
                 from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
                 to: email,
                 subject: `[${otp}] Mã OTP đặt lại mật khẩu`,
-                html: ForgotPasswordTemplate(otp, fullName, expiresAt) // 👈 Truyền giờ hết hạn
+                html: ForgotPasswordTemplate(otp, fullName, expiresAt.display) // 👈 Truyền giờ hiển thị
 
             });
 
@@ -142,7 +145,7 @@ const MailService = {
                 from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
                 to: email,
                 subject: `[${otp}] Mã xác thực đặt lại mã PIN`,
-                html: ForgotPinTemplate(otp, fullName, expiresAt) // 👈 Truyền giờ hết hạn
+                html: ForgotPinTemplate(otp, fullName, expiresAt.display) // 👈 Truyền giờ hiển thị
 
             });
 
