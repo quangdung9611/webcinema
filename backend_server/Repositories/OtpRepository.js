@@ -3,14 +3,13 @@ const db = require("../Config/db");
 class OtpRepository {
 
     /*=========================================================
-        CREATE OTP LOG - THÊM CỘT otp
+        CREATE OTP LOG
     =========================================================*/
     async create(data) {
-
         const {
             email,
             purpose,
-            otp,           // 👈 THÊM
+            otp,
             status = "sent",
             ip_address,
             user_agent
@@ -22,20 +21,21 @@ class OtpRepository {
             (
                 email,
                 purpose,
-                otp,         // 👈 THÊM
+                otp,
                 status,
                 ip_address,
-                user_agent
+                user_agent,
+                created_at
             )
             VALUES
             (
-                ?, ?, ?, ?, ?, ?
+                ?, ?, ?, ?, ?, ?, NOW()
             )
             `,
             [
                 email,
                 purpose,
-                otp || null,  // 👈 Nếu không có thì null
+                otp || null,
                 status,
                 ip_address || null,
                 user_agent || null
@@ -46,13 +46,9 @@ class OtpRepository {
     }
 
     /*=========================================================
-        FIND LATEST OTP LOG - THÊM CỘT otp
+        FIND LATEST OTP LOG
     =========================================================*/
-    async findLatest(
-        email,
-        purpose
-    ) {
-
+    async findLatest(email, purpose) {
         const [rows] = await db.query(
             `
             SELECT *
@@ -62,24 +58,16 @@ class OtpRepository {
             ORDER BY otp_id DESC
             LIMIT 1
             `,
-            [
-                email,
-                purpose
-            ]
+            [email, purpose]
         );
 
         return rows[0] || null;
     }
 
     /*=========================================================
-        FIND BY OTP - TÌM LOG THEO OTP
+        FIND BY OTP
     =========================================================*/
-    async findByOTP(
-        email,
-        purpose,
-        otp
-    ) {
-
+    async findByOTP(email, purpose, otp) {
         const [rows] = await db.query(
             `
             SELECT *
@@ -90,11 +78,7 @@ class OtpRepository {
             ORDER BY otp_id DESC
             LIMIT 1
             `,
-            [
-                email,
-                purpose,
-                otp
-            ]
+            [email, purpose, otp]
         );
 
         return rows[0] || null;
@@ -103,11 +87,7 @@ class OtpRepository {
     /*=========================================================
         EXPIRE PREVIOUS OTP LOGS
     =========================================================*/
-    async expirePreviousOtps(
-        email,
-        purpose
-    ) {
-
+    async expirePreviousOtps(email, purpose) {
         await db.query(
             `
             UPDATE otp_logs
@@ -116,10 +96,7 @@ class OtpRepository {
               AND purpose = ?
               AND status = 'sent'
             `,
-            [
-                email,
-                purpose
-            ]
+            [email, purpose]
         );
     }
 
@@ -127,7 +104,6 @@ class OtpRepository {
         MARK VERIFIED
     =========================================================*/
     async markVerified(otpId) {
-
         await db.query(
             `
             UPDATE otp_logs
@@ -143,7 +119,6 @@ class OtpRepository {
         MARK USED
     =========================================================*/
     async markUsed(otpId) {
-
         await db.query(
             `
             UPDATE otp_logs
@@ -158,7 +133,6 @@ class OtpRepository {
         MARK FAILED
     =========================================================*/
     async markFailed(otpId) {
-
         await db.query(
             `
             UPDATE otp_logs
@@ -173,7 +147,6 @@ class OtpRepository {
         MARK EXPIRED
     =========================================================*/
     async markExpired(otpId) {
-
         await db.query(
             `
             UPDATE otp_logs
@@ -188,7 +161,6 @@ class OtpRepository {
         MARK RESENT
     =========================================================*/
     async markResent(otpId) {
-
         await db.query(
             `
             UPDATE otp_logs
@@ -200,10 +172,9 @@ class OtpRepository {
     }
 
     /*=========================================================
-        MARK LOCKED - KHI OTP BỊ KHÓA DO SAI 5 LẦN
+        MARK LOCKED
     =========================================================*/
     async markLocked(otpId) {
-
         await db.query(
             `
             UPDATE otp_logs
@@ -215,10 +186,9 @@ class OtpRepository {
     }
 
     /*=========================================================
-        MARK INVALIDATED - KHI OTP BỊ VÔ HIỆU HÓA
+        MARK INVALIDATED
     =========================================================*/
     async markInvalidated(otpId) {
-
         await db.query(
             `
             UPDATE otp_logs
@@ -230,62 +200,40 @@ class OtpRepository {
     }
 
     /*=========================================================
-        DELETE OTP LOGS
+        DELETE OTP LOGS BY EMAIL
     =========================================================*/
-    async deleteByEmail(
-        email,
-        purpose
-    ) {
-
+    async deleteByEmail(email, purpose) {
         await db.query(
             `
             DELETE FROM otp_logs
             WHERE email = ?
               AND purpose = ?
             `,
-            [
-                email,
-                purpose
-            ]
+            [email, purpose]
         );
     }
 
     /*=========================================================
         COUNT RECENT OTPS
     =========================================================*/
-    async countRecentOtps(
-        email,
-        minutes = 1
-    ) {
-
+    async countRecentOtps(email, minutes = 1) {
         const [rows] = await db.query(
             `
             SELECT COUNT(*) AS total
             FROM otp_logs
             WHERE email = ?
-              AND created_at >= DATE_SUB(
-                    NOW(),
-                    INTERVAL ? MINUTE
-                )
+              AND created_at >= DATE_SUB(NOW(), INTERVAL ? MINUTE)
             `,
-            [
-                email,
-                minutes
-            ]
+            [email, minutes]
         );
 
         return rows[0].total;
     }
 
     /*=========================================================
-        GET OTP LOGS BY EMAIL - LẤY TẤT CẢ LOG CỦA USER
+        GET OTP LOGS BY EMAIL
     =========================================================*/
-    async getLogsByEmail(
-        email,
-        purpose = null,
-        limit = 50
-    ) {
-
+    async getLogsByEmail(email, purpose = null, limit = 50) {
         let query = `
             SELECT *
             FROM otp_logs
@@ -308,17 +256,11 @@ class OtpRepository {
     /*=========================================================
         CLEANUP OLD LOGS
     =========================================================*/
-    async cleanupOldLogs(
-        days = 90
-    ) {
-
+    async cleanupOldLogs(days = 90) {
         const [result] = await db.query(
             `
             DELETE FROM otp_logs
-            WHERE created_at < DATE_SUB(
-                    NOW(),
-                    INTERVAL ? DAY
-                )
+            WHERE created_at < DATE_SUB(NOW(), INTERVAL ? DAY)
             `,
             [days]
         );
