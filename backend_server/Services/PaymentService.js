@@ -175,19 +175,11 @@ class PaymentService {
     async commitToDatabase(connection, tempBookingId) {
         const key = `temp:${tempBookingId}`;
 
-        /*=====================================================
-            LẤY TEMP BOOKING
-        =====================================================*/
-
         let tempData = await CacheService.get(key);
 
         if (!tempData) {
             throw new Error("Phiên đặt vé đã hết hạn. Vui lòng đặt lại.");
         }
-
-        /*=====================================================
-            PARSE CACHE DATA
-        =====================================================*/
 
         if (typeof tempData === "string") {
             try {
@@ -217,10 +209,6 @@ class PaymentService {
             ownerToken
         } = tempData;
 
-        /*=====================================================
-            VALIDATE TEMP DATA
-        =====================================================*/
-
         if (!ownerToken) {
             throw new Error("Phiên giữ ghế không hợp lệ. Vui lòng chọn ghế lại.");
         }
@@ -228,10 +216,6 @@ class PaymentService {
         if (!selectedSeats || !Array.isArray(selectedSeats) || selectedSeats.length === 0) {
             throw new Error("Không tìm thấy ghế trong phiên đặt vé.");
         }
-
-        /*=====================================================
-            KIỂM TRA CACHE LOCK LẦN CUỐI
-        =====================================================*/
 
         const finalSeatLocks = await Promise.all(
             selectedSeats.map(async (seat) => {
@@ -256,10 +240,6 @@ class PaymentService {
             }
         }
 
-        /*=====================================================
-            KIỂM TRA MYSQL LẦN CUỐI
-        =====================================================*/
-
         for (const seat of selectedSeats) {
             const [existing] = await connection.execute(`
                 SELECT t.ticket_id
@@ -274,10 +254,6 @@ class PaymentService {
             }
         }
 
-        /*=====================================================
-            TẠO BOOKING
-        =====================================================*/
-
         const memo = `DUNG${Date.now()}`;
 
         const [bookingResult] = await connection.execute(`
@@ -287,39 +263,19 @@ class PaymentService {
 
         const bookingId = bookingResult.insertId;
 
-        /*=====================================================
-            THÊM GHẾ + TICKET
-        =====================================================*/
-
         for (const seat of selectedSeats) {
-            /*=================================================
-                BOOKING DETAIL
-            =================================================*/
-
             await connection.execute(`
                 INSERT INTO booking_details (booking_id, seat_id, price, item_name, quantity)
                 VALUES (?, ?, ?, ?, 1)
             `, [bookingId, seat.seat_id, seat.price, `Ghế ${seat.seat_row}${seat.seat_number}`]);
 
-            /*=================================================
-                TICKET CODE
-            =================================================*/
-
             const ticketCode = `TIC-${bookingId}-${seat.seat_id}-${Date.now()}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
-
-            /*=================================================
-                INSERT TICKET
-            =================================================*/
 
             await connection.execute(`
                 INSERT INTO tickets (booking_id, showtime_id, room_id, cinema_id, seat_id, ticket_code, price, seat_status, ticket_status, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, 'Booked', 'Valid', NOW())
             `, [bookingId, showtimeId, room_id, cinema_id, seat.seat_id, ticketCode, seat.price]);
         }
-
-        /*=====================================================
-            THÊM ĐỒ ĂN
-        =====================================================*/
 
         if (selectedFoods && Array.isArray(selectedFoods) && selectedFoods.length > 0) {
             for (const food of selectedFoods) {
@@ -329,10 +285,6 @@ class PaymentService {
                 `, [bookingId, food.product_id, food.product_name, food.quantity, food.price]);
             }
         }
-
-        /*=====================================================
-            CỘNG ĐIỂM
-        =====================================================*/
 
         let earnedPoints = 0;
 
@@ -347,17 +299,9 @@ class PaymentService {
             }
         }
 
-        /*=====================================================
-            XÓA TEMP BOOKING
-        =====================================================*/
-
         await CacheService.delete(key);
 
         console.log(`✅ Booking ${bookingId} committed successfully`);
-
-        /*=====================================================
-            TRẢ VỀ DỮ LIỆU
-        =====================================================*/
 
         return {
             bookingId,
@@ -467,7 +411,7 @@ class PaymentService {
     /*=========================================================
         7. RESEND OTP PAYMENT
         🔥 SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
-        ✅ THÊM: serverTime để đồng bộ timer tuyệt đối
+        ✅ THÊM: serverTime + CHỜ GỬI EMAIL (await)
     =========================================================*/
 
     async resendOtpPayment(email, tempBookingId) {
@@ -479,10 +423,6 @@ class PaymentService {
             };
         }
 
-        /*=====================================================
-            CHECK TEMP BOOKING
-        =====================================================*/
-
         const key = `temp:${tempBookingId}`;
         const tempData = await CacheService.get(key);
 
@@ -492,10 +432,6 @@ class PaymentService {
                 message: "Phiên đặt vé đã hết hạn. Vui lòng đặt lại."
             };
         }
-
-        /*=====================================================
-            RATE LIMIT
-        =====================================================*/
 
         const rateLimit = await CacheService.checkRateLimit(email, "payment-resend", 3, RATE_LIMIT_WINDOW);
 
@@ -510,26 +446,13 @@ class PaymentService {
             };
         }
 
-        /*=====================================================
-            🔥 ĐÁNH DẤU OTP CŨ ĐÃ SỬ DỤNG (is_used = 1)
-            ✅ SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
-        =====================================================*/
-
         const OtpService = require("./OtpService");
         await CacheService.markOTPAsUsed(email, OtpService.PURPOSE.PAYMENT);
-
-        /*=====================================================
-            CREATE OTP
-        =====================================================*/
 
         const otpResult = await OtpService.createOTP(email, OtpService.PURPOSE.PAYMENT);
 
         // ✅ Lấy mốc thời gian hiện tại của server để đồng bộ timer
         const serverTime = Date.now();
-
-        /*=====================================================
-            UPDATE TEMP BOOKING
-        =====================================================*/
 
         const updatedData = typeof tempData === "string" ? JSON.parse(tempData) : tempData;
         updatedData.otp = otpResult.otp;
@@ -537,25 +460,16 @@ class PaymentService {
 
         await CacheService.set(key, updatedData, TEMP_BOOKING_TTL);
 
-        /*=====================================================
-            SEND EMAIL
-        =====================================================*/
-
         const MailService = require("./MailService");
 
-        setImmediate(() => {
-            MailService.sendPaymentOTP(email, otpResult.otp, updatedData.customerName, updatedData.totalAmount)
-                .then(() => {
-                    console.log(`✅ Payment OTP email sent to ${email}`);
-                })
-                .catch((err) => {
-                    console.error(`❌ Payment OTP email failed: ${err.message}`);
-                });
-        });
-
-        /*=====================================================
-            OTP TTL
-        =====================================================*/
+        // ✅ SỬA: CHỜ GỬI EMAIL XONG RỒI MỚI TRẢ VỀ (await thay setImmediate)
+        await MailService.sendPaymentOTP(email, otpResult.otp, updatedData.customerName, updatedData.totalAmount)
+            .then(() => {
+                console.log(`✅ Payment OTP email sent to ${email}`);
+            })
+            .catch((err) => {
+                console.error(`❌ Payment OTP email failed: ${err.message}`);
+            });
 
         const otpKey = `otp:${email}:${OtpService.PURPOSE.PAYMENT}`;
         const ttl = await CacheService.getTTL(otpKey);

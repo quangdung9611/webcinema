@@ -166,7 +166,7 @@ class MomoService {
     /*=========================================================
         3. SEND OTP PAYMENT
         🔥 SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
-        ✅ THÊM: serverTime để đồng bộ timer tuyệt đối
+        ✅ THÊM: serverTime + CHỜ GỬI EMAIL (await)
     =========================================================*/
     async sendPaymentOTP(email, tempBookingId) {
         if (!email?.trim()) {
@@ -204,12 +204,10 @@ class MomoService {
         updatedData.otpCreatedAt = Date.now();
         await CacheService.set(key, updatedData, 300);
 
-        // Gửi email (KHÔNG ĐỢI)
-        setImmediate(() => {
-            MailService.sendPaymentOTP(email, otpResult.otp, updatedData.customerName, updatedData.totalAmount)
-                .then(() => console.log(`✅ MoMo OTP email sent to ${email}`))
-                .catch(err => console.error(`❌ MoMo OTP email failed: ${err.message}`));
-        });
+        // ✅ SỬA: CHỜ GỬI EMAIL XONG RỒI MỚI TRẢ VỀ (await thay setImmediate)
+        await MailService.sendPaymentOTP(email, otpResult.otp, updatedData.customerName, updatedData.totalAmount)
+            .then(() => console.log(`✅ MoMo OTP email sent to ${email}`))
+            .catch(err => console.error(`❌ MoMo OTP email failed: ${err.message}`));
 
         const otpKey = `otp:${email}:${PURPOSE.PAYMENT}`;
         const ttl = await CacheService.getTTL(otpKey);
@@ -226,10 +224,9 @@ class MomoService {
 
     /*=========================================================
         4. VERIFY OTP + COMMIT TO DATABASE
-        ✅ KHÔNG CẦN SỬA (dùng OtpService.verifyOTP với deleteAfterVerify = true)
+        ✅ KHÔNG CẦN SỬA
     =========================================================*/
     async verifyOTPAndCommit(email, otp, tempBookingId) {
-        // Xác thực OTP - deleteAfterVerify = true để đánh dấu OTP đã dùng
         const verifyResult = await OtpService.verifyOTP(email, otp, PURPOSE.PAYMENT, true);
         if (!verifyResult.success) {
             throw {
@@ -244,7 +241,6 @@ class MomoService {
         try {
             await connection.beginTransaction();
 
-            // Lấy temp data từ Cache
             const key = `temp:${tempBookingId}`;
             let tempData = await CacheService.get(key);
             if (!tempData) {
@@ -269,7 +265,6 @@ class MomoService {
                 startTime
             } = tempData;
 
-            // Kiểm tra ghế lần cuối
             for (const seat of selectedSeats) {
                 const [existing] = await connection.execute(
                     `SELECT t.ticket_id 
@@ -286,7 +281,6 @@ class MomoService {
                 }
             }
 
-            // Tạo booking
             const memo = `MOMO${Date.now()}`;
             const [bookingResult] = await connection.execute(
                 `INSERT INTO bookings (user_id, showtime_id, total_amount, coupon_id, status, booking_date, memo, email)
@@ -295,7 +289,6 @@ class MomoService {
             );
             const bookingId = bookingResult.insertId;
 
-            // Thêm ghế + ticket
             for (const seat of selectedSeats) {
                 await connection.execute(
                     `INSERT INTO booking_details (booking_id, seat_id, price, item_name, quantity)
@@ -311,7 +304,6 @@ class MomoService {
                 );
             }
 
-            // Thêm đồ ăn
             if (selectedFoods && selectedFoods.length > 0) {
                 for (const food of selectedFoods) {
                     await connection.execute(
@@ -322,7 +314,6 @@ class MomoService {
                 }
             }
 
-            // Cộng điểm
             let earnedPoints = 0;
             if (userId) {
                 const points = Math.floor(totalAmount * 0.05);
@@ -335,12 +326,10 @@ class MomoService {
                 }
             }
 
-            // Xóa temp booking khỏi Cache
             await CacheService.delete(key);
 
             await connection.commit();
 
-            // Gửi email vé (KHÔNG ĐỢI)
             const order = await BookingService.getBookingDetail(connection, bookingId);
             const foods = await BookingService.getFoodDetail(connection, bookingId);
             const foodString = foods.length 
@@ -381,7 +370,7 @@ class MomoService {
     /*=========================================================
         5. RESEND OTP
         🔥 SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
-        ✅ THÊM: serverTime để đồng bộ timer tuyệt đối
+        ✅ THÊM: serverTime + CHỜ GỬI EMAIL (await)
     =========================================================*/
     async resendOtpPayment(email, tempBookingId) {
         if (!email?.trim()) {
@@ -419,12 +408,10 @@ class MomoService {
         updatedData.otpCreatedAt = Date.now();
         await CacheService.set(key, updatedData, 300);
 
-        // Gửi email
-        setImmediate(() => {
-            MailService.sendPaymentOTP(email, otpResult.otp, updatedData.customerName, updatedData.totalAmount)
-                .then(() => console.log(`✅ MoMo OTP resent to ${email}`))
-                .catch(err => console.error(`❌ MoMo OTP resend failed: ${err.message}`));
-        });
+        // ✅ SỬA: CHỜ GỬI EMAIL XONG RỒI MỚI TRẢ VỀ (await thay setImmediate)
+        await MailService.sendPaymentOTP(email, otpResult.otp, updatedData.customerName, updatedData.totalAmount)
+            .then(() => console.log(`✅ MoMo OTP resent to ${email}`))
+            .catch(err => console.error(`❌ MoMo OTP resend failed: ${err.message}`));
 
         const otpKey = `otp:${email}:${PURPOSE.PAYMENT}`;
         const ttl = await CacheService.getTTL(otpKey);
@@ -442,7 +429,7 @@ class MomoService {
     }
 
     /*=========================================================
-        6. CHECK TTL (GIỐNG BANKAPP)
+        6. CHECK TTL
     =========================================================*/
     async checkTTL(tempBookingId) {
         if (!tempBookingId) {
@@ -481,7 +468,7 @@ class MomoService {
     }
 
     /*=========================================================
-        8. MOMO CALLBACK (XỬ LÝ TỪ MOMO)
+        8. MOMO CALLBACK
     =========================================================*/
     async handleCallback(reqBody) {
         const { orderId, resultCode } = reqBody;
@@ -491,7 +478,6 @@ class MomoService {
             return false;
         }
 
-        // Lấy tempBookingId từ orderId
         const tempBookingId = orderId.replace('TEMP-', '');
         const key = `temp:${tempBookingId}`;
         const tempData = await CacheService.get(key);
@@ -501,7 +487,6 @@ class MomoService {
             return false;
         }
 
-        // Cập nhật trạng thái thanh toán MoMo thành công
         const data = typeof tempData === 'string' ? JSON.parse(tempData) : tempData;
         data.momo.status = 'paid';
         data.momo.paidAt = new Date().toISOString();

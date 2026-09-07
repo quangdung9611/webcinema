@@ -347,11 +347,10 @@ exports.forgotPassword = async (email, req) => {
     // ⏰ Lấy mốc thời gian hiện tại của server (để Frontend đồng bộ timer)
     const serverTime = Date.now();
     
-    setImmediate(() => {
-        MailService.sendResetPasswordOTP(email, otpResult.otp, user.full_name)
-            .then(() => console.log(`✅ Email sent to ${email}`))
-            .catch(err => console.error(`❌ Email failed: ${err.message}`));
-    });
+    // ✅ SỬA: CHỜ GỬI EMAIL XONG RỒI MỚI TRẢ VỀ
+    await MailService.sendResetPasswordOTP(email, otpResult.otp, user.full_name)
+        .then(() => console.log(`✅ Email sent to ${email}`))
+        .catch(err => console.error(`❌ Email failed: ${err.message}`));
 
     const otpKey = `otp:${email}:${OtpService.PURPOSE.RESET_PASSWORD}`;
     const ttl = await CacheService.getTTL(otpKey);
@@ -424,11 +423,10 @@ exports.submitNewPassword = async (token, newPassword) => {
     // ⏰ Lấy mốc thời gian hiện tại của server
     const serverTime = Date.now();
     
-    setImmediate(() => {
-        MailService.sendResetPasswordOTP(user.email, otpResult.otp, user.full_name)
-            .then(() => console.log(`✅ Email sent to ${user.email}`))
-            .catch(err => console.error(`❌ Email failed: ${err.message}`));
-    });
+    // ✅ SỬA: CHỜ GỬI EMAIL XONG RỒI MỚI TRẢ VỀ
+    await MailService.sendResetPasswordOTP(user.email, otpResult.otp, user.full_name)
+        .then(() => console.log(`✅ Email sent to ${user.email}`))
+        .catch(err => console.error(`❌ Email failed: ${err.message}`));
 
     return {
         success: true,
@@ -686,11 +684,10 @@ exports.forgotPin = async (email) => {
     // ⏰ Lấy mốc thời gian hiện tại của server
     const serverTime = Date.now();
     
-    setImmediate(() => {
-        MailService.sendForgotPinOTP(email, otpResult.otp, user.full_name)
-            .then(() => console.log(`✅ Forgot PIN email sent to ${email}`))
-            .catch(err => console.error(`❌ Forgot PIN email failed: ${err.message}`));
-    });
+    // ✅ SỬA: CHỜ GỬI EMAIL XONG RỒI MỚI TRẢ VỀ
+    await MailService.sendForgotPinOTP(email, otpResult.otp, user.full_name)
+        .then(() => console.log(`✅ Forgot PIN email sent to ${email}`))
+        .catch(err => console.error(`❌ Forgot PIN email failed: ${err.message}`));
 
     const otpKey = `otp:${email}:${OtpService.PURPOSE.FORGOT_PIN}`;
     const ttl = await CacheService.getTTL(otpKey);
@@ -1003,23 +1000,22 @@ exports.resendOtp = async (email, purpose) => {
     // ⏰ Lấy mốc thời gian hiện tại của server
     const serverTime = Date.now();
     
-    setImmediate(() => {
-        if (purpose === OtpService.PURPOSE.FORGOT_PIN) {
-            MailService.sendForgotPinOTP(email, otpResult.otp, user.full_name)
-                .then(() => console.log(`✅ Forgot PIN email sent to ${email}`))
-                .catch(err => console.error(`❌ Forgot PIN email failed: ${err.message}`));
-        } else if (purpose === OtpService.PURPOSE.RESET_PASSWORD) {
-            MailService.sendResetPasswordOTP(email, otpResult.otp, user.full_name)
-                .then(() => console.log(`✅ Reset password email sent to ${email}`))
-                .catch(err => console.error(`❌ Reset password email failed: ${err.message}`));
-        } else if (purpose === OtpService.PURPOSE.REGISTER) {
-            const verifyToken = Jwt.generateEmailVerifyToken({ user_id: user.user_id, email: email });
-            const verifyUrl = `${FRONTEND_URL}/verify-email?token=${verifyToken}`;
-            MailService.sendEmailVerification(email, verifyUrl, user.full_name)
-                .then(() => console.log(`✅ Verify email sent to ${email}`))
-                .catch(err => console.error(`❌ Verify email failed: ${err.message}`));
-        }
-    });
+    // ✅ SỬA: CHỜ GỬI EMAIL XONG RỒI MỚI TRẢ VỀ
+    if (purpose === OtpService.PURPOSE.FORGOT_PIN) {
+        await MailService.sendForgotPinOTP(email, otpResult.otp, user.full_name)
+            .then(() => console.log(`✅ Forgot PIN email sent to ${email}`))
+            .catch(err => console.error(`❌ Forgot PIN email failed: ${err.message}`));
+    } else if (purpose === OtpService.PURPOSE.RESET_PASSWORD) {
+        await MailService.sendResetPasswordOTP(email, otpResult.otp, user.full_name)
+            .then(() => console.log(`✅ Reset password email sent to ${email}`))
+            .catch(err => console.error(`❌ Reset password email failed: ${err.message}`));
+    } else if (purpose === OtpService.PURPOSE.REGISTER) {
+        const verifyToken = Jwt.generateEmailVerifyToken({ user_id: user.user_id, email: email });
+        const verifyUrl = `${FRONTEND_URL}/verify-email?token=${verifyToken}`;
+        await MailService.sendEmailVerification(email, verifyUrl, user.full_name)
+            .then(() => console.log(`✅ Verify email sent to ${email}`))
+            .catch(err => console.error(`❌ Verify email failed: ${err.message}`));
+    }
 
     return {
         success: true,

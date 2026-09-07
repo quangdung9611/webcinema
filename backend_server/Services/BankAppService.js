@@ -9,7 +9,6 @@ const CacheService = require("./CacheService");
 
 class BankAppService {
 
-
     /*=========================================================
         GỬI EMAIL VÉ SAU KHI THANH TOÁN THÀNH CÔNG
     =========================================================*/
@@ -123,7 +122,7 @@ class BankAppService {
     /*=========================================================
         🆕 GỬI LẠI OTP PAYMENT
         🔥 SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
-        ✅ THÊM: serverTime để đồng bộ timer tuyệt đối
+        ✅ THÊM: serverTime + CHỜ GỬI EMAIL (await)
     =========================================================*/
 
     async resendOtpPayment(email, tempBookingId) {
@@ -167,12 +166,10 @@ class BankAppService {
 
         await CacheService.set(key, updatedData, 300);
 
-        // Gửi email (KHÔNG ĐỢI)
-        setImmediate(() => {
-            MailService.sendPaymentOTP(email, otpResult.otp, updatedData.customerName, updatedData.totalAmount)
-                .then(() => console.log(`✅ Payment OTP email sent to ${email}`))
-                .catch(err => console.error(`❌ Payment OTP email failed: ${err.message}`));
-        });
+        // ✅ SỬA: CHỜ GỬI EMAIL XONG RỒI MỚI TRẢ VỀ (await thay setImmediate)
+        await MailService.sendPaymentOTP(email, otpResult.otp, updatedData.customerName, updatedData.totalAmount)
+            .then(() => console.log(`✅ Payment OTP email sent to ${email}`))
+            .catch(err => console.error(`❌ Payment OTP email failed: ${err.message}`));
 
         const otpKey = `otp:${email}:${PURPOSE.PAYMENT}`;
         const ttl = await CacheService.getTTL(otpKey);
@@ -193,7 +190,7 @@ class BankAppService {
     /*=========================================================
         🆕 GỬI OTP THANH TOÁN
         🔥 SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
-        ✅ THÊM: serverTime để đồng bộ timer tuyệt đối
+        ✅ THÊM: serverTime + CHỜ GỬI EMAIL (await)
     =========================================================*/
 
     async sendPaymentOTP(email, tempBookingId) {
@@ -236,12 +233,10 @@ class BankAppService {
 
         await CacheService.set(key, updatedData, 300);
 
-        // Gửi email (KHÔNG ĐỢI)
-        setImmediate(() => {
-            MailService.sendPaymentOTP(email, otpResult.otp, updatedData.customerName, updatedData.totalAmount)
-                .then(() => console.log(`✅ Payment OTP email sent to ${email}`))
-                .catch(err => console.error(`❌ Payment OTP email failed: ${err.message}`));
-        });
+        // ✅ SỬA: CHỜ GỬI EMAIL XONG RỒI MỚI TRẢ VỀ (await thay setImmediate)
+        await MailService.sendPaymentOTP(email, otpResult.otp, updatedData.customerName, updatedData.totalAmount)
+            .then(() => console.log(`✅ Payment OTP email sent to ${email}`))
+            .catch(err => console.error(`❌ Payment OTP email failed: ${err.message}`));
 
         const otpKey = `otp:${email}:${PURPOSE.PAYMENT}`;
         const ttl = await CacheService.getTTL(otpKey);
