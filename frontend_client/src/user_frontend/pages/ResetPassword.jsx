@@ -5,6 +5,7 @@ import api from '../../api/api';
 import { LockKeyhole, AlertCircle, CheckCircle, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import LoadingButton from '../components/LoadingButton';
 import ResetPasswordSuccessModal from '../components/ResetPasswordSuccessModal';
+import useOTPGuard from '../../hooks/useOTPGuard'; // 🔥 IMPORT
 import '../styles/UserAuth.css';
 
 const ResetPassword = () => {
@@ -13,6 +14,14 @@ const ResetPassword = () => {
 
     const email = location.state?.email || '';
     const otp = location.state?.otp || '';
+    const purpose = 'RESET_PASSWORD';
+
+    // 🔥 SỬ DỤNG useOTPGuard
+    const { safeNavigate } = useOTPGuard(email, purpose, {
+        onInvalidate: () => {
+            console.log('🔴 [RESET PASSWORD] OTP đã bị vô hiệu do rời trang');
+        }
+    });
 
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -23,9 +32,56 @@ const ResetPassword = () => {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [fieldErrors, setFieldErrors] = useState({});
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [isCheckingOTP, setIsCheckingOTP] = useState(true);
+    const [isOtpValid, setIsOtpValid] = useState(false);
 
     const [isRateLimited, setIsRateLimited] = useState(false);
     const [rateLimitTimeLeft, setRateLimitTimeLeft] = useState(0);
+
+    // ============================================================
+    // 🔥 KIỂM TRA OTP CÒN HIỆU LỰC KHI VÀO TRANG
+    // ============================================================
+    useEffect(() => {
+        const checkOTP = async () => {
+            if (!email || !otp) {
+                safeNavigate('/forgot-password');
+                return;
+            }
+
+            try {
+                setIsCheckingOTP(true);
+                const response = await api.get('/api/auth/check-otp-ttl', {
+                    params: { email, purpose }
+                });
+
+                const data = response.data?.data;
+                if (data?.exists && data?.expiresIn > 0) {
+                    setIsOtpValid(true);
+                } else {
+                    // OTP đã hết hạn hoặc không tồn tại
+                    setMessage('❌ Mã OTP đã hết hạn hoặc không tồn tại. Vui lòng yêu cầu mã mới.');
+                    setMessageType('error');
+                    // Sau 3 giây chuyển về forgot-password
+                    setTimeout(() => {
+                        safeNavigate('/forgot-password', {
+                            state: { error: 'Mã OTP đã hết hạn. Vui lòng gửi lại.' }
+                        });
+                    }, 3000);
+                }
+            } catch (error) {
+                console.error('❌ [RESET PASSWORD] Check OTP error:', error);
+                setMessage('❌ Không thể kiểm tra OTP. Vui lòng thử lại.');
+                setMessageType('error');
+                setTimeout(() => {
+                    safeNavigate('/forgot-password');
+                }, 3000);
+            } finally {
+                setIsCheckingOTP(false);
+            }
+        };
+
+        checkOTP();
+    }, [email, otp, purpose, safeNavigate]);
 
     useEffect(() => {
         if (!isRateLimited || rateLimitTimeLeft <= 0) return;
@@ -43,12 +99,6 @@ const ResetPassword = () => {
 
         return () => clearInterval(timer);
     }, [isRateLimited, rateLimitTimeLeft]);
-
-    useEffect(() => {
-        if (!email || !otp) {
-            navigate('/forgot-password');
-        }
-    }, [email, otp, navigate]);
 
     const handleFieldChange = (field, value) => {
         if (field === 'newPassword') {
@@ -121,13 +171,11 @@ const ResetPassword = () => {
             const errorMessage = errorData.message || 'Không thể đặt lại mật khẩu';
             const errorCode = errorData.code;
 
-            // 🔥 XỬ LÝ CÁC TRƯỜNG HỢP LỖI
             if (field === 'newPassword') {
                 setFieldErrors({ newPassword: errorMessage });
             } else if (field === 'confirmPassword') {
                 setFieldErrors({ confirmPassword: errorMessage });
             } else if (status === 404) {
-                // 🔥 EMAIL CHƯA ĐĂNG KÝ
                 setMessage('❌ Email này chưa được đăng ký trong hệ thống.');
                 setMessageType('error');
             } else if (status === 429) {
@@ -151,12 +199,12 @@ const ResetPassword = () => {
 
     const handleModalConfirm = () => {
         setShowSuccessModal(false);
-        navigate('/login');
+        safeNavigate('/login');
     };
 
     const handleModalClose = () => {
         setShowSuccessModal(false);
-        navigate('/login');
+        safeNavigate('/login');
     };
 
     const formatTime = (seconds) => {
@@ -165,6 +213,29 @@ const ResetPassword = () => {
         const secs = seconds % 60;
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
+
+    // 🔥 HIỂN THỊ LOADING KHI KIỂM TRA OTP
+    if (isCheckingOTP) {
+        return (
+            <div className="auth-container">
+                <div className="auth-card">
+                    <div className="forgot-icon-wrapper">
+                        <LockKeyhole size={42} className="forgot-icon" />
+                    </div>
+                    <h2>ĐẶT LẠI MẬT KHẨU</h2>
+                    <p className="auth-subtitle">⏳ Đang kiểm tra mã OTP...</p>
+                    <div className="loading-spinner" style={{ textAlign: 'center', padding: '20px' }}>
+                        <div className="spinner"></div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // 🔥 NẾU OTP KHÔNG HỢP LỆ, KHÔNG HIỂN THỊ FORM
+    if (!isOtpValid) {
+        return null;
+    }
 
     return (
         <div className="auth-container">
@@ -268,7 +339,7 @@ const ResetPassword = () => {
                     <button
                         type="button"
                         className="btn-link back-btn"
-                        onClick={() => navigate('/forgot-password')}
+                        onClick={() => safeNavigate('/forgot-password')}
                         disabled={loading}
                     >
                         <ArrowLeft size={16} />

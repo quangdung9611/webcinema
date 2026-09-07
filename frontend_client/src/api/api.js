@@ -70,6 +70,26 @@ api.get = function (url, config = {}) {
     return originalGet.call(this, url, requestConfig);
 };
 
+// ============================================================
+// 🔥 INVALIDATE OTP - GỌI KHI NGƯỜI DÙNG RỜI TRANG
+// ============================================================
+api.invalidateOTP = async (email, purpose) => {
+    if (!email || !purpose) {
+        console.warn('⚠️ [API] invalidateOTP: Thiếu email hoặc purpose');
+        return null;
+    }
+
+    try {
+        const response = await api.post('/api/auth/invalidate-otp', { email, purpose });
+        console.log('✅ [API] OTP invalidated:', { email, purpose });
+        return response.data;
+    } catch (error) {
+        // Không throw lỗi để tránh ảnh hưởng UX
+        console.warn('⚠️ [API] Failed to invalidate OTP:', error.message);
+        return null;
+    }
+};
+
 api.interceptors.response.use(
     (response) => {
         const requestUrl = response.config?.url || '';
@@ -81,7 +101,7 @@ api.interceptors.response.use(
             console.log('💾 [API] Cached /api/auth/me response');
         }
 
-        // ✅ Reset session expired lock khi login thành công
+        // Reset session expired lock khi login thành công
         if (normalizedUrl === '/api/auth/login') {
             api.resetSessionExpiredLock();
             console.log('🔓 [API] Reset session expired lock on login');
@@ -108,7 +128,7 @@ api.interceptors.response.use(
                 message: errorMessage,
             });
 
-            // ✅ SỬA: Thêm tất cả endpoints public vào đây
+            // Các endpoint public không cần emit session expired
             const excludedEndpoints = [
                 // Auth
                 '/api/auth/login',
@@ -126,6 +146,7 @@ api.interceptors.response.use(
                 '/api/auth/verify-otp-and-change-pin',
                 '/api/auth/send-verification',
                 '/api/auth/resend-verification',
+                '/api/auth/invalidate-otp', // 🔥 THÊM ENDPOINT INVALIDATE OTP
                 
                 // User
                 '/api/users/verify-pin',

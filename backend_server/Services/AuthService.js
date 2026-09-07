@@ -342,6 +342,9 @@ exports.forgotPassword = async (email, req) => {
         };
     }
 
+    // 🔥 Xóa OTP cũ trước khi tạo mới
+    await CacheService.deleteOTPByEmailAndPurpose(email, OtpService.PURPOSE.RESET_PASSWORD);
+
     const otpResult = await OtpService.createOTP(email, OtpService.PURPOSE.RESET_PASSWORD);
     
     setImmediate(() => {
@@ -434,7 +437,7 @@ exports.submitNewPassword = async (token, newPassword) => {
 };
 
 // ============================================================
-// VERIFY OTP AND RESET
+// VERIFY OTP AND RESET - THÊM KIỂM TRA OTP ĐÃ BỊ VÔ HIỆU
 // ============================================================
 exports.verifyOtpAndReset = async (email, otp, newPassword) => {
     const rateLimit = await CacheService.checkRateLimit(email, "verify-otp-reset", 5, 300);
@@ -446,6 +449,16 @@ exports.verifyOtpAndReset = async (email, otp, newPassword) => {
                 remainingSeconds: rateLimit.remainingSeconds || 300,
                 maxAttempts: 5
             }
+        };
+    }
+
+    // 🔥 KIỂM TRA OTP ĐÃ BỊ VÔ HIỆU CHƯA
+    const otpData = await CacheService.getOTPData(email, OtpService.PURPOSE.RESET_PASSWORD);
+    if (!otpData) {
+        throw {
+            statusCode: 400,
+            field: "otp",
+            message: "OTP không tồn tại hoặc đã hết hạn. Vui lòng gửi lại OTP mới."
         };
     }
 
@@ -491,7 +504,8 @@ exports.verifyOtpAndReset = async (email, otp, newPassword) => {
         console.error('❌ [RESET_PASSWORD] Lỗi khi xóa socket:', error.message);
     }
 
-    await CacheService.deleteOTP(email, OtpService.PURPOSE.RESET_PASSWORD);
+    // 🔥 ĐÁNH DẤU OTP ĐÃ SỬ DỤNG (is_used = 1)
+    await CacheService.deleteOTPByEmailAndPurpose(email, OtpService.PURPOSE.RESET_PASSWORD);
 
     return {
         success: true,
@@ -663,6 +677,9 @@ exports.forgotPin = async (email) => {
         };
     }
 
+    // 🔥 Xóa OTP cũ trước khi tạo mới
+    await CacheService.deleteOTPByEmailAndPurpose(email, OtpService.PURPOSE.FORGOT_PIN);
+
     const otpResult = await OtpService.createOTP(email, OtpService.PURPOSE.FORGOT_PIN);
     
     setImmediate(() => {
@@ -684,7 +701,7 @@ exports.forgotPin = async (email) => {
 };
 
 // ============================================================
-// VERIFY OTP AND CHANGE PIN
+// VERIFY OTP AND CHANGE PIN - THÊM KIỂM TRA OTP ĐÃ BỊ VÔ HIỆU
 // ============================================================
 exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
     const rateLimit = await CacheService.checkRateLimit(email, "verify-otp-pin", 5, 300);
@@ -696,6 +713,16 @@ exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
                 remainingSeconds: rateLimit.remainingSeconds || 300,
                 maxAttempts: 5
             }
+        };
+    }
+
+    // 🔥 KIỂM TRA OTP ĐÃ BỊ VÔ HIỆU CHƯA
+    const otpData = await CacheService.getOTPData(email, OtpService.PURPOSE.FORGOT_PIN);
+    if (!otpData) {
+        throw {
+            statusCode: 400,
+            field: "otp",
+            message: "OTP không tồn tại hoặc đã hết hạn. Vui lòng gửi lại OTP mới."
         };
     }
 
@@ -730,7 +757,8 @@ exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
     const hashedPin = await Password.hash(newPin);
     await UserRepository.updatePinHash(user.user_id, hashedPin);
 
-    await CacheService.deleteOTP(email, OtpService.PURPOSE.FORGOT_PIN);
+    // 🔥 ĐÁNH DẤU OTP ĐÃ SỬ DỤNG (is_used = 1)
+    await CacheService.deleteOTPByEmailAndPurpose(email, OtpService.PURPOSE.FORGOT_PIN);
 
     return {
         success: true,
@@ -963,7 +991,8 @@ exports.resendOtp = async (email, purpose) => {
         };
     }
 
-    await CacheService.deleteOTP(email, purpose);
+    // 🔥 Đánh dấu OTP cũ đã sử dụng trước khi tạo mới
+    await CacheService.deleteOTPByEmailAndPurpose(email, purpose);
 
     const otpResult = await OtpService.createOTP(email, purpose);
     

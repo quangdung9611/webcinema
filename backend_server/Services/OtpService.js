@@ -34,7 +34,8 @@ class OtpService {
         const otpCode = Otp.generate6(); 
         console.log(`📤 Generated OTP: ${otpCode}`);
 
-        await CacheService.deleteOTP(email, purpose);
+        // 🔥 Đánh dấu OTP cũ là used trước khi tạo mới
+        await CacheService.deleteOTPByEmailAndPurpose(email, purpose);
         await CacheService.saveOTP(email, purpose, otpCode, OTP_EXPIRE_SECONDS);
         
         const otpId = await OtpRepository.create({
@@ -67,16 +68,31 @@ class OtpService {
 
         const isLocked = await CacheService.isOTPLocked(email, purpose, 5);
         if (isLocked) {
-            // ✅ XÓA OTP KHỎI CACHE KHI BỊ KHÓA
-            await CacheService.deleteOTP(email, purpose);
-            return { success: false, code: "OTP_LOCKED", message: "OTP đã bị khóa do nhập sai quá nhiều lần" };
+            // 🔥 Đánh dấu OTP đã sử dụng thay vì xóa
+            await CacheService.deleteOTPByEmailAndPurpose(email, purpose);
+            await OtpRepository.create({
+                email,
+                purpose,
+                status: "invalidated",
+                ip_address: null,
+                user_agent: null
+            });
+            return { 
+                success: false, 
+                code: "OTP_LOCKED", 
+                message: "OTP đã bị khóa do nhập sai quá nhiều lần. Vui lòng gửi lại OTP mới." 
+            };
         }
 
         const savedOTP = String(await CacheService.getOTP(email, purpose) || '').trim();
         const userOTP = String(otp || '').trim();
 
         if (!savedOTP) {
-            return { success: false, code: "OTP_NOT_FOUND", message: "OTP không tồn tại hoặc đã hết hạn" };
+            return { 
+                success: false, 
+                code: "OTP_NOT_FOUND", 
+                message: "OTP không tồn tại hoặc đã hết hạn. Vui lòng gửi lại OTP mới." 
+            };
         }
 
         if (savedOTP !== userOTP) {
@@ -84,13 +100,20 @@ class OtpService {
             const latestLog = await OtpRepository.findLatest(email, purpose);
             if (latestLog?.otp_id) await OtpRepository.markFailed(latestLog.otp_id);
             
-            // ✅ KIỂM TRA NẾU ĐẠT 5 LẦN SAI → XÓA OTP
+            // 🔥 Nếu đạt 5 lần sai → đánh dấu OTP đã sử dụng
             if (attempts >= 5) {
-                await CacheService.deleteOTP(email, purpose);
+                await CacheService.deleteOTPByEmailAndPurpose(email, purpose);
+                await OtpRepository.create({
+                    email,
+                    purpose,
+                    status: "invalidated",
+                    ip_address: null,
+                    user_agent: null
+                });
                 return {
                     success: false,
                     code: "OTP_LOCKED",
-                    message: "Bạn đã nhập sai quá 5 lần. OTP đã bị khóa. Vui lòng gửi lại OTP mới."
+                    message: "Bạn đã nhập sai quá 5 lần. OTP đã bị vô hiệu hóa. Vui lòng gửi lại OTP mới."
                 };
             }
             
@@ -103,10 +126,17 @@ class OtpService {
 
         // ✅ CHỈ XÓA OTP KHI deleteAfterVerify = true
         if (deleteAfterVerify) {
-            await CacheService.deleteOTP(email, purpose);
+            // 🔥 Đánh dấu OTP đã sử dụng thay vì xóa
+            await CacheService.deleteOTPByEmailAndPurpose(email, purpose);
             const latestLog = await OtpRepository.findLatest(email, purpose);
             if (latestLog?.otp_id) await OtpRepository.markVerified(latestLog.otp_id);
-            await OtpRepository.create({ email, purpose, status: "verified", ip_address: null, user_agent: null });
+            await OtpRepository.create({ 
+                email, 
+                purpose, 
+                status: "verified", 
+                ip_address: null, 
+                user_agent: null 
+            });
         } else {
             // ✅ KHÔNG XÓA OTP, chỉ reset số lần thử sai
             await CacheService.resetOTPAttempts(email, purpose);
@@ -116,18 +146,28 @@ class OtpService {
     }
 
     // ============================================================
-    // DELETE OTP
+    // DELETE OTP - ĐÁNH DẤU OTP ĐÃ XÓA
     // ============================================================
     async deleteOTP(email, purpose) {
         if (!purpose) throw new Error("Purpose is required");
         email = email.trim();
-        await CacheService.deleteOTP(email, purpose);
+        
+        // 🔥 Đánh dấu OTP đã sử dụng thay vì xóa
+        await CacheService.deleteOTPByEmailAndPurpose(email, purpose);
+        
         const latestLog = await OtpRepository.findLatest(email, purpose);
         if (latestLog && latestLog.status === 'sent') {
             await OtpRepository.markExpired(latestLog.otp_id);
         }
-        await OtpRepository.create({ email, purpose, status: "deleted", ip_address: null, user_agent: null });
-        return { success: true, message: "OTP đã được xóa" };
+        await OtpRepository.create({ 
+            email, 
+            purpose, 
+            status: "deleted", 
+            ip_address: null, 
+            user_agent: null 
+        });
+        
+        return { success: true, message: "OTP đã được vô hiệu hóa" };
     }
 
     // ============================================================

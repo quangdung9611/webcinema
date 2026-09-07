@@ -669,7 +669,45 @@ class CacheService {
 
 
     /*=======================================================
-        DELETE OTP
+        GET OTP DATA (LẤY CẢ OTP + ATTEMPTS + EXPIRES_AT)
+    =======================================================*/
+
+    async getOTPData(email, purpose) {
+
+        const now = new Date();
+
+        const [rows] = await db.query(
+            `
+            SELECT otp, attempts, expires_at
+            FROM otp_codes
+            WHERE email = ?
+              AND purpose = ?
+              AND is_used = 0
+              AND expires_at > ?
+            ORDER BY otp_code_id DESC
+            LIMIT 1
+            `,
+            [
+                email,
+                purpose,
+                now
+            ]
+        );
+
+        if (rows.length === 0) {
+            return null;
+        }
+
+        return {
+            otp: rows[0].otp,
+            attempts: Number(rows[0].attempts) || 0,
+            expiresAt: rows[0].expires_at
+        };
+    }
+
+
+    /*=======================================================
+        DELETE OTP (XÓA VĨNH VIỄN)
     =======================================================*/
 
     async deleteOTP(email, purpose) {
@@ -691,6 +729,33 @@ class CacheService {
 
 
     /*=======================================================
+        DELETE OTP BY EMAIL AND PURPOSE (ĐÁNH DẤU IS_USED = 1)
+        🔥 DÙNG KHI USER RỜI TRANG / RESEND / VERIFY THÀNH CÔNG
+    =======================================================*/
+
+    async deleteOTPByEmailAndPurpose(email, purpose) {
+
+        const now = new Date();
+
+        const [result] = await db.query(
+            `
+            UPDATE otp_codes
+            SET is_used = 1, 
+                updated_at = ?
+            WHERE email = ?
+              AND purpose = ?
+              AND is_used = 0
+              AND expires_at > ?
+            `,
+            [now, email, purpose, now]
+        );
+
+        console.log(`🔴 [CACHE] Marked OTP as used for ${email}, purpose: ${purpose}, affected: ${result.affectedRows}`);
+        return result.affectedRows > 0;
+    }
+
+
+    /*=======================================================
         INCREMENT OTP ATTEMPTS
     =======================================================*/
 
@@ -704,7 +769,7 @@ class CacheService {
 
         const [rows] = await db.query(
             `
-            SELECT *
+            SELECT otp_code_id, attempts
             FROM otp_codes
             WHERE email = ?
               AND purpose = ?
@@ -760,6 +825,7 @@ class CacheService {
             SET attempts = 0
             WHERE email = ?
               AND purpose = ?
+              AND is_used = 0
             `,
             [
                 email,

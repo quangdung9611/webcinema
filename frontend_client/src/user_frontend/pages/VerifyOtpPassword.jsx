@@ -5,6 +5,7 @@ import { ShieldCheck, ArrowLeft, RefreshCw, AlertCircle, CheckCircle } from 'luc
 import api from '../../api/api';
 import LoadingButton from '../components/LoadingButton';
 import LockModal from '../components/LockModal';
+import useOTPGuard from '../../hooks/useOTPGuard';
 import '../styles/UserAuth.css';
 
 const VerifyOtpPassword = () => {
@@ -24,6 +25,16 @@ const VerifyOtpPassword = () => {
     });
 
     const purpose = location.state?.purpose || 'RESET_PASSWORD';
+
+    // 🔥 SỬ DỤNG useOTPGuard - TỰ ĐỘNG INVALIDATE KHI RỜI TRANG
+    const { safeNavigate, invalidateOTP } = useOTPGuard(email, purpose, {
+        onInvalidate: () => {
+            console.log('🔴 [VERIFY OTP] OTP đã bị vô hiệu do rời trang');
+            // Xóa storage khi OTP bị invalidate
+            localStorage.removeItem('verify_otp_password_lock');
+            sessionStorage.removeItem('verify_otp_password_email');
+        }
+    });
 
     const [otp, setOtp] = useState('');
     const [error, setError] = useState('');
@@ -122,11 +133,9 @@ const VerifyOtpPassword = () => {
         // Xóa tất cả storage
         localStorage.removeItem(OTP_LOCK_STORAGE_KEY);
         sessionStorage.removeItem(EMAIL_STORAGE_KEY);
-        // Chuyển về forgot-password
-        navigate('/forgot-password', {
-            state: {
-                message: '⏳ OTP đã hết hạn. Vui lòng gửi lại OTP mới.'
-            }
+        // 🔥 DÙNG safeNavigate THAY VÌ navigate
+        safeNavigate('/forgot-password', {
+            message: '⏳ OTP đã hết hạn. Vui lòng gửi lại OTP mới.'
         });
     };
 
@@ -135,7 +144,7 @@ const VerifyOtpPassword = () => {
     // ============================================================
     useEffect(() => {
         if (!email) {
-            navigate('/forgot-password');
+            safeNavigate('/forgot-password');
             return;
         }
 
@@ -465,12 +474,11 @@ const VerifyOtpPassword = () => {
                 localStorage.removeItem(OTP_LOCK_STORAGE_KEY);
                 sessionStorage.removeItem(EMAIL_STORAGE_KEY);
 
-                navigate('/reset-password', {
-                    state: {
-                        email: email,
-                        otp: otp,
-                        fromForgotPassword: true
-                    }
+                // 🔥 DÙNG safeNavigate THAY VÌ navigate
+                safeNavigate('/reset-password', {
+                    email: email,
+                    otp: otp,
+                    fromForgotPassword: true
                 });
             }
         } catch (err) {
@@ -688,7 +696,8 @@ const VerifyOtpPassword = () => {
                         onClick={() => {
                             localStorage.removeItem(OTP_LOCK_STORAGE_KEY);
                             sessionStorage.removeItem(EMAIL_STORAGE_KEY);
-                            navigate('/forgot-password');
+                            // 🔥 DÙNG safeNavigate
+                            safeNavigate('/forgot-password');
                         }}
                         disabled={isDisabled}
                     >

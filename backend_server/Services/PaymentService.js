@@ -35,19 +35,6 @@ class PaymentService {
 
     /*=========================================================
         1. PROCESS ORDER
-
-        MỤC TIÊU:
-
-        - Lấy thông tin suất chiếu
-        - Xác nhận ghế đang thuộc Cache lock
-        - Tạo temp booking
-        - Lưu temp booking vào Cache
-
-        QUAN TRỌNG:
-
-        Không dùng SELECT từng ghế trong MySQL ở đây nữa.
-
-        Cache mới là lớp bảo vệ realtime đầu tiên.
     =========================================================*/
 
     async processOrder(data) {
@@ -65,8 +52,6 @@ class PaymentService {
             movieTitle,
             cinemaName,
             startTime,
-
-            // Owner của Cache seat lock
             ownerToken
         } = data;
 
@@ -94,13 +79,6 @@ class PaymentService {
         }
 
 
-        /*
-         * Giới hạn giống frontend hiện tại:
-         * tối đa 8 ghế.
-         *
-         * Đây chỉ là lớp bảo vệ backend.
-         */
-
         if (selectedSeats.length > 8) {
 
             throw new Error(
@@ -108,16 +86,6 @@ class PaymentService {
             );
         }
 
-
-        /*
-         * ownerToken rất quan trọng.
-         *
-         * Nó phải giống token được dùng khi:
-         *
-         * Cache Seat Lock
-         *
-         * được tạo ở server.js.
-         */
 
         if (!ownerToken) {
 
@@ -168,22 +136,6 @@ class PaymentService {
             KIỂM TRA CACHE SEAT LOCK
         =====================================================*/
 
-        /*
-         * Kiểm tra tất cả ghế song song.
-         *
-         * Không làm:
-         *
-         * await seat 1
-         * await seat 2
-         * await seat 3
-         *
-         * vì sẽ chậm hơn.
-         *
-         * Thay vào đó:
-         *
-         * Promise.all()
-         */
-
         const seatLockResults =
             await Promise.all(
                 selectedSeats.map(
@@ -216,10 +168,6 @@ class PaymentService {
             } = item;
 
 
-            /*
-             * Không có Cache lock
-             */
-
             if (
                 !lock.locked
             ) {
@@ -229,10 +177,6 @@ class PaymentService {
                 );
             }
 
-
-            /*
-             * Lock thuộc người khác
-             */
 
             if (
                 lock.ownerToken !==
@@ -244,13 +188,6 @@ class PaymentService {
                 );
             }
 
-
-            /*
-             * Lock sắp hết hạn.
-             *
-             * Không bắt buộc phải chặn ở đây,
-             * nhưng nếu TTL <= 0 thì chắc chắn không hợp lệ.
-             */
 
             if (
                 !lock.ttl ||
@@ -308,15 +245,6 @@ class PaymentService {
 
             startTime,
 
-            /*
-             * Rất quan trọng:
-             *
-             * Lưu ownerToken cùng temp booking
-             * để lúc commit có thể xác nhận
-             * người thanh toán chính là người
-             * đã giữ ghế.
-             */
-
             ownerToken,
 
             status: "pending",
@@ -358,26 +286,6 @@ class PaymentService {
 
     /*=========================================================
         2. COMMIT TO DATABASE
-
-        MỤC TIÊU:
-
-        - Lấy temp booking
-        - Kiểm tra Cache seat lock lần cuối
-        - Tạo booking
-        - Tạo booking details
-        - Tạo tickets
-        - Thêm food
-        - Cộng điểm
-
-        QUAN TRỌNG:
-
-        Đây là lớp bảo vệ thứ hai sau Cache.
-
-        Cache:
-            realtime contention
-
-        MySQL:
-            dữ liệu lâu dài
     =========================================================*/
 
     async commitToDatabase(
@@ -500,25 +408,6 @@ class PaymentService {
 
         /*=====================================================
             KIỂM TRA CACHE LOCK LẦN CUỐI
-
-            Đây là bước CỰC KỲ QUAN TRỌNG.
-
-            Ví dụ:
-
-            User A giữ A1
-                ↓
-            chờ OTP
-                ↓
-            lock hết hạn
-                ↓
-            User B lấy A1
-
-            Nếu A vẫn được thanh toán
-            thì sẽ xảy ra race condition.
-
-            Vì vậy khi commit:
-
-            A phải còn sở hữu Cache lock.
         =====================================================*/
 
         const finalSeatLocks =
@@ -586,13 +475,6 @@ class PaymentService {
 
         /*=====================================================
             KIỂM TRA MYSQL LẦN CUỐI
-
-            Đây là lớp bảo vệ durable.
-
-            Cache không thay thế MySQL.
-
-            MySQL vẫn phải xác nhận ghế chưa
-            được booking Completed trước đó.
         =====================================================*/
 
         for (
@@ -842,12 +724,6 @@ class PaymentService {
 
         /*=====================================================
             XÓA TEMP BOOKING
-
-            Chỉ xóa sau khi toàn bộ INSERT
-            trong connection đã thành công.
-
-            Transaction commit/rollback vẫn do
-            caller quản lý.
         =====================================================*/
 
         await CacheService.delete(
@@ -907,11 +783,6 @@ class PaymentService {
 
     /*=========================================================
         3. RELEASE SEAT LOCKS
-
-        Dùng sau khi booking thành công.
-
-        Hàm này được gọi ở controller/service
-        sau khi transaction COMMIT thành công.
     =========================================================*/
 
     async releaseBookingSeatLocks(
@@ -1090,7 +961,7 @@ class PaymentService {
 
 
     /*=========================================================
-        7. RESEND OTP PAYMENT
+        7. RESEND OTP PAYMENT - 🔥 SỬA DÙNG deleteOTPByEmailAndPurpose
     =========================================================*/
 
     async resendOtpPayment(
@@ -1170,6 +1041,16 @@ class PaymentService {
 
 
         /*=====================================================
+            🔥 ĐÁNH DẤU OTP CŨ ĐÃ SỬ DỤNG
+        =====================================================*/
+
+        await CacheService.deleteOTPByEmailAndPurpose(
+            email,
+            OtpService.PURPOSE.PAYMENT
+        );
+
+
+        /*=====================================================
             CREATE OTP
         =====================================================*/
 
@@ -1203,13 +1084,6 @@ class PaymentService {
         updatedData.otpCreatedAt =
             Date.now();
 
-
-        /*
-         * Lưu lại TTL 5 phút.
-         *
-         * ownerToken vẫn được giữ nguyên
-         * vì updatedData là object cũ.
-         */
 
         await CacheService.set(
             key,

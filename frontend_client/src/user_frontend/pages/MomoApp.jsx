@@ -22,6 +22,7 @@ import socketService from '../../api/socket';
 import Modal from '../components/Modal';
 import BookingSidebar from '../components/BookingSidebar';
 import LoadingButton from '../components/LoadingButton';
+import useOTPGuard from '../../hooks/useOTPGuard';
 
 import '../styles/MomoApp.css';
 
@@ -115,6 +116,16 @@ const MomoApp = () => {
     const ownerToken = bookingData.ownerToken || localStorage.getItem('bookingOwnerToken') || '';
 
     const showtimeId = selectedShowtime?.showtime_id || selectedShowtime?.id || showtimeDetail?.showtime_id || showtimeDetail?.id || '';
+
+    // ============================================================
+    // 🔥 SỬ DỤNG useOTPGuard - TỰ ĐỘNG INVALIDATE KHI RỜI TRANG
+    // ============================================================
+
+    const { safeNavigate, invalidateOTP } = useOTPGuard(customerEmail, 'PAYMENT', {
+        onInvalidate: () => {
+            console.log('🔴 [MOMO] OTP đã bị vô hiệu do rời trang');
+        }
+    });
 
     // ============================================================
     // MOMO QR
@@ -353,46 +364,6 @@ const MomoApp = () => {
     }, [resetLockState]);
 
     // ============================================================
-    // BLOCKER
-    // ============================================================
-
-    const shouldBlock = useCallback(() => {
-        if (paymentCompletedRef.current) return false;
-        if (!otp && timeLeft <= 0) return false;
-        return location.pathname === '/momo-app';
-    }, [otp, timeLeft, location.pathname]);
-
-    const blocker = useBlocker(({ currentLocation, nextLocation }) => shouldBlock());
-
-    // ============================================================
-    // BLOCKER EFFECT
-    // ============================================================
-
-    useEffect(() => {
-        if (blocker.state === 'blocked') {
-            if (!modalConfig.show && !showBackConfirm) {
-                setShowBackConfirm(true);
-            }
-        }
-    }, [blocker.state, modalConfig.show, showBackConfirm]);
-
-    // ============================================================
-    // MODAL STATE TRACKING
-    // ============================================================
-
-    useEffect(() => {
-        isModalOpenRef.current = modalConfig.show;
-    }, [modalConfig.show]);
-
-    // ============================================================
-    // OTP STORAGE
-    // ============================================================
-
-    useEffect(() => {
-        localStorage.setItem('momoOtpInput', otp);
-    }, [otp]);
-
-    // ============================================================
     // CANCEL TEMP BOOKING
     // ============================================================
 
@@ -413,12 +384,13 @@ const MomoApp = () => {
     }, [tempBookingId]);
 
     // ============================================================
-    // EXPIRE FLOW
+    // EXPIRE FLOW - 🔥 THÊM invalidateOTP
     // ============================================================
 
     const handleExpireFlow = useCallback(async () => {
         if (paymentCompletedRef.current) return;
         console.log('⏰ [MOMO] Payment/OTP expired');
+        await invalidateOTP();
         await releaseSeatLocks();
         await cancelBookingOnServer();
         clearAllBookingData();
@@ -428,10 +400,10 @@ const MomoApp = () => {
             'Thời gian thanh toán đã hết. Ghế của bạn đã được giải phóng. Vui lòng đặt vé lại.',
             () => {
                 closeModal();
-                navigate('/booking');
+                safeNavigate('/booking');
             }
         );
-    }, [releaseSeatLocks, cancelBookingOnServer, clearAllBookingData, openModal, closeModal, navigate]);
+    }, [releaseSeatLocks, cancelBookingOnServer, clearAllBookingData, openModal, closeModal, safeNavigate, invalidateOTP]);
 
     // ============================================================
     // CHECK PAYMENT COMPLETED
@@ -451,27 +423,12 @@ const MomoApp = () => {
                     'Bạn đã thanh toán thành công! Vui lòng quay lại trang chủ.',
                     () => {
                         closeModal();
-                        navigate('/');
+                        safeNavigate('/');
                     }
                 );
             }
         }
-    }, [tempBookingId, clearAllBookingData, modalConfig.show, openModal, closeModal, navigate]);
-
-    // ============================================================
-    // BEFORE UNLOAD
-    // ============================================================
-
-    useEffect(() => {
-        const handleBeforeUnload = (e) => {
-            if (timeLeft > 0 && otp.length > 0 && !paymentCompletedRef.current) {
-                e.preventDefault();
-                e.returnValue = 'Bạn đang nhập OTP. Nếu rời trang, bạn sẽ mất tiến trình thanh toán!';
-            }
-        };
-        window.addEventListener('beforeunload', handleBeforeUnload);
-        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-    }, [timeLeft, otp]);
+    }, [tempBookingId, clearAllBookingData, modalConfig.show, openModal, closeModal, safeNavigate]);
 
     // ============================================================
     // CHECK DATA
@@ -487,13 +444,13 @@ const MomoApp = () => {
                     'Không tìm thấy thông tin đặt vé. Vui lòng đặt lại.',
                     () => {
                         closeModal();
-                        navigate('/');
+                        safeNavigate('/');
                     }
                 );
             }
         }
         isFirstLoad.current = false;
-    }, [tempBookingId, customerEmail, navigate, openModal, closeModal]);
+    }, [tempBookingId, customerEmail, openModal, closeModal, safeNavigate]);
 
     // ============================================================
     // CHECK OWNER TOKEN
@@ -512,11 +469,11 @@ const MomoApp = () => {
                     closeModal();
                     await cancelBookingOnServer();
                     clearAllBookingData();
-                    navigate('/booking');
+                    safeNavigate('/booking');
                 }
             );
         }
-    }, [ownerToken, cancelBookingOnServer, clearAllBookingData, navigate, openModal, closeModal]);
+    }, [ownerToken, cancelBookingOnServer, clearAllBookingData, openModal, closeModal, safeNavigate]);
 
     // ============================================================
     // CLEANUP
@@ -531,17 +488,15 @@ const MomoApp = () => {
     }, []);
 
     // ============================================================
-    // CLEAR ALL + GO HOME
+    // CLEAR ALL + GO HOME - 🔥 DÙNG safeNavigate + invalidateOTP
     // ============================================================
 
     const clearAllAndGoHome = async () => {
+        await invalidateOTP();
         await releaseSeatLocks();
         await cancelBookingOnServer();
         clearAllBookingData();
-        if (blocker.state === 'blocked') {
-            blocker.proceed();
-        }
-        navigate('/');
+        safeNavigate('/');
     };
 
     // ============================================================
@@ -550,9 +505,6 @@ const MomoApp = () => {
 
     const handleStay = () => {
         setShowBackConfirm(false);
-        if (blocker.state === 'blocked') {
-            blocker.reset();
-        }
     };
 
     // ============================================================
@@ -638,9 +590,7 @@ const MomoApp = () => {
                 localStorage.setItem('momoOtpAttempts', '0');
                 resetLockState();
 
-                // ========================================================
-                // FIX: Xóa OTP cũ khi gửi lại OTP mới
-                // ========================================================
+                // 🔥 Xóa OTP cũ khi gửi lại OTP mới
                 setOtp('');
                 localStorage.setItem('momoOtpInput', '');
 
@@ -870,13 +820,13 @@ const MomoApp = () => {
                             clearTimeout(autoNavigateRef.current);
                         }
                         closeModal();
-                        navigate('/confirm-success', { state: bookingData });
+                        safeNavigate('/confirm-success', { state: bookingData });
                     }
                 );
                 autoNavigateRef.current = setTimeout(() => {
                     if (isModalOpenRef.current) {
                         closeModal();
-                        navigate('/confirm-success', { state: bookingData });
+                        safeNavigate('/confirm-success', { state: bookingData });
                     }
                     autoNavigateRef.current = null;
                 }, 3000);

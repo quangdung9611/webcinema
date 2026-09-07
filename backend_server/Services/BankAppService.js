@@ -121,9 +121,7 @@ class BankAppService {
 
 
     /*=========================================================
-        🆕 GỬI LẠI OTP PAYMENT - GIỐNG AUTH SERVICE
-        - Rate limit: 3 lần / 5 phút
-        - Trả về thông báo lock và attempts
+        🆕 GỬI LẠI OTP PAYMENT - 🔥 SỬA DÙNG deleteOTPByEmailAndPurpose
     =========================================================*/
 
     async resendOtpPayment(email, tempBookingId) {
@@ -151,8 +149,8 @@ class BankAppService {
             };
         }
 
-        // Xóa OTP cũ
-        await CacheService.deleteOTP(email, PURPOSE.PAYMENT);
+        // 🔥 Đánh dấu OTP cũ đã sử dụng
+        await CacheService.deleteOTPByEmailAndPurpose(email, PURPOSE.PAYMENT);
 
         // Tạo OTP mới
         const otpResult = await OtpService.createOTP(email, PURPOSE.PAYMENT);
@@ -187,7 +185,7 @@ class BankAppService {
 
 
     /*=========================================================
-        🆕 GỬI OTP THANH TOÁN - CÓ RATE LIMIT
+        🆕 GỬI OTP THANH TOÁN - 🔥 SỬA DÙNG deleteOTPByEmailAndPurpose
     =========================================================*/
 
     async sendPaymentOTP(email, tempBookingId) {
@@ -213,6 +211,9 @@ class BankAppService {
                 }
             };
         }
+
+        // 🔥 Đánh dấu OTP cũ đã sử dụng (nếu có)
+        await CacheService.deleteOTPByEmailAndPurpose(email, PURPOSE.PAYMENT);
 
         // Tạo OTP mới
         const otpResult = await OtpService.createOTP(email, PURPOSE.PAYMENT);

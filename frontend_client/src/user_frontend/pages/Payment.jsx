@@ -11,6 +11,7 @@ import BookingSidebar from '../components/BookingSidebar';
 import LoadingButton from '../components/LoadingButton';
 import PaymentPinModal from '../components/PaymentPinModal';
 import BookingProgress from '../components/BookingProgress';
+import useOTPGuard from '../../hooks/useOTPGuard'; // 🔥 IMPORT
 import '../styles/Payment.css';
 
 // ============================================================
@@ -414,7 +415,7 @@ const Payment = () => {
     };
 
     // ============================================================
-    // PAYMENT PROCESS
+    // PAYMENT PROCESS - THÊM INVALIDATE OTP TRƯỚC KHI CHUYỂN TRANG
     // ============================================================
 
     const handleProceed = async () => {
@@ -450,6 +451,18 @@ const Payment = () => {
             showNotice('error', 'THIẾU THÔNG TIN', 'Vui lòng nhập đầy đủ thông tin nhận vé.');
             return;
         }
+
+        // 🔥 Xóa OTP cũ trước khi tạo phiên mới
+        try {
+            await api.post('/api/auth/invalidate-otp', {
+                email: email,
+                purpose: 'PAYMENT'
+            });
+            console.log('🔴 [PAYMENT] Invalidated old OTP before new payment');
+        } catch (err) {
+            console.warn('⚠️ [PAYMENT] Failed to invalidate old OTP:', err);
+        }
+
         const bankKeys = [
             'bankHasSentOtp', 'bankHasVisited', 'bankOtpTimeLeft', 'bankOtpInput',
             'bankLastOtpSentAt', 'paymentCompleted', 'completedBookingId', 'paymentInitiated', 'lastSuccessTicket'
@@ -597,6 +610,34 @@ const Payment = () => {
             setIsProcessing(false);
         }
     };
+
+    // ============================================================
+    // BEFORE UNLOAD - THÊM INVALIDATE OTP KHI ĐÓNG TAB
+    // ============================================================
+
+    useEffect(() => {
+        const handleBeforeUnload = (event) => {
+            // Kiểm tra nếu có OTP đang được nhập hoặc đã gửi
+            const hasOtp = localStorage.getItem('bankOtpInput') || localStorage.getItem('momoOtpInput');
+            const hasSentOtp = localStorage.getItem('bankHasSentOtp') === 'true' || 
+                               localStorage.getItem('momoHasSentOtp') === 'true';
+            
+            if ((hasOtp || hasSentOtp) && !isProcessing) {
+                const email = userInfo.email || localStorage.getItem('momoCustomerEmail') || '';
+                if (email) {
+                    navigator.sendBeacon(
+                        '/api/auth/invalidate-otp',
+                        JSON.stringify({ email, purpose: 'PAYMENT' })
+                    );
+                }
+                event.preventDefault();
+                event.returnValue = 'Bạn đang trong quá trình thanh toán. Nếu rời trang, bạn có thể mất tiến trình!';
+            }
+        };
+        
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [userInfo.email, isProcessing]);
 
     // ============================================================
     // RENDER

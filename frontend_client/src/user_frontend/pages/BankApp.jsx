@@ -9,6 +9,7 @@ import api from '../../api/api';
 import Modal from '../components/Modal';
 import BookingSidebar from '../components/BookingSidebar';
 import LoadingButton from '../components/LoadingButton';
+import useOTPGuard from '../../hooks/useOTPGuard'; // 🔥 IMPORT
 import '../styles/BankApp.css';
 
 // ============================================================
@@ -61,6 +62,17 @@ const BankApp = () => {
   const totalTicketPrice = Number(bookingData.totalTicketPrice || 0);
   const totalFoodPrice = Number(bookingData.totalFoodPrice || 0);
   const showtimeDetail = bookingData.showtimeDetail || {};
+
+  // ========================================================
+  // 🔥 SỬ DỤNG useOTPGuard - TỰ ĐỘNG INVALIDATE KHI RỜI TRANG
+  // ========================================================
+
+  const { safeNavigate, invalidateOTP } = useOTPGuard(customerEmail, 'PAYMENT', {
+    onInvalidate: () => {
+      console.log('🔴 [BANK APP] OTP đã bị vô hiệu do rời trang');
+      // Có thể thêm logic khác nếu cần
+    }
+  });
 
   // ========================================================
   // REFS
@@ -143,7 +155,7 @@ const BankApp = () => {
   });
 
   // ========================================================
-  // BACK CONFIRM
+  // BACK CONFIRM - KHÔNG CẦN blocker VÌ useOTPGuard ĐÃ XỬ LÝ
   // ========================================================
 
   const [showBackConfirm, setShowBackConfirm] = useState(false);
@@ -353,6 +365,7 @@ const BankApp = () => {
 
   const handleTimeExpire = useCallback(async () => {
     if (paymentCompletedRef.current) return;
+    await invalidateOTP(); // 🔥 GỌI INVALIDATE OTP
     await cancelBookingOnServer();
     const keysToRemove = [
       'selectedSeats', 'holdExpiresAt', 'currentShowtimeId', 'booking_seats',
@@ -371,35 +384,26 @@ const BankApp = () => {
       'Thời gian giữ ghế hoặc thanh toán đã kết thúc. Vui lòng chọn lại ghế để tiếp tục.',
       () => {
         closeModal();
-        navigate('/');
+        safeNavigate('/'); // 🔥 DÙNG safeNavigate
       }
     );
-  }, [cancelBookingOnServer, closeModal, navigate, openModal]);
+  }, [cancelBookingOnServer, closeModal, openModal, invalidateOTP, safeNavigate]);
 
   // ========================================================
-  // BLOCK ROUTE
+  // BLOCK ROUTE - BỎ blocker VÌ useOTPGuard ĐÃ XỬ LÝ
   // ========================================================
 
-  const shouldBlock = useCallback(() => {
-    if (paymentCompletedRef.current) return false;
-    if (!tempBookingId) return false;
-    if (timeLeft <= 0) return false;
-    return location.pathname === '/bank-app';
-  }, [tempBookingId, timeLeft, location.pathname]);
-
-  const blocker = useBlocker(({ currentLocation, nextLocation }) => shouldBlock());
-
   // ========================================================
-  // BLOCKER MODAL
+  // CLEAR + GO HOME - DÙNG safeNavigate
   // ========================================================
 
-  useEffect(() => {
-    if (blocker.state === 'blocked') {
-      if (!modalConfig.show && !showBackConfirm) {
-        setShowBackConfirm(true);
-      }
-    }
-  }, [blocker.state, modalConfig.show, showBackConfirm]);
+  const clearAllAndGoHome = async () => {
+    setShowBackConfirm(false);
+    await invalidateOTP(); // 🔥 GỌI INVALIDATE OTP
+    await cancelBookingOnServer();
+    clearAllBookingData();
+    safeNavigate('/'); // 🔥 DÙNG safeNavigate
+  };
 
   // ========================================================
   // STAY
@@ -407,23 +411,6 @@ const BankApp = () => {
 
   const handleStay = () => {
     setShowBackConfirm(false);
-    if (blocker.state === 'blocked') {
-      blocker.reset();
-    }
-  };
-
-  // ========================================================
-  // CLEAR + GO HOME
-  // ========================================================
-
-  const clearAllAndGoHome = async () => {
-    setShowBackConfirm(false);
-    await cancelBookingOnServer();
-    clearAllBookingData();
-    if (blocker.state === 'blocked') {
-      blocker.proceed();
-    }
-    navigate('/');
   };
 
   // ========================================================
@@ -580,9 +567,7 @@ const BankApp = () => {
       localStorage.setItem('bankOtpAttempts', '0');
       resetLockState();
       
-      // ========================================================
-      // FIX: Xóa OTP cũ khi gửi lại OTP mới
-      // ========================================================
+      // 🔥 Xóa OTP cũ khi gửi lại OTP mới
       setOtp('');
       localStorage.setItem('bankOtpInput', '');
       
@@ -715,11 +700,11 @@ const BankApp = () => {
         'Bạn đã thanh toán thành công! Vui lòng quay lại trang xác nhận.',
         () => {
           closeModal();
-          navigate('/confirm-success', { state: bookingData });
+          safeNavigate('/confirm-success', { state: bookingData }); // 🔥 DÙNG safeNavigate
         }
       );
     }
-  }, [tempBookingId, navigate, closeModal, openModal]);
+  }, [tempBookingId, closeModal, openModal, safeNavigate]);
 
   // ========================================================
   // CHECK BOOKING DATA
@@ -735,14 +720,14 @@ const BankApp = () => {
         'Không tìm thấy thông tin đặt vé. Vui lòng đặt lại.',
         () => {
           closeModal();
-          navigate('/');
+          safeNavigate('/'); // 🔥 DÙNG safeNavigate
         }
       );
     }
-  }, [tempBookingId, customerEmail, navigate, closeModal, openModal]);
+  }, [tempBookingId, customerEmail, closeModal, openModal, safeNavigate]);
 
   // ========================================================
-  // BEFORE UNLOAD
+  // BEFORE UNLOAD - useOTPGuard đã xử lý qua sendBeacon
   // ========================================================
 
   useEffect(() => {
@@ -758,7 +743,7 @@ const BankApp = () => {
   }, [timeLeft, otp]);
 
   // ========================================================
-  // CLEANUP
+  // CLEANUP - useOTPGuard đã xử lý invalidate khi unmount
   // ========================================================
 
   useEffect(() => {
@@ -843,13 +828,13 @@ const BankApp = () => {
           'Cảm ơn bạn đã đặt vé! Vui lòng kiểm tra email để nhận vé.',
           () => {
             closeModal();
-            navigate('/confirm-success', { state: bookingData });
+            safeNavigate('/confirm-success', { state: bookingData }); // 🔥 DÙNG safeNavigate
           }
         );
         autoNavigateRef.current = setTimeout(() => {
           if (isModalOpenRef.current) {
             closeModal();
-            navigate('/confirm-success', { state: bookingData });
+            safeNavigate('/confirm-success', { state: bookingData });
           }
         }, 3000);
         return;

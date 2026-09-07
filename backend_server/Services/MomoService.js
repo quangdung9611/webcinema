@@ -164,7 +164,7 @@ class MomoService {
     }
 
     /*=========================================================
-        3. SEND OTP PAYMENT (GIỐNG BANKAPP)
+        3. SEND OTP PAYMENT - 🔥 SỬA DÙNG deleteOTPByEmailAndPurpose
     =========================================================*/
     async sendPaymentOTP(email, tempBookingId) {
         if (!email?.trim()) {
@@ -186,6 +186,9 @@ class MomoService {
                 data: { remainingSeconds: rateLimit.remainingSeconds || 60 }
             };
         }
+
+        // 🔥 Đánh dấu OTP cũ đã sử dụng
+        await CacheService.deleteOTPByEmailAndPurpose(email, PURPOSE.PAYMENT);
 
         // Tạo OTP
         const otpResult = await OtpService.createOTP(email, PURPOSE.PAYMENT);
@@ -214,11 +217,11 @@ class MomoService {
     }
 
     /*=========================================================
-        4. VERIFY OTP + COMMIT TO DATABASE
+        4. VERIFY OTP + COMMIT TO DATABASE - 🔥 SỬA DÙNG verifyOTP với deleteAfterVerify = true
     =========================================================*/
     async verifyOTPAndCommit(email, otp, tempBookingId) {
-        // Xác thực OTP
-        const verifyResult = await OtpService.verifyOTP(email, otp, PURPOSE.PAYMENT);
+        // Xác thực OTP - deleteAfterVerify = true để đánh dấu OTP đã dùng
+        const verifyResult = await OtpService.verifyOTP(email, otp, PURPOSE.PAYMENT, true);
         if (!verifyResult.success) {
             throw {
                 statusCode: 400,
@@ -367,7 +370,7 @@ class MomoService {
     }
 
     /*=========================================================
-        5. RESEND OTP (GIỐNG BANKAPP)
+        5. RESEND OTP - 🔥 SỬA DÙNG deleteOTPByEmailAndPurpose
     =========================================================*/
     async resendOtpPayment(email, tempBookingId) {
         if (!email?.trim()) {
@@ -390,8 +393,8 @@ class MomoService {
             };
         }
 
-        // Xóa OTP cũ
-        await CacheService.deleteOTP(email, PURPOSE.PAYMENT);
+        // 🔥 Đánh dấu OTP cũ đã sử dụng
+        await CacheService.deleteOTPByEmailAndPurpose(email, PURPOSE.PAYMENT);
 
         // Tạo OTP mới
         const otpResult = await OtpService.createOTP(email, PURPOSE.PAYMENT);

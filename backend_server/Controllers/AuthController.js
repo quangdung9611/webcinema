@@ -1,5 +1,7 @@
 // Controllers/AuthController.js
 const AuthService = require("../Services/AuthService");
+const CacheService = require("../Services/CacheService");
+const OtpRepository = require("../Repositories/OtpRepository");
 
 /*=========================================================
     🆕 ĐĂNG KÝ BƯỚC 1 (CHỈ VALIDATE, KHÔNG LƯU CSDL)
@@ -576,6 +578,55 @@ exports.resendOtp = async (req, res) => {
             field: error.field || null,
             message: error.message || "Lỗi máy chủ",
             data: error.data || null
+        });
+    }
+};
+
+/*=========================================================
+    🆕 VÔ HIỆU HÓA OTP (KHI NGƯỜI DÙNG RỜI TRANG)
+=========================================================*/
+exports.invalidateOtp = async (req, res) => {
+    try {
+        const { email, purpose } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: "Thiếu email"
+            });
+        }
+        
+        if (!purpose) {
+            return res.status(400).json({
+                success: false,
+                message: "Thiếu purpose"
+            });
+        }
+        
+        // 🔥 Đánh dấu OTP đã sử dụng trong otp_codes (is_used = 1)
+        await CacheService.deleteOTPByEmailAndPurpose(email, purpose);
+        
+        // 🔥 Log vào otp_logs với status 'invalidated'
+        await OtpRepository.create({
+            email,
+            purpose,
+            status: 'invalidated',
+            ip_address: req.ip || req.connection?.remoteAddress || null,
+            user_agent: req.headers?.['user-agent'] || null
+        });
+        
+        console.log(`🔴 [OTP] Đã vô hiệu hóa OTP cho ${email}, purpose: ${purpose}`);
+        
+        return res.status(200).json({
+            success: true,
+            message: "OTP đã được vô hiệu hóa"
+        });
+        
+    } catch (error) {
+        console.error("Invalidate OTP Error:", error);
+        return res.status(500).json({
+            success: false,
+            message: error.message || "Lỗi máy chủ"
         });
     }
 };

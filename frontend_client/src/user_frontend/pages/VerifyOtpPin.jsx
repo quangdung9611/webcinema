@@ -5,6 +5,7 @@ import { ShieldCheck, ArrowLeft, RefreshCw, AlertCircle, CheckCircle } from 'luc
 import api from '../../api/api';
 import LoadingButton from '../components/LoadingButton';
 import LockModal from '../components/LockModal';
+import useOTPGuard from '../../hooks/useOTPGuard'; // 🔥 IMPORT
 import '../styles/UserAuth.css';
 
 const VerifyOtpPin = () => {
@@ -24,6 +25,16 @@ const VerifyOtpPin = () => {
     });
 
     const purpose = location.state?.purpose || 'FORGOT_PIN';
+
+    // 🔥 SỬ DỤNG useOTPGuard - TỰ ĐỘNG INVALIDATE KHI RỜI TRANG
+    const { safeNavigate, invalidateOTP } = useOTPGuard(email, purpose, {
+        onInvalidate: () => {
+            console.log('🔴 [VERIFY OTP PIN] OTP đã bị vô hiệu do rời trang');
+            // Xóa storage khi OTP bị invalidate
+            localStorage.removeItem('verify_otp_pin_lock');
+            sessionStorage.removeItem('verify_otp_pin_email');
+        }
+    });
 
     const [otp, setOtp] = useState('');
     const [error, setError] = useState('');
@@ -122,11 +133,9 @@ const VerifyOtpPin = () => {
         // Xóa tất cả storage
         localStorage.removeItem(OTP_LOCK_STORAGE_KEY);
         sessionStorage.removeItem(EMAIL_STORAGE_KEY);
-        // Chuyển về forgot-pin
-        navigate('/forgot-pin', {
-            state: {
-                message: '⏳ OTP đã hết hạn. Vui lòng gửi lại OTP mới.'
-            }
+        // 🔥 DÙNG safeNavigate THAY VÌ navigate
+        safeNavigate('/forgot-pin', {
+            message: '⏳ OTP đã hết hạn. Vui lòng gửi lại OTP mới.'
         });
     };
 
@@ -135,7 +144,7 @@ const VerifyOtpPin = () => {
     // ============================================================
     useEffect(() => {
         if (!email) {
-            navigate('/forgot-pin');
+            safeNavigate('/forgot-pin');
             return;
         }
 
@@ -464,12 +473,11 @@ const VerifyOtpPin = () => {
                 localStorage.removeItem(OTP_LOCK_STORAGE_KEY);
                 sessionStorage.removeItem(EMAIL_STORAGE_KEY);
 
-                navigate('/reset-pin', {
-                    state: {
-                        email: email,
-                        otp: otp,
-                        fromForgotPin: true
-                    }
+                // 🔥 DÙNG safeNavigate THAY VÌ navigate
+                safeNavigate('/reset-pin', {
+                    email: email,
+                    otp: otp,
+                    fromForgotPin: true
                 });
             }
         } catch (err) {
@@ -687,7 +695,8 @@ const VerifyOtpPin = () => {
                         onClick={() => {
                             localStorage.removeItem(OTP_LOCK_STORAGE_KEY);
                             sessionStorage.removeItem(EMAIL_STORAGE_KEY);
-                            navigate('/forgot-pin');
+                            // 🔥 DÙNG safeNavigate
+                            safeNavigate('/forgot-pin');
                         }}
                         disabled={isDisabled}
                     >

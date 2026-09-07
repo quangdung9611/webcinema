@@ -16,6 +16,9 @@ router.post("/verify-otp-and-change-pin", AuthController.verifyOtpAndChangePin);
 router.get("/check-otp-ttl", AuthController.checkOtpTTL);
 router.post("/resend-otp", AuthController.resendOtp);
 
+// 🆕 ROUTE VÔ HIỆU HÓA OTP (KHI NGƯỜI DÙNG RỜI TRANG)
+router.post("/invalidate-otp", AuthController.invalidateOtp);
+
 // AUTH ROUTES
 router.post("/register-step1", AuthController.registerStep1);
 router.post("/complete-registration", AuthController.completeRegistration);
