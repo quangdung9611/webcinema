@@ -24,9 +24,9 @@ import AdminPagination from '../../../components/AdminPagination';
 // ==========================================================
 
 const DISTRIBUTION_OPTIONS = [
-    { value: 'cold', label: '❄️ Ít - COLD (120 phút/suất)' },
-    { value: 'normal', label: '📊 Trung bình - NORMAL (75 phút/suất)' },
-    { value: 'hot', label: '🔥 Nhiều - HOT (45 phút/suất)' }
+    { value: 'hot', label: '🔥 HOT - 45 phút/suất' },
+    { value: 'normal', label: '📊 NORMAL - 75 phút/suất' },
+    { value: 'cold', label: '❄️ COLD - 120 phút/suất' }
 ];
 
 // ==========================================================
@@ -35,11 +35,10 @@ const DISTRIBUTION_OPTIONS = [
 
 const initialScheduleData = {
     movie_ids: [],
+    movie_distributions: {}, // { movie_id: 'hot' | 'normal' | 'cold' }
     cinema_id: '',
     start_date: '',
     end_date: '',
-    distribution_level: 'normal',
-    // Cấu hình giờ hoạt động
     weekday_start: '08:00',
     weekday_end: '23:30',
     weekend_start: '08:00',
@@ -203,10 +202,9 @@ const ShowTimePage = () => {
         setScheduleData({
             ...initialScheduleData,
             movie_ids: [],
+            movie_distributions: {},
             start_date: '',
             end_date: '',
-            operating_start: '08:00',
-            distribution_level: 'normal',
             weekday_start: '08:00',
             weekday_end: '23:30',
             weekend_start: '08:00',
@@ -266,7 +264,7 @@ const ShowTimePage = () => {
             setFormErrors(prev => ({ ...prev, [name]: '' }));
         }
 
-        // Xử lý multiselect cho phim
+        // Xử lý chọn phim
         if (name === 'movie_ids') {
             const movieId = Number(value);
             setScheduleData(prev => {
@@ -274,8 +272,35 @@ const ShowTimePage = () => {
                 const nextIds = checked
                     ? (currentIds.includes(movieId) ? currentIds : [...currentIds, movieId])
                     : currentIds.filter(id => id !== movieId);
-                return { ...prev, movie_ids: nextIds };
+                
+                // 👉 Nếu bỏ chọn phim, xóa luôn distribution của nó
+                const newDistributions = { ...prev.movie_distributions };
+                if (!checked) {
+                    delete newDistributions[movieId];
+                } else if (!newDistributions[movieId]) {
+                    // Nếu chọn phim mới, set default là 'normal'
+                    newDistributions[movieId] = 'normal';
+                }
+                
+                return { 
+                    ...prev, 
+                    movie_ids: nextIds,
+                    movie_distributions: newDistributions
+                };
             });
+            return;
+        }
+
+        // Xử lý change distribution cho từng phim
+        if (name.startsWith('dist_')) {
+            const movieId = Number(name.replace('dist_', ''));
+            setScheduleData(prev => ({
+                ...prev,
+                movie_distributions: {
+                    ...prev.movie_distributions,
+                    [movieId]: value
+                }
+            }));
             return;
         }
 
@@ -365,12 +390,21 @@ const ShowTimePage = () => {
             setSubmitLoading(true);
             setFormErrors({});
 
+            // 👉 Xây dựng payload với distribution riêng cho từng phim
+            const movieIds = scheduleData.movie_ids || [];
+            const movieDistributions = scheduleData.movie_distributions || {};
+            
+            // Tạo mảng movies với distribution riêng
+            const moviesWithDist = movieIds.map(movieId => ({
+                movie_id: movieId,
+                distribution: movieDistributions[movieId] || 'normal'
+            }));
+
             const payload = {
-                movie_ids: scheduleData.movie_ids || [],
+                movies: moviesWithDist,
                 cinema_id: Number(scheduleData.cinema_id),
                 start_date: scheduleData.start_date,
                 end_date: scheduleData.end_date,
-                distribution: scheduleData.distribution_level,
                 config: {
                     weekday_start: scheduleData.weekday_start || '08:00',
                     weekday_end: scheduleData.weekday_end || '23:30',
@@ -409,7 +443,9 @@ const ShowTimePage = () => {
                 if (data.summary?.byMovie) {
                     message += `\n\n📊 PHÂN BỔ THEO PHIM:`;
                     for (const [movieId, stats] of Object.entries(data.summary.byMovie)) {
-                        message += `\n  🎬 ${stats.title}: ${stats.count} suất (${stats.avgPerDay || 0}/ngày)`;
+                        const dist = movieDistributions[movieId] || 'normal';
+                        const distLabel = dist === 'hot' ? '🔥' : dist === 'cold' ? '❄️' : '📊';
+                        message += `\n  ${distLabel} ${stats.title}: ${stats.count} suất (${stats.avgPerDay || 0}/ngày)`;
                     }
                 }
 
@@ -532,15 +568,8 @@ const ShowTimePage = () => {
         }
     ];
 
-    // FORM FIELDS
+    // FORM FIELDS - KHÔNG CÓ movie_ids và distribution_level
     const formFields = [
-        {
-            label: 'Chọn phim',
-            name: 'movie_ids',
-            type: 'multiselect',
-            options: movies.map(movie => ({ label: movie.title, value: movie.movie_id })),
-            description: 'Để trống để lấy tất cả phim đang chiếu'
-        },
         {
             label: 'Rạp chiếu',
             name: 'cinema_id',
@@ -558,13 +587,7 @@ const ShowTimePage = () => {
         }] : []),
         { label: 'Ngày bắt đầu', name: 'start_date', type: 'date' },
         { label: 'Ngày kết thúc', name: 'end_date', type: 'date' },
-        ...(editingShowtime ? [{ label: 'Giờ chiếu', name: 'operating_start', type: 'time' }] : []),
-        ...(!editingShowtime ? [{
-            label: 'Mức độ phân bổ',
-            name: 'distribution_level',
-            type: 'select',
-            options: DISTRIBUTION_OPTIONS
-        }] : [])
+        ...(editingShowtime ? [{ label: 'Giờ chiếu', name: 'operating_start', type: 'time' }] : [])
     ];
 
     // Advanced config fields
@@ -651,30 +674,168 @@ const ShowTimePage = () => {
                 size="lg"
             >
                 {!editingShowtime && (
-                    <div style={{ marginBottom: '20px', padding: '16px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600', marginBottom: '8px' }}>
-                            <Sparkles size={18} /> Phân bổ suất chiếu tự động
+                    <>
+                        {/* Phần hướng dẫn */}
+                        <div style={{ marginBottom: '20px', padding: '16px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600', marginBottom: '8px' }}>
+                                <Sparkles size={18} /> Phân bổ suất chiếu tự động
+                            </div>
+                            <div style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.6' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                                    <div style={{ background: '#fef2f2', padding: '10px', borderRadius: '8px' }}>
+                                        <div style={{ fontWeight: '600', color: '#dc2626' }}>🔥 HOT</div>
+                                        <div>45 phút/suất</div>
+                                        <div style={{ fontSize: '12px', color: '#94a3b8' }}>2D(40%) + 3D(30%) + VIP(20%) + IMAX(10%)</div>
+                                    </div>
+                                    <div style={{ background: '#eff6ff', padding: '10px', borderRadius: '8px' }}>
+                                        <div style={{ fontWeight: '600', color: '#2563eb' }}>📊 NORMAL</div>
+                                        <div>75 phút/suất</div>
+                                        <div style={{ fontSize: '12px', color: '#94a3b8' }}>2D(60%) + 3D(40%)</div>
+                                    </div>
+                                    <div style={{ background: '#f0fdf4', padding: '10px', borderRadius: '8px' }}>
+                                        <div style={{ fontWeight: '600', color: '#16a34a' }}>❄️ COLD</div>
+                                        <div>120 phút/suất</div>
+                                        <div style={{ fontSize: '12px', color: '#94a3b8' }}>2D(50%)</div>
+                                    </div>
+                                </div>
+                                <div style={{ marginTop: '10px', padding: '8px 12px', background: '#f1f5f9', borderRadius: '6px', fontSize: '13px' }}>
+                                    💡 <strong>Chọn phim và mức độ ưu tiên riêng cho từng phim</strong>
+                                </div>
+                            </div>
                         </div>
-                        <div style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.6' }}>
-                            <strong>Hệ thống sẽ tự động phân bổ phòng theo mức độ ưu tiên:</strong>
-                            <br /><br />
-                            🔥 <strong>HOT</strong>: 45 phút/suất
-                            <br />
-                            &nbsp;&nbsp;&nbsp;→ 2D(40%) + 3D(30%) + VIP(20%) + IMAX(10%)
-                            <br /><br />
-                            📊 <strong>NORMAL</strong>: 75 phút/suất
-                            <br />
-                            &nbsp;&nbsp;&nbsp;→ 2D(60%) + 3D(40%)
-                            <br /><br />
-                            ❄️ <strong>COLD</strong>: 120 phút/suất
-                            <br />
-                            &nbsp;&nbsp;&nbsp;→ 2D(50%)
-                            <br /><br />
-                            <strong>💡 Bạn chỉ cần chọn mức độ ưu tiên, hệ thống sẽ tự động phân bổ hạng phòng!</strong>
+
+                        {/* 👇 PHẦN CHỌN PHIM + DISTRIBUTION RIÊNG */}
+                        <div style={{ marginBottom: '20px' }}>
+                            <label style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                fontWeight: '500',
+                                marginBottom: '12px',
+                                color: '#1e293b'
+                            }}>
+                                Chọn phim và cấu hình mức độ ưu tiên
+                                <span style={{
+                                    color: '#64748b',
+                                    fontSize: '13px',
+                                    fontWeight: '400'
+                                }}>
+                                    (Mỗi phim có thể chọn mức độ khác nhau)
+                                </span>
+                            </label>
+
+                            {/* Bảng chọn phim */}
+                            <div style={{
+                                border: '1px solid #e2e8f0',
+                                borderRadius: '8px',
+                                overflow: 'hidden'
+                            }}>
+                                <table style={{
+                                    width: '100%',
+                                    borderCollapse: 'collapse',
+                                    fontSize: '14px'
+                                }}>
+                                    <thead style={{ background: '#f8fafc' }}>
+                                        <tr>
+                                            <th style={{ padding: '10px 16px', textAlign: 'left', width: '40px' }}></th>
+                                            <th style={{ padding: '10px 16px', textAlign: 'left' }}>Tên phim</th>
+                                            <th style={{ padding: '10px 16px', textAlign: 'center', width: '220px' }}>Mức độ ưu tiên</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {movies.map(movie => {
+                                            const isChecked = scheduleData.movie_ids?.includes(movie.movie_id);
+                                            const distValue = scheduleData.movie_distributions?.[movie.movie_id] || 'normal';
+                                            
+                                            return (
+                                                <tr 
+                                                    key={movie.movie_id}
+                                                    style={{
+                                                        borderTop: '1px solid #e2e8f0',
+                                                        background: isChecked ? '#f8fafc' : '#ffffff'
+                                                    }}
+                                                >
+                                                    <td style={{ padding: '10px 16px' }}>
+                                                        <input
+                                                            type="checkbox"
+                                                            name="movie_ids"
+                                                            value={movie.movie_id}
+                                                            checked={isChecked || false}
+                                                            onChange={handleChange}
+                                                            style={{
+                                                                width: '18px',
+                                                                height: '18px',
+                                                                cursor: 'pointer',
+                                                                accentColor: '#3b82f6'
+                                                            }}
+                                                        />
+                                                    </td>
+                                                    <td style={{ 
+                                                        padding: '10px 16px',
+                                                        fontWeight: isChecked ? '500' : '400',
+                                                        color: isChecked ? '#1e293b' : '#94a3b8'
+                                                    }}>
+                                                        {movie.title}
+                                                    </td>
+                                                    <td style={{ padding: '10px 16px', textAlign: 'center' }}>
+                                                        {isChecked ? (
+                                                            <select
+                                                                name={`dist_${movie.movie_id}`}
+                                                                value={distValue}
+                                                                onChange={handleChange}
+                                                                style={{
+                                                                    padding: '6px 12px',
+                                                                    borderRadius: '6px',
+                                                                    border: '1px solid #e2e8f0',
+                                                                    fontSize: '13px',
+                                                                    background: '#ffffff',
+                                                                    cursor: 'pointer',
+                                                                    minWidth: '160px'
+                                                                }}
+                                                            >
+                                                                <option value="hot" style={{ color: '#dc2626' }}>🔥 HOT - 45 phút</option>
+                                                                <option value="normal" style={{ color: '#2563eb' }}>📊 NORMAL - 75 phút</option>
+                                                                <option value="cold" style={{ color: '#16a34a' }}>❄️ COLD - 120 phút</option>
+                                                            </select>
+                                                        ) : (
+                                                            <span style={{ color: '#94a3b8', fontSize: '13px' }}>-- Chưa chọn --</span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* Thông báo số phim đã chọn */}
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                marginTop: '8px'
+                            }}>
+                                {formErrors.movie_ids && (
+                                    <span style={{ color: '#ef4444', fontSize: '13px' }}>
+                                        {formErrors.movie_ids}
+                                    </span>
+                                )}
+                                {scheduleData.movie_ids?.length > 0 && !formErrors.movie_ids && (
+                                    <span style={{ fontSize: '13px', color: '#22c55e' }}>
+                                        ✅ Đã chọn <strong>{scheduleData.movie_ids.length}</strong> phim
+                                    </span>
+                                )}
+                                {(!scheduleData.movie_ids || scheduleData.movie_ids.length === 0) && !formErrors.movie_ids && (
+                                    <span style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic' }}>
+                                        ⚠️ Để trống để lấy tất cả phim đang chiếu (mặc định NORMAL)
+                                    </span>
+                                )}
+                            </div>
                         </div>
-                    </div>
+                    </>
                 )}
 
+                {/* AdminForm - LỌC BỎ distribution_level */}
                 <AdminForm
                     fields={formFields}
                     formData={scheduleData}
@@ -720,55 +881,50 @@ const ShowTimePage = () => {
                                     ⚙️ Cấu hình giờ chiếu nâng cao
                                 </h4>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                                    {advancedConfigFields.map(field => {
-                                        const FieldComponent = field.type === 'time' ? 'input' : 'input';
-                                        return (
-                                            <div key={field.name} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                <label style={{ fontSize: '13px', fontWeight: '500', color: '#475569' }}>
-                                                    {field.label}
-                                                </label>
-                                                <input
-                                                    type={field.type === 'time' ? 'time' : 'number'}
-                                                    name={field.name}
-                                                    value={scheduleData[field.name] || ''}
-                                                    onChange={handleChange}
-                                                    min={field.min}
-                                                    max={field.max}
-                                                    style={{
-                                                        padding: '8px 12px',
-                                                        border: '1px solid #e2e8f0',
-                                                        borderRadius: '6px',
-                                                        fontSize: '14px'
-                                                    }}
-                                                />
-                                            </div>
-                                        );
-                                    })}
+                                    {advancedConfigFields.map(field => (
+                                        <div key={field.name} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                            <label style={{ fontSize: '13px', fontWeight: '500', color: '#475569' }}>
+                                                {field.label}
+                                            </label>
+                                            <input
+                                                type={field.type === 'time' ? 'time' : 'number'}
+                                                name={field.name}
+                                                value={scheduleData[field.name] || ''}
+                                                onChange={handleChange}
+                                                min={field.min}
+                                                max={field.max}
+                                                style={{
+                                                    padding: '8px 12px',
+                                                    border: '1px solid #e2e8f0',
+                                                    borderRadius: '6px',
+                                                    fontSize: '14px'
+                                                }}
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         )}
-                    </>
-                )}
 
-                {!editingShowtime && (
-                    <div style={{ marginTop: '16px', padding: '14px', borderRadius: '10px', background: '#f8fafc', fontSize: '13px', color: '#64748b' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '7px' }}>
-                            <Info size={16} /> <strong>Cách hoạt động:</strong>
+                        <div style={{ marginTop: '16px', padding: '14px', borderRadius: '10px', background: '#f8fafc', fontSize: '13px', color: '#64748b' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '7px' }}>
+                                <Info size={16} /> <strong>Cách hoạt động:</strong>
+                            </div>
+                            Hệ thống sẽ tự động lấy toàn bộ phòng thuộc các hạng phù hợp với mức ưu tiên bạn chọn.
+                            <br /><br />
+                            <strong>🕐 Giờ hoạt động mặc định:</strong>
+                            <br />Thứ 2 → Thứ 6: <strong>08:00 → 23:30</strong>
+                            <br />Thứ 7 → Chủ nhật: <strong>08:00 → 24:00</strong>
+                            <br /><br />
+                            <strong>Khoảng cách suất mặc định:</strong>
+                            <br />🔥 HOT: <strong>45 phút</strong> | 📊 NORMAL: <strong>75 phút</strong> | ❄️ COLD: <strong>120 phút</strong>
+                            <br /><br />
+                            Phòng nào đang bận thì hệ thống sẽ thử phòng khác.
+                            <br />Phòng chỉ được sử dụng lại sau khi phim trước kết thúc <strong>+ 15 phút</strong>.
+                            <br /><br />
+                            <em>💡 Bấm vào "Cấu hình nâng cao" để tùy chỉnh giờ hoạt động và khoảng cách suất.</em>
                         </div>
-                        Hệ thống sẽ tự động lấy toàn bộ phòng thuộc các hạng phù hợp với mức ưu tiên bạn chọn.
-                        <br /><br />
-                        <strong>🕐 Giờ hoạt động mặc định:</strong>
-                        <br />Thứ 2 → Thứ 6: <strong>08:00 → 23:30</strong>
-                        <br />Thứ 7 → Chủ nhật: <strong>08:00 → 24:00</strong>
-                        <br /><br />
-                        <strong>Khoảng cách suất mặc định:</strong>
-                        <br />🔥 HOT: <strong>45 phút</strong> | 📊 NORMAL: <strong>75 phút</strong> | ❄️ COLD: <strong>120 phút</strong>
-                        <br /><br />
-                        Phòng nào đang bận thì hệ thống sẽ thử phòng khác.
-                        <br />Phòng chỉ được sử dụng lại sau khi phim trước kết thúc <strong>+ 15 phút</strong>.
-                        <br /><br />
-                        <em>💡 Bấm vào "Cấu hình nâng cao" để tùy chỉnh giờ hoạt động và khoảng cách suất.</em>
-                    </div>
+                    </>
                 )}
             </AdminModal>
 

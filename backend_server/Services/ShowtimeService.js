@@ -479,22 +479,6 @@ const buildRoomTypeSequence = (roomAllocation) => {
 };
 
 // ==========================================================
-// DETERMINE START CURSOR FOR MOVIE
-// ==========================================================
-
-const buildMovieRoundCursors = ({ date, startMinutes, roomAllocation, existingShowtimes = [], scheduledSlots = [] }) => {
-    const cursors = {};
-    const allExisting = [...existingShowtimes, ...scheduledSlots];
-    for (const [type, allocation] of Object.entries(roomAllocation)) {
-        if (!allocation || !Array.isArray(allocation.pool) || allocation.pool.length === 0) continue;
-        const pool = allocation.pool;
-        const lastIndex = getLastRoomIndexForRound({ pool, existingShowtimes: allExisting, date, startMinutes });
-        cursors[type] = lastIndex >= 0 ? (lastIndex + 1) % pool.length : 0;
-    }
-    return cursors;
-};
-
-// ==========================================================
 // GENERATE SLOTS FOR ONE MOVIE / ONE DAY
 // ==========================================================
 
@@ -907,6 +891,10 @@ class ShowtimeService {
         return await ShowtimeRepository.create({ movie_id, cinema_id, room_id, start_time });
     }
 
+    // ==========================================================
+    // SCHEDULE SHOWTIMES - HỖ TRỢ NHIỀU PHIM + DISTRIBUTION RIÊNG
+    // ==========================================================
+
     async scheduleShowtimes(data) {
         if (!data) {
             const err = new Error("Dữ liệu tạo lịch chiếu không hợp lệ");
@@ -914,10 +902,10 @@ class ShowtimeService {
             throw err;
         }
 
-        // 👇 Lấy config từ request
+        // 👉 Lấy config từ request
         const userConfig = data.config || {};
         
-        // 👇 Merge với config mặc định
+        // 👉 Merge với config mặc định
         const config = {
             ...SCHEDULER_CONFIG,
             weekdayStart: userConfig.weekday_start || SCHEDULER_CONFIG.weekdayStart,
@@ -932,7 +920,8 @@ class ShowtimeService {
 
         console.log("📋 CONFIG ĐANG SỬ DỤNG:", config);
 
-        const { movie_ids, cinema_id, start_date, end_date, distribution } = data;
+        // 👉 Lấy movies từ request (hỗ trợ nhiều phim với distribution riêng)
+        const { movies, cinema_id, start_date, end_date } = data;
         const cinemaId = Number(cinema_id);
         
         if (!cinemaId || cinemaId <= 0) {
@@ -959,27 +948,30 @@ class ShowtimeService {
             throw err;
         }
 
-        // Lấy danh sách phim
+        // 👉 Xây dựng danh sách phim từ request
         let moviesData = [];
-        const movieIds = Array.isArray(movie_ids) ? movie_ids : (movie_ids ? [movie_ids] : []);
         
-        if (movieIds.length > 0) {
-            for (const movieId of movieIds) {
+        if (Array.isArray(movies) && movies.length > 0) {
+            // Lấy từng phim với distribution riêng
+            for (const item of movies) {
+                const movieId = Number(item.movie_id);
                 const movie = await ShowtimeRepository.getMovieDuration(movieId);
                 if (movie) {
                     moviesData.push({
                         ...movie,
-                        distribution: distribution || 'normal',
+                        distribution: item.distribution || 'normal',
                         _schedulerOrder: Number(movie.created_order || 0)
                     });
+                } else {
+                    console.warn(`⚠️ Không tìm thấy phim với ID: ${movieId}`);
                 }
             }
         } else {
-            // Nếu không chọn phim cụ thể, lấy tất cả phim đang chiếu
+            // Nếu không chọn phim cụ thể, lấy tất cả phim đang chiếu (mặc định NORMAL)
             const allMovies = await ShowtimeRepository.getActiveMovies();
             moviesData = allMovies.map(movie => ({
                 ...movie,
-                distribution: distribution || 'normal',
+                distribution: 'normal',
                 _schedulerOrder: Number(movie.created_order || 0)
             }));
         }
@@ -987,8 +979,13 @@ class ShowtimeService {
         if (moviesData.length === 0) {
             const err = new Error("Không có phim nào để tạo lịch");
             err.statusCode = 400;
-            err.field = "movie_ids";
+            err.field = "movies";
             throw err;
+        }
+
+        console.log(`📋 DANH SÁCH PHIM (${moviesData.length} phim):`);
+        for (const movie of moviesData) {
+            console.log(`  🎬 ${movie.title} (${movie.movie_id}) - ${movie.distribution?.toUpperCase() || 'NORMAL'}`);
         }
 
         // Lấy phòng của rạp
@@ -1018,15 +1015,16 @@ class ShowtimeService {
             endDate: end_date,
             roomIds: schedulerRoomIds
         });
+        console.log(`📚 Đã tải ${existingShowtimes?.length || 0} suất chiếu hiện tại để kiểm tra xung đột.`);
 
-        // 👇 Dùng config tùy chỉnh
+        // 👉 Tạo schedule với config tùy chỉnh và danh sách phim đã có distribution
         const generated = generateSchedule({
             movies: moviesData,
             rooms,
             roomTypes: allRoomTypes,
             startDate: start_date,
             endDate: end_date,
-            config, // 👈 Config từ user
+            config,
             existingShowtimes,
             movieStats: await ShowtimeRepository.getMovieStats(moviesData.map(m => m.movie_id))
         });
@@ -1119,13 +1117,17 @@ class ShowtimeService {
                 roomTypes: allRoomTypes,
                 movieCount: moviesData.length,
                 movieIds: moviesData.map(m => m.movie_id),
+                movies: moviesData.map(m => ({
+                    movie_id: m.movie_id,
+                    title: m.title,
+                    distribution: m.distribution
+                })),
                 generatedCount: generated.data.length,
                 createdCount: created.length,
                 conflictCount: conflicts.length,
                 skippedPastCount: skippedPast.length,
                 startDate: start_date,
                 endDate: end_date,
-                distribution: distribution || 'normal',
                 byRoomType: created.reduce((acc, slot) => {
                     const type = slot.room_type || "UNKNOWN";
                     acc[type] = (acc[type] || 0) + 1;
@@ -1146,7 +1148,7 @@ class ShowtimeService {
             },
             schedulerStats: generated.stats || null,
             roomTypes: allRoomTypes,
-            usedConfig: config // 👈 Trả về config đã dùng
+            usedConfig: config
         };
     }
 

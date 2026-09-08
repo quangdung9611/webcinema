@@ -187,7 +187,7 @@ exports.filterShowtimes = async (req, res) => {
 };
 
 /*=========================================================
-    PUBLIC - MOVIE DETAIL - BỎ GIÁ
+    PUBLIC - MOVIE DETAIL
 =========================================================*/
 exports.getShowtimesForMovieDetail = async (req, res) => {
     try {
@@ -216,40 +216,52 @@ exports.getShowtimesForMovieDetail = async (req, res) => {
 };
 
 /*=========================================================
-    ADMIN - AUTO GENERATE SHOWTIMES
+    ADMIN - AUTO GENERATE SHOWTIMES (CÓ HỖ TRỢ NHIỀU PHIM + DISTRIBUTION RIÊNG)
 =========================================================*/
 exports.createAutoSchedule = async (req, res) => {
     try {
         const { 
-            movie_ids, 
+            movies,      // [{ movie_id, distribution }]
             cinema_id, 
             start_date, 
             end_date, 
-            distribution,
-            config // 👈 Nhận thêm config
+            config       // Cấu hình giờ
         } = req.body;
         
-        // Xử lý movie_ids
-        let movieIdArray = [];
-        if (movie_ids) {
-            if (Array.isArray(movie_ids)) {
-                movieIdArray = movie_ids;
-            } else if (typeof movie_ids === 'string') {
-                movieIdArray = movie_ids.split(',').map(id => id.trim());
-            } else {
-                movieIdArray = [String(movie_ids)];
-            }
+        // Validate movies
+        let moviesArray = [];
+        if (Array.isArray(movies) && movies.length > 0) {
+            moviesArray = movies.map(item => ({
+                movie_id: Number(item.movie_id),
+                distribution: item.distribution || 'normal'
+            })).filter(item => !isNaN(item.movie_id) && item.movie_id > 0);
         }
-        movieIdArray = movieIdArray.map(id => Number(id)).filter(id => !isNaN(id) && id > 0);
+        // Nếu movies rỗng, service sẽ tự lấy tất cả phim đang chiếu
         
-        // 👇 Gọi service với config
+        // Validate cinema_id
+        if (!cinema_id) {
+            return res.status(400).json({
+                success: false,
+                field: "cinema_id",
+                message: "Vui lòng chọn rạp"
+            });
+        }
+
+        // Validate dates
+        if (!start_date || !end_date) {
+            return res.status(400).json({
+                success: false,
+                field: "start_date",
+                message: "Vui lòng chọn ngày"
+            });
+        }
+
         const result = await ShowtimeService.scheduleShowtimes({
-            movie_ids: movieIdArray,
-            cinema_id,
+            movies: moviesArray,
+            cinema_id: Number(cinema_id),
             start_date,
             end_date,
-            distribution,
-            config // 👈 Truyền config
+            config
         });
 
         return res.status(201).json({
