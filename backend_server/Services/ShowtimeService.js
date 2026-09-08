@@ -407,27 +407,54 @@ const getRotatingRooms = ({ pool, startIndex, count }) => {
     return result;
 };
 
-// ==========================================================
-// ALLOCATE ROOMS BY PERCENTAGE
-// ==========================================================
+// ShowtimeService.js - Tìm hàm allocateRoomsByPercentage và thay thế
 
 const allocateRoomsByPercentage = (movies, rooms, stats = {}, existingShowtimes = []) => {
     const roomsByType = buildRoomsByType(rooms);
+    
+    // 👉 KHÔNG RESET CURSOR, lấy từ existingShowtimes (phòng đã dùng gần nhất)
+    const startIndexMap = buildInitialRoomCursors({ 
+        roomsByType, 
+        existingShowtimes,
+        date: null, // 👈 Không fix theo ngày
+        startMinutes: null 
+    });
+    
     console.log("📋 SỐ LƯỢNG PHÒNG THEO HẠNG:");
     for (const [type, list] of Object.entries(roomsByType)) {
         console.log(`  ${type}: ${list.length} phòng`);
+        console.log(`    → ${list.map(r => r.room_name).join(', ')}`);
     }
-    const startIndexMap = buildInitialRoomCursors({ roomsByType, existingShowtimes });
-    console.log("🔄 CURSOR PHÒNG BAN ĐẦU:");
+    
+    console.log("🔄 CURSOR HIỆN TẠI (từ lịch cũ):");
     for (const [type, index] of Object.entries(startIndexMap)) {
         const pool = roomsByType[type] || [];
         console.log(`  ${type}: index=${index} → ${pool[index]?.room_name || pool[index]?.room_id || "N/A"}`);
     }
-    const orderedMovies = movies.map((movie, index) => ({
-        ...movie,
-        _schedulerOrder: Number.isFinite(Number(movie._schedulerOrder)) ? Number(movie._schedulerOrder) : index
-    }));
-    orderedMovies.sort((a, b) => a._schedulerOrder - b._schedulerOrder);
+    
+    // 👉 Sắp xếp phim theo HOT level (HOT lên trước)
+    const orderedMovies = movies.map((movie, index) => {
+        const hotOrder = { hot: 0, normal: 1, cold: 2 };
+        return {
+            ...movie,
+            _schedulerOrder: hotOrder[movie.distribution || 'normal'],
+            _userOrder: index
+        };
+    }).sort((a, b) => {
+        // Sắp xếp theo HOT level trước
+        if (a._schedulerOrder !== b._schedulerOrder) {
+            return a._schedulerOrder - b._schedulerOrder;
+        }
+        // Nếu cùng level, giữ nguyên thứ tự user chọn
+        return a._userOrder - b._userOrder;
+    });
+    
+    console.log("📊 THỨ TỰ ƯU TIÊN PHIM:");
+    for (const movie of orderedMovies) {
+        const dist = movie.distribution?.toUpperCase() || 'NORMAL';
+        console.log(`  ${movie._schedulerOrder}. ${movie.title} (${dist}) - User order: ${movie._userOrder}`);
+    }
+    
     const allocated = orderedMovies.map(movie => {
         const level = getMovieHotLevel(movie, stats);
         const config = ROOM_ALLOCATION_PERCENTAGE[level] || ROOM_ALLOCATION_PERCENTAGE.normal;
@@ -435,34 +462,103 @@ const allocateRoomsByPercentage = (movies, rooms, stats = {}, existingShowtimes 
         const percentages = config.percentage || {};
         const roomAllocation = {};
         let totalRoomsAllocated = 0;
+        
         for (const type of allowedTypes) {
             const pool = roomsByType[type] || [];
             if (pool.length === 0) {
                 roomAllocation[type] = { count: 0, rooms: [], pool: [] };
                 continue;
             }
+            
+            // 👉 Tính số phòng cần lấy theo tỷ lệ %
             const percentage = Number(percentages[type] || 0);
-            const allocatedCount = calculatePreferredRoomCount({ poolLength: pool.length, percentage });
-            const startIndex = Number(startIndexMap[type] || 0);
-            const selectedRooms = getRotatingRooms({ pool, startIndex, count: allocatedCount });
-            startIndexMap[type] = (startIndex + allocatedCount) % pool.length;
-            roomAllocation[type] = { count: selectedRooms.length, rooms: selectedRooms, pool };
+            let allocatedCount = calculatePreferredRoomCount({ poolLength: pool.length, percentage });
+            
+            // 👉 Đảm bảo mỗi hạng phòng có ít nhất 1 phòng
+            if (allocatedCount === 0 && pool.length > 0) {
+                allocatedCount = 1;
+            }
+            
+            // 👉 Lấy cursor hiện tại
+            let startIndex = Number(startIndexMap[type] || 0);
+            
+            // 👉 Tìm danh sách phòng trống (không bị conflict)
+            const availableRooms = [];
+            const triedRooms = new Set();
+            let attempts = 0;
+            const maxAttempts = pool.length * 3;
+            
+            // 👉 Lấy phòng trống trước
+            while (availableRooms.length < allocatedCount && attempts < maxAttempts) {
+                const room = pool[startIndex % pool.length];
+                const roomId = Number(room.room_id);
+                
+                if (!triedRooms.has(roomId)) {
+                    triedRooms.add(roomId);
+                    
+                    // Kiểm tra phòng có trống không
+                    const isAvailable = !existingShowtimes.some(existing => {
+                        const existingRoomId = Number(existing.room_id);
+                        return existingRoomId === roomId;
+                    });
+                    
+                    if (isAvailable) {
+                        availableRooms.push(room);
+                    }
+                }
+                
+                startIndex++;
+                attempts++;
+            }
+            
+            // 👉 Nếu không đủ phòng trống, lấy phòng đã dùng (xoay vòng)
+            if (availableRooms.length < allocatedCount) {
+                const remainingCount = allocatedCount - availableRooms.length;
+                let extraStartIndex = startIndex % pool.length;
+                let extraAttempts = 0;
+                
+                while (availableRooms.length < allocatedCount && extraAttempts < pool.length * 2) {
+                    const room = pool[extraStartIndex % pool.length];
+                    const roomId = Number(room.room_id);
+                    
+                    if (!availableRooms.some(r => Number(r.room_id) === roomId)) {
+                        availableRooms.push(room);
+                    }
+                    
+                    extraStartIndex++;
+                    extraAttempts++;
+                }
+            }
+            
+            // 👉 Cập nhật cursor mới
+            startIndexMap[type] = (startIndex) % pool.length;
+            
+            // 👉 Lấy danh sách phòng được chọn
+            const selectedRooms = availableRooms.slice(0, allocatedCount);
+            
+            roomAllocation[type] = { 
+                count: selectedRooms.length, 
+                rooms: selectedRooms, 
+                pool 
+            };
             totalRoomsAllocated += selectedRooms.length;
         }
         return { ...movie, level, hotScore: calculateHotScore(movie, stats), allocatedRooms: totalRoomsAllocated, roomAllocation, allowedTypes };
     });
-    console.log("📊 PHÂN BỔ PHÒNG THEO % + SHARED ROUND ROBIN:");
+    
+    // 👉 LOG CHI TIẾT PHÂN BỔ
+    console.log("📊 PHÂN BỔ PHÒNG (ưu tiên phòng trống + xoay vòng):");
     for (const movie of allocated) {
         console.log(`  🎬 ${movie.title} (${movie.level.toUpperCase()})`);
         for (const [type, data] of Object.entries(movie.roomAllocation)) {
             if (!data || data.count <= 0) continue;
             const names = data.rooms.map(r => r.room_name || r.room_id).join(", ");
-            console.log(`      ${type}: ${data.count} phòng ưu tiên → ${names}`);
+            console.log(`      ${type}: ${data.count} phòng → ${names}`);
         }
     }
+    
     return allocated;
 };
-
 // ==========================================================
 // BUILD ROOM TYPE SEQUENCE
 // ==========================================================
