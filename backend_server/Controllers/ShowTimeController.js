@@ -1,6 +1,5 @@
 const ShowtimeService = require("../Services/ShowtimeService");
 
-
 /*=========================================================
     PUBLIC / ADMIN - GET ALL SHOWTIMES - KHÔNG PHÂN TRANG
 =========================================================*/
@@ -30,7 +29,6 @@ exports.getAllShowtimesAll = async (req, res) => {
     }
 };
 
-
 /*=========================================================
     ADMIN - GET SHOWTIMES - CÓ PHÂN TRANG
 =========================================================*/
@@ -54,7 +52,6 @@ exports.getShowtimesWithPagination = async (req, res) => {
     }
 };
 
-
 /*=========================================================
     ADMIN - GET SHOWTIME DETAIL BY ID
 =========================================================*/
@@ -75,7 +72,6 @@ exports.getShowtimeDetail = async (req, res) => {
         });
     }
 };
-
 
 /*=========================================================
     PUBLIC - GET SHOWTIMES BY CINEMA + ROOM
@@ -106,7 +102,6 @@ exports.getShowtimesByCinemaAndRoom = async (req, res) => {
     }
 };
 
-
 /*=========================================================
     PUBLIC - GET SHOWTIMES BY MOVIE
 =========================================================*/
@@ -127,7 +122,6 @@ exports.getShowtimesByMovie = async (req, res) => {
         });
     }
 };
-
 
 /*=========================================================
     PUBLIC - QUICK BOOKING
@@ -150,7 +144,6 @@ exports.getQuickBookingData = async (req, res) => {
     }
 };
 
-
 /*=========================================================
     PUBLIC - GET SHOWTIMES FOR BOOKING
 =========================================================*/
@@ -172,7 +165,6 @@ exports.getShowtimesForBooking = async (req, res) => {
     }
 };
 
-
 /*=========================================================
     PUBLIC - FILTER SHOWTIMES
 =========================================================*/
@@ -193,7 +185,6 @@ exports.filterShowtimes = async (req, res) => {
         });
     }
 };
-
 
 /*=========================================================
     PUBLIC - MOVIE DETAIL - BỎ GIÁ
@@ -224,13 +215,42 @@ exports.getShowtimesForMovieDetail = async (req, res) => {
     }
 };
 
-
 /*=========================================================
     ADMIN - AUTO GENERATE SHOWTIMES
 =========================================================*/
 exports.createAutoSchedule = async (req, res) => {
     try {
-        const result = await ShowtimeService.scheduleShowtimes(req.body);
+        const { 
+            movie_ids, 
+            cinema_id, 
+            start_date, 
+            end_date, 
+            distribution,
+            config // 👈 Nhận thêm config
+        } = req.body;
+        
+        // Xử lý movie_ids
+        let movieIdArray = [];
+        if (movie_ids) {
+            if (Array.isArray(movie_ids)) {
+                movieIdArray = movie_ids;
+            } else if (typeof movie_ids === 'string') {
+                movieIdArray = movie_ids.split(',').map(id => id.trim());
+            } else {
+                movieIdArray = [String(movie_ids)];
+            }
+        }
+        movieIdArray = movieIdArray.map(id => Number(id)).filter(id => !isNaN(id) && id > 0);
+        
+        // 👇 Gọi service với config
+        const result = await ShowtimeService.scheduleShowtimes({
+            movie_ids: movieIdArray,
+            cinema_id,
+            start_date,
+            end_date,
+            distribution,
+            config // 👈 Truyền config
+        });
 
         return res.status(201).json({
             success: true,
@@ -246,7 +266,6 @@ exports.createAutoSchedule = async (req, res) => {
         });
     }
 };
-
 
 /*=========================================================
     ADMIN - UPDATE SHOWTIME
@@ -269,7 +288,6 @@ exports.updateShowtime = async (req, res) => {
         });
     }
 };
-
 
 /*=========================================================
     ADMIN - DELETE SHOWTIME

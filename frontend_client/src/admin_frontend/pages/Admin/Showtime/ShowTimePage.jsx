@@ -9,7 +9,8 @@ import {
     MapPin,
     Clock,
     Sparkles,
-    Info
+    Info,
+    Settings
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -29,17 +30,24 @@ const DISTRIBUTION_OPTIONS = [
 ];
 
 // ==========================================================
-// INITIAL DATA - KHÔNG CÓ room_types
+// INITIAL DATA
 // ==========================================================
 
 const initialScheduleData = {
-    movie_id: '',
+    movie_ids: [],
     cinema_id: '',
-    room_ids: [],
     start_date: '',
     end_date: '',
-    operating_start: '08:00',
-    distribution_level: 'normal'
+    distribution_level: 'normal',
+    // Cấu hình giờ hoạt động
+    weekday_start: '08:00',
+    weekday_end: '23:30',
+    weekend_start: '08:00',
+    weekend_end: '24:00',
+    hot_interval: 45,
+    normal_interval: 75,
+    cold_interval: 120,
+    buffer_minutes: 15
 };
 
 // ==========================================================
@@ -55,6 +63,7 @@ const ShowTimePage = () => {
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
     const [search, setSearch] = useState('');
+    const [showAdvancedConfig, setShowAdvancedConfig] = useState(false);
 
     const [pagination, setPagination] = useState({
         page: 1,
@@ -193,15 +202,24 @@ const ShowTimePage = () => {
         setEditingShowtime(null);
         setScheduleData({
             ...initialScheduleData,
-            room_ids: [],
+            movie_ids: [],
             start_date: '',
             end_date: '',
             operating_start: '08:00',
-            distribution_level: 'normal'
+            distribution_level: 'normal',
+            weekday_start: '08:00',
+            weekday_end: '23:30',
+            weekend_start: '08:00',
+            weekend_end: '24:00',
+            hot_interval: 45,
+            normal_interval: 75,
+            cold_interval: 120,
+            buffer_minutes: 15
         });
         setRooms([]);
         setFormErrors({});
         setIsFormOpen(true);
+        setShowAdvancedConfig(false);
     };
 
     const handleOpenEdit = async (showtime) => {
@@ -238,22 +256,38 @@ const ShowTimePage = () => {
         setEditingShowtime(null);
         setFormErrors({});
         setRooms([]);
+        setShowAdvancedConfig(false);
     };
 
     const handleChange = async (e) => {
-        const { name, value, checked } = e.target;
+        const { name, value, checked, type } = e.target;
 
         if (formErrors[name]) {
             setFormErrors(prev => ({ ...prev, [name]: '' }));
         }
 
-        if (name === 'cinema_id') {
-            setScheduleData(prev => ({ ...prev, cinema_id: value, room_ids: [] }));
-            await fetchRoomsByCinema(value);
+        // Xử lý multiselect cho phim
+        if (name === 'movie_ids') {
+            const movieId = Number(value);
+            setScheduleData(prev => {
+                const currentIds = Array.isArray(prev.movie_ids) ? prev.movie_ids : [];
+                const nextIds = checked
+                    ? (currentIds.includes(movieId) ? currentIds : [...currentIds, movieId])
+                    : currentIds.filter(id => id !== movieId);
+                return { ...prev, movie_ids: nextIds };
+            });
             return;
         }
 
-        if (name === 'room_ids') {
+        if (name === 'cinema_id') {
+            setScheduleData(prev => ({ ...prev, cinema_id: value }));
+            if (!editingShowtime) {
+                await fetchRoomsByCinema(value);
+            }
+            return;
+        }
+
+        if (name === 'room_ids' && editingShowtime) {
             const roomId = Number(value);
             setScheduleData(prev => {
                 const currentRoomIds = Array.isArray(prev.room_ids) ? prev.room_ids : [];
@@ -268,16 +302,18 @@ const ShowTimePage = () => {
         setScheduleData(prev => ({ ...prev, [name]: value }));
     };
 
-    // ✅ VALIDATE - KHÔNG CÓ room_types
     const validateSchedule = () => {
         const errors = {};
 
-        if (!scheduleData.movie_id) errors.movie_id = 'Vui lòng chọn phim';
         if (!scheduleData.cinema_id) errors.cinema_id = 'Vui lòng chọn rạp';
 
         if (editingShowtime) {
+            if (!scheduleData.movie_id) errors.movie_id = 'Vui lòng chọn phim';
             if (!Array.isArray(scheduleData.room_ids) || scheduleData.room_ids.length === 0) {
                 errors.room_ids = 'Vui lòng chọn phòng chiếu';
+            }
+            if (!scheduleData.operating_start) {
+                errors.operating_start = 'Vui lòng chọn giờ';
             }
         }
 
@@ -286,10 +322,6 @@ const ShowTimePage = () => {
 
         if (scheduleData.start_date && scheduleData.end_date && scheduleData.start_date > scheduleData.end_date) {
             errors.end_date = 'Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu';
-        }
-
-        if (editingShowtime && !scheduleData.operating_start) {
-            errors.operating_start = 'Vui lòng chọn giờ';
         }
 
         setFormErrors(errors);
@@ -326,7 +358,7 @@ const ShowTimePage = () => {
             return;
         }
 
-        // ✅ CREATE AUTO - KHÔNG CÓ room_types
+        // CREATE AUTO
         if (!validateSchedule()) return;
 
         try {
@@ -334,11 +366,21 @@ const ShowTimePage = () => {
             setFormErrors({});
 
             const payload = {
-                movie_id: Number(scheduleData.movie_id),
+                movie_ids: scheduleData.movie_ids || [],
                 cinema_id: Number(scheduleData.cinema_id),
                 start_date: scheduleData.start_date,
                 end_date: scheduleData.end_date,
-                distribution: scheduleData.distribution_level
+                distribution: scheduleData.distribution_level,
+                config: {
+                    weekday_start: scheduleData.weekday_start || '08:00',
+                    weekday_end: scheduleData.weekday_end || '23:30',
+                    weekend_start: scheduleData.weekend_start || '08:00',
+                    weekend_end: scheduleData.weekend_end || '24:00',
+                    hot_interval: Number(scheduleData.hot_interval) || 45,
+                    normal_interval: Number(scheduleData.normal_interval) || 75,
+                    cold_interval: Number(scheduleData.cold_interval) || 120,
+                    buffer_minutes: Number(scheduleData.buffer_minutes) || 15
+                }
             };
 
             console.log('📤 AUTO SCHEDULE PAYLOAD:', payload);
@@ -353,31 +395,37 @@ const ShowTimePage = () => {
             let message = res.data?.message || 'Tạo lịch chiếu thành công.';
 
             if (data) {
-                const created = Array.isArray(data.data) ? data.data.length : (data.createdCount || 0);
-                const conflicts = Array.isArray(data.conflicts) ? data.conflicts.length : 0;
-                const skippedPast = Array.isArray(data.skippedPast) ? data.skippedPast.length : 0;
-                const skipped = Array.isArray(data.skipped) ? data.skipped.length : 0;
+                const created = data.data?.length || 0;
+                const conflicts = data.conflicts?.length || 0;
+                const skippedPast = data.skippedPast?.length || 0;
+                const movieCount = data.summary?.movieCount || 0;
 
-                message += `\n\n✅ Đã tạo: ${created} suất`;
+                message += `\n\n📊 TỔNG QUAN:`;
+                message += `\n🎬 Số phim: ${movieCount}`;
+                message += `\n✅ Đã tạo: ${created} suất`;
                 if (conflicts > 0) message += `\n⚠️ Bỏ qua: ${conflicts} suất bị trùng`;
                 if (skippedPast > 0) message += `\n⏭️ Bỏ qua: ${skippedPast} suất trong quá khứ`;
-                if (skipped > 0) message += `\n⏭️ Bỏ qua: ${skipped} suất không thể xếp`;
 
-                if (data.summary?.allocation && data.summary.allocation.length > 0) {
-                    message += `\n\n📊 PHÂN BỔ PHÒNG THEO HẠNG:`;
-                    for (const alloc of data.summary.allocation) {
-                        const roomAlloc = alloc.roomAllocation || {};
-                        const roomDetails = Object.entries(roomAlloc)
-                            .filter(([type, info]) => info.count > 0)
-                            .map(([type, info]) => `${type}: ${info.count} phòng`)
-                            .join(' | ');
-                        
-                        message += `\n  🎬 ${alloc.title} (${alloc.hotLevel?.toUpperCase() || 'NORMAL'}):`;
-                        message += `\n     Tổng: ${alloc.allocatedRooms} phòng`;
-                        if (roomDetails) {
-                            message += `\n     Chi tiết: ${roomDetails}`;
-                        }
+                if (data.summary?.byMovie) {
+                    message += `\n\n📊 PHÂN BỔ THEO PHIM:`;
+                    for (const [movieId, stats] of Object.entries(data.summary.byMovie)) {
+                        message += `\n  🎬 ${stats.title}: ${stats.count} suất (${stats.avgPerDay || 0}/ngày)`;
                     }
+                }
+
+                if (data.summary?.byRoomType) {
+                    message += `\n\n📊 PHÂN BỔ THEO HẠNG PHÒNG:`;
+                    for (const [type, count] of Object.entries(data.summary.byRoomType)) {
+                        message += `\n  🏠 ${type}: ${count} suất`;
+                    }
+                }
+
+                if (data.summary?.byTimeSlot) {
+                    message += `\n\n📊 PHÂN BỔ THEO KHUNG GIỜ:`;
+                    message += `\n  🌅 Sáng: ${data.summary.byTimeSlot.MORNING || 0} suất`;
+                    message += `\n  ☀️ Chiều: ${data.summary.byTimeSlot.AFTERNOON || 0} suất`;
+                    message += `\n  🌆 Tối: ${data.summary.byTimeSlot.EVENING || 0} suất`;
+                    message += `\n  🌙 Đêm: ${data.summary.byTimeSlot.NIGHT || 0} suất`;
                 }
             }
 
@@ -484,13 +532,14 @@ const ShowTimePage = () => {
         }
     ];
 
-    // ✅ FORM FIELDS - KHÔNG CÓ room_types
+    // FORM FIELDS
     const formFields = [
         {
-            label: 'Phim',
-            name: 'movie_id',
-            type: 'select',
-            options: [{ label: '-- Chọn phim --', value: '' }, ...movies.map(movie => ({ label: movie.title, value: movie.movie_id }))]
+            label: 'Chọn phim',
+            name: 'movie_ids',
+            type: 'multiselect',
+            options: movies.map(movie => ({ label: movie.title, value: movie.movie_id })),
+            description: 'Để trống để lấy tất cả phim đang chiếu'
         },
         {
             label: 'Rạp chiếu',
@@ -502,9 +551,9 @@ const ShowTimePage = () => {
             label: 'Phòng chiếu',
             name: 'room_ids',
             type: 'checkbox-select',
-            options: rooms.map(room => ({ 
-                label: `${room.room_name} (${String(room.room_type || '').trim().toUpperCase()})`, 
-                value: room.room_id 
+            options: rooms.map(room => ({
+                label: `${room.room_name} (${String(room.room_type || '').trim().toUpperCase()})`,
+                value: room.room_id
             }))
         }] : []),
         { label: 'Ngày bắt đầu', name: 'start_date', type: 'date' },
@@ -516,6 +565,58 @@ const ShowTimePage = () => {
             type: 'select',
             options: DISTRIBUTION_OPTIONS
         }] : [])
+    ];
+
+    // Advanced config fields
+    const advancedConfigFields = [
+        {
+            label: '⏰ GIỜ HOẠT ĐỘNG (Thứ 2 - Thứ 6)',
+            name: 'weekday_start',
+            type: 'time'
+        },
+        {
+            label: '⏰ GIỜ KẾT THÚC (Thứ 2 - Thứ 6)',
+            name: 'weekday_end',
+            type: 'time'
+        },
+        {
+            label: '⏰ GIỜ HOẠT ĐỘNG (Thứ 7 - Chủ nhật)',
+            name: 'weekend_start',
+            type: 'time'
+        },
+        {
+            label: '⏰ GIỜ KẾT THÚC (Thứ 7 - Chủ nhật)',
+            name: 'weekend_end',
+            type: 'time'
+        },
+        {
+            label: '🔥 Khoảng cách HOT (phút)',
+            name: 'hot_interval',
+            type: 'number',
+            min: 30,
+            max: 60
+        },
+        {
+            label: '📊 Khoảng cách NORMAL (phút)',
+            name: 'normal_interval',
+            type: 'number',
+            min: 60,
+            max: 90
+        },
+        {
+            label: '❄️ Khoảng cách COLD (phút)',
+            name: 'cold_interval',
+            type: 'number',
+            min: 90,
+            max: 150
+        },
+        {
+            label: '🧹 Thời gian vệ sinh (phút)',
+            name: 'buffer_minutes',
+            type: 'number',
+            min: 10,
+            max: 30
+        }
     ];
 
     return (
@@ -585,21 +686,88 @@ const ShowTimePage = () => {
                 />
 
                 {!editingShowtime && (
+                    <>
+                        <button
+                            type="button"
+                            onClick={() => setShowAdvancedConfig(!showAdvancedConfig)}
+                            style={{
+                                marginTop: '16px',
+                                padding: '8px 16px',
+                                background: 'transparent',
+                                border: '1px solid #e2e8f0',
+                                borderRadius: '6px',
+                                color: '#475569',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                fontSize: '14px'
+                            }}
+                        >
+                            <Settings size={16} />
+                            {showAdvancedConfig ? 'Ẩn' : 'Hiện'} cấu hình nâng cao
+                        </button>
+
+                        {showAdvancedConfig && (
+                            <div style={{
+                                marginTop: '16px',
+                                padding: '20px',
+                                background: '#f8fafc',
+                                borderRadius: '8px',
+                                border: '1px solid #e2e8f0'
+                            }}>
+                                <h4 style={{ marginBottom: '16px', color: '#1e293b' }}>
+                                    ⚙️ Cấu hình giờ chiếu nâng cao
+                                </h4>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                    {advancedConfigFields.map(field => {
+                                        const FieldComponent = field.type === 'time' ? 'input' : 'input';
+                                        return (
+                                            <div key={field.name} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                <label style={{ fontSize: '13px', fontWeight: '500', color: '#475569' }}>
+                                                    {field.label}
+                                                </label>
+                                                <input
+                                                    type={field.type === 'time' ? 'time' : 'number'}
+                                                    name={field.name}
+                                                    value={scheduleData[field.name] || ''}
+                                                    onChange={handleChange}
+                                                    min={field.min}
+                                                    max={field.max}
+                                                    style={{
+                                                        padding: '8px 12px',
+                                                        border: '1px solid #e2e8f0',
+                                                        borderRadius: '6px',
+                                                        fontSize: '14px'
+                                                    }}
+                                                />
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
+
+                {!editingShowtime && (
                     <div style={{ marginTop: '16px', padding: '14px', borderRadius: '10px', background: '#f8fafc', fontSize: '13px', color: '#64748b' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '7px' }}>
                             <Info size={16} /> <strong>Cách hoạt động:</strong>
                         </div>
                         Hệ thống sẽ tự động lấy toàn bộ phòng thuộc các hạng phù hợp với mức ưu tiên bạn chọn.
                         <br /><br />
-                        <strong>🕐 Giờ hoạt động:</strong>
+                        <strong>🕐 Giờ hoạt động mặc định:</strong>
                         <br />Thứ 2 → Thứ 6: <strong>08:00 → 23:30</strong>
                         <br />Thứ 7 → Chủ nhật: <strong>08:00 → 24:00</strong>
                         <br /><br />
-                        <strong>Khoảng cách suất:</strong>
+                        <strong>Khoảng cách suất mặc định:</strong>
                         <br />🔥 HOT: <strong>45 phút</strong> | 📊 NORMAL: <strong>75 phút</strong> | ❄️ COLD: <strong>120 phút</strong>
                         <br /><br />
                         Phòng nào đang bận thì hệ thống sẽ thử phòng khác.
                         <br />Phòng chỉ được sử dụng lại sau khi phim trước kết thúc <strong>+ 15 phút</strong>.
+                        <br /><br />
+                        <em>💡 Bấm vào "Cấu hình nâng cao" để tùy chỉnh giờ hoạt động và khoảng cách suất.</em>
                     </div>
                 )}
             </AdminModal>
@@ -616,7 +784,7 @@ const ShowTimePage = () => {
                 cancelText="Hủy"
             >
                 <div className="admin-alert-content">
-                    <p>{alertModal.message}</p>
+                    <p style={{ whiteSpace: 'pre-wrap' }}>{alertModal.message}</p>
                 </div>
             </AdminModal>
         </>

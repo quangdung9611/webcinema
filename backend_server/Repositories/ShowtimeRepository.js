@@ -44,7 +44,6 @@ class ShowtimeRepository {
         return rows;
     }
 
-
     /*=========================================================
         FIND ALL - CÓ PHÂN TRANG
     =========================================================*/
@@ -122,7 +121,6 @@ class ShowtimeRepository {
         };
     }
 
-
     /*=========================================================
         FIND BY CINEMA + ROOM
     =========================================================*/
@@ -152,7 +150,6 @@ class ShowtimeRepository {
 
         return rows;
     }
-
 
     /*=========================================================
         FIND BY ID
@@ -187,7 +184,6 @@ class ShowtimeRepository {
         return rows[0] || null;
     }
 
-
     /*=========================================================
         FIND BY MOVIE
     =========================================================*/
@@ -213,7 +209,6 @@ class ShowtimeRepository {
         return rows;
     }
 
-
     /*=========================================================
         FIND ROOM IN CINEMA
     =========================================================*/
@@ -230,7 +225,6 @@ class ShowtimeRepository {
 
         return rows[0] || null;
     }
-
 
     /*=========================================================
         FIND ROOMS BY CINEMA - DÙNG CHO AUTO SCHEDULER
@@ -252,14 +246,13 @@ class ShowtimeRepository {
         return rows;
     }
 
-
     /*=========================================================
         GET MOVIE DURATION
     =========================================================*/
     async getMovieDuration(movieId) {
         const [rows] = await db.query(
             `
-            SELECT movie_id, duration, title
+            SELECT movie_id, duration, title, created_at
             FROM movies
             WHERE movie_id = ?
             LIMIT 1
@@ -269,7 +262,6 @@ class ShowtimeRepository {
 
         return rows[0] || null;
     }
-
 
     /*=========================================================
         CHECK CONFLICT
@@ -313,7 +305,6 @@ class ShowtimeRepository {
         return rows[0] || null;
     }
 
-
     /*=========================================================
         CHECK IF PAST TIME
     =========================================================*/
@@ -328,7 +319,6 @@ class ShowtimeRepository {
         return rows[0]?.isPast === 1;
     }
 
-
     /*=========================================================
         CHECK IF HAS TICKETS
     =========================================================*/
@@ -342,7 +332,6 @@ class ShowtimeRepository {
 
         return rows[0] || null;
     }
-
 
     /*=========================================================
         GET EXISTING SHOWTIMES
@@ -387,6 +376,61 @@ class ShowtimeRepository {
         }));
     }
 
+    /*=========================================================
+        GET ACTIVE MOVIES - LẤY PHIM ĐANG CHIẾU
+    =========================================================*/
+    async getActiveMovies() {
+        const [rows] = await db.query(
+            `
+            SELECT 
+                movie_id,
+                title,
+                duration,
+                created_at,
+                status
+            FROM movies
+            WHERE status IN ('active', 'now_showing')
+            ORDER BY created_at ASC
+            `
+        );
+        return rows;
+    }
+
+    /*=========================================================
+        GET MOVIE STATS - LẤY THỐNG KÊ PHIM
+    =========================================================*/
+    async getMovieStats(movieIds) {
+        if (!movieIds || movieIds.length === 0) return {};
+        
+        const placeholders = movieIds.map(() => '?').join(',');
+        const [rows] = await db.query(
+            `
+            SELECT 
+                m.movie_id,
+                COUNT(DISTINCT t.ticket_id) AS ticketSold,
+                COUNT(DISTINCT v.view_id) AS viewCount,
+                AVG(r.rating) AS rating
+            FROM movies m
+            LEFT JOIN showtimes s ON m.movie_id = s.movie_id
+            LEFT JOIN tickets t ON s.showtime_id = t.showtime_id AND t.status IN ('paid', 'completed')
+            LEFT JOIN views v ON m.movie_id = v.movie_id
+            LEFT JOIN reviews r ON m.movie_id = r.movie_id
+            WHERE m.movie_id IN (${placeholders})
+            GROUP BY m.movie_id
+            `,
+            movieIds
+        );
+        
+        const stats = {};
+        for (const row of rows) {
+            stats[row.movie_id] = {
+                ticketSold: Number(row.ticketSold) || 0,
+                viewCount: Number(row.viewCount) || 0,
+                rating: Number(row.rating) || 0
+            };
+        }
+        return stats;
+    }
 
     /*=========================================================
         GET QUICK BOOKING - MOVIES
@@ -403,7 +447,6 @@ class ShowtimeRepository {
 
         return rows;
     }
-
 
     /*=========================================================
         GET QUICK BOOKING - CINEMAS
@@ -422,7 +465,6 @@ class ShowtimeRepository {
         return rows;
     }
 
-
     /*=========================================================
         GET QUICK BOOKING - DATES
     =========================================================*/
@@ -439,7 +481,6 @@ class ShowtimeRepository {
 
         return rows;
     }
-
 
     /*=========================================================
         GET QUICK BOOKING - TIMES
@@ -461,7 +502,6 @@ class ShowtimeRepository {
 
         return rows;
     }
-
 
     /*=========================================================
         GET SHOWTIMES FOR BOOKING
@@ -485,7 +525,6 @@ class ShowtimeRepository {
         return rows;
     }
 
-
     /*=========================================================
         FILTER SHOWTIMES
     =========================================================*/
@@ -505,7 +544,6 @@ class ShowtimeRepository {
 
         return rows;
     }
-
 
     /*=========================================================
         FIND SHOWTIMES FOR MOVIE DETAIL
@@ -530,7 +568,6 @@ class ShowtimeRepository {
         return rows;
     }
 
-
     /*=========================================================
         CREATE
     =========================================================*/
@@ -547,7 +584,6 @@ class ShowtimeRepository {
 
         return result.insertId;
     }
-
 
     /*=========================================================
         UPDATE
@@ -566,7 +602,6 @@ class ShowtimeRepository {
 
         return result.affectedRows;
     }
-
 
     /*=========================================================
         DELETE

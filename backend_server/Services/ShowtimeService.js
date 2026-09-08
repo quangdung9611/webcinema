@@ -913,79 +913,104 @@ class ShowtimeService {
             err.statusCode = 400;
             throw err;
         }
-        const { movie_id, cinema_id, start_date, end_date, distribution } = data;
-        const movieId = Number(movie_id);
+
+        // 👇 Lấy config từ request
+        const userConfig = data.config || {};
+        
+        // 👇 Merge với config mặc định
+        const config = {
+            ...SCHEDULER_CONFIG,
+            weekdayStart: userConfig.weekday_start || SCHEDULER_CONFIG.weekdayStart,
+            weekdayEnd: userConfig.weekday_end || SCHEDULER_CONFIG.weekdayEnd,
+            weekendStart: userConfig.weekend_start || SCHEDULER_CONFIG.weekendStart,
+            weekendEnd: userConfig.weekend_end || SCHEDULER_CONFIG.weekendEnd,
+            hotInterval: Number(userConfig.hot_interval) || SCHEDULER_CONFIG.hotInterval,
+            normalInterval: Number(userConfig.normal_interval) || SCHEDULER_CONFIG.normalInterval,
+            coldInterval: Number(userConfig.cold_interval) || SCHEDULER_CONFIG.coldInterval,
+            bufferMinutes: Number(userConfig.buffer_minutes) || SCHEDULER_CONFIG.bufferMinutes,
+        };
+
+        console.log("📋 CONFIG ĐANG SỬ DỤNG:", config);
+
+        const { movie_ids, cinema_id, start_date, end_date, distribution } = data;
         const cinemaId = Number(cinema_id);
-        if (!Number.isInteger(movieId) || movieId <= 0) {
-            const err = new Error("Vui lòng chọn phim");
-            err.statusCode = 400;
-            err.field = "movie_id";
-            throw err;
-        }
-        if (!Number.isInteger(cinemaId) || cinemaId <= 0) {
+        
+        if (!cinemaId || cinemaId <= 0) {
             const err = new Error("Vui lòng chọn rạp");
             err.statusCode = 400;
             err.field = "cinema_id";
             throw err;
         }
-        if (!start_date) {
-            const err = new Error("Vui lòng chọn ngày bắt đầu");
+
+        if (!start_date || !end_date) {
+            const err = new Error("Vui lòng chọn ngày");
             err.statusCode = 400;
             err.field = "start_date";
             throw err;
         }
-        if (!end_date) {
-            const err = new Error("Vui lòng chọn ngày kết thúc");
-            err.statusCode = 400;
-            err.field = "end_date";
-            throw err;
-        }
+
         const startDate = parseDate(start_date);
         const endDate = parseDate(end_date);
+        
         if (endDate < startDate) {
             const err = new Error("Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu");
             err.statusCode = 400;
             err.field = "end_date";
             throw err;
         }
-        const scheduleDistribution = String(distribution || "normal").toLowerCase();
-        if (!ALLOWED_DISTRIBUTIONS.includes(scheduleDistribution)) {
-            const err = new Error("Mức độ phân bổ không hợp lệ. Chấp nhận: hot, normal, cold");
+
+        // Lấy danh sách phim
+        let moviesData = [];
+        const movieIds = Array.isArray(movie_ids) ? movie_ids : (movie_ids ? [movie_ids] : []);
+        
+        if (movieIds.length > 0) {
+            for (const movieId of movieIds) {
+                const movie = await ShowtimeRepository.getMovieDuration(movieId);
+                if (movie) {
+                    moviesData.push({
+                        ...movie,
+                        distribution: distribution || 'normal',
+                        _schedulerOrder: Number(movie.created_order || 0)
+                    });
+                }
+            }
+        } else {
+            // Nếu không chọn phim cụ thể, lấy tất cả phim đang chiếu
+            const allMovies = await ShowtimeRepository.getActiveMovies();
+            moviesData = allMovies.map(movie => ({
+                ...movie,
+                distribution: distribution || 'normal',
+                _schedulerOrder: Number(movie.created_order || 0)
+            }));
+        }
+
+        if (moviesData.length === 0) {
+            const err = new Error("Không có phim nào để tạo lịch");
             err.statusCode = 400;
-            err.field = "distribution";
+            err.field = "movie_ids";
             throw err;
         }
-        const movie = await ShowtimeRepository.getMovieDuration(movieId);
-        if (!movie) {
-            const err = new Error("Không tìm thấy phim");
-            err.statusCode = 404;
-            err.field = "movie_id";
-            throw err;
-        }
-        const duration = Number(movie.duration);
-        if (!Number.isFinite(duration) || duration <= 0) {
-            const err = new Error("Thời lượng phim không hợp lệ");
-            err.statusCode = 400;
-            err.field = "movie_id";
-            throw err;
-        }
-        let rooms = [];
-        if (typeof ShowtimeRepository.findRoomsByCinema === "function") {
-            rooms = await ShowtimeRepository.findRoomsByCinema(cinemaId);
-        }
+
+        // Lấy phòng của rạp
+        let rooms = await ShowtimeRepository.findRoomsByCinema(cinemaId);
         rooms = rooms.map(room => ({
             ...room,
             room_id: Number(room.room_id),
             room_type: String(room.room_type || "").trim().toUpperCase()
         })).filter(room => Number.isInteger(room.room_id) && room.room_id > 0);
+
         if (rooms.length === 0) {
             const err = new Error("Rạp không có phòng chiếu nào.");
             err.statusCode = 400;
             err.field = "cinema_id";
             throw err;
         }
+
+        // Lấy tất cả room types
         const allRoomTypes = [...new Set(rooms.map(r => r.room_type).filter(type => ALLOWED_ROOM_TYPES.includes(type)))];
         console.log(`📋 Rạp có các hạng phòng: ${allRoomTypes.join(", ")}`);
+
+        // Lấy existing showtimes để check conflict
         const schedulerRoomIds = rooms.map(room => Number(room.room_id));
         const existingShowtimes = await ShowtimeRepository.getExistingShowtimes({
             cinemaId,
@@ -993,37 +1018,20 @@ class ShowtimeService {
             endDate: end_date,
             roomIds: schedulerRoomIds
         });
-        console.log(`📚 Đã tải ${existingShowtimes?.length || 0} suất chiếu hiện tại để kiểm tra xung đột.`);
-        const config = {
-            ...SCHEDULER_CONFIG,
-            weekdayStart: "08:00",
-            weekdayEnd: "23:30",
-            weekendStart: "08:00",
-            weekendEnd: "24:00",
-            bufferMinutes: 15,
-            hotInterval: 45,
-            normalInterval: 75,
-            coldInterval: 120,
-            roomTypes: allRoomTypes
-        };
-        const moviesForScheduler = [{
-            movie_id: movieId,
-            title: movie.title || `Phim ${movieId}`,
-            duration,
-            distribution: scheduleDistribution,
-            roomTypes: allRoomTypes,
-            _schedulerOrder: Number(movie.created_order || 0)
-        }];
+
+        // 👇 Dùng config tùy chỉnh
         const generated = generateSchedule({
-            movies: moviesForScheduler,
+            movies: moviesData,
             rooms,
             roomTypes: allRoomTypes,
             startDate: start_date,
             endDate: end_date,
-            config,
+            config, // 👈 Config từ user
             existingShowtimes,
-            movieStats: {}
+            movieStats: await ShowtimeRepository.getMovieStats(moviesData.map(m => m.movie_id))
         });
+
+        // Lưu các suất đã tạo
         const created = [], conflicts = [], skippedPast = [];
         const timeSlotStats = {
             MORNING: { count: 0, slots: [] },
@@ -1035,6 +1043,7 @@ class ShowtimeService {
             WEEKDAY: { count: 0, slots: [] },
             WEEKEND: { count: 0, slots: [] }
         };
+
         for (const slot of generated.data) {
             const roomId = Number(slot.room_id);
             const slotStartTime = formatDateTime(slot.start_time);
@@ -1044,42 +1053,48 @@ class ShowtimeService {
             const dayType = getDayType(date);
             const roomInfo = rooms.find(r => Number(r.room_id) === roomId);
             const roomType = slot.room_type || roomInfo?.room_type || null;
+
             if (!Number.isInteger(roomId) || roomId <= 0 || !slotStartTime) {
                 conflicts.push({ ...slot, reason: "Suất chiếu không hợp lệ" });
                 continue;
             }
+
             const isPast = await ShowtimeRepository.isPastTime(slotStartTime);
             if (isPast) {
                 skippedPast.push({ ...slot, room_type: roomType, reason: "Suất chiếu nằm trong quá khứ" });
                 continue;
             }
+
             const conflict = await ShowtimeRepository.findConflict(roomId, slotStartTime, slotEndTime);
             if (conflict) {
                 conflicts.push({ ...slot, room_type: roomType, reason: "Phòng đã có suất chiếu bị trùng thời gian" });
                 continue;
             }
+
             try {
                 const showtimeId = await ShowtimeRepository.create({
-                    movie_id: movieId,
+                    movie_id: slot.movie_id,
                     cinema_id: cinemaId,
                     room_id: roomId,
                     start_time: slotStartTime
                 });
+
                 const createdSlot = {
                     showtime_id: showtimeId,
-                    movie_id: movieId,
+                    movie_id: slot.movie_id,
                     cinema_id: cinemaId,
                     room_id: roomId,
                     room_type: roomType,
                     start_time: slotStartTime,
                     end_time: slotEndTime,
-                    duration,
+                    duration: slot.duration,
                     time_slot: timeSlot,
                     time_slot_label: TIME_SLOT_LABELS[timeSlot],
                     day_type: dayType,
                     day_type_label: DAY_TYPE_LABELS[dayType]
                 };
                 created.push(createdSlot);
+                
                 if (timeSlotStats[timeSlot]) {
                     timeSlotStats[timeSlot].count++;
                     timeSlotStats[timeSlot].slots.push(createdSlot);
@@ -1092,27 +1107,25 @@ class ShowtimeService {
                 conflicts.push({ ...slot, room_type: roomType, reason: error.message || "Không thể tạo suất chiếu" });
             }
         }
+
         return {
             success: true,
             data: created,
             conflicts,
             skippedPast,
             summary: {
-                movieId,
                 cinemaId,
                 roomCount: rooms.length,
                 roomTypes: allRoomTypes,
-                roomIds: rooms.map(r => r.room_id),
+                movieCount: moviesData.length,
+                movieIds: moviesData.map(m => m.movie_id),
                 generatedCount: generated.data.length,
                 createdCount: created.length,
                 conflictCount: conflicts.length,
                 skippedPastCount: skippedPast.length,
-                duration,
                 startDate: start_date,
                 endDate: end_date,
-                startTime: "08:00",
-                endTime: "23:30",
-                distribution: scheduleDistribution,
+                distribution: distribution || 'normal',
                 byRoomType: created.reduce((acc, slot) => {
                     const type = slot.room_type || "UNKNOWN";
                     acc[type] = (acc[type] || 0) + 1;
@@ -1128,11 +1141,12 @@ class ShowtimeService {
                     WEEKDAY: dayTypeStats.WEEKDAY.count,
                     WEEKEND: dayTypeStats.WEEKEND.count
                 },
+                byMovie: generated.stats?.byMovie || {},
                 allocation: generated.allocation || []
             },
             schedulerStats: generated.stats || null,
-            schedulerDistribution: generated.distribution || null,
-            roomTypes: allRoomTypes
+            roomTypes: allRoomTypes,
+            usedConfig: config // 👈 Trả về config đã dùng
         };
     }
 
