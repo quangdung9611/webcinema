@@ -18,7 +18,7 @@ import {
 
 import AdminPage from '../../../components/AdminPage';
 import AdminModal from '../../../components/AdminModal';
-import '../../../styles/MovieShowtimeConfigPage.css'; //
+import '../../../styles/MovieShowtimeConfigPage.css';
 
 // ==========================================================
 // CONSTANTS
@@ -116,9 +116,11 @@ const MovieShowtimeConfigPage = () => {
         
         for (const movieId of selectedMovies) {
             try {
-                const res = await api.get(`/api/admin/movies/${movieId}/showtime-config?cinema_id=${selectedCinema}`);
+                // 👉 SỬA ENDPOINT: /api/showtime-config/:movie_id?cinema_id=xxx
+                const res = await api.get(`/api/showtime-config/${movieId}?cinema_id=${selectedCinema}`);
                 newConfigs[movieId] = res.data.data || [];
             } catch (error) {
+                console.error(`Lỗi load config cho phim ${movieId}:`, error);
                 newConfigs[movieId] = [];
             }
         }
@@ -176,7 +178,8 @@ const MovieShowtimeConfigPage = () => {
         
         if (removed.config_id) {
             try {
-                await api.delete(`/api/admin/movies/${movieId}/showtime-config/${removed.config_id}`);
+                // 👉 SỬA ENDPOINT: /api/showtime-config/:movie_id/:config_id
+                await api.delete(`/api/showtime-config/${movieId}/${removed.config_id}`);
                 setConfigs(prev => ({
                     ...prev,
                     [movieId]: newConfigs
@@ -226,7 +229,8 @@ const MovieShowtimeConfigPage = () => {
             if (validConfigs.length === 0) continue;
 
             try {
-                await api.post(`/api/admin/movies/${movieId}/showtime-config`, {
+                // 👉 SỬA ENDPOINT: /api/showtime-config/:movie_id
+                await api.post(`/api/showtime-config/${movieId}`, {
                     cinema_id: selectedCinema,
                     configs: validConfigs.map(c => ({
                         time_slot: c.time_slot,

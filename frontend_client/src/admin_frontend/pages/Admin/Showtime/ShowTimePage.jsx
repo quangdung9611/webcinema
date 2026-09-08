@@ -9,7 +9,12 @@ import {
     MapPin,
     Clock,
     Sparkles,
-    Info
+    Info,
+    Plus,
+    Trash2 as TrashIcon,
+    Settings,
+    ChevronDown,
+    ChevronUp
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -19,6 +24,25 @@ import AdminForm from '../../../components/AdminForm';
 import AdminPagination from '../../../components/AdminPagination';
 
 // ==========================================================
+// CONSTANTS
+// ==========================================================
+
+const TIME_SLOTS = [
+    { key: 'MORNING', label: '🌅 SÁNG (06:00 - 12:00)' },
+    { key: 'AFTERNOON', label: '☀️ TRƯA (12:00 - 17:00)' },
+    { key: 'EVENING', label: '🌆 CHIỀU (17:00 - 20:00)' },
+    { key: 'NIGHT', label: '🌙 TỐI (20:00 - 24:00)' }
+];
+
+const ROOM_TYPES = ['2D', '3D', 'VIP', 'IMAX'];
+
+const DAY_TYPES = [
+    { key: 'ALL', label: 'Tất cả các ngày' },
+    { key: 'WEEKDAY', label: 'Ngày thường (T2-T6)' },
+    { key: 'WEEKEND', label: 'Cuối tuần (T7-CN)' }
+];
+
+// ==========================================================
 // INITIAL DATA
 // ==========================================================
 
@@ -26,7 +50,14 @@ const initialScheduleData = {
     movie_ids: [],
     cinema_id: '',
     start_date: '',
-    end_date: ''
+    end_date: '',
+    configs: [
+        { time_slot: 'MORNING', room_type: '2D', slot_count: 4, interval_minutes: 45, day_type: 'ALL', is_active: 1 },
+        { time_slot: 'AFTERNOON', room_type: '2D', slot_count: 3, interval_minutes: 45, day_type: 'ALL', is_active: 1 },
+        { time_slot: 'EVENING', room_type: '3D', slot_count: 3, interval_minutes: 45, day_type: 'ALL', is_active: 1 },
+        { time_slot: 'NIGHT', room_type: 'IMAX', slot_count: 2, interval_minutes: 60, day_type: 'ALL', is_active: 1 }
+    ],
+    showConfigSection: true
 };
 
 // ==========================================================
@@ -42,6 +73,7 @@ const ShowTimePage = () => {
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
     const [search, setSearch] = useState('');
+    const [showConfigSection, setShowConfigSection] = useState(true);
 
     const [pagination, setPagination] = useState({
         page: 1,
@@ -59,6 +91,7 @@ const ShowTimePage = () => {
     const [editingShowtime, setEditingShowtime] = useState(null);
     const [scheduleData, setScheduleData] = useState(initialScheduleData);
     const [formErrors, setFormErrors] = useState({});
+    const [loadedConfigs, setLoadedConfigs] = useState({});
 
     const [alertModal, setAlertModal] = useState({
         open: false,
@@ -87,6 +120,10 @@ const ShowTimePage = () => {
         return { date: `${day}/${month}/${year}`, time: `${hour}:${minute}` };
     };
 
+    // ==========================================================
+    // FETCH DATA
+    // ==========================================================
+
     const fetchShowtimes = useCallback(async (page = 1, keyword = '') => {
         if (isFetching.current) return;
         if (abortControllerRef.current) abortControllerRef.current.abort();
@@ -102,21 +139,17 @@ const ShowTimePage = () => {
                 signal: controller.signal
             });
 
-            const showtimesData = res.data?.data || [];
-            const paginationData = res.data?.pagination || {
+            setShowtimes(res.data?.data || []);
+            setPagination(res.data?.pagination || {
                 page: 1, limit: 20, total: 0, totalPages: 1,
                 hasPreviousPage: false, hasNextPage: false
-            };
-
-            setShowtimes(showtimesData);
-            setPagination(paginationData);
+            });
 
         } catch (error) {
             if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') return;
             console.error('FETCH SHOWTIMES ERROR:', error);
             setShowtimes([]);
             showAlert('Lỗi', 'Không thể tải danh sách suất chiếu.', 'error');
-
         } finally {
             setLoading(false);
             isFetching.current = false;
@@ -151,6 +184,30 @@ const ShowTimePage = () => {
         }
     }, []);
 
+    // 👉 LOAD CONFIG TỪ DATABASE
+    const loadConfigFromDB = async (movieId, cinemaId) => {
+        if (!movieId || !cinemaId) return null;
+        try {
+            const res = await api.get(`/api/showtime-config/${movieId}?cinema_id=${cinemaId}`);
+            const data = res.data.data || [];
+            if (data.length > 0) {
+                return data.map(c => ({
+                    time_slot: c.time_slot || 'MORNING',
+                    room_type: c.room_type || '2D',
+                    slot_count: c.slot_count || 1,
+                    interval_minutes: c.interval_minutes || 45,
+                    day_type: c.day_type || 'ALL',
+                    is_active: c.is_active !== undefined ? c.is_active : 1,
+                    config_id: c.config_id
+                }));
+            }
+            return null;
+        } catch (error) {
+            console.log('Không có config cũ hoặc lỗi load:', error);
+            return null;
+        }
+    };
+
     useEffect(() => {
         fetchShowtimes(1, '');
         fetchInitialData();
@@ -176,17 +233,59 @@ const ShowTimePage = () => {
         fetchShowtimes(page, search);
     };
 
-    const handleOpenAdd = () => {
+    // ==========================================================
+    // CONFIG FUNCTIONS
+    // ==========================================================
+
+    const addConfig = () => {
+        setScheduleData(prev => ({
+            ...prev,
+            configs: [
+                ...prev.configs,
+                { time_slot: 'MORNING', room_type: '2D', slot_count: 1, interval_minutes: 45, day_type: 'ALL', is_active: 1 }
+            ]
+        }));
+    };
+
+    const removeConfig = (index) => {
+        setScheduleData(prev => ({
+            ...prev,
+            configs: prev.configs.filter((_, i) => i !== index)
+        }));
+    };
+
+    const updateConfig = (index, field, value) => {
+        setScheduleData(prev => {
+            const newConfigs = [...prev.configs];
+            newConfigs[index] = { ...newConfigs[index], [field]: value };
+            return { ...prev, configs: newConfigs };
+        });
+    };
+
+    // ==========================================================
+    // HANDLE MODAL
+    // ==========================================================
+
+    const handleOpenAdd = async () => {
         setEditingShowtime(null);
         setScheduleData({
             ...initialScheduleData,
             movie_ids: [],
+            cinema_id: '',
             start_date: '',
-            end_date: ''
+            end_date: '',
+            configs: [
+                { time_slot: 'MORNING', room_type: '2D', slot_count: 4, interval_minutes: 45, day_type: 'ALL', is_active: 1 },
+                { time_slot: 'AFTERNOON', room_type: '2D', slot_count: 3, interval_minutes: 45, day_type: 'ALL', is_active: 1 },
+                { time_slot: 'EVENING', room_type: '3D', slot_count: 3, interval_minutes: 45, day_type: 'ALL', is_active: 1 },
+                { time_slot: 'NIGHT', room_type: 'IMAX', slot_count: 2, interval_minutes: 60, day_type: 'ALL', is_active: 1 }
+            ],
+            showConfigSection: true
         });
         setRooms([]);
         setFormErrors({});
         setIsFormOpen(true);
+        setShowConfigSection(true);
     };
 
     const handleOpenEdit = async (showtime) => {
@@ -207,6 +306,7 @@ const ShowTimePage = () => {
                 operating_start: st.start_time?.slice(11, 16) || '08:00'
             });
             setIsFormOpen(true);
+            setShowConfigSection(false);
 
         } catch (error) {
             console.error('FETCH SHOWTIME DETAIL ERROR:', error);
@@ -223,6 +323,10 @@ const ShowTimePage = () => {
         setFormErrors({});
         setRooms([]);
     };
+
+    // ==========================================================
+    // HANDLE CHANGE
+    // ==========================================================
 
     const handleChange = async (e) => {
         const { name, value, checked } = e.target;
@@ -247,6 +351,13 @@ const ShowTimePage = () => {
             setScheduleData(prev => ({ ...prev, cinema_id: value }));
             if (!editingShowtime) {
                 await fetchRoomsByCinema(value);
+                // Load config khi chọn phim + rạp
+                if (scheduleData.movie_ids && scheduleData.movie_ids.length === 1) {
+                    const config = await loadConfigFromDB(scheduleData.movie_ids[0], value);
+                    if (config) {
+                        setScheduleData(prev => ({ ...prev, configs: config }));
+                    }
+                }
             }
             return;
         }
@@ -265,6 +376,10 @@ const ShowTimePage = () => {
 
         setScheduleData(prev => ({ ...prev, [name]: value }));
     };
+
+    // ==========================================================
+    // VALIDATE
+    // ==========================================================
 
     const validateSchedule = () => {
         const errors = {};
@@ -294,6 +409,10 @@ const ShowTimePage = () => {
         setFormErrors(errors);
         return Object.keys(errors).length === 0;
     };
+
+    // ==========================================================
+    // HANDLE SUBMIT
+    // ==========================================================
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -332,17 +451,38 @@ const ShowTimePage = () => {
             setSubmitLoading(true);
             setFormErrors({});
 
+            const movieIds = scheduleData.movie_ids || [];
+            const validConfigs = scheduleData.configs.filter(c => c.slot_count > 0 && c.is_active === 1);
+
+            // 👉 1. LƯU CẤU HÌNH VÀO DATABASE
+            for (const movieId of movieIds) {
+                try {
+                    await api.post(`/api/showtime-config/${movieId}`, {
+                        cinema_id: Number(scheduleData.cinema_id),
+                        configs: validConfigs.map(c => ({
+                            time_slot: c.time_slot,
+                            room_type: c.room_type,
+                            slot_count: c.slot_count,
+                            interval_minutes: c.interval_minutes,
+                            day_type: c.day_type || 'ALL',
+                            is_active: c.is_active !== undefined ? c.is_active : 1
+                        }))
+                    });
+                } catch (err) {
+                    console.warn(`⚠️ Không thể lưu config cho phim ${movieId}:`, err);
+                }
+            }
+
+            // 👉 2. TẠO LỊCH CHIẾU
             const payload = {
-                movies: scheduleData.movie_ids.map(id => ({ movie_id: id })),
+                movies: movieIds.map(id => ({ movie_id: id })),
                 cinema_id: Number(scheduleData.cinema_id),
                 start_date: scheduleData.start_date,
                 end_date: scheduleData.end_date
             };
 
             console.log('📤 AUTO SCHEDULE PAYLOAD:', payload);
-
             const res = await api.post('/api/showtimes/schedule', payload);
-            console.log('📥 AUTO SCHEDULE RESPONSE:', res.data);
 
             setIsFormOpen(false);
             await fetchShowtimes(pagination.page, search);
@@ -354,10 +494,8 @@ const ShowTimePage = () => {
                 const created = data.data?.length || 0;
                 const conflicts = data.conflicts?.length || 0;
                 const skippedPast = data.skippedPast?.length || 0;
-                const movieCount = data.summary?.movieCount || 0;
 
                 message += `\n\n📊 TỔNG QUAN:`;
-                message += `\n🎬 Số phim: ${movieCount}`;
                 message += `\n✅ Đã tạo: ${created} suất`;
                 if (conflicts > 0) message += `\n⚠️ Bỏ qua: ${conflicts} suất bị trùng`;
                 if (skippedPast > 0) message += `\n⏭️ Bỏ qua: ${skippedPast} suất trong quá khứ`;
@@ -379,13 +517,13 @@ const ShowTimePage = () => {
                 if (data.summary?.byTimeSlot) {
                     message += `\n\n📊 PHÂN BỔ THEO KHUNG GIỜ:`;
                     message += `\n  🌅 Sáng: ${data.summary.byTimeSlot.MORNING || 0} suất`;
-                    message += `\n  ☀️ Chiều: ${data.summary.byTimeSlot.AFTERNOON || 0} suất`;
-                    message += `\n  🌆 Tối: ${data.summary.byTimeSlot.EVENING || 0} suất`;
+                    message += `\n  ☀️ Trưa: ${data.summary.byTimeSlot.AFTERNOON || 0} suất`;
+                    message += `\n  🌆 Chiều: ${data.summary.byTimeSlot.EVENING || 0} suất`;
                     message += `\n  🌙 Đêm: ${data.summary.byTimeSlot.NIGHT || 0} suất`;
                 }
             }
 
-            showAlert('Tạo lịch chiếu thành công', message, 'success');
+            showAlert('✅ Tạo lịch chiếu thành công', message, 'success');
 
         } catch (error) {
             console.error('CREATE SCHEDULE ERROR:', error);
@@ -395,13 +533,17 @@ const ShowTimePage = () => {
             if (backendField) {
                 setFormErrors({ [backendField]: message });
             } else {
-                showAlert('Không thể tạo lịch', message, 'error');
+                showAlert('❌ Không thể tạo lịch', message, 'error');
             }
 
         } finally {
             setSubmitLoading(false);
         }
     };
+
+    // ==========================================================
+    // HANDLE DELETE
+    // ==========================================================
 
     const handleDelete = (showtime) => {
         showAlert(
@@ -426,6 +568,10 @@ const ShowTimePage = () => {
             closeAlert
         );
     };
+
+    // ==========================================================
+    // COLUMNS
+    // ==========================================================
 
     const columns = [
         {
@@ -488,55 +634,191 @@ const ShowTimePage = () => {
         }
     ];
 
-    const formFields = [
-        {
-            label: 'Chọn phim',
-            name: 'movie_ids',
-            type: 'checkbox',
-            options: movies.map(movie => ({ label: movie.title, value: movie.movie_id })),
-            description: 'Chọn 1 hoặc nhiều phim để tạo lịch'
-        },
-        {
-            label: 'Rạp chiếu',
-            name: 'cinema_id',
-            type: 'select',
-            options: [{ label: '-- Chọn rạp --', value: '' }, ...cinemas.map(cinema => ({ label: cinema.cinema_name, value: cinema.cinema_id }))]
-        },
-        { label: 'Ngày bắt đầu', name: 'start_date', type: 'date' },
-        { label: 'Ngày kết thúc', name: 'end_date', type: 'date' }
-    ];
+    // ==========================================================
+    // RENDER CONFIG FORM
+    // ==========================================================
 
-    const editFormFields = [
-        {
-            label: 'Phim',
-            name: 'movie_id',
-            type: 'select',
-            options: movies.map(movie => ({ label: movie.title, value: movie.movie_id }))
-        },
-        {
-            label: 'Rạp chiếu',
-            name: 'cinema_id',
-            type: 'select',
-            options: cinemas.map(cinema => ({ label: cinema.cinema_name, value: cinema.cinema_id }))
-        },
-        {
-            label: 'Phòng chiếu',
-            name: 'room_ids',
-            type: 'checkbox-select',
-            options: rooms.map(room => ({
-                label: `${room.room_name} (${String(room.room_type || '').trim().toUpperCase()})`,
-                value: room.room_id
-            }))
-        },
-        { label: 'Ngày chiếu', name: 'start_date', type: 'date' },
-        { label: 'Giờ chiếu', name: 'operating_start', type: 'time' }
-    ];
+    const renderConfigForm = () => {
+        if (editingShowtime) return null;
+
+        return (
+            <div style={{ marginBottom: '20px', padding: '16px', border: '1px solid #e2e8f0', borderRadius: '8px', background: '#f8fafc' }}>
+                <div 
+                    style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center', 
+                        cursor: 'pointer',
+                        marginBottom: showConfigSection ? '12px' : '0'
+                    }}
+                    onClick={() => setShowConfigSection(!showConfigSection)}
+                >
+                    <h4 style={{ margin: 0, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Settings size={18} />
+                        📋 Cấu hình suất chiếu
+                        <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: '400' }}>
+                            ({scheduleData.configs.filter(c => c.slot_count > 0 && c.is_active === 1).length} suất)
+                        </span>
+                    </h4>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {showConfigSection ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                    </div>
+                </div>
+
+                {showConfigSection && (
+                    <>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px', marginTop: '8px' }}>
+                            <button 
+                                type="button"
+                                onClick={addConfig}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    padding: '6px 14px',
+                                    background: '#3b82f6',
+                                    color: '#fff',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer',
+                                    fontSize: '13px',
+                                    fontWeight: '500'
+                                }}
+                            >
+                                <Plus size={16} /> Thêm dòng
+                            </button>
+                        </div>
+
+                        {scheduleData.configs.length === 0 ? (
+                            <div style={{ textAlign: 'center', padding: '20px', color: '#94a3b8' }}>
+                                <p>Chưa có cấu hình. Bấm "Thêm dòng" để bắt đầu.</p>
+                            </div>
+                        ) : (
+                            <>
+                                <div style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: '1.2fr 0.8fr 0.6fr 0.6fr 1fr 0.5fr 40px',
+                                    gap: '8px',
+                                    padding: '8px 12px',
+                                    background: '#f1f5f9',
+                                    borderRadius: '6px',
+                                    fontSize: '11px',
+                                    fontWeight: '600',
+                                    color: '#64748b',
+                                    textTransform: 'uppercase',
+                                    marginBottom: '6px'
+                                }}>
+                                    <span>Khung giờ</span>
+                                    <span>Loại phòng</span>
+                                    <span>Số suất</span>
+                                    <span>K/c</span>
+                                    <span>Áp dụng</span>
+                                    <span>Bật</span>
+                                    <span></span>
+                                </div>
+
+                                {scheduleData.configs.map((config, index) => (
+                                    <div key={index} style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: '1.2fr 0.8fr 0.6fr 0.6fr 1fr 0.5fr 40px',
+                                        gap: '8px',
+                                        padding: '6px 12px',
+                                        background: '#ffffff',
+                                        borderRadius: '6px',
+                                        border: '1px solid #e2e8f0',
+                                        marginBottom: '4px',
+                                        alignItems: 'center'
+                                    }}>
+                                        <select 
+                                            value={config.time_slot}
+                                            onChange={(e) => updateConfig(index, 'time_slot', e.target.value)}
+                                            style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: '4px', fontSize: '12px', background: '#fff' }}
+                                        >
+                                            {TIME_SLOTS.map(s => <option key={s.key} value={s.key}>{s.label.split(' ')[0]}</option>)}
+                                        </select>
+
+                                        <select 
+                                            value={config.room_type}
+                                            onChange={(e) => updateConfig(index, 'room_type', e.target.value)}
+                                            style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: '4px', fontSize: '12px', background: '#fff' }}
+                                        >
+                                            {ROOM_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                        </select>
+
+                                        <input 
+                                            type="number" 
+                                            value={config.slot_count}
+                                            onChange={(e) => updateConfig(index, 'slot_count', Number(e.target.value))}
+                                            min="0"
+                                            max="30"
+                                            style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: '4px', fontSize: '12px', width: '100%' }}
+                                        />
+
+                                        <input 
+                                            type="number" 
+                                            value={config.interval_minutes}
+                                            onChange={(e) => updateConfig(index, 'interval_minutes', Number(e.target.value))}
+                                            min="30"
+                                            max="120"
+                                            step="5"
+                                            style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: '4px', fontSize: '12px', width: '100%' }}
+                                        />
+
+                                        <select 
+                                            value={config.day_type || 'ALL'}
+                                            onChange={(e) => updateConfig(index, 'day_type', e.target.value)}
+                                            style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: '4px', fontSize: '12px', background: '#fff' }}
+                                        >
+                                            {DAY_TYPES.map(d => <option key={d.key} value={d.key}>{d.label}</option>)}
+                                        </select>
+
+                                        <input 
+                                            type="checkbox" 
+                                            checked={config.is_active === 1}
+                                            onChange={(e) => updateConfig(index, 'is_active', e.target.checked ? 1 : 0)}
+                                            style={{ width: '16px', height: '16px', accentColor: '#3b82f6', cursor: 'pointer' }}
+                                        />
+
+                                        <button 
+                                            type="button"
+                                            onClick={() => removeConfig(index)}
+                                            style={{
+                                                padding: '4px',
+                                                background: 'transparent',
+                                                color: '#dc2626',
+                                                border: 'none',
+                                                borderRadius: '4px',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}
+                                        >
+                                            <TrashIcon size={15} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </>
+                        )}
+
+                        <div style={{ marginTop: '8px', fontSize: '12px', color: '#94a3b8' }}>
+                            💡 Cấu hình sẽ được lưu và dùng cho các lần tạo lịch sau
+                        </div>
+                    </>
+                )}
+            </div>
+        );
+    };
+
+    // ==========================================================
+    // RENDER
+    // ==========================================================
 
     return (
         <>
             <AdminPage
                 title="Quản lý lịch chiếu"
-                subtitle="Tạo lịch chiếu theo cấu hình từng phim"
+                subtitle="Tạo lịch chiếu và cấu hình suất chiếu cho từng phim"
                 icon={<CalendarDays size={30} />}
                 buttonText="Tạo lịch chiếu"
                 onAdd={handleOpenAdd}
@@ -556,6 +838,7 @@ const ShowTimePage = () => {
                 )}
             </AdminPage>
 
+            {/* FORM MODAL */}
             <AdminModal
                 open={isFormOpen}
                 onClose={handleCloseForm}
@@ -566,50 +849,142 @@ const ShowTimePage = () => {
                 {!editingShowtime && (
                     <div style={{ marginBottom: '20px', padding: '16px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600', marginBottom: '8px' }}>
-                            <Sparkles size={18} /> Tạo lịch chiếu theo cấu hình
+                            <Sparkles size={18} /> Tạo lịch chiếu + Lưu cấu hình
                         </div>
                         <div style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.6' }}>
-                            <strong>Hệ thống sẽ tạo lịch chiếu dựa trên cấu hình của từng phim:</strong>
-                            <br /><br />
-                            📋 Mỗi phim cần được cấu hình trong <strong>Quản lý phim → Cấu hình lịch chiếu</strong>
+                            <strong>Hệ thống sẽ:</strong>
                             <br />
-                            🔧 Cấu hình bao gồm: Khung giờ, loại phòng, số suất, khoảng cách
+                            1. 📝 Lưu cấu hình suất chiếu vào hệ thống (dùng cho lần sau)
+                            <br />
+                            2. 🎬 Tạo lịch chiếu theo cấu hình đã nhập
                             <br /><br />
-                            <strong>💡 Nếu phim chưa có cấu hình, sẽ bỏ qua khi tạo lịch!</strong>
+                            <strong>💡 Lần sau chỉ cần chọn phim + rạp + ngày là tạo được lịch!</strong>
                         </div>
                     </div>
                 )}
 
-                <AdminForm
-                    fields={editingShowtime ? editFormFields : formFields}
-                    formData={scheduleData}
-                    errors={formErrors}
-                    onChange={handleChange}
-                    onSubmit={handleSubmit}
-                    loading={submitLoading}
-                    submitText={editingShowtime ? 'Lưu thay đổi' : 'Tạo lịch chiếu'}
-                />
-
-                {!editingShowtime && (
-                    <div style={{ marginTop: '16px', padding: '14px', borderRadius: '10px', background: '#f8fafc', fontSize: '13px', color: '#64748b' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '7px' }}>
-                            <Info size={16} /> <strong>Cách hoạt động:</strong>
+                {/* Form chính */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    {/* Chọn phim */}
+                    {!editingShowtime && (
+                        <div>
+                            <label style={{ fontWeight: '500', display: 'block', marginBottom: '8px', color: '#1e293b' }}>
+                                Chọn phim
+                                <span style={{ color: '#64748b', fontSize: '13px', fontWeight: '400', marginLeft: '8px' }}>
+                                    (Có thể chọn nhiều phim)
+                                </span>
+                            </label>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '12px', border: '1px solid #e2e8f0', borderRadius: '8px', background: '#f8fafc', maxHeight: '150px', overflowY: 'auto' }}>
+                                {movies.map(movie => {
+                                    const isChecked = scheduleData.movie_ids?.includes(movie.movie_id);
+                                    return (
+                                        <label key={movie.movie_id} style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px',
+                                            padding: '4px 12px',
+                                            borderRadius: '16px',
+                                            cursor: 'pointer',
+                                            fontSize: '13px',
+                                            background: isChecked ? '#dbeafe' : '#ffffff',
+                                            border: isChecked ? '2px solid #3b82f6' : '1px solid #e2e8f0'
+                                        }}>
+                                            <input
+                                                type="checkbox"
+                                                name="movie_ids"
+                                                value={movie.movie_id}
+                                                checked={isChecked}
+                                                onChange={handleChange}
+                                                style={{ accentColor: '#3b82f6' }}
+                                            />
+                                            {movie.title}
+                                        </label>
+                                    );
+                                })}
+                            </div>
+                            {formErrors.movie_ids && <span style={{ color: '#ef4444', fontSize: '13px' }}>{formErrors.movie_ids}</span>}
                         </div>
-                        Hệ thống sẽ đọc cấu hình lịch chiếu của từng phim trong bảng <strong>movie_showtime_config</strong>.
-                        <br /><br />
-                        <strong>🕐 Giờ hoạt động:</strong>
-                        <br />Lấy từ cấu hình của từng rạp (Quản lý rạp → Giờ hoạt động)
-                        <br /><br />
-                        <strong>📋 Cấu hình phim bao gồm:</strong>
-                        <br />- Khung giờ: MORNING, AFTERNOON, EVENING, NIGHT
-                        <br />- Loại phòng: 2D, 3D, VIP, IMAX
-                        <br />- Số suất và khoảng cách giữa các suất
-                        <br /><br />
-                        <em>💡 Vào "Quản lý phim" → Chọn phim → "Cấu hình lịch chiếu" để thiết lập.</em>
+                    )}
+
+                    {/* Rạp chiếu */}
+                    <div>
+                        <label style={{ fontWeight: '500', display: 'block', marginBottom: '4px', color: '#1e293b' }}>Rạp chiếu</label>
+                        <select
+                            name="cinema_id"
+                            value={scheduleData.cinema_id}
+                            onChange={handleChange}
+                            style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '14px' }}
+                        >
+                            <option value="">-- Chọn rạp --</option>
+                            {cinemas.map(c => (
+                                <option key={c.cinema_id} value={c.cinema_id}>{c.cinema_name}</option>
+                            ))}
+                        </select>
+                        {formErrors.cinema_id && <span style={{ color: '#ef4444', fontSize: '13px' }}>{formErrors.cinema_id}</span>}
                     </div>
-                )}
+
+                    {/* Ngày */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                        <div>
+                            <label style={{ fontWeight: '500', display: 'block', marginBottom: '4px', color: '#1e293b' }}>Ngày bắt đầu</label>
+                            <input
+                                type="date"
+                                name="start_date"
+                                value={scheduleData.start_date}
+                                onChange={handleChange}
+                                style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '14px' }}
+                            />
+                            {formErrors.start_date && <span style={{ color: '#ef4444', fontSize: '13px' }}>{formErrors.start_date}</span>}
+                        </div>
+                        <div>
+                            <label style={{ fontWeight: '500', display: 'block', marginBottom: '4px', color: '#1e293b' }}>Ngày kết thúc</label>
+                            <input
+                                type="date"
+                                name="end_date"
+                                value={scheduleData.end_date}
+                                onChange={handleChange}
+                                style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '14px' }}
+                            />
+                            {formErrors.end_date && <span style={{ color: '#ef4444', fontSize: '13px' }}>{formErrors.end_date}</span>}
+                        </div>
+                    </div>
+
+                    {/* Cấu hình suất chiếu */}
+                    {renderConfigForm()}
+
+                    {/* Nút submit */}
+                    <button
+                        type="submit"
+                        onClick={handleSubmit}
+                        disabled={submitLoading}
+                        style={{
+                            padding: '12px 24px',
+                            background: '#3b82f6',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontSize: '16px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px'
+                        }}
+                    >
+                        {submitLoading ? (
+                            <>
+                                <Loader2 size={20} className="spin-icon" />
+                                Đang xử lý...
+                            </>
+                        ) : (
+                            editingShowtime ? 'Lưu thay đổi' : '🚀 Tạo lịch chiếu'
+                        )}
+                    </button>
+                </div>
             </AdminModal>
 
+            {/* ALERT MODAL */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}
