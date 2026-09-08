@@ -396,42 +396,42 @@ class ShowtimeRepository {
         return rows;
     }
 
-    /*=========================================================
-        GET MOVIE STATS - LẤY THỐNG KÊ PHIM
-    =========================================================*/
-    async getMovieStats(movieIds) {
-        if (!movieIds || movieIds.length === 0) return {};
-        
-        const placeholders = movieIds.map(() => '?').join(',');
-        const [rows] = await db.query(
-            `
-            SELECT 
-                m.movie_id,
-                COUNT(DISTINCT t.ticket_id) AS ticketSold,
-                COUNT(DISTINCT v.view_id) AS viewCount,
-                AVG(r.rating) AS rating
-            FROM movies m
-            LEFT JOIN showtimes s ON m.movie_id = s.movie_id
-            LEFT JOIN tickets t ON s.showtime_id = t.showtime_id AND t.status IN ('paid', 'completed')
-            LEFT JOIN views v ON m.movie_id = v.movie_id
-            LEFT JOIN reviews r ON m.movie_id = r.movie_id
-            WHERE m.movie_id IN (${placeholders})
-            GROUP BY m.movie_id
-            `,
-            movieIds
-        );
-        
-        const stats = {};
-        for (const row of rows) {
-            stats[row.movie_id] = {
-                ticketSold: Number(row.ticketSold) || 0,
-                viewCount: Number(row.viewCount) || 0,
-                rating: Number(row.rating) || 0
-            };
-        }
-        return stats;
-    }
+   // ShowtimeRepository.js
 
+/*=========================================================
+    GET MOVIE STATS - KHÔNG CẦN BẢNG views
+=========================================================*/
+async getMovieStats(movieIds) {
+    if (!movieIds || movieIds.length === 0) return {};
+    
+    const placeholders = movieIds.map(() => '?').join(',');
+    const [rows] = await db.query(
+        `
+        SELECT 
+            m.movie_id,
+            m.views_count AS viewCount,  -- 👈 Lấy từ bảng movies luôn
+            COUNT(DISTINCT t.ticket_id) AS ticketSold,
+            AVG(r.rating) AS rating
+        FROM movies m
+        LEFT JOIN showtimes s ON m.movie_id = s.movie_id
+        LEFT JOIN tickets t ON s.showtime_id = t.showtime_id AND t.status IN ('paid', 'completed')
+        LEFT JOIN reviews r ON m.movie_id = r.movie_id
+        WHERE m.movie_id IN (${placeholders})
+        GROUP BY m.movie_id
+        `,
+        movieIds
+    );
+    
+    const stats = {};
+    for (const row of rows) {
+        stats[row.movie_id] = {
+            ticketSold: Number(row.ticketSold) || 0,
+            viewCount: Number(row.viewCount) || 0,  // 👈 Từ bảng movies
+            rating: Number(row.rating) || 0
+        };
+    }
+    return stats;
+}
     /*=========================================================
         GET QUICK BOOKING - MOVIES
     =========================================================*/
