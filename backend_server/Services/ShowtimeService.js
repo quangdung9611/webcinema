@@ -406,33 +406,31 @@ const getRotatingRooms = ({ pool, startIndex, count }) => {
     }
     return result;
 };
-
-// ShowtimeService.js - Tìm hàm allocateRoomsByPercentage và thay thế
+// ShowtimeService.js - Trong allocateRoomsByPercentage
 
 const allocateRoomsByPercentage = (movies, rooms, stats = {}, existingShowtimes = []) => {
     const roomsByType = buildRoomsByType(rooms);
     
-    // 👉 KHÔNG RESET CURSOR, lấy từ existingShowtimes (phòng đã dùng gần nhất)
+    // 👉 Đếm tổng số phòng của từng hạng
+    const totalRoomsByType = {};
+    for (const [type, list] of Object.entries(roomsByType)) {
+        totalRoomsByType[type] = list.length;
+    }
+    
+    console.log("📋 SỐ LƯỢNG PHÒNG THEO HẠNG:");
+    for (const [type, count] of Object.entries(totalRoomsByType)) {
+        console.log(`  ${type}: ${count} phòng`);
+    }
+    
+    // 👉 KHÔNG RESET CURSOR
     const startIndexMap = buildInitialRoomCursors({ 
         roomsByType, 
         existingShowtimes,
-        date: null, // 👈 Không fix theo ngày
+        date: null,
         startMinutes: null 
     });
     
-    console.log("📋 SỐ LƯỢNG PHÒNG THEO HẠNG:");
-    for (const [type, list] of Object.entries(roomsByType)) {
-        console.log(`  ${type}: ${list.length} phòng`);
-        console.log(`    → ${list.map(r => r.room_name).join(', ')}`);
-    }
-    
-    console.log("🔄 CURSOR HIỆN TẠI (từ lịch cũ):");
-    for (const [type, index] of Object.entries(startIndexMap)) {
-        const pool = roomsByType[type] || [];
-        console.log(`  ${type}: index=${index} → ${pool[index]?.room_name || pool[index]?.room_id || "N/A"}`);
-    }
-    
-    // 👉 Sắp xếp phim theo HOT level (HOT lên trước)
+    // 👉 Sắp xếp phim theo HOT level
     const orderedMovies = movies.map((movie, index) => {
         const hotOrder = { hot: 0, normal: 1, cold: 2 };
         return {
@@ -441,19 +439,11 @@ const allocateRoomsByPercentage = (movies, rooms, stats = {}, existingShowtimes 
             _userOrder: index
         };
     }).sort((a, b) => {
-        // Sắp xếp theo HOT level trước
         if (a._schedulerOrder !== b._schedulerOrder) {
             return a._schedulerOrder - b._schedulerOrder;
         }
-        // Nếu cùng level, giữ nguyên thứ tự user chọn
         return a._userOrder - b._userOrder;
     });
-    
-    console.log("📊 THỨ TỰ ƯU TIÊN PHIM:");
-    for (const movie of orderedMovies) {
-        const dist = movie.distribution?.toUpperCase() || 'NORMAL';
-        console.log(`  ${movie._schedulerOrder}. ${movie.title} (${dist}) - User order: ${movie._userOrder}`);
-    }
     
     const allocated = orderedMovies.map(movie => {
         const level = getMovieHotLevel(movie, stats);
@@ -470,25 +460,27 @@ const allocateRoomsByPercentage = (movies, rooms, stats = {}, existingShowtimes 
                 continue;
             }
             
-            // 👉 Tính số phòng cần lấy theo tỷ lệ %
+            // 👉 LẤY % TRÊN TỔNG SỐ PHÒNG CỦA RẠP
+            const totalRooms = totalRoomsByType[type] || pool.length;
             const percentage = Number(percentages[type] || 0);
-            let allocatedCount = calculatePreferredRoomCount({ poolLength: pool.length, percentage });
+            let allocatedCount = Math.round(totalRooms * percentage);
             
-            // 👉 Đảm bảo mỗi hạng phòng có ít nhất 1 phòng
-            if (allocatedCount === 0 && pool.length > 0) {
+            // 👉 Đảm bảo ít nhất 1 phòng
+            if (allocatedCount === 0 && totalRooms > 0) {
                 allocatedCount = 1;
             }
+            
+            console.log(`  ${type}: ${totalRooms} phòng × ${percentage*100}% = ${allocatedCount} phòng`);
             
             // 👉 Lấy cursor hiện tại
             let startIndex = Number(startIndexMap[type] || 0);
             
-            // 👉 Tìm danh sách phòng trống (không bị conflict)
+            // 👉 Tìm phòng trống
             const availableRooms = [];
             const triedRooms = new Set();
             let attempts = 0;
             const maxAttempts = pool.length * 3;
             
-            // 👉 Lấy phòng trống trước
             while (availableRooms.length < allocatedCount && attempts < maxAttempts) {
                 const room = pool[startIndex % pool.length];
                 const roomId = Number(room.room_id);
@@ -496,7 +488,6 @@ const allocateRoomsByPercentage = (movies, rooms, stats = {}, existingShowtimes 
                 if (!triedRooms.has(roomId)) {
                     triedRooms.add(roomId);
                     
-                    // Kiểm tra phòng có trống không
                     const isAvailable = !existingShowtimes.some(existing => {
                         const existingRoomId = Number(existing.room_id);
                         return existingRoomId === roomId;
@@ -511,7 +502,7 @@ const allocateRoomsByPercentage = (movies, rooms, stats = {}, existingShowtimes 
                 attempts++;
             }
             
-            // 👉 Nếu không đủ phòng trống, lấy phòng đã dùng (xoay vòng)
+            // 👉 Nếu không đủ phòng trống, lấy phòng đã dùng
             if (availableRooms.length < allocatedCount) {
                 const remainingCount = allocatedCount - availableRooms.length;
                 let extraStartIndex = startIndex % pool.length;
@@ -530,10 +521,7 @@ const allocateRoomsByPercentage = (movies, rooms, stats = {}, existingShowtimes 
                 }
             }
             
-            // 👉 Cập nhật cursor mới
             startIndexMap[type] = (startIndex) % pool.length;
-            
-            // 👉 Lấy danh sách phòng được chọn
             const selectedRooms = availableRooms.slice(0, allocatedCount);
             
             roomAllocation[type] = { 
@@ -546,8 +534,7 @@ const allocateRoomsByPercentage = (movies, rooms, stats = {}, existingShowtimes 
         return { ...movie, level, hotScore: calculateHotScore(movie, stats), allocatedRooms: totalRoomsAllocated, roomAllocation, allowedTypes };
     });
     
-    // 👉 LOG CHI TIẾT PHÂN BỔ
-    console.log("📊 PHÂN BỔ PHÒNG (ưu tiên phòng trống + xoay vòng):");
+    console.log("📊 PHÂN BỔ PHÒNG:");
     for (const movie of allocated) {
         console.log(`  🎬 ${movie.title} (${movie.level.toUpperCase()})`);
         for (const [type, data] of Object.entries(movie.roomAllocation)) {
