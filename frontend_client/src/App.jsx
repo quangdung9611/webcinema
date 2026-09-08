@@ -117,6 +117,7 @@ const BookingPage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Ad
 const MovieGenrePage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/MovieGenre/MovieGenrePage")));
 const MovieActorPage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/MovieActor/MovieActorPage")));
 const ShowTimePage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/Showtime/ShowTimePage")));
+const MovieShowtimeConfigPage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/Showtime/MovieShowtimeConfigPage")));
 const NewsPage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/News/NewsPage")));
 const FoodPage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/Food/FoodPage")));
 const BlogCinemaPage = lazy(() => lazyRetry(() => import("./admin_frontend/pages/Admin/BlogCinema/BlogCinemaPage")));
@@ -288,6 +289,7 @@ const ADMIN_ROUTES = [
     { path: "genres", element: <GenresPage /> },
     { path: "cinemas", element: <CinemaPage /> },
     { path: "showtimes", element: <ShowTimePage /> },
+    {path: "showtime-config", element: <MovieShowtimeConfigPage /> },
     { path: "price-config", element: <PriceConfigPage /> },
     { path: "seats", element: <SeatList /> },
     { path: "movie-genres", element: <MovieGenrePage /> },

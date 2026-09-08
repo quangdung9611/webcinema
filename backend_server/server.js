@@ -66,7 +66,7 @@ const testimonialRoutes = require("./Routers/TestimonialRouter");
 const bannerRoutes = require("./Routers/BannerRouter");
 const dashboardRouter = require("./Routers/DashboardRouter");
 const priceConfigRoutes = require("./Routers/PriceConfigRouter");
-
+const showtimeConfigRoutes = require('./Routers/ShowtimeConfigRouter');
 
 // ============================================================
 // APP / SERVER
@@ -1268,7 +1268,10 @@ app.use(
     "/api/showtimes",
     showtimeRoutes
 );
-
+app.use(
+    '/api/showtime-config',
+    showtimeConfigRoutes
+);
 app.use(
     "/api/bookings",
     bookingRoutes

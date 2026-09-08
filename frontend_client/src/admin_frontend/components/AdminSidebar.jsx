@@ -1,3 +1,5 @@
+// components/AdminSidebar.jsx
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -21,7 +23,8 @@ import {
     BookOpen,
     Gift,
     Image,
-    DollarSign,        // 👈 Thêm cho Price Config
+    DollarSign,
+    Calendar,        // 👈 THÊM ICON CHO CẤU HÌNH LỊCH CHIẾU
 } from 'lucide-react';
 
 import '../styles/Sidebar.css';
@@ -121,13 +124,17 @@ const AdminSidebar = ({
             icon: <Clock size={20} />,
             label: 'Quản lý Suất Chiếu'
         },
-        // 🔥 PRICE CONFIG - THÊM MỚI
+        // 👉 THÊM MENU CẤU HÌNH LỊCH CHIẾU
+        {
+            path: '/showtime-config',
+            icon: <Calendar size={20} />,
+            label: 'Cấu hình lịch chiếu'
+        },
         {
             path: '/price-config',
             icon: <DollarSign size={20} />,
             label: 'Cấu hình Giá Vé'
         },
-       
         {
             path: '/tickets',
             icon: <Ticket size={20} />,
