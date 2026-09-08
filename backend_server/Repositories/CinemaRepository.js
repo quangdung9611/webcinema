@@ -31,6 +31,10 @@ class CinemaRepository {
                 hotline,
                 map_link,
                 cinema_backdrop,
+                DATE_FORMAT(weekday_open, '%H:%i') AS weekday_open,
+                DATE_FORMAT(weekday_close, '%H:%i') AS weekday_close,
+                DATE_FORMAT(weekend_open, '%H:%i') AS weekend_open,
+                DATE_FORMAT(weekend_close, '%H:%i') AS weekend_close,
                 DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') AS created_at
             FROM cinemas
             ${whereClause}
@@ -78,6 +82,10 @@ class CinemaRepository {
                 hotline,
                 map_link,
                 cinema_backdrop,
+                DATE_FORMAT(weekday_open, '%H:%i') AS weekday_open,
+                DATE_FORMAT(weekday_close, '%H:%i') AS weekday_close,
+                DATE_FORMAT(weekend_open, '%H:%i') AS weekend_open,
+                DATE_FORMAT(weekend_close, '%H:%i') AS weekend_close,
                 DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') AS created_at
             FROM cinemas
             ${whereClause}
@@ -123,6 +131,10 @@ class CinemaRepository {
                 hotline,
                 map_link,
                 cinema_backdrop,
+                weekday_open,
+                weekday_close,
+                weekend_open,
+                weekend_close,
                 created_at,
                 updated_at
             FROM cinemas
@@ -149,6 +161,10 @@ class CinemaRepository {
                 hotline,
                 map_link,
                 cinema_backdrop,
+                weekday_open,
+                weekday_close,
+                weekend_open,
+                weekend_close,
                 created_at,
                 updated_at
             FROM cinemas
@@ -201,7 +217,11 @@ class CinemaRepository {
             city,
             hotline,
             map_link,
-            cinema_backdrop
+            cinema_backdrop,
+            weekday_open,
+            weekday_close,
+            weekend_open,
+            weekend_close
         } = data;
 
         const [result] = await db.query(
@@ -213,8 +233,12 @@ class CinemaRepository {
                 city,
                 hotline,
                 map_link,
-                cinema_backdrop
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                cinema_backdrop,
+                weekday_open,
+                weekday_close,
+                weekend_open,
+                weekend_close
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `,
             [
                 cinema_name.trim(),
@@ -223,7 +247,11 @@ class CinemaRepository {
                 city.trim(),
                 hotline.trim(),
                 map_link.trim(),
-                cinema_backdrop || null
+                cinema_backdrop || null,
+                weekday_open || '08:00:00',
+                weekday_close || '23:30:00',
+                weekend_open || '08:00:00',
+                weekend_close || '24:00:00'
             ]
         );
         return result.insertId;
@@ -240,7 +268,11 @@ class CinemaRepository {
             city,
             hotline,
             map_link,
-            cinema_backdrop
+            cinema_backdrop,
+            weekday_open,
+            weekday_close,
+            weekend_open,
+            weekend_close
         } = data;
 
         const [result] = await db.query(
@@ -253,7 +285,11 @@ class CinemaRepository {
                 city = ?,
                 hotline = ?,
                 map_link = ?,
-                cinema_backdrop = ?
+                cinema_backdrop = ?,
+                weekday_open = ?,
+                weekday_close = ?,
+                weekend_open = ?,
+                weekend_close = ?
             WHERE cinema_id = ?
             `,
             [
@@ -264,6 +300,10 @@ class CinemaRepository {
                 hotline.trim(),
                 map_link.trim(),
                 cinema_backdrop || null,
+                weekday_open || '08:00:00',
+                weekday_close || '23:30:00',
+                weekend_open || '08:00:00',
+                weekend_close || '24:00:00',
                 cinemaId
             ]
         );
@@ -301,6 +341,44 @@ class CinemaRepository {
             [cinemaId]
         );
         return rows;
+    }
+
+    /* ==========================================================
+        GET CINEMA OPERATING HOURS
+    ========================================================== */
+    async getOperatingHours(cinemaId) {
+        const [rows] = await db.query(
+            `
+            SELECT
+                weekday_open,
+                weekday_close,
+                weekend_open,
+                weekend_close
+            FROM cinemas
+            WHERE cinema_id = ?
+            LIMIT 1
+            `,
+            [cinemaId]
+        );
+        
+        if (rows.length === 0) {
+            return {
+                weekday: { open: '08:00:00', close: '23:30:00' },
+                weekend: { open: '08:00:00', close: '24:00:00' }
+            };
+        }
+        
+        const row = rows[0];
+        return {
+            weekday: {
+                open: row.weekday_open || '08:00:00',
+                close: row.weekday_close || '23:30:00'
+            },
+            weekend: {
+                open: row.weekend_open || '08:00:00',
+                close: row.weekend_close || '24:00:00'
+            }
+        };
     }
 }
 

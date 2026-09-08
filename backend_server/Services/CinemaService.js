@@ -59,10 +59,33 @@ const validateCinema = (data, files = {}, isUpdate = false) => {
     if (!map_link || map_link.trim() === "") {
         return "Vui lòng nhập iframe Google Map.";
     }
-    // Kiểm tra map_link có chứa iframe không
     const trimmedMapLink = map_link.trim();
     if (!trimmedMapLink.includes('<iframe') || !trimmedMapLink.includes('</iframe>')) {
         return "Vui lòng nhập đúng thẻ iframe Google Map.";
+    }
+
+    return null;
+};
+
+// ==========================================================
+// VALIDATE OPERATING HOURS
+// ==========================================================
+const validateOperatingHours = (data) => {
+    const { weekday_open, weekday_close, weekend_open, weekend_close } = data;
+
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+
+    if (weekday_open && !timeRegex.test(weekday_open)) {
+        return "Giờ mở cửa ngày thường không hợp lệ.";
+    }
+    if (weekday_close && !timeRegex.test(weekday_close)) {
+        return "Giờ đóng cửa ngày thường không hợp lệ.";
+    }
+    if (weekend_open && !timeRegex.test(weekend_open)) {
+        return "Giờ mở cửa cuối tuần không hợp lệ.";
+    }
+    if (weekend_close && !timeRegex.test(weekend_close)) {
+        return "Giờ đóng cửa cuối tuần không hợp lệ.";
     }
 
     return null;
@@ -114,7 +137,6 @@ class CinemaService {
             throw err;
         }
 
-        // Lấy danh sách phim + suất chiếu
         const movies = await CinemaRepository.getMoviesByCinema(cinema.cinema_id);
         const movieMap = {};
         for (const item of movies) {
@@ -147,11 +169,29 @@ class CinemaService {
             throw err;
         }
 
-        const { cinema_name, address, city, hotline, map_link } = data;
+        const hoursError = validateOperatingHours(data);
+        if (hoursError) {
+            const err = new Error(hoursError);
+            err.statusCode = 400;
+            err.field = "general";
+            throw err;
+        }
+
+        const { 
+            cinema_name, 
+            address, 
+            city, 
+            hotline, 
+            map_link,
+            weekday_open,
+            weekday_close,
+            weekend_open,
+            weekend_close
+        } = data;
+        
         const cleanCinemaName = cinema_name.trim();
         const slug = createSlug(cleanCinemaName);
 
-        // Kiểm tra trùng tên
         const duplicateName = await CinemaRepository.findByName(cleanCinemaName);
         if (duplicateName) {
             const err = new Error("Tên rạp đã tồn tại.");
@@ -160,7 +200,6 @@ class CinemaService {
             throw err;
         }
 
-        // Kiểm tra trùng hotline
         const duplicateHotline = await CinemaRepository.findByHotline(hotline.trim());
         if (duplicateHotline) {
             const err = new Error("Hotline đã tồn tại.");
@@ -169,7 +208,6 @@ class CinemaService {
             throw err;
         }
 
-        // Upload ảnh backdrop nếu có
         let cinema_backdrop = null;
         if (files['cinema_backdrop']?.[0]) {
             const result = await uploadToCloudinary(
@@ -185,8 +223,12 @@ class CinemaService {
             address: address.trim(),
             city: city.trim(),
             hotline: hotline.trim(),
-            map_link: map_link.trim(), // Lưu trực tiếp iframe HTML
-            cinema_backdrop
+            map_link: map_link.trim(),
+            cinema_backdrop,
+            weekday_open: weekday_open || '08:00:00',
+            weekday_close: weekday_close || '23:30:00',
+            weekend_open: weekend_open || '08:00:00',
+            weekend_close: weekend_close || '24:00:00'
         });
 
         return cinemaId;
@@ -211,11 +253,29 @@ class CinemaService {
             throw err;
         }
 
-        const { cinema_name, address, city, hotline, map_link } = data;
+        const hoursError = validateOperatingHours(data);
+        if (hoursError) {
+            const err = new Error(hoursError);
+            err.statusCode = 400;
+            err.field = "general";
+            throw err;
+        }
+
+        const { 
+            cinema_name, 
+            address, 
+            city, 
+            hotline, 
+            map_link,
+            weekday_open,
+            weekday_close,
+            weekend_open,
+            weekend_close
+        } = data;
+        
         const cleanCinemaName = cinema_name.trim();
         const slug = createSlug(cleanCinemaName);
 
-        // Kiểm tra trùng tên (không tính chính nó)
         const duplicateName = await CinemaRepository.findByName(cleanCinemaName, cinemaId);
         if (duplicateName) {
             const err = new Error("Tên rạp đã tồn tại.");
@@ -224,7 +284,6 @@ class CinemaService {
             throw err;
         }
 
-        // Kiểm tra trùng hotline (không tính chính nó)
         const duplicateHotline = await CinemaRepository.findByHotline(hotline.trim(), cinemaId);
         if (duplicateHotline) {
             const err = new Error("Hotline đã tồn tại.");
@@ -233,17 +292,14 @@ class CinemaService {
             throw err;
         }
 
-        // Xử lý ảnh backdrop
         let finalBackdrop = existing.cinema_backdrop;
         if (files['cinema_backdrop']?.[0]) {
-            // Xóa ảnh cũ nếu có
             if (existing.cinema_backdrop) {
                 const publicId = extractPublicId(existing.cinema_backdrop);
                 if (publicId) {
                     await deleteFromCloudinary(publicId);
                 }
             }
-            // Upload ảnh mới
             const result = await uploadToCloudinary(
                 files['cinema_backdrop'][0],
                 'cinema_shop/backdrops'
@@ -257,8 +313,12 @@ class CinemaService {
             address: address.trim(),
             city: city.trim(),
             hotline: hotline.trim(),
-            map_link: map_link.trim(), // Lưu trực tiếp iframe HTML
-            cinema_backdrop: finalBackdrop
+            map_link: map_link.trim(),
+            cinema_backdrop: finalBackdrop,
+            weekday_open: weekday_open || '08:00:00',
+            weekday_close: weekday_close || '23:30:00',
+            weekend_open: weekend_open || '08:00:00',
+            weekend_close: weekend_close || '24:00:00'
         });
 
         if (affectedRows === 0) {
@@ -280,7 +340,6 @@ class CinemaService {
             throw err;
         }
 
-        // Xóa ảnh backdrop trên Cloudinary nếu có
         if (cinema.cinema_backdrop) {
             const publicId = extractPublicId(cinema.cinema_backdrop);
             if (publicId) {
@@ -295,6 +354,28 @@ class CinemaService {
             throw err;
         }
         return true;
+    }
+
+    /* ==========================================================
+        GET OPERATING HOURS BY CINEMA
+    ========================================================== */
+    async getOperatingHours(cinemaId) {
+        const cinema = await CinemaRepository.findById(cinemaId);
+        if (!cinema) {
+            const err = new Error("Không tìm thấy rạp.");
+            err.statusCode = 404;
+            throw err;
+        }
+        return {
+            weekday: {
+                open: cinema.weekday_open || '08:00:00',
+                close: cinema.weekday_close || '23:30:00'
+            },
+            weekend: {
+                open: cinema.weekend_open || '08:00:00',
+                close: cinema.weekend_close || '24:00:00'
+            }
+        };
     }
 }
 

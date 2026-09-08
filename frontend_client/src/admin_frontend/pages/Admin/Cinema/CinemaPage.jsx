@@ -11,7 +11,8 @@ import {
     Navigation,
     Phone,
     Map,
-    Image
+    Image,
+    Clock
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -38,7 +39,11 @@ const initialFormData = {
     city: '',
     slug: '',
     hotline: '',
-    map_link: ''
+    map_link: '',
+    weekday_open: '08:00',
+    weekday_close: '23:30',
+    weekend_open: '08:00',
+    weekend_close: '24:00'
 };
 
 // ==========================================================
@@ -247,12 +252,27 @@ const CinemaPage = () => {
         if (!formData.map_link.trim()) {
             errors.map_link = 'Vui lòng nhập iframe Google Map';
         } else {
-            // Kiểm tra map_link có chứa iframe không
             const trimmedMapLink = formData.map_link.trim();
             if (!trimmedMapLink.includes('<iframe') || !trimmedMapLink.includes('</iframe>')) {
                 errors.map_link = 'Vui lòng nhập đúng thẻ iframe Google Map (ví dụ: <iframe src="..."></iframe>)';
             }
         }
+
+        // 👉 VALIDATE GIỜ HOẠT ĐỘNG
+        const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+        if (!formData.weekday_open || !timeRegex.test(formData.weekday_open)) {
+            errors.weekday_open = 'Giờ mở cửa ngày thường không hợp lệ (HH:MM)';
+        }
+        if (!formData.weekday_close || !timeRegex.test(formData.weekday_close)) {
+            errors.weekday_close = 'Giờ đóng cửa ngày thường không hợp lệ (HH:MM)';
+        }
+        if (!formData.weekend_open || !timeRegex.test(formData.weekend_open)) {
+            errors.weekend_open = 'Giờ mở cửa cuối tuần không hợp lệ (HH:MM)';
+        }
+        if (!formData.weekend_close || !timeRegex.test(formData.weekend_close)) {
+            errors.weekend_close = 'Giờ đóng cửa cuối tuần không hợp lệ (HH:MM)';
+        }
+
         setFormErrors(errors);
         return Object.keys(errors).length === 0;
     };
@@ -277,7 +297,11 @@ const CinemaPage = () => {
             city: cinema.city || '',
             slug: cinema.slug || '',
             hotline: cinema.hotline || '',
-            map_link: cinema.map_link || ''
+            map_link: cinema.map_link || '',
+            weekday_open: cinema.weekday_open || '08:00',
+            weekday_close: cinema.weekday_close || '23:30',
+            weekend_open: cinema.weekend_open || '08:00',
+            weekend_close: cinema.weekend_close || '24:00'
         });
         setCinemaBackdropFile(null);
         setIsFormOpen(true);
@@ -435,6 +459,22 @@ const CinemaPage = () => {
             )
         },
         {
+            title: 'Giờ hoạt động',
+            key: 'operating_hours',
+            render: (row) => (
+                <div style={{ fontSize: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#475569' }}>
+                        <Clock size={14} />
+                        <span>Ngày thường: <strong>{row.weekday_open || '08:00'} - {row.weekday_close || '23:30'}</strong></span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#475569', marginTop: '2px' }}>
+                        <Clock size={14} />
+                        <span>Cuối tuần: <strong>{row.weekend_open || '08:00'} - {row.weekend_close || '24:00'}</strong></span>
+                    </div>
+                </div>
+            )
+        },
+        {
             title: 'Google Map',
             key: 'map_link',
             render: (row) => (
@@ -442,9 +482,7 @@ const CinemaPage = () => {
                     href="#"
                     onClick={(e) => {
                         e.preventDefault();
-                        // Mở modal xem map hoặc mở link nếu cần
                         if (row.map_link && row.map_link.includes('<iframe')) {
-                            // Tạo popup hoặc modal để hiển thị iframe
                             const win = window.open('', '_blank', 'width=800,height=600');
                             if (win) {
                                 win.document.write(`
@@ -464,7 +502,6 @@ const CinemaPage = () => {
                                 win.document.close();
                             }
                         } else {
-                            // Fallback: mở link trực tiếp
                             window.open(row.map_link, '_blank');
                         }
                     }}
@@ -514,7 +551,7 @@ const CinemaPage = () => {
     ];
 
     // ------------------------------------------------------
-    // FORM FIELDS
+    // FORM FIELDS (THÊM 4 TRƯỜNG GIỜ HOẠT ĐỘNG)
     // ------------------------------------------------------
     const formFields = [
         { label: 'Tên rạp', name: 'cinema_name', type: 'text', placeholder: 'Nhập tên rạp' },
@@ -529,7 +566,33 @@ const CinemaPage = () => {
             rows: 4
         },
         { label: 'Backdrop', name: 'cinema_backdrop', type: 'file' },
-        { label: 'Địa chỉ', name: 'address', type: 'textarea', placeholder: 'Nhập địa chỉ chi tiết' }
+        { label: 'Địa chỉ', name: 'address', type: 'textarea', placeholder: 'Nhập địa chỉ chi tiết' },
+        
+        // 👉 THÊM 4 TRƯỜNG GIỜ HOẠT ĐỘNG
+        {
+            label: '🕐 Giờ mở cửa (Thứ 2 - Thứ 6)',
+            name: 'weekday_open',
+            type: 'time',
+            placeholder: '08:00'
+        },
+        {
+            label: '🕐 Giờ đóng cửa (Thứ 2 - Thứ 6)',
+            name: 'weekday_close',
+            type: 'time',
+            placeholder: '23:30'
+        },
+        {
+            label: '🕐 Giờ mở cửa (Thứ 7 - Chủ nhật)',
+            name: 'weekend_open',
+            type: 'time',
+            placeholder: '08:00'
+        },
+        {
+            label: '🕐 Giờ đóng cửa (Thứ 7 - Chủ nhật)',
+            name: 'weekend_close',
+            type: 'time',
+            placeholder: '24:00'
+        }
     ];
 
     // ------------------------------------------------------

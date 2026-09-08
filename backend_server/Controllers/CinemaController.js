@@ -8,7 +8,6 @@ exports.getAllCinemasAll = async (req, res) => {
     try {
         const { search = "", page, limit } = req.query;
 
-        // Không cho phép phân trang
         if (page !== undefined || limit !== undefined) {
             return res.status(400).json({
                 success: false,
