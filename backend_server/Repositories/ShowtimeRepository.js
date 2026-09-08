@@ -397,9 +397,10 @@ class ShowtimeRepository {
     }
 
    // ShowtimeRepository.js
+// ShowtimeRepository.js
 
 /*=========================================================
-    GET MOVIE STATS - KHÔNG CẦN BẢNG views
+    GET MOVIE STATS - ĐÚNG VỚI CSDL CỦA BẠN
 =========================================================*/
 async getMovieStats(movieIds) {
     if (!movieIds || movieIds.length === 0) return {};
@@ -409,12 +410,12 @@ async getMovieStats(movieIds) {
         `
         SELECT 
             m.movie_id,
-            m.views_count AS viewCount,  -- 👈 Lấy từ bảng movies luôn
+            m.views_count AS viewCount,
             COUNT(DISTINCT t.ticket_id) AS ticketSold,
-            AVG(r.rating) AS rating
+            AVG(r.rating_score) AS rating
         FROM movies m
         LEFT JOIN showtimes s ON m.movie_id = s.movie_id
-        LEFT JOIN tickets t ON s.showtime_id = t.showtime_id AND t.status IN ('paid', 'completed')
+        LEFT JOIN tickets t ON s.showtime_id = t.showtime_id AND t.ticket_status IN ('Valid')
         LEFT JOIN reviews r ON m.movie_id = r.movie_id
         WHERE m.movie_id IN (${placeholders})
         GROUP BY m.movie_id
@@ -426,7 +427,7 @@ async getMovieStats(movieIds) {
     for (const row of rows) {
         stats[row.movie_id] = {
             ticketSold: Number(row.ticketSold) || 0,
-            viewCount: Number(row.viewCount) || 0,  // 👈 Từ bảng movies
+            viewCount: Number(row.viewCount) || 0,
             rating: Number(row.rating) || 0
         };
     }
