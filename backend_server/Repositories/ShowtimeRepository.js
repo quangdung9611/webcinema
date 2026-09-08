@@ -389,50 +389,122 @@ class ShowtimeRepository {
                 created_at,
                 status
             FROM movies
-            WHERE status IN ('active', 'now_showing')
+            WHERE status IN ('Đang chiếu', 'now_showing')
             ORDER BY created_at ASC
             `
         );
         return rows;
     }
 
-   // ShowtimeRepository.js
-// ShowtimeRepository.js
-
-/*=========================================================
-    GET MOVIE STATS - ĐÚNG VỚI CSDL CỦA BẠN
-=========================================================*/
-async getMovieStats(movieIds) {
-    if (!movieIds || movieIds.length === 0) return {};
-    
-    const placeholders = movieIds.map(() => '?').join(',');
-    const [rows] = await db.query(
-        `
-        SELECT 
-            m.movie_id,
-            m.views_count AS viewCount,
-            COUNT(DISTINCT t.ticket_id) AS ticketSold,
-            AVG(r.rating_score) AS rating
-        FROM movies m
-        LEFT JOIN showtimes s ON m.movie_id = s.movie_id
-        LEFT JOIN tickets t ON s.showtime_id = t.showtime_id AND t.ticket_status IN ('Valid')
-        LEFT JOIN reviews r ON m.movie_id = r.movie_id
-        WHERE m.movie_id IN (${placeholders})
-        GROUP BY m.movie_id
-        `,
-        movieIds
-    );
-    
-    const stats = {};
-    for (const row of rows) {
-        stats[row.movie_id] = {
-            ticketSold: Number(row.ticketSold) || 0,
-            viewCount: Number(row.viewCount) || 0,
-            rating: Number(row.rating) || 0
+    /*=========================================================
+        GET OPERATING HOURS FROM CINEMA
+    =========================================================*/
+    async getOperatingHours(cinemaId) {
+        const [rows] = await db.query(
+            `
+            SELECT 
+                weekday_open,
+                weekday_close,
+                weekend_open,
+                weekend_close
+            FROM cinemas
+            WHERE cinema_id = ?
+            LIMIT 1
+            `,
+            [cinemaId]
+        );
+        
+        if (rows.length === 0) {
+            return {
+                weekday: { open: '08:00:00', close: '23:30:00' },
+                weekend: { open: '08:00:00', close: '24:00:00' }
+            };
+        }
+        
+        const row = rows[0];
+        return {
+            weekday: {
+                open: row.weekday_open || '08:00:00',
+                close: row.weekday_close || '23:30:00'
+            },
+            weekend: {
+                open: row.weekend_open || '08:00:00',
+                close: row.weekend_close || '24:00:00'
+            }
         };
     }
-    return stats;
-}
+
+    /*=========================================================
+        GET MOVIE SHOWTIME CONFIG (THỦ CÔNG)
+    =========================================================*/
+    async getMovieShowtimeConfig(movieId, cinemaId, dayType = 'ALL') {
+        const [rows] = await db.query(
+            `
+            SELECT 
+                time_slot,
+                room_type,
+                slot_count,
+                interval_minutes
+            FROM movie_showtime_config
+            WHERE movie_id = ? 
+                AND cinema_id = ? 
+                AND (day_type = ? OR day_type = 'ALL')
+                AND is_active = 1
+            ORDER BY time_slot, room_type
+            `,
+            [movieId, cinemaId, dayType]
+        );
+        
+        // Nhóm theo time_slot
+        const config = {};
+        for (const row of rows) {
+            const slot = row.time_slot;
+            if (!config[slot]) config[slot] = [];
+            config[slot].push({
+                room_type: row.room_type,
+                slot_count: row.slot_count,
+                interval_minutes: row.interval_minutes
+            });
+        }
+        
+        return config;
+    }
+
+    /*=========================================================
+        GET MOVIE STATS - ĐÚNG VỚI CSDL CỦA BẠN
+    =========================================================*/
+    async getMovieStats(movieIds) {
+        if (!movieIds || movieIds.length === 0) return {};
+        
+        const placeholders = movieIds.map(() => '?').join(',');
+        const [rows] = await db.query(
+            `
+            SELECT 
+                m.movie_id,
+                m.views_count AS viewCount,
+                COUNT(DISTINCT t.ticket_id) AS ticketSold,
+                AVG(r.rating_score) AS rating
+            FROM movies m
+            LEFT JOIN showtimes s ON m.movie_id = s.movie_id
+            LEFT JOIN tickets t ON s.showtime_id = t.showtime_id AND t.ticket_status IN ('Valid')
+            LEFT JOIN reviews r ON m.movie_id = r.movie_id
+            WHERE m.movie_id IN (${placeholders})
+            GROUP BY m.movie_id
+            `,
+            movieIds
+        );
+        
+        const stats = {};
+        for (const row of rows) {
+            stats[row.movie_id] = {
+                ticketSold: Number(row.ticketSold) || 0,
+                viewCount: Number(row.viewCount) || 0,
+                rating: Number(row.rating) || 0
+            };
+        }
+        return stats;
+    }
+
     /*=========================================================
         GET QUICK BOOKING - MOVIES
     =========================================================*/

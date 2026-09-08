@@ -216,27 +216,24 @@ exports.getShowtimesForMovieDetail = async (req, res) => {
 };
 
 /*=========================================================
-    ADMIN - AUTO GENERATE SHOWTIMES (CÓ HỖ TRỢ NHIỀU PHIM + DISTRIBUTION RIÊNG)
+    ADMIN - AUTO GENERATE SHOWTIMES (DÙNG CẤU HÌNH THỦ CÔNG)
 =========================================================*/
 exports.createAutoSchedule = async (req, res) => {
     try {
         const { 
-            movies,      // [{ movie_id, distribution }]
+            movies,      // [{ movie_id }]
             cinema_id, 
             start_date, 
-            end_date, 
-            config       // Cấu hình giờ
+            end_date
         } = req.body;
         
         // Validate movies
         let moviesArray = [];
         if (Array.isArray(movies) && movies.length > 0) {
             moviesArray = movies.map(item => ({
-                movie_id: Number(item.movie_id),
-                distribution: item.distribution || 'normal'
+                movie_id: Number(item.movie_id)
             })).filter(item => !isNaN(item.movie_id) && item.movie_id > 0);
         }
-        // Nếu movies rỗng, service sẽ tự lấy tất cả phim đang chiếu
         
         // Validate cinema_id
         if (!cinema_id) {
@@ -260,13 +257,12 @@ exports.createAutoSchedule = async (req, res) => {
             movies: moviesArray,
             cinema_id: Number(cinema_id),
             start_date,
-            end_date,
-            config
+            end_date
         });
 
         return res.status(201).json({
             success: true,
-            message: "Tạo lịch chiếu tự động thành công",
+            message: "Tạo lịch chiếu thành công",
             data: result
         });
     } catch (err) {
@@ -274,7 +270,7 @@ exports.createAutoSchedule = async (req, res) => {
         return res.status(err.statusCode || 400).json({
             success: false,
             field: err.field || null,
-            message: err.message || "Không thể tạo lịch chiếu tự động"
+            message: err.message || "Không thể tạo lịch chiếu"
         });
     }
 };

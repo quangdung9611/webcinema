@@ -81,7 +81,7 @@ router.get(
 
 
 // ==========================================================
-// AUTO SHOWTIME SCHEDULER
+// AUTO SHOWTIME SCHEDULER (DÙNG CẤU HÌNH THỦ CÔNG)
 // ==========================================================
 router.post(
     "/schedule",

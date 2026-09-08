@@ -9,8 +9,7 @@ import {
     MapPin,
     Clock,
     Sparkles,
-    Info,
-    Settings
+    Info
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -20,33 +19,14 @@ import AdminForm from '../../../components/AdminForm';
 import AdminPagination from '../../../components/AdminPagination';
 
 // ==========================================================
-// DISTRIBUTION
-// ==========================================================
-
-const DISTRIBUTION_OPTIONS = [
-    { value: 'hot', label: '🔥 HOT - 45 phút/suất' },
-    { value: 'normal', label: '📊 NORMAL - 75 phút/suất' },
-    { value: 'cold', label: '❄️ COLD - 120 phút/suất' }
-];
-
-// ==========================================================
 // INITIAL DATA
 // ==========================================================
 
 const initialScheduleData = {
     movie_ids: [],
-    movie_distributions: {}, // { movie_id: 'hot' | 'normal' | 'cold' }
     cinema_id: '',
     start_date: '',
-    end_date: '',
-    weekday_start: '08:00',
-    weekday_end: '23:30',
-    weekend_start: '08:00',
-    weekend_end: '24:00',
-    hot_interval: 45,
-    normal_interval: 75,
-    cold_interval: 120,
-    buffer_minutes: 15
+    end_date: ''
 };
 
 // ==========================================================
@@ -62,7 +42,6 @@ const ShowTimePage = () => {
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
     const [search, setSearch] = useState('');
-    const [showAdvancedConfig, setShowAdvancedConfig] = useState(false);
 
     const [pagination, setPagination] = useState({
         page: 1,
@@ -202,22 +181,12 @@ const ShowTimePage = () => {
         setScheduleData({
             ...initialScheduleData,
             movie_ids: [],
-            movie_distributions: {},
             start_date: '',
-            end_date: '',
-            weekday_start: '08:00',
-            weekday_end: '23:30',
-            weekend_start: '08:00',
-            weekend_end: '24:00',
-            hot_interval: 45,
-            normal_interval: 75,
-            cold_interval: 120,
-            buffer_minutes: 15
+            end_date: ''
         });
         setRooms([]);
         setFormErrors({});
         setIsFormOpen(true);
-        setShowAdvancedConfig(false);
     };
 
     const handleOpenEdit = async (showtime) => {
@@ -235,8 +204,7 @@ const ShowTimePage = () => {
                 room_ids: [Number(st.room_id)],
                 start_date: st.start_time?.slice(0, 10) || '',
                 end_date: st.start_time?.slice(0, 10) || '',
-                operating_start: st.start_time?.slice(11, 16) || '08:00',
-                distribution_level: 'normal'
+                operating_start: st.start_time?.slice(11, 16) || '08:00'
             });
             setIsFormOpen(true);
 
@@ -254,17 +222,15 @@ const ShowTimePage = () => {
         setEditingShowtime(null);
         setFormErrors({});
         setRooms([]);
-        setShowAdvancedConfig(false);
     };
 
     const handleChange = async (e) => {
-        const { name, value, checked, type } = e.target;
+        const { name, value, checked } = e.target;
 
         if (formErrors[name]) {
             setFormErrors(prev => ({ ...prev, [name]: '' }));
         }
 
-        // Xử lý chọn phim
         if (name === 'movie_ids') {
             const movieId = Number(value);
             setScheduleData(prev => {
@@ -272,35 +238,8 @@ const ShowTimePage = () => {
                 const nextIds = checked
                     ? (currentIds.includes(movieId) ? currentIds : [...currentIds, movieId])
                     : currentIds.filter(id => id !== movieId);
-                
-                // 👉 Nếu bỏ chọn phim, xóa luôn distribution của nó
-                const newDistributions = { ...prev.movie_distributions };
-                if (!checked) {
-                    delete newDistributions[movieId];
-                } else if (!newDistributions[movieId]) {
-                    // Nếu chọn phim mới, set default là 'normal'
-                    newDistributions[movieId] = 'normal';
-                }
-                
-                return { 
-                    ...prev, 
-                    movie_ids: nextIds,
-                    movie_distributions: newDistributions
-                };
+                return { ...prev, movie_ids: nextIds };
             });
-            return;
-        }
-
-        // Xử lý change distribution cho từng phim
-        if (name.startsWith('dist_')) {
-            const movieId = Number(name.replace('dist_', ''));
-            setScheduleData(prev => ({
-                ...prev,
-                movie_distributions: {
-                    ...prev.movie_distributions,
-                    [movieId]: value
-                }
-            }));
             return;
         }
 
@@ -331,6 +270,12 @@ const ShowTimePage = () => {
         const errors = {};
 
         if (!scheduleData.cinema_id) errors.cinema_id = 'Vui lòng chọn rạp';
+        if (!scheduleData.start_date) errors.start_date = 'Vui lòng chọn ngày bắt đầu';
+        if (!scheduleData.end_date) errors.end_date = 'Vui lòng chọn ngày kết thúc';
+
+        if (scheduleData.start_date && scheduleData.end_date && scheduleData.start_date > scheduleData.end_date) {
+            errors.end_date = 'Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu';
+        }
 
         if (editingShowtime) {
             if (!scheduleData.movie_id) errors.movie_id = 'Vui lòng chọn phim';
@@ -340,13 +285,10 @@ const ShowTimePage = () => {
             if (!scheduleData.operating_start) {
                 errors.operating_start = 'Vui lòng chọn giờ';
             }
-        }
-
-        if (!scheduleData.start_date) errors.start_date = 'Vui lòng chọn ngày bắt đầu';
-        if (!scheduleData.end_date) errors.end_date = 'Vui lòng chọn ngày kết thúc';
-
-        if (scheduleData.start_date && scheduleData.end_date && scheduleData.start_date > scheduleData.end_date) {
-            errors.end_date = 'Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu';
+        } else {
+            if (!scheduleData.movie_ids || scheduleData.movie_ids.length === 0) {
+                errors.movie_ids = 'Vui lòng chọn ít nhất 1 phim';
+            }
         }
 
         setFormErrors(errors);
@@ -390,31 +332,11 @@ const ShowTimePage = () => {
             setSubmitLoading(true);
             setFormErrors({});
 
-            // 👉 Xây dựng payload với distribution riêng cho từng phim
-            const movieIds = scheduleData.movie_ids || [];
-            const movieDistributions = scheduleData.movie_distributions || {};
-            
-            // Tạo mảng movies với distribution riêng
-            const moviesWithDist = movieIds.map(movieId => ({
-                movie_id: movieId,
-                distribution: movieDistributions[movieId] || 'normal'
-            }));
-
             const payload = {
-                movies: moviesWithDist,
+                movies: scheduleData.movie_ids.map(id => ({ movie_id: id })),
                 cinema_id: Number(scheduleData.cinema_id),
                 start_date: scheduleData.start_date,
-                end_date: scheduleData.end_date,
-                config: {
-                    weekday_start: scheduleData.weekday_start || '08:00',
-                    weekday_end: scheduleData.weekday_end || '23:30',
-                    weekend_start: scheduleData.weekend_start || '08:00',
-                    weekend_end: scheduleData.weekend_end || '24:00',
-                    hot_interval: Number(scheduleData.hot_interval) || 45,
-                    normal_interval: Number(scheduleData.normal_interval) || 75,
-                    cold_interval: Number(scheduleData.cold_interval) || 120,
-                    buffer_minutes: Number(scheduleData.buffer_minutes) || 15
-                }
+                end_date: scheduleData.end_date
             };
 
             console.log('📤 AUTO SCHEDULE PAYLOAD:', payload);
@@ -443,9 +365,7 @@ const ShowTimePage = () => {
                 if (data.summary?.byMovie) {
                     message += `\n\n📊 PHÂN BỔ THEO PHIM:`;
                     for (const [movieId, stats] of Object.entries(data.summary.byMovie)) {
-                        const dist = movieDistributions[movieId] || 'normal';
-                        const distLabel = dist === 'hot' ? '🔥' : dist === 'cold' ? '❄️' : '📊';
-                        message += `\n  ${distLabel} ${stats.title}: ${stats.count} suất (${stats.avgPerDay || 0}/ngày)`;
+                        message += `\n  🎬 ${stats.title}: ${stats.count} suất`;
                     }
                 }
 
@@ -568,15 +488,38 @@ const ShowTimePage = () => {
         }
     ];
 
-    // FORM FIELDS - KHÔNG CÓ movie_ids và distribution_level
     const formFields = [
+        {
+            label: 'Chọn phim',
+            name: 'movie_ids',
+            type: 'checkbox',
+            options: movies.map(movie => ({ label: movie.title, value: movie.movie_id })),
+            description: 'Chọn 1 hoặc nhiều phim để tạo lịch'
+        },
         {
             label: 'Rạp chiếu',
             name: 'cinema_id',
             type: 'select',
             options: [{ label: '-- Chọn rạp --', value: '' }, ...cinemas.map(cinema => ({ label: cinema.cinema_name, value: cinema.cinema_id }))]
         },
-        ...(editingShowtime ? [{
+        { label: 'Ngày bắt đầu', name: 'start_date', type: 'date' },
+        { label: 'Ngày kết thúc', name: 'end_date', type: 'date' }
+    ];
+
+    const editFormFields = [
+        {
+            label: 'Phim',
+            name: 'movie_id',
+            type: 'select',
+            options: movies.map(movie => ({ label: movie.title, value: movie.movie_id }))
+        },
+        {
+            label: 'Rạp chiếu',
+            name: 'cinema_id',
+            type: 'select',
+            options: cinemas.map(cinema => ({ label: cinema.cinema_name, value: cinema.cinema_id }))
+        },
+        {
             label: 'Phòng chiếu',
             name: 'room_ids',
             type: 'checkbox-select',
@@ -584,69 +527,16 @@ const ShowTimePage = () => {
                 label: `${room.room_name} (${String(room.room_type || '').trim().toUpperCase()})`,
                 value: room.room_id
             }))
-        }] : []),
-        { label: 'Ngày bắt đầu', name: 'start_date', type: 'date' },
-        { label: 'Ngày kết thúc', name: 'end_date', type: 'date' },
-        ...(editingShowtime ? [{ label: 'Giờ chiếu', name: 'operating_start', type: 'time' }] : [])
-    ];
-
-    // Advanced config fields
-    const advancedConfigFields = [
-        {
-            label: '⏰ GIỜ HOẠT ĐỘNG (Thứ 2 - Thứ 6)',
-            name: 'weekday_start',
-            type: 'time'
         },
-        {
-            label: '⏰ GIỜ KẾT THÚC (Thứ 2 - Thứ 6)',
-            name: 'weekday_end',
-            type: 'time'
-        },
-        {
-            label: '⏰ GIỜ HOẠT ĐỘNG (Thứ 7 - Chủ nhật)',
-            name: 'weekend_start',
-            type: 'time'
-        },
-        {
-            label: '⏰ GIỜ KẾT THÚC (Thứ 7 - Chủ nhật)',
-            name: 'weekend_end',
-            type: 'time'
-        },
-        {
-            label: '🔥 Khoảng cách HOT (phút)',
-            name: 'hot_interval',
-            type: 'number',
-            min: 30,
-            max: 60
-        },
-        {
-            label: '📊 Khoảng cách NORMAL (phút)',
-            name: 'normal_interval',
-            type: 'number',
-            min: 60,
-            max: 90
-        },
-        {
-            label: '❄️ Khoảng cách COLD (phút)',
-            name: 'cold_interval',
-            type: 'number',
-            min: 90,
-            max: 150
-        },
-        {
-            label: '🧹 Thời gian vệ sinh (phút)',
-            name: 'buffer_minutes',
-            type: 'number',
-            min: 10,
-            max: 30
-        }
+        { label: 'Ngày chiếu', name: 'start_date', type: 'date' },
+        { label: 'Giờ chiếu', name: 'operating_start', type: 'time' }
     ];
 
     return (
         <>
             <AdminPage
                 title="Quản lý lịch chiếu"
-                subtitle="Tự động phân bổ suất chiếu theo phim, rạp và mức độ ưu tiên"
+                subtitle="Tạo lịch chiếu theo cấu hình từng phim"
                 icon={<CalendarDays size={30} />}
                 buttonText="Tạo lịch chiếu"
                 onAdd={handleOpenAdd}
@@ -669,262 +559,54 @@ const ShowTimePage = () => {
             <AdminModal
                 open={isFormOpen}
                 onClose={handleCloseForm}
-                title={editingShowtime ? 'Cập nhật suất chiếu' : 'Tạo lịch chiếu tự động'}
+                title={editingShowtime ? 'Cập nhật suất chiếu' : 'Tạo lịch chiếu'}
                 type="default"
                 size="lg"
             >
                 {!editingShowtime && (
-                    <>
-                        {/* Phần hướng dẫn */}
-                        <div style={{ marginBottom: '20px', padding: '16px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600', marginBottom: '8px' }}>
-                                <Sparkles size={18} /> Phân bổ suất chiếu tự động
-                            </div>
-                            <div style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.6' }}>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
-                                    <div style={{ background: '#fef2f2', padding: '10px', borderRadius: '8px' }}>
-                                        <div style={{ fontWeight: '600', color: '#dc2626' }}>🔥 HOT</div>
-                                        <div>45 phút/suất</div>
-                                        <div style={{ fontSize: '12px', color: '#94a3b8' }}>2D(40%) + 3D(30%) + VIP(20%) + IMAX(10%)</div>
-                                    </div>
-                                    <div style={{ background: '#eff6ff', padding: '10px', borderRadius: '8px' }}>
-                                        <div style={{ fontWeight: '600', color: '#2563eb' }}>📊 NORMAL</div>
-                                        <div>75 phút/suất</div>
-                                        <div style={{ fontSize: '12px', color: '#94a3b8' }}>2D(60%) + 3D(40%)</div>
-                                    </div>
-                                    <div style={{ background: '#f0fdf4', padding: '10px', borderRadius: '8px' }}>
-                                        <div style={{ fontWeight: '600', color: '#16a34a' }}>❄️ COLD</div>
-                                        <div>120 phút/suất</div>
-                                        <div style={{ fontSize: '12px', color: '#94a3b8' }}>2D(50%)</div>
-                                    </div>
-                                </div>
-                                <div style={{ marginTop: '10px', padding: '8px 12px', background: '#f1f5f9', borderRadius: '6px', fontSize: '13px' }}>
-                                    💡 <strong>Chọn phim và mức độ ưu tiên riêng cho từng phim</strong>
-                                </div>
-                            </div>
+                    <div style={{ marginBottom: '20px', padding: '16px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600', marginBottom: '8px' }}>
+                            <Sparkles size={18} /> Tạo lịch chiếu theo cấu hình
                         </div>
-
-                        {/* 👇 PHẦN CHỌN PHIM + DISTRIBUTION RIÊNG */}
-                        <div style={{ marginBottom: '20px' }}>
-                            <label style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                fontWeight: '500',
-                                marginBottom: '12px',
-                                color: '#1e293b'
-                            }}>
-                                Chọn phim và cấu hình mức độ ưu tiên
-                                <span style={{
-                                    color: '#64748b',
-                                    fontSize: '13px',
-                                    fontWeight: '400'
-                                }}>
-                                    (Mỗi phim có thể chọn mức độ khác nhau)
-                                </span>
-                            </label>
-
-                            {/* Bảng chọn phim */}
-                            <div style={{
-                                border: '1px solid #e2e8f0',
-                                borderRadius: '8px',
-                                overflow: 'hidden'
-                            }}>
-                                <table style={{
-                                    width: '100%',
-                                    borderCollapse: 'collapse',
-                                    fontSize: '14px'
-                                }}>
-                                    <thead style={{ background: '#f8fafc' }}>
-                                        <tr>
-                                            <th style={{ padding: '10px 16px', textAlign: 'left', width: '40px' }}></th>
-                                            <th style={{ padding: '10px 16px', textAlign: 'left' }}>Tên phim</th>
-                                            <th style={{ padding: '10px 16px', textAlign: 'center', width: '220px' }}>Mức độ ưu tiên</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {movies.map(movie => {
-                                            const isChecked = scheduleData.movie_ids?.includes(movie.movie_id);
-                                            const distValue = scheduleData.movie_distributions?.[movie.movie_id] || 'normal';
-                                            
-                                            return (
-                                                <tr 
-                                                    key={movie.movie_id}
-                                                    style={{
-                                                        borderTop: '1px solid #e2e8f0',
-                                                        background: isChecked ? '#f8fafc' : '#ffffff'
-                                                    }}
-                                                >
-                                                    <td style={{ padding: '10px 16px' }}>
-                                                        <input
-                                                            type="checkbox"
-                                                            name="movie_ids"
-                                                            value={movie.movie_id}
-                                                            checked={isChecked || false}
-                                                            onChange={handleChange}
-                                                            style={{
-                                                                width: '18px',
-                                                                height: '18px',
-                                                                cursor: 'pointer',
-                                                                accentColor: '#3b82f6'
-                                                            }}
-                                                        />
-                                                    </td>
-                                                    <td style={{ 
-                                                        padding: '10px 16px',
-                                                        fontWeight: isChecked ? '500' : '400',
-                                                        color: isChecked ? '#1e293b' : '#94a3b8'
-                                                    }}>
-                                                        {movie.title}
-                                                    </td>
-                                                    <td style={{ padding: '10px 16px', textAlign: 'center' }}>
-                                                        {isChecked ? (
-                                                            <select
-                                                                name={`dist_${movie.movie_id}`}
-                                                                value={distValue}
-                                                                onChange={handleChange}
-                                                                style={{
-                                                                    padding: '6px 12px',
-                                                                    borderRadius: '6px',
-                                                                    border: '1px solid #e2e8f0',
-                                                                    fontSize: '13px',
-                                                                    background: '#ffffff',
-                                                                    cursor: 'pointer',
-                                                                    minWidth: '160px'
-                                                                }}
-                                                            >
-                                                                <option value="hot" style={{ color: '#dc2626' }}>🔥 HOT - 45 phút</option>
-                                                                <option value="normal" style={{ color: '#2563eb' }}>📊 NORMAL - 75 phút</option>
-                                                                <option value="cold" style={{ color: '#16a34a' }}>❄️ COLD - 120 phút</option>
-                                                            </select>
-                                                        ) : (
-                                                            <span style={{ color: '#94a3b8', fontSize: '13px' }}>-- Chưa chọn --</span>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            {/* Thông báo số phim đã chọn */}
-                            <div style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                marginTop: '8px'
-                            }}>
-                                {formErrors.movie_ids && (
-                                    <span style={{ color: '#ef4444', fontSize: '13px' }}>
-                                        {formErrors.movie_ids}
-                                    </span>
-                                )}
-                                {scheduleData.movie_ids?.length > 0 && !formErrors.movie_ids && (
-                                    <span style={{ fontSize: '13px', color: '#22c55e' }}>
-                                        ✅ Đã chọn <strong>{scheduleData.movie_ids.length}</strong> phim
-                                    </span>
-                                )}
-                                {(!scheduleData.movie_ids || scheduleData.movie_ids.length === 0) && !formErrors.movie_ids && (
-                                    <span style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic' }}>
-                                        ⚠️ Để trống để lấy tất cả phim đang chiếu (mặc định NORMAL)
-                                    </span>
-                                )}
-                            </div>
+                        <div style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.6' }}>
+                            <strong>Hệ thống sẽ tạo lịch chiếu dựa trên cấu hình của từng phim:</strong>
+                            <br /><br />
+                            📋 Mỗi phim cần được cấu hình trong <strong>Quản lý phim → Cấu hình lịch chiếu</strong>
+                            <br />
+                            🔧 Cấu hình bao gồm: Khung giờ, loại phòng, số suất, khoảng cách
+                            <br /><br />
+                            <strong>💡 Nếu phim chưa có cấu hình, sẽ bỏ qua khi tạo lịch!</strong>
                         </div>
-                    </>
+                    </div>
                 )}
 
-                {/* AdminForm - LỌC BỎ distribution_level */}
                 <AdminForm
-                    fields={formFields}
+                    fields={editingShowtime ? editFormFields : formFields}
                     formData={scheduleData}
                     errors={formErrors}
                     onChange={handleChange}
                     onSubmit={handleSubmit}
                     loading={submitLoading}
-                    submitText={editingShowtime ? 'Lưu thay đổi' : 'Tự động tạo lịch'}
+                    submitText={editingShowtime ? 'Lưu thay đổi' : 'Tạo lịch chiếu'}
                 />
 
                 {!editingShowtime && (
-                    <>
-                        <button
-                            type="button"
-                            onClick={() => setShowAdvancedConfig(!showAdvancedConfig)}
-                            style={{
-                                marginTop: '16px',
-                                padding: '8px 16px',
-                                background: 'transparent',
-                                border: '1px solid #e2e8f0',
-                                borderRadius: '6px',
-                                color: '#475569',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                fontSize: '14px'
-                            }}
-                        >
-                            <Settings size={16} />
-                            {showAdvancedConfig ? 'Ẩn' : 'Hiện'} cấu hình nâng cao
-                        </button>
-
-                        {showAdvancedConfig && (
-                            <div style={{
-                                marginTop: '16px',
-                                padding: '20px',
-                                background: '#f8fafc',
-                                borderRadius: '8px',
-                                border: '1px solid #e2e8f0'
-                            }}>
-                                <h4 style={{ marginBottom: '16px', color: '#1e293b' }}>
-                                    ⚙️ Cấu hình giờ chiếu nâng cao
-                                </h4>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                                    {advancedConfigFields.map(field => (
-                                        <div key={field.name} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                            <label style={{ fontSize: '13px', fontWeight: '500', color: '#475569' }}>
-                                                {field.label}
-                                            </label>
-                                            <input
-                                                type={field.type === 'time' ? 'time' : 'number'}
-                                                name={field.name}
-                                                value={scheduleData[field.name] || ''}
-                                                onChange={handleChange}
-                                                min={field.min}
-                                                max={field.max}
-                                                style={{
-                                                    padding: '8px 12px',
-                                                    border: '1px solid #e2e8f0',
-                                                    borderRadius: '6px',
-                                                    fontSize: '14px'
-                                                }}
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        <div style={{ marginTop: '16px', padding: '14px', borderRadius: '10px', background: '#f8fafc', fontSize: '13px', color: '#64748b' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '7px' }}>
-                                <Info size={16} /> <strong>Cách hoạt động:</strong>
-                            </div>
-                            Hệ thống sẽ tự động lấy toàn bộ phòng thuộc các hạng phù hợp với mức ưu tiên bạn chọn.
-                            <br /><br />
-                            <strong>🕐 Giờ hoạt động mặc định:</strong>
-                            <br />Thứ 2 → Thứ 6: <strong>08:00 → 23:30</strong>
-                            <br />Thứ 7 → Chủ nhật: <strong>08:00 → 24:00</strong>
-                            <br /><br />
-                            <strong>Khoảng cách suất mặc định:</strong>
-                            <br />🔥 HOT: <strong>45 phút</strong> | 📊 NORMAL: <strong>75 phút</strong> | ❄️ COLD: <strong>120 phút</strong>
-                            <br /><br />
-                            Phòng nào đang bận thì hệ thống sẽ thử phòng khác.
-                            <br />Phòng chỉ được sử dụng lại sau khi phim trước kết thúc <strong>+ 15 phút</strong>.
-                            <br /><br />
-                            <em>💡 Bấm vào "Cấu hình nâng cao" để tùy chỉnh giờ hoạt động và khoảng cách suất.</em>
+                    <div style={{ marginTop: '16px', padding: '14px', borderRadius: '10px', background: '#f8fafc', fontSize: '13px', color: '#64748b' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '7px' }}>
+                            <Info size={16} /> <strong>Cách hoạt động:</strong>
                         </div>
-                    </>
+                        Hệ thống sẽ đọc cấu hình lịch chiếu của từng phim trong bảng <strong>movie_showtime_config</strong>.
+                        <br /><br />
+                        <strong>🕐 Giờ hoạt động:</strong>
+                        <br />Lấy từ cấu hình của từng rạp (Quản lý rạp → Giờ hoạt động)
+                        <br /><br />
+                        <strong>📋 Cấu hình phim bao gồm:</strong>
+                        <br />- Khung giờ: MORNING, AFTERNOON, EVENING, NIGHT
+                        <br />- Loại phòng: 2D, 3D, VIP, IMAX
+                        <br />- Số suất và khoảng cách giữa các suất
+                        <br /><br />
+                        <em>💡 Vào "Quản lý phim" → Chọn phim → "Cấu hình lịch chiếu" để thiết lập.</em>
+                    </div>
                 )}
             </AdminModal>
 
