@@ -437,38 +437,127 @@ class ShowtimeRepository {
     /*=========================================================
         GET MOVIE SHOWTIME CONFIG (THỦ CÔNG)
     =========================================================*/
-    async getMovieShowtimeConfig(movieId, cinemaId, dayType = 'ALL') {
-        const [rows] = await db.query(
-            `
-            SELECT 
+   async getMovieShowtimeConfig(movieId, cinemaId, dayType = 'ALL') {
+    let rows = [];
+
+    // =========================================================
+    // 1. DAY TYPE CỤ THỂ: WEEKDAY / WEEKEND
+    // =========================================================
+    if (dayType !== 'ALL') {
+
+        // Ưu tiên config riêng của ngày đó
+        const [specificRows] = await db.query(`
+            SELECT
                 time_slot,
                 room_type,
                 slot_count,
                 interval_minutes
             FROM movie_showtime_config
-            WHERE movie_id = ? 
-                AND cinema_id = ? 
-                AND (day_type = ? OR day_type = 'ALL')
-                AND is_active = 1
-            ORDER BY time_slot, room_type
-            `,
-            [movieId, cinemaId, dayType]
-        );
-        
-        // Nhóm theo time_slot
-        const config = {};
-        for (const row of rows) {
-            const slot = row.time_slot;
-            if (!config[slot]) config[slot] = [];
-            config[slot].push({
-                room_type: row.room_type,
-                slot_count: row.slot_count,
-                interval_minutes: row.interval_minutes
-            });
+            WHERE movie_id = ?
+              AND cinema_id = ?
+              AND day_type = ?
+              AND is_active = 1
+            ORDER BY time_slot ASC, room_type ASC
+        `, [
+            movieId,
+            cinemaId,
+            dayType
+        ]);
+
+        // Nếu có config riêng
+        // => CHỈ dùng config riêng
+        if (Array.isArray(specificRows) && specificRows.length > 0) {
+            rows = specificRows;
         }
-        
-        return config;
+
+        // Nếu KHÔNG có config riêng
+        // => mới fallback về ALL
+        else {
+            const [allRows] = await db.query(`
+                SELECT
+                    time_slot,
+                    room_type,
+                    slot_count,
+                    interval_minutes
+                FROM movie_showtime_config
+                WHERE movie_id = ?
+                  AND cinema_id = ?
+                  AND day_type = 'ALL'
+                  AND is_active = 1
+                ORDER BY time_slot ASC, room_type ASC
+            `, [
+                movieId,
+                cinemaId
+            ]);
+
+            rows = allRows;
+        }
     }
+
+    // =========================================================
+    // 2. DAY TYPE = ALL
+    // =========================================================
+    else {
+
+        const [allRows] = await db.query(`
+            SELECT
+                time_slot,
+                room_type,
+                slot_count,
+                interval_minutes
+            FROM movie_showtime_config
+            WHERE movie_id = ?
+              AND cinema_id = ?
+              AND day_type = 'ALL'
+              AND is_active = 1
+            ORDER BY time_slot ASC, room_type ASC
+        `, [
+            movieId,
+            cinemaId
+        ]);
+
+        rows = allRows;
+    }
+
+    // =========================================================
+    // 3. BUILD CONFIG OBJECT
+    // =========================================================
+
+    const config = {};
+
+    for (const row of rows) {
+
+        const slot = row.time_slot;
+
+        if (!config[slot]) {
+            config[slot] = [];
+        }
+
+        config[slot].push({
+            room_type: String(row.room_type || '')
+                .trim()
+                .toUpperCase(),
+
+            slot_count: Number(row.slot_count),
+
+            interval_minutes: Number(row.interval_minutes)
+        });
+    }
+
+    // =========================================================
+    // DEBUG
+    // =========================================================
+
+    console.log(
+        `🧩 CONFIG LOAD | movie=${movieId} | cinema=${cinemaId} | dayType=${dayType}`
+    );
+
+    console.log(
+        `   → ${JSON.stringify(config)}`
+    );
+
+    return config;
+}
 
     /*=========================================================
         GET MOVIE STATS - ĐÚNG VỚI CSDL CỦA BẠN
