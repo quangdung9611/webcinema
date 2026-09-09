@@ -23,7 +23,9 @@ import {
     Search,
     AlertTriangle,
     CheckCircle2,
-    Lightbulb
+    Lightbulb,
+    Clock,
+    Info
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -85,43 +87,25 @@ const DAY_TYPES = [
 ];
 
 const DEFAULT_INTERVAL = 45;
-
 const DEFAULT_MOVIE_DURATION = 120;
-
 const DEFAULT_CINEMA_OPEN = 8 * 60;
-
 const DEFAULT_CINEMA_CLOSE = 24 * 60;
-
 const DEFAULT_ROOM_COUNT = 1;
+const ROOM_BUFFER_MINUTES = 15;
 
 // ==========================================================
 // UTILS
 // ==========================================================
 
-const toNumber = (
-    value,
-    fallback = 0
-) => {
-
+const toNumber = (value, fallback = 0) => {
     const number = Number(value);
-
-    return Number.isFinite(number)
-        ? number
-        : fallback;
+    return Number.isFinite(number) ? number : fallback;
 };
 
-const normalizeString = (
-    value,
-    fallback = ''
-) => {
-
-    if (
-        value === null ||
-        value === undefined
-    ) {
+const normalizeString = (value, fallback = '') => {
+    if (value === null || value === undefined) {
         return fallback;
     }
-
     return String(value).trim();
 };
 
@@ -129,152 +113,105 @@ const normalizeString = (
 // TIME UTILS
 // ==========================================================
 
-const timeToMinutes = (
-    value,
-    fallback = null
-) => {
-
-    if (
-        value === null ||
-        value === undefined ||
-        value === ''
-    ) {
+const timeToMinutes = (value, fallback = null) => {
+    if (value === null || value === undefined || value === '') {
         return fallback;
     }
 
     if (typeof value === 'number') {
-
-        if (
-            Number.isFinite(value) &&
-            value >= 0 &&
-            value <= 1440
-        ) {
+        if (Number.isFinite(value) && value >= 0 && value <= 1440) {
             return Math.round(value);
         }
-
         return fallback;
     }
 
-    const stringValue =
-        String(value).trim();
+    const stringValue = String(value).trim();
+    if (!stringValue) return fallback;
 
-    if (!stringValue) {
-        return fallback;
-    }
-
-    // HH:mm
-    const match =
-        stringValue.match(
-            /^(\d{1,2}):(\d{2})/
-        );
-
+    const match = stringValue.match(/^(\d{1,2}):(\d{2})/);
     if (match) {
-
-        const hour =
-            Number(match[1]);
-
-        const minute =
-            Number(match[2]);
-
-        if (
-            hour >= 0 &&
-            hour <= 23 &&
-            minute >= 0 &&
-            minute <= 59
-        ) {
-            return (
-                hour * 60 +
-                minute
-            );
+        const hour = Number(match[1]);
+        const minute = Number(match[2]);
+        if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+            return hour * 60 + minute;
         }
     }
 
-    // Decimal / integer minutes
-    const numeric =
-        Number(stringValue);
-
-    if (
-        Number.isFinite(numeric) &&
-        numeric >= 0 &&
-        numeric <= 1440
-    ) {
+    const numeric = Number(stringValue);
+    if (Number.isFinite(numeric) && numeric >= 0 && numeric <= 1440) {
         return Math.round(numeric);
     }
 
     return fallback;
 };
 
-const minutesToTime = (
-    minutes
-) => {
-
-    const safeMinutes =
-        Math.max(
-            0,
-            Math.min(
-                1440,
-                Math.round(
-                    Number(minutes) || 0
-                )
-            )
-        );
-
-    if (
-        safeMinutes === 1440
-    ) {
-        return '24:00';
-    }
-
-    const hour =
-        Math.floor(
-            safeMinutes / 60
-        );
-
-    const minute =
-        safeMinutes % 60;
-
+const minutesToTime = (minutes) => {
+    const safeMinutes = Math.max(0, Math.min(1440, Math.round(Number(minutes) || 0)));
+    if (safeMinutes === 1440) return '24:00';
+    const hour = Math.floor(safeMinutes / 60);
+    const minute = safeMinutes % 60;
     return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 };
 
-const formatHourShort = (
-    minutes
-) => {
-
-    const value =
-        Math.round(
-            Number(minutes) || 0
-        );
-
-    if (value === 1440) {
-        return '24h';
-    }
-
-    const hour =
-        Math.floor(
-            value / 60
-        );
-
-    const minute =
-        value % 60;
-
-    if (minute === 0) {
-        return `${hour}h`;
-    }
-
+const formatHourShort = (minutes) => {
+    const value = Math.round(Number(minutes) || 0);
+    if (value === 1440) return '24h';
+    const hour = Math.floor(value / 60);
+    const minute = value % 60;
+    if (minute === 0) return `${hour}h`;
     return `${hour}h${String(minute).padStart(2, '0')}`;
 };
 
 // ==========================================================
-// EXTRACT MOVIE DURATION
+// CALCULATE SLOT TIMES - CHỈ TÍNH THEO INTERVAL, BỎ QUA DURATION
 // ==========================================================
 
-const extractMovieDuration = (
-    movie
-) => {
-
-    if (!movie) {
-        return DEFAULT_MOVIE_DURATION;
+const calculateSlotTimes = ({
+    startMinutes,
+    endMinutes,
+    intervalMinutes
+}) => {
+    if (startMinutes >= endMinutes || intervalMinutes <= 0) {
+        return { times: [], maxSlots: 0 };
     }
+
+    const times = [];
+    let currentTime = startMinutes;
+
+    // CHỈ TÍNH SỐ LẦN CHIA ĐỀU TRONG KHUNG, BỎ QUA DURATION
+    const maxSlots = Math.floor((endMinutes - startMinutes) / intervalMinutes);
+
+    if (maxSlots <= 0) {
+        return { times: [], maxSlots: 0 };
+    }
+
+    for (let i = 0; i < maxSlots; i++) {
+        const start = startMinutes + i * intervalMinutes;
+
+        // CHỈ CHECK GIỜ BẮT ĐẦU, KHÔNG CHECK DURATION
+        if (start >= endMinutes) break;
+
+        times.push({
+            start: start,
+            startTime: minutesToTime(start),
+            end: start + intervalMinutes,
+            endTime: minutesToTime(start + intervalMinutes)
+        });
+    }
+
+    return {
+        times,
+        maxSlots,
+        actualCount: times.length
+    };
+};
+
+// ==========================================================
+// EXTRACT FUNCTIONS
+// ==========================================================
+
+const extractMovieDuration = (movie) => {
+    if (!movie) return DEFAULT_MOVIE_DURATION;
 
     const candidates = [
         movie.duration,
@@ -288,14 +225,8 @@ const extractMovieDuration = (
     ];
 
     for (const value of candidates) {
-
-        const number =
-            Number(value);
-
-        if (
-            Number.isFinite(number) &&
-            number > 0
-        ) {
+        const number = Number(value);
+        if (Number.isFinite(number) && number > 0) {
             return Math.round(number);
         }
     }
@@ -303,17 +234,8 @@ const extractMovieDuration = (
     return DEFAULT_MOVIE_DURATION;
 };
 
-// ==========================================================
-// EXTRACT CINEMA OPEN / CLOSE
-// ==========================================================
-
-const extractCinemaOpen = (
-    cinema
-) => {
-
-    if (!cinema) {
-        return DEFAULT_CINEMA_OPEN;
-    }
+const extractCinemaOpen = (cinema) => {
+    if (!cinema) return DEFAULT_CINEMA_OPEN;
 
     const candidates = [
         cinema.open_time,
@@ -328,30 +250,15 @@ const extractCinemaOpen = (
     ];
 
     for (const value of candidates) {
-
-        const minutes =
-            timeToMinutes(
-                value,
-                null
-            );
-
-        if (
-            minutes !== null
-        ) {
-            return minutes;
-        }
+        const minutes = timeToMinutes(value, null);
+        if (minutes !== null) return minutes;
     }
 
     return DEFAULT_CINEMA_OPEN;
 };
 
-const extractCinemaClose = (
-    cinema
-) => {
-
-    if (!cinema) {
-        return DEFAULT_CINEMA_CLOSE;
-    }
+const extractCinemaClose = (cinema) => {
+    if (!cinema) return DEFAULT_CINEMA_CLOSE;
 
     const candidates = [
         cinema.close_time,
@@ -366,342 +273,46 @@ const extractCinemaClose = (
     ];
 
     for (const value of candidates) {
-
-        const minutes =
-            timeToMinutes(
-                value,
-                null
-            );
-
-        if (
-            minutes !== null
-        ) {
-            return minutes;
-        }
+        const minutes = timeToMinutes(value, null);
+        if (minutes !== null) return minutes;
     }
 
     return DEFAULT_CINEMA_CLOSE;
 };
 
-// ==========================================================
-// EXTRACT ROOM COUNT
-// ==========================================================
+const extractRoomCount = (cinema, roomType) => {
+    if (!cinema) return DEFAULT_ROOM_COUNT;
 
-const extractRoomCount = (
-    cinema,
-    roomType
-) => {
+    const normalizedType = String(roomType || '2D').toUpperCase();
 
-    if (!cinema) {
-        return DEFAULT_ROOM_COUNT;
-    }
-
-    const normalizedType =
-        String(
-            roomType || '2D'
-        ).toUpperCase();
-
-    // ----------------------------------------------
-    // 1. room_count_by_type
-    // ----------------------------------------------
-
-    const byType =
-        cinema.room_count_by_type ||
-        cinema.roomCountByType ||
-        cinema.rooms_by_type ||
-        cinema.roomsByType;
-
-    if (
-        byType &&
-        typeof byType === 'object'
-    ) {
-
-        const value =
-            byType[normalizedType];
-
-        if (
-            Number.isFinite(
-                Number(value)
-            ) &&
-            Number(value) > 0
-        ) {
+    // Room count by type
+    const byType = cinema.room_count_by_type || cinema.roomCountByType || cinema.rooms_by_type || cinema.roomsByType;
+    if (byType && typeof byType === 'object') {
+        const value = byType[normalizedType];
+        if (Number.isFinite(Number(value)) && Number(value) > 0) {
             return Number(value);
         }
     }
 
-    // ----------------------------------------------
-    // 2. rooms array
-    // ----------------------------------------------
-
-    const rooms =
-        cinema.rooms ||
-        cinema.room_list ||
-        cinema.roomList;
-
-    if (
-        Array.isArray(rooms)
-    ) {
-
-        const matched =
-            rooms.filter(room => {
-
-                const type =
-                    String(
-                        room.room_type ||
-                        room.type ||
-                        room.roomType ||
-                        ''
-                    ).toUpperCase();
-
-                return (
-                    type ===
-                    normalizedType
-                );
-            });
-
-        if (
-            matched.length > 0
-        ) {
-            return matched.length;
-        }
-    }
-
-    // ----------------------------------------------
-    // 3. room_count
-    // ----------------------------------------------
-
-    const genericCount =
-        cinema.room_count ||
-        cinema.roomCount ||
-        cinema.total_rooms ||
-        cinema.totalRooms;
-
-    if (
-        Number.isFinite(
-            Number(genericCount)
-        ) &&
-        Number(genericCount) > 0
-    ) {
-
-        /*
-         * Nếu backend chỉ trả tổng số phòng
-         * mà không có phân loại thì chưa thể
-         * biết chính xác từng loại.
-         *
-         * Tạm dùng 1 phòng để không đánh giá
-         * quá cao capacity.
-         */
-        return DEFAULT_ROOM_COUNT;
+    // Rooms array
+    const rooms = cinema.rooms || cinema.room_list || cinema.roomList;
+    if (Array.isArray(rooms)) {
+        const matched = rooms.filter(room => {
+            const type = String(room.room_type || room.type || room.roomType || '').toUpperCase();
+            return type === normalizedType;
+        });
+        if (matched.length > 0) return matched.length;
     }
 
     return DEFAULT_ROOM_COUNT;
 };
 
-// ==========================================================
-// GET MOVIE OBJECT
-// ==========================================================
-
-const getMovieByIdFromList = (
-    movies,
-    movieId
-) => {
-
-    return movies.find(
-        movie =>
-            String(
-                movie.movie_id
-            ) ===
-            String(movieId)
-    );
+const getMovieByIdFromList = (movies, movieId) => {
+    return movies.find(movie => String(movie.movie_id) === String(movieId));
 };
 
-// ==========================================================
-// GET TIME SLOT
-// ==========================================================
-
-const getTimeSlotByKey = (
-    key
-) => {
-
-    return TIME_SLOTS.find(
-        slot =>
-            slot.key === key
-    );
-};
-
-// ==========================================================
-// CALCULATE EFFECTIVE TIME RANGE
-// ==========================================================
-
-const getEffectiveSlotRange = (
-    timeSlotKey,
-    cinemaOpen,
-    cinemaClose
-) => {
-
-    const slot =
-        getTimeSlotByKey(
-            timeSlotKey
-        );
-
-    if (!slot) {
-        return null;
-    }
-
-    const start =
-        Math.max(
-            cinemaOpen,
-            slot.startMinutes
-        );
-
-    const end =
-        Math.min(
-            cinemaClose,
-            slot.endMinutes
-        );
-
-    if (start >= end) {
-        return null;
-    }
-
-    return {
-        start,
-        end
-    };
-};
-
-// ==========================================================
-// CALCULATE MAX CAPACITY
-// ==========================================================
-
-const calculateMaxCapacity = ({
-    slotStart,
-    slotEnd,
-    duration,
-    intervalMinutes,
-    roomCount
-}) => {
-
-    if (
-        !Number.isFinite(slotStart) ||
-        !Number.isFinite(slotEnd) ||
-        !Number.isFinite(duration) ||
-        !Number.isFinite(intervalMinutes) ||
-        !Number.isFinite(roomCount)
-    ) {
-        return 0;
-    }
-
-    if (
-        slotStart >= slotEnd ||
-        duration <= 0 ||
-        intervalMinutes <= 0 ||
-        roomCount <= 0
-    ) {
-        return 0;
-    }
-
-    /*
-     * Scheduler hiện tại của bạn có buffer 15 phút
-     * giữa hai suất cùng một phòng.
-     */
-    const ROOM_BUFFER = 15;
-
-    let totalCapacity = 0;
-
-    for (
-        let roomIndex = 0;
-        roomIndex < roomCount;
-        roomIndex++
-    ) {
-
-        let candidate =
-            slotStart;
-
-        let lastBlockedUntil =
-            -Infinity;
-
-        let roomCapacity = 0;
-
-        while (
-            candidate + duration <=
-            slotEnd
-        ) {
-
-            if (
-                candidate >=
-                lastBlockedUntil
-            ) {
-
-                roomCapacity++;
-
-                lastBlockedUntil =
-                    candidate +
-                    duration +
-                    ROOM_BUFFER;
-
-                candidate +=
-                    intervalMinutes;
-
-            } else {
-
-                const difference =
-                    lastBlockedUntil -
-                    candidate;
-
-                const jumps =
-                    Math.ceil(
-                        difference /
-                        intervalMinutes
-                    );
-
-                candidate +=
-                    Math.max(
-                        1,
-                        jumps
-                    ) *
-                    intervalMinutes;
-            }
-        }
-
-        totalCapacity +=
-            roomCapacity;
-    }
-
-    return totalCapacity;
-};
-
-// ==========================================================
-// GET EFFECTIVE SLOT LABEL
-// ==========================================================
-
-const getEffectiveSlotLabel = (
-    timeSlotKey,
-    cinemaOpen,
-    cinemaClose
-) => {
-
-    const range =
-        getEffectiveSlotRange(
-            timeSlotKey,
-            cinemaOpen,
-            cinemaClose
-        );
-
-    const slot =
-        getTimeSlotByKey(
-            timeSlotKey
-        );
-
-    if (
-        !range ||
-        !slot
-    ) {
-        return slot?.label ||
-            timeSlotKey;
-    }
-
-    return `${timeSlotKey} (${formatHourShort(range.start)} - ${formatHourShort(range.end)})`;
+const getTimeSlotByKey = (key) => {
+    return TIME_SLOTS.find(slot => slot.key === key);
 };
 
 // ==========================================================
@@ -716,1122 +327,319 @@ const MovieShowtimeConfigPage = () => {
     // STATE
     // ======================================================
 
-    const [loading, setLoading] =
-        useState(false);
+    const [loading, setLoading] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [movies, setMovies] = useState([]);
+    const [cinemas, setCinemas] = useState([]);
+    const [selectedCinema, setSelectedCinema] = useState('');
+    const [selectedMovies, setSelectedMovies] = useState([]);
+    const [searchMovie, setSearchMovie] = useState('');
+    const [configs, setConfigs] = useState({});
+    const [expandedMovies, setExpandedMovies] = useState({});
 
-    const [saving, setSaving] =
-        useState(false);
-
-    const [movies, setMovies] =
-        useState([]);
-
-    const [cinemas, setCinemas] =
-        useState([]);
-
-    const [selectedCinema, setSelectedCinema] =
-        useState('');
-
-    const [selectedMovies, setSelectedMovies] =
-        useState([]);
-
-    const [searchMovie, setSearchMovie] =
-        useState('');
-
-    const [configs, setConfigs] =
-        useState({});
-
-    const [expandedMovies, setExpandedMovies] =
-        useState({});
-
-    const [alertModal, setAlertModal] =
-        useState({
-            open: false,
-            title: '',
-            message: '',
-            type: 'default'
-        });
+    const [alertModal, setAlertModal] = useState({
+        open: false,
+        title: '',
+        message: '',
+        type: 'default'
+    });
 
     // ======================================================
-    // SELECTED CINEMA OBJECT
+    // SELECTED CINEMA
     // ======================================================
 
-    const selectedCinemaObject =
-        useMemo(() => {
+    const selectedCinemaObject = useMemo(() => {
+        return cinemas.find(cinema => String(cinema.cinema_id) === String(selectedCinema));
+    }, [cinemas, selectedCinema]);
 
-            return cinemas.find(
-                cinema =>
-                    String(
-                        cinema.cinema_id
-                    ) ===
-                    String(
-                        selectedCinema
-                    )
-            );
-
-        }, [
-            cinemas,
-            selectedCinema
-        ]);
-
-    // ======================================================
-    // CINEMA HOURS
-    // ======================================================
-
-    const cinemaOpen =
-        useMemo(() => {
-
-            return extractCinemaOpen(
-                selectedCinemaObject
-            );
-
-        }, [
-            selectedCinemaObject
-        ]);
-
-    const cinemaClose =
-        useMemo(() => {
-
-            return extractCinemaClose(
-                selectedCinemaObject
-            );
-
-        }, [
-            selectedCinemaObject
-        ]);
+    const cinemaOpen = useMemo(() => extractCinemaOpen(selectedCinemaObject), [selectedCinemaObject]);
+    const cinemaClose = useMemo(() => extractCinemaClose(selectedCinemaObject), [selectedCinemaObject]);
 
     // ======================================================
     // ALERT
     // ======================================================
 
-    const showAlert = (
-        title,
-        message,
-        type = 'default'
-    ) => {
-
-        setAlertModal({
-            open: true,
-            title,
-            message,
-            type
-        });
+    const showAlert = (title, message, type = 'default') => {
+        setAlertModal({ open: true, title, message, type });
     };
 
     const closeAlert = () => {
-
-        setAlertModal(prev => ({
-            ...prev,
-            open: false
-        }));
+        setAlertModal(prev => ({ ...prev, open: false }));
     };
 
     // ======================================================
-    // LOAD INITIAL DATA
+    // LOAD DATA
     // ======================================================
 
     useEffect(() => {
-
         fetchMovies();
         fetchCinemas();
-
     }, []);
 
-    // ======================================================
-    // LOAD CONFIG WHEN CINEMA / MOVIES CHANGE
-    // ======================================================
-
     useEffect(() => {
-
-        if (
-            selectedCinema &&
-            selectedMovies.length > 0
-        ) {
+        if (selectedCinema && selectedMovies.length > 0) {
             loadAllConfigs();
         }
-
-    }, [
-        selectedCinema,
-        selectedMovies
-    ]);
-
-    // ======================================================
-    // FETCH MOVIES
-    // ======================================================
+    }, [selectedCinema, selectedMovies]);
 
     const fetchMovies = async () => {
-
         try {
-
-            const res =
-                await api.get(
-                    '/api/movies'
-                );
-
-            const movieData =
-                Array.isArray(
-                    res.data?.data
-                )
-                    ? res.data.data
-                    : [];
-
-            setMovies(
-                movieData
-            );
-
+            const res = await api.get('/api/movies');
+            const movieData = Array.isArray(res.data?.data) ? res.data.data : [];
+            setMovies(movieData);
         } catch (error) {
-
-            console.error(
-                'Lỗi load phim:',
-                error
-            );
-
-            showAlert(
-                'Lỗi',
-                'Không thể tải danh sách phim',
-                'error'
-            );
+            console.error('Lỗi load phim:', error);
+            showAlert('Lỗi', 'Không thể tải danh sách phim', 'error');
         }
     };
-
-    // ======================================================
-    // FETCH CINEMAS
-    // ======================================================
 
     const fetchCinemas = async () => {
-
         try {
-
-            const res =
-                await api.get(
-                    '/api/cinemas'
-                );
-
-            const cinemaData =
-                Array.isArray(
-                    res.data?.data
-                )
-                    ? res.data.data
-                    : [];
-
-            setCinemas(
-                cinemaData
-            );
-
-            if (
-                cinemaData.length > 0
-            ) {
-
-                setSelectedCinema(
-                    cinemaData[0].cinema_id
-                );
+            const res = await api.get('/api/cinemas');
+            const cinemaData = Array.isArray(res.data?.data) ? res.data.data : [];
+            setCinemas(cinemaData);
+            if (cinemaData.length > 0) {
+                setSelectedCinema(cinemaData[0].cinema_id);
             }
-
         } catch (error) {
-
-            console.error(
-                'Lỗi load rạp:',
-                error
-            );
-
-            showAlert(
-                'Lỗi',
-                'Không thể tải danh sách rạp',
-                'error'
-            );
+            console.error('Lỗi load rạp:', error);
+            showAlert('Lỗi', 'Không thể tải danh sách rạp', 'error');
         }
     };
 
-    // ======================================================
-    // LOAD ALL CONFIGS
-    // ======================================================
-
     const loadAllConfigs = async () => {
-
-        if (
-            !selectedCinema ||
-            selectedMovies.length === 0
-        ) {
-            return;
-        }
+        if (!selectedCinema || selectedMovies.length === 0) return;
 
         setLoading(true);
-
         const newConfigs = {};
 
         try {
-
-            for (
-                const movieId
-                of selectedMovies
-            ) {
-
+            for (const movieId of selectedMovies) {
                 try {
+                    const res = await api.get(`/api/showtime-config/${movieId}?cinema_id=${selectedCinema}`);
+                    const rawData = res.data?.data;
+                    const movieConfig = Array.isArray(rawData) ? rawData : Array.isArray(rawData?.data) ? rawData.data : [];
 
-                    const res =
-                        await api.get(
-                            `/api/showtime-config/${movieId}?cinema_id=${selectedCinema}`
-                        );
-
-                    const rawData =
-                        res.data?.data;
-
-                    const movieConfig =
-                        Array.isArray(
-                            rawData
-                        )
-                            ? rawData
-                            : Array.isArray(
-                                rawData?.data
-                            )
-                                ? rawData.data
-                                : [];
-
-                    newConfigs[movieId] =
-                        movieConfig.map(
-                            config => ({
-                                ...config,
-
-                                config_id:
-                                    config.config_id ??
-                                    config.id ??
-                                    undefined,
-
-                                time_slot:
-                                    config.time_slot ||
-                                    'MORNING',
-
-                                room_type:
-                                    config.room_type ||
-                                    '2D',
-
-                                slot_count:
-                                    Number(
-                                        config.slot_count
-                                    ) || 0,
-
-                                interval_minutes:
-                                    Number(
-                                        config.interval_minutes
-                                    ) ||
-                                    DEFAULT_INTERVAL,
-
-                                day_type:
-                                    config.day_type ||
-                                    'ALL',
-
-                                is_active:
-                                    Number(
-                                        config.is_active
-                                    ) === 1
-                                        ? 1
-                                        : 0
-                            })
-                        );
-
+                    newConfigs[movieId] = movieConfig.map(config => ({
+                        ...config,
+                        config_id: config.config_id ?? config.id ?? undefined,
+                        time_slot: config.time_slot || 'MORNING',
+                        room_type: config.room_type || '2D',
+                        slot_count: Number(config.slot_count) || 0,
+                        interval_minutes: Number(config.interval_minutes) || DEFAULT_INTERVAL,
+                        day_type: config.day_type || 'ALL',
+                        is_active: Number(config.is_active) === 1 ? 1 : 0
+                    }));
                 } catch (error) {
-
-                    console.error(
-                        `Lỗi load config cho phim ${movieId}:`,
-                        error
-                    );
-
-                    newConfigs[movieId] =
-                        [];
+                    console.error(`Lỗi load config cho phim ${movieId}:`, error);
+                    newConfigs[movieId] = [];
                 }
             }
 
-            setConfigs(
-                newConfigs
-            );
-
+            setConfigs(newConfigs);
         } finally {
-
             setLoading(false);
         }
     };
 
     // ======================================================
-    // TOGGLE MOVIE
+    // HANDLERS
     // ======================================================
 
-    const toggleMovieSelection = (
-        movieId
-    ) => {
-
+    const toggleMovieSelection = (movieId) => {
         setSelectedMovies(prev => {
-
-            if (
-                prev.includes(
-                    movieId
-                )
-            ) {
-
-                return prev.filter(
-                    id =>
-                        id !== movieId
-                );
+            if (prev.includes(movieId)) {
+                return prev.filter(id => id !== movieId);
             }
-
-            return [
-                ...prev,
-                movieId
-            ];
+            return [...prev, movieId];
         });
-
-        setExpandedMovies(prev => ({
-            ...prev,
-            [movieId]: true
-        }));
+        setExpandedMovies(prev => ({ ...prev, [movieId]: true }));
     };
 
-    // ======================================================
-    // TOGGLE EXPAND
-    // ======================================================
-
-    const toggleExpand = (
-        movieId
-    ) => {
-
-        setExpandedMovies(prev => ({
-            ...prev,
-            [movieId]:
-                !prev[movieId]
-        }));
+    const toggleExpand = (movieId) => {
+        setExpandedMovies(prev => ({ ...prev, [movieId]: !prev[movieId] }));
     };
 
-    // ======================================================
-    // ADD CONFIG ROW
-    // ======================================================
-
-    const addConfig = (
-        movieId
-    ) => {
-
+    const addConfig = (movieId) => {
         setConfigs(prev => ({
-
             ...prev,
-
             [movieId]: [
                 ...(prev[movieId] || []),
-
                 {
-                    time_slot:
-                        'MORNING',
-
-                    room_type:
-                        '2D',
-
-                    slot_count:
-                        1,
-
-                    interval_minutes:
-                        DEFAULT_INTERVAL,
-
-                    day_type:
-                        'ALL',
-
-                    is_active:
-                        1
+                    time_slot: 'MORNING',
+                    room_type: '2D',
+                    slot_count: 1,
+                    interval_minutes: DEFAULT_INTERVAL,
+                    day_type: 'ALL',
+                    is_active: 1
                 }
             ]
         }));
-
-        setExpandedMovies(prev => ({
-            ...prev,
-            [movieId]: true
-        }));
+        setExpandedMovies(prev => ({ ...prev, [movieId]: true }));
     };
 
-    // ======================================================
-    // REMOVE CONFIG
-    // ======================================================
+    const removeConfig = async (movieId, index) => {
+        const movieConfigs = configs[movieId] || [];
+        const newConfigs = [...movieConfigs];
+        const removed = newConfigs.splice(index, 1)[0];
 
-    const removeConfig = async (
-        movieId,
-        index
-    ) => {
-
-        const movieConfigs =
-            configs[movieId] || [];
-
-        const newConfigs = [
-            ...movieConfigs
-        ];
-
-        const removed =
-            newConfigs.splice(
-                index,
-                1
-            )[0];
-
-        if (
-            removed?.config_id
-        ) {
-
+        if (removed?.config_id) {
             try {
-
-                await api.delete(
-                    `/api/showtime-config/${movieId}/${removed.config_id}`
-                );
-
-                setConfigs(prev => ({
-                    ...prev,
-                    [movieId]:
-                        newConfigs
-                }));
-
-                showAlert(
-                    'Thành công',
-                    'Xóa cấu hình thành công',
-                    'success'
-                );
-
+                await api.delete(`/api/showtime-config/${movieId}/${removed.config_id}`);
+                setConfigs(prev => ({ ...prev, [movieId]: newConfigs }));
+                showAlert('Thành công', 'Xóa cấu hình thành công', 'success');
             } catch (error) {
-
-                console.error(
-                    'Lỗi xóa config:',
-                    error
-                );
-
-                showAlert(
-                    'Lỗi',
-                    'Không thể xóa cấu hình',
-                    'error'
-                );
+                console.error('Lỗi xóa config:', error);
+                showAlert('Lỗi', 'Không thể xóa cấu hình', 'error');
             }
-
             return;
         }
 
-        setConfigs(prev => ({
-            ...prev,
-            [movieId]:
-                newConfigs
-        }));
+        setConfigs(prev => ({ ...prev, [movieId]: newConfigs }));
     };
 
-    // ======================================================
-    // UPDATE CONFIG
-    // ======================================================
-
-    const updateConfig = (
-        movieId,
-        index,
-        field,
-        value
-    ) => {
-
+    const updateConfig = (movieId, index, field, value) => {
         setConfigs(prev => {
+            const movieConfigs = [...(prev[movieId] || [])];
+            if (!movieConfigs[index]) return prev;
 
-            const movieConfigs = [
-                ...(prev[movieId] || [])
-            ];
+            let normalizedValue = value;
 
-            if (
-                !movieConfigs[index]
-            ) {
-                return prev;
+            if (field === 'slot_count' || field === 'interval_minutes') {
+                normalizedValue = Number(value);
+                if (!Number.isFinite(normalizedValue)) normalizedValue = 0;
             }
 
-            let normalizedValue =
-                value;
-
-            // NUMBER
-            if (
-                field ===
-                    'slot_count' ||
-                field ===
-                    'interval_minutes'
-            ) {
-
-                normalizedValue =
-                    Number(value);
-
-                if (
-                    !Number.isFinite(
-                        normalizedValue
-                    )
-                ) {
-                    normalizedValue =
-                        0;
-                }
+            if (field === 'is_active') {
+                normalizedValue = Number(value) === 1 ? 1 : 0;
             }
 
-            // ACTIVE
-            if (
-                field ===
-                'is_active'
-            ) {
-
-                normalizedValue =
-                    Number(value) ===
-                    1
-                        ? 1
-                        : 0;
+            if (field === 'time_slot') {
+                const exists = TIME_SLOTS.some(item => item.key === value);
+                if (!exists) normalizedValue = 'MORNING';
             }
 
-            // TIME SLOT
-            if (
-                field ===
-                'time_slot'
-            ) {
-
-                const exists =
-                    TIME_SLOTS.some(
-                        item =>
-                            item.key ===
-                            value
-                    );
-
-                if (!exists) {
-
-                    normalizedValue =
-                        'MORNING';
-                }
+            if (field === 'room_type') {
+                const exists = ROOM_TYPES.includes(value);
+                if (!exists) normalizedValue = '2D';
             }
 
-            // ROOM TYPE
-            if (
-                field ===
-                'room_type'
-            ) {
-
-                const exists =
-                    ROOM_TYPES.includes(
-                        value
-                    );
-
-                if (!exists) {
-
-                    normalizedValue =
-                        '2D';
-                }
+            if (field === 'day_type') {
+                const exists = DAY_TYPES.some(item => item.key === value);
+                if (!exists) normalizedValue = 'ALL';
             }
 
-            // DAY TYPE
-            if (
-                field ===
-                'day_type'
-            ) {
-
-                const exists =
-                    DAY_TYPES.some(
-                        item =>
-                            item.key ===
-                            value
-                    );
-
-                if (!exists) {
-
-                    normalizedValue =
-                        'ALL';
-                }
-            }
-
-            movieConfigs[index] = {
-                ...movieConfigs[index],
-                [field]:
-                    normalizedValue
-            };
-
-            return {
-                ...prev,
-                [movieId]:
-                    movieConfigs
-            };
+            movieConfigs[index] = { ...movieConfigs[index], [field]: normalizedValue };
+            return { ...prev, [movieId]: movieConfigs };
         });
     };
 
     // ======================================================
-    // VALIDATE CONFIG
+    // GET CONFIG CAPACITY INFO - BỎ QUA DURATION
     // ======================================================
 
-    const validateConfigs = (
-        movieId,
-        movieConfigs
-    ) => {
+    const getConfigCapacityInfo = useCallback((movieId, config) => {
+        if (!config || Number(config.is_active) !== 1) return null;
 
-        if (
-            !Array.isArray(
-                movieConfigs
-            ) ||
-            movieConfigs.length === 0
-        ) {
+        const movie = getMovieByIdFromList(movies, movieId);
+        const duration = extractMovieDuration(movie);
+        const roomCount = extractRoomCount(selectedCinemaObject, config.room_type);
+        const slot = getTimeSlotByKey(config.time_slot);
 
+        if (!slot) return null;
+
+        // Tính khung giờ thực tế (giới hạn bởi giờ mở cửa)
+        const actualStart = Math.max(slot.startMinutes, cinemaOpen);
+        const actualEnd = Math.min(slot.endMinutes, cinemaClose);
+
+        if (actualStart >= actualEnd) {
             return {
-                valid: false,
-                message:
-                    `Phim "${getMovieTitle(movieId)}" chưa có cấu hình`
+                validRange: false,
+                duration,
+                roomCount,
+                maxCapacity: 0,
+                requested: Number(config.slot_count) || 0,
+                actualStart,
+                actualEnd,
+                slotStart: slot.startMinutes,
+                slotEnd: slot.endMinutes
             };
         }
 
-        const activeConfigs =
-            movieConfigs.filter(
-                config =>
-                    Number(
-                        config.is_active
-                    ) === 1 &&
-                    Number(
-                        config.slot_count
-                    ) > 0
-            );
+        // CHỈ TÍNH THEO INTERVAL, BỎ QUA DURATION
+        const result = calculateSlotTimes({
+            startMinutes: actualStart,
+            endMinutes: actualEnd,
+            intervalMinutes: Number(config.interval_minutes) || DEFAULT_INTERVAL
+        });
 
-        if (
-            activeConfigs.length === 0
-        ) {
-
-            return {
-                valid: false,
-                message:
-                    `Phim "${getMovieTitle(movieId)}" chưa có cấu hình đang bật`
-            };
-        }
-
-        for (
-            let index = 0;
-            index <
-            activeConfigs.length;
-            index++
-        ) {
-
-            const config =
-                activeConfigs[index];
-
-            if (
-                !TIME_SLOTS.some(
-                    item =>
-                        item.key ===
-                        config.time_slot
-                )
-            ) {
-
-                return {
-                    valid: false,
-                    message:
-                        `Phim "${getMovieTitle(movieId)}": Khung giờ không hợp lệ`
-                };
-            }
-
-            if (
-                !ROOM_TYPES.includes(
-                    config.room_type
-                )
-            ) {
-
-                return {
-                    valid: false,
-                    message:
-                        `Phim "${getMovieTitle(movieId)}": Loại phòng không hợp lệ`
-                };
-            }
-
-            if (
-                !DAY_TYPES.some(
-                    item =>
-                        item.key ===
-                        (
-                            config.day_type ||
-                            'ALL'
-                        )
-                )
-            ) {
-
-                return {
-                    valid: false,
-                    message:
-                        `Phim "${getMovieTitle(movieId)}": Loại ngày không hợp lệ`
-                };
-            }
-
-            if (
-                !Number.isFinite(
-                    Number(
-                        config.slot_count
-                    )
-                ) ||
-                Number(
-                    config.slot_count
-                ) <= 0
-            ) {
-
-                return {
-                    valid: false,
-                    message:
-                        `Phim "${getMovieTitle(movieId)}": Số suất phải lớn hơn 0`
-                };
-            }
-
-            if (
-                !Number.isFinite(
-                    Number(
-                        config.interval_minutes
-                    )
-                ) ||
-                Number(
-                    config.interval_minutes
-                ) <= 0
-            ) {
-
-                return {
-                    valid: false,
-                    message:
-                        `Phim "${getMovieTitle(movieId)}": Khoảng cách phải lớn hơn 0`
-                };
-            }
-
-            // ==========================================
-            // CAPACITY VALIDATION
-            // ==========================================
-
-            const movie =
-                getMovieByIdFromList(
-                    movies,
-                    movieId
-                );
-
-            const duration =
-                extractMovieDuration(
-                    movie
-                );
-
-            const roomCount =
-                extractRoomCount(
-                    selectedCinemaObject,
-                    config.room_type
-                );
-
-            const range =
-                getEffectiveSlotRange(
-                    config.time_slot,
-                    cinemaOpen,
-                    cinemaClose
-                );
-
-            if (!range) {
-
-                return {
-                    valid: false,
-                    message:
-                        `Phim "${getMovieTitle(movieId)}": Khung ${config.time_slot} không nằm trong giờ hoạt động của rạp (${minutesToTime(cinemaOpen)} - ${minutesToTime(cinemaClose)})`
-                };
-            }
-
-            const maxCapacity =
-                calculateMaxCapacity({
-                    slotStart:
-                        range.start,
-
-                    slotEnd:
-                        range.end,
-
-                    duration,
-
-                    intervalMinutes:
-                        Number(
-                            config.interval_minutes
-                        ),
-
-                    roomCount
-                });
-
-            if (
-                Number(
-                    config.slot_count
-                ) > maxCapacity
-            ) {
-
-                return {
-                    valid: false,
-
-                    capacityError: true,
-
-                    movieId,
-
-                    config,
-
-                    duration,
-
-                    roomCount,
-
-                    range,
-
-                    maxCapacity,
-
-                    message:
-                        [
-                            `⚠️ CẤU HÌNH VƯỢT KHUNG GIỜ`,
-
-                            ``,
-
-                            `🎬 Phim: ${getMovieTitle(movieId)}`,
-
-                            `🎞️ Khung giờ: ${config.time_slot}`,
-
-                            `⏰ Khung thực tế: ${minutesToTime(range.start)} → ${minutesToTime(range.end)}`,
-
-                            `🏠 Loại phòng: ${config.room_type}`,
-
-                            `🏢 Số phòng: ${roomCount}`,
-
-                            `🎥 Thời lượng phim: ${duration} phút`,
-
-                            `⏱️ Khoảng cách suất: ${config.interval_minutes} phút`,
-
-                            ``,
-
-                            `Bạn đang cấu hình: ${config.slot_count} suất`,
-
-                            `Tối đa có thể tạo: ${maxCapacity} suất`,
-
-                            ``,
-
-                            `💡 ĐỀ XUẤT:`,
-
-                            `👉 Đặt slot_count = ${maxCapacity}`,
-
-                            ``,
-
-                            `Vui lòng giảm số suất để phù hợp với khung giờ.`
-                        ].join('\n')
-                };
-            }
-        }
+        const requested = Number(config.slot_count) || 0;
 
         return {
-            valid: true,
-            configs: activeConfigs
+            validRange: true,
+            actualStart,
+            actualEnd,
+            slotStart: slot.startMinutes,
+            slotEnd: slot.endMinutes,
+            duration,
+            roomCount,
+            maxCapacity: result.maxSlots,
+            requested,
+            exceeded: requested > result.maxSlots,
+            recommended: result.maxSlots,
+            slotTimes: result.times
         };
-    };
-
-    // ======================================================
-    // GET CONFIG CAPACITY INFO
-    // ======================================================
-
-    const getConfigCapacityInfo = useCallback(
-        (
-            movieId,
-            config
-        ) => {
-
-            if (
-                !config ||
-                Number(
-                    config.is_active
-                ) !== 1
-            ) {
-                return null;
-            }
-
-            const movie =
-                getMovieByIdFromList(
-                    movies,
-                    movieId
-                );
-
-            const duration =
-                extractMovieDuration(
-                    movie
-                );
-
-            const roomCount =
-                extractRoomCount(
-                    selectedCinemaObject,
-                    config.room_type
-                );
-
-            const range =
-                getEffectiveSlotRange(
-                    config.time_slot,
-                    cinemaOpen,
-                    cinemaClose
-                );
-
-            if (!range) {
-
-                return {
-                    validRange: false,
-
-                    duration,
-
-                    roomCount,
-
-                    maxCapacity: 0,
-
-                    requested:
-                        Number(
-                            config.slot_count
-                        ) || 0
-                };
-            }
-
-            const maxCapacity =
-                calculateMaxCapacity({
-                    slotStart:
-                        range.start,
-
-                    slotEnd:
-                        range.end,
-
-                    duration,
-
-                    intervalMinutes:
-                        Number(
-                            config.interval_minutes
-                        ) ||
-                        DEFAULT_INTERVAL,
-
-                    roomCount
-                });
-
-            const requested =
-                Number(
-                    config.slot_count
-                ) || 0;
-
-            return {
-                validRange: true,
-
-                range,
-
-                duration,
-
-                roomCount,
-
-                maxCapacity,
-
-                requested,
-
-                exceeded:
-                    requested >
-                    maxCapacity,
-
-                recommended:
-                    maxCapacity
-            };
-        },
-        [
-            movies,
-            selectedCinemaObject,
-            cinemaOpen,
-            cinemaClose
-        ]
-    );
+    }, [movies, selectedCinemaObject, cinemaOpen, cinemaClose]);
 
     // ======================================================
     // GET CAPACITY MESSAGE
     // ======================================================
 
-    const getCapacityMessage = (
-        movieId,
-        config
-    ) => {
+    const getCapacityMessage = (movieId, config) => {
+        const info = getConfigCapacityInfo(movieId, config);
 
-        const info =
-            getConfigCapacityInfo(
-                movieId,
-                config
-            );
+        if (!info) return null;
 
-        if (!info) {
-            return null;
-        }
-
-        if (
-            !info.validRange
-        ) {
-
+        if (!info.validRange) {
             return {
                 type: 'error',
-
-                text:
-                    `Khung ${config.time_slot} không nằm trong giờ hoạt động của rạp.`
+                text: `❌ Khung ${config.time_slot} không nằm trong giờ hoạt động của rạp (${minutesToTime(cinemaOpen)} → ${minutesToTime(cinemaClose)})`
             };
         }
 
-        if (
-            info.exceeded
-        ) {
+        if (info.exceeded) {
+            // Tạo danh sách các giờ bắt đầu
+            const timeList = info.slotTimes.map(t => t.startTime).join(', ');
 
             return {
                 type: 'error',
-
-                text:
-                    `⚠️ Vượt giới hạn: ${info.requested} suất → tối đa ${info.maxCapacity} suất. Đề xuất: ${info.maxCapacity} suất.`
+                text: `⚠️ Vượt giới hạn! Bạn nhập ${info.requested} suất, tối đa ${info.maxCapacity} suất`,
+                details: {
+                    maxCapacity: info.maxCapacity,
+                    requested: info.requested,
+                    recommended: info.recommended,
+                    duration: info.duration,
+                    roomCount: info.roomCount,
+                    timeRange: `${minutesToTime(info.actualStart)} → ${minutesToTime(info.actualEnd)}`,
+                    slotTimes: info.slotTimes,
+                    timeList: timeList
+                }
             };
         }
 
         return {
             type: 'success',
-
-            text:
-                `✓ Phù hợp: tối đa ${info.maxCapacity} suất trong khung này.`
-        };
-    };
-
-    // ======================================================
-    // FIND CAPACITY ERRORS
-    // ======================================================
-
-    const findCapacityErrors = () => {
-
-        const errors = [];
-
-        for (
-            const movieId
-            of selectedMovies
-        ) {
-
-            const movieConfigs =
-                configs[movieId] || [];
-
-            for (
-                const config
-                of movieConfigs
-            ) {
-
-                if (
-                    Number(
-                        config.is_active
-                    ) !== 1
-                ) {
-                    continue;
-                }
-
-                if (
-                    Number(
-                        config.slot_count
-                    ) <= 0
-                ) {
-                    continue;
-                }
-
-                const info =
-                    getConfigCapacityInfo(
-                        movieId,
-                        config
-                    );
-
-                if (
-                    info?.exceeded
-                ) {
-
-                    errors.push({
-                        movieId,
-
-                        movieTitle:
-                            getMovieTitle(
-                                movieId
-                            ),
-
-                        config,
-
-                        info
-                    });
-                }
+            text: `✅ ${info.requested} suất (tối đa ${info.maxCapacity} suất)`,
+            details: {
+                maxCapacity: info.maxCapacity,
+                requested: info.requested,
+                duration: info.duration,
+                roomCount: info.roomCount,
+                timeRange: `${minutesToTime(info.actualStart)} → ${minutesToTime(info.actualEnd)}`,
+                slotTimes: info.slotTimes,
+                timeList: info.slotTimes.map(t => t.startTime).join(', ')
             }
-        }
-
-        return errors;
+        };
     };
 
     // ======================================================
@@ -1839,336 +647,173 @@ const MovieShowtimeConfigPage = () => {
     // ======================================================
 
     const handleSaveAll = async () => {
-
-        // -----------------------------------------------
-        // VALIDATE CINEMA
-        // -----------------------------------------------
-
-        if (
-            !selectedCinema
-        ) {
-
-            showAlert(
-                'Lỗi',
-                'Vui lòng chọn rạp',
-                'error'
-            );
-
+        if (!selectedCinema) {
+            showAlert('Lỗi', 'Vui lòng chọn rạp', 'error');
             return;
         }
 
-        // -----------------------------------------------
-        // VALIDATE MOVIES
-        // -----------------------------------------------
-
-        if (
-            selectedMovies.length === 0
-        ) {
-
-            showAlert(
-                'Lỗi',
-                'Vui lòng chọn ít nhất 1 phim',
-                'error'
-            );
-
+        if (selectedMovies.length === 0) {
+            showAlert('Lỗi', 'Vui lòng chọn ít nhất 1 phim', 'error');
             return;
         }
 
-        // -----------------------------------------------
-        // CAPACITY VALIDATION
-        // -----------------------------------------------
-
-        const capacityErrors =
-            findCapacityErrors();
-
-        if (
-            capacityErrors.length > 0
-        ) {
-
-            const first =
-                capacityErrors[0];
-
-            const info =
-                first.info;
-
-            showAlert(
-                'Cấu hình vượt khung giờ',
-
-                [
-                    `⚠️ Phim: ${first.movieTitle}`,
-
-                    `Khung giờ: ${first.config.time_slot}`,
-
-                    `Loại phòng: ${first.config.room_type}`,
-
-                    ``,
-
-                    `Bạn đang nhập: ${info.requested} suất`,
-
-                    `Tối đa có thể tạo: ${info.maxCapacity} suất`,
-
-                    ``,
-
-                    `💡 Đề xuất:`,
-
-                    `Nhập ${info.maxCapacity} suất.`,
-
-                    ``,
-
-                    `Khung giờ thực tế: ${minutesToTime(info.range.start)} → ${minutesToTime(info.range.end)}`,
-
-                    `Thời lượng phim: ${info.duration} phút`,
-
-                    `Số phòng: ${info.roomCount}`,
-
-                    `Khoảng cách suất: ${first.config.interval_minutes} phút`
-                ].join('\n'),
-
-                'warning'
-            );
-
-            return;
-        }
-
-        // -----------------------------------------------
-        // VALIDATE ALL CONFIGS
-        // -----------------------------------------------
-
+        // Kiểm tra tất cả config
+        const errors = [];
         const preparedConfigs = {};
 
-        for (
-            const movieId
-            of selectedMovies
-        ) {
+        for (const movieId of selectedMovies) {
+            const movieConfigs = configs[movieId] || [];
+            const activeConfigs = movieConfigs.filter(
+                config => Number(config.is_active) === 1 && Number(config.slot_count) > 0
+            );
 
-            const movieConfigs =
-                configs[movieId] || [];
-
-            const validation =
-                validateConfigs(
+            if (activeConfigs.length === 0) {
+                errors.push({
                     movieId,
-                    movieConfigs
-                );
-
-            if (
-                !validation.valid
-            ) {
-
-                showAlert(
-                    validation.capacityError
-                        ? 'Cấu hình vượt khung giờ'
-                        : 'Cấu hình không hợp lệ',
-
-                    validation.message,
-
-                    validation.capacityError
-                        ? 'warning'
-                        : 'error'
-                );
-
-                return;
+                    title: getMovieTitle(movieId),
+                    message: 'Chưa có cấu hình đang bật'
+                });
+                continue;
             }
 
-            preparedConfigs[movieId] =
-                validation.configs.map(
-                    config => ({
-
-                        time_slot:
-                            String(
-                                config.time_slot
-                            ).toUpperCase(),
-
-                        room_type:
-                            String(
-                                config.room_type
-                            ).toUpperCase(),
-
-                        slot_count:
-                            Number(
-                                config.slot_count
-                            ),
-
-                        interval_minutes:
-                            Number(
-                                config.interval_minutes
-                            ),
-
-                        day_type:
-                            String(
-                                config.day_type ||
-                                'ALL'
-                            ).toUpperCase(),
-
-                        is_active:
-                            1
-                    })
-                );
-        }
-
-        // -----------------------------------------------
-        // SAVE
-        // -----------------------------------------------
-
-        setSaving(true);
-
-        let successCount = 0;
-
-        let errorCount = 0;
-
-        const errorMovies = [];
-
-        try {
-
-            for (
-                const movieId
-                of selectedMovies
-            ) {
-
-                try {
-
-                    await api.post(
-                        `/api/showtime-config/${movieId}`,
-
-                        {
-                            cinema_id:
-                                Number(
-                                    selectedCinema
-                                ),
-
-                            configs:
-                                preparedConfigs[
-                                    movieId
-                                ]
-                        }
-                    );
-
-                    successCount++;
-
-                } catch (error) {
-
-                    console.error(
-                        `Lỗi lưu config cho phim ${movieId}:`,
-                        error
-                    );
-
-                    errorCount++;
-
-                    errorMovies.push(
-                        getMovieTitle(
-                            movieId
-                        )
-                    );
+            // Kiểm tra từng config
+            for (const config of activeConfigs) {
+                const info = getConfigCapacityInfo(movieId, config);
+                if (info?.exceeded) {
+                    errors.push({
+                        movieId,
+                        title: getMovieTitle(movieId),
+                        config,
+                        info,
+                        message: `Cấu hình ${config.time_slot} - ${config.room_type}: yêu cầu ${info.requested} suất, tối đa ${info.maxCapacity} suất`
+                    });
                 }
             }
 
-        } finally {
+            preparedConfigs[movieId] = activeConfigs.map(config => ({
+                time_slot: String(config.time_slot).toUpperCase(),
+                room_type: String(config.room_type).toUpperCase(),
+                slot_count: Number(config.slot_count),
+                interval_minutes: Number(config.interval_minutes),
+                day_type: String(config.day_type || 'ALL').toUpperCase(),
+                is_active: 1
+            }));
+        }
 
+        // Nếu có lỗi vượt quá
+        if (errors.length > 0) {
+            const firstError = errors[0];
+            const info = firstError.info;
+
+            let detailMessage = `⚠️ Phim: ${firstError.title}\n`;
+            detailMessage += `Khung giờ: ${firstError.config.time_slot}\n`;
+            detailMessage += `Loại phòng: ${firstError.config.room_type}\n`;
+            detailMessage += `Số phòng: ${info?.roomCount || '?'}\n\n`;
+            detailMessage += `Bạn nhập: ${firstError.config.slot_count} suất\n`;
+            detailMessage += `Tối đa: ${info?.maxCapacity || 0} suất\n\n`;
+
+            if (info?.slotTimes && info.slotTimes.length > 0) {
+                detailMessage += `📋 Các giờ bắt đầu có thể:\n`;
+                info.slotTimes.forEach(t => {
+                    detailMessage += `  • ${t.startTime} → ${t.endTime}\n`;
+                });
+            }
+
+            detailMessage += `\n💡 Đề xuất: Nhập ${info?.recommended || info?.maxCapacity || 0} suất`;
+
+            showAlert(
+                '⚠️ Cấu hình vượt khung giờ',
+                detailMessage,
+                'warning'
+            );
+
+            return;
+        }
+
+        // Lưu config
+        setSaving(true);
+        let successCount = 0;
+        let errorCount = 0;
+        const errorMovies = [];
+
+        try {
+            for (const movieId of selectedMovies) {
+                try {
+                    await api.post(`/api/showtime-config/${movieId}`, {
+                        cinema_id: Number(selectedCinema),
+                        configs: preparedConfigs[movieId]
+                    });
+                    successCount++;
+                } catch (error) {
+                    console.error(`Lỗi lưu config cho phim ${movieId}:`, error);
+                    errorCount++;
+                    errorMovies.push(getMovieTitle(movieId));
+                }
+            }
+        } finally {
             setSaving(false);
         }
 
-        // -----------------------------------------------
-        // RESULT
-        // -----------------------------------------------
-
-        if (
-            errorCount === 0
-        ) {
-
-            showAlert(
-                'Thành công',
-
-                `Lưu cấu hình thành công cho ${successCount} phim!`,
-
-                'success'
-            );
-
+        if (errorCount === 0) {
+            showAlert('Thành công', `Lưu cấu hình thành công cho ${successCount} phim!`, 'success');
         } else {
-
             showAlert(
                 'Thông báo',
-
-                `Lưu thành công ${successCount} phim, thất bại ${errorCount} phim.${
-                    errorMovies.length > 0
-                        ? `\n\nPhim lỗi:\n${errorMovies.join('\n')}`
-                        : ''
-                }`,
-
+                `Lưu thành công ${successCount} phim, thất bại ${errorCount} phim.\n\nPhim lỗi:\n${errorMovies.join('\n')}`,
                 'warning'
             );
         }
-
-        // -----------------------------------------------
-        // RELOAD DATABASE CONFIG
-        // -----------------------------------------------
 
         await loadAllConfigs();
     };
 
     // ======================================================
-    // FILTER MOVIES
+    // HELPERS
     // ======================================================
 
-    const filteredMovies =
-        movies.filter(
-            movie => {
+    const filteredMovies = movies.filter(movie => {
+        const title = String(movie.title || '').toLowerCase();
+        return title.includes(searchMovie.toLowerCase());
+    });
 
-                const title =
-                    String(
-                        movie.title ||
-                        ''
-                    ).toLowerCase();
+    const getMovieTitle = (movieId) => {
+        const movie = movies.find(movie => String(movie.movie_id) === String(movieId));
+        return movie?.title || `Phim #${movieId}`;
+    };
 
-                return title.includes(
-                    searchMovie.toLowerCase()
-                );
-            }
-        );
-
-    // ======================================================
-    // GET MOVIE TITLE
-    // ======================================================
-
-    const getMovieTitle = (
-        movieId
-    ) => {
-
-        const movie =
-            movies.find(
-                movie =>
-                    String(
-                        movie.movie_id
-                    ) ===
-                    String(
-                        movieId
-                    )
-            );
-
-        return (
-            movie?.title ||
-            `Phim #${movieId}`
-        );
+    const getTotalSlots = (movieId) => {
+        const movieConfigs = configs[movieId] || [];
+        return movieConfigs.filter(
+            config => Number(config.slot_count) > 0 && Number(config.is_active) === 1
+        ).length;
     };
 
     // ======================================================
-    // GET TOTAL CONFIG SLOTS
+    // RENDER CAPACITY DETAILS
     // ======================================================
 
-    const getTotalSlots = (
-        movieId
-    ) => {
+    const renderCapacityDetails = (capacityMessage) => {
+        if (!capacityMessage?.details) return null;
 
-        const movieConfigs =
-            configs[movieId] || [];
+        const details = capacityMessage.details;
 
-        return movieConfigs.filter(
-            config =>
-                Number(
-                    config.slot_count
-                ) > 0 &&
-                Number(
-                    config.is_active
-                ) === 1
-        ).length;
+        return (
+            <div className="capacity-details">
+                {details.timeList && (
+                    <div className="capacity-times">
+                        <Clock size={14} />
+                        <span>
+                            Các giờ bắt đầu: <strong>{details.timeList}</strong>
+                        </span>
+                    </div>
+                )}
+                <div className="capacity-stats">
+                    <span>⏱️ {details.duration}p</span>
+                    <span>🏢 {details.roomCount} phòng</span>
+                    <span>📅 {details.timeRange}</span>
+                </div>
+            </div>
+        );
     };
 
     // ======================================================
@@ -2176,19 +821,10 @@ const MovieShowtimeConfigPage = () => {
     // ======================================================
 
     if (loading) {
-
         return (
             <div className="admin-loading">
-
-                <Loader2
-                    size={32}
-                    className="spin-icon"
-                />
-
-                <span>
-                    Đang tải dữ liệu...
-                </span>
-
+                <Loader2 size={32} className="spin-icon" />
+                <span>Đang tải dữ liệu...</span>
             </div>
         );
     }
@@ -2202,1047 +838,446 @@ const MovieShowtimeConfigPage = () => {
             <AdminPage
                 title="Cấu hình lịch chiếu"
                 subtitle="Cấu hình suất chiếu cho nhiều phim cùng lúc"
-                icon={
-                    <Settings
-                        size={30}
-                    />
-                }
+                icon={<Settings size={30} />}
                 buttonText="Quay lại"
-                onAdd={() =>
-                    navigate(
-                        '/admin/showtime-config'
-                    )
-                }
-                buttonIcon={
-                    <ArrowLeft
-                        size={18}
-                    />
-                }
+                onAdd={() => navigate('/admin/showtime-config')}
+                buttonIcon={<ArrowLeft size={18} />}
             >
-
                 <div className="movie-showtime-config-page">
 
-                    {/* ==================================================
-                        CHỌN RẠP
-                    ================================================== */}
-
+                    {/* Chọn rạp */}
                     <div className="cinema-select-wrapper">
-
-                        <label className="cinema-select-label">
-                            Chọn rạp:
-                        </label>
-
+                        <label className="cinema-select-label">Chọn rạp:</label>
                         <select
-                            value={
-                                selectedCinema
-                            }
-                            onChange={
-                                e =>
-                                    setSelectedCinema(
-                                        e.target.value
-                                    )
-                            }
+                            value={selectedCinema}
+                            onChange={e => setSelectedCinema(e.target.value)}
                             className="cinema-select"
                         >
-
-                            <option value="">
-                                -- Chọn rạp --
-                            </option>
-
-                            {cinemas.map(
-                                cinema => (
-
-                                    <option
-                                        key={
-                                            cinema.cinema_id
-                                        }
-                                        value={
-                                            cinema.cinema_id
-                                        }
-                                    >
-                                        {
-                                            cinema.cinema_name
-                                        }
-
-                                        {cinema.city
-                                            ? ` - ${cinema.city}`
-                                            : ''}
-                                    </option>
-                                )
-                            )}
-
+                            <option value="">-- Chọn rạp --</option>
+                            {cinemas.map(cinema => (
+                                <option key={cinema.cinema_id} value={cinema.cinema_id}>
+                                    {cinema.cinema_name}
+                                    {cinema.city ? ` - ${cinema.city}` : ''}
+                                </option>
+                            ))}
                         </select>
-
                     </div>
 
-                    {/* ==================================================
-                        CINEMA INFO
-                    ================================================== */}
-
+                    {/* Cinema Info */}
                     {selectedCinema && (
-
-                        <div
-                            className="showtime-capacity-summary"
-                            style={{
-                                marginTop:
-                                    '12px',
-                                marginBottom:
-                                    '18px',
-                                padding:
-                                    '12px 16px',
-                                border:
-                                    '1px solid rgba(255,255,255,0.1)',
-                                borderRadius:
-                                    '10px'
-                            }}
-                        >
-
-                            <div
-                                style={{
-                                    display:
-                                        'flex',
-                                    alignItems:
-                                        'center',
-                                    gap:
-                                        '8px',
-                                    marginBottom:
-                                        '6px'
-                                }}
-                            >
-
-                                <Settings
-                                    size={16}
-                                />
-
-                                <strong>
-                                    Giờ hoạt động của rạp
-                                </strong>
-
+                        <div className="showtime-capacity-summary" style={{
+                            marginTop: '12px',
+                            marginBottom: '18px',
+                            padding: '12px 16px',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: '10px'
+                        }}>
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                marginBottom: '6px'
+                            }}>
+                                <Settings size={16} />
+                                <strong>Giờ hoạt động của rạp</strong>
                             </div>
-
-                            <div>
-                                🕐{' '}
-                                {minutesToTime(
-                                    cinemaOpen
-                                )}
-
-                                {' → '}
-
-                                {minutesToTime(
-                                    cinemaClose
-                                )}
-                            </div>
-
-                            <small
-                                style={{
-                                    opacity:
-                                        0.7
-                                }}
-                            >
+                            <div>🕐 {minutesToTime(cinemaOpen)} → {minutesToTime(cinemaClose)}</div>
+                            <small style={{ opacity: 0.7 }}>
                                 Khung giờ được tự động giới hạn theo giờ hoạt động của rạp.
                             </small>
-
                         </div>
                     )}
 
-                    {/* ==================================================
-                        CHỌN PHIM
-                    ================================================== */}
-
+                    {/* Chọn phim */}
                     {selectedCinema && (
-
                         <div className="movie-select-wrapper">
-
                             <label className="movie-select-label">
-
                                 Chọn phim để cấu hình
-
-                                <span className="movie-select-hint">
-                                    (Có thể chọn nhiều phim)
-                                </span>
-
+                                <span className="movie-select-hint">(Có thể chọn nhiều phim)</span>
                             </label>
 
                             <div className="movie-search-wrapper">
-
-                                <Search
-                                    size={18}
-                                    className="search-icon"
-                                />
-
+                                <Search size={18} className="search-icon" />
                                 <input
                                     type="text"
                                     placeholder="Tìm phim..."
-                                    value={
-                                        searchMovie
-                                    }
-                                    onChange={
-                                        e =>
-                                            setSearchMovie(
-                                                e.target.value
-                                            )
-                                    }
+                                    value={searchMovie}
+                                    onChange={e => setSearchMovie(e.target.value)}
                                     className="movie-search-input"
                                 />
-
                                 <span className="selected-count">
-                                    Đã chọn:{' '}
-                                    {
-                                        selectedMovies.length
-                                    }{' '}
-                                    phim
+                                    Đã chọn: {selectedMovies.length} phim
                                 </span>
-
                             </div>
 
                             <div className="movie-list">
-
-                                {filteredMovies.map(
-                                    movie => {
-
-                                        const isChecked =
-                                            selectedMovies.includes(
-                                                movie.movie_id
-                                            );
-
-                                        return (
-
-                                            <label
-                                                key={
-                                                    movie.movie_id
-                                                }
-                                                className={
-                                                    `movie-chip ${
-                                                        isChecked
-                                                            ? 'checked'
-                                                            : ''
-                                                    }`
-                                                }
-                                            >
-
-                                                <input
-                                                    type="checkbox"
-                                                    checked={
-                                                        isChecked
-                                                    }
-                                                    onChange={() =>
-                                                        toggleMovieSelection(
-                                                            movie.movie_id
-                                                        )
-                                                    }
-                                                />
-
-                                                {
-                                                    movie.title
-                                                }
-
-                                                {isChecked && (
-
-                                                    <span className="movie-chip-badge">
-
-                                                        {
-                                                            getTotalSlots(
-                                                                movie.movie_id
-                                                            )
-                                                        }
-
-                                                        {' '}
-                                                        cấu hình
-
-                                                    </span>
-
-                                                )}
-
-                                            </label>
-                                        );
-                                    }
+                                {filteredMovies.map(movie => {
+                                    const isChecked = selectedMovies.includes(movie.movie_id);
+                                    return (
+                                        <label
+                                            key={movie.movie_id}
+                                            className={`movie-chip ${isChecked ? 'checked' : ''}`}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={isChecked}
+                                                onChange={() => toggleMovieSelection(movie.movie_id)}
+                                            />
+                                            {movie.title}
+                                            {isChecked && (
+                                                <span className="movie-chip-badge">
+                                                    {getTotalSlots(movie.movie_id)} cấu hình
+                                                </span>
+                                            )}
+                                        </label>
+                                    );
+                                })}
+                                {filteredMovies.length === 0 && (
+                                    <span className="no-movies">Không tìm thấy phim</span>
                                 )}
-
-                                {filteredMovies.length ===
-                                    0 && (
-
-                                    <span className="no-movies">
-                                        Không tìm thấy phim
-                                    </span>
-
-                                )}
-
                             </div>
-
                         </div>
                     )}
 
-                    {/* ==================================================
-                        CONFIGURATION
-                    ================================================== */}
+                    {/* Configuration */}
+                    {selectedCinema && selectedMovies.length > 0 && (
+                        <div className="config-container">
+                            {selectedMovies.map((movieId, idx) => {
+                                const movieConfigs = configs[movieId] || [];
+                                const isExpanded = expandedMovies[movieId] !== false;
+                                const movieTitle = getMovieTitle(movieId);
+                                const totalSlots = getTotalSlots(movieId);
+                                const movie = getMovieByIdFromList(movies, movieId);
+                                const duration = extractMovieDuration(movie);
 
-                    {selectedCinema &&
-                        selectedMovies.length >
-                            0 && (
+                                return (
+                                    <div key={movieId} className="movie-config-card">
+                                        {/* Header */}
+                                        <div
+                                            className={`movie-config-header ${isExpanded ? 'expanded' : ''}`}
+                                            onClick={() => toggleExpand(movieId)}
+                                        >
+                                            <div className="movie-config-title">
+                                                <span className="movie-config-index">{idx + 1}.</span>
+                                                <span className="movie-config-name">{movieTitle}</span>
+                                                <span className="movie-config-badge">{totalSlots} cấu hình</span>
+                                            </div>
+                                            <div className="movie-config-toggle">
+                                                {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                            </div>
+                                        </div>
 
-                            <div className="config-container">
-
-                                {selectedMovies.map(
-                                    (
-                                        movieId,
-                                        idx
-                                    ) => {
-
-                                        const movieConfigs =
-                                            configs[
-                                                movieId
-                                            ] || [];
-
-                                        const isExpanded =
-                                            expandedMovies[
-                                                movieId
-                                            ] !== false;
-
-                                        const movieTitle =
-                                            getMovieTitle(
-                                                movieId
-                                            );
-
-                                        const totalSlots =
-                                            getTotalSlots(
-                                                movieId
-                                            );
-
-                                        const movie =
-                                            getMovieByIdFromList(
-                                                movies,
-                                                movieId
-                                            );
-
-                                        const duration =
-                                            extractMovieDuration(
-                                                movie
-                                            );
-
-                                        return (
-
-                                            <div
-                                                key={
-                                                    movieId
-                                                }
-                                                className="movie-config-card"
-                                            >
-
-                                                {/* HEADER */}
-
-                                                <div
-                                                    className={
-                                                        `movie-config-header ${
-                                                            isExpanded
-                                                                ? 'expanded'
-                                                                : ''
-                                                        }`
-                                                    }
-                                                    onClick={() =>
-                                                        toggleExpand(
-                                                            movieId
-                                                        )
-                                                    }
-                                                >
-
-                                                    <div className="movie-config-title">
-
-                                                        <span className="movie-config-index">
-                                                            {
-                                                                idx +
-                                                                1
-                                                            }.
-                                                        </span>
-
-                                                        <span className="movie-config-name">
-                                                            {
-                                                                movieTitle
-                                                            }
-                                                        </span>
-
-                                                        <span className="movie-config-badge">
-                                                            {
-                                                                totalSlots
-                                                            }{' '}
-                                                            cấu hình
-                                                        </span>
-
-                                                    </div>
-
-                                                    <div className="movie-config-toggle">
-
-                                                        {isExpanded
-                                                            ? (
-                                                                <ChevronUp
-                                                                    size={
-                                                                        18
-                                                                    }
-                                                                />
-                                                            )
-                                                            : (
-                                                                <ChevronDown
-                                                                    size={
-                                                                        18
-                                                                    }
-                                                                />
-                                                            )}
-
-                                                    </div>
-
+                                        {/* Body */}
+                                        {isExpanded && (
+                                            <div className="movie-config-body">
+                                                {/* Movie Info */}
+                                                <div style={{
+                                                    marginBottom: '12px',
+                                                    padding: '10px 14px',
+                                                    borderRadius: '8px',
+                                                    background: 'rgba(255,255,255,0.04)',
+                                                    fontSize: '13px'
+                                                }}>
+                                                    🎥 Thời lượng phim: <strong>{duration} phút</strong>
+                                                    {' • '}
+                                                    🏢 Giờ rạp: <strong>
+                                                        {minutesToTime(cinemaOpen)} → {minutesToTime(cinemaClose)}
+                                                    </strong>
                                                 </div>
 
-                                                {/* BODY */}
-
-                                                {isExpanded && (
-
-                                                    <div className="movie-config-body">
-
-                                                        {/* MOVIE INFO */}
-
-                                                        <div
-                                                            style={{
-                                                                marginBottom:
-                                                                    '12px',
-                                                                padding:
-                                                                    '10px 14px',
-                                                                borderRadius:
-                                                                    '8px',
-                                                                background:
-                                                                    'rgba(255,255,255,0.04)',
-                                                                fontSize:
-                                                                    '13px'
-                                                            }}
-                                                        >
-
-                                                            🎥 Thời lượng phim:
-                                                            {' '}
-                                                            <strong>
-                                                                {
-                                                                    duration
-                                                                }{' '}
-                                                                phút
-                                                            </strong>
-
-                                                            {' • '}
-
-                                                            🏢 Giờ rạp:
-                                                            {' '}
-                                                            <strong>
-                                                                {
-                                                                    minutesToTime(
-                                                                        cinemaOpen
-                                                                    )
-                                                                }
-                                                                {' → '}
-                                                                {
-                                                                    minutesToTime(
-                                                                        cinemaClose
-                                                                    )
-                                                                }
-                                                            </strong>
-
-                                                        </div>
-
-                                                        <div className="config-actions">
-
-                                                            <button
-                                                                type="button"
-                                                                className="btn-add-row"
-                                                                onClick={() =>
-                                                                    addConfig(
-                                                                        movieId
-                                                                    )
-                                                                }
-                                                            >
-
-                                                                <Plus
-                                                                    size={
-                                                                        16
-                                                                    }
-                                                                />
-
-                                                                Thêm dòng
-
-                                                            </button>
-
-                                                        </div>
-
-                                                        {movieConfigs.length ===
-                                                        0 ? (
-
-                                                            <div className="empty-config">
-
-                                                                <p>
-                                                                    Chưa có cấu hình cho phim này
-                                                                </p>
-
-                                                                <p className="empty-hint">
-                                                                    Bấm "Thêm dòng" để bắt đầu
-                                                                </p>
-
-                                                            </div>
-
-                                                        ) : (
-
-                                                            <>
-
-                                                                {/* HEADER */}
-
-                                                                <div className="config-table-header">
-
-                                                                    <span>
-                                                                        Khung giờ
-                                                                    </span>
-
-                                                                    <span>
-                                                                        Loại phòng
-                                                                    </span>
-
-                                                                    <span>
-                                                                        Số suất
-                                                                    </span>
-
-                                                                    <span>
-                                                                        K/c (phút)
-                                                                    </span>
-
-                                                                    <span>
-                                                                        Áp dụng
-                                                                    </span>
-
-                                                                    <span>
-                                                                        Bật
-                                                                    </span>
-
-                                                                    <span></span>
-
-                                                                </div>
-
-                                                                {/* ROWS */}
-
-                                                                {movieConfigs.map(
-                                                                    (
-                                                                        config,
-                                                                        index
-                                                                    ) => {
-
-                                                                        const capacityInfo =
-                                                                            getConfigCapacityInfo(
-                                                                                movieId,
-                                                                                config
-                                                                            );
-
-                                                                        const capacityMessage =
-                                                                            getCapacityMessage(
-                                                                                movieId,
-                                                                                config
-                                                                            );
-
-                                                                        return (
-
-                                                                            <React.Fragment
-                                                                                key={
-                                                                                    config.config_id ||
-                                                                                    `${movieId}-${index}`
-                                                                                }
-                                                                            >
-
-                                                                                <div
-                                                                                    className={
-                                                                                        `config-table-row ${
-                                                                                            capacityMessage?.type ===
-                                                                                            'error'
-                                                                                                ? 'config-row-warning'
-                                                                                                : ''
-                                                                                        }`
-                                                                                    }
-                                                                                >
-
-                                                                                    {/* TIME SLOT */}
-
-                                                                                    <select
-                                                                                        value={
-                                                                                            config.time_slot ||
-                                                                                            'MORNING'
-                                                                                        }
-                                                                                        onChange={
-                                                                                            e =>
-                                                                                                updateConfig(
-                                                                                                    movieId,
-                                                                                                    index,
-                                                                                                    'time_slot',
-                                                                                                    e.target.value
-                                                                                                )
-                                                                                        }
-                                                                                        className="config-select"
-                                                                                    >
-
-                                                                                        {TIME_SLOTS.map(
-                                                                                            slot => (
-
-                                                                                                <option
-                                                                                                    key={
-                                                                                                        slot.key
-                                                                                                    }
-                                                                                                    value={
-                                                                                                        slot.key
-                                                                                                    }
-                                                                                                >
-                                                                                                    {
-                                                                                                        slot.label
-                                                                                                    }
-                                                                                                </option>
-
-                                                                                            )
-                                                                                        )}
-
-                                                                                    </select>
-
-                                                                                    {/* ROOM TYPE */}
-
-                                                                                    <select
-                                                                                        value={
-                                                                                            config.room_type ||
-                                                                                            '2D'
-                                                                                        }
-                                                                                        onChange={
-                                                                                            e =>
-                                                                                                updateConfig(
-                                                                                                    movieId,
-                                                                                                    index,
-                                                                                                    'room_type',
-                                                                                                    e.target.value
-                                                                                                )
-                                                                                        }
-                                                                                        className="config-select"
-                                                                                    >
-
-                                                                                        {ROOM_TYPES.map(
-                                                                                            type => (
-
-                                                                                                <option
-                                                                                                    key={
-                                                                                                        type
-                                                                                                    }
-                                                                                                    value={
-                                                                                                        type
-                                                                                                    }
-                                                                                                >
-                                                                                                    {
-                                                                                                        type
-                                                                                                    }
-                                                                                                </option>
-
-                                                                                            )
-                                                                                        )}
-
-                                                                                    </select>
-
-                                                                                    {/* SLOT COUNT */}
-
-                                                                                    <input
-                                                                                        type="number"
-                                                                                        value={
-                                                                                            config.slot_count ??
-                                                                                            0
-                                                                                        }
-                                                                                        onChange={
-                                                                                            e =>
-                                                                                                updateConfig(
-                                                                                                    movieId,
-                                                                                                    index,
-                                                                                                    'slot_count',
-                                                                                                    e.target.value
-                                                                                                )
-                                                                                        }
-                                                                                        min="0"
-                                                                                        max="30"
-                                                                                        className="config-input config-input-number"
-                                                                                    />
-
-                                                                                    {/* INTERVAL */}
-
-                                                                                    <input
-                                                                                        type="number"
-                                                                                        value={
-                                                                                            config.interval_minutes ??
-                                                                                            DEFAULT_INTERVAL
-                                                                                        }
-                                                                                        onChange={
-                                                                                            e =>
-                                                                                                updateConfig(
-                                                                                                    movieId,
-                                                                                                    index,
-                                                                                                    'interval_minutes',
-                                                                                                    e.target.value
-                                                                                                )
-                                                                                        }
-                                                                                        min="30"
-                                                                                        max="120"
-                                                                                        step="5"
-                                                                                        className="config-input config-input-number"
-                                                                                    />
-
-                                                                                    {/* DAY TYPE */}
-
-                                                                                    <select
-                                                                                        value={
-                                                                                            config.day_type ||
-                                                                                            'ALL'
-                                                                                        }
-                                                                                        onChange={
-                                                                                            e =>
-                                                                                                updateConfig(
-                                                                                                    movieId,
-                                                                                                    index,
-                                                                                                    'day_type',
-                                                                                                    e.target.value
-                                                                                                )
-                                                                                        }
-                                                                                        className="config-select"
-                                                                                    >
-
-                                                                                        {DAY_TYPES.map(
-                                                                                            day => (
-
-                                                                                                <option
-                                                                                                    key={
-                                                                                                        day.key
-                                                                                                    }
-                                                                                                    value={
-                                                                                                        day.key
-                                                                                                    }
-                                                                                                >
-                                                                                                    {
-                                                                                                        day.label
-                                                                                                    }
-                                                                                                </option>
-
-                                                                                            )
-                                                                                        )}
-
-                                                                                    </select>
-
-                                                                                    {/* ACTIVE */}
-
-                                                                                    <input
-                                                                                        type="checkbox"
-                                                                                        checked={
-                                                                                            Number(
-                                                                                                config.is_active
-                                                                                            ) ===
-                                                                                            1
-                                                                                        }
-                                                                                        onChange={
-                                                                                            e =>
-                                                                                                updateConfig(
-                                                                                                    movieId,
-                                                                                                    index,
-                                                                                                    'is_active',
-                                                                                                    e.target
-                                                                                                        .checked
-                                                                                                        ? 1
-                                                                                                        : 0
-                                                                                                )
-                                                                                        }
-                                                                                        className="config-checkbox"
-                                                                                    />
-
-                                                                                    {/* DELETE */}
-
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        className="btn-remove-row"
-                                                                                        onClick={() =>
-                                                                                            removeConfig(
-                                                                                                movieId,
-                                                                                                index
-                                                                                            )
-                                                                                        }
-                                                                                    >
-
-                                                                                        <Trash2
-                                                                                            size={
-                                                                                                15
-                                                                                            }
-                                                                                        />
-
-                                                                                    </button>
-
-                                                                                </div>
-
-                                                                                {/* ==================================================
-                                                                                    CAPACITY WARNING / RECOMMENDATION
-                                                                                ================================================== */}
-
-                                                                                {capacityInfo && (
-                                                                                    <div
-                                                                                        style={{
-                                                                                            margin:
-                                                                                                '0 0 10px 0',
-                                                                                            padding:
-                                                                                                '9px 12px',
-                                                                                            borderRadius:
-                                                                                                '0 0 8px 8px',
-                                                                                            fontSize:
-                                                                                                '12px',
-                                                                                            display:
-                                                                                                'flex',
-                                                                                            alignItems:
-                                                                                                'center',
-                                                                                            gap:
-                                                                                                '8px',
-                                                                                            background:
-                                                                                                capacityMessage?.type ===
-                                                                                                'error'
-                                                                                                    ? 'rgba(220, 38, 38, 0.12)'
-                                                                                                    : 'rgba(34, 197, 94, 0.08)',
-                                                                                            border:
-                                                                                                capacityMessage?.type ===
-                                                                                                'error'
-                                                                                                    ? '1px solid rgba(220, 38, 38, 0.3)'
-                                                                                                    : '1px solid rgba(34, 197, 94, 0.2)'
-                                                                                        }}
-                                                                                    >
-
-                                                                                        {capacityMessage?.type ===
-                                                                                        'error'
-                                                                                            ? (
-                                                                                                <AlertTriangle
-                                                                                                    size={
-                                                                                                        16
-                                                                                                    }
-                                                                                                />
-                                                                                            )
-                                                                                            : (
-                                                                                                <CheckCircle2
-                                                                                                    size={
-                                                                                                        16
-                                                                                                    }
-                                                                                                />
-                                                                                            )}
-
-                                                                                        <div>
-
-                                                                                            <div>
-                                                                                                {
-                                                                                                    capacityMessage?.text
-                                                                                                }
-                                                                                            </div>
-
-                                                                                            {capacityMessage?.type ===
-                                                                                                'error' &&
-                                                                                                capacityInfo.validRange && (
-
-                                                                                                    <div
-                                                                                                        style={{
-                                                                                                            marginTop:
-                                                                                                                '4px',
-                                                                                                            display:
-                                                                                                                'flex',
-                                                                                                            alignItems:
-                                                                                                                'center',
-                                                                                                            gap:
-                                                                                                                '5px'
-                                                                                                        }}
-                                                                                                    >
-
-                                                                                                        <Lightbulb
-                                                                                                            size={
-                                                                                                                14
-                                                                                                            }
-                                                                                                        />
-
-                                                                                                        Đề xuất:
-                                                                                                        {' '}
-                                                                                                        <strong>
-                                                                                                            {
-                                                                                                                capacityInfo.recommended
-                                                                                                            }{' '}
-                                                                                                            suất
-                                                                                                        </strong>
-
-                                                                                                        {' '}
-                                                                                                        (
-                                                                                                        {
-                                                                                                            minutesToTime(
-                                                                                                                capacityInfo.range.start
-                                                                                                            )
-                                                                                                        }
-                                                                                                        {' → '}
-                                                                                                        {
-                                                                                                            minutesToTime(
-                                                                                                                capacityInfo.range.end
-                                                                                                            )
-                                                                                                        }
-                                                                                                        )
-
-                                                                                                    </div>
-
-                                                                                                )}
-
-                                                                                        </div>
-
-                                                                                    </div>
-                                                                                )}
-
-                                                                            </React.Fragment>
-                                                                        );
-                                                                    }
-                                                                )}
-
-                                                            </>
-
-                                                        )}
-
+                                                <div className="config-actions">
+                                                    <button
+                                                        type="button"
+                                                        className="btn-add-row"
+                                                        onClick={() => addConfig(movieId)}
+                                                    >
+                                                        <Plus size={16} /> Thêm dòng
+                                                    </button>
+                                                </div>
+
+                                                {movieConfigs.length === 0 ? (
+                                                    <div className="empty-config">
+                                                        <p>Chưa có cấu hình cho phim này</p>
+                                                        <p className="empty-hint">Bấm "Thêm dòng" để bắt đầu</p>
                                                     </div>
+                                                ) : (
+                                                    <>
+                                                        {/* Table Header */}
+                                                        <div className="config-table-header">
+                                                            <span>Khung giờ</span>
+                                                            <span>Loại phòng</span>
+                                                            <span>Số suất</span>
+                                                            <span>K/c (phút)</span>
+                                                            <span>Áp dụng</span>
+                                                            <span>Bật</span>
+                                                            <span></span>
+                                                        </div>
+
+                                                        {/* Rows */}
+                                                        {movieConfigs.map((config, index) => {
+                                                            const capacityMessage = getCapacityMessage(movieId, config);
+                                                            const isError = capacityMessage?.type === 'error';
+
+                                                            return (
+                                                                <React.Fragment
+                                                                    key={config.config_id || `${movieId}-${index}`}
+                                                                >
+                                                                    <div
+                                                                        className={`config-table-row ${isError ? 'config-row-warning' : ''}`}
+                                                                    >
+                                                                        {/* Time Slot */}
+                                                                        <select
+                                                                            value={config.time_slot || 'MORNING'}
+                                                                            onChange={e => updateConfig(movieId, index, 'time_slot', e.target.value)}
+                                                                            className="config-select"
+                                                                        >
+                                                                            {TIME_SLOTS.map(slot => (
+                                                                                <option key={slot.key} value={slot.key}>
+                                                                                    {slot.label}
+                                                                                </option>
+                                                                            ))}
+                                                                        </select>
+
+                                                                        {/* Room Type */}
+                                                                        <select
+                                                                            value={config.room_type || '2D'}
+                                                                            onChange={e => updateConfig(movieId, index, 'room_type', e.target.value)}
+                                                                            className="config-select"
+                                                                        >
+                                                                            {ROOM_TYPES.map(type => (
+                                                                                <option key={type} value={type}>{type}</option>
+                                                                            ))}
+                                                                        </select>
+
+                                                                        {/* Slot Count */}
+                                                                        <input
+                                                                            type="number"
+                                                                            value={config.slot_count ?? 0}
+                                                                            onChange={e => updateConfig(movieId, index, 'slot_count', e.target.value)}
+                                                                            min="0"
+                                                                            max="30"
+                                                                            className={`config-input config-input-number ${isError ? 'input-error' : ''}`}
+                                                                        />
+
+                                                                        {/* Interval */}
+                                                                        <input
+                                                                            type="number"
+                                                                            value={config.interval_minutes ?? DEFAULT_INTERVAL}
+                                                                            onChange={e => updateConfig(movieId, index, 'interval_minutes', e.target.value)}
+                                                                            min="30"
+                                                                            max="120"
+                                                                            step="5"
+                                                                            className="config-input config-input-number"
+                                                                        />
+
+                                                                        {/* Day Type */}
+                                                                        <select
+                                                                            value={config.day_type || 'ALL'}
+                                                                            onChange={e => updateConfig(movieId, index, 'day_type', e.target.value)}
+                                                                            className="config-select"
+                                                                        >
+                                                                            {DAY_TYPES.map(day => (
+                                                                                <option key={day.key} value={day.key}>
+                                                                                    {day.label}
+                                                                                </option>
+                                                                            ))}
+                                                                        </select>
+
+                                                                        {/* Active */}
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={Number(config.is_active) === 1}
+                                                                            onChange={e => updateConfig(movieId, index, 'is_active', e.target.checked ? 1 : 0)}
+                                                                            className="config-checkbox"
+                                                                        />
+
+                                                                        {/* Delete */}
+                                                                        <button
+                                                                            type="button"
+                                                                            className="btn-remove-row"
+                                                                            onClick={() => removeConfig(movieId, index)}
+                                                                        >
+                                                                            <Trash2 size={15} />
+                                                                        </button>
+                                                                    </div>
+
+                                                                    {/* Capacity Message - Improved */}
+                                                                    {capacityMessage && (
+                                                                        <div
+                                                                            className={`capacity-message ${capacityMessage.type}`}
+                                                                            style={{
+                                                                                margin: '0 0 10px 0',
+                                                                                padding: '12px 16px',
+                                                                                borderRadius: '0 0 8px 8px',
+                                                                                fontSize: '13px',
+                                                                                display: 'flex',
+                                                                                flexDirection: 'column',
+                                                                                gap: '8px',
+                                                                                background: isError
+                                                                                    ? 'rgba(220, 38, 38, 0.12)'
+                                                                                    : 'rgba(34, 197, 94, 0.08)',
+                                                                                border: isError
+                                                                                    ? '1px solid rgba(220, 38, 38, 0.3)'
+                                                                                    : '1px solid rgba(34, 197, 94, 0.2)'
+                                                                            }}
+                                                                        >
+                                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                                {isError ? (
+                                                                                    <AlertTriangle size={16} color="#dc2626" />
+                                                                                ) : (
+                                                                                    <CheckCircle2 size={16} color="#22c55e" />
+                                                                                )}
+                                                                                <span style={{ fontWeight: isError ? '600' : '400' }}>
+                                                                                    {capacityMessage.text}
+                                                                                </span>
+                                                                            </div>
+
+                                                                            {/* Hiển thị chi tiết các giờ bắt đầu */}
+                                                                            {capacityMessage.details?.slotTimes && capacityMessage.details.slotTimes.length > 0 && (
+                                                                                <div style={{
+                                                                                    marginTop: '4px',
+                                                                                    padding: '8px 12px',
+                                                                                    background: isError
+                                                                                        ? 'rgba(220, 38, 38, 0.08)'
+                                                                                        : 'rgba(34, 197, 94, 0.06)',
+                                                                                    borderRadius: '6px',
+                                                                                    fontSize: '12px'
+                                                                                }}>
+                                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                                                                                        <Clock size={14} />
+                                                                                        <strong>Các giờ bắt đầu có thể:</strong>
+                                                                                    </div>
+                                                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                                                                        {capacityMessage.details.slotTimes.map((t, i) => (
+                                                                                            <span
+                                                                                                key={i}
+                                                                                                style={{
+                                                                                                    padding: '2px 8px',
+                                                                                                    background: isError
+                                                                                                        ? 'rgba(220, 38, 38, 0.15)'
+                                                                                                        : 'rgba(34, 197, 94, 0.12)',
+                                                                                                    borderRadius: '4px',
+                                                                                                    fontSize: '12px',
+                                                                                                    fontWeight: '500'
+                                                                                                }}
+                                                                                            >
+                                                                                                {t.startTime} → {t.endTime}
+                                                                                            </span>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                </div>
+                                                                            )}
+
+                                                                            {/* Thông tin chi tiết khác */}
+                                                                            {capacityMessage.details && (
+                                                                                <div style={{
+                                                                                    display: 'flex',
+                                                                                    flexWrap: 'wrap',
+                                                                                    gap: '12px',
+                                                                                    fontSize: '12px',
+                                                                                    opacity: 0.75
+                                                                                }}>
+                                                                                    <span>🎬 {capacityMessage.details.duration}p</span>
+                                                                                    <span>🏢 {capacityMessage.details.roomCount} phòng</span>
+                                                                                    <span>📅 {capacityMessage.details.timeRange}</span>
+                                                                                    {isError && (
+                                                                                        <>
+                                                                                            <span style={{ color: '#dc2626', fontWeight: '600' }}>
+                                                                                                ⚠️ Nhập: {capacityMessage.details.requested} suất
+                                                                                            </span>
+                                                                                            <span style={{ color: '#22c55e', fontWeight: '600' }}>
+                                                                                                ✅ Tối đa: {capacityMessage.details.maxCapacity} suất
+                                                                                            </span>
+                                                                                        </>
+                                                                                    )}
+                                                                                </div>
+                                                                            )}
+
+                                                                            {/* Đề xuất khi vượt quá */}
+                                                                            {isError && capacityMessage.details?.recommended && (
+                                                                                <div style={{
+                                                                                    marginTop: '4px',
+                                                                                    padding: '6px 12px',
+                                                                                    background: 'rgba(251, 191, 36, 0.15)',
+                                                                                    borderRadius: '6px',
+                                                                                    border: '1px solid rgba(251, 191, 36, 0.3)',
+                                                                                    display: 'flex',
+                                                                                    alignItems: 'center',
+                                                                                    gap: '8px',
+                                                                                    fontSize: '13px'
+                                                                                }}>
+                                                                                    <Lightbulb size={16} color="#f59e0b" />
+                                                                                    <span>
+                                                                                        💡 <strong>Đề xuất:</strong> Nhập <strong>{capacityMessage.details.recommended}</strong> suất
+                                                                                        (thay vì {capacityMessage.details.requested} suất)
+                                                                                    </span>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                                </React.Fragment>
+                                                            );
+                                                        })}
+                                                    </>
                                                 )}
-
                                             </div>
-                                        );
-                                    }
-                                )}
-
-                                {/* ==================================================
-                                    SAVE ALL
-                                ================================================== */}
-
-                                <div className="save-all-wrapper">
-
-                                    <button
-                                        type="button"
-                                        className="btn-save-all"
-                                        onClick={
-                                            handleSaveAll
-                                        }
-                                        disabled={
-                                            saving ||
-                                            selectedMovies.length ===
-                                                0
-                                        }
-                                    >
-
-                                        {saving ? (
-
-                                            <>
-
-                                                <Loader2
-                                                    size={
-                                                        18
-                                                    }
-                                                    className="spin-icon"
-                                                />
-
-                                                Đang lưu...
-
-                                            </>
-
-                                        ) : (
-
-                                            <>
-
-                                                <Save
-                                                    size={
-                                                        18
-                                                    }
-                                                />
-
-                                                Lưu tất cả (
-                                                {
-                                                    selectedMovies.length
-                                                }{' '}
-                                                phim)
-
-                                            </>
                                         )}
+                                    </div>
+                                );
+                            })}
 
-                                    </button>
-
-                                    <span className="save-hint">
-
-                                        Cấu hình sẽ được kiểm tra
-                                        giới hạn khung giờ trước khi lưu
-
-                                    </span>
-
-                                </div>
-
+                            {/* Save All */}
+                            <div className="save-all-wrapper">
+                                <button
+                                    type="button"
+                                    className="btn-save-all"
+                                    onClick={handleSaveAll}
+                                    disabled={saving || selectedMovies.length === 0}
+                                >
+                                    {saving ? (
+                                        <>
+                                            <Loader2 size={18} className="spin-icon" />
+                                            Đang lưu...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save size={18} />
+                                            Lưu tất cả ({selectedMovies.length} phim)
+                                        </>
+                                    )}
+                                </button>
+                                <span className="save-hint">
+                                    💡 Cấu hình sẽ được kiểm tra giới hạn khung giờ trước khi lưu
+                                </span>
                             </div>
-                        )}
+                        </div>
+                    )}
 
-                    {/* ==================================================
-                        NO MOVIE
-                    ================================================== */}
-
-                    {selectedCinema &&
-                        selectedMovies.length ===
-                            0 && (
-
-                            <div className="empty-state">
-
-                                <Film
-                                    size={
-                                        48
-                                    }
-                                    className="empty-icon"
-                                />
-
-                                <p className="empty-title">
-                                    Chưa chọn phim nào
-                                </p>
-
-                                <p className="empty-subtitle">
-                                    Hãy chọn ít nhất 1 phim ở trên để cấu hình
-                                </p>
-
-                            </div>
-                        )}
-
+                    {/* No Movie */}
+                    {selectedCinema && selectedMovies.length === 0 && (
+                        <div className="empty-state">
+                            <Film size={48} className="empty-icon" />
+                            <p className="empty-title">Chưa chọn phim nào</p>
+                            <p className="empty-subtitle">Hãy chọn ít nhất 1 phim ở trên để cấu hình</p>
+                        </div>
+                    )}
                 </div>
-
             </AdminPage>
 
-            {/* ======================================================
-                ALERT MODAL
-            ====================================================== */}
-
+            {/* Alert Modal */}
             <AdminModal
-                open={
-                    alertModal.open
-                }
-                onClose={
-                    closeAlert
-                }
-                title={
-                    alertModal.title
-                }
-                type={
-                    alertModal.type
-                }
+                open={alertModal.open}
+                onClose={closeAlert}
+                title={alertModal.title}
+                type={alertModal.type}
                 size="sm"
-                onConfirm={
-                    closeAlert
-                }
+                onConfirm={closeAlert}
                 confirmText="Đóng"
             >
-
                 <div className="admin-alert-content">
-
-                    <p
-                        style={{
-                            whiteSpace:
-                                'pre-line'
-                        }}
-                    >
-                        {
-                            alertModal.message
-                        }
-                    </p>
-
+                    <p style={{ whiteSpace: 'pre-line' }}>{alertModal.message}</p>
                 </div>
-
             </AdminModal>
-
         </>
     );
 };
