@@ -24,10 +24,18 @@ class ShowtimeConfigService {
         'IMAX'
     ];
 
+    // 🆕 THÊM TẤT CẢ CÁC NGÀY TRONG TUẦN
     ALLOWED_DAY_TYPES = [
         'ALL',
         'WEEKDAY',
-        'WEEKEND'
+        'WEEKEND',
+        'MONDAY',
+        'TUESDAY',
+        'WEDNESDAY',
+        'THURSDAY',
+        'FRIDAY',
+        'SATURDAY',
+        'SUNDAY'
     ];
 
     /*=========================================================
@@ -35,10 +43,8 @@ class ShowtimeConfigService {
     =========================================================*/
     createError(message, statusCode = 400, field = 'general') {
         const err = new Error(message);
-
         err.statusCode = statusCode;
         err.field = field;
-
         return err;
     }
 
@@ -156,7 +162,6 @@ class ShowtimeConfigService {
 
     /*=========================================================
         LẤY TẤT CẢ CONFIG
-
         Bao gồm cả inactive.
     =========================================================*/
     async getAllConfig(movieId, cinemaId) {
@@ -472,19 +477,11 @@ class ShowtimeConfigService {
 
             return {
                 success: true,
-
                 inserted,
-
                 updated,
-
                 deleted,
-
-                total:
-                    inserted +
-                    updated,
-
-                message:
-                    'Lưu cấu hình suất chiếu thành công'
+                total: inserted + updated,
+                message: 'Lưu cấu hình suất chiếu thành công'
             };
 
         } catch (error) {
@@ -724,14 +721,9 @@ class ShowtimeConfigService {
 
         return {
             success: true,
-
-            config_id:
-                Number(configId),
-
+            config_id: Number(configId),
             updated: 1,
-
-            message:
-                'Cập nhật cấu hình thành công'
+            message: 'Cập nhật cấu hình thành công'
         };
     }
 }
