@@ -19,58 +19,158 @@ class ShowtimeConfigService {
         return configs;
     }
 
-    /*=========================================================
-        LƯU CẤU HÌNH CHO 1 PHIM Ở 1 RẠP
-    =========================================================*/
     async saveConfig(movieId, cinemaId, configs) {
-        if (!movieId || !cinemaId) {
-            const err = new Error('Thiếu movie_id hoặc cinema_id');
-            err.statusCode = 400;
-            err.field = 'general';
-            throw err;
-        }
+    if (!movieId || !cinemaId) {
+        const err = new Error('Thiếu movie_id hoặc cinema_id');
+        err.statusCode = 400;
+        err.field = 'general';
+        throw err;
+    }
 
-        if (!Array.isArray(configs) || configs.length === 0) {
-            const err = new Error('Configs phải là mảng và không được rỗng');
-            err.statusCode = 400;
-            err.field = 'configs';
-            throw err;
-        }
+    if (!Array.isArray(configs) || configs.length === 0) {
+        const err = new Error('Configs phải là mảng và không được rỗng');
+        err.statusCode = 400;
+        err.field = 'configs';
+        throw err;
+    }
 
-        // Xóa config cũ
-        await ShowtimeConfigRepository.deleteByMovieAndCinema(movieId, cinemaId);
+    const ALLOWED_TIME_SLOTS = [
+        'MORNING',
+        'AFTERNOON',
+        'EVENING',
+        'NIGHT'
+    ];
 
-        // Thêm config mới
-        let insertedCount = 0;
-        for (const config of configs) {
-            const {
-                time_slot,
-                room_type,
-                slot_count,
-                interval_minutes,
-                day_type = 'ALL',
-                is_active = 1
-            } = config;
+    const ALLOWED_ROOM_TYPES = [
+        '2D',
+        '3D',
+        'VIP',
+        'IMAX'
+    ];
 
-            if (!time_slot || !room_type || slot_count <= 0 || interval_minutes <= 0) {
-                continue;
+    const ALLOWED_DAY_TYPES = [
+        'ALL',
+        'WEEKDAY',
+        'WEEKEND'
+    ];
+
+    // =====================================================
+    // 1. LỌC CONFIG HỢP LỆ + CHỈ LẤY CONFIG ACTIVE
+    // =====================================================
+
+    const validConfigs = configs
+        .map(config => ({
+            time_slot: String(config.time_slot || '').trim().toUpperCase(),
+            room_type: String(config.room_type || '').trim().toUpperCase(),
+            slot_count: Number(config.slot_count),
+            interval_minutes: Number(config.interval_minutes),
+            day_type: String(config.day_type || 'ALL').trim().toUpperCase(),
+            is_active: Number(config.is_active) === 1 ? 1 : 0
+        }))
+        .filter(config => {
+
+            // Không active => không lưu
+            if (config.is_active !== 1) {
+                return false;
             }
 
-            await ShowtimeConfigRepository.create({
-                movie_id: movieId,
-                cinema_id: cinemaId,
-                day_type,
-                time_slot,
-                room_type,
-                slot_count,
-                interval_minutes,
-                is_active
-            });
-            insertedCount++;
-        }
+            // Kiểm tra time slot
+            if (!ALLOWED_TIME_SLOTS.includes(config.time_slot)) {
+                return false;
+            }
 
-        return { inserted: insertedCount };
+            // Kiểm tra room type
+            if (!ALLOWED_ROOM_TYPES.includes(config.room_type)) {
+                return false;
+            }
+
+            // Kiểm tra day type
+            if (!ALLOWED_DAY_TYPES.includes(config.day_type)) {
+                return false;
+            }
+
+            // Kiểm tra số suất
+            if (
+                !Number.isFinite(config.slot_count) ||
+                config.slot_count <= 0
+            ) {
+                return false;
+            }
+
+            // Kiểm tra interval
+            if (
+                !Number.isFinite(config.interval_minutes) ||
+                config.interval_minutes <= 0
+            ) {
+                return false;
+            }
+
+            return true;
+        });
+
+    // =====================================================
+    // 2. PHẢI CÓ ÍT NHẤT 1 CONFIG ACTIVE
+    // =====================================================
+
+    if (validConfigs.length === 0) {
+        const err = new Error(
+            'Không có cấu hình suất chiếu hợp lệ và đang hoạt động'
+        );
+
+        err.statusCode = 400;
+        err.field = 'configs';
+
+        throw err;
     }
+
+    // =====================================================
+    // 3. XÓA TOÀN BỘ CONFIG CŨ
+    // =====================================================
+
+    await ShowtimeConfigRepository.deleteByMovieAndCinema(
+        movieId,
+        cinemaId
+    );
+
+    // =====================================================
+    // 4. INSERT CONFIG MỚI
+    // =====================================================
+
+    let insertedCount = 0;
+
+    for (const config of validConfigs) {
+
+        await ShowtimeConfigRepository.create({
+            movie_id: movieId,
+            cinema_id: cinemaId,
+            day_type: config.day_type,
+            time_slot: config.time_slot,
+            room_type: config.room_type,
+            slot_count: config.slot_count,
+            interval_minutes: config.interval_minutes,
+            is_active: 1
+        });
+
+        insertedCount++;
+    }
+
+    // =====================================================
+    // 5. TRẢ VỀ THÔNG TIN DEBUG
+    // =====================================================
+
+    return {
+        inserted: insertedCount,
+
+        configs: validConfigs.map(config => ({
+            time_slot: config.time_slot,
+            room_type: config.room_type,
+            slot_count: config.slot_count,
+            interval_minutes: config.interval_minutes,
+            day_type: config.day_type,
+            is_active: 1
+        }))
+    };
+}
 
     /*=========================================================
         XÓA 1 CẤU HÌNH
