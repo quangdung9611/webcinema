@@ -1,0 +1,267 @@
+/* ==========================================================
+   USER PAGE - QUẢN LÝ NGƯỜI DÙNG
+   ========================================================== */
+
+/* ==========================================================
+   LOADING
+   ========================================================== */
+
+.user-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    padding: var(--space-3xl) var(--space-lg);
+    color: var(--text-secondary);
+}
+
+.user-loading .spin-icon {
+    animation: spin 1s linear infinite;
+    color: var(--accent-ice);
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ==========================================================
+   AVATAR TABLE
+   ========================================================== */
+
+.user-avatar-table {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border-premium);
+    background: var(--bg-tertiary);
+}
+
+.user-avatar-placeholder {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+/* ==========================================================
+   BADGES
+   ========================================================== */
+
+.user-role-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: var(--radius-round);
+    font-size: 0.75rem;
+    font-weight: var(--fw-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.user-role-badge.admin {
+    background: rgba(166, 193, 217, 0.15);
+    color: var(--accent-ice);
+    border: 1px solid var(--accent-ice-border);
+}
+
+.user-role-badge.customer {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-subtle);
+}
+
+.user-status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: var(--radius-round);
+    font-size: 0.75rem;
+    font-weight: var(--fw-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.user-status-badge.active {
+    background: rgba(67, 183, 122, 0.15);
+    color: var(--seat-selected-color);
+    border: 1px solid rgba(67, 183, 122, 0.25);
+}
+
+.user-status-badge.banned {
+    background: rgba(216, 90, 90, 0.15);
+    color: var(--seat-sold-color);
+    border: 1px solid rgba(216, 90, 90, 0.25);
+}
+
+/* ==========================================================
+   ACTION BUTTONS
+   ========================================================== */
+
+.user-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.user-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    color: var(--text-secondary);
+    background: var(--bg-tertiary);
+}
+
+.user-action-btn:hover {
+    transform: scale(1.05);
+}
+
+.user-action-btn.view-btn {
+    color: var(--accent-ice);
+    background: var(--accent-ice-soft);
+}
+
+.user-action-btn.view-btn:hover {
+    background: var(--accent-ice-bg);
+    color: var(--accent-ice-light);
+}
+
+.user-action-btn.delete-btn {
+    color: var(--seat-sold-color);
+    background: rgba(216, 90, 90, 0.08);
+}
+
+.user-action-btn.delete-btn:hover {
+    background: rgba(216, 90, 90, 0.16);
+    color: #f87171;
+}
+
+/* ==========================================================
+   VIEW MODAL
+   ========================================================== */
+
+.user-view-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+    padding: var(--space-sm) 0;
+}
+
+.user-view-avatar-wrapper {
+    display: flex;
+    justify-content: center;
+    padding-bottom: var(--space-md);
+    border-bottom: var(--border-subtle);
+}
+
+.user-view-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--accent-ice-border);
+    box-shadow: 0 0 40px rgba(166, 193, 217, 0.08);
+}
+
+.user-view-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
+}
+
+.user-view-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.user-view-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.user-view-label {
+    font-size: 0.75rem;
+    font-weight: var(--fw-medium);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.user-view-value {
+    font-size: 0.95rem;
+    color: var(--text-heading);
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-subtle);
+    min-height: 32px;
+}
+
+.user-view-value .user-role-badge,
+.user-view-value .user-status-badge {
+    font-size: 0.8rem;
+}
+
+/* ==========================================================
+   ALERT CONTENT
+   ========================================================== */
+
+.user-alert-content {
+    padding: var(--space-sm) 0;
+}
+
+.user-alert-content p {
+    color: var(--text-body);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+/* ==========================================================
+   RESPONSIVE
+   ========================================================== */
+
+@media (max-width: 768px) {
+    .user-view-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-sm);
+    }
+
+    .user-view-avatar {
+        width: 72px;
+        height: 72px;
+    }
+
+    .user-view-label {
+        font-size: 0.7rem;
+    }
+
+    .user-view-value {
+        font-size: 0.875rem;
+        min-height: 28px;
+    }
+}
+
+@media (max-width: 480px) {
+    .user-actions {
+        gap: 2px;
+    }
+
+    .user-action-btn {
+        width: 28px;
+        height: 28px;
+    }
+
+    .user-action-btn svg {
+        width: 14px;
+        height: 14px;
+    }
+}
