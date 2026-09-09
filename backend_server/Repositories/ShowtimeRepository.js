@@ -435,55 +435,47 @@ class ShowtimeRepository {
     }
 
     /*=========================================================
-        GET MOVIE SHOWTIME CONFIG - SỬA LẠI HOÀN TOÀN
+        GET MOVIE SHOWTIME CONFIG - HỖ TRỢ TỪNG NGÀY
     =========================================================*/
     async getMovieShowtimeConfig(movieId, cinemaId, dayType = 'ALL') {
         console.log(`🔍 [CONFIG] movie=${movieId}, cinema=${cinemaId}, dayType=${dayType}`);
         
         let rows = [];
+        let query = `
+            SELECT
+                time_slot,
+                room_type,
+                slot_count,
+                interval_minutes
+            FROM movie_showtime_config
+            WHERE movie_id = ?
+              AND cinema_id = ?
+              AND is_active = 1
+        `;
+        const params = [movieId, cinemaId];
         
-        // 1. THỬ LẤY CONFIG THEO dayType CỤ THỂ
-        if (dayType !== 'ALL') {
-            const [specificRows] = await db.query(`
-                SELECT
-                    time_slot,
-                    room_type,
-                    slot_count,
-                    interval_minutes
-                FROM movie_showtime_config
-                WHERE movie_id = ?
-                  AND cinema_id = ?
-                  AND day_type = ?
-                  AND is_active = 1
-                ORDER BY time_slot ASC, room_type ASC
-            `, [movieId, cinemaId, dayType]);
-            
-            console.log(`🔍 [CONFIG] specificRows: ${specificRows.length} rows`);
-            
-            if (specificRows.length > 0) {
-                rows = specificRows;
-            } else {
-                // FALLBACK: LẤY CONFIG ALL
-                const [allRows] = await db.query(`
-                    SELECT
-                        time_slot,
-                        room_type,
-                        slot_count,
-                        interval_minutes
-                    FROM movie_showtime_config
-                    WHERE movie_id = ?
-                      AND cinema_id = ?
-                      AND day_type = 'ALL'
-                      AND is_active = 1
-                    ORDER BY time_slot ASC, room_type ASC
-                `, [movieId, cinemaId]);
-                
-                console.log(`🔍 [CONFIG] allRows (fallback): ${allRows.length} rows`);
-                rows = allRows;
-            }
+        // Nếu có dayType cụ thể (MONDAY, TUESDAY, ...)
+        if (dayType && dayType !== 'ALL' && dayType !== 'WEEKDAY' && dayType !== 'WEEKEND') {
+            // Ưu tiên lấy config của ngày cụ thể
+            query += ` AND day_type = ?`;
+            params.push(dayType);
+        } else if (dayType === 'WEEKDAY' || dayType === 'WEEKEND') {
+            // Lấy config theo WEEKDAY/WEEKEND
+            query += ` AND day_type = ?`;
+            params.push(dayType);
         } else {
-            // dayType = 'ALL'
-            const [allRows] = await db.query(`
+            // Lấy config ALL
+            query += ` AND day_type = 'ALL'`;
+        }
+        
+        query += ` ORDER BY time_slot ASC, room_type ASC`;
+        
+        const [specificRows] = await db.query(query, params);
+        console.log(`🔍 [CONFIG] specific rows: ${specificRows.length}`);
+        
+        // Nếu không có config cho ngày cụ thể, fallback về ALL
+        if (specificRows.length === 0 && dayType && dayType !== 'ALL') {
+            const [fallbackRows] = await db.query(`
                 SELECT
                     time_slot,
                     room_type,
@@ -497,8 +489,10 @@ class ShowtimeRepository {
                 ORDER BY time_slot ASC, room_type ASC
             `, [movieId, cinemaId]);
             
-            console.log(`🔍 [CONFIG] allRows: ${allRows.length} rows`);
-            rows = allRows;
+            console.log(`🔍 [CONFIG] fallback rows: ${fallbackRows.length}`);
+            rows = fallbackRows;
+        } else {
+            rows = specificRows;
         }
         
         // BUILD CONFIG OBJECT

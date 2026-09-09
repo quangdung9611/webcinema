@@ -71,19 +71,18 @@ const ROOM_TYPES = [
     'IMAX'
 ];
 
-const DAY_TYPES = [
-    {
-        key: 'ALL',
-        label: 'Tất cả các ngày'
-    },
-    {
-        key: 'WEEKDAY',
-        label: 'Ngày thường (T2-T6)'
-    },
-    {
-        key: 'WEEKEND',
-        label: 'Cuối tuần (T7-CN)'
-    }
+// ==========================================================
+// 🆕 DAYS OF WEEK - TỪNG NGÀY RIÊNG BIỆT
+// ==========================================================
+
+const DAYS_OF_WEEK = [
+    { key: 'MONDAY', label: 'Thứ 2', short: 'T2' },
+    { key: 'TUESDAY', label: 'Thứ 3', short: 'T3' },
+    { key: 'WEDNESDAY', label: 'Thứ 4', short: 'T4' },
+    { key: 'THURSDAY', label: 'Thứ 5', short: 'T5' },
+    { key: 'FRIDAY', label: 'Thứ 6', short: 'T6' },
+    { key: 'SATURDAY', label: 'Thứ 7', short: 'T7' },
+    { key: 'SUNDAY', label: 'Chủ Nhật', short: 'CN' }
 ];
 
 const DEFAULT_INTERVAL = 45;
@@ -178,7 +177,6 @@ const calculateSlotTimes = ({
     const times = [];
     let currentTime = startMinutes;
 
-    // CHỈ TÍNH SỐ LẦN CHIA ĐỀU TRONG KHUNG, BỎ QUA DURATION
     const maxSlots = Math.floor((endMinutes - startMinutes) / intervalMinutes);
 
     if (maxSlots <= 0) {
@@ -187,8 +185,6 @@ const calculateSlotTimes = ({
 
     for (let i = 0; i < maxSlots; i++) {
         const start = startMinutes + i * intervalMinutes;
-
-        // CHỈ CHECK GIỜ BẮT ĐẦU, KHÔNG CHECK DURATION
         if (start >= endMinutes) break;
 
         times.push({
@@ -285,7 +281,6 @@ const extractRoomCount = (cinema, roomType) => {
 
     const normalizedType = String(roomType || '2D').toUpperCase();
 
-    // Room count by type
     const byType = cinema.room_count_by_type || cinema.roomCountByType || cinema.rooms_by_type || cinema.roomsByType;
     if (byType && typeof byType === 'object') {
         const value = byType[normalizedType];
@@ -294,7 +289,6 @@ const extractRoomCount = (cinema, roomType) => {
         }
     }
 
-    // Rooms array
     const rooms = cinema.rooms || cinema.room_list || cinema.roomList;
     if (Array.isArray(rooms)) {
         const matched = rooms.filter(room => {
@@ -427,7 +421,7 @@ const MovieShowtimeConfigPage = () => {
                         room_type: config.room_type || '2D',
                         slot_count: Number(config.slot_count) || 0,
                         interval_minutes: Number(config.interval_minutes) || DEFAULT_INTERVAL,
-                        day_type: config.day_type || 'ALL',
+                        day_type: config.day_type || 'MONDAY',
                         is_active: Number(config.is_active) === 1 ? 1 : 0
                     }));
                 } catch (error) {
@@ -460,7 +454,7 @@ const MovieShowtimeConfigPage = () => {
         setExpandedMovies(prev => ({ ...prev, [movieId]: !prev[movieId] }));
     };
 
-    const addConfig = (movieId) => {
+    const addConfig = (movieId, dayType = 'MONDAY') => {
         setConfigs(prev => ({
             ...prev,
             [movieId]: [
@@ -470,7 +464,7 @@ const MovieShowtimeConfigPage = () => {
                     room_type: '2D',
                     slot_count: 1,
                     interval_minutes: DEFAULT_INTERVAL,
-                    day_type: 'ALL',
+                    day_type: dayType,
                     is_active: 1
                 }
             ]
@@ -525,8 +519,8 @@ const MovieShowtimeConfigPage = () => {
             }
 
             if (field === 'day_type') {
-                const exists = DAY_TYPES.some(item => item.key === value);
-                if (!exists) normalizedValue = 'ALL';
+                const exists = DAYS_OF_WEEK.some(item => item.key === value);
+                if (!exists) normalizedValue = 'MONDAY';
             }
 
             movieConfigs[index] = { ...movieConfigs[index], [field]: normalizedValue };
@@ -548,7 +542,6 @@ const MovieShowtimeConfigPage = () => {
 
         if (!slot) return null;
 
-        // Tính khung giờ thực tế (giới hạn bởi giờ mở cửa)
         const actualStart = Math.max(slot.startMinutes, cinemaOpen);
         const actualEnd = Math.min(slot.endMinutes, cinemaClose);
 
@@ -566,7 +559,6 @@ const MovieShowtimeConfigPage = () => {
             };
         }
 
-        // CHỈ TÍNH THEO INTERVAL, BỎ QUA DURATION
         const result = calculateSlotTimes({
             startMinutes: actualStart,
             endMinutes: actualEnd,
@@ -608,7 +600,6 @@ const MovieShowtimeConfigPage = () => {
         }
 
         if (info.exceeded) {
-            // Tạo danh sách các giờ bắt đầu
             const timeList = info.slotTimes.map(t => t.startTime).join(', ');
 
             return {
@@ -643,6 +634,15 @@ const MovieShowtimeConfigPage = () => {
     };
 
     // ======================================================
+    // GET DAY LABEL
+    // ======================================================
+
+    const getDayLabel = (dayKey) => {
+        const day = DAYS_OF_WEEK.find(d => d.key === dayKey);
+        return day ? day.label : dayKey;
+    };
+
+    // ======================================================
     // SAVE ALL
     // ======================================================
 
@@ -657,7 +657,6 @@ const MovieShowtimeConfigPage = () => {
             return;
         }
 
-        // Kiểm tra tất cả config
         const errors = [];
         const preparedConfigs = {};
 
@@ -676,7 +675,6 @@ const MovieShowtimeConfigPage = () => {
                 continue;
             }
 
-            // Kiểm tra từng config
             for (const config of activeConfigs) {
                 const info = getConfigCapacityInfo(movieId, config);
                 if (info?.exceeded) {
@@ -685,7 +683,7 @@ const MovieShowtimeConfigPage = () => {
                         title: getMovieTitle(movieId),
                         config,
                         info,
-                        message: `Cấu hình ${config.time_slot} - ${config.room_type}: yêu cầu ${info.requested} suất, tối đa ${info.maxCapacity} suất`
+                        message: `Cấu hình ${config.time_slot} - ${config.room_type} (${getDayLabel(config.day_type)}): yêu cầu ${info.requested} suất, tối đa ${info.maxCapacity} suất`
                     });
                 }
             }
@@ -695,17 +693,17 @@ const MovieShowtimeConfigPage = () => {
                 room_type: String(config.room_type).toUpperCase(),
                 slot_count: Number(config.slot_count),
                 interval_minutes: Number(config.interval_minutes),
-                day_type: String(config.day_type || 'ALL').toUpperCase(),
+                day_type: String(config.day_type || 'MONDAY').toUpperCase(),
                 is_active: 1
             }));
         }
 
-        // Nếu có lỗi vượt quá
         if (errors.length > 0) {
             const firstError = errors[0];
             const info = firstError.info;
 
             let detailMessage = `⚠️ Phim: ${firstError.title}\n`;
+            detailMessage += `Ngày: ${getDayLabel(firstError.config.day_type)}\n`;
             detailMessage += `Khung giờ: ${firstError.config.time_slot}\n`;
             detailMessage += `Loại phòng: ${firstError.config.room_type}\n`;
             detailMessage += `Số phòng: ${info?.roomCount || '?'}\n\n`;
@@ -730,7 +728,6 @@ const MovieShowtimeConfigPage = () => {
             return;
         }
 
-        // Lưu config
         setSaving(true);
         let successCount = 0;
         let errorCount = 0;
@@ -789,34 +786,6 @@ const MovieShowtimeConfigPage = () => {
     };
 
     // ======================================================
-    // RENDER CAPACITY DETAILS
-    // ======================================================
-
-    const renderCapacityDetails = (capacityMessage) => {
-        if (!capacityMessage?.details) return null;
-
-        const details = capacityMessage.details;
-
-        return (
-            <div className="capacity-details">
-                {details.timeList && (
-                    <div className="capacity-times">
-                        <Clock size={14} />
-                        <span>
-                            Các giờ bắt đầu: <strong>{details.timeList}</strong>
-                        </span>
-                    </div>
-                )}
-                <div className="capacity-stats">
-                    <span>⏱️ {details.duration}p</span>
-                    <span>🏢 {details.roomCount} phòng</span>
-                    <span>📅 {details.timeRange}</span>
-                </div>
-            </div>
-        );
-    };
-
-    // ======================================================
     // LOADING
     // ======================================================
 
@@ -837,7 +806,7 @@ const MovieShowtimeConfigPage = () => {
         <>
             <AdminPage
                 title="Cấu hình lịch chiếu"
-                subtitle="Cấu hình suất chiếu cho nhiều phim cùng lúc"
+                subtitle="Cấu hình suất chiếu cho từng ngày trong tuần"
                 icon={<Settings size={30} />}
                 buttonText="Quay lại"
                 onAdd={() => navigate('/admin/showtime-config')}
@@ -985,30 +954,73 @@ const MovieShowtimeConfigPage = () => {
                                                     </strong>
                                                 </div>
 
-                                                <div className="config-actions">
+                                                {/* 🆕 Nút thêm config với chọn ngày */}
+                                                <div className="config-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                                                     <button
                                                         type="button"
                                                         className="btn-add-row"
-                                                        onClick={() => addConfig(movieId)}
+                                                        onClick={() => addConfig(movieId, 'MONDAY')}
                                                     >
-                                                        <Plus size={16} /> Thêm dòng
+                                                        <Plus size={16} /> Thêm Thứ 2
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="btn-add-row"
+                                                        onClick={() => addConfig(movieId, 'TUESDAY')}
+                                                    >
+                                                        <Plus size={16} /> Thêm Thứ 3
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="btn-add-row"
+                                                        onClick={() => addConfig(movieId, 'WEDNESDAY')}
+                                                    >
+                                                        <Plus size={16} /> Thêm Thứ 4
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="btn-add-row"
+                                                        onClick={() => addConfig(movieId, 'THURSDAY')}
+                                                    >
+                                                        <Plus size={16} /> Thêm Thứ 5
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="btn-add-row"
+                                                        onClick={() => addConfig(movieId, 'FRIDAY')}
+                                                    >
+                                                        <Plus size={16} /> Thêm Thứ 6
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="btn-add-row"
+                                                        onClick={() => addConfig(movieId, 'SATURDAY')}
+                                                    >
+                                                        <Plus size={16} /> Thêm Thứ 7
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="btn-add-row"
+                                                        onClick={() => addConfig(movieId, 'SUNDAY')}
+                                                    >
+                                                        <Plus size={16} /> Thêm Chủ Nhật
                                                     </button>
                                                 </div>
 
                                                 {movieConfigs.length === 0 ? (
                                                     <div className="empty-config">
                                                         <p>Chưa có cấu hình cho phim này</p>
-                                                        <p className="empty-hint">Bấm "Thêm dòng" để bắt đầu</p>
+                                                        <p className="empty-hint">Bấm "Thêm ngày" để bắt đầu</p>
                                                     </div>
                                                 ) : (
                                                     <>
                                                         {/* Table Header */}
                                                         <div className="config-table-header">
+                                                            <span>Ngày</span>
                                                             <span>Khung giờ</span>
                                                             <span>Loại phòng</span>
                                                             <span>Số suất</span>
                                                             <span>K/c (phút)</span>
-                                                            <span>Áp dụng</span>
                                                             <span>Bật</span>
                                                             <span></span>
                                                         </div>
@@ -1025,6 +1037,20 @@ const MovieShowtimeConfigPage = () => {
                                                                     <div
                                                                         className={`config-table-row ${isError ? 'config-row-warning' : ''}`}
                                                                     >
+                                                                        {/* 🆕 Day Type */}
+                                                                        <select
+                                                                            value={config.day_type || 'MONDAY'}
+                                                                            onChange={e => updateConfig(movieId, index, 'day_type', e.target.value)}
+                                                                            className="config-select"
+                                                                            style={{ minWidth: '100px' }}
+                                                                        >
+                                                                            {DAYS_OF_WEEK.map(day => (
+                                                                                <option key={day.key} value={day.key}>
+                                                                                    {day.label}
+                                                                                </option>
+                                                                            ))}
+                                                                        </select>
+
                                                                         {/* Time Slot */}
                                                                         <select
                                                                             value={config.time_slot || 'MORNING'}
@@ -1070,19 +1096,6 @@ const MovieShowtimeConfigPage = () => {
                                                                             className="config-input config-input-number"
                                                                         />
 
-                                                                        {/* Day Type */}
-                                                                        <select
-                                                                            value={config.day_type || 'ALL'}
-                                                                            onChange={e => updateConfig(movieId, index, 'day_type', e.target.value)}
-                                                                            className="config-select"
-                                                                        >
-                                                                            {DAY_TYPES.map(day => (
-                                                                                <option key={day.key} value={day.key}>
-                                                                                    {day.label}
-                                                                                </option>
-                                                                            ))}
-                                                                        </select>
-
                                                                         {/* Active */}
                                                                         <input
                                                                             type="checkbox"
@@ -1101,7 +1114,7 @@ const MovieShowtimeConfigPage = () => {
                                                                         </button>
                                                                     </div>
 
-                                                                    {/* Capacity Message - Improved */}
+                                                                    {/* Capacity Message */}
                                                                     {capacityMessage && (
                                                                         <div
                                                                             className={`capacity-message ${capacityMessage.type}`}
@@ -1132,7 +1145,6 @@ const MovieShowtimeConfigPage = () => {
                                                                                 </span>
                                                                             </div>
 
-                                                                            {/* Hiển thị chi tiết các giờ bắt đầu */}
                                                                             {capacityMessage.details?.slotTimes && capacityMessage.details.slotTimes.length > 0 && (
                                                                                 <div style={{
                                                                                     marginTop: '4px',
@@ -1168,7 +1180,6 @@ const MovieShowtimeConfigPage = () => {
                                                                                 </div>
                                                                             )}
 
-                                                                            {/* Thông tin chi tiết khác */}
                                                                             {capacityMessage.details && (
                                                                                 <div style={{
                                                                                     display: 'flex',
@@ -1193,7 +1204,6 @@ const MovieShowtimeConfigPage = () => {
                                                                                 </div>
                                                                             )}
 
-                                                                            {/* Đề xuất khi vượt quá */}
                                                                             {isError && capacityMessage.details?.recommended && (
                                                                                 <div style={{
                                                                                     marginTop: '4px',
@@ -1247,7 +1257,7 @@ const MovieShowtimeConfigPage = () => {
                                     )}
                                 </button>
                                 <span className="save-hint">
-                                    💡 Cấu hình sẽ được kiểm tra giới hạn khung giờ trước khi lưu
+                                    💡 Cấu hình từng ngày riêng biệt - Linh hoạt cho từng ngày trong tuần
                                 </span>
                             </div>
                         </div>

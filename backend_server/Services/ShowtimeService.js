@@ -22,7 +22,14 @@ const TIME_SLOT_LABELS = {
 
 const DAY_TYPE_LABELS = {
     WEEKDAY: "Ngày thường (T2-T6)",
-    WEEKEND: "Cuối tuần (T7-CN)"
+    WEEKEND: "Cuối tuần (T7-CN)",
+    MONDAY: "Thứ 2",
+    TUESDAY: "Thứ 3",
+    WEDNESDAY: "Thứ 4",
+    THURSDAY: "Thứ 5",
+    FRIDAY: "Thứ 6",
+    SATURDAY: "Thứ 7",
+    SUNDAY: "Chủ Nhật"
 };
 
 // ==========================================================
@@ -41,6 +48,13 @@ const getTimeSlot = (startTime) => {
     if (hour >= 12 && hour < 17) return "AFTERNOON";
     if (hour >= 17 && hour < 20) return "EVENING";
     return "NIGHT";
+};
+
+// 🆕 Lấy tên ngày trong tuần (MONDAY, TUESDAY, ...)
+const getDayOfWeek = (dateStr) => {
+    const date = new Date(dateStr + 'T00:00:00Z');
+    const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+    return days[date.getUTCDay()];
 };
 
 const getDayType = (date) => {
@@ -363,7 +377,7 @@ class ShowtimeService {
     }
 
     // ==========================================================
-    // SCHEDULE SHOWTIMES - BỎ QUA DURATION
+    // SCHEDULE SHOWTIMES - HỖ TRỢ TỪNG NGÀY
     // ==========================================================
 
     async scheduleShowtimes(data) {
@@ -464,31 +478,20 @@ class ShowtimeService {
 
         // Lấy cấu hình từ database
         const manualConfigs = {};
+
         for (const movie of moviesData) {
-            // THỬ LẤY CONFIG VỚI WEEKDAY TRƯỚC
-            let config = await ShowtimeRepository.getMovieShowtimeConfig(movie.movie_id, cinemaId, 'WEEKDAY');
+            // 🆕 THỬ LẤY CONFIG THEO TỪNG NGÀY
+            // 1. Lấy config cho ngày cụ thể (MONDAY, TUESDAY, ...)
+            // 2. Nếu không có, lấy WEEKDAY/WEEKEND
+            // 3. Nếu không có, lấy ALL
             
-            // NẾU KHÔNG CÓ, THỬ WEEKEND
-            if (!config || Object.keys(config).length === 0) {
-                config = await ShowtimeRepository.getMovieShowtimeConfig(movie.movie_id, cinemaId, 'WEEKEND');
-            }
+            // Lấy ngày cụ thể
+            const movieId = movie.movie_id;
             
-            // NẾU KHÔNG CÓ, THỬ ALL
-            if (!config || Object.keys(config).length === 0) {
-                config = await ShowtimeRepository.getMovieShowtimeConfig(movie.movie_id, cinemaId, 'ALL');
-            }
-            
-            if (config && Object.keys(config).length > 0) {
-                manualConfigs[movie.movie_id] = config;
-                console.log(`📋 CẤU HÌNH CHO PHIM "${movie.title}":`);
-                for (const [slot, slots] of Object.entries(config)) {
-                    for (const s of slots) {
-                        console.log(`  ${slot}: ${s.slot_count} suất ${s.room_type}, cách ${s.interval_minutes} phút`);
-                    }
-                }
-            } else {
-                console.log(`⚠️ Phim "${movie.title}" chưa có cấu hình, bỏ qua!`);
-            }
+            // Dùng hàm getDayOfWeek để lấy tên ngày
+            // Nhưng chưa biết ngày cụ thể ở đây, sẽ lấy trong vòng lặp ngày
+            // Nên để trống, sẽ lấy trong vòng lặp ngày
+            manualConfigs[movieId] = {};
         }
 
         // Tạo lịch chiếu
@@ -505,13 +508,21 @@ class ShowtimeService {
         };
         const dayTypeStats = {
             WEEKDAY: { count: 0, slots: [] },
-            WEEKEND: { count: 0, slots: [] }
+            WEEKEND: { count: 0, slots: [] },
+            MONDAY: { count: 0, slots: [] },
+            TUESDAY: { count: 0, slots: [] },
+            WEDNESDAY: { count: 0, slots: [] },
+            THURSDAY: { count: 0, slots: [] },
+            FRIDAY: { count: 0, slots: [] },
+            SATURDAY: { count: 0, slots: [] },
+            SUNDAY: { count: 0, slots: [] }
         };
 
         // Duyệt từng ngày
         let currentDate = parseDate(start_date);
         while (currentDate <= endDate) {
             const dateStr = formatDate(currentDate);
+            const dayOfWeek = getDayOfWeek(dateStr); // MONDAY, TUESDAY, ...
             const dayType = isWeekend(currentDate) ? 'WEEKEND' : 'WEEKDAY';
             const timeRange = getTimeRangeForDate(dateStr, {
                 weekdayStart: operatingHours.weekday.open,
@@ -520,7 +531,7 @@ class ShowtimeService {
                 weekendEnd: operatingHours.weekend.close
             });
 
-            console.log(`\n📅 NGÀY ${dateStr} (${dayType}):`);
+            console.log(`\n📅 NGÀY ${dateStr} (${dayOfWeek} - ${dayType}):`);
             console.log(`  Giờ hoạt động: ${minutesToTime(timeRange.startMinutes)} → ${minutesToTime(timeRange.endMinutes)}`);
 
             // Duyệt từng phim
@@ -528,15 +539,37 @@ class ShowtimeService {
                 const movieId = movie.movie_id;
                 const duration = Number(movie.duration);
                 
-                const manualConfig = manualConfigs[movieId];
+                // 🆕 Lấy config theo thứ tự ưu tiên:
+                // 1. Ngày cụ thể (MONDAY, TUESDAY, ...)
+                // 2. WEEKDAY / WEEKEND
+                // 3. ALL
+                let config = await ShowtimeRepository.getMovieShowtimeConfig(movieId, cinemaId, dayOfWeek);
                 
-                if (!manualConfig || Object.keys(manualConfig).length === 0) {
-                    console.log(`⚠️ Phim "${movie.title}" chưa có cấu hình, bỏ qua!`);
+                if (!config || Object.keys(config).length === 0) {
+                    console.log(`⚠️ Không có config cho ${dayOfWeek}, thử ${dayType}`);
+                    config = await ShowtimeRepository.getMovieShowtimeConfig(movieId, cinemaId, dayType);
+                }
+                
+                if (!config || Object.keys(config).length === 0) {
+                    console.log(`⚠️ Không có config cho ${dayType}, thử ALL`);
+                    config = await ShowtimeRepository.getMovieShowtimeConfig(movieId, cinemaId, 'ALL');
+                }
+                
+                if (config && Object.keys(config).length > 0) {
+                    manualConfigs[movieId] = config;
+                    console.log(`📋 CẤU HÌNH CHO PHIM "${movie.title}" (${dayOfWeek}):`);
+                    for (const [slot, slots] of Object.entries(config)) {
+                        for (const s of slots) {
+                            console.log(`  ${slot}: ${s.slot_count} suất ${s.room_type}, cách ${s.interval_minutes} phút`);
+                        }
+                    }
+                } else {
+                    console.log(`⚠️ Phim "${movie.title}" chưa có cấu hình cho ${dayOfWeek}, bỏ qua!`);
                     continue;
                 }
 
                 // Duyệt từng time slot
-                for (const [timeSlotKey, slotConfigs] of Object.entries(manualConfig)) {
+                for (const [timeSlotKey, slotConfigs] of Object.entries(config)) {
                     for (const slotConfig of slotConfigs) {
                         const { room_type, slot_count, interval_minutes } = slotConfig;
                         
@@ -646,7 +679,7 @@ class ShowtimeService {
                                         });
 
                                         const timeSlot = getTimeSlot(startTimeStr.split(" ")[1] || "09:00");
-                                        const dayTypeResult = getDayType(dateStr);
+                                        const dayTypeResult = dayOfWeek;
 
                                         const createdSlot = {
                                             showtime_id: showtimeId,
@@ -662,7 +695,7 @@ class ShowtimeService {
                                             time_slot: timeSlot,
                                             time_slot_label: TIME_SLOT_LABELS[timeSlot],
                                             day_type: dayTypeResult,
-                                            day_type_label: DAY_TYPE_LABELS[dayTypeResult]
+                                            day_type_label: DAY_TYPE_LABELS[dayTypeResult] || dayTypeResult
                                         };
 
                                         created.push(createdSlot);
@@ -731,7 +764,14 @@ class ShowtimeService {
             },
             byDayType: {
                 WEEKDAY: dayTypeStats.WEEKDAY.count,
-                WEEKEND: dayTypeStats.WEEKEND.count
+                WEEKEND: dayTypeStats.WEEKEND.count,
+                MONDAY: dayTypeStats.MONDAY.count,
+                TUESDAY: dayTypeStats.TUESDAY.count,
+                WEDNESDAY: dayTypeStats.WEDNESDAY.count,
+                THURSDAY: dayTypeStats.THURSDAY.count,
+                FRIDAY: dayTypeStats.FRIDAY.count,
+                SATURDAY: dayTypeStats.SATURDAY.count,
+                SUNDAY: dayTypeStats.SUNDAY.count
             },
             byMovie: created.reduce((acc, slot) => {
                 const key = slot.movie_id;
