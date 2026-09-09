@@ -4,10 +4,48 @@ const ShowtimeRepository = require("../Repositories/ShowtimeRepository");
 // CONSTANTS
 // ==========================================================
 
-const ALLOWED_ROOM_TYPES = ["2D", "3D", "VIP", "IMAX"];
+const ALLOWED_ROOM_TYPES = [
+    "2D",
+    "3D",
+    "VIP",
+    "IMAX"
+];
+
+// ==========================================================
+// TIME SLOT
+//
+// KHUNG GIỜ LOGIC CỦA RẠP
+//
+// MORNING   = 08:00 → 12:00
+// AFTERNOON = 12:00 → 17:00
+// EVENING   = 17:00 → 20:00
+// NIGHT     = 20:00 → 24:00
+// ==========================================================
+
+const TIME_SLOT_RANGES = {
+    MORNING: {
+        start: "08:00",
+        end: "12:00"
+    },
+
+    AFTERNOON: {
+        start: "12:00",
+        end: "17:00"
+    },
+
+    EVENING: {
+        start: "17:00",
+        end: "20:00"
+    },
+
+    NIGHT: {
+        start: "20:00",
+        end: "24:00"
+    }
+};
 
 const TIME_SLOT_LABELS = {
-    MORNING: "Sáng (6h-12h)",
+    MORNING: "Sáng (8h-12h)",
     AFTERNOON: "Chiều (12h-17h)",
     EVENING: "Tối (17h-20h)",
     NIGHT: "Đêm (20h-24h)"
@@ -30,23 +68,43 @@ const formatDateTime = (dateTime) => {
         .substring(0, 16);
 };
 
+// ==========================================================
+// GET TIME SLOT
+// ==========================================================
+
 const getTimeSlot = (startTime) => {
-    if (!startTime) return "MORNING";
+    if (!startTime) {
+        return "MORNING";
+    }
 
     const hour = parseInt(
         String(startTime).split(":")[0],
         10
     );
 
-    if (hour >= 6 && hour < 12) return "MORNING";
-    if (hour >= 12 && hour < 17) return "AFTERNOON";
-    if (hour >= 17 && hour < 20) return "EVENING";
+    if (hour >= 8 && hour < 12) {
+        return "MORNING";
+    }
+
+    if (hour >= 12 && hour < 17) {
+        return "AFTERNOON";
+    }
+
+    if (hour >= 17 && hour < 20) {
+        return "EVENING";
+    }
 
     return "NIGHT";
 };
 
+// ==========================================================
+// GET DAY TYPE
+// ==========================================================
+
 const getDayType = (date) => {
-    if (!date) return "WEEKDAY";
+    if (!date) {
+        return "WEEKDAY";
+    }
 
     const d =
         typeof date === "string"
@@ -60,8 +118,14 @@ const getDayType = (date) => {
         : "WEEKDAY";
 };
 
+// ==========================================================
+// NORMALIZE ROOM TYPES
+// ==========================================================
+
 const normalizeRoomTypes = (roomTypes) => {
-    if (!Array.isArray(roomTypes)) return [];
+    if (!Array.isArray(roomTypes)) {
+        return [];
+    }
 
     return [
         ...new Set(
@@ -77,6 +141,10 @@ const normalizeRoomTypes = (roomTypes) => {
         )
     ];
 };
+
+// ==========================================================
+// VALIDATE SHOWTIME
+// ==========================================================
 
 const validateShowtime = (data) => {
     const {
@@ -221,6 +289,10 @@ const buildDateTime = (date, minutes) => {
     return `${date} ${minutesToTime(minutes)}`;
 };
 
+// ==========================================================
+// GET OPERATING RANGE
+// ==========================================================
+
 const getTimeRangeForDate = (
     date,
     config
@@ -238,11 +310,186 @@ const getTimeRangeForDate = (
     return {
         startTime,
         endTime,
+
         startMinutes:
             timeToMinutes(startTime),
+
         endMinutes:
             timeToMinutes(endTime),
+
         isWeekend: weekend
+    };
+};
+
+// ==========================================================
+// GET REAL TIME SLOT RANGE
+//
+// Kết hợp:
+// 1. Khung giờ cố định của slot
+// 2. Giờ mở/đóng cửa thực tế của rạp
+//
+// Ví dụ:
+// Rạp mở 08:00
+// MORNING = 08:00 → 12:00
+//
+// Rạp mở 09:00
+// MORNING = 09:00 → 12:00
+// ==========================================================
+
+const getActualTimeSlotRange = (
+    timeSlot,
+    timeRange
+) => {
+    const slotConfig =
+        TIME_SLOT_RANGES[timeSlot];
+
+    if (!slotConfig) {
+        return null;
+    }
+
+    const slotStart = timeToMinutes(
+        slotConfig.start
+    );
+
+    const slotEnd = timeToMinutes(
+        slotConfig.end
+    );
+
+    const actualStart = Math.max(
+        slotStart,
+        timeRange.startMinutes
+    );
+
+    const actualEnd = Math.min(
+        slotEnd,
+        timeRange.endMinutes
+    );
+
+    return {
+        startMinutes: actualStart,
+        endMinutes: actualEnd,
+
+        startTime:
+            minutesToTime(actualStart),
+
+        endTime:
+            minutesToTime(actualEnd),
+
+        slotStartMinutes: slotStart,
+        slotEndMinutes: slotEnd
+    };
+};
+
+// ==========================================================
+// CALCULATE MAX POSSIBLE SLOTS
+//
+// Ví dụ:
+//
+// Morning:
+// 08:00 → 12:00
+//
+// Phim:
+// 120 phút
+//
+// Interval:
+// 30 phút
+//
+// Các giờ bắt đầu có thể:
+// 08:00
+// 08:30
+// 09:00
+// 09:30
+// 10:00
+// 10:30
+//
+// => tối đa 6 suất
+// ==========================================================
+
+const calculateMaxSlots = ({
+    startMinutes,
+    endMinutes,
+    duration,
+    intervalMinutes
+}) => {
+    const availableMinutes =
+        endMinutes - startMinutes;
+
+    if (
+        availableMinutes <= 0 ||
+        duration <= 0 ||
+        intervalMinutes <= 0
+    ) {
+        return 0;
+    }
+
+    if (duration > availableMinutes) {
+        return 0;
+    }
+
+    return (
+        Math.floor(
+            (
+                availableMinutes -
+                duration
+            ) /
+            intervalMinutes
+        ) + 1
+    );
+};
+
+// ==========================================================
+// VALIDATE SLOT CAPACITY
+//
+// Nếu config yêu cầu quá nhiều suất:
+// → KHÔNG tạo một phần
+// → báo rõ cho admin cấu hình lại
+// ==========================================================
+
+const validateSlotCapacity = ({
+    timeSlot,
+    roomType,
+    slotCount,
+    duration,
+    intervalMinutes,
+    actualRange
+}) => {
+    if (!actualRange) {
+        return {
+            valid: false,
+            maxSlots: 0,
+            reason:
+                "Không xác định được khung giờ"
+        };
+    }
+
+    const maxSlots =
+        calculateMaxSlots({
+            startMinutes:
+                actualRange.startMinutes,
+
+            endMinutes:
+                actualRange.endMinutes,
+
+            duration,
+
+            intervalMinutes
+        });
+
+    if (slotCount > maxSlots) {
+        return {
+            valid: false,
+
+            maxSlots,
+
+            reason:
+                `Cấu hình ${timeSlot} - ${roomType} yêu cầu ${slotCount} suất nhưng khung giờ ${actualRange.startTime} → ${actualRange.endTime} chỉ đáp ứng tối đa ${maxSlots} suất với phim ${duration} phút và khoảng cách ${intervalMinutes} phút. Vui lòng giảm số suất hoặc điều chỉnh interval.`
+        };
+    }
+
+    return {
+        valid: true,
+        maxSlots,
+        reason: null
     };
 };
 
@@ -253,11 +500,15 @@ const getTimeRangeForDate = (
 const sortRoomsNaturally = (rooms) => {
     return [...rooms].sort((a, b) => {
         const nameA = String(
-            a.room_name || a.room_id || ""
+            a.room_name ||
+            a.room_id ||
+            ""
         );
 
         const nameB = String(
-            b.room_name || b.room_id || ""
+            b.room_name ||
+            b.room_id ||
+            ""
         );
 
         return nameA.localeCompare(
@@ -318,9 +569,12 @@ const filterRoomsByType = (
 const normalizeShowtime = (
     showtime
 ) => {
-    if (!showtime) return null;
+    if (!showtime) {
+        return null;
+    }
 
-    let date = showtime.date || null;
+    let date =
+        showtime.date || null;
 
     let startMinutes = Number(
         showtime.startMinutes
@@ -349,9 +603,10 @@ const normalizeShowtime = (
         const time =
             parts[1] || "00:00";
 
-        startMinutes = timeToMinutes(
-            time.substring(0, 5)
-        );
+        startMinutes =
+            timeToMinutes(
+                time.substring(0, 5)
+            );
     }
 
     if (!Number.isFinite(duration)) {
@@ -363,14 +618,19 @@ const normalizeShowtime = (
 
     return {
         ...showtime,
+
         date,
+
         room_id: Number(
             showtime.room_id
         ),
+
         movie_id: Number(
             showtime.movie_id
         ),
+
         startMinutes,
+
         duration
     };
 };
@@ -383,6 +643,7 @@ const hasRoomConflict = ({
     roomId,
     startMinutes,
     endMinutes,
+    date = null,
     existingShowtimes = [],
     bufferMinutes = 15
 }) => {
@@ -401,6 +662,22 @@ const hasRoomConflict = ({
                 Number(
                     existing.room_id
                 ) !== Number(roomId)
+            ) {
+                return false;
+            }
+
+            // ==================================================
+            // QUAN TRỌNG:
+            // Không được so conflict giữa 2 ngày khác nhau.
+            // ==================================================
+
+            if (
+                date &&
+                existing.date &&
+                String(existing.date)
+                    .substring(0, 10) !==
+                    String(date)
+                        .substring(0, 10)
             ) {
                 return false;
             }
@@ -442,6 +719,7 @@ const findAvailableRoom = ({
     poolRooms = [],
     startMinutes,
     endMinutes,
+    date = null,
     existingShowtimes = [],
     bufferMinutes = 15
 }) => {
@@ -478,6 +756,7 @@ const findAvailableRoom = ({
                 roomId,
                 startMinutes,
                 endMinutes,
+                date,
                 existingShowtimes,
                 bufferMinutes
             })
@@ -560,6 +839,10 @@ class ShowtimeService {
         );
     }
 
+    // ======================================================
+    // MOVIE DETAIL
+    // ======================================================
+
     async getShowtimesForMovieDetail(
         movieId,
         cinemaId,
@@ -585,15 +868,19 @@ class ShowtimeService {
 
                     return {
                         ...showtime,
+
                         time_slot:
                             timeSlot,
+
                         time_slot_label:
                             TIME_SLOT_LABELS[
                                 timeSlot
                             ] ||
                             timeSlot,
+
                         day_type:
                             dayType,
+
                         day_type_label:
                             DAY_TYPE_LABELS[
                                 dayType
@@ -641,9 +928,14 @@ class ShowtimeService {
                 start_time
             );
 
-        movie_id = Number(movie_id);
-        cinema_id = Number(cinema_id);
-        room_id = Number(room_id);
+        movie_id =
+            Number(movie_id);
+
+        cinema_id =
+            Number(cinema_id);
+
+        room_id =
+            Number(room_id);
 
         const validationError =
             validateShowtime({
@@ -696,14 +988,12 @@ class ShowtimeService {
             throw err;
         }
 
-        return await ShowtimeRepository.create(
-            {
-                movie_id,
-                cinema_id,
-                room_id,
-                start_time
-            }
-        );
+        return await ShowtimeRepository.create({
+            movie_id,
+            cinema_id,
+            room_id,
+            start_time
+        });
     }
 
     // ==========================================================
@@ -815,7 +1105,9 @@ class ShowtimeService {
             for (const item of movies) {
 
                 const movieId =
-                    Number(item.movie_id);
+                    Number(
+                        item.movie_id
+                    );
 
                 if (
                     !Number.isInteger(
@@ -892,9 +1184,12 @@ class ShowtimeService {
             ? rooms
                   .map((room) => ({
                       ...room,
-                      room_id: Number(
-                          room.room_id
-                      ),
+
+                      room_id:
+                          Number(
+                              room.room_id
+                          ),
+
                       room_type:
                           String(
                               room.room_type ||
@@ -939,9 +1234,11 @@ class ShowtimeService {
             `📋 Rạp có ${rooms.length} phòng:`
         );
 
-        for (const room of sortRoomsNaturally(
-            rooms
-        )) {
+        for (
+            const room of sortRoomsNaturally(
+                rooms
+            )
+        ) {
             console.log(
                 `  🎥 ${room.room_name} | ${room.room_type} | ID ${room.room_id}`
             );
@@ -958,18 +1255,24 @@ class ShowtimeService {
         // ======================================================
 
         const schedulerRoomIds =
-            rooms.map((room) =>
-                Number(room.room_id)
+            rooms.map(
+                (room) =>
+                    Number(
+                        room.room_id
+                    )
             );
 
         let existingShowtimes =
             await ShowtimeRepository.getExistingShowtimes(
                 {
                     cinemaId,
+
                     startDate:
                         start_date,
+
                     endDate:
                         end_date,
+
                     roomIds:
                         schedulerRoomIds
                 }
@@ -1037,14 +1340,7 @@ class ShowtimeService {
         };
 
         // ======================================================
-        // 8. MANUAL CONFIG CACHE
-        //
-        // QUAN TRỌNG:
-        // KHÔNG lấy config ALL một lần nữa.
-        //
-        // Mỗi ngày sẽ lấy:
-        // WEEKDAY => WEEKDAY + ALL
-        // WEEKEND => WEEKEND + ALL
+        // 8. CONFIG CACHE
         // ======================================================
 
         const manualConfigs = {};
@@ -1095,6 +1391,7 @@ class ShowtimeService {
                 );
 
             console.log("");
+
             console.log(
                 `📅 NGÀY ${dateStr} (${dayType})`
             );
@@ -1108,10 +1405,12 @@ class ShowtimeService {
             );
 
             // ==================================================
-            // 10. LOOP EACH MOVIE
+            // 10. LOOP MOVIES
             // ==================================================
 
-            for (const movie of moviesData) {
+            for (
+                const movie of moviesData
+            ) {
 
                 const movieId =
                     Number(
@@ -1133,30 +1432,28 @@ class ShowtimeService {
                         `⚠️ Phim "${movie.title}" có thời lượng không hợp lệ: ${movie.duration}`
                     );
 
-                    skippedInvalidConfig.push(
-                        {
-                            movie_id:
-                                movieId,
+                    skippedInvalidConfig.push({
+                        movie_id:
+                            movieId,
 
-                            title:
-                                movie.title,
+                        title:
+                            movie.title,
 
-                            date:
-                                dateStr,
+                        date:
+                            dateStr,
 
-                            reason:
-                                "Thời lượng phim không hợp lệ"
-                        }
-                    );
+                        reason:
+                            "Thời lượng phim không hợp lệ"
+                    });
 
                     continue;
                 }
 
                 // ==================================================
-                // 11. GET CONFIG ĐÚNG DAY TYPE
+                // 11. GET CONFIG THEO DAY TYPE
                 // ==================================================
 
-                let manualConfig =
+                const manualConfig =
                     await ShowtimeRepository.getMovieShowtimeConfig(
                         movieId,
                         cinemaId,
@@ -1176,8 +1473,9 @@ class ShowtimeService {
                     continue;
                 }
 
-                // Cache lại để response trả về frontend
-                if (!manualConfigs[movieId]) {
+                if (
+                    !manualConfigs[movieId]
+                ) {
                     manualConfigs[movieId] =
                         {};
                 }
@@ -1201,7 +1499,9 @@ class ShowtimeService {
                     "NIGHT"
                 ];
 
-                for (const timeSlotKey of timeSlotOrder) {
+                for (
+                    const timeSlotKey of timeSlotOrder
+                ) {
 
                     const slotConfigs =
                         manualConfig[
@@ -1218,40 +1518,59 @@ class ShowtimeService {
                     }
 
                     // ==================================================
-                    // TIME SLOT START
+                    // 12.1 ACTUAL SLOT RANGE
                     // ==================================================
 
-                    const timeSlotStart = {
-                        MORNING:
-                            timeRange.startMinutes,
+                    const actualSlotRange =
+                        getActualTimeSlotRange(
+                            timeSlotKey,
+                            timeRange
+                        );
 
-                        AFTERNOON:
-                            Math.max(
-                                timeRange.startMinutes,
-                                12 * 60
-                            ),
+                    if (
+                        !actualSlotRange ||
+                        actualSlotRange.startMinutes >=
+                            actualSlotRange.endMinutes
+                    ) {
 
-                        EVENING:
-                            Math.max(
-                                timeRange.startMinutes,
-                                17 * 60
-                            ),
+                        for (
+                            const slotConfig of slotConfigs
+                        ) {
+                            skippedOutsideHours.push({
+                                movie_id:
+                                    movieId,
 
-                        NIGHT:
-                            Math.max(
-                                timeRange.startMinutes,
-                                20 * 60
-                            )
-                    };
+                                title:
+                                    movie.title,
 
-                    const slotStart =
-                        timeSlotStart[
-                            timeSlotKey
-                        ] ??
-                        timeRange.startMinutes;
+                                date:
+                                    dateStr,
+
+                                time_slot:
+                                    timeSlotKey,
+
+                                room_type:
+                                    String(
+                                        slotConfig.room_type ||
+                                            ""
+                                    )
+                                        .trim()
+                                        .toUpperCase(),
+
+                                reason:
+                                    `Khung ${TIME_SLOT_LABELS[timeSlotKey]} nằm ngoài giờ hoạt động của rạp`
+                            });
+                        }
+
+                        continue;
+                    }
+
+                    console.log(
+                        `  ⏰ ${timeSlotKey}: ${actualSlotRange.startTime} → ${actualSlotRange.endTime}`
+                    );
 
                     // ==================================================
-                    // 13. LOOP CONFIG ROOM TYPE
+                    // 13. LOOP ROOM TYPE CONFIG
                     // ==================================================
 
                     for (
@@ -1277,7 +1596,7 @@ class ShowtimeService {
                             );
 
                         // ==================================================
-                        // VALIDATE CONFIG
+                        // VALIDATE ROOM TYPE
                         // ==================================================
 
                         if (
@@ -1285,34 +1604,33 @@ class ShowtimeService {
                                 roomType
                             )
                         ) {
-                            console.warn(
-                                `⚠️ Room type không hợp lệ: ${slotConfig.room_type}`
-                            );
 
-                            skippedInvalidConfig.push(
-                                {
-                                    movie_id:
-                                        movieId,
+                            skippedInvalidConfig.push({
+                                movie_id:
+                                    movieId,
 
-                                    title:
-                                        movie.title,
+                                title:
+                                    movie.title,
 
-                                    date:
-                                        dateStr,
+                                date:
+                                    dateStr,
 
-                                    time_slot:
-                                        timeSlotKey,
+                                time_slot:
+                                    timeSlotKey,
 
-                                    room_type:
-                                        roomType,
+                                room_type:
+                                    roomType,
 
-                                    reason:
-                                        "Room type không hợp lệ"
-                                }
-                            );
+                                reason:
+                                    "Room type không hợp lệ"
+                            });
 
                             continue;
                         }
+
+                        // ==================================================
+                        // VALIDATE SLOT COUNT
+                        // ==================================================
 
                         if (
                             !Number.isFinite(
@@ -1320,34 +1638,33 @@ class ShowtimeService {
                             ) ||
                             slotCount <= 0
                         ) {
-                            console.warn(
-                                `⚠️ slot_count không hợp lệ: ${slotCount}`
-                            );
 
-                            skippedInvalidConfig.push(
-                                {
-                                    movie_id:
-                                        movieId,
+                            skippedInvalidConfig.push({
+                                movie_id:
+                                    movieId,
 
-                                    title:
-                                        movie.title,
+                                title:
+                                    movie.title,
 
-                                    date:
-                                        dateStr,
+                                date:
+                                    dateStr,
 
-                                    time_slot:
-                                        timeSlotKey,
+                                time_slot:
+                                    timeSlotKey,
 
-                                    room_type:
-                                        roomType,
+                                room_type:
+                                    roomType,
 
-                                    reason:
-                                        "slot_count không hợp lệ"
-                                }
-                            );
+                                reason:
+                                    "slot_count không hợp lệ"
+                            });
 
                             continue;
                         }
+
+                        // ==================================================
+                        // VALIDATE INTERVAL
+                        // ==================================================
 
                         if (
                             !Number.isFinite(
@@ -1355,31 +1672,26 @@ class ShowtimeService {
                             ) ||
                             intervalMinutes <= 0
                         ) {
-                            console.warn(
-                                `⚠️ interval_minutes không hợp lệ: ${intervalMinutes}`
-                            );
 
-                            skippedInvalidConfig.push(
-                                {
-                                    movie_id:
-                                        movieId,
+                            skippedInvalidConfig.push({
+                                movie_id:
+                                    movieId,
 
-                                    title:
-                                        movie.title,
+                                title:
+                                    movie.title,
 
-                                    date:
-                                        dateStr,
+                                date:
+                                    dateStr,
 
-                                    time_slot:
-                                        timeSlotKey,
+                                time_slot:
+                                    timeSlotKey,
 
-                                    room_type:
-                                        roomType,
+                                room_type:
+                                    roomType,
 
-                                    reason:
-                                        "interval_minutes không hợp lệ"
-                                }
-                            );
+                                reason:
+                                    "interval_minutes không hợp lệ"
+                            });
 
                             continue;
                         }
@@ -1397,31 +1709,117 @@ class ShowtimeService {
                         if (
                             availableRooms.length === 0
                         ) {
+
+                            skippedNoRoom.push({
+                                movie_id:
+                                    movieId,
+
+                                title:
+                                    movie.title,
+
+                                date:
+                                    dateStr,
+
+                                time_slot:
+                                    timeSlotKey,
+
+                                room_type:
+                                    roomType,
+
+                                reason:
+                                    `Không có phòng ${roomType}`
+                            });
+
+                            continue;
+                        }
+
+                        // ==================================================
+                        // 15. KIỂM TRA SỐ SUẤT CÓ VƯỢT KHUNG GIỜ KHÔNG
+                        // ==================================================
+
+                        const capacity =
+                            validateSlotCapacity({
+                                timeSlot:
+                                    timeSlotKey,
+
+                                roomType,
+
+                                slotCount,
+
+                                duration,
+
+                                intervalMinutes,
+
+                                actualRange:
+                                    actualSlotRange
+                            });
+
+                        if (
+                            !capacity.valid
+                        ) {
+
                             console.warn(
-                                `⚠️ Không có phòng ${roomType} cho phim "${movie.title}"`
+                                `⚠️ ${movie.title} | ${dateStr} | ${timeSlotKey} | ${roomType}`
                             );
 
-                            skippedNoRoom.push(
-                                {
-                                    movie_id:
-                                        movieId,
-
-                                    title:
-                                        movie.title,
-
-                                    date:
-                                        dateStr,
-
-                                    time_slot:
-                                        timeSlotKey,
-
-                                    room_type:
-                                        roomType,
-
-                                    reason:
-                                        `Không có phòng ${roomType}`
-                                }
+                            console.warn(
+                                `   → Yêu cầu: ${slotCount} suất`
                             );
+
+                            console.warn(
+                                `   → Tối đa: ${capacity.maxSlots} suất`
+                            );
+
+                            console.warn(
+                                `   → ${capacity.reason}`
+                            );
+
+                            skippedInvalidConfig.push({
+                                movie_id:
+                                    movieId,
+
+                                title:
+                                    movie.title,
+
+                                date:
+                                    dateStr,
+
+                                time_slot:
+                                    timeSlotKey,
+
+                                time_slot_label:
+                                    TIME_SLOT_LABELS[
+                                        timeSlotKey
+                                    ],
+
+                                room_type:
+                                    roomType,
+
+                                requested_slots:
+                                    slotCount,
+
+                                max_possible_slots:
+                                    capacity.maxSlots,
+
+                                duration,
+
+                                interval_minutes:
+                                    intervalMinutes,
+
+                                slot_start:
+                                    actualSlotRange.startTime,
+
+                                slot_end:
+                                    actualSlotRange.endTime,
+
+                                reason:
+                                    capacity.reason
+                            });
+
+                            // ==================================================
+                            // QUAN TRỌNG:
+                            // KHÔNG TẠO MỘT PHẦN
+                            // ==================================================
 
                             continue;
                         }
@@ -1430,52 +1828,20 @@ class ShowtimeService {
                             `  🎬 ${movie.title} | ${timeSlotKey} | ${roomType} | ${slotCount} suất | mỗi ${intervalMinutes} phút`
                         );
 
+                        console.log(
+                            `     📐 Khả năng tối đa: ${capacity.maxSlots} suất`
+                        );
+
                         // ==================================================
-                        // 15. IMPORTANT
-                        //
-                        // Mỗi room_type bắt đầu độc lập từ đầu time slot.
+                        // 16. START TIME
                         // ==================================================
 
                         let currentTime =
-                            slotStart;
+                            actualSlotRange.startMinutes;
 
-                        if (
-                            currentTime <
-                            timeRange.startMinutes
-                        ) {
-                            currentTime =
-                                timeRange.startMinutes;
-                        }
-
-                        // Nếu slot bắt đầu sau giờ đóng cửa
-                        if (
-                            currentTime >=
-                            timeRange.endMinutes
-                        ) {
-                            skippedOutsideHours.push(
-                                {
-                                    movie_id:
-                                        movieId,
-
-                                    title:
-                                        movie.title,
-
-                                    date:
-                                        dateStr,
-
-                                    time_slot:
-                                        timeSlotKey,
-
-                                    room_type:
-                                        roomType,
-
-                                    reason:
-                                        "Time slot nằm ngoài giờ hoạt động"
-                                }
-                            );
-
-                            continue;
-                        }
+                        // ==================================================
+                        // 17. CREATE SLOTS
+                        // ==================================================
 
                         let slotsCreated = 0;
 
@@ -1486,10 +1852,6 @@ class ShowtimeService {
                                 slotCount * 50,
                                 50
                             );
-
-                        // ==================================================
-                        // 16. CREATE SLOTS
-                        // ==================================================
 
                         while (
                             slotsCreated <
@@ -1505,47 +1867,45 @@ class ShowtimeService {
                                 duration;
 
                             // ==================================================
-                            // Nếu phim không thể kết thúc trước giờ đóng
-                            // thì thử time tiếp theo.
+                            // PHIM VƯỢT QUÁ KHUNG SLOT
                             // ==================================================
 
                             if (
                                 endMinutes >
-                                timeRange.endMinutes
+                                actualSlotRange.endMinutes
                             ) {
-                                skippedOutsideHours.push(
-                                    {
-                                        movie_id:
-                                            movieId,
 
-                                        title:
-                                            movie.title,
+                                skippedOutsideHours.push({
+                                    movie_id:
+                                        movieId,
 
-                                        date:
+                                    title:
+                                        movie.title,
+
+                                    date:
+                                        dateStr,
+
+                                    time_slot:
+                                        timeSlotKey,
+
+                                    room_type:
+                                        roomType,
+
+                                    start_time:
+                                        buildDateTime(
                                             dateStr,
+                                            currentTime
+                                        ),
 
-                                        time_slot:
-                                            timeSlotKey,
-
-                                        room_type:
-                                            roomType,
-
-                                        start_time:
-                                            buildDateTime(
-                                                dateStr,
-                                                currentTime
-                                            ),
-
-                                        reason:
-                                            "Suất chiếu vượt quá giờ đóng cửa"
-                                    }
-                                );
+                                    reason:
+                                        `Suất chiếu vượt quá khung ${TIME_SLOT_LABELS[timeSlotKey]}`
+                                });
 
                                 break;
                             }
 
                             // ==================================================
-                            // 17. FIND AVAILABLE ROOM
+                            // 18. FIND AVAILABLE ROOM
                             // ==================================================
 
                             const allCurrentShowtimes =
@@ -1555,62 +1915,60 @@ class ShowtimeService {
                                 ];
 
                             const availableRoom =
-                                findAvailableRoom(
-                                    {
-                                        poolRooms:
-                                            availableRooms,
+                                findAvailableRoom({
+                                    poolRooms:
+                                        availableRooms,
 
-                                        startMinutes:
-                                            currentTime,
+                                    startMinutes:
+                                        currentTime,
 
-                                        endMinutes:
-                                            endMinutes,
+                                    endMinutes:
+                                        endMinutes,
 
-                                        existingShowtimes:
-                                            allCurrentShowtimes,
+                                    date:
+                                        dateStr,
 
-                                        bufferMinutes:
-                                            15
-                                    }
-                                );
+                                    existingShowtimes:
+                                        allCurrentShowtimes,
+
+                                    bufferMinutes:
+                                        15
+                                });
 
                             // ==================================================
-                            // 18. NO ROOM AVAILABLE
+                            // 19. NO ROOM
                             // ==================================================
 
                             if (
                                 !availableRoom
                             ) {
 
-                                conflicts.push(
-                                    {
-                                        movie_id:
-                                            movieId,
+                                conflicts.push({
+                                    movie_id:
+                                        movieId,
 
-                                        title:
-                                            movie.title,
+                                    title:
+                                        movie.title,
 
-                                        date:
+                                    date:
+                                        dateStr,
+
+                                    time_slot:
+                                        timeSlotKey,
+
+                                    room_type:
+                                        roomType,
+
+                                    start_time:
+                                        buildDateTime(
                                             dateStr,
+                                            currentTime
+                                        ),
 
-                                        time_slot:
-                                            timeSlotKey,
+                                    reason:
+                                        "Tất cả phòng loại này đang bị trùng lịch"
+                                });
 
-                                        room_type:
-                                            roomType,
-
-                                        start_time:
-                                            buildDateTime(
-                                                dateStr,
-                                                currentTime
-                                            ),
-
-                                        reason:
-                                            "Tất cả phòng loại này đang bị trùng lịch"
-                                    }
-                                );
-
-                                // Thử thời gian tiếp theo
                                 currentTime +=
                                     intervalMinutes;
 
@@ -1638,7 +1996,7 @@ class ShowtimeService {
                                 );
 
                             // ==================================================
-                            // 19. CHECK PAST
+                            // 20. CHECK PAST
                             // ==================================================
 
                             const isPast =
@@ -1648,30 +2006,28 @@ class ShowtimeService {
 
                             if (isPast) {
 
-                                skippedPast.push(
-                                    {
-                                        movie_id:
-                                            movieId,
+                                skippedPast.push({
+                                    movie_id:
+                                        movieId,
 
-                                        title:
-                                            movie.title,
+                                    title:
+                                        movie.title,
 
-                                        date:
-                                            dateStr,
+                                    date:
+                                        dateStr,
 
-                                        room_id:
-                                            roomId,
+                                    room_id:
+                                        roomId,
 
-                                        room_type:
-                                            roomType,
+                                    room_type:
+                                        roomType,
 
-                                        start_time:
-                                            startTimeStr,
+                                    start_time:
+                                        startTimeStr,
 
-                                        reason:
-                                            "Suất chiếu nằm trong quá khứ"
-                                    }
-                                );
+                                    reason:
+                                        "Suất chiếu nằm trong quá khứ"
+                                });
 
                                 currentTime +=
                                     intervalMinutes;
@@ -1680,55 +2036,58 @@ class ShowtimeService {
                             }
 
                             // ==================================================
-                            // 20. FINAL CONFLICT CHECK
+                            // 21. FINAL CONFLICT CHECK
                             // ==================================================
 
                             const finalConflict =
-                                hasRoomConflict(
-                                    {
-                                        roomId,
-                                        startMinutes:
-                                            currentTime,
-                                        endMinutes:
-                                            endMinutes,
-                                        existingShowtimes:
-                                            [
-                                                ...existingShowtimes,
-                                                ...created
-                                            ],
-                                        bufferMinutes:
-                                            15
-                                    }
-                                );
+                                hasRoomConflict({
+                                    roomId,
+
+                                    startMinutes:
+                                        currentTime,
+
+                                    endMinutes:
+                                        endMinutes,
+
+                                    date:
+                                        dateStr,
+
+                                    existingShowtimes:
+                                        [
+                                            ...existingShowtimes,
+                                            ...created
+                                        ],
+
+                                    bufferMinutes:
+                                        15
+                                });
 
                             if (
                                 finalConflict
                             ) {
 
-                                conflicts.push(
-                                    {
-                                        movie_id:
-                                            movieId,
+                                conflicts.push({
+                                    movie_id:
+                                        movieId,
 
-                                        title:
-                                            movie.title,
+                                    title:
+                                        movie.title,
 
-                                        date:
-                                            dateStr,
+                                    date:
+                                        dateStr,
 
-                                        room_id:
-                                            roomId,
+                                    room_id:
+                                        roomId,
 
-                                        room_type:
-                                            roomType,
+                                    room_type:
+                                        roomType,
 
-                                        start_time:
-                                            startTimeStr,
+                                    start_time:
+                                        startTimeStr,
 
-                                        reason:
-                                            "Phòng bị trùng lịch"
-                                    }
-                                );
+                                    reason:
+                                        "Phòng bị trùng lịch"
+                                });
 
                                 currentTime +=
                                     intervalMinutes;
@@ -1737,7 +2096,7 @@ class ShowtimeService {
                             }
 
                             // ==================================================
-                            // 21. INSERT DATABASE
+                            // 22. INSERT DATABASE
                             // ==================================================
 
                             try {
@@ -1836,6 +2195,7 @@ class ShowtimeService {
                                         timeSlot
                                     ]
                                 ) {
+
                                     timeSlotStats[
                                         timeSlot
                                     ].count++;
@@ -1852,6 +2212,7 @@ class ShowtimeService {
                                         dayTypeResult
                                     ]
                                 ) {
+
                                     dayTypeStats[
                                         dayTypeResult
                                     ].count++;
@@ -1876,34 +2237,32 @@ class ShowtimeService {
                                     error.message
                                 );
 
-                                conflicts.push(
-                                    {
-                                        movie_id:
-                                            movieId,
+                                conflicts.push({
+                                    movie_id:
+                                        movieId,
 
-                                        title:
-                                            movie.title,
+                                    title:
+                                        movie.title,
 
-                                        date:
-                                            dateStr,
+                                    date:
+                                        dateStr,
 
-                                        room_id:
-                                            roomId,
+                                    room_id:
+                                        roomId,
 
-                                        room_type:
-                                            roomType,
+                                    room_type:
+                                        roomType,
 
-                                        start_time:
-                                            startTimeStr,
+                                    start_time:
+                                        startTimeStr,
 
-                                        reason:
-                                            error.message
-                                    }
-                                );
+                                    reason:
+                                        error.message
+                                });
                             }
 
                             // ==================================================
-                            // 22. NEXT SLOT
+                            // 23. NEXT SLOT
                             // ==================================================
 
                             currentTime +=
@@ -1914,10 +2273,13 @@ class ShowtimeService {
                             slotsCreated <
                             slotCount
                         ) {
+
                             console.log(
                                 `  ⚠️ ${movie.title} | ${timeSlotKey} | ${roomType}: tạo ${slotsCreated}/${slotCount} suất`
                             );
+
                         } else {
+
                             console.log(
                                 `  ✅ ${movie.title} | ${timeSlotKey} | ${roomType}: đủ ${slotsCreated}/${slotCount} suất`
                             );
@@ -1926,9 +2288,9 @@ class ShowtimeService {
                 }
             }
 
-            // ==================================================
+            // ======================================================
             // NEXT DATE
-            // ==================================================
+            // ======================================================
 
             currentDate =
                 addDays(
@@ -1938,7 +2300,7 @@ class ShowtimeService {
         }
 
         // ======================================================
-        // 23. SUMMARY
+        // 24. SUMMARY
         // ======================================================
 
         const summary = {
@@ -2058,6 +2420,7 @@ class ShowtimeService {
                             acc[key] = {
                                 title:
                                     slot.title,
+
                                 count: 0
                             };
                         }
@@ -2071,10 +2434,11 @@ class ShowtimeService {
         };
 
         // ======================================================
-        // 24. LOG FINAL
+        // 25. LOG FINAL
         // ======================================================
 
         console.log("");
+
         console.log(
             "=========================================================="
         );
@@ -2151,44 +2515,52 @@ class ShowtimeService {
         );
 
         // ======================================================
-        // 25. QUAN TRỌNG
-        //
-        // Nếu KHÔNG tạo được record nào thì success = false.
-        // Frontend sẽ không còn báo "thành công" giả.
+        // 26. NO SHOWTIME CREATED
         // ======================================================
 
-        if (created.length === 0) {
+        if (
+            created.length === 0
+        ) {
 
             let message =
                 "Không tạo được suất chiếu nào.";
 
             if (
+                skippedInvalidConfig.length >
+                0
+            ) {
+
+                message =
+                    "Không tạo được suất chiếu vì cấu hình suất chiếu không phù hợp với khung giờ. Vui lòng kiểm tra số suất và khoảng cách giữa các suất.";
+
+            } else if (
                 skippedPast.length > 0 &&
                 conflicts.length === 0
             ) {
+
                 message =
                     "Không tạo được suất chiếu vì các thời gian được tính đều đã ở quá khứ.";
+
             } else if (
                 skippedNoRoom.length > 0 &&
                 conflicts.length === 0
             ) {
+
                 message =
                     "Không tạo được suất chiếu vì không có phòng phù hợp.";
+
             } else if (
                 conflicts.length > 0
             ) {
+
                 message =
                     "Không tạo được suất chiếu vì các phòng đều bị trùng lịch hoặc không còn khung giờ phù hợp.";
-            } else if (
-                skippedInvalidConfig.length >
-                0
-            ) {
-                message =
-                    "Không tạo được suất chiếu vì cấu hình suất chiếu không hợp lệ.";
+
             } else if (
                 skippedOutsideHours.length >
                 0
             ) {
+
                 message =
                     "Không tạo được suất chiếu vì thời lượng phim vượt quá giờ hoạt động của rạp.";
             }
@@ -2220,13 +2592,36 @@ class ShowtimeService {
         }
 
         // ======================================================
-        // 26. SUCCESS
+        // 27. PARTIAL CONFIG WARNING
+        // ======================================================
+
+        let message =
+            `Đã tạo thành công ${created.length} suất chiếu.`;
+
+        if (
+            skippedInvalidConfig.length > 0
+        ) {
+
+            message +=
+                ` Có ${skippedInvalidConfig.length} cấu hình không phù hợp với khung giờ và đã được bỏ qua.`;
+        }
+
+        if (
+            skippedOutsideHours.length > 0
+        ) {
+
+            message +=
+                ` Có ${skippedOutsideHours.length} suất nằm ngoài khung giờ hoạt động.`;
+        }
+
+        // ======================================================
+        // 28. SUCCESS
         // ======================================================
 
         return {
             success: true,
 
-            message: `Đã tạo thành công ${created.length} suất chiếu.`,
+            message,
 
             data: created,
 
@@ -2284,9 +2679,14 @@ class ShowtimeService {
                 start_time
             );
 
-        movie_id = Number(movie_id);
-        cinema_id = Number(cinema_id);
-        room_id = Number(room_id);
+        movie_id =
+            Number(movie_id);
+
+        cinema_id =
+            Number(cinema_id);
+
+        room_id =
+            Number(room_id);
 
         const validationError =
             validateShowtime({
