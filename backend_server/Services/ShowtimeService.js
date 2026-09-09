@@ -601,7 +601,7 @@ class ShowtimeService {
                             continue;
                         }
 
-                        console.log(`  🎬 ${movie.title} | ${timeSlotKey} | ${room_type} | ${slot_count} suất | mỗi ${intervalMinutes} phút`);
+                        console.log(`  🎬 ${movie.title} | ${timeSlotKey} | ${room_type} | ${slot_count} suất | mỗi ${interval_minutes} phút`);
                         console.log(`     📐 Khả năng tối đa: ${capacity.maxSlots} suất`);
 
                         // Tạo các suất chiếu

@@ -643,8 +643,22 @@ const ShowTimePage = () => {
 
             setIsFormOpen(false);
 
-            if (result.data.length === 0) {
-                showAlert('⚠️ Không tạo được lịch', message, 'warning');
+            // ✅ KIỂM TRA success TỪ BACKEND
+            if (result.success === false || result.data.length === 0) {
+                // Hiển thị message chi tiết từ backend
+                let errorMessage = result.message || 'Không tạo được suất chiếu.';
+                
+                // Nếu có lỗi config, hiển thị chi tiết
+                if (result.skippedInvalidConfig && result.skippedInvalidConfig.length > 0) {
+                    const firstError = result.skippedInvalidConfig[0];
+                    errorMessage = `❌ ${firstError.reason || 'Cấu hình không phù hợp'}`;
+                } else if (result.skippedNoRoom && result.skippedNoRoom.length > 0) {
+                    errorMessage = `❌ Không có phòng ${result.skippedNoRoom[0].room_type} cho phim này.`;
+                } else if (result.conflicts && result.conflicts.length > 0) {
+                    errorMessage = `❌ Phòng bị trùng lịch.`;
+                }
+                
+                showAlert('⚠️ Không tạo được lịch', errorMessage, 'warning');
             } else {
                 showAlert('✅ Tạo lịch chiếu thành công', message, 'success');
             }
@@ -653,13 +667,29 @@ const ShowTimePage = () => {
             console.error('CREATE SCHEDULE ERROR:', error);
             console.error('BACKEND RESPONSE:', error.response?.data);
 
-            const backendField = error.response?.data?.field;
-            const backendMessage = error.response?.data?.message || 'Không thể tạo lịch chiếu.';
+            // ✅ HIỂN THỊ LỖI CHI TIẾT TỪ BACKEND
+            const backendData = error.response?.data;
+            const backendField = backendData?.field;
+            const backendMessage = backendData?.message || 'Không thể tạo lịch chiếu.';
+
+            // Nếu có field lỗi, hiển thị chi tiết
+            let errorDetail = backendMessage;
+            if (backendField) {
+                const fieldLabels = {
+                    cinema_id: 'Rạp chiếu',
+                    start_date: 'Ngày bắt đầu',
+                    end_date: 'Ngày kết thúc',
+                    movies: 'Phim',
+                    configs: 'Cấu hình'
+                };
+                const fieldLabel = fieldLabels[backendField] || backendField;
+                errorDetail = `❌ ${fieldLabel}: ${backendMessage}`;
+            }
 
             if (backendField) {
                 setFormErrors({ [backendField]: backendMessage });
             } else {
-                showAlert('❌ Không thể tạo lịch', backendMessage, 'error');
+                showAlert('❌ Không thể tạo lịch', errorDetail, 'error');
             }
 
         } finally {

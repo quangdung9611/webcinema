@@ -40,8 +40,8 @@ import '../../../styles/MovieShowtimeConfigPage.css';
 const TIME_SLOTS = [
     {
         key: 'MORNING',
-        label: 'MORNING (06:00 - 12:00)',
-        startMinutes: 6 * 60,
+        label: 'MORNING (08:00 - 12:00)',
+        startMinutes: 8 * 60,
         endMinutes: 12 * 60
     },
     {
