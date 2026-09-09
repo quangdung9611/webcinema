@@ -1,6 +1,12 @@
 // pages/admin/MovieShowtimeConfigPage.jsx
 
-import React, { useState, useEffect } from 'react';
+import React, {
+    useState,
+    useEffect,
+    useMemo,
+    useCallback
+} from 'react';
+
 import { useNavigate } from 'react-router-dom';
 import api from '../../../../api/api';
 
@@ -14,7 +20,10 @@ import {
     Settings,
     ChevronDown,
     ChevronUp,
-    Search
+    Search,
+    AlertTriangle,
+    CheckCircle2,
+    Lightbulb
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -29,19 +38,27 @@ import '../../../styles/MovieShowtimeConfigPage.css';
 const TIME_SLOTS = [
     {
         key: 'MORNING',
-        label: 'MORNING (06:00 - 12:00)'
+        label: 'MORNING (06:00 - 12:00)',
+        startMinutes: 6 * 60,
+        endMinutes: 12 * 60
     },
     {
         key: 'AFTERNOON',
-        label: 'AFTERNOON (12:00 - 17:00)'
+        label: 'AFTERNOON (12:00 - 17:00)',
+        startMinutes: 12 * 60,
+        endMinutes: 17 * 60
     },
     {
         key: 'EVENING',
-        label: 'EVENING (17:00 - 20:00)'
+        label: 'EVENING (17:00 - 20:00)',
+        startMinutes: 17 * 60,
+        endMinutes: 20 * 60
     },
     {
         key: 'NIGHT',
-        label: 'NIGHT (20:00 - 24:00)'
+        label: 'NIGHT (20:00 - 24:00)',
+        startMinutes: 20 * 60,
+        endMinutes: 24 * 60
     }
 ];
 
@@ -67,6 +84,626 @@ const DAY_TYPES = [
     }
 ];
 
+const DEFAULT_INTERVAL = 45;
+
+const DEFAULT_MOVIE_DURATION = 120;
+
+const DEFAULT_CINEMA_OPEN = 8 * 60;
+
+const DEFAULT_CINEMA_CLOSE = 24 * 60;
+
+const DEFAULT_ROOM_COUNT = 1;
+
+// ==========================================================
+// UTILS
+// ==========================================================
+
+const toNumber = (
+    value,
+    fallback = 0
+) => {
+
+    const number = Number(value);
+
+    return Number.isFinite(number)
+        ? number
+        : fallback;
+};
+
+const normalizeString = (
+    value,
+    fallback = ''
+) => {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+        return fallback;
+    }
+
+    return String(value).trim();
+};
+
+// ==========================================================
+// TIME UTILS
+// ==========================================================
+
+const timeToMinutes = (
+    value,
+    fallback = null
+) => {
+
+    if (
+        value === null ||
+        value === undefined ||
+        value === ''
+    ) {
+        return fallback;
+    }
+
+    if (typeof value === 'number') {
+
+        if (
+            Number.isFinite(value) &&
+            value >= 0 &&
+            value <= 1440
+        ) {
+            return Math.round(value);
+        }
+
+        return fallback;
+    }
+
+    const stringValue =
+        String(value).trim();
+
+    if (!stringValue) {
+        return fallback;
+    }
+
+    // HH:mm
+    const match =
+        stringValue.match(
+            /^(\d{1,2}):(\d{2})/
+        );
+
+    if (match) {
+
+        const hour =
+            Number(match[1]);
+
+        const minute =
+            Number(match[2]);
+
+        if (
+            hour >= 0 &&
+            hour <= 23 &&
+            minute >= 0 &&
+            minute <= 59
+        ) {
+            return (
+                hour * 60 +
+                minute
+            );
+        }
+    }
+
+    // Decimal / integer minutes
+    const numeric =
+        Number(stringValue);
+
+    if (
+        Number.isFinite(numeric) &&
+        numeric >= 0 &&
+        numeric <= 1440
+    ) {
+        return Math.round(numeric);
+    }
+
+    return fallback;
+};
+
+const minutesToTime = (
+    minutes
+) => {
+
+    const safeMinutes =
+        Math.max(
+            0,
+            Math.min(
+                1440,
+                Math.round(
+                    Number(minutes) || 0
+                )
+            )
+        );
+
+    if (
+        safeMinutes === 1440
+    ) {
+        return '24:00';
+    }
+
+    const hour =
+        Math.floor(
+            safeMinutes / 60
+        );
+
+    const minute =
+        safeMinutes % 60;
+
+    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+};
+
+const formatHourShort = (
+    minutes
+) => {
+
+    const value =
+        Math.round(
+            Number(minutes) || 0
+        );
+
+    if (value === 1440) {
+        return '24h';
+    }
+
+    const hour =
+        Math.floor(
+            value / 60
+        );
+
+    const minute =
+        value % 60;
+
+    if (minute === 0) {
+        return `${hour}h`;
+    }
+
+    return `${hour}h${String(minute).padStart(2, '0')}`;
+};
+
+// ==========================================================
+// EXTRACT MOVIE DURATION
+// ==========================================================
+
+const extractMovieDuration = (
+    movie
+) => {
+
+    if (!movie) {
+        return DEFAULT_MOVIE_DURATION;
+    }
+
+    const candidates = [
+        movie.duration,
+        movie.duration_minutes,
+        movie.movie_duration,
+        movie.runtime,
+        movie.running_time,
+        movie.length_minutes,
+        movie.duration_minute,
+        movie.thoi_luong
+    ];
+
+    for (const value of candidates) {
+
+        const number =
+            Number(value);
+
+        if (
+            Number.isFinite(number) &&
+            number > 0
+        ) {
+            return Math.round(number);
+        }
+    }
+
+    return DEFAULT_MOVIE_DURATION;
+};
+
+// ==========================================================
+// EXTRACT CINEMA OPEN / CLOSE
+// ==========================================================
+
+const extractCinemaOpen = (
+    cinema
+) => {
+
+    if (!cinema) {
+        return DEFAULT_CINEMA_OPEN;
+    }
+
+    const candidates = [
+        cinema.open_time,
+        cinema.opening_time,
+        cinema.opening_hour,
+        cinema.openingTime,
+        cinema.openTime,
+        cinema.open_at,
+        cinema.start_time,
+        cinema.startTime,
+        cinema.gio_mo_cua
+    ];
+
+    for (const value of candidates) {
+
+        const minutes =
+            timeToMinutes(
+                value,
+                null
+            );
+
+        if (
+            minutes !== null
+        ) {
+            return minutes;
+        }
+    }
+
+    return DEFAULT_CINEMA_OPEN;
+};
+
+const extractCinemaClose = (
+    cinema
+) => {
+
+    if (!cinema) {
+        return DEFAULT_CINEMA_CLOSE;
+    }
+
+    const candidates = [
+        cinema.close_time,
+        cinema.closing_time,
+        cinema.closing_hour,
+        cinema.closingTime,
+        cinema.closeTime,
+        cinema.close_at,
+        cinema.end_time,
+        cinema.endTime,
+        cinema.gio_dong_cua
+    ];
+
+    for (const value of candidates) {
+
+        const minutes =
+            timeToMinutes(
+                value,
+                null
+            );
+
+        if (
+            minutes !== null
+        ) {
+            return minutes;
+        }
+    }
+
+    return DEFAULT_CINEMA_CLOSE;
+};
+
+// ==========================================================
+// EXTRACT ROOM COUNT
+// ==========================================================
+
+const extractRoomCount = (
+    cinema,
+    roomType
+) => {
+
+    if (!cinema) {
+        return DEFAULT_ROOM_COUNT;
+    }
+
+    const normalizedType =
+        String(
+            roomType || '2D'
+        ).toUpperCase();
+
+    // ----------------------------------------------
+    // 1. room_count_by_type
+    // ----------------------------------------------
+
+    const byType =
+        cinema.room_count_by_type ||
+        cinema.roomCountByType ||
+        cinema.rooms_by_type ||
+        cinema.roomsByType;
+
+    if (
+        byType &&
+        typeof byType === 'object'
+    ) {
+
+        const value =
+            byType[normalizedType];
+
+        if (
+            Number.isFinite(
+                Number(value)
+            ) &&
+            Number(value) > 0
+        ) {
+            return Number(value);
+        }
+    }
+
+    // ----------------------------------------------
+    // 2. rooms array
+    // ----------------------------------------------
+
+    const rooms =
+        cinema.rooms ||
+        cinema.room_list ||
+        cinema.roomList;
+
+    if (
+        Array.isArray(rooms)
+    ) {
+
+        const matched =
+            rooms.filter(room => {
+
+                const type =
+                    String(
+                        room.room_type ||
+                        room.type ||
+                        room.roomType ||
+                        ''
+                    ).toUpperCase();
+
+                return (
+                    type ===
+                    normalizedType
+                );
+            });
+
+        if (
+            matched.length > 0
+        ) {
+            return matched.length;
+        }
+    }
+
+    // ----------------------------------------------
+    // 3. room_count
+    // ----------------------------------------------
+
+    const genericCount =
+        cinema.room_count ||
+        cinema.roomCount ||
+        cinema.total_rooms ||
+        cinema.totalRooms;
+
+    if (
+        Number.isFinite(
+            Number(genericCount)
+        ) &&
+        Number(genericCount) > 0
+    ) {
+
+        /*
+         * Nếu backend chỉ trả tổng số phòng
+         * mà không có phân loại thì chưa thể
+         * biết chính xác từng loại.
+         *
+         * Tạm dùng 1 phòng để không đánh giá
+         * quá cao capacity.
+         */
+        return DEFAULT_ROOM_COUNT;
+    }
+
+    return DEFAULT_ROOM_COUNT;
+};
+
+// ==========================================================
+// GET MOVIE OBJECT
+// ==========================================================
+
+const getMovieByIdFromList = (
+    movies,
+    movieId
+) => {
+
+    return movies.find(
+        movie =>
+            String(
+                movie.movie_id
+            ) ===
+            String(movieId)
+    );
+};
+
+// ==========================================================
+// GET TIME SLOT
+// ==========================================================
+
+const getTimeSlotByKey = (
+    key
+) => {
+
+    return TIME_SLOTS.find(
+        slot =>
+            slot.key === key
+    );
+};
+
+// ==========================================================
+// CALCULATE EFFECTIVE TIME RANGE
+// ==========================================================
+
+const getEffectiveSlotRange = (
+    timeSlotKey,
+    cinemaOpen,
+    cinemaClose
+) => {
+
+    const slot =
+        getTimeSlotByKey(
+            timeSlotKey
+        );
+
+    if (!slot) {
+        return null;
+    }
+
+    const start =
+        Math.max(
+            cinemaOpen,
+            slot.startMinutes
+        );
+
+    const end =
+        Math.min(
+            cinemaClose,
+            slot.endMinutes
+        );
+
+    if (start >= end) {
+        return null;
+    }
+
+    return {
+        start,
+        end
+    };
+};
+
+// ==========================================================
+// CALCULATE MAX CAPACITY
+// ==========================================================
+
+const calculateMaxCapacity = ({
+    slotStart,
+    slotEnd,
+    duration,
+    intervalMinutes,
+    roomCount
+}) => {
+
+    if (
+        !Number.isFinite(slotStart) ||
+        !Number.isFinite(slotEnd) ||
+        !Number.isFinite(duration) ||
+        !Number.isFinite(intervalMinutes) ||
+        !Number.isFinite(roomCount)
+    ) {
+        return 0;
+    }
+
+    if (
+        slotStart >= slotEnd ||
+        duration <= 0 ||
+        intervalMinutes <= 0 ||
+        roomCount <= 0
+    ) {
+        return 0;
+    }
+
+    /*
+     * Scheduler hiện tại của bạn có buffer 15 phút
+     * giữa hai suất cùng một phòng.
+     */
+    const ROOM_BUFFER = 15;
+
+    let totalCapacity = 0;
+
+    for (
+        let roomIndex = 0;
+        roomIndex < roomCount;
+        roomIndex++
+    ) {
+
+        let candidate =
+            slotStart;
+
+        let lastBlockedUntil =
+            -Infinity;
+
+        let roomCapacity = 0;
+
+        while (
+            candidate + duration <=
+            slotEnd
+        ) {
+
+            if (
+                candidate >=
+                lastBlockedUntil
+            ) {
+
+                roomCapacity++;
+
+                lastBlockedUntil =
+                    candidate +
+                    duration +
+                    ROOM_BUFFER;
+
+                candidate +=
+                    intervalMinutes;
+
+            } else {
+
+                const difference =
+                    lastBlockedUntil -
+                    candidate;
+
+                const jumps =
+                    Math.ceil(
+                        difference /
+                        intervalMinutes
+                    );
+
+                candidate +=
+                    Math.max(
+                        1,
+                        jumps
+                    ) *
+                    intervalMinutes;
+            }
+        }
+
+        totalCapacity +=
+            roomCapacity;
+    }
+
+    return totalCapacity;
+};
+
+// ==========================================================
+// GET EFFECTIVE SLOT LABEL
+// ==========================================================
+
+const getEffectiveSlotLabel = (
+    timeSlotKey,
+    cinemaOpen,
+    cinemaClose
+) => {
+
+    const range =
+        getEffectiveSlotRange(
+            timeSlotKey,
+            cinemaOpen,
+            cinemaClose
+        );
+
+    const slot =
+        getTimeSlotByKey(
+            timeSlotKey
+        );
+
+    if (
+        !range ||
+        !slot
+    ) {
+        return slot?.label ||
+            timeSlotKey;
+    }
+
+    return `${timeSlotKey} (${formatHourShort(range.start)} - ${formatHourShort(range.end)})`;
+};
+
 // ==========================================================
 // COMPONENT
 // ==========================================================
@@ -79,27 +716,88 @@ const MovieShowtimeConfigPage = () => {
     // STATE
     // ======================================================
 
-    const [loading, setLoading] = useState(false);
-    const [saving, setSaving] = useState(false);
+    const [loading, setLoading] =
+        useState(false);
 
-    const [movies, setMovies] = useState([]);
-    const [cinemas, setCinemas] = useState([]);
+    const [saving, setSaving] =
+        useState(false);
 
-    const [selectedCinema, setSelectedCinema] = useState('');
-    const [selectedMovies, setSelectedMovies] = useState([]);
+    const [movies, setMovies] =
+        useState([]);
 
-    const [searchMovie, setSearchMovie] = useState('');
+    const [cinemas, setCinemas] =
+        useState([]);
 
-    const [configs, setConfigs] = useState({});
+    const [selectedCinema, setSelectedCinema] =
+        useState('');
 
-    const [expandedMovies, setExpandedMovies] = useState({});
+    const [selectedMovies, setSelectedMovies] =
+        useState([]);
 
-    const [alertModal, setAlertModal] = useState({
-        open: false,
-        title: '',
-        message: '',
-        type: 'default'
-    });
+    const [searchMovie, setSearchMovie] =
+        useState('');
+
+    const [configs, setConfigs] =
+        useState({});
+
+    const [expandedMovies, setExpandedMovies] =
+        useState({});
+
+    const [alertModal, setAlertModal] =
+        useState({
+            open: false,
+            title: '',
+            message: '',
+            type: 'default'
+        });
+
+    // ======================================================
+    // SELECTED CINEMA OBJECT
+    // ======================================================
+
+    const selectedCinemaObject =
+        useMemo(() => {
+
+            return cinemas.find(
+                cinema =>
+                    String(
+                        cinema.cinema_id
+                    ) ===
+                    String(
+                        selectedCinema
+                    )
+            );
+
+        }, [
+            cinemas,
+            selectedCinema
+        ]);
+
+    // ======================================================
+    // CINEMA HOURS
+    // ======================================================
+
+    const cinemaOpen =
+        useMemo(() => {
+
+            return extractCinemaOpen(
+                selectedCinemaObject
+            );
+
+        }, [
+            selectedCinemaObject
+        ]);
+
+    const cinemaClose =
+        useMemo(() => {
+
+            return extractCinemaClose(
+                selectedCinemaObject
+            );
+
+        }, [
+            selectedCinemaObject
+        ]);
 
     // ======================================================
     // ALERT
@@ -110,6 +808,7 @@ const MovieShowtimeConfigPage = () => {
         message,
         type = 'default'
     ) => {
+
         setAlertModal({
             open: true,
             title,
@@ -119,6 +818,7 @@ const MovieShowtimeConfigPage = () => {
     };
 
     const closeAlert = () => {
+
         setAlertModal(prev => ({
             ...prev,
             open: false
@@ -130,8 +830,10 @@ const MovieShowtimeConfigPage = () => {
     // ======================================================
 
     useEffect(() => {
+
         fetchMovies();
         fetchCinemas();
+
     }, []);
 
     // ======================================================
@@ -160,13 +862,21 @@ const MovieShowtimeConfigPage = () => {
 
         try {
 
-            const res = await api.get('/api/movies');
+            const res =
+                await api.get(
+                    '/api/movies'
+                );
 
-            const movieData = Array.isArray(res.data?.data)
-                ? res.data.data
-                : [];
+            const movieData =
+                Array.isArray(
+                    res.data?.data
+                )
+                    ? res.data.data
+                    : [];
 
-            setMovies(movieData);
+            setMovies(
+                movieData
+            );
 
         } catch (error) {
 
@@ -191,15 +901,25 @@ const MovieShowtimeConfigPage = () => {
 
         try {
 
-            const res = await api.get('/api/cinemas');
+            const res =
+                await api.get(
+                    '/api/cinemas'
+                );
 
-            const cinemaData = Array.isArray(res.data?.data)
-                ? res.data.data
-                : [];
+            const cinemaData =
+                Array.isArray(
+                    res.data?.data
+                )
+                    ? res.data.data
+                    : [];
 
-            setCinemas(cinemaData);
+            setCinemas(
+                cinemaData
+            );
 
-            if (cinemaData.length > 0) {
+            if (
+                cinemaData.length > 0
+            ) {
 
                 setSelectedCinema(
                     cinemaData[0].cinema_id
@@ -240,54 +960,73 @@ const MovieShowtimeConfigPage = () => {
 
         try {
 
-            for (const movieId of selectedMovies) {
+            for (
+                const movieId
+                of selectedMovies
+            ) {
 
                 try {
 
-                    const res = await api.get(
-                        `/api/showtime-config/${movieId}?cinema_id=${selectedCinema}`
-                    );
+                    const res =
+                        await api.get(
+                            `/api/showtime-config/${movieId}?cinema_id=${selectedCinema}`
+                        );
 
-                    const rawData = res.data?.data;
+                    const rawData =
+                        res.data?.data;
 
-                    const movieConfig = Array.isArray(rawData)
-                        ? rawData
-                        : Array.isArray(rawData?.data)
-                            ? rawData.data
-                            : [];
+                    const movieConfig =
+                        Array.isArray(
+                            rawData
+                        )
+                            ? rawData
+                            : Array.isArray(
+                                rawData?.data
+                            )
+                                ? rawData.data
+                                : [];
 
                     newConfigs[movieId] =
-                        movieConfig.map(config => ({
-                            ...config,
+                        movieConfig.map(
+                            config => ({
+                                ...config,
 
-                            config_id:
-                                config.config_id ??
-                                config.id ??
-                                undefined,
+                                config_id:
+                                    config.config_id ??
+                                    config.id ??
+                                    undefined,
 
-                            time_slot:
-                                config.time_slot ||
-                                'MORNING',
+                                time_slot:
+                                    config.time_slot ||
+                                    'MORNING',
 
-                            room_type:
-                                config.room_type ||
-                                '2D',
+                                room_type:
+                                    config.room_type ||
+                                    '2D',
 
-                            slot_count:
-                                Number(config.slot_count) || 0,
+                                slot_count:
+                                    Number(
+                                        config.slot_count
+                                    ) || 0,
 
-                            interval_minutes:
-                                Number(config.interval_minutes) || 45,
+                                interval_minutes:
+                                    Number(
+                                        config.interval_minutes
+                                    ) ||
+                                    DEFAULT_INTERVAL,
 
-                            day_type:
-                                config.day_type ||
-                                'ALL',
+                                day_type:
+                                    config.day_type ||
+                                    'ALL',
 
-                            is_active:
-                                Number(config.is_active) === 1
-                                    ? 1
-                                    : 0
-                        }));
+                                is_active:
+                                    Number(
+                                        config.is_active
+                                    ) === 1
+                                        ? 1
+                                        : 0
+                            })
+                        );
 
                 } catch (error) {
 
@@ -296,11 +1035,14 @@ const MovieShowtimeConfigPage = () => {
                         error
                     );
 
-                    newConfigs[movieId] = [];
+                    newConfigs[movieId] =
+                        [];
                 }
             }
 
-            setConfigs(newConfigs);
+            setConfigs(
+                newConfigs
+            );
 
         } finally {
 
@@ -312,14 +1054,21 @@ const MovieShowtimeConfigPage = () => {
     // TOGGLE MOVIE
     // ======================================================
 
-    const toggleMovieSelection = (movieId) => {
+    const toggleMovieSelection = (
+        movieId
+    ) => {
 
         setSelectedMovies(prev => {
 
-            if (prev.includes(movieId)) {
+            if (
+                prev.includes(
+                    movieId
+                )
+            ) {
 
                 return prev.filter(
-                    id => id !== movieId
+                    id =>
+                        id !== movieId
                 );
             }
 
@@ -339,11 +1088,14 @@ const MovieShowtimeConfigPage = () => {
     // TOGGLE EXPAND
     // ======================================================
 
-    const toggleExpand = (movieId) => {
+    const toggleExpand = (
+        movieId
+    ) => {
 
         setExpandedMovies(prev => ({
             ...prev,
-            [movieId]: !prev[movieId]
+            [movieId]:
+                !prev[movieId]
         }));
     };
 
@@ -351,7 +1103,9 @@ const MovieShowtimeConfigPage = () => {
     // ADD CONFIG ROW
     // ======================================================
 
-    const addConfig = (movieId) => {
+    const addConfig = (
+        movieId
+    ) => {
 
         setConfigs(prev => ({
 
@@ -361,12 +1115,23 @@ const MovieShowtimeConfigPage = () => {
                 ...(prev[movieId] || []),
 
                 {
-                    time_slot: 'MORNING',
-                    room_type: '2D',
-                    slot_count: 1,
-                    interval_minutes: 45,
-                    day_type: 'ALL',
-                    is_active: 1
+                    time_slot:
+                        'MORNING',
+
+                    room_type:
+                        '2D',
+
+                    slot_count:
+                        1,
+
+                    interval_minutes:
+                        DEFAULT_INTERVAL,
+
+                    day_type:
+                        'ALL',
+
+                    is_active:
+                        1
                 }
             ]
         }));
@@ -394,13 +1159,14 @@ const MovieShowtimeConfigPage = () => {
         ];
 
         const removed =
-            newConfigs.splice(index, 1)[0];
+            newConfigs.splice(
+                index,
+                1
+            )[0];
 
-        // -----------------------------------------------
-        // CONFIG ĐÃ CÓ TRONG DATABASE
-        // -----------------------------------------------
-
-        if (removed?.config_id) {
+        if (
+            removed?.config_id
+        ) {
 
             try {
 
@@ -410,7 +1176,8 @@ const MovieShowtimeConfigPage = () => {
 
                 setConfigs(prev => ({
                     ...prev,
-                    [movieId]: newConfigs
+                    [movieId]:
+                        newConfigs
                 }));
 
                 showAlert(
@@ -436,13 +1203,10 @@ const MovieShowtimeConfigPage = () => {
             return;
         }
 
-        // -----------------------------------------------
-        // CONFIG CHƯA CÓ TRONG DATABASE
-        // -----------------------------------------------
-
         setConfigs(prev => ({
             ...prev,
-            [movieId]: newConfigs
+            [movieId]:
+                newConfigs
         }));
     };
 
@@ -463,94 +1227,117 @@ const MovieShowtimeConfigPage = () => {
                 ...(prev[movieId] || [])
             ];
 
-            if (!movieConfigs[index]) {
+            if (
+                !movieConfigs[index]
+            ) {
                 return prev;
             }
 
-            let normalizedValue = value;
+            let normalizedValue =
+                value;
 
-            // -------------------------------------------
             // NUMBER
-            // -------------------------------------------
-
             if (
-                field === 'slot_count' ||
-                field === 'interval_minutes'
+                field ===
+                    'slot_count' ||
+                field ===
+                    'interval_minutes'
             ) {
-                normalizedValue = Number(value);
 
-                if (!Number.isFinite(normalizedValue)) {
-                    normalizedValue = 0;
+                normalizedValue =
+                    Number(value);
+
+                if (
+                    !Number.isFinite(
+                        normalizedValue
+                    )
+                ) {
+                    normalizedValue =
+                        0;
                 }
             }
 
-            // -------------------------------------------
             // ACTIVE
-            // -------------------------------------------
+            if (
+                field ===
+                'is_active'
+            ) {
 
-            if (field === 'is_active') {
                 normalizedValue =
-                    Number(value) === 1
+                    Number(value) ===
+                    1
                         ? 1
                         : 0;
             }
 
-            // -------------------------------------------
             // TIME SLOT
-            // -------------------------------------------
-
-            if (field === 'time_slot') {
+            if (
+                field ===
+                'time_slot'
+            ) {
 
                 const exists =
                     TIME_SLOTS.some(
                         item =>
-                            item.key === value
+                            item.key ===
+                            value
                     );
 
                 if (!exists) {
-                    normalizedValue = 'MORNING';
+
+                    normalizedValue =
+                        'MORNING';
                 }
             }
 
-            // -------------------------------------------
             // ROOM TYPE
-            // -------------------------------------------
-
-            if (field === 'room_type') {
+            if (
+                field ===
+                'room_type'
+            ) {
 
                 const exists =
-                    ROOM_TYPES.includes(value);
+                    ROOM_TYPES.includes(
+                        value
+                    );
 
                 if (!exists) {
-                    normalizedValue = '2D';
+
+                    normalizedValue =
+                        '2D';
                 }
             }
 
-            // -------------------------------------------
             // DAY TYPE
-            // -------------------------------------------
-
-            if (field === 'day_type') {
+            if (
+                field ===
+                'day_type'
+            ) {
 
                 const exists =
                     DAY_TYPES.some(
                         item =>
-                            item.key === value
+                            item.key ===
+                            value
                     );
 
                 if (!exists) {
-                    normalizedValue = 'ALL';
+
+                    normalizedValue =
+                        'ALL';
                 }
             }
 
             movieConfigs[index] = {
                 ...movieConfigs[index],
-                [field]: normalizedValue
+                [field]:
+                    normalizedValue
             };
 
             return {
                 ...prev,
-                [movieId]: movieConfigs
+                [movieId]:
+                    movieConfigs
             };
         });
     };
@@ -565,9 +1352,12 @@ const MovieShowtimeConfigPage = () => {
     ) => {
 
         if (
-            !Array.isArray(movieConfigs) ||
+            !Array.isArray(
+                movieConfigs
+            ) ||
             movieConfigs.length === 0
         ) {
+
             return {
                 valid: false,
                 message:
@@ -578,11 +1368,17 @@ const MovieShowtimeConfigPage = () => {
         const activeConfigs =
             movieConfigs.filter(
                 config =>
-                    Number(config.is_active) === 1 &&
-                    Number(config.slot_count) > 0
+                    Number(
+                        config.is_active
+                    ) === 1 &&
+                    Number(
+                        config.slot_count
+                    ) > 0
             );
 
-        if (activeConfigs.length === 0) {
+        if (
+            activeConfigs.length === 0
+        ) {
 
             return {
                 valid: false,
@@ -593,7 +1389,8 @@ const MovieShowtimeConfigPage = () => {
 
         for (
             let index = 0;
-            index < activeConfigs.length;
+            index <
+            activeConfigs.length;
             index++
         ) {
 
@@ -603,9 +1400,11 @@ const MovieShowtimeConfigPage = () => {
             if (
                 !TIME_SLOTS.some(
                     item =>
-                        item.key === config.time_slot
+                        item.key ===
+                        config.time_slot
                 )
             ) {
+
                 return {
                     valid: false,
                     message:
@@ -618,6 +1417,7 @@ const MovieShowtimeConfigPage = () => {
                     config.room_type
                 )
             ) {
+
                 return {
                     valid: false,
                     message:
@@ -629,9 +1429,13 @@ const MovieShowtimeConfigPage = () => {
                 !DAY_TYPES.some(
                     item =>
                         item.key ===
-                        (config.day_type || 'ALL')
+                        (
+                            config.day_type ||
+                            'ALL'
+                        )
                 )
             ) {
+
                 return {
                     valid: false,
                     message:
@@ -641,10 +1445,15 @@ const MovieShowtimeConfigPage = () => {
 
             if (
                 !Number.isFinite(
-                    Number(config.slot_count)
+                    Number(
+                        config.slot_count
+                    )
                 ) ||
-                Number(config.slot_count) <= 0
+                Number(
+                    config.slot_count
+                ) <= 0
             ) {
+
                 return {
                     valid: false,
                     message:
@@ -654,14 +1463,136 @@ const MovieShowtimeConfigPage = () => {
 
             if (
                 !Number.isFinite(
-                    Number(config.interval_minutes)
+                    Number(
+                        config.interval_minutes
+                    )
                 ) ||
-                Number(config.interval_minutes) <= 0
+                Number(
+                    config.interval_minutes
+                ) <= 0
             ) {
+
                 return {
                     valid: false,
                     message:
                         `Phim "${getMovieTitle(movieId)}": Khoảng cách phải lớn hơn 0`
+                };
+            }
+
+            // ==========================================
+            // CAPACITY VALIDATION
+            // ==========================================
+
+            const movie =
+                getMovieByIdFromList(
+                    movies,
+                    movieId
+                );
+
+            const duration =
+                extractMovieDuration(
+                    movie
+                );
+
+            const roomCount =
+                extractRoomCount(
+                    selectedCinemaObject,
+                    config.room_type
+                );
+
+            const range =
+                getEffectiveSlotRange(
+                    config.time_slot,
+                    cinemaOpen,
+                    cinemaClose
+                );
+
+            if (!range) {
+
+                return {
+                    valid: false,
+                    message:
+                        `Phim "${getMovieTitle(movieId)}": Khung ${config.time_slot} không nằm trong giờ hoạt động của rạp (${minutesToTime(cinemaOpen)} - ${minutesToTime(cinemaClose)})`
+                };
+            }
+
+            const maxCapacity =
+                calculateMaxCapacity({
+                    slotStart:
+                        range.start,
+
+                    slotEnd:
+                        range.end,
+
+                    duration,
+
+                    intervalMinutes:
+                        Number(
+                            config.interval_minutes
+                        ),
+
+                    roomCount
+                });
+
+            if (
+                Number(
+                    config.slot_count
+                ) > maxCapacity
+            ) {
+
+                return {
+                    valid: false,
+
+                    capacityError: true,
+
+                    movieId,
+
+                    config,
+
+                    duration,
+
+                    roomCount,
+
+                    range,
+
+                    maxCapacity,
+
+                    message:
+                        [
+                            `⚠️ CẤU HÌNH VƯỢT KHUNG GIỜ`,
+
+                            ``,
+
+                            `🎬 Phim: ${getMovieTitle(movieId)}`,
+
+                            `🎞️ Khung giờ: ${config.time_slot}`,
+
+                            `⏰ Khung thực tế: ${minutesToTime(range.start)} → ${minutesToTime(range.end)}`,
+
+                            `🏠 Loại phòng: ${config.room_type}`,
+
+                            `🏢 Số phòng: ${roomCount}`,
+
+                            `🎥 Thời lượng phim: ${duration} phút`,
+
+                            `⏱️ Khoảng cách suất: ${config.interval_minutes} phút`,
+
+                            ``,
+
+                            `Bạn đang cấu hình: ${config.slot_count} suất`,
+
+                            `Tối đa có thể tạo: ${maxCapacity} suất`,
+
+                            ``,
+
+                            `💡 ĐỀ XUẤT:`,
+
+                            `👉 Đặt slot_count = ${maxCapacity}`,
+
+                            ``,
+
+                            `Vui lòng giảm số suất để phù hợp với khung giờ.`
+                        ].join('\n')
                 };
             }
         }
@@ -670,6 +1601,237 @@ const MovieShowtimeConfigPage = () => {
             valid: true,
             configs: activeConfigs
         };
+    };
+
+    // ======================================================
+    // GET CONFIG CAPACITY INFO
+    // ======================================================
+
+    const getConfigCapacityInfo = useCallback(
+        (
+            movieId,
+            config
+        ) => {
+
+            if (
+                !config ||
+                Number(
+                    config.is_active
+                ) !== 1
+            ) {
+                return null;
+            }
+
+            const movie =
+                getMovieByIdFromList(
+                    movies,
+                    movieId
+                );
+
+            const duration =
+                extractMovieDuration(
+                    movie
+                );
+
+            const roomCount =
+                extractRoomCount(
+                    selectedCinemaObject,
+                    config.room_type
+                );
+
+            const range =
+                getEffectiveSlotRange(
+                    config.time_slot,
+                    cinemaOpen,
+                    cinemaClose
+                );
+
+            if (!range) {
+
+                return {
+                    validRange: false,
+
+                    duration,
+
+                    roomCount,
+
+                    maxCapacity: 0,
+
+                    requested:
+                        Number(
+                            config.slot_count
+                        ) || 0
+                };
+            }
+
+            const maxCapacity =
+                calculateMaxCapacity({
+                    slotStart:
+                        range.start,
+
+                    slotEnd:
+                        range.end,
+
+                    duration,
+
+                    intervalMinutes:
+                        Number(
+                            config.interval_minutes
+                        ) ||
+                        DEFAULT_INTERVAL,
+
+                    roomCount
+                });
+
+            const requested =
+                Number(
+                    config.slot_count
+                ) || 0;
+
+            return {
+                validRange: true,
+
+                range,
+
+                duration,
+
+                roomCount,
+
+                maxCapacity,
+
+                requested,
+
+                exceeded:
+                    requested >
+                    maxCapacity,
+
+                recommended:
+                    maxCapacity
+            };
+        },
+        [
+            movies,
+            selectedCinemaObject,
+            cinemaOpen,
+            cinemaClose
+        ]
+    );
+
+    // ======================================================
+    // GET CAPACITY MESSAGE
+    // ======================================================
+
+    const getCapacityMessage = (
+        movieId,
+        config
+    ) => {
+
+        const info =
+            getConfigCapacityInfo(
+                movieId,
+                config
+            );
+
+        if (!info) {
+            return null;
+        }
+
+        if (
+            !info.validRange
+        ) {
+
+            return {
+                type: 'error',
+
+                text:
+                    `Khung ${config.time_slot} không nằm trong giờ hoạt động của rạp.`
+            };
+        }
+
+        if (
+            info.exceeded
+        ) {
+
+            return {
+                type: 'error',
+
+                text:
+                    `⚠️ Vượt giới hạn: ${info.requested} suất → tối đa ${info.maxCapacity} suất. Đề xuất: ${info.maxCapacity} suất.`
+            };
+        }
+
+        return {
+            type: 'success',
+
+            text:
+                `✓ Phù hợp: tối đa ${info.maxCapacity} suất trong khung này.`
+        };
+    };
+
+    // ======================================================
+    // FIND CAPACITY ERRORS
+    // ======================================================
+
+    const findCapacityErrors = () => {
+
+        const errors = [];
+
+        for (
+            const movieId
+            of selectedMovies
+        ) {
+
+            const movieConfigs =
+                configs[movieId] || [];
+
+            for (
+                const config
+                of movieConfigs
+            ) {
+
+                if (
+                    Number(
+                        config.is_active
+                    ) !== 1
+                ) {
+                    continue;
+                }
+
+                if (
+                    Number(
+                        config.slot_count
+                    ) <= 0
+                ) {
+                    continue;
+                }
+
+                const info =
+                    getConfigCapacityInfo(
+                        movieId,
+                        config
+                    );
+
+                if (
+                    info?.exceeded
+                ) {
+
+                    errors.push({
+                        movieId,
+
+                        movieTitle:
+                            getMovieTitle(
+                                movieId
+                            ),
+
+                        config,
+
+                        info
+                    });
+                }
+            }
+        }
+
+        return errors;
     };
 
     // ======================================================
@@ -682,7 +1844,9 @@ const MovieShowtimeConfigPage = () => {
         // VALIDATE CINEMA
         // -----------------------------------------------
 
-        if (!selectedCinema) {
+        if (
+            !selectedCinema
+        ) {
 
             showAlert(
                 'Lỗi',
@@ -697,7 +1861,9 @@ const MovieShowtimeConfigPage = () => {
         // VALIDATE MOVIES
         // -----------------------------------------------
 
-        if (selectedMovies.length === 0) {
+        if (
+            selectedMovies.length === 0
+        ) {
 
             showAlert(
                 'Lỗi',
@@ -709,12 +1875,71 @@ const MovieShowtimeConfigPage = () => {
         }
 
         // -----------------------------------------------
-        // VALIDATE TẤT CẢ PHIM TRƯỚC KHI SAVE
+        // CAPACITY VALIDATION
+        // -----------------------------------------------
+
+        const capacityErrors =
+            findCapacityErrors();
+
+        if (
+            capacityErrors.length > 0
+        ) {
+
+            const first =
+                capacityErrors[0];
+
+            const info =
+                first.info;
+
+            showAlert(
+                'Cấu hình vượt khung giờ',
+
+                [
+                    `⚠️ Phim: ${first.movieTitle}`,
+
+                    `Khung giờ: ${first.config.time_slot}`,
+
+                    `Loại phòng: ${first.config.room_type}`,
+
+                    ``,
+
+                    `Bạn đang nhập: ${info.requested} suất`,
+
+                    `Tối đa có thể tạo: ${info.maxCapacity} suất`,
+
+                    ``,
+
+                    `💡 Đề xuất:`,
+
+                    `Nhập ${info.maxCapacity} suất.`,
+
+                    ``,
+
+                    `Khung giờ thực tế: ${minutesToTime(info.range.start)} → ${minutesToTime(info.range.end)}`,
+
+                    `Thời lượng phim: ${info.duration} phút`,
+
+                    `Số phòng: ${info.roomCount}`,
+
+                    `Khoảng cách suất: ${first.config.interval_minutes} phút`
+                ].join('\n'),
+
+                'warning'
+            );
+
+            return;
+        }
+
+        // -----------------------------------------------
+        // VALIDATE ALL CONFIGS
         // -----------------------------------------------
 
         const preparedConfigs = {};
 
-        for (const movieId of selectedMovies) {
+        for (
+            const movieId
+            of selectedMovies
+        ) {
 
             const movieConfigs =
                 configs[movieId] || [];
@@ -725,48 +1950,59 @@ const MovieShowtimeConfigPage = () => {
                     movieConfigs
                 );
 
-            if (!validation.valid) {
+            if (
+                !validation.valid
+            ) {
 
                 showAlert(
-                    'Cấu hình không hợp lệ',
+                    validation.capacityError
+                        ? 'Cấu hình vượt khung giờ'
+                        : 'Cấu hình không hợp lệ',
+
                     validation.message,
-                    'warning'
+
+                    validation.capacityError
+                        ? 'warning'
+                        : 'error'
                 );
 
                 return;
             }
 
             preparedConfigs[movieId] =
-                validation.configs.map(config => ({
-                    time_slot:
-                        String(
-                            config.time_slot
-                        ).toUpperCase(),
+                validation.configs.map(
+                    config => ({
 
-                    room_type:
-                        String(
-                            config.room_type
-                        ).toUpperCase(),
+                        time_slot:
+                            String(
+                                config.time_slot
+                            ).toUpperCase(),
 
-                    slot_count:
-                        Number(
-                            config.slot_count
-                        ),
+                        room_type:
+                            String(
+                                config.room_type
+                            ).toUpperCase(),
 
-                    interval_minutes:
-                        Number(
-                            config.interval_minutes
-                        ),
+                        slot_count:
+                            Number(
+                                config.slot_count
+                            ),
 
-                    day_type:
-                        String(
-                            config.day_type ||
-                            'ALL'
-                        ).toUpperCase(),
+                        interval_minutes:
+                            Number(
+                                config.interval_minutes
+                            ),
 
-                    // Chỉ gửi config ACTIVE
-                    is_active: 1
-                }));
+                        day_type:
+                            String(
+                                config.day_type ||
+                                'ALL'
+                            ).toUpperCase(),
+
+                        is_active:
+                            1
+                    })
+                );
         }
 
         // -----------------------------------------------
@@ -776,18 +2012,23 @@ const MovieShowtimeConfigPage = () => {
         setSaving(true);
 
         let successCount = 0;
+
         let errorCount = 0;
 
         const errorMovies = [];
 
         try {
 
-            for (const movieId of selectedMovies) {
+            for (
+                const movieId
+                of selectedMovies
+            ) {
 
                 try {
 
                     await api.post(
                         `/api/showtime-config/${movieId}`,
+
                         {
                             cinema_id:
                                 Number(
@@ -795,7 +2036,9 @@ const MovieShowtimeConfigPage = () => {
                                 ),
 
                             configs:
-                                preparedConfigs[movieId]
+                                preparedConfigs[
+                                    movieId
+                                ]
                         }
                     );
 
@@ -811,7 +2054,9 @@ const MovieShowtimeConfigPage = () => {
                     errorCount++;
 
                     errorMovies.push(
-                        getMovieTitle(movieId)
+                        getMovieTitle(
+                            movieId
+                        )
                     );
                 }
             }
@@ -825,11 +2070,15 @@ const MovieShowtimeConfigPage = () => {
         // RESULT
         // -----------------------------------------------
 
-        if (errorCount === 0) {
+        if (
+            errorCount === 0
+        ) {
 
             showAlert(
                 'Thành công',
+
                 `Lưu cấu hình thành công cho ${successCount} phim!`,
+
                 'success'
             );
 
@@ -837,11 +2086,13 @@ const MovieShowtimeConfigPage = () => {
 
             showAlert(
                 'Thông báo',
+
                 `Lưu thành công ${successCount} phim, thất bại ${errorCount} phim.${
                     errorMovies.length > 0
                         ? `\n\nPhim lỗi:\n${errorMovies.join('\n')}`
                         : ''
                 }`,
+
                 'warning'
             );
         }
@@ -857,29 +2108,39 @@ const MovieShowtimeConfigPage = () => {
     // FILTER MOVIES
     // ======================================================
 
-    const filteredMovies = movies.filter(movie => {
+    const filteredMovies =
+        movies.filter(
+            movie => {
 
-        const title =
-            String(
-                movie.title || ''
-            ).toLowerCase();
+                const title =
+                    String(
+                        movie.title ||
+                        ''
+                    ).toLowerCase();
 
-        return title.includes(
-            searchMovie.toLowerCase()
+                return title.includes(
+                    searchMovie.toLowerCase()
+                );
+            }
         );
-    });
 
     // ======================================================
     // GET MOVIE TITLE
     // ======================================================
 
-    const getMovieTitle = (movieId) => {
+    const getMovieTitle = (
+        movieId
+    ) => {
 
         const movie =
             movies.find(
                 movie =>
-                    String(movie.movie_id) ===
-                    String(movieId)
+                    String(
+                        movie.movie_id
+                    ) ===
+                    String(
+                        movieId
+                    )
             );
 
         return (
@@ -892,15 +2153,21 @@ const MovieShowtimeConfigPage = () => {
     // GET TOTAL CONFIG SLOTS
     // ======================================================
 
-    const getTotalSlots = (movieId) => {
+    const getTotalSlots = (
+        movieId
+    ) => {
 
         const movieConfigs =
             configs[movieId] || [];
 
         return movieConfigs.filter(
             config =>
-                Number(config.slot_count) > 0 &&
-                Number(config.is_active) === 1
+                Number(
+                    config.slot_count
+                ) > 0 &&
+                Number(
+                    config.is_active
+                ) === 1
         ).length;
     };
 
@@ -935,7 +2202,11 @@ const MovieShowtimeConfigPage = () => {
             <AdminPage
                 title="Cấu hình lịch chiếu"
                 subtitle="Cấu hình suất chiếu cho nhiều phim cùng lúc"
-                icon={<Settings size={30} />}
+                icon={
+                    <Settings
+                        size={30}
+                    />
+                }
                 buttonText="Quay lại"
                 onAdd={() =>
                     navigate(
@@ -943,7 +2214,9 @@ const MovieShowtimeConfigPage = () => {
                     )
                 }
                 buttonIcon={
-                    <ArrowLeft size={18} />
+                    <ArrowLeft
+                        size={18}
+                    />
                 }
             >
 
@@ -960,11 +2233,14 @@ const MovieShowtimeConfigPage = () => {
                         </label>
 
                         <select
-                            value={selectedCinema}
-                            onChange={(e) =>
-                                setSelectedCinema(
-                                    e.target.value
-                                )
+                            value={
+                                selectedCinema
+                            }
+                            onChange={
+                                e =>
+                                    setSelectedCinema(
+                                        e.target.value
+                                    )
                             }
                             className="cinema-select"
                         >
@@ -973,27 +2249,101 @@ const MovieShowtimeConfigPage = () => {
                                 -- Chọn rạp --
                             </option>
 
-                            {cinemas.map(cinema => (
+                            {cinemas.map(
+                                cinema => (
 
-                                <option
-                                    key={
-                                        cinema.cinema_id
-                                    }
-                                    value={
-                                        cinema.cinema_id
-                                    }
-                                >
-                                    {cinema.cinema_name}
-                                    {cinema.city
-                                        ? ` - ${cinema.city}`
-                                        : ''}
-                                </option>
+                                    <option
+                                        key={
+                                            cinema.cinema_id
+                                        }
+                                        value={
+                                            cinema.cinema_id
+                                        }
+                                    >
+                                        {
+                                            cinema.cinema_name
+                                        }
 
-                            ))}
+                                        {cinema.city
+                                            ? ` - ${cinema.city}`
+                                            : ''}
+                                    </option>
+                                )
+                            )}
 
                         </select>
 
                     </div>
+
+                    {/* ==================================================
+                        CINEMA INFO
+                    ================================================== */}
+
+                    {selectedCinema && (
+
+                        <div
+                            className="showtime-capacity-summary"
+                            style={{
+                                marginTop:
+                                    '12px',
+                                marginBottom:
+                                    '18px',
+                                padding:
+                                    '12px 16px',
+                                border:
+                                    '1px solid rgba(255,255,255,0.1)',
+                                borderRadius:
+                                    '10px'
+                            }}
+                        >
+
+                            <div
+                                style={{
+                                    display:
+                                        'flex',
+                                    alignItems:
+                                        'center',
+                                    gap:
+                                        '8px',
+                                    marginBottom:
+                                        '6px'
+                                }}
+                            >
+
+                                <Settings
+                                    size={16}
+                                />
+
+                                <strong>
+                                    Giờ hoạt động của rạp
+                                </strong>
+
+                            </div>
+
+                            <div>
+                                🕐{' '}
+                                {minutesToTime(
+                                    cinemaOpen
+                                )}
+
+                                {' → '}
+
+                                {minutesToTime(
+                                    cinemaClose
+                                )}
+                            </div>
+
+                            <small
+                                style={{
+                                    opacity:
+                                        0.7
+                                }}
+                            >
+                                Khung giờ được tự động giới hạn theo giờ hoạt động của rạp.
+                            </small>
+
+                        </div>
+                    )}
 
                     {/* ==================================================
                         CHỌN PHIM
@@ -1023,18 +2373,23 @@ const MovieShowtimeConfigPage = () => {
                                 <input
                                     type="text"
                                     placeholder="Tìm phim..."
-                                    value={searchMovie}
-                                    onChange={(e) =>
-                                        setSearchMovie(
-                                            e.target.value
-                                        )
+                                    value={
+                                        searchMovie
+                                    }
+                                    onChange={
+                                        e =>
+                                            setSearchMovie(
+                                                e.target.value
+                                            )
                                     }
                                     className="movie-search-input"
                                 />
 
                                 <span className="selected-count">
                                     Đã chọn:{' '}
-                                    {selectedMovies.length}{' '}
+                                    {
+                                        selectedMovies.length
+                                    }{' '}
                                     phim
                                 </span>
 
@@ -1077,17 +2432,23 @@ const MovieShowtimeConfigPage = () => {
                                                     }
                                                 />
 
-                                                {movie.title}
+                                                {
+                                                    movie.title
+                                                }
 
                                                 {isChecked && (
 
                                                     <span className="movie-chip-badge">
+
                                                         {
                                                             getTotalSlots(
                                                                 movie.movie_id
                                                             )
-                                                        }{' '}
+                                                        }
+
+                                                        {' '}
                                                         cấu hình
+
                                                     </span>
 
                                                 )}
@@ -1097,7 +2458,8 @@ const MovieShowtimeConfigPage = () => {
                                     }
                                 )}
 
-                                {filteredMovies.length === 0 && (
+                                {filteredMovies.length ===
+                                    0 && (
 
                                     <span className="no-movies">
                                         Không tìm thấy phim
@@ -1115,7 +2477,8 @@ const MovieShowtimeConfigPage = () => {
                     ================================================== */}
 
                     {selectedCinema &&
-                        selectedMovies.length > 0 && (
+                        selectedMovies.length >
+                            0 && (
 
                             <div className="config-container">
 
@@ -1145,6 +2508,17 @@ const MovieShowtimeConfigPage = () => {
                                                 movieId
                                             );
 
+                                        const movie =
+                                            getMovieByIdFromList(
+                                                movies,
+                                                movieId
+                                            );
+
+                                        const duration =
+                                            extractMovieDuration(
+                                                movie
+                                            );
+
                                         return (
 
                                             <div
@@ -1154,9 +2528,7 @@ const MovieShowtimeConfigPage = () => {
                                                 className="movie-config-card"
                                             >
 
-                                                {/* ======================
-                                                    HEADER
-                                                ====================== */}
+                                                {/* HEADER */}
 
                                                 <div
                                                     className={
@@ -1176,11 +2548,16 @@ const MovieShowtimeConfigPage = () => {
                                                     <div className="movie-config-title">
 
                                                         <span className="movie-config-index">
-                                                            {idx + 1}.
+                                                            {
+                                                                idx +
+                                                                1
+                                                            }.
                                                         </span>
 
                                                         <span className="movie-config-name">
-                                                            {movieTitle}
+                                                            {
+                                                                movieTitle
+                                                            }
                                                         </span>
 
                                                         <span className="movie-config-badge">
@@ -1214,13 +2591,57 @@ const MovieShowtimeConfigPage = () => {
 
                                                 </div>
 
-                                                {/* ======================
-                                                    BODY
-                                                ====================== */}
+                                                {/* BODY */}
 
                                                 {isExpanded && (
 
                                                     <div className="movie-config-body">
+
+                                                        {/* MOVIE INFO */}
+
+                                                        <div
+                                                            style={{
+                                                                marginBottom:
+                                                                    '12px',
+                                                                padding:
+                                                                    '10px 14px',
+                                                                borderRadius:
+                                                                    '8px',
+                                                                background:
+                                                                    'rgba(255,255,255,0.04)',
+                                                                fontSize:
+                                                                    '13px'
+                                                            }}
+                                                        >
+
+                                                            🎥 Thời lượng phim:
+                                                            {' '}
+                                                            <strong>
+                                                                {
+                                                                    duration
+                                                                }{' '}
+                                                                phút
+                                                            </strong>
+
+                                                            {' • '}
+
+                                                            🏢 Giờ rạp:
+                                                            {' '}
+                                                            <strong>
+                                                                {
+                                                                    minutesToTime(
+                                                                        cinemaOpen
+                                                                    )
+                                                                }
+                                                                {' → '}
+                                                                {
+                                                                    minutesToTime(
+                                                                        cinemaClose
+                                                                    )
+                                                                }
+                                                            </strong>
+
+                                                        </div>
 
                                                         <div className="config-actions">
 
@@ -1233,6 +2654,7 @@ const MovieShowtimeConfigPage = () => {
                                                                     )
                                                                 }
                                                             >
+
                                                                 <Plus
                                                                     size={
                                                                         16
@@ -1244,10 +2666,6 @@ const MovieShowtimeConfigPage = () => {
                                                             </button>
 
                                                         </div>
-
-                                                        {/* ==================
-                                                            EMPTY
-                                                        ================== */}
 
                                                         {movieConfigs.length ===
                                                         0 ? (
@@ -1268,9 +2686,7 @@ const MovieShowtimeConfigPage = () => {
 
                                                             <>
 
-                                                                {/* ==================
-                                                                    HEADER
-                                                                ================== */}
+                                                                {/* HEADER */}
 
                                                                 <div className="config-table-header">
 
@@ -1302,243 +2718,377 @@ const MovieShowtimeConfigPage = () => {
 
                                                                 </div>
 
-                                                                {/* ==================
-                                                                    ROWS
-                                                                ================== */}
+                                                                {/* ROWS */}
 
                                                                 {movieConfigs.map(
                                                                     (
                                                                         config,
                                                                         index
-                                                                    ) => (
+                                                                    ) => {
 
-                                                                        <div
-                                                                            key={
-                                                                                config.config_id ||
-                                                                                `${movieId}-${index}`
-                                                                            }
-                                                                            className="config-table-row"
-                                                                        >
+                                                                        const capacityInfo =
+                                                                            getConfigCapacityInfo(
+                                                                                movieId,
+                                                                                config
+                                                                            );
 
-                                                                            {/* TIME SLOT */}
+                                                                        const capacityMessage =
+                                                                            getCapacityMessage(
+                                                                                movieId,
+                                                                                config
+                                                                            );
 
-                                                                            <select
-                                                                                value={
-                                                                                    config.time_slot ||
-                                                                                    'MORNING'
-                                                                                }
-                                                                                onChange={(
-                                                                                    e
-                                                                                ) =>
-                                                                                    updateConfig(
-                                                                                        movieId,
-                                                                                        index,
-                                                                                        'time_slot',
-                                                                                        e.target.value
-                                                                                    )
-                                                                                }
-                                                                                className="config-select"
-                                                                            >
+                                                                        return (
 
-                                                                                {TIME_SLOTS.map(
-                                                                                    slot => (
-
-                                                                                        <option
-                                                                                            key={
-                                                                                                slot.key
-                                                                                            }
-                                                                                            value={
-                                                                                                slot.key
-                                                                                            }
-                                                                                        >
-                                                                                            {
-                                                                                                slot.label
-                                                                                            }
-                                                                                        </option>
-
-                                                                                    )
-                                                                                )}
-
-                                                                            </select>
-
-                                                                            {/* ROOM TYPE */}
-
-                                                                            <select
-                                                                                value={
-                                                                                    config.room_type ||
-                                                                                    '2D'
-                                                                                }
-                                                                                onChange={(
-                                                                                    e
-                                                                                ) =>
-                                                                                    updateConfig(
-                                                                                        movieId,
-                                                                                        index,
-                                                                                        'room_type',
-                                                                                        e.target.value
-                                                                                    )
-                                                                                }
-                                                                                className="config-select"
-                                                                            >
-
-                                                                                {ROOM_TYPES.map(
-                                                                                    type => (
-
-                                                                                        <option
-                                                                                            key={
-                                                                                                type
-                                                                                            }
-                                                                                            value={
-                                                                                                type
-                                                                                            }
-                                                                                        >
-                                                                                            {
-                                                                                                type
-                                                                                            }
-                                                                                        </option>
-
-                                                                                    )
-                                                                                )}
-
-                                                                            </select>
-
-                                                                            {/* SLOT COUNT */}
-
-                                                                            <input
-                                                                                type="number"
-                                                                                value={
-                                                                                    config.slot_count ??
-                                                                                    0
-                                                                                }
-                                                                                onChange={(
-                                                                                    e
-                                                                                ) =>
-                                                                                    updateConfig(
-                                                                                        movieId,
-                                                                                        index,
-                                                                                        'slot_count',
-                                                                                        e.target.value
-                                                                                    )
-                                                                                }
-                                                                                min="0"
-                                                                                max="30"
-                                                                                className="config-input config-input-number"
-                                                                            />
-
-                                                                            {/* INTERVAL */}
-
-                                                                            <input
-                                                                                type="number"
-                                                                                value={
-                                                                                    config.interval_minutes ??
-                                                                                    45
-                                                                                }
-                                                                                onChange={(
-                                                                                    e
-                                                                                ) =>
-                                                                                    updateConfig(
-                                                                                        movieId,
-                                                                                        index,
-                                                                                        'interval_minutes',
-                                                                                        e.target.value
-                                                                                    )
-                                                                                }
-                                                                                min="30"
-                                                                                max="120"
-                                                                                step="5"
-                                                                                className="config-input config-input-number"
-                                                                            />
-
-                                                                            {/* DAY TYPE */}
-
-                                                                            <select
-                                                                                value={
-                                                                                    config.day_type ||
-                                                                                    'ALL'
-                                                                                }
-                                                                                onChange={(
-                                                                                    e
-                                                                                ) =>
-                                                                                    updateConfig(
-                                                                                        movieId,
-                                                                                        index,
-                                                                                        'day_type',
-                                                                                        e.target.value
-                                                                                    )
-                                                                                }
-                                                                                className="config-select"
-                                                                            >
-
-                                                                                {DAY_TYPES.map(
-                                                                                    day => (
-
-                                                                                        <option
-                                                                                            key={
-                                                                                                day.key
-                                                                                            }
-                                                                                            value={
-                                                                                                day.key
-                                                                                            }
-                                                                                        >
-                                                                                            {
-                                                                                                day.label
-                                                                                            }
-                                                                                        </option>
-
-                                                                                    )
-                                                                                )}
-
-                                                                            </select>
-
-                                                                            {/* ACTIVE */}
-
-                                                                            <input
-                                                                                type="checkbox"
-                                                                                checked={
-                                                                                    Number(
-                                                                                        config.is_active
-                                                                                    ) ===
-                                                                                    1
-                                                                                }
-                                                                                onChange={(
-                                                                                    e
-                                                                                ) =>
-                                                                                    updateConfig(
-                                                                                        movieId,
-                                                                                        index,
-                                                                                        'is_active',
-                                                                                        e.target
-                                                                                            .checked
-                                                                                            ? 1
-                                                                                            : 0
-                                                                                    )
-                                                                                }
-                                                                                className="config-checkbox"
-                                                                            />
-
-                                                                            {/* DELETE */}
-
-                                                                            <button
-                                                                                type="button"
-                                                                                className="btn-remove-row"
-                                                                                onClick={() =>
-                                                                                    removeConfig(
-                                                                                        movieId,
-                                                                                        index
-                                                                                    )
+                                                                            <React.Fragment
+                                                                                key={
+                                                                                    config.config_id ||
+                                                                                    `${movieId}-${index}`
                                                                                 }
                                                                             >
 
-                                                                                <Trash2
-                                                                                    size={
-                                                                                        15
+                                                                                <div
+                                                                                    className={
+                                                                                        `config-table-row ${
+                                                                                            capacityMessage?.type ===
+                                                                                            'error'
+                                                                                                ? 'config-row-warning'
+                                                                                                : ''
+                                                                                        }`
                                                                                     }
-                                                                                />
+                                                                                >
 
-                                                                            </button>
+                                                                                    {/* TIME SLOT */}
 
-                                                                        </div>
-                                                                    )
+                                                                                    <select
+                                                                                        value={
+                                                                                            config.time_slot ||
+                                                                                            'MORNING'
+                                                                                        }
+                                                                                        onChange={
+                                                                                            e =>
+                                                                                                updateConfig(
+                                                                                                    movieId,
+                                                                                                    index,
+                                                                                                    'time_slot',
+                                                                                                    e.target.value
+                                                                                                )
+                                                                                        }
+                                                                                        className="config-select"
+                                                                                    >
+
+                                                                                        {TIME_SLOTS.map(
+                                                                                            slot => (
+
+                                                                                                <option
+                                                                                                    key={
+                                                                                                        slot.key
+                                                                                                    }
+                                                                                                    value={
+                                                                                                        slot.key
+                                                                                                    }
+                                                                                                >
+                                                                                                    {
+                                                                                                        slot.label
+                                                                                                    }
+                                                                                                </option>
+
+                                                                                            )
+                                                                                        )}
+
+                                                                                    </select>
+
+                                                                                    {/* ROOM TYPE */}
+
+                                                                                    <select
+                                                                                        value={
+                                                                                            config.room_type ||
+                                                                                            '2D'
+                                                                                        }
+                                                                                        onChange={
+                                                                                            e =>
+                                                                                                updateConfig(
+                                                                                                    movieId,
+                                                                                                    index,
+                                                                                                    'room_type',
+                                                                                                    e.target.value
+                                                                                                )
+                                                                                        }
+                                                                                        className="config-select"
+                                                                                    >
+
+                                                                                        {ROOM_TYPES.map(
+                                                                                            type => (
+
+                                                                                                <option
+                                                                                                    key={
+                                                                                                        type
+                                                                                                    }
+                                                                                                    value={
+                                                                                                        type
+                                                                                                    }
+                                                                                                >
+                                                                                                    {
+                                                                                                        type
+                                                                                                    }
+                                                                                                </option>
+
+                                                                                            )
+                                                                                        )}
+
+                                                                                    </select>
+
+                                                                                    {/* SLOT COUNT */}
+
+                                                                                    <input
+                                                                                        type="number"
+                                                                                        value={
+                                                                                            config.slot_count ??
+                                                                                            0
+                                                                                        }
+                                                                                        onChange={
+                                                                                            e =>
+                                                                                                updateConfig(
+                                                                                                    movieId,
+                                                                                                    index,
+                                                                                                    'slot_count',
+                                                                                                    e.target.value
+                                                                                                )
+                                                                                        }
+                                                                                        min="0"
+                                                                                        max="30"
+                                                                                        className="config-input config-input-number"
+                                                                                    />
+
+                                                                                    {/* INTERVAL */}
+
+                                                                                    <input
+                                                                                        type="number"
+                                                                                        value={
+                                                                                            config.interval_minutes ??
+                                                                                            DEFAULT_INTERVAL
+                                                                                        }
+                                                                                        onChange={
+                                                                                            e =>
+                                                                                                updateConfig(
+                                                                                                    movieId,
+                                                                                                    index,
+                                                                                                    'interval_minutes',
+                                                                                                    e.target.value
+                                                                                                )
+                                                                                        }
+                                                                                        min="30"
+                                                                                        max="120"
+                                                                                        step="5"
+                                                                                        className="config-input config-input-number"
+                                                                                    />
+
+                                                                                    {/* DAY TYPE */}
+
+                                                                                    <select
+                                                                                        value={
+                                                                                            config.day_type ||
+                                                                                            'ALL'
+                                                                                        }
+                                                                                        onChange={
+                                                                                            e =>
+                                                                                                updateConfig(
+                                                                                                    movieId,
+                                                                                                    index,
+                                                                                                    'day_type',
+                                                                                                    e.target.value
+                                                                                                )
+                                                                                        }
+                                                                                        className="config-select"
+                                                                                    >
+
+                                                                                        {DAY_TYPES.map(
+                                                                                            day => (
+
+                                                                                                <option
+                                                                                                    key={
+                                                                                                        day.key
+                                                                                                    }
+                                                                                                    value={
+                                                                                                        day.key
+                                                                                                    }
+                                                                                                >
+                                                                                                    {
+                                                                                                        day.label
+                                                                                                    }
+                                                                                                </option>
+
+                                                                                            )
+                                                                                        )}
+
+                                                                                    </select>
+
+                                                                                    {/* ACTIVE */}
+
+                                                                                    <input
+                                                                                        type="checkbox"
+                                                                                        checked={
+                                                                                            Number(
+                                                                                                config.is_active
+                                                                                            ) ===
+                                                                                            1
+                                                                                        }
+                                                                                        onChange={
+                                                                                            e =>
+                                                                                                updateConfig(
+                                                                                                    movieId,
+                                                                                                    index,
+                                                                                                    'is_active',
+                                                                                                    e.target
+                                                                                                        .checked
+                                                                                                        ? 1
+                                                                                                        : 0
+                                                                                                )
+                                                                                        }
+                                                                                        className="config-checkbox"
+                                                                                    />
+
+                                                                                    {/* DELETE */}
+
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        className="btn-remove-row"
+                                                                                        onClick={() =>
+                                                                                            removeConfig(
+                                                                                                movieId,
+                                                                                                index
+                                                                                            )
+                                                                                        }
+                                                                                    >
+
+                                                                                        <Trash2
+                                                                                            size={
+                                                                                                15
+                                                                                            }
+                                                                                        />
+
+                                                                                    </button>
+
+                                                                                </div>
+
+                                                                                {/* ==================================================
+                                                                                    CAPACITY WARNING / RECOMMENDATION
+                                                                                ================================================== */}
+
+                                                                                {capacityInfo && (
+                                                                                    <div
+                                                                                        style={{
+                                                                                            margin:
+                                                                                                '0 0 10px 0',
+                                                                                            padding:
+                                                                                                '9px 12px',
+                                                                                            borderRadius:
+                                                                                                '0 0 8px 8px',
+                                                                                            fontSize:
+                                                                                                '12px',
+                                                                                            display:
+                                                                                                'flex',
+                                                                                            alignItems:
+                                                                                                'center',
+                                                                                            gap:
+                                                                                                '8px',
+                                                                                            background:
+                                                                                                capacityMessage?.type ===
+                                                                                                'error'
+                                                                                                    ? 'rgba(220, 38, 38, 0.12)'
+                                                                                                    : 'rgba(34, 197, 94, 0.08)',
+                                                                                            border:
+                                                                                                capacityMessage?.type ===
+                                                                                                'error'
+                                                                                                    ? '1px solid rgba(220, 38, 38, 0.3)'
+                                                                                                    : '1px solid rgba(34, 197, 94, 0.2)'
+                                                                                        }}
+                                                                                    >
+
+                                                                                        {capacityMessage?.type ===
+                                                                                        'error'
+                                                                                            ? (
+                                                                                                <AlertTriangle
+                                                                                                    size={
+                                                                                                        16
+                                                                                                    }
+                                                                                                />
+                                                                                            )
+                                                                                            : (
+                                                                                                <CheckCircle2
+                                                                                                    size={
+                                                                                                        16
+                                                                                                    }
+                                                                                                />
+                                                                                            )}
+
+                                                                                        <div>
+
+                                                                                            <div>
+                                                                                                {
+                                                                                                    capacityMessage?.text
+                                                                                                }
+                                                                                            </div>
+
+                                                                                            {capacityMessage?.type ===
+                                                                                                'error' &&
+                                                                                                capacityInfo.validRange && (
+
+                                                                                                    <div
+                                                                                                        style={{
+                                                                                                            marginTop:
+                                                                                                                '4px',
+                                                                                                            display:
+                                                                                                                'flex',
+                                                                                                            alignItems:
+                                                                                                                'center',
+                                                                                                            gap:
+                                                                                                                '5px'
+                                                                                                        }}
+                                                                                                    >
+
+                                                                                                        <Lightbulb
+                                                                                                            size={
+                                                                                                                14
+                                                                                                            }
+                                                                                                        />
+
+                                                                                                        Đề xuất:
+                                                                                                        {' '}
+                                                                                                        <strong>
+                                                                                                            {
+                                                                                                                capacityInfo.recommended
+                                                                                                            }{' '}
+                                                                                                            suất
+                                                                                                        </strong>
+
+                                                                                                        {' '}
+                                                                                                        (
+                                                                                                        {
+                                                                                                            minutesToTime(
+                                                                                                                capacityInfo.range.start
+                                                                                                            )
+                                                                                                        }
+                                                                                                        {' → '}
+                                                                                                        {
+                                                                                                            minutesToTime(
+                                                                                                                capacityInfo.range.end
+                                                                                                            )
+                                                                                                        }
+                                                                                                        )
+
+                                                                                                    </div>
+
+                                                                                                )}
+
+                                                                                        </div>
+
+                                                                                    </div>
+                                                                                )}
+
+                                                                            </React.Fragment>
+                                                                        );
+                                                                    }
                                                                 )}
 
                                                             </>
@@ -1575,6 +3125,7 @@ const MovieShowtimeConfigPage = () => {
                                         {saving ? (
 
                                             <>
+
                                                 <Loader2
                                                     size={
                                                         18
@@ -1583,11 +3134,13 @@ const MovieShowtimeConfigPage = () => {
                                                 />
 
                                                 Đang lưu...
+
                                             </>
 
                                         ) : (
 
                                             <>
+
                                                 <Save
                                                     size={
                                                         18
@@ -1599,13 +3152,17 @@ const MovieShowtimeConfigPage = () => {
                                                     selectedMovies.length
                                                 }{' '}
                                                 phim)
+
                                             </>
                                         )}
 
                                     </button>
 
                                     <span className="save-hint">
-                                        Cấu hình sẽ được lưu cho từng phim
+
+                                        Cấu hình sẽ được kiểm tra
+                                        giới hạn khung giờ trước khi lưu
+
                                     </span>
 
                                 </div>
@@ -1618,12 +3175,15 @@ const MovieShowtimeConfigPage = () => {
                     ================================================== */}
 
                     {selectedCinema &&
-                        selectedMovies.length === 0 && (
+                        selectedMovies.length ===
+                            0 && (
 
                             <div className="empty-state">
 
                                 <Film
-                                    size={48}
+                                    size={
+                                        48
+                                    }
                                     className="empty-icon"
                                 />
 
@@ -1647,12 +3207,22 @@ const MovieShowtimeConfigPage = () => {
             ====================================================== */}
 
             <AdminModal
-                open={alertModal.open}
-                onClose={closeAlert}
-                title={alertModal.title}
-                type={alertModal.type}
+                open={
+                    alertModal.open
+                }
+                onClose={
+                    closeAlert
+                }
+                title={
+                    alertModal.title
+                }
+                type={
+                    alertModal.type
+                }
                 size="sm"
-                onConfirm={closeAlert}
+                onConfirm={
+                    closeAlert
+                }
                 confirmText="Đóng"
             >
 
@@ -1660,15 +3230,19 @@ const MovieShowtimeConfigPage = () => {
 
                     <p
                         style={{
-                            whiteSpace: 'pre-line'
+                            whiteSpace:
+                                'pre-line'
                         }}
                     >
-                        {alertModal.message}
+                        {
+                            alertModal.message
+                        }
                     </p>
 
                 </div>
 
             </AdminModal>
+
         </>
     );
 };
