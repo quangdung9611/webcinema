@@ -227,7 +227,7 @@ class ShowtimeRepository {
     }
 
     /*=========================================================
-        FIND ROOMS BY CINEMA - DÙNG CHO AUTO SCHEDULER
+        FIND ROOMS BY CINEMA
     =========================================================*/
     async findRoomsByCinema(cinemaId) {
         const [rows] = await db.query(
@@ -377,7 +377,7 @@ class ShowtimeRepository {
     }
 
     /*=========================================================
-        GET ACTIVE MOVIES - LẤY PHIM ĐANG CHIẾU
+        GET ACTIVE MOVIES
     =========================================================*/
     async getActiveMovies() {
         const [rows] = await db.query(
@@ -435,44 +435,54 @@ class ShowtimeRepository {
     }
 
     /*=========================================================
-        GET MOVIE SHOWTIME CONFIG (THỦ CÔNG)
+        GET MOVIE SHOWTIME CONFIG - SỬA LẠI HOÀN TOÀN
     =========================================================*/
-   async getMovieShowtimeConfig(movieId, cinemaId, dayType = 'ALL') {
-    let rows = [];
-
-    // =========================================================
-    // 1. DAY TYPE CỤ THỂ: WEEKDAY / WEEKEND
-    // =========================================================
-    if (dayType !== 'ALL') {
-
-        // Ưu tiên config riêng của ngày đó
-        const [specificRows] = await db.query(`
-            SELECT
-                time_slot,
-                room_type,
-                slot_count,
-                interval_minutes
-            FROM movie_showtime_config
-            WHERE movie_id = ?
-              AND cinema_id = ?
-              AND day_type = ?
-              AND is_active = 1
-            ORDER BY time_slot ASC, room_type ASC
-        `, [
-            movieId,
-            cinemaId,
-            dayType
-        ]);
-
-        // Nếu có config riêng
-        // => CHỈ dùng config riêng
-        if (Array.isArray(specificRows) && specificRows.length > 0) {
-            rows = specificRows;
-        }
-
-        // Nếu KHÔNG có config riêng
-        // => mới fallback về ALL
-        else {
+    async getMovieShowtimeConfig(movieId, cinemaId, dayType = 'ALL') {
+        console.log(`🔍 [CONFIG] movie=${movieId}, cinema=${cinemaId}, dayType=${dayType}`);
+        
+        let rows = [];
+        
+        // 1. THỬ LẤY CONFIG THEO dayType CỤ THỂ
+        if (dayType !== 'ALL') {
+            const [specificRows] = await db.query(`
+                SELECT
+                    time_slot,
+                    room_type,
+                    slot_count,
+                    interval_minutes
+                FROM movie_showtime_config
+                WHERE movie_id = ?
+                  AND cinema_id = ?
+                  AND day_type = ?
+                  AND is_active = 1
+                ORDER BY time_slot ASC, room_type ASC
+            `, [movieId, cinemaId, dayType]);
+            
+            console.log(`🔍 [CONFIG] specificRows: ${specificRows.length} rows`);
+            
+            if (specificRows.length > 0) {
+                rows = specificRows;
+            } else {
+                // FALLBACK: LẤY CONFIG ALL
+                const [allRows] = await db.query(`
+                    SELECT
+                        time_slot,
+                        room_type,
+                        slot_count,
+                        interval_minutes
+                    FROM movie_showtime_config
+                    WHERE movie_id = ?
+                      AND cinema_id = ?
+                      AND day_type = 'ALL'
+                      AND is_active = 1
+                    ORDER BY time_slot ASC, room_type ASC
+                `, [movieId, cinemaId]);
+                
+                console.log(`🔍 [CONFIG] allRows (fallback): ${allRows.length} rows`);
+                rows = allRows;
+            }
+        } else {
+            // dayType = 'ALL'
             const [allRows] = await db.query(`
                 SELECT
                     time_slot,
@@ -485,82 +495,32 @@ class ShowtimeRepository {
                   AND day_type = 'ALL'
                   AND is_active = 1
                 ORDER BY time_slot ASC, room_type ASC
-            `, [
-                movieId,
-                cinemaId
-            ]);
-
+            `, [movieId, cinemaId]);
+            
+            console.log(`🔍 [CONFIG] allRows: ${allRows.length} rows`);
             rows = allRows;
         }
-    }
-
-    // =========================================================
-    // 2. DAY TYPE = ALL
-    // =========================================================
-    else {
-
-        const [allRows] = await db.query(`
-            SELECT
-                time_slot,
-                room_type,
-                slot_count,
-                interval_minutes
-            FROM movie_showtime_config
-            WHERE movie_id = ?
-              AND cinema_id = ?
-              AND day_type = 'ALL'
-              AND is_active = 1
-            ORDER BY time_slot ASC, room_type ASC
-        `, [
-            movieId,
-            cinemaId
-        ]);
-
-        rows = allRows;
-    }
-
-    // =========================================================
-    // 3. BUILD CONFIG OBJECT
-    // =========================================================
-
-    const config = {};
-
-    for (const row of rows) {
-
-        const slot = row.time_slot;
-
-        if (!config[slot]) {
-            config[slot] = [];
+        
+        // BUILD CONFIG OBJECT
+        const config = {};
+        for (const row of rows) {
+            const slot = row.time_slot;
+            if (!config[slot]) {
+                config[slot] = [];
+            }
+            config[slot].push({
+                room_type: String(row.room_type || '').trim().toUpperCase(),
+                slot_count: Number(row.slot_count),
+                interval_minutes: Number(row.interval_minutes)
+            });
         }
-
-        config[slot].push({
-            room_type: String(row.room_type || '')
-                .trim()
-                .toUpperCase(),
-
-            slot_count: Number(row.slot_count),
-
-            interval_minutes: Number(row.interval_minutes)
-        });
+        
+        console.log(`🔍 [CONFIG] result:`, JSON.stringify(config));
+        return config;
     }
-
-    // =========================================================
-    // DEBUG
-    // =========================================================
-
-    console.log(
-        `🧩 CONFIG LOAD | movie=${movieId} | cinema=${cinemaId} | dayType=${dayType}`
-    );
-
-    console.log(
-        `   → ${JSON.stringify(config)}`
-    );
-
-    return config;
-}
 
     /*=========================================================
-        GET MOVIE STATS - ĐÚNG VỚI CSDL CỦA BẠN
+        GET MOVIE STATS
     =========================================================*/
     async getMovieStats(movieIds) {
         if (!movieIds || movieIds.length === 0) return {};
@@ -595,7 +555,7 @@ class ShowtimeRepository {
     }
 
     /*=========================================================
-        GET QUICK BOOKING - MOVIES
+        QUICK BOOKING
     =========================================================*/
     async getQuickBookingMovies() {
         const [rows] = await db.query(
@@ -606,13 +566,9 @@ class ShowtimeRepository {
             WHERE s.start_time >= NOW()
             `
         );
-
         return rows;
     }
 
-    /*=========================================================
-        GET QUICK BOOKING - CINEMAS
-    =========================================================*/
     async getQuickBookingCinemas(movieId) {
         const [rows] = await db.query(
             `
@@ -623,13 +579,9 @@ class ShowtimeRepository {
             `,
             [movieId]
         );
-
         return rows;
     }
 
-    /*=========================================================
-        GET QUICK BOOKING - DATES
-    =========================================================*/
     async getQuickBookingDates(movieId, cinemaId) {
         const [rows] = await db.query(
             `
@@ -640,13 +592,9 @@ class ShowtimeRepository {
             `,
             [movieId, cinemaId]
         );
-
         return rows;
     }
 
-    /*=========================================================
-        GET QUICK BOOKING - TIMES
-    =========================================================*/
     async getQuickBookingTimes(movieId, cinemaId, date) {
         const [rows] = await db.query(
             `
@@ -661,13 +609,9 @@ class ShowtimeRepository {
             `,
             [movieId, cinemaId, date]
         );
-
         return rows;
     }
 
-    /*=========================================================
-        GET SHOWTIMES FOR BOOKING
-    =========================================================*/
     async getShowtimesForBooking(movieId, cinemaId, date) {
         const [rows] = await db.query(
             `
@@ -683,13 +627,9 @@ class ShowtimeRepository {
             `,
             [movieId, cinemaId, date]
         );
-
         return rows;
     }
 
-    /*=========================================================
-        FILTER SHOWTIMES
-    =========================================================*/
     async filterShowtimes(movieId, roomId, date) {
         const [rows] = await db.query(
             `
@@ -703,13 +643,9 @@ class ShowtimeRepository {
             `,
             [movieId, roomId, date]
         );
-
         return rows;
     }
 
-    /*=========================================================
-        FIND SHOWTIMES FOR MOVIE DETAIL
-    =========================================================*/
     async findByMovieCinemaDateForDetail(movieId, cinemaId, date) {
         const [rows] = await db.query(
             `
@@ -726,7 +662,6 @@ class ShowtimeRepository {
             `,
             [movieId, cinemaId, date]
         );
-
         return rows;
     }
 
