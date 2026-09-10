@@ -1,5 +1,5 @@
 /* ==========================================================
-   MOVIE SHOWTIME CONFIG PAGE - NO TAB, SCROLL VERTICAL + HORIZONTAL
+   MOVIE SHOWTIME CONFIG PAGE
    ========================================================== */
 
 .movie-showtime-config-page {
@@ -9,7 +9,7 @@
 }
 
 /* ==========================================================
-   TOOLBAR - CHỌN RẠP
+   TOOLBAR
    ========================================================== */
 
 .config-toolbar {
@@ -280,7 +280,7 @@
 }
 
 /* ==========================================================
-   CẤU HÌNH - MOVIE CARD
+   MOVIE CARD
    ========================================================== */
 
 .config-container {
@@ -391,10 +391,6 @@
     color: var(--text-heading);
 }
 
-/* ==========================================================
-   NÚT AUTO FILL
-   ========================================================== */
-
 .btn-auto-fill {
     display: flex;
     align-items: center;
@@ -417,7 +413,7 @@
 }
 
 /* ==========================================================
-   INTERVAL SECTION - CHỌN KHOẢNG CÁCH
+   INTERVAL SECTION
    ========================================================== */
 
 .interval-section {
@@ -433,6 +429,7 @@
     align-items: center;
     gap: var(--space-sm);
     margin-bottom: var(--space-sm);
+    flex-wrap: wrap;
 }
 
 .interval-label {
@@ -524,14 +521,30 @@
     width: 100%;
 }
 
-.btn-apply-interval:hover {
+.btn-apply-interval:hover:not(:disabled) {
     background: var(--accent-ice-soft);
     border-color: var(--accent-ice);
     transform: translateY(-1px);
 }
 
+.btn-apply-interval:disabled,
+.btn-apply-interval.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+    border-color: var(--border-subtle);
+}
+
+.btn-apply-interval:disabled:hover,
+.btn-apply-interval.disabled:hover {
+    transform: none;
+    background: var(--bg-tertiary);
+    border-color: var(--border-subtle);
+}
+
 /* ==========================================================
-   TABLE CONFIG - SCROLL NGANG + DỌC
+   TABLE CONFIG
    ========================================================== */
 
 .config-table-wrapper {
@@ -540,10 +553,6 @@
     border-radius: var(--radius-sm);
     border: var(--border-subtle);
 }
-
-/* ==========================================================
-   BẢNG
-   ========================================================== */
 
 .config-table {
     width: 100%;
@@ -589,10 +598,6 @@
     background: var(--bg-elevated);
 }
 
-/* ==========================================================
-   TIME SLOT HEADER (Dòng tiêu đề khung giờ)
-   ========================================================== */
-
 .config-table tbody tr.time-slot-header td {
     padding: 6px 12px;
     background: var(--bg-tertiary);
@@ -600,15 +605,12 @@
     color: var(--text-heading);
     font-size: 13px;
     border-bottom: 1px solid var(--border-subtle);
+    text-align: left;
 }
 
 .config-table tbody tr.time-slot-header:not(:first-child) td {
     border-top: 2px solid var(--border-premium);
 }
-
-/* ==========================================================
-   ROOM LABEL
-   ========================================================== */
 
 .config-table .room-label {
     font-weight: var(--fw-medium);
@@ -618,10 +620,6 @@
     padding-left: 24px;
     white-space: nowrap;
 }
-
-/* ==========================================================
-   HÀNG TRỐNG (KHÔNG CÓ CONFIG)
-   ========================================================== */
 
 .config-table tbody tr.empty-row {
     opacity: 0.5;
@@ -634,10 +632,6 @@
 .config-table tbody tr.empty-row .room-label {
     color: var(--text-muted);
 }
-
-/* ==========================================================
-   INPUT CELL
-   ========================================================== */
 
 .config-input-cell {
     width: 44px;
@@ -685,10 +679,6 @@
     opacity: 0.3;
 }
 
-/* ==========================================================
-   TỔNG HÀNG/CỘT
-   ========================================================== */
-
 .config-table .total-row td {
     font-weight: var(--fw-semibold);
     background: var(--bg-elevated);
@@ -721,23 +711,6 @@
 }
 
 .empty-hint {
-    font-size: 13px;
-    color: var(--text-disabled);
-}
-
-.empty-tab-config {
-    text-align: center;
-    padding: var(--space-xl);
-    color: var(--text-muted);
-    border: 2px dashed var(--border-subtle);
-    border-radius: var(--radius-sm);
-}
-
-.empty-tab-config p {
-    margin: 4px 0;
-}
-
-.empty-tab-hint {
     font-size: 13px;
     color: var(--text-disabled);
 }
@@ -813,35 +786,29 @@
    ========================================================== */
 
 .movie-chip-list::-webkit-scrollbar,
-.time-slot-tabs::-webkit-scrollbar,
 .config-table-wrapper::-webkit-scrollbar {
     width: 6px;
     height: 6px;
 }
 
 .movie-chip-list::-webkit-scrollbar-track,
-.time-slot-tabs::-webkit-scrollbar-track,
 .config-table-wrapper::-webkit-scrollbar-track {
     background: var(--bg-primary);
     border-radius: var(--radius-sm);
 }
 
 .movie-chip-list::-webkit-scrollbar-thumb,
-.time-slot-tabs::-webkit-scrollbar-thumb,
 .config-table-wrapper::-webkit-scrollbar-thumb {
     background: var(--text-muted);
     border-radius: var(--radius-round);
 }
 
 .movie-chip-list::-webkit-scrollbar-thumb:hover,
-.time-slot-tabs::-webkit-scrollbar-thumb:hover,
 .config-table-wrapper::-webkit-scrollbar-thumb:hover {
     background: var(--text-secondary);
 }
 
-/* Firefox */
 .movie-chip-list,
-.time-slot-tabs,
 .config-table-wrapper {
     scrollbar-width: thin;
     scrollbar-color: var(--text-muted) var(--bg-primary);
@@ -936,7 +903,6 @@
         max-height: 400px;
     }
     
-    /* Interval responsive */
     .interval-btn {
         min-width: 80px;
         padding: 6px 12px;
@@ -1014,7 +980,6 @@
         padding: 4px 12px;
     }
     
-    /* Interval responsive */
     .interval-btn {
         min-width: 60px;
         padding: 4px 8px;

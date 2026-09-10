@@ -356,7 +356,7 @@ const MovieShowtimeConfigPage = () => {
             time_slot: 'MORNING',
             room_type: '2D',
             slot_count: 1,
-            interval_type: selectedInterval || DEFAULT_INTERVAL_TYPE,  // ✅ Dùng interval_type
+            interval_type: selectedInterval || DEFAULT_INTERVAL_TYPE,
             day_type: d.dayKey,
             is_active: 1
         }));
@@ -373,16 +373,27 @@ const MovieShowtimeConfigPage = () => {
         const movieConfigs = configs[movieId] || [];
         const preset = INTERVAL_TYPES.find(i => i.key === selectedInterval);
         
-        if (!preset) return;
+        if (!preset) {
+            showAlert('Lỗi', 'Không tìm thấy interval đã chọn!', 'error');
+            return;
+        }
         
         if (movieConfigs.length === 0) {
-            showAlert('Thông báo', '📭 Chưa có cấu hình để áp dụng interval!', 'info');
+            showAlert(
+                '📭 Chưa có cấu hình',
+                'Phim này chưa có cấu hình suất chiếu.\n\n' +
+                'Vui lòng làm theo thứ tự:\n' +
+                '1️⃣ Bấm "➕ Thêm tất cả ngày" để tạo cấu hình\n' +
+                '2️⃣ Hoặc bấm "🤖 Auto" để tự động điền\n' +
+                '3️⃣ Sau đó mới bấm "✅ Áp dụng"',
+                'warning'
+            );
             return;
         }
         
         const newConfigs = movieConfigs.map(config => ({
             ...config,
-            interval_type: preset.key  // ✅ CHỈ CẦN interval_type
+            interval_type: preset.key
         }));
         
         setConfigs(prev => ({
@@ -390,7 +401,12 @@ const MovieShowtimeConfigPage = () => {
             [movieId]: newConfigs
         }));
         
-        showAlert('Thành công', `✅ Đã áp dụng ${preset.label} (${preset.minutes} phút) cho tất cả!`, 'success');
+        showAlert(
+            '✅ Thành công',
+            `Đã áp dụng ${preset.label} (${preset.minutes} phút)\n` +
+            `cho ${movieConfigs.length} cấu hình của phim này!`,
+            'success'
+        );
     };
 
     // Auto fill - Điền số suất tối đa cho tất cả các ô
@@ -414,7 +430,6 @@ const MovieShowtimeConfigPage = () => {
                     const key = `${timeSlot.key}_${roomType}_${d.dayKey}`;
                     const existingConfig = configMap[key];
                     
-                    // ✅ Lấy interval_minutes từ interval_type
                     const intervalType = existingConfig?.interval_type || selectedInterval || DEFAULT_INTERVAL_TYPE;
                     const intervalMinutes = getIntervalMinutes(intervalType);
                     
@@ -448,7 +463,7 @@ const MovieShowtimeConfigPage = () => {
                             newConfigs.push({
                                 ...existingConfig,
                                 slot_count: maxSlots,
-                                interval_type: intervalType,  // ✅ Dùng interval_type
+                                interval_type: intervalType,
                                 is_active: 1
                             });
                             hasChanges = true;
@@ -460,7 +475,7 @@ const MovieShowtimeConfigPage = () => {
                             time_slot: timeSlot.key,
                             room_type: roomType,
                             slot_count: maxSlots,
-                            interval_type: intervalType,  // ✅ Dùng interval_type
+                            interval_type: intervalType,
                             day_type: d.dayKey,
                             is_active: 1
                         });
@@ -539,7 +554,6 @@ const MovieShowtimeConfigPage = () => {
             return { validRange: false, duration, roomCount, maxCapacity: 0, requested: Number(config.slot_count) || 0 };
         }
         
-        // ✅ Lấy interval_minutes từ interval_type
         const intervalMinutes = getIntervalMinutes(config.interval_type);
         
         const result = calculateSlotTimes({
@@ -604,7 +618,7 @@ const MovieShowtimeConfigPage = () => {
                 time_slot: String(config.time_slot).toUpperCase(),
                 room_type: String(config.room_type).toUpperCase(),
                 slot_count: Number(config.slot_count),
-                interval_type: String(config.interval_type || DEFAULT_INTERVAL_TYPE).toUpperCase(),  // ✅ Gửi interval_type
+                interval_type: String(config.interval_type || DEFAULT_INTERVAL_TYPE).toUpperCase(),
                 day_type: String(config.day_type || 'MONDAY').toUpperCase(),
                 is_active: 1
             }));
@@ -888,7 +902,12 @@ const MovieShowtimeConfigPage = () => {
                                                 <div className="interval-section">
                                                     <div className="interval-header">
                                                         <span className="interval-label">⏱️ Khoảng cách giữa các suất</span>
-                                                        <span className="interval-hint">(Ảnh hưởng đến số suất tối đa)</span>
+                                                        <span className="interval-hint">
+                                                            {movieConfigs.length === 0 
+                                                                ? '⚠️ Chưa có cấu hình - Hãy tạo cấu hình trước'
+                                                                : `Đang chọn: ${INTERVAL_TYPES.find(i => i.key === selectedInterval)?.label} (${getIntervalMinutes(selectedInterval)} phút)`
+                                                            }
+                                                        </span>
                                                     </div>
                                                     <div className="interval-group">
                                                         {INTERVAL_TYPES.map(preset => (
@@ -906,10 +925,15 @@ const MovieShowtimeConfigPage = () => {
                                                     </div>
                                                     <button
                                                         type="button"
-                                                        className="btn-apply-interval"
+                                                        className={`btn-apply-interval ${movieConfigs.length === 0 ? 'disabled' : ''}`}
                                                         onClick={() => applyIntervalToAll(movieId)}
+                                                        disabled={movieConfigs.length === 0}
+                                                        title={movieConfigs.length === 0 ? 'Chưa có cấu hình để áp dụng' : 'Áp dụng interval cho tất cả config'}
                                                     >
-                                                        ✅ Áp dụng cho tất cả ngày
+                                                        {movieConfigs.length === 0 
+                                                            ? '⚠️ Chưa có cấu hình để áp dụng'
+                                                            : `✅ Áp dụng ${INTERVAL_TYPES.find(i => i.key === selectedInterval)?.label} cho tất cả`
+                                                        }
                                                     </button>
                                                 </div>
 
@@ -949,13 +973,7 @@ const MovieShowtimeConfigPage = () => {
                                                                     return (
                                                                         <React.Fragment key={timeSlot.key}>
                                                                             <tr className="time-slot-header">
-                                                                                <td colSpan={datesInRange.length + 2} style={{ 
-                                                                                    padding: '6px 12px', 
-                                                                                    background: 'var(--bg-tertiary)',
-                                                                                    fontWeight: 'var(--fw-semibold)',
-                                                                                    color: 'var(--text-heading)',
-                                                                                    fontSize: '13px'
-                                                                                }}>
+                                                                                <td colSpan={datesInRange.length + 2}>
                                                                                     {timeSlot.label}
                                                                                 </td>
                                                                             </tr>
@@ -973,7 +991,7 @@ const MovieShowtimeConfigPage = () => {
 
                                                                                 return (
                                                                                     <tr key={roomType} className={!hasValue ? 'empty-row' : ''}>
-                                                                                        <td className="room-label" style={{ paddingLeft: '24px' }}>
+                                                                                        <td className="room-label">
                                                                                             {roomType}
                                                                                         </td>
                                                                                         {datesInRange.map((d, idx) => {
@@ -1001,7 +1019,7 @@ const MovieShowtimeConfigPage = () => {
                                                                                                         time_slot: timeSlot.key,
                                                                                                         room_type: roomType,
                                                                                                         slot_count: Number(newVal),
-                                                                                                        interval_type: selectedInterval || DEFAULT_INTERVAL_TYPE,  // ✅ Dùng interval_type
+                                                                                                        interval_type: selectedInterval || DEFAULT_INTERVAL_TYPE,
                                                                                                         day_type: d.dayKey,
                                                                                                         is_active: 1
                                                                                                     };

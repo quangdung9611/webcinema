@@ -436,6 +436,7 @@ class ShowtimeRepository {
 
     /*=========================================================
         GET MOVIE SHOWTIME CONFIG - HỖ TRỢ TỪNG NGÀY
+        ✅ ĐÃ ĐỔI interval_minutes → interval_type
     =========================================================*/
     async getMovieShowtimeConfig(movieId, cinemaId, dayType = 'ALL') {
         console.log(`🔍 [CONFIG] movie=${movieId}, cinema=${cinemaId}, dayType=${dayType}`);
@@ -446,7 +447,7 @@ class ShowtimeRepository {
                 time_slot,
                 room_type,
                 slot_count,
-                interval_minutes
+                interval_type
             FROM movie_showtime_config
             WHERE movie_id = ?
               AND cinema_id = ?
@@ -456,15 +457,12 @@ class ShowtimeRepository {
         
         // Nếu có dayType cụ thể (MONDAY, TUESDAY, ...)
         if (dayType && dayType !== 'ALL' && dayType !== 'WEEKDAY' && dayType !== 'WEEKEND') {
-            // Ưu tiên lấy config của ngày cụ thể
             query += ` AND day_type = ?`;
             params.push(dayType);
         } else if (dayType === 'WEEKDAY' || dayType === 'WEEKEND') {
-            // Lấy config theo WEEKDAY/WEEKEND
             query += ` AND day_type = ?`;
             params.push(dayType);
         } else {
-            // Lấy config ALL
             query += ` AND day_type = 'ALL'`;
         }
         
@@ -480,7 +478,7 @@ class ShowtimeRepository {
                     time_slot,
                     room_type,
                     slot_count,
-                    interval_minutes
+                    interval_type
                 FROM movie_showtime_config
                 WHERE movie_id = ?
                   AND cinema_id = ?
@@ -505,7 +503,7 @@ class ShowtimeRepository {
             config[slot].push({
                 room_type: String(row.room_type || '').trim().toUpperCase(),
                 slot_count: Number(row.slot_count),
-                interval_minutes: Number(row.interval_minutes)
+                interval_type: String(row.interval_type || 'NORMAL').trim().toUpperCase()
             });
         }
         

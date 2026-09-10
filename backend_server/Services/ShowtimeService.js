@@ -32,6 +32,17 @@ const DAY_TYPE_LABELS = {
     SUNDAY: "Chủ Nhật"
 };
 
+// ✅ MAP INTERVAL_TYPE → MINUTES
+const INTERVAL_MINUTES_MAP = {
+    'HOT': 45,
+    'NORMAL': 75,
+    'COOL': 120
+};
+
+const getIntervalMinutes = (intervalType) => {
+    return INTERVAL_MINUTES_MAP[String(intervalType || 'NORMAL').toUpperCase()] || 75;
+};
+
 // ==========================================================
 // HELPERS
 // ==========================================================
@@ -378,6 +389,7 @@ class ShowtimeService {
 
     // ==========================================================
     // SCHEDULE SHOWTIMES - HỖ TRỢ TỪNG NGÀY
+    // ✅ ĐÃ ĐỔI interval_minutes → interval_type
     // ==========================================================
 
     async scheduleShowtimes(data) {
@@ -480,17 +492,7 @@ class ShowtimeService {
         const manualConfigs = {};
 
         for (const movie of moviesData) {
-            // 🆕 THỬ LẤY CONFIG THEO TỪNG NGÀY
-            // 1. Lấy config cho ngày cụ thể (MONDAY, TUESDAY, ...)
-            // 2. Nếu không có, lấy WEEKDAY/WEEKEND
-            // 3. Nếu không có, lấy ALL
-            
-            // Lấy ngày cụ thể
             const movieId = movie.movie_id;
-            
-            // Dùng hàm getDayOfWeek để lấy tên ngày
-            // Nhưng chưa biết ngày cụ thể ở đây, sẽ lấy trong vòng lặp ngày
-            // Nên để trống, sẽ lấy trong vòng lặp ngày
             manualConfigs[movieId] = {};
         }
 
@@ -522,7 +524,7 @@ class ShowtimeService {
         let currentDate = parseDate(start_date);
         while (currentDate <= endDate) {
             const dateStr = formatDate(currentDate);
-            const dayOfWeek = getDayOfWeek(dateStr); // MONDAY, TUESDAY, ...
+            const dayOfWeek = getDayOfWeek(dateStr);
             const dayType = isWeekend(currentDate) ? 'WEEKEND' : 'WEEKDAY';
             const timeRange = getTimeRangeForDate(dateStr, {
                 weekdayStart: operatingHours.weekday.open,
@@ -539,10 +541,7 @@ class ShowtimeService {
                 const movieId = movie.movie_id;
                 const duration = Number(movie.duration);
                 
-                // 🆕 Lấy config theo thứ tự ưu tiên:
-                // 1. Ngày cụ thể (MONDAY, TUESDAY, ...)
-                // 2. WEEKDAY / WEEKEND
-                // 3. ALL
+                // Lấy config theo thứ tự ưu tiên
                 let config = await ShowtimeRepository.getMovieShowtimeConfig(movieId, cinemaId, dayOfWeek);
                 
                 if (!config || Object.keys(config).length === 0) {
@@ -560,7 +559,9 @@ class ShowtimeService {
                     console.log(`📋 CẤU HÌNH CHO PHIM "${movie.title}" (${dayOfWeek}):`);
                     for (const [slot, slots] of Object.entries(config)) {
                         for (const s of slots) {
-                            console.log(`  ${slot}: ${s.slot_count} suất ${s.room_type}, cách ${s.interval_minutes} phút`);
+                            // ✅ ĐỔI: Lấy minutes từ interval_type
+                            const minutes = getIntervalMinutes(s.interval_type);
+                            console.log(`  ${slot}: ${s.slot_count} suất ${s.room_type}, ${s.interval_type} (${minutes} phút)`);
                         }
                     }
                 } else {
@@ -571,7 +572,11 @@ class ShowtimeService {
                 // Duyệt từng time slot
                 for (const [timeSlotKey, slotConfigs] of Object.entries(config)) {
                     for (const slotConfig of slotConfigs) {
-                        const { room_type, slot_count, interval_minutes } = slotConfig;
+                        // ✅ ĐỔI: Dùng interval_type thay vì interval_minutes
+                        const { room_type, slot_count, interval_type } = slotConfig;
+                        
+                        // ✅ TÍNH interval_minutes TỪ interval_type
+                        const interval_minutes = getIntervalMinutes(interval_type);
                         
                         // Tìm phòng theo room_type
                         const availableRooms = rooms.filter(r => r.room_type === room_type);
@@ -626,6 +631,7 @@ class ShowtimeService {
                                 room_type: room_type,
                                 requested_slots: slot_count,
                                 max_possible_slots: capacity.maxSlots,
+                                interval_type: interval_type,
                                 interval_minutes: interval_minutes,
                                 slot_start: actualSlotRange.startTime,
                                 slot_end: actualSlotRange.endTime,
@@ -634,7 +640,7 @@ class ShowtimeService {
                             continue;
                         }
 
-                        console.log(`  🎬 ${movie.title} | ${timeSlotKey} | ${room_type} | ${slot_count} suất | mỗi ${interval_minutes} phút`);
+                        console.log(`  🎬 ${movie.title} | ${timeSlotKey} | ${room_type} | ${slot_count} suất | ${interval_type} (mỗi ${interval_minutes} phút)`);
                         console.log(`     📐 Khả năng tối đa: ${capacity.maxSlots} suất`);
 
                         // Tạo các suất chiếu
@@ -695,7 +701,10 @@ class ShowtimeService {
                                             time_slot: timeSlot,
                                             time_slot_label: TIME_SLOT_LABELS[timeSlot],
                                             day_type: dayTypeResult,
-                                            day_type_label: DAY_TYPE_LABELS[dayTypeResult] || dayTypeResult
+                                            day_type_label: DAY_TYPE_LABELS[dayTypeResult] || dayTypeResult,
+                                            // ✅ THÊM INTERVAL_TYPE VÀO KẾT QUẢ
+                                            interval_type: interval_type,
+                                            interval_minutes: interval_minutes
                                         };
 
                                         created.push(createdSlot);
