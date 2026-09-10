@@ -1,5 +1,6 @@
 /* ==========================================================
    USER PAGE - QUẢN LÝ NGƯỜI DÙNG
+   ✅ ĐÃ ĐỒNG BỘ DESIGN SYSTEM (SILVER + ICE BLUE)
    ========================================================== */
 
 /* ==========================================================
@@ -64,7 +65,7 @@
 }
 
 .user-role-badge.admin {
-    background: rgba(166, 193, 217, 0.15);
+    background: var(--accent-ice-bg);
     color: var(--accent-ice);
     border: 1px solid var(--accent-ice-border);
 }
@@ -86,12 +87,14 @@
     letter-spacing: 0.04em;
 }
 
+/* ✅ ĐỔI: Xanh lá → Silver */
 .user-status-badge.active {
-    background: rgba(67, 183, 122, 0.15);
-    color: var(--seat-selected-color);
-    border: 1px solid rgba(67, 183, 122, 0.25);
+    background: rgba(244, 246, 248, 0.08);
+    color: var(--silver-primary);
+    border: 1px solid rgba(244, 246, 248, 0.15);
 }
 
+/* ✅ GIỮ ĐỎ: Banned vẫn là đỏ */
 .user-status-badge.banned {
     background: rgba(216, 90, 90, 0.15);
     color: var(--seat-sold-color);
@@ -136,6 +139,7 @@
     color: var(--accent-ice-light);
 }
 
+/* ✅ ĐỔI: Dùng --seat-sold-color để đồng bộ */
 .user-action-btn.delete-btn {
     color: var(--seat-sold-color);
     background: rgba(216, 90, 90, 0.08);
@@ -143,7 +147,7 @@
 
 .user-action-btn.delete-btn:hover {
     background: rgba(216, 90, 90, 0.16);
-    color: #f87171;
+    color: var(--seat-sold-color);
 }
 
 /* ==========================================================

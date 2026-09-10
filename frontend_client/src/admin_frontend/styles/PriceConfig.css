@@ -1,5 +1,6 @@
 /* ==========================================================
    PRICE CONFIG PAGE - QUẢN LÝ GIÁ VÉ
+   ✅ ĐÃ ĐỒNG BỘ DESIGN SYSTEM (SILVER + ICE BLUE)
 ========================================================== */
 
 .price-config-page {
@@ -108,14 +109,16 @@
     cursor: not-allowed;
 }
 
+/* ✅ ĐỔI: Từ cam → Ice Blue */
 .btn-seed {
-    background: rgba(255, 165, 0, 0.1);
-    color: #ffa500;
-    border: 1px solid rgba(255, 165, 0, 0.25);
+    background: var(--accent-ice-bg);
+    color: var(--accent-ice);
+    border: var(--border-ice);
 }
 
 .btn-seed:hover {
-    background: rgba(255, 165, 0, 0.2);
+    background: var(--accent-ice-soft);
+    border-color: var(--accent-ice);
     transform: translateY(-2px);
 }
 
@@ -290,14 +293,18 @@
     font-weight: var(--fw-bold);
 }
 
+/* ✅ ĐỔI: Xanh lá → Silver */
 .status-badge.active {
-    background: rgba(46, 204, 113, 0.15);
-    color: #2ecc71;
+    background: rgba(244, 246, 248, 0.08);
+    color: var(--silver-primary);
+    border: 1px solid rgba(244, 246, 248, 0.15);
 }
 
+/* ✅ ĐỔI: Đỏ → Đỏ nhạt (giữ để phân biệt) */
 .status-badge.inactive {
-    background: rgba(231, 76, 60, 0.15);
-    color: #e74c3c;
+    background: rgba(216, 90, 90, 0.12);
+    color: #D85A5A;
+    border: 1px solid rgba(216, 90, 90, 0.2);
 }
 
 .price-cell {
@@ -334,40 +341,45 @@
     transform: translateY(-2px);
 }
 
+/* ✅ ĐỔI: Xanh dương → Ice Blue */
 .action-btn.edit-btn {
-    color: #3498db;
+    color: var(--accent-ice);
 }
 
 .action-btn.edit-btn:hover {
-    background: rgba(52, 152, 219, 0.15);
+    background: var(--accent-ice-soft);
+    color: var(--accent-ice);
 }
 
 .action-btn.toggle-btn {
     font-size: 16px;
 }
 
+/* ✅ ĐỔI: Vàng → Silver */
 .action-btn.toggle-btn.active {
-    color: #f1c40f;
+    color: var(--silver-primary);
 }
 
 .action-btn.toggle-btn.active:hover {
-    background: rgba(241, 196, 15, 0.15);
+    background: rgba(244, 246, 248, 0.1);
 }
 
+/* ✅ ĐỔI: Xanh lá → Ice Blue */
 .action-btn.toggle-btn.inactive {
-    color: #2ecc71;
+    color: var(--accent-ice);
 }
 
 .action-btn.toggle-btn.inactive:hover {
-    background: rgba(46, 204, 113, 0.15);
+    background: var(--accent-ice-soft);
 }
 
+/* ✅ GIỮ ĐỎ: Delete luôn là đỏ */
 .action-btn.delete-btn {
-    color: #e74c3c;
+    color: #D85A5A;
 }
 
 .action-btn.delete-btn:hover {
-    background: rgba(231, 76, 60, 0.15);
+    background: rgba(216, 90, 90, 0.15);
 }
 
 /* ==========================================================
@@ -441,12 +453,14 @@
     color: var(--silver-primary);
 }
 
+/* ✅ ĐỔI: Xanh lá → Silver */
 .text-success {
-    color: #2ecc71 !important;
+    color: var(--silver-primary) !important;
 }
 
+/* ✅ GIỮ ĐỎ: Danger vẫn là đỏ */
 .text-danger {
-    color: #e74c3c !important;
+    color: #D85A5A !important;
 }
 
 /* ==========================================================
@@ -562,8 +576,9 @@
     font-weight: var(--fw-bold);
 }
 
+/* ✅ GIỮ ĐỎ: Required marker */
 .form-group label .required {
-    color: #e74c3c;
+    color: #D85A5A;
 }
 
 .form-group select,
@@ -586,9 +601,10 @@
     box-shadow: 0 0 0 3px rgba(232, 232, 232, 0.08);
 }
 
+/* ✅ GIỮ ĐỎ: Error state */
 .form-group select.error,
 .form-group input.error {
-    border-color: #e74c3c;
+    border-color: #D85A5A;
 }
 
 .form-group select option {
@@ -596,10 +612,11 @@
     color: var(--text-body);
 }
 
+/* ✅ GIỮ ĐỎ: Error text */
 .error-text {
     display: block;
     margin-top: 4px;
-    color: #e74c3c;
+    color: #D85A5A;
     font-size: 12px;
 }
 
@@ -614,28 +631,31 @@
     margin: 0;
 }
 
+/* ✅ ĐỔI: Cam → Ice Blue */
 .alert-modal.warning .modal-header {
-    border-bottom-color: rgba(255, 165, 0, 0.2);
+    border-bottom-color: var(--accent-ice-border);
 }
 
 .alert-modal.warning .modal-header h2 {
-    color: #ffa500;
+    color: var(--accent-ice);
 }
 
+/* ✅ GIỮ ĐỎ: Error */
 .alert-modal.error .modal-header {
-    border-bottom-color: rgba(231, 76, 60, 0.2);
+    border-bottom-color: rgba(216, 90, 90, 0.2);
 }
 
 .alert-modal.error .modal-header h2 {
-    color: #e74c3c;
+    color: #D85A5A;
 }
 
+/* ✅ ĐỔI: Xanh lá → Silver */
 .alert-modal.success .modal-header {
-    border-bottom-color: rgba(46, 204, 113, 0.2);
+    border-bottom-color: rgba(244, 246, 248, 0.15);
 }
 
 .alert-modal.success .modal-header h2 {
-    color: #2ecc71;
+    color: var(--silver-primary);
 }
 
 /* ==========================================================

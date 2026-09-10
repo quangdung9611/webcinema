@@ -12,8 +12,6 @@ import api from '../../../../api/api';
 
 import {
     Save,
-    Plus,
-    Trash2,
     Loader2,
     Film,
     ArrowLeft,
@@ -21,12 +19,10 @@ import {
     ChevronDown,
     ChevronUp,
     Search,
-    AlertTriangle,
-    CheckCircle2,
     Clock,
     Calendar,
-    ChevronLeft,
-    ChevronRight
+    CheckSquare,
+    Square
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -47,14 +43,12 @@ const TIME_SLOTS = [
 
 const ROOM_TYPES = ['2D', '3D', 'VIP', 'IMAX'];
 
-// ✅ INTERVAL TYPES - ENUM
 const INTERVAL_TYPES = [
     { key: 'HOT', label: '🔥 HOT', minutes: 45, description: 'Phim đông khách' },
     { key: 'NORMAL', label: '📊 NORMAL', minutes: 75, description: 'Phim bình thường' },
     { key: 'COOL', label: '❄️ COOL', minutes: 120, description: 'Phim ít khách' }
 ];
 
-// Map để lấy minutes từ type
 const INTERVAL_MINUTES_MAP = {
     'HOT': 45,
     'NORMAL': 75,
@@ -69,7 +63,6 @@ const DEFAULT_INTERVAL_TYPE = 'NORMAL';
 const DEFAULT_MOVIE_DURATION = 120;
 const DEFAULT_CINEMA_OPEN = 8 * 60;
 const DEFAULT_CINEMA_CLOSE = 24 * 60;
-const DEFAULT_ROOM_COUNT = 1;
 
 // ==========================================================
 // UTILS
@@ -106,6 +99,11 @@ const minutesToTime = (minutes) => {
     return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 };
 
+// Trả về "HH:MM:SS" cho API
+const minutesToTimeFull = (minutes) => {
+    return `${minutesToTime(minutes)}:00`;
+};
+
 const getTodayDate = () => {
     const now = new Date();
     return now.toISOString().split('T')[0];
@@ -140,22 +138,14 @@ const getDatesInRange = (startDate, endDate) => {
     return dates;
 };
 
-const calculateSlotTimes = ({ startMinutes, endMinutes, intervalMinutes }) => {
-    if (startMinutes >= endMinutes || intervalMinutes <= 0) return { times: [], maxSlots: 0 };
+// Sinh danh sách giờ cho 1 khung giờ với interval
+const generateSlotTimes = ({ startMinutes, endMinutes, intervalMinutes }) => {
+    if (startMinutes >= endMinutes || intervalMinutes <= 0) return [];
     const times = [];
-    const maxSlots = Math.floor((endMinutes - startMinutes) / intervalMinutes);
-    if (maxSlots <= 0) return { times: [], maxSlots: 0 };
-    for (let i = 0; i < maxSlots; i++) {
-        const start = startMinutes + i * intervalMinutes;
-        if (start >= endMinutes) break;
-        times.push({
-            start: start,
-            startTime: minutesToTime(start),
-            end: start + intervalMinutes,
-            endTime: minutesToTime(start + intervalMinutes)
-        });
+    for (let t = startMinutes; t < endMinutes; t += intervalMinutes) {
+        times.push(t);
     }
-    return { times, maxSlots, actualCount: times.length };
+    return times;
 };
 
 const extractMovieDuration = (movie) => {
@@ -170,7 +160,7 @@ const extractMovieDuration = (movie) => {
 
 const extractCinemaOpen = (cinema) => {
     if (!cinema) return DEFAULT_CINEMA_OPEN;
-    const candidates = [cinema.open_time, cinema.opening_time, cinema.opening_hour, cinema.openingTime, cinema.openTime, cinema.open_at, cinema.start_time, cinema.startTime, cinema.gio_mo_cua];
+    const candidates = [cinema.weekday_open, cinema.weekend_open, cinema.open_time, cinema.opening_time, cinema.opening_hour, cinema.openingTime, cinema.openTime, cinema.open_at, cinema.start_time, cinema.startTime, cinema.gio_mo_cua];
     for (const value of candidates) {
         const minutes = timeToMinutes(value, null);
         if (minutes !== null) return minutes;
@@ -180,7 +170,7 @@ const extractCinemaOpen = (cinema) => {
 
 const extractCinemaClose = (cinema) => {
     if (!cinema) return DEFAULT_CINEMA_CLOSE;
-    const candidates = [cinema.close_time, cinema.closing_time, cinema.closing_hour, cinema.closingTime, cinema.closeTime, cinema.close_at, cinema.end_time, cinema.endTime, cinema.gio_dong_cua];
+    const candidates = [cinema.weekday_close, cinema.weekend_close, cinema.close_time, cinema.closing_time, cinema.closing_hour, cinema.closingTime, cinema.closeTime, cinema.close_at, cinema.end_time, cinema.endTime, cinema.gio_dong_cua];
     for (const value of candidates) {
         const minutes = timeToMinutes(value, null);
         if (minutes !== null) return minutes;
@@ -188,27 +178,13 @@ const extractCinemaClose = (cinema) => {
     return DEFAULT_CINEMA_CLOSE;
 };
 
-const extractRoomCount = (cinema, roomType) => {
-    if (!cinema) return DEFAULT_ROOM_COUNT;
-    const normalizedType = String(roomType || '2D').toUpperCase();
-    const byType = cinema.room_count_by_type || cinema.roomCountByType || cinema.rooms_by_type || cinema.roomsByType;
-    if (byType && typeof byType === 'object') {
-        const value = byType[normalizedType];
-        if (Number.isFinite(Number(value)) && Number(value) > 0) return Number(value);
-    }
-    const rooms = cinema.rooms || cinema.room_list || cinema.roomList;
-    if (Array.isArray(rooms)) {
-        const matched = rooms.filter(room => {
-            const type = String(room.room_type || room.type || room.roomType || '').toUpperCase();
-            return type === normalizedType;
-        });
-        if (matched.length > 0) return matched.length;
-    }
-    return DEFAULT_ROOM_COUNT;
-};
-
 const getMovieByIdFromList = (movies, movieId) => {
     return movies.find(movie => String(movie.movie_id) === String(movieId));
+};
+
+// Key để định danh 1 giờ cụ thể
+const buildSlotKey = (timeSlot, roomType, dayType, startMinutes) => {
+    return `${timeSlot}|${roomType}|${dayType}|${startMinutes}`;
 };
 
 // ==========================================================
@@ -226,11 +202,13 @@ const MovieShowtimeConfigPage = () => {
     const [selectedCinema, setSelectedCinema] = useState('');
     const [selectedMovies, setSelectedMovies] = useState([]);
     const [searchMovie, setSearchMovie] = useState('');
-    const [configs, setConfigs] = useState({});
     const [expandedMovies, setExpandedMovies] = useState({});
 
-    // ✅ State cho Interval Type
-    const [selectedInterval, setSelectedInterval] = useState(DEFAULT_INTERVAL_TYPE);
+    // Config lưu dạng: { [movieId]: { [slotKey]: { config_id, ... } } }
+    const [configs, setConfigs] = useState({});
+
+    // Interval riêng cho từng phim: { [movieId]: 'HOT' | 'NORMAL' | 'COOL' }
+    const [movieIntervals, setMovieIntervals] = useState({});
 
     const [dateRange, setDateRange] = useState({
         startDate: getTodayDate(),
@@ -300,33 +278,62 @@ const MovieShowtimeConfigPage = () => {
         }
     };
 
+    // Load config từ API - chuyển mảng row thành object theo slotKey
     const loadAllConfigs = async () => {
         if (!selectedCinema || selectedMovies.length === 0) return;
         setLoading(true);
         const newConfigs = {};
+        const newIntervals = {};
+
         try {
             for (const movieId of selectedMovies) {
                 try {
                     const res = await api.get(`/api/showtime-config/${movieId}?cinema_id=${selectedCinema}`);
                     const rawData = res.data?.data;
-                    const movieConfig = Array.isArray(rawData) ? rawData : Array.isArray(rawData?.data) ? rawData.data : [];
-                    newConfigs[movieId] = movieConfig.map(config => ({
-                        ...config,
-                        config_id: config.config_id ?? config.id ?? undefined,
-                        time_slot: config.time_slot || 'MORNING',
-                        room_type: config.room_type || '2D',
-                        slot_count: Number(config.slot_count) || 0,
-                        // ✅ Dùng interval_type thay vì interval_minutes
-                        interval_type: config.interval_type || DEFAULT_INTERVAL_TYPE,
-                        day_type: config.day_type || 'MONDAY',
-                        is_active: Number(config.is_active) === 1 ? 1 : 0
-                    }));
+                    const rows = Array.isArray(rawData) ? rawData : Array.isArray(rawData?.data) ? rawData.data : [];
+
+                    const movieConfigMap = {};
+                    let detectedInterval = DEFAULT_INTERVAL_TYPE;
+
+                    for (const row of rows) {
+                        if (Number(row.is_active) !== 1) continue;
+
+                        const startMinutes = timeToMinutes(row.slot_time, null);
+                        if (startMinutes === null) continue;
+
+                        const key = buildSlotKey(
+                            row.time_slot,
+                            row.room_type,
+                            row.day_type,
+                            startMinutes
+                        );
+
+                        movieConfigMap[key] = {
+                            config_id: row.config_id,
+                            time_slot: row.time_slot,
+                            room_type: row.room_type,
+                            day_type: row.day_type,
+                            startMinutes,
+                            slot_time: row.slot_time,
+                            interval_type: row.interval_type || DEFAULT_INTERVAL_TYPE,
+                            is_active: 1
+                        };
+
+                        if (row.interval_type) {
+                            detectedInterval = row.interval_type;
+                        }
+                    }
+
+                    newConfigs[movieId] = movieConfigMap;
+                    newIntervals[movieId] = detectedInterval;
                 } catch (error) {
                     console.error(`Lỗi load config cho phim ${movieId}:`, error);
-                    newConfigs[movieId] = [];
+                    newConfigs[movieId] = {};
+                    newIntervals[movieId] = DEFAULT_INTERVAL_TYPE;
                 }
             }
             setConfigs(newConfigs);
+            setMovieIntervals(newIntervals);
         } finally {
             setLoading(false);
         }
@@ -344,239 +351,230 @@ const MovieShowtimeConfigPage = () => {
         setExpandedMovies(prev => ({ ...prev, [movieId]: !prev[movieId] }));
     };
 
-    const addConfigForAllDays = (movieId) => {
-        const currentConfigs = configs[movieId] || [];
-        const existingDayKeys = currentConfigs.map(c => c.day_type);
-        const missingDays = datesInRange.filter(d => !existingDayKeys.includes(d.dayKey));
-        if (missingDays.length === 0) {
-            showAlert('Thông báo', 'Tất cả các ngày đã có cấu hình!', 'info');
-            return;
-        }
-        const newConfigs = missingDays.map(d => ({
-            time_slot: 'MORNING',
-            room_type: '2D',
-            slot_count: 1,
-            interval_type: selectedInterval || DEFAULT_INTERVAL_TYPE,
-            day_type: d.dayKey,
-            is_active: 1
-        }));
-        setConfigs(prev => ({
-            ...prev,
-            [movieId]: [...(prev[movieId] || []), ...newConfigs]
-        }));
-        setExpandedMovies(prev => ({ ...prev, [movieId]: true }));
-        showAlert('Thành công', `Đã thêm cấu hình cho ${missingDays.length} ngày!`, 'success');
+    const getMovieInterval = (movieId) => {
+        return movieIntervals[movieId] || DEFAULT_INTERVAL_TYPE;
     };
 
-    // ✅ Áp dụng Interval Type cho tất cả config
-    const applyIntervalToAll = (movieId) => {
-        const movieConfigs = configs[movieId] || [];
-        const preset = INTERVAL_TYPES.find(i => i.key === selectedInterval);
-        
-        if (!preset) {
-            showAlert('Lỗi', 'Không tìm thấy interval đã chọn!', 'error');
-            return;
-        }
-        
-        if (movieConfigs.length === 0) {
-            showAlert(
-                '📭 Chưa có cấu hình',
-                'Phim này chưa có cấu hình suất chiếu.\n\n' +
-                'Vui lòng làm theo thứ tự:\n' +
-                '1️⃣ Bấm "➕ Thêm tất cả ngày" để tạo cấu hình\n' +
-                '2️⃣ Hoặc bấm "🤖 Auto" để tự động điền\n' +
-                '3️⃣ Sau đó mới bấm "✅ Áp dụng"',
-                'warning'
-            );
-            return;
-        }
-        
-        const newConfigs = movieConfigs.map(config => ({
-            ...config,
-            interval_type: preset.key
-        }));
-        
-        setConfigs(prev => ({
-            ...prev,
-            [movieId]: newConfigs
-        }));
-        
-        showAlert(
-            '✅ Thành công',
-            `Đã áp dụng ${preset.label} (${preset.minutes} phút)\n` +
-            `cho ${movieConfigs.length} cấu hình của phim này!`,
-            'success'
-        );
+    const setMovieInterval = (movieId, intervalType) => {
+        setMovieIntervals(prev => ({ ...prev, [movieId]: intervalType }));
     };
 
-    // Auto fill - Điền số suất tối đa cho tất cả các ô
-    const handleAutoFill = (movieId) => {
-        const movie = getMovieByIdFromList(movies, movieId);
-        const duration = extractMovieDuration(movie);
-        
-        const currentConfigs = configs[movieId] || [];
-        const configMap = {};
-        currentConfigs.forEach((config, index) => {
-            const key = `${config.time_slot}_${config.room_type}_${config.day_type}`;
-            configMap[key] = { ...config, index };
-        });
-        
-        const newConfigs = [];
-        let hasChanges = false;
-        
-        TIME_SLOTS.forEach(timeSlot => {
-            ROOM_TYPES.forEach(roomType => {
-                datesInRange.forEach(d => {
-                    const key = `${timeSlot.key}_${roomType}_${d.dayKey}`;
-                    const existingConfig = configMap[key];
-                    
-                    const intervalType = existingConfig?.interval_type || selectedInterval || DEFAULT_INTERVAL_TYPE;
-                    const intervalMinutes = getIntervalMinutes(intervalType);
-                    
-                    const mockConfig = {
-                        time_slot: timeSlot.key,
-                        room_type: roomType,
-                        slot_count: 1,
-                        interval_type: intervalType,
-                        day_type: d.dayKey,
-                        is_active: 1
-                    };
-                    
-                    const info = getConfigCapacityInfo(movieId, mockConfig);
-                    const maxSlots = info?.maxCapacity || 0;
-                    
-                    if (maxSlots <= 0) {
-                        if (existingConfig) {
-                            newConfigs.push({
-                                ...existingConfig,
-                                slot_count: 0,
-                                is_active: 0
-                            });
-                            hasChanges = true;
-                        }
-                        return;
-                    }
-                    
-                    if (existingConfig) {
-                        const currentSlotCount = Number(existingConfig.slot_count) || 0;
-                        if (currentSlotCount !== maxSlots) {
-                            newConfigs.push({
-                                ...existingConfig,
-                                slot_count: maxSlots,
-                                interval_type: intervalType,
-                                is_active: 1
-                            });
-                            hasChanges = true;
-                        } else {
-                            newConfigs.push(existingConfig);
-                        }
-                    } else {
-                        newConfigs.push({
-                            time_slot: timeSlot.key,
-                            room_type: roomType,
-                            slot_count: maxSlots,
-                            interval_type: intervalType,
-                            day_type: d.dayKey,
-                            is_active: 1
-                        });
-                        hasChanges = true;
-                    }
-                });
-            });
-        });
-        
-        if (hasChanges) {
-            setConfigs(prev => ({
-                ...prev,
-                [movieId]: newConfigs
-            }));
-            showAlert('Thành công', `🤖 Đã tự động điền số suất tối đa cho tất cả các ô!`, 'success');
-        } else {
-            showAlert('Thông báo', '📭 Tất cả các ô đã có số suất tối đa!', 'info');
-        }
-    };
-
-    const removeConfig = async (movieId, index) => {
-        const movieConfigs = configs[movieId] || [];
-        const newConfigs = [...movieConfigs];
-        const removed = newConfigs.splice(index, 1)[0];
-        if (removed?.config_id) {
-            try {
-                await api.delete(`/api/showtime-config/${movieId}/${removed.config_id}`);
-                setConfigs(prev => ({ ...prev, [movieId]: newConfigs }));
-                showAlert('Thành công', 'Xóa cấu hình thành công', 'success');
-            } catch (error) {
-                console.error('Lỗi xóa config:', error);
-                showAlert('Lỗi', 'Không thể xóa cấu hình', 'error');
-            }
-            return;
-        }
-        setConfigs(prev => ({ ...prev, [movieId]: newConfigs }));
-    };
-
-    const updateConfig = (movieId, index, field, value) => {
+    // Toggle 1 slot (giờ) cụ thể
+    const toggleSlot = (movieId, timeSlot, roomType, dayType, startMinutes) => {
+        const key = buildSlotKey(timeSlot, roomType, dayType, startMinutes);
         setConfigs(prev => {
-            const movieConfigs = [...(prev[movieId] || [])];
-            if (!movieConfigs[index]) return prev;
-            let normalizedValue = value;
-            if (field === 'slot_count') {
-                normalizedValue = Number(value);
-                if (!Number.isFinite(normalizedValue)) normalizedValue = 0;
+            const movieConfigMap = { ...(prev[movieId] || {}) };
+
+            if (movieConfigMap[key]) {
+                // Đã chọn → bỏ chọn (nhưng giữ config_id để backend biết cần xóa)
+                delete movieConfigMap[key];
+            } else {
+                // Chưa chọn → thêm vào
+                const intervalType = getMovieInterval(movieId);
+                movieConfigMap[key] = {
+                    config_id: undefined,
+                    time_slot: timeSlot,
+                    room_type: roomType,
+                    day_type: dayType,
+                    startMinutes,
+                    slot_time: minutesToTimeFull(startMinutes),
+                    interval_type: intervalType,
+                    is_active: 1
+                };
             }
-            if (field === 'is_active') normalizedValue = Number(value) === 1 ? 1 : 0;
-            if (field === 'time_slot') {
-                const exists = TIME_SLOTS.some(item => item.key === value);
-                if (!exists) normalizedValue = 'MORNING';
-            }
-            if (field === 'room_type') {
-                const exists = ROOM_TYPES.includes(value);
-                if (!exists) normalizedValue = '2D';
-            }
-            if (field === 'interval_type') {
-                const exists = INTERVAL_TYPES.some(item => item.key === value);
-                if (!exists) normalizedValue = DEFAULT_INTERVAL_TYPE;
-            }
-            movieConfigs[index] = { ...movieConfigs[index], [field]: normalizedValue };
-            return { ...prev, [movieId]: movieConfigs };
+
+            return { ...prev, [movieId]: movieConfigMap };
         });
     };
 
-    const getConfigCapacityInfo = useCallback((movieId, config) => {
-        if (!config || Number(config.is_active) !== 1) return null;
-        const movie = getMovieByIdFromList(movies, movieId);
-        const duration = extractMovieDuration(movie);
-        const roomCount = extractRoomCount(selectedCinemaObject, config.room_type);
-        const slot = TIME_SLOTS.find(s => s.key === config.time_slot);
-        if (!slot) return null;
-        const actualStart = Math.max(slot.startMinutes, cinemaOpen);
-        const actualEnd = Math.min(slot.endMinutes, cinemaClose);
-        if (actualStart >= actualEnd) {
-            return { validRange: false, duration, roomCount, maxCapacity: 0, requested: Number(config.slot_count) || 0 };
-        }
-        
-        const intervalMinutes = getIntervalMinutes(config.interval_type);
-        
-        const result = calculateSlotTimes({
+    // Toggle toàn bộ 1 khung giờ (SÁNG/TRƯA/CHIỀU/TỐI) cho 1 phòng + 1 ngày
+    const toggleTimeSlotAll = (movieId, timeSlotKey, roomType, dayType) => {
+        const timeSlot = TIME_SLOTS.find(s => s.key === timeSlotKey);
+        if (!timeSlot) return;
+
+        const actualStart = Math.max(timeSlot.startMinutes, cinemaOpen);
+        const actualEnd = Math.min(timeSlot.endMinutes, cinemaClose);
+        if (actualStart >= actualEnd) return;
+
+        const intervalType = getMovieInterval(movieId);
+        const intervalMinutes = getIntervalMinutes(intervalType);
+        const allTimes = generateSlotTimes({
             startMinutes: actualStart,
             endMinutes: actualEnd,
-            intervalMinutes: intervalMinutes
+            intervalMinutes
         });
-        const requested = Number(config.slot_count) || 0;
-        return {
-            validRange: true,
-            actualStart,
-            actualEnd,
-            duration,
-            roomCount,
-            maxCapacity: result.maxSlots,
-            requested,
-            exceeded: requested > result.maxSlots,
-            recommended: result.maxSlots,
-            slotTimes: result.times,
-            timeRange: `${minutesToTime(actualStart)} → ${minutesToTime(actualEnd)}`
-        };
-    }, [movies, selectedCinemaObject, cinemaOpen, cinemaClose]);
 
+        setConfigs(prev => {
+            const movieConfigMap = { ...(prev[movieId] || {}) };
+            const anySelected = allTimes.some(t => {
+                const key = buildSlotKey(timeSlotKey, roomType, dayType, t);
+                return !!movieConfigMap[key];
+            });
+
+            if (anySelected) {
+                // Bỏ chọn tất cả
+                for (const t of allTimes) {
+                    const key = buildSlotKey(timeSlotKey, roomType, dayType, t);
+                    delete movieConfigMap[key];
+                }
+            } else {
+                // Chọn tất cả
+                for (const t of allTimes) {
+                    const key = buildSlotKey(timeSlotKey, roomType, dayType, t);
+                    if (!movieConfigMap[key]) {
+                        movieConfigMap[key] = {
+                            config_id: undefined,
+                            time_slot: timeSlotKey,
+                            room_type: roomType,
+                            day_type: dayType,
+                            startMinutes: t,
+                            slot_time: minutesToTimeFull(t),
+                            interval_type: intervalType,
+                            is_active: 1
+                        };
+                    }
+                }
+            }
+
+            return { ...prev, [movieId]: movieConfigMap };
+        });
+    };
+
+    // Toggle toàn bộ 1 hàng (room_type) cho 1 ngày
+    const toggleRowAll = (movieId, roomType, dayType) => {
+        setConfigs(prev => {
+            const movieConfigMap = { ...(prev[movieId] || {}) };
+            const intervalType = getMovieInterval(movieId);
+            const intervalMinutes = getIntervalMinutes(intervalType);
+
+            // Kiểm tra có slot nào đã chọn chưa
+            let anySelected = false;
+            for (const timeSlot of TIME_SLOTS) {
+                const actualStart = Math.max(timeSlot.startMinutes, cinemaOpen);
+                const actualEnd = Math.min(timeSlot.endMinutes, cinemaClose);
+                if (actualStart >= actualEnd) continue;
+                const times = generateSlotTimes({ startMinutes: actualStart, endMinutes: actualEnd, intervalMinutes });
+                if (times.some(t => {
+                    const key = buildSlotKey(timeSlot.key, roomType, dayType, t);
+                    return !!movieConfigMap[key];
+                })) {
+                    anySelected = true;
+                    break;
+                }
+            }
+
+            if (anySelected) {
+                // Bỏ chọn tất cả
+                for (const timeSlot of TIME_SLOTS) {
+                    const actualStart = Math.max(timeSlot.startMinutes, cinemaOpen);
+                    const actualEnd = Math.min(timeSlot.endMinutes, cinemaClose);
+                    if (actualStart >= actualEnd) continue;
+                    const times = generateSlotTimes({ startMinutes: actualStart, endMinutes: actualEnd, intervalMinutes });
+                    for (const t of times) {
+                        const key = buildSlotKey(timeSlot.key, roomType, dayType, t);
+                        delete movieConfigMap[key];
+                    }
+                }
+            } else {
+                // Chọn tất cả
+                for (const timeSlot of TIME_SLOTS) {
+                    const actualStart = Math.max(timeSlot.startMinutes, cinemaOpen);
+                    const actualEnd = Math.min(timeSlot.endMinutes, cinemaClose);
+                    if (actualStart >= actualEnd) continue;
+                    const times = generateSlotTimes({ startMinutes: actualStart, endMinutes: actualEnd, intervalMinutes });
+                    for (const t of times) {
+                        const key = buildSlotKey(timeSlot.key, roomType, dayType, t);
+                        if (!movieConfigMap[key]) {
+                            movieConfigMap[key] = {
+                                config_id: undefined,
+                                time_slot: timeSlot.key,
+                                room_type: roomType,
+                                day_type: dayType,
+                                startMinutes: t,
+                                slot_time: minutesToTimeFull(t),
+                                interval_type: intervalType,
+                                is_active: 1
+                            };
+                        }
+                    }
+                }
+            }
+
+            return { ...prev, [movieId]: movieConfigMap };
+        });
+    };
+
+    // Đổi interval cho 1 phim → reset hết tick của phim đó (vì giờ thay đổi)
+    const handleChangeInterval = (movieId, intervalType) => {
+        const currentConfigs = configs[movieId] || {};
+        const hasConfigs = Object.keys(currentConfigs).length > 0;
+
+        if (hasConfigs) {
+            // Reset hết tick vì giờ thay đổi
+            setConfigs(prev => ({ ...prev, [movieId]: {} }));
+            showAlert(
+                '🔄 Đã đổi khoảng cách',
+                `Đã xóa tất cả ${Object.keys(currentConfigs).length} suất đã tick.\nVui lòng tick lại giờ với khoảng cách mới (${getIntervalMinutes(intervalType)} phút).`,
+                'info'
+            );
+        }
+
+        setMovieIntervals(prev => ({ ...prev, [movieId]: intervalType }));
+    };
+
+    // Auto - tick tất cả giờ có thể chiếu
+    const handleAutoFill = (movieId) => {
+        const intervalType = getMovieInterval(movieId);
+        const intervalMinutes = getIntervalMinutes(intervalType);
+
+        setConfigs(prev => {
+            const movieConfigMap = { ...(prev[movieId] || {}) };
+
+            for (const timeSlot of TIME_SLOTS) {
+                const actualStart = Math.max(timeSlot.startMinutes, cinemaOpen);
+                const actualEnd = Math.min(timeSlot.endMinutes, cinemaClose);
+                if (actualStart >= actualEnd) continue;
+
+                const times = generateSlotTimes({
+                    startMinutes: actualStart,
+                    endMinutes: actualEnd,
+                    intervalMinutes
+                });
+
+                for (const roomType of ROOM_TYPES) {
+                    for (const d of datesInRange) {
+                        for (const t of times) {
+                            const key = buildSlotKey(timeSlot.key, roomType, d.dayKey, t);
+                            if (!movieConfigMap[key]) {
+                                movieConfigMap[key] = {
+                                    config_id: undefined,
+                                    time_slot: timeSlot.key,
+                                    room_type: roomType,
+                                    day_type: d.dayKey,
+                                    startMinutes: t,
+                                    slot_time: minutesToTimeFull(t),
+                                    interval_type: intervalType,
+                                    is_active: 1
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+
+            return { ...prev, [movieId]: movieConfigMap };
+        });
+
+        showAlert('✅ Thành công', `🤖 Đã chọn tất cả giờ có thể chiếu!`, 'success');
+    };
+
+    // Bỏ chọn tất cả
+    const handleClearAll = (movieId) => {
+        setConfigs(prev => ({ ...prev, [movieId]: {} }));
+        showAlert('Đã xóa', 'Đã bỏ chọn tất cả suất chiếu', 'info');
+    };
+
+    // Save
     const handleSaveAll = async () => {
         if (!selectedCinema) {
             showAlert('Lỗi', 'Vui lòng chọn rạp', 'error');
@@ -587,69 +585,21 @@ const MovieShowtimeConfigPage = () => {
             return;
         }
 
-        const errors = [];
-        const preparedConfigs = {};
-
+        // Kiểm tra phim nào chưa có config
+        const emptyMovies = [];
         for (const movieId of selectedMovies) {
-            const movieConfigs = configs[movieId] || [];
-            const activeConfigs = movieConfigs.filter(
-                config => Number(config.is_active) === 1 && Number(config.slot_count) > 0
-            );
-            if (activeConfigs.length === 0) {
-                errors.push({ movieId, title: getMovieTitle(movieId), message: 'Chưa có cấu hình đang bật' });
-                continue;
+            const movieConfigs = configs[movieId] || {};
+            if (Object.keys(movieConfigs).length === 0) {
+                emptyMovies.push(getMovieTitle(movieId));
             }
-            for (const config of activeConfigs) {
-                const info = getConfigCapacityInfo(movieId, config);
-                if (info?.exceeded) {
-                    const dayInfo = datesInRange.find(d => d.dayKey === config.day_type);
-                    const dayDisplay = dayInfo ? `${dayInfo.shortDay} ${dayInfo.display}` : config.day_type;
-                    const timeLabel = TIME_SLOTS.find(s => s.key === config.time_slot)?.label || config.time_slot;
-                    errors.push({
-                        movieId,
-                        title: getMovieTitle(movieId),
-                        config,
-                        info,
-                        message: `${dayDisplay} - ${timeLabel}: ${info.requested}/${info.maxCapacity} suất`
-                    });
-                }
-            }
-            preparedConfigs[movieId] = activeConfigs.map(config => ({
-                time_slot: String(config.time_slot).toUpperCase(),
-                room_type: String(config.room_type).toUpperCase(),
-                slot_count: Number(config.slot_count),
-                interval_type: String(config.interval_type || DEFAULT_INTERVAL_TYPE).toUpperCase(),
-                day_type: String(config.day_type || 'MONDAY').toUpperCase(),
-                is_active: 1
-            }));
         }
 
-        if (errors.length > 0) {
-            const firstError = errors[0];
-            const info = firstError.info;
-            const dayInfo = datesInRange.find(d => d.dayKey === firstError.config.day_type);
-            const dayDisplay = dayInfo ? `${dayInfo.shortDay} ${dayInfo.display}` : firstError.config.day_type;
-            const timeLabel = TIME_SLOTS.find(s => s.key === firstError.config.time_slot)?.label || firstError.config.time_slot;
-
-            let detailMessage = `⚠️ ${firstError.title}\n`;
-            detailMessage += `📅 ${dayDisplay}\n`;
-            detailMessage += `🕐 ${timeLabel}\n`;
-            detailMessage += `🏠 ${firstError.config.room_type}\n\n`;
-            detailMessage += `Bạn nhập: ${firstError.config.slot_count} suất\n`;
-            detailMessage += `Tối đa: ${info?.maxCapacity || 0} suất\n`;
-
-            if (info?.slotTimes && info.slotTimes.length > 0) {
-                detailMessage += `\n📋 Các giờ bắt đầu:\n`;
-                info.slotTimes.slice(0, 6).forEach(t => {
-                    detailMessage += `  • ${t.startTime} → ${t.endTime}\n`;
-                });
-                if (info.slotTimes.length > 6) {
-                    detailMessage += `  • ... và ${info.slotTimes.length - 6} suất khác\n`;
-                }
-            }
-            detailMessage += `\n💡 Đề xuất: Nhập ${info?.recommended || info?.maxCapacity || 0} suất`;
-
-            showAlert('⚠️ Vượt giới hạn khung giờ', detailMessage, 'warning');
+        if (emptyMovies.length > 0) {
+            showAlert(
+                '⚠️ Chưa chọn suất chiếu',
+                `Các phim sau chưa có suất nào được chọn:\n${emptyMovies.join('\n')}\n\nVui lòng tick ít nhất 1 suất cho mỗi phim.`,
+                'warning'
+            );
             return;
         }
 
@@ -661,9 +611,20 @@ const MovieShowtimeConfigPage = () => {
         try {
             for (const movieId of selectedMovies) {
                 try {
+                    const movieConfigMap = configs[movieId] || {};
+                    const configsArray = Object.values(movieConfigMap).map(cfg => ({
+                        config_id: cfg.config_id,
+                        time_slot: String(cfg.time_slot).toUpperCase(),
+                        slot_time: cfg.slot_time,
+                        room_type: String(cfg.room_type).toUpperCase(),
+                        interval_type: String(cfg.interval_type || DEFAULT_INTERVAL_TYPE).toUpperCase(),
+                        day_type: String(cfg.day_type || 'MONDAY').toUpperCase(),
+                        is_active: 1
+                    }));
+
                     await api.post(`/api/showtime-config/${movieId}`, {
                         cinema_id: Number(selectedCinema),
-                        configs: preparedConfigs[movieId]
+                        configs: configsArray
                     });
                     successCount++;
                 } catch (error) {
@@ -694,11 +655,9 @@ const MovieShowtimeConfigPage = () => {
         return movie?.title || `Phim #${movieId}`;
     };
 
-    const getTotalSlots = (movieId) => {
-        const movieConfigs = configs[movieId] || [];
-        return movieConfigs.filter(
-            config => Number(config.slot_count) > 0 && Number(config.is_active) === 1
-        ).length;
+    const getTotalSelected = (movieId) => {
+        const movieConfigs = configs[movieId] || {};
+        return Object.keys(movieConfigs).length;
     };
 
     if (loading) {
@@ -714,7 +673,7 @@ const MovieShowtimeConfigPage = () => {
         <>
             <AdminPage
                 title="Cấu hình lịch chiếu"
-                subtitle="Cấu hình suất chiếu theo từng ngày"
+                subtitle="Tick chọn giờ chiếu cụ thể cho từng phim"
                 icon={<Settings size={30} />}
                 buttonText="Quay lại"
                 onAdd={() => navigate('/admin/showtime-config')}
@@ -722,9 +681,7 @@ const MovieShowtimeConfigPage = () => {
             >
                 <div className="movie-showtime-config-page">
 
-                    {/* ==========================================================
-                        TOOLBAR - CHỌN RẠP
-                    ========================================================== */}
+                    {/* TOOLBAR - CHỌN RẠP */}
                     <div className="config-toolbar">
                         <div className="filter-group">
                             <label className="config-label">🏠 Rạp</label>
@@ -751,9 +708,7 @@ const MovieShowtimeConfigPage = () => {
                         </div>
                     </div>
 
-                    {/* ==========================================================
-                        CHỌN PHIM
-                    ========================================================== */}
+                    {/* CHỌN PHIM */}
                     {selectedCinema && (
                         <div className="movie-select-section">
                             <div className="movie-select-header">
@@ -791,7 +746,7 @@ const MovieShowtimeConfigPage = () => {
                                             {movie.title}
                                             {isChecked && (
                                                 <span className="chip-badge">
-                                                    {getTotalSlots(movie.movie_id)}
+                                                    {getTotalSelected(movie.movie_id)}
                                                 </span>
                                             )}
                                         </label>
@@ -804,9 +759,7 @@ const MovieShowtimeConfigPage = () => {
                         </div>
                     )}
 
-                    {/* ==========================================================
-                        KHOẢNG NGÀY & DANH SÁCH NGÀY
-                    ========================================================== */}
+                    {/* KHOẢNG NGÀY */}
                     {selectedCinema && selectedMovies.length > 0 && (
                         <>
                             <div className="date-range-section">
@@ -844,20 +797,18 @@ const MovieShowtimeConfigPage = () => {
                         </>
                     )}
 
-                    {/* ==========================================================
-                        CẤU HÌNH
-                    ========================================================== */}
+                    {/* CẤU HÌNH */}
                     {selectedCinema && selectedMovies.length > 0 && (
                         <div className="config-container">
                             {selectedMovies.map((movieId, idx) => {
-                                const movieConfigs = configs[movieId] || [];
+                                const movieConfigMap = configs[movieId] || {};
                                 const isExpanded = expandedMovies[movieId] !== false;
                                 const movieTitle = getMovieTitle(movieId);
-                                const totalSlots = movieConfigs.filter(
-                                    c => Number(c.slot_count) > 0 && Number(c.is_active) === 1
-                                ).length;
+                                const totalSelected = Object.keys(movieConfigMap).length;
                                 const movie = getMovieByIdFromList(movies, movieId);
                                 const duration = extractMovieDuration(movie);
+                                const intervalType = getMovieInterval(movieId);
+                                const intervalMinutes = getIntervalMinutes(intervalType);
 
                                 return (
                                     <div key={movieId} className="movie-card">
@@ -869,7 +820,7 @@ const MovieShowtimeConfigPage = () => {
                                             <div className="movie-card-title">
                                                 <span className="movie-index">{idx + 1}.</span>
                                                 <span className="movie-name">🎬 {movieTitle}</span>
-                                                <span className="movie-badge">{totalSlots} cấu hình</span>
+                                                <span className="movie-badge">{totalSelected} suất</span>
                                                 <span className="movie-duration">⏱️ {duration}p</span>
                                             </div>
                                             <div className="movie-card-toggle">
@@ -880,32 +831,15 @@ const MovieShowtimeConfigPage = () => {
                                         {/* Body */}
                                         {isExpanded && (
                                             <div className="movie-card-body">
-                                                {/* Actions */}
-                                                <div className="card-actions">
-                                                    <button
-                                                        type="button"
-                                                        className="btn-add-all"
-                                                        onClick={() => addConfigForAllDays(movieId)}
-                                                    >
-                                                        <Plus size={14} /> Thêm tất cả ngày
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        className="btn-auto-fill"
-                                                        onClick={() => handleAutoFill(movieId)}
-                                                    >
-                                                        🤖 Auto
-                                                    </button>
-                                                </div>
 
-                                                {/* ✅ INTERVAL SECTION */}
+                                                {/* INTERVAL SECTION */}
                                                 <div className="interval-section">
                                                     <div className="interval-header">
                                                         <span className="interval-label">⏱️ Khoảng cách giữa các suất</span>
                                                         <span className="interval-hint">
-                                                            {movieConfigs.length === 0 
-                                                                ? '⚠️ Chưa có cấu hình - Hãy tạo cấu hình trước'
-                                                                : `Đang chọn: ${INTERVAL_TYPES.find(i => i.key === selectedInterval)?.label} (${getIntervalMinutes(selectedInterval)} phút)`
+                                                            {totalSelected > 0
+                                                                ? `Đã chọn ${totalSelected} suất`
+                                                                : 'Chọn khoảng cách trước khi tick giờ'
                                                             }
                                                         </span>
                                                     </div>
@@ -914,8 +848,8 @@ const MovieShowtimeConfigPage = () => {
                                                             <button
                                                                 key={preset.key}
                                                                 type="button"
-                                                                className={`interval-btn ${selectedInterval === preset.key ? 'active' : ''}`}
-                                                                onClick={() => setSelectedInterval(preset.key)}
+                                                                className={`interval-btn ${intervalType === preset.key ? 'active' : ''}`}
+                                                                onClick={() => handleChangeInterval(movieId, preset.key)}
                                                             >
                                                                 <span className="interval-label-btn">{preset.label}</span>
                                                                 <span className="interval-minutes">{preset.minutes}p</span>
@@ -923,181 +857,165 @@ const MovieShowtimeConfigPage = () => {
                                                             </button>
                                                         ))}
                                                     </div>
+                                                </div>
+
+                                                {/* ACTIONS */}
+                                                <div className="card-actions">
                                                     <button
                                                         type="button"
-                                                        className={`btn-apply-interval ${movieConfigs.length === 0 ? 'disabled' : ''}`}
-                                                        onClick={() => applyIntervalToAll(movieId)}
-                                                        disabled={movieConfigs.length === 0}
-                                                        title={movieConfigs.length === 0 ? 'Chưa có cấu hình để áp dụng' : 'Áp dụng interval cho tất cả config'}
+                                                        className="btn-auto-fill"
+                                                        onClick={() => handleAutoFill(movieId)}
                                                     >
-                                                        {movieConfigs.length === 0 
-                                                            ? '⚠️ Chưa có cấu hình để áp dụng'
-                                                            : `✅ Áp dụng ${INTERVAL_TYPES.find(i => i.key === selectedInterval)?.label} cho tất cả`
-                                                        }
+                                                        🤖 Chọn tất cả
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="btn-clear-all"
+                                                        onClick={() => handleClearAll(movieId)}
+                                                    >
+                                                        🗑️ Bỏ chọn tất cả
                                                     </button>
                                                 </div>
 
-                                                {movieConfigs.length === 0 ? (
-                                                    <div className="empty-config">
-                                                        <p>📭 Chưa có cấu hình</p>
-                                                        <p className="empty-hint">Bấm "Thêm tất cả ngày" để bắt đầu</p>
-                                                    </div>
-                                                ) : (
-                                                    <div className="config-table-wrapper">
-                                                        <table className="config-table">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th style={{ minWidth: '120px', textAlign: 'left' }}>
-                                                                        LOẠI PHÒNG
+                                                {/* BẢNG */}
+                                                <div className="config-table-wrapper">
+                                                    <table className="config-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th style={{ minWidth: '120px', textAlign: 'left' }}>
+                                                                    LOẠI PHÒNG
+                                                                </th>
+                                                                {datesInRange.map((d, idx) => (
+                                                                    <th
+                                                                        key={idx}
+                                                                        className={`date-header ${d.isWeekend ? 'weekend' : ''}`}
+                                                                    >
+                                                                        {d.shortDay}<br />
+                                                                        <span style={{ fontWeight: '400', fontSize: '10px', color: 'var(--text-muted)' }}>
+                                                                            {d.display}
+                                                                        </span>
                                                                     </th>
-                                                                    {datesInRange.map((d, idx) => (
-                                                                        <th 
-                                                                            key={idx} 
-                                                                            className={`date-header ${d.isWeekend ? 'weekend' : ''}`}
-                                                                        >
-                                                                            {d.shortDay}<br/>
-                                                                            <span style={{ fontWeight: '400', fontSize: '10px', color: 'var(--text-muted)' }}>
-                                                                                {d.display}
-                                                                            </span>
-                                                                        </th>
-                                                                    ))}
-                                                                    <th style={{ minWidth: '40px', color: 'var(--accent-ice)' }}>📊</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                {TIME_SLOTS.map(timeSlot => {
-                                                                    const slotConfigs = movieConfigs.filter(
-                                                                        c => c.time_slot === timeSlot.key && Number(c.is_active) === 1
-                                                                    );
+                                                                ))}
+                                                                <th style={{ minWidth: '50px', color: 'var(--accent-ice)' }}>📊</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {TIME_SLOTS.map(timeSlot => {
+                                                                const actualStart = Math.max(timeSlot.startMinutes, cinemaOpen);
+                                                                const actualEnd = Math.min(timeSlot.endMinutes, cinemaClose);
+                                                                const isValidRange = actualStart < actualEnd;
+                                                                const times = isValidRange
+                                                                    ? generateSlotTimes({
+                                                                        startMinutes: actualStart,
+                                                                        endMinutes: actualEnd,
+                                                                        intervalMinutes
+                                                                    })
+                                                                    : [];
 
+                                                                return (
+                                                                    <React.Fragment key={timeSlot.key}>
+                                                                        <tr className="time-slot-header">
+                                                                            <td colSpan={datesInRange.length + 2}>
+                                                                                {timeSlot.label}
+                                                                                {isValidRange && (
+                                                                                    <span className="time-slot-range">
+                                                                                        {' '}({minutesToTime(actualStart)} → {minutesToTime(actualEnd)})
+                                                                                    </span>
+                                                                                )}
+                                                                                {!isValidRange && (
+                                                                                    <span className="time-slot-range disabled">
+                                                                                        {' '}(ngoài giờ hoạt động)
+                                                                                    </span>
+                                                                                )}
+                                                                            </td>
+                                                                        </tr>
+
+                                                                        {ROOM_TYPES.map(roomType => {
+                                                                            // Đếm tổng selected trong row này
+                                                                            let rowTotal = 0;
+                                                                            for (const d of datesInRange) {
+                                                                                for (const t of times) {
+                                                                                    const key = buildSlotKey(timeSlot.key, roomType, d.dayKey, t);
+                                                                                    if (movieConfigMap[key]) rowTotal++;
+                                                                                }
+                                                                            }
+
+                                                                            return (
+                                                                                <tr key={roomType} className={rowTotal === 0 ? 'empty-row' : ''}>
+                                                                                    <td className="room-label">
+                                                                                        <div className="room-label-content">
+                                                                                            <span>{roomType}</span>
+                                                                                            {isValidRange && times.length > 0 && (
+                                                                                                <span className="room-slot-count">
+                                                                                                    ({times.length} giờ)
+                                                                                                </span>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    </td>
+                                                                                    {datesInRange.map((d, dayIdx) => {
+                                                                                        return (
+                                                                                            <td key={dayIdx} className="slot-cell-container">
+                                                                                                {!isValidRange ? (
+                                                                                                    <span className="no-slots">-</span>
+                                                                                                ) : (
+                                                                                                    <div className="slot-list">
+                                                                                                        {times.map(t => {
+                                                                                                            const key = buildSlotKey(timeSlot.key, roomType, d.dayKey, t);
+                                                                                                            const isSelected = !!movieConfigMap[key];
+                                                                                                            return (
+                                                                                                                <button
+                                                                                                                    key={t}
+                                                                                                                    type="button"
+                                                                                                                    className={`slot-btn ${isSelected ? 'selected' : ''}`}
+                                                                                                                    onClick={() => toggleSlot(movieId, timeSlot.key, roomType, d.dayKey, t)}
+                                                                                                                    title={`${minutesToTime(t)} - ${roomType} - ${d.shortDay} ${d.display}`}
+                                                                                                                >
+                                                                                                                    {minutesToTime(t)}
+                                                                                                                </button>
+                                                                                                            );
+                                                                                                        })}
+                                                                                                    </div>
+                                                                                                )}
+                                                                                            </td>
+                                                                                        );
+                                                                                    })}
+                                                                                    <td className="total-cell">{rowTotal}</td>
+                                                                                </tr>
+                                                                            );
+                                                                        })}
+                                                                    </React.Fragment>
+                                                                );
+                                                            })}
+
+                                                            <tr className="total-row">
+                                                                <td className="room-label">📊 TỔNG</td>
+                                                                {datesInRange.map((d, dayIdx) => {
+                                                                    let dayTotal = 0;
+                                                                    for (const timeSlot of TIME_SLOTS) {
+                                                                        const actualStart = Math.max(timeSlot.startMinutes, cinemaOpen);
+                                                                        const actualEnd = Math.min(timeSlot.endMinutes, cinemaClose);
+                                                                        if (actualStart >= actualEnd) continue;
+                                                                        const times = generateSlotTimes({
+                                                                            startMinutes: actualStart,
+                                                                            endMinutes: actualEnd,
+                                                                            intervalMinutes
+                                                                        });
+                                                                        for (const roomType of ROOM_TYPES) {
+                                                                            for (const t of times) {
+                                                                                const key = buildSlotKey(timeSlot.key, roomType, d.dayKey, t);
+                                                                                if (movieConfigMap[key]) dayTotal++;
+                                                                            }
+                                                                        }
+                                                                    }
                                                                     return (
-                                                                        <React.Fragment key={timeSlot.key}>
-                                                                            <tr className="time-slot-header">
-                                                                                <td colSpan={datesInRange.length + 2}>
-                                                                                    {timeSlot.label}
-                                                                                </td>
-                                                                            </tr>
-
-                                                                            {ROOM_TYPES.map(roomType => {
-                                                                                const roomConfigs = slotConfigs.filter(c => c.room_type === roomType);
-                                                                                
-                                                                                const dayTotals = datesInRange.map(d => {
-                                                                                    const config = roomConfigs.find(c => c.day_type === d.dayKey);
-                                                                                    return config ? Number(config.slot_count) || 0 : 0;
-                                                                                });
-                                                                                
-                                                                                const rowTotal = dayTotals.reduce((a, b) => a + b, 0);
-                                                                                const hasValue = dayTotals.some(v => v > 0);
-
-                                                                                return (
-                                                                                    <tr key={roomType} className={!hasValue ? 'empty-row' : ''}>
-                                                                                        <td className="room-label">
-                                                                                            {roomType}
-                                                                                        </td>
-                                                                                        {datesInRange.map((d, idx) => {
-                                                                                            const config = roomConfigs.find(c => c.day_type === d.dayKey);
-                                                                                            const actualIndex = config ? movieConfigs.indexOf(config) : -1;
-                                                                                            const value = config ? Number(config.slot_count) || 0 : 0;
-                                                                                            
-                                                                                            let isError = false;
-                                                                                            let capacityInfo = null;
-                                                                                            if (config && Number(config.slot_count) > 0) {
-                                                                                                const info = getConfigCapacityInfo(movieId, config);
-                                                                                                if (info?.exceeded) {
-                                                                                                    isError = true;
-                                                                                                    capacityInfo = info;
-                                                                                                }
-                                                                                            }
-
-                                                                                            const handleInputChange = (e) => {
-                                                                                                const newVal = e.target.value;
-                                                                                                
-                                                                                                if (config && actualIndex !== -1) {
-                                                                                                    updateConfig(movieId, actualIndex, 'slot_count', newVal);
-                                                                                                } else if (newVal !== '' && Number(newVal) > 0) {
-                                                                                                    const newConfig = {
-                                                                                                        time_slot: timeSlot.key,
-                                                                                                        room_type: roomType,
-                                                                                                        slot_count: Number(newVal),
-                                                                                                        interval_type: selectedInterval || DEFAULT_INTERVAL_TYPE,
-                                                                                                        day_type: d.dayKey,
-                                                                                                        is_active: 1
-                                                                                                    };
-                                                                                                    setConfigs(prev => ({
-                                                                                                        ...prev,
-                                                                                                        [movieId]: [...(prev[movieId] || []), newConfig]
-                                                                                                    }));
-                                                                                                }
-                                                                                            };
-
-                                                                                            return (
-                                                                                                <td key={idx}>
-                                                                                                    <input
-                                                                                                        type="number"
-                                                                                                        className={`config-input-cell ${value > 0 ? 'has-value' : ''} ${isError ? 'error' : ''}`}
-                                                                                                        value={value}
-                                                                                                        onChange={handleInputChange}
-                                                                                                        min="0"
-                                                                                                        max="30"
-                                                                                                        placeholder="-"
-                                                                                                        title={isError && capacityInfo ? `${capacityInfo.requested}/${capacityInfo.maxCapacity} suất tối đa` : ''}
-                                                                                                    />
-                                                                                                </td>
-                                                                                            );
-                                                                                        })}
-                                                                                        <td className="total-cell">{rowTotal}</td>
-                                                                                    </tr>
-                                                                                );
-                                                                            })}
-                                                                        </React.Fragment>
+                                                                        <td key={dayIdx} className="total-cell">{dayTotal}</td>
                                                                     );
                                                                 })}
-
-                                                                <tr className="total-row">
-                                                                    <td className="room-label">📊 TỔNG</td>
-                                                                    {datesInRange.map((d, idx) => {
-                                                                        let dayTotal = 0;
-                                                                        ROOM_TYPES.forEach(roomType => {
-                                                                            TIME_SLOTS.forEach(timeSlot => {
-                                                                                const config = movieConfigs.find(
-                                                                                    c => c.time_slot === timeSlot.key && 
-                                                                                         c.room_type === roomType && 
-                                                                                         c.day_type === d.dayKey &&
-                                                                                         Number(c.is_active) === 1
-                                                                                );
-                                                                                if (config) {
-                                                                                    dayTotal += Number(config.slot_count) || 0;
-                                                                                }
-                                                                            });
-                                                                        });
-                                                                        return (
-                                                                            <td key={idx} className="total-cell">{dayTotal}</td>
-                                                                        );
-                                                                    })}
-                                                                    <td className="total-cell">
-                                                                        {datesInRange.reduce((sum, d) => {
-                                                                            let dayTotal = 0;
-                                                                            ROOM_TYPES.forEach(roomType => {
-                                                                                TIME_SLOTS.forEach(timeSlot => {
-                                                                                    const config = movieConfigs.find(
-                                                                                        c => c.time_slot === timeSlot.key && 
-                                                                                             c.room_type === roomType && 
-                                                                                             c.day_type === d.dayKey &&
-                                                                                             Number(c.is_active) === 1
-                                                                                    );
-                                                                                    if (config) {
-                                                                                        dayTotal += Number(config.slot_count) || 0;
-                                                                                    }
-                                                                                });
-                                                                            });
-                                                                            return sum + dayTotal;
-                                                                        }, 0)}
-                                                                    </td>
-                                                                </tr>
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                )}
+                                                                <td className="total-cell">{totalSelected}</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
                                             </div>
                                         )}
                                     </div>

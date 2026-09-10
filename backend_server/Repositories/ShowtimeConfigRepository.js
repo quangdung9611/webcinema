@@ -7,7 +7,7 @@ const db = require('../Config/db');
 class ShowtimeConfigRepository {
 
     /*=========================================================
-        LẤY CẤU HÌNH CỦA 1 PHIM Ở 1 RẠP
+        LẤY CẤU HÌNH CỦA 1 PHIM Ở 1 RẠP (chỉ active)
     =========================================================*/
     async findByMovieAndCinema(movieId, cinemaId) {
         const [rows] = await db.query(
@@ -18,8 +18,8 @@ class ShowtimeConfigRepository {
                 cinema_id,
                 day_type,
                 time_slot,
+                slot_time,
                 room_type,
-                slot_count,
                 interval_type,
                 is_active,
                 created_at,
@@ -30,25 +30,20 @@ class ShowtimeConfigRepository {
               AND is_active = 1
             ORDER BY
                 FIELD(
+                    day_type,
+                    'MONDAY','TUESDAY','WEDNESDAY','THURSDAY',
+                    'FRIDAY','SATURDAY','SUNDAY',
+                    'WEEKDAY','WEEKEND','ALL'
+                ),
+                FIELD(
                     time_slot,
-                    'MORNING',
-                    'AFTERNOON',
-                    'EVENING',
-                    'NIGHT'
+                    'MORNING','AFTERNOON','EVENING','NIGHT'
                 ),
                 FIELD(
                     room_type,
-                    '2D',
-                    '3D',
-                    'VIP',
-                    'IMAX'
+                    '2D','3D','VIP','IMAX'
                 ),
-                FIELD(
-                    day_type,
-                    'ALL',
-                    'WEEKDAY',
-                    'WEEKEND'
-                )
+                slot_time ASC
             `,
             [movieId, cinemaId]
         );
@@ -57,8 +52,7 @@ class ShowtimeConfigRepository {
     }
 
     /*=========================================================
-        LẤY TẤT CẢ CONFIG CỦA 1 PHIM + RẠP
-        Bao gồm cả config inactive
+        LẤY TẤT CẢ CONFIG CỦA 1 PHIM + RẠP (kể cả inactive)
     =========================================================*/
     async findAllByMovieAndCinema(movieId, cinemaId) {
         const [rows] = await db.query(
@@ -69,8 +63,8 @@ class ShowtimeConfigRepository {
                 cinema_id,
                 day_type,
                 time_slot,
+                slot_time,
                 room_type,
-                slot_count,
                 interval_type,
                 is_active,
                 created_at,
@@ -80,25 +74,20 @@ class ShowtimeConfigRepository {
               AND cinema_id = ?
             ORDER BY
                 FIELD(
+                    day_type,
+                    'MONDAY','TUESDAY','WEDNESDAY','THURSDAY',
+                    'FRIDAY','SATURDAY','SUNDAY',
+                    'WEEKDAY','WEEKEND','ALL'
+                ),
+                FIELD(
                     time_slot,
-                    'MORNING',
-                    'AFTERNOON',
-                    'EVENING',
-                    'NIGHT'
+                    'MORNING','AFTERNOON','EVENING','NIGHT'
                 ),
                 FIELD(
                     room_type,
-                    '2D',
-                    '3D',
-                    'VIP',
-                    'IMAX'
+                    '2D','3D','VIP','IMAX'
                 ),
-                FIELD(
-                    day_type,
-                    'ALL',
-                    'WEEKDAY',
-                    'WEEKEND'
-                )
+                slot_time ASC
             `,
             [movieId, cinemaId]
         );
@@ -123,7 +112,7 @@ class ShowtimeConfigRepository {
     }
 
     /*=========================================================
-        THÊM 1 CẤU HÌNH MỚI
+        THÊM 1 CẤU HÌNH MỚI (1 giờ cụ thể)
     =========================================================*/
     async create(data, connection = db) {
         const {
@@ -131,8 +120,8 @@ class ShowtimeConfigRepository {
             cinema_id,
             day_type,
             time_slot,
+            slot_time,
             room_type,
-            slot_count,
             interval_type,
             is_active
         } = data;
@@ -145,8 +134,8 @@ class ShowtimeConfigRepository {
                 cinema_id,
                 day_type,
                 time_slot,
+                slot_time,
                 room_type,
-                slot_count,
                 interval_type,
                 is_active
             )
@@ -157,8 +146,8 @@ class ShowtimeConfigRepository {
                 cinema_id,
                 day_type || 'ALL',
                 time_slot,
+                slot_time,
                 room_type,
-                slot_count ?? 1,
                 interval_type || 'NORMAL',
                 is_active !== undefined ? is_active : 1
             ]
@@ -194,8 +183,8 @@ class ShowtimeConfigRepository {
                 cinema_id,
                 day_type,
                 time_slot,
+                slot_time,
                 room_type,
-                slot_count,
                 interval_type,
                 is_active,
                 created_at,
@@ -212,11 +201,13 @@ class ShowtimeConfigRepository {
 
     /*=========================================================
         KIỂM TRA CONFIG ĐÃ TỒN TẠI CHƯA
+        Unique key: (movie, cinema, day, slot, slot_time, room)
     =========================================================*/
     async exists(
         movieId,
         cinemaId,
         timeSlot,
+        slotTime,
         roomType,
         dayType,
         connection = db
@@ -229,14 +220,15 @@ class ShowtimeConfigRepository {
                 cinema_id,
                 day_type,
                 time_slot,
+                slot_time,
                 room_type,
-                slot_count,
                 interval_type,
                 is_active
             FROM movie_showtime_config
             WHERE movie_id = ?
               AND cinema_id = ?
               AND time_slot = ?
+              AND slot_time = ?
               AND room_type = ?
               AND day_type = ?
             LIMIT 1
@@ -245,6 +237,7 @@ class ShowtimeConfigRepository {
                 movieId,
                 cinemaId,
                 timeSlot,
+                slotTime,
                 roomType,
                 dayType
             ]
@@ -260,8 +253,8 @@ class ShowtimeConfigRepository {
         const {
             day_type,
             time_slot,
+            slot_time,
             room_type,
-            slot_count,
             interval_type,
             is_active
         } = data;
@@ -272,8 +265,8 @@ class ShowtimeConfigRepository {
             SET
                 day_type = ?,
                 time_slot = ?,
+                slot_time = ?,
                 room_type = ?,
-                slot_count = ?,
                 interval_type = ?,
                 is_active = ?
             WHERE config_id = ?
@@ -281,8 +274,8 @@ class ShowtimeConfigRepository {
             [
                 day_type,
                 time_slot,
+                slot_time,
                 room_type,
-                slot_count,
                 interval_type,
                 is_active,
                 configId
@@ -293,27 +286,20 @@ class ShowtimeConfigRepository {
     }
 
     /*=========================================================
-        CẬP NHẬT RIÊNG SỐ SUẤT + INTERVAL TYPE
+        CẬP NHẬT RIÊNG INTERVAL TYPE
     =========================================================*/
-    async updateScheduleValues(
+    async updateIntervalType(
         configId,
-        slotCount,
         intervalType,
         connection = db
     ) {
         const [result] = await connection.query(
             `
             UPDATE movie_showtime_config
-            SET
-                slot_count = ?,
-                interval_type = ?
+            SET interval_type = ?
             WHERE config_id = ?
             `,
-            [
-                slotCount,
-                intervalType,
-                configId
-            ]
+            [intervalType, configId]
         );
 
         return result.affectedRows;

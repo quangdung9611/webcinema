@@ -1,3 +1,7 @@
+// ============================================================
+// repositories/ShowtimeRepository.js
+// ============================================================
+
 const db = require("../Config/db");
 
 class ShowtimeRepository {
@@ -400,53 +404,53 @@ class ShowtimeRepository {
         GET OPERATING HOURS FROM CINEMA
     =========================================================*/
     async getOperatingHours(cinemaId) {
-    const [rows] = await db.query(
-        `
-        SELECT 
-            TIME_FORMAT(weekday_open, '%H:%i') AS weekday_open,
-            TIME_FORMAT(weekday_close, '%H:%i') AS weekday_close,
-            TIME_FORMAT(weekend_open, '%H:%i') AS weekend_open,
-            TIME_FORMAT(weekend_close, '%H:%i') AS weekend_close
-        FROM cinemas
-        WHERE cinema_id = ?
-        LIMIT 1
-        `,
-        [cinemaId]
-    );
-    
-    if (rows.length === 0) {
+        const [rows] = await db.query(
+            `
+            SELECT 
+                TIME_FORMAT(weekday_open, '%H:%i') AS weekday_open,
+                TIME_FORMAT(weekday_close, '%H:%i') AS weekday_close,
+                TIME_FORMAT(weekend_open, '%H:%i') AS weekend_open,
+                TIME_FORMAT(weekend_close, '%H:%i') AS weekend_close
+            FROM cinemas
+            WHERE cinema_id = ?
+            LIMIT 1
+            `,
+            [cinemaId]
+        );
+
+        if (rows.length === 0) {
+            return {
+                weekday: { open: '08:00', close: '23:30' },
+                weekend: { open: '08:00', close: '24:00' }
+            };
+        }
+
+        const row = rows[0];
         return {
-            weekday: { open: '08:00', close: '23:30' },
-            weekend: { open: '08:00', close: '24:00' }
+            weekday: {
+                open: row.weekday_open || '08:00',
+                close: row.weekday_close || '23:30'
+            },
+            weekend: {
+                open: row.weekend_open || '08:00',
+                close: row.weekend_close || '24:00'
+            }
         };
     }
-    
-    const row = rows[0];
-    return {
-        weekday: {
-            open: row.weekday_open || '08:00',
-            close: row.weekday_close || '23:30'
-        },
-        weekend: {
-            open: row.weekend_open || '08:00',
-            close: row.weekend_close || '24:00'
-        }
-    };
-}
 
     /*=========================================================
         GET MOVIE SHOWTIME CONFIG - HỖ TRỢ TỪNG NGÀY
-        ✅ ĐÃ ĐỔI interval_minutes → interval_type
+        ✅ ĐÃ ĐỔI: trả về danh sách slot_times thay vì slot_count
     =========================================================*/
     async getMovieShowtimeConfig(movieId, cinemaId, dayType = 'ALL') {
         console.log(`🔍 [CONFIG] movie=${movieId}, cinema=${cinemaId}, dayType=${dayType}`);
-        
+
         let rows = [];
         let query = `
             SELECT
                 time_slot,
+                slot_time,
                 room_type,
-                slot_count,
                 interval_type
             FROM movie_showtime_config
             WHERE movie_id = ?
@@ -454,7 +458,7 @@ class ShowtimeRepository {
               AND is_active = 1
         `;
         const params = [movieId, cinemaId];
-        
+
         // Nếu có dayType cụ thể (MONDAY, TUESDAY, ...)
         if (dayType && dayType !== 'ALL' && dayType !== 'WEEKDAY' && dayType !== 'WEEKEND') {
             query += ` AND day_type = ?`;
@@ -465,48 +469,69 @@ class ShowtimeRepository {
         } else {
             query += ` AND day_type = 'ALL'`;
         }
-        
-        query += ` ORDER BY time_slot ASC, room_type ASC`;
-        
+
+        query += ` ORDER BY time_slot ASC, room_type ASC, slot_time ASC`;
+
         const [specificRows] = await db.query(query, params);
         console.log(`🔍 [CONFIG] specific rows: ${specificRows.length}`);
-        
+
         // Nếu không có config cho ngày cụ thể, fallback về ALL
         if (specificRows.length === 0 && dayType && dayType !== 'ALL') {
             const [fallbackRows] = await db.query(`
                 SELECT
                     time_slot,
+                    slot_time,
                     room_type,
-                    slot_count,
                     interval_type
                 FROM movie_showtime_config
                 WHERE movie_id = ?
                   AND cinema_id = ?
                   AND day_type = 'ALL'
                   AND is_active = 1
-                ORDER BY time_slot ASC, room_type ASC
+                ORDER BY time_slot ASC, room_type ASC, slot_time ASC
             `, [movieId, cinemaId]);
-            
+
             console.log(`🔍 [CONFIG] fallback rows: ${fallbackRows.length}`);
             rows = fallbackRows;
         } else {
             rows = specificRows;
         }
-        
+
         // BUILD CONFIG OBJECT
+        // Cấu trúc:
+        // {
+        //   MORNING: [
+        //     { room_type: '2D', interval_type: 'NORMAL', slot_times: ['08:00:00', '09:15:00', '10:30:00'] }
+        //   ],
+        //   AFTERNOON: [...]
+        // }
         const config = {};
         for (const row of rows) {
             const slot = row.time_slot;
             if (!config[slot]) {
                 config[slot] = [];
             }
-            config[slot].push({
-                room_type: String(row.room_type || '').trim().toUpperCase(),
-                slot_count: Number(row.slot_count),
-                interval_type: String(row.interval_type || 'NORMAL').trim().toUpperCase()
-            });
+
+            const roomType = String(row.room_type || '').trim().toUpperCase();
+            const intervalType = String(row.interval_type || 'NORMAL').trim().toUpperCase();
+            const slotTime = String(row.slot_time || '').trim();
+
+            let entry = config[slot].find(item => item.room_type === roomType);
+
+            if (!entry) {
+                entry = {
+                    room_type: roomType,
+                    interval_type: intervalType,
+                    slot_times: []
+                };
+                config[slot].push(entry);
+            }
+
+            if (slotTime) {
+                entry.slot_times.push(slotTime);
+            }
         }
-        
+
         console.log(`🔍 [CONFIG] result:`, JSON.stringify(config));
         return config;
     }
@@ -516,7 +541,7 @@ class ShowtimeRepository {
     =========================================================*/
     async getMovieStats(movieIds) {
         if (!movieIds || movieIds.length === 0) return {};
-        
+
         const placeholders = movieIds.map(() => '?').join(',');
         const [rows] = await db.query(
             `
@@ -534,7 +559,7 @@ class ShowtimeRepository {
             `,
             movieIds
         );
-        
+
         const stats = {};
         for (const row of rows) {
             stats[row.movie_id] = {

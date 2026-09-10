@@ -78,7 +78,7 @@ exports.getShowtimeConfig = async (req, res) => {
     CONFIG BỊ BỎ KHỎI PAYLOAD
         → DELETE
 
-    KHÔNG DELETE ALL + INSERT ALL
+    Mỗi config = 1 giờ cụ thể (start_time)
 =========================================================*/
 exports.saveShowtimeConfig = async (req, res) => {
     try {
