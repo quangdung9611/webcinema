@@ -20,7 +20,7 @@ class ShowtimeConfigRepository {
                 time_slot,
                 room_type,
                 slot_count,
-                interval_minutes,
+                interval_type,
                 is_active,
                 created_at,
                 updated_at
@@ -71,7 +71,7 @@ class ShowtimeConfigRepository {
                 time_slot,
                 room_type,
                 slot_count,
-                interval_minutes,
+                interval_type,
                 is_active,
                 created_at,
                 updated_at
@@ -108,11 +108,6 @@ class ShowtimeConfigRepository {
 
     /*=========================================================
         XÓA TẤT CẢ CẤU HÌNH CỦA 1 PHIM Ở 1 RẠP
-
-        LƯU Ý:
-        Hàm này vẫn giữ lại để dùng khi thật sự cần xóa toàn bộ.
-
-        saveConfig() KHÔNG sử dụng hàm này nữa.
     =========================================================*/
     async deleteByMovieAndCinema(movieId, cinemaId) {
         const [result] = await db.query(
@@ -138,7 +133,7 @@ class ShowtimeConfigRepository {
             time_slot,
             room_type,
             slot_count,
-            interval_minutes,
+            interval_type,
             is_active
         } = data;
 
@@ -152,7 +147,7 @@ class ShowtimeConfigRepository {
                 time_slot,
                 room_type,
                 slot_count,
-                interval_minutes,
+                interval_type,
                 is_active
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -164,7 +159,7 @@ class ShowtimeConfigRepository {
                 time_slot,
                 room_type,
                 slot_count ?? 1,
-                interval_minutes ?? 45,
+                interval_type || 'NORMAL',
                 is_active !== undefined ? is_active : 1
             ]
         );
@@ -201,7 +196,7 @@ class ShowtimeConfigRepository {
                 time_slot,
                 room_type,
                 slot_count,
-                interval_minutes,
+                interval_type,
                 is_active,
                 created_at,
                 updated_at
@@ -217,14 +212,6 @@ class ShowtimeConfigRepository {
 
     /*=========================================================
         KIỂM TRA CONFIG ĐÃ TỒN TẠI CHƯA
-
-        Bộ khóa logic:
-
-        movie_id
-        + cinema_id
-        + time_slot
-        + room_type
-        + day_type
     =========================================================*/
     async exists(
         movieId,
@@ -244,7 +231,7 @@ class ShowtimeConfigRepository {
                 time_slot,
                 room_type,
                 slot_count,
-                interval_minutes,
+                interval_type,
                 is_active
             FROM movie_showtime_config
             WHERE movie_id = ?
@@ -275,7 +262,7 @@ class ShowtimeConfigRepository {
             time_slot,
             room_type,
             slot_count,
-            interval_minutes,
+            interval_type,
             is_active
         } = data;
 
@@ -287,7 +274,7 @@ class ShowtimeConfigRepository {
                 time_slot = ?,
                 room_type = ?,
                 slot_count = ?,
-                interval_minutes = ?,
+                interval_type = ?,
                 is_active = ?
             WHERE config_id = ?
             `,
@@ -296,7 +283,7 @@ class ShowtimeConfigRepository {
                 time_slot,
                 room_type,
                 slot_count,
-                interval_minutes,
+                interval_type,
                 is_active,
                 configId
             ]
@@ -306,14 +293,12 @@ class ShowtimeConfigRepository {
     }
 
     /*=========================================================
-        CẬP NHẬT RIÊNG SỐ SUẤT + INTERVAL
-
-        Có thể dùng khi UI chỉ thay đổi số suất/khoảng cách.
+        CẬP NHẬT RIÊNG SỐ SUẤT + INTERVAL TYPE
     =========================================================*/
     async updateScheduleValues(
         configId,
         slotCount,
-        intervalMinutes,
+        intervalType,
         connection = db
     ) {
         const [result] = await connection.query(
@@ -321,12 +306,12 @@ class ShowtimeConfigRepository {
             UPDATE movie_showtime_config
             SET
                 slot_count = ?,
-                interval_minutes = ?
+                interval_type = ?
             WHERE config_id = ?
             `,
             [
                 slotCount,
-                intervalMinutes,
+                intervalType,
                 configId
             ]
         );

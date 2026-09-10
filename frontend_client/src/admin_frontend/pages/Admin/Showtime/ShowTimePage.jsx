@@ -23,6 +23,8 @@ import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
 import AdminPagination from '../../../components/AdminPagination';
 
+import '../../../styles/ShowtimePage.css';
+
 // ==========================================================
 // COMPONENT
 // ==========================================================
@@ -447,7 +449,6 @@ const ShowTimePage = () => {
 
         let result = root;
 
-        // Nếu API wrapper bọc thêm data
         if (
             root?.data &&
             !Array.isArray(root.data) &&
@@ -456,7 +457,6 @@ const ShowTimePage = () => {
             result = root.data;
         }
 
-        // CREATED
         let created = [];
 
         if (Array.isArray(result?.data)) {
@@ -503,7 +503,6 @@ const ShowTimePage = () => {
 
         let message = 'Tạo lịch chiếu đã hoàn tất.';
 
-        // TỔNG QUAN
         message += `\n\n📊 TỔNG QUAN:`;
         message += `\n✅ Đã tạo: ${createdCount} suất`;
 
@@ -515,7 +514,6 @@ const ShowTimePage = () => {
             message += `\n⏭️ Bỏ qua: ${skippedPastCount} suất trong quá khứ`;
         }
 
-        // PHÂN BỔ THEO PHIM
         if (summary?.byMovie && typeof summary.byMovie === 'object') {
             message += `\n\n🎬 PHÂN BỔ THEO PHIM:`;
             for (const [movieId, stats] of Object.entries(summary.byMovie)) {
@@ -525,7 +523,6 @@ const ShowTimePage = () => {
             }
         }
 
-        // PHÂN BỔ THEO HẠNG PHÒNG
         if (summary?.byRoomType && typeof summary.byRoomType === 'object') {
             message += `\n\n🏠 PHÂN BỔ THEO HẠNG PHÒNG:`;
             for (const [type, count] of Object.entries(summary.byRoomType)) {
@@ -533,7 +530,6 @@ const ShowTimePage = () => {
             }
         }
 
-        // PHÂN BỔ THEO KHUNG GIỜ
         if (summary?.byTimeSlot && typeof summary.byTimeSlot === 'object') {
             message += `\n\n🕐 PHÂN BỔ THEO KHUNG GIỜ:`;
             message += `\n  🌅 Sáng: ${Number(summary.byTimeSlot.MORNING) || 0} suất`;
@@ -542,7 +538,6 @@ const ShowTimePage = () => {
             message += `\n  🌙 Đêm: ${Number(summary.byTimeSlot.NIGHT) || 0} suất`;
         }
 
-        // PHÂN BỔ THEO LOẠI NGÀY
         if (summary?.byDayType && typeof summary.byDayType === 'object') {
             message += `\n\n📅 PHÂN BỔ THEO LOẠI NGÀY:`;
             if (summary.byDayType.ALL !== undefined) {
@@ -556,7 +551,6 @@ const ShowTimePage = () => {
             }
         }
 
-        // KHÔNG TẠO ĐƯỢC SUẤT NÀO
         if (createdCount === 0) {
             message += `\n\n⚠️ KHÔNG TẠO ĐƯỢC SUẤT NÀO!`;
             message += `\n\n🔍 Hệ thống đã kiểm tra:`;
@@ -615,9 +609,18 @@ const ShowTimePage = () => {
             setSubmitLoading(true);
             setFormErrors({});
 
-            const movieIds = Array.isArray(scheduleData.movie_ids) ? scheduleData.movie_ids : [];
+            const movieIds = Array.isArray(scheduleData.movie_ids) 
+                ? scheduleData.movie_ids 
+                : [];
 
-            // TẠO LỊCH CHIẾU (lấy cấu hình từ database)
+            console.log('📤 movieIds:', movieIds);
+
+            if (movieIds.length === 0) {
+                showAlert('Lỗi', 'Vui lòng chọn ít nhất 1 phim', 'error');
+                setSubmitLoading(false);
+                return;
+            }
+
             const payload = {
                 movies: movieIds.map(id => ({ movie_id: Number(id) })),
                 cinema_id: Number(scheduleData.cinema_id),
@@ -631,24 +634,18 @@ const ShowTimePage = () => {
 
             console.log('📥 RAW RESPONSE:', res.data);
 
-            // NORMALIZE RESPONSE
             const result = normalizeScheduleResult(res);
             console.log('📊 NORMALIZED RESULT:', result);
 
-            // REFRESH DATA
             await fetchShowtimes(pagination.page, search);
 
-            // BUILD MESSAGE
             const message = buildScheduleResultMessage(result);
 
             setIsFormOpen(false);
 
-            // ✅ KIỂM TRA success TỪ BACKEND
             if (result.success === false || result.data.length === 0) {
-                // Hiển thị message chi tiết từ backend
                 let errorMessage = result.message || 'Không tạo được suất chiếu.';
                 
-                // Nếu có lỗi config, hiển thị chi tiết
                 if (result.skippedInvalidConfig && result.skippedInvalidConfig.length > 0) {
                     const firstError = result.skippedInvalidConfig[0];
                     errorMessage = `❌ ${firstError.reason || 'Cấu hình không phù hợp'}`;
@@ -667,12 +664,10 @@ const ShowTimePage = () => {
             console.error('CREATE SCHEDULE ERROR:', error);
             console.error('BACKEND RESPONSE:', error.response?.data);
 
-            // ✅ HIỂN THỊ LỖI CHI TIẾT TỪ BACKEND
             const backendData = error.response?.data;
             const backendField = backendData?.field;
             const backendMessage = backendData?.message || 'Không thể tạo lịch chiếu.';
 
-            // Nếu có field lỗi, hiển thị chi tiết
             let errorDetail = backendMessage;
             if (backendField) {
                 const fieldLabels = {
@@ -737,22 +732,13 @@ const ShowTimePage = () => {
             title: 'Phim',
             key: 'title',
             render: row => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{
-                        width: '42px',
-                        height: '42px',
-                        borderRadius: '12px',
-                        background: '#dbeafe',
-                        color: '#2563eb',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}>
+                <div className="showtime-movie-cell">
+                    <div className="showtime-movie-icon">
                         <Film size={18} />
                     </div>
                     <div>
-                        <div style={{ fontWeight: '600' }}>{row.title}</div>
-                        <small style={{ color: '#64748b' }}>{row.duration} phút</small>
+                        <div className="showtime-movie-title">{row.title}</div>
+                        <small className="showtime-movie-duration">{row.duration} phút</small>
                     </div>
                 </div>
             )
@@ -762,10 +748,10 @@ const ShowTimePage = () => {
             key: 'cinema_name',
             render: row => (
                 <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: '600' }}>
+                    <div className="showtime-cinema-name">
                         <MapPin size={14} /> {row.cinema_name}
                     </div>
-                    <div className="status-badge" style={{ marginTop: '6px', width: 'fit-content' }}>
+                    <div className="status-badge showtime-room-badge">
                         {row.room_name} ({row.room_type})
                     </div>
                 </div>
@@ -780,8 +766,8 @@ const ShowTimePage = () => {
             title: 'Giờ chiếu',
             key: 'time',
             render: row => (
-                <span className="status-badge pending">
-                    <Clock size={13} style={{ marginRight: '4px' }} />
+                <span className="status-badge pending showtime-time-badge">
+                    <Clock size={13} />
                     {formatDateTime(row.start_time).time}
                 </span>
             )
@@ -808,7 +794,6 @@ const ShowTimePage = () => {
 
     return (
         <>
-            {/* MAIN PAGE */}
             <AdminPage
                 title="Quản lý lịch chiếu"
                 subtitle="Tạo lịch chiếu từ cấu hình có sẵn"
@@ -843,30 +828,13 @@ const ShowTimePage = () => {
                 type="default"
                 size="lg"
             >
-                {/* CREATE INFO */}
                 {!editingShowtime && (
-                    <div style={{
-                        marginBottom: '20px',
-                        padding: '16px',
-                        borderRadius: '12px',
-                        background: 'rgba(59, 130, 246, 0.08)',
-                        border: '1px solid rgba(59, 130, 246, 0.15)'
-                    }}>
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            fontWeight: '600',
-                            marginBottom: '8px'
-                        }}>
+                    <div className="showtime-create-info">
+                        <div className="showtime-create-header">
                             <Sparkles size={18} />
                             Tạo lịch chiếu
                         </div>
-                        <div style={{
-                            fontSize: '14px',
-                            color: '#64748b',
-                            lineHeight: '1.6'
-                        }}>
+                        <div className="showtime-create-body">
                             <strong>Hệ thống sẽ:</strong>
                             <br />
                             1. 🎬 Lấy cấu hình suất chiếu từ database (<strong>movie_showtime_config</strong>)
@@ -884,60 +852,25 @@ const ShowTimePage = () => {
                     </div>
                 )}
 
-                {/* FORM */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-
+                <div className="showtime-form">
                     {/* MOVIE - CREATE */}
                     {!editingShowtime && (
-                        <div>
-                            <label style={{
-                                fontWeight: '500',
-                                display: 'block',
-                                marginBottom: '8px',
-                                color: '#1e293b'
-                            }}>
+                        <div className="showtime-form-group">
+                            <label className="showtime-form-label">
                                 Chọn phim
-                                <span style={{
-                                    color: '#64748b',
-                                    fontSize: '13px',
-                                    fontWeight: '400',
-                                    marginLeft: '8px'
-                                }}>
-                                    (Có thể chọn nhiều phim)
-                                </span>
+                                <span className="showtime-form-hint">(Có thể chọn nhiều phim)</span>
                             </label>
-                            <div style={{
-                                display: 'flex',
-                                flexWrap: 'wrap',
-                                gap: '8px',
-                                padding: '12px',
-                                border: '1px solid #e2e8f0',
-                                borderRadius: '8px',
-                                background: '#f8fafc',
-                                maxHeight: '150px',
-                                overflowY: 'auto'
-                            }}>
+                            <div className="showtime-movie-checkbox-list">
                                 {movies.map(movie => {
                                     const isChecked = scheduleData.movie_ids?.includes(movie.movie_id);
                                     return (
-                                        <label key={movie.movie_id} style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '6px',
-                                            padding: '4px 12px',
-                                            borderRadius: '16px',
-                                            cursor: 'pointer',
-                                            fontSize: '13px',
-                                            background: isChecked ? '#dbeafe' : '#ffffff',
-                                            border: isChecked ? '2px solid #3b82f6' : '1px solid #e2e8f0'
-                                        }}>
+                                        <label key={movie.movie_id} className={`showtime-movie-checkbox ${isChecked ? 'checked' : ''}`}>
                                             <input
                                                 type="checkbox"
                                                 name="movie_ids"
                                                 value={movie.movie_id}
                                                 checked={isChecked}
                                                 onChange={handleChange}
-                                                style={{ accentColor: '#3b82f6' }}
                                             />
                                             {movie.title}
                                         </label>
@@ -945,63 +878,33 @@ const ShowTimePage = () => {
                                 })}
                             </div>
                             {formErrors.movie_ids && (
-                                <span style={{ color: '#ef4444', fontSize: '13px' }}>
-                                    {formErrors.movie_ids}
-                                </span>
+                                <span className="showtime-form-error">{formErrors.movie_ids}</span>
                             )}
                         </div>
                     )}
 
                     {/* MOVIE - EDIT */}
                     {editingShowtime && (
-                        <div>
-                            <label style={{
-                                fontWeight: '500',
-                                display: 'block',
-                                marginBottom: '4px',
-                                color: '#1e293b'
-                            }}>
-                                Phim
-                            </label>
+                        <div className="showtime-form-group">
+                            <label className="showtime-form-label">Phim</label>
                             <input
                                 type="text"
                                 value={editingShowtime.title || ''}
                                 disabled
-                                style={{
-                                    width: '100%',
-                                    padding: '8px 12px',
-                                    border: '1px solid #e2e8f0',
-                                    borderRadius: '6px',
-                                    fontSize: '14px',
-                                    background: '#f8fafc'
-                                }}
+                                className="showtime-form-input showtime-form-input-disabled"
                             />
                         </div>
                     )}
 
                     {/* CINEMA */}
-                    <div>
-                        <label style={{
-                            fontWeight: '500',
-                            display: 'block',
-                            marginBottom: '4px',
-                            color: '#1e293b'
-                        }}>
-                            Rạp chiếu
-                        </label>
+                    <div className="showtime-form-group">
+                        <label className="showtime-form-label">Rạp chiếu</label>
                         <select
                             name="cinema_id"
                             value={scheduleData.cinema_id}
                             onChange={handleChange}
                             disabled={Boolean(editingShowtime)}
-                            style={{
-                                width: '100%',
-                                padding: '8px 12px',
-                                border: '1px solid #e2e8f0',
-                                borderRadius: '6px',
-                                fontSize: '14px',
-                                background: editingShowtime ? '#f8fafc' : '#fff'
-                            }}
+                            className="showtime-form-select"
                         >
                             <option value="">-- Chọn rạp --</option>
                             {cinemas.map(cinema => (
@@ -1011,45 +914,19 @@ const ShowTimePage = () => {
                             ))}
                         </select>
                         {formErrors.cinema_id && (
-                            <span style={{ color: '#ef4444', fontSize: '13px' }}>
-                                {formErrors.cinema_id}
-                            </span>
+                            <span className="showtime-form-error">{formErrors.cinema_id}</span>
                         )}
                     </div>
 
                     {/* ROOM - EDIT */}
                     {editingShowtime && (
-                        <div>
-                            <label style={{
-                                fontWeight: '500',
-                                display: 'block',
-                                marginBottom: '8px',
-                                color: '#1e293b'
-                            }}>
-                                Phòng chiếu
-                            </label>
-                            <div style={{
-                                display: 'flex',
-                                flexWrap: 'wrap',
-                                gap: '8px',
-                                padding: '12px',
-                                border: '1px solid #e2e8f0',
-                                borderRadius: '8px',
-                                background: '#f8fafc'
-                            }}>
+                        <div className="showtime-form-group">
+                            <label className="showtime-form-label">Phòng chiếu</label>
+                            <div className="showtime-room-checkbox-list">
                                 {rooms.map(room => {
                                     const checked = scheduleData.room_ids?.includes(Number(room.room_id));
                                     return (
-                                        <label key={room.room_id} style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '6px',
-                                            padding: '6px 10px',
-                                            borderRadius: '6px',
-                                            cursor: 'pointer',
-                                            background: checked ? '#dbeafe' : '#fff',
-                                            border: checked ? '1px solid #3b82f6' : '1px solid #e2e8f0'
-                                        }}>
+                                        <label key={room.room_id} className={`showtime-room-checkbox ${checked ? 'checked' : ''}`}>
                                             <input
                                                 type="checkbox"
                                                 name="room_ids"
@@ -1063,101 +940,54 @@ const ShowTimePage = () => {
                                 })}
                             </div>
                             {formErrors.room_ids && (
-                                <span style={{ color: '#ef4444', fontSize: '13px' }}>
-                                    {formErrors.room_ids}
-                                </span>
+                                <span className="showtime-form-error">{formErrors.room_ids}</span>
                             )}
                         </div>
                     )}
 
                     {/* DATE */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                        <div>
-                            <label style={{
-                                fontWeight: '500',
-                                display: 'block',
-                                marginBottom: '4px',
-                                color: '#1e293b'
-                            }}>
-                                Ngày bắt đầu
-                            </label>
+                    <div className="showtime-form-row">
+                        <div className="showtime-form-group">
+                            <label className="showtime-form-label">Ngày bắt đầu</label>
                             <input
                                 type="date"
                                 name="start_date"
                                 value={scheduleData.start_date}
                                 onChange={handleChange}
-                                style={{
-                                    width: '100%',
-                                    padding: '8px 12px',
-                                    border: '1px solid #e2e8f0',
-                                    borderRadius: '6px',
-                                    fontSize: '14px'
-                                }}
+                                className="showtime-form-input"
                             />
                             {formErrors.start_date && (
-                                <span style={{ color: '#ef4444', fontSize: '13px' }}>
-                                    {formErrors.start_date}
-                                </span>
+                                <span className="showtime-form-error">{formErrors.start_date}</span>
                             )}
                         </div>
-                        <div>
-                            <label style={{
-                                fontWeight: '500',
-                                display: 'block',
-                                marginBottom: '4px',
-                                color: '#1e293b'
-                            }}>
-                                Ngày kết thúc
-                            </label>
+                        <div className="showtime-form-group">
+                            <label className="showtime-form-label">Ngày kết thúc</label>
                             <input
                                 type="date"
                                 name="end_date"
                                 value={scheduleData.end_date}
                                 onChange={handleChange}
-                                style={{
-                                    width: '100%',
-                                    padding: '8px 12px',
-                                    border: '1px solid #e2e8f0',
-                                    borderRadius: '6px',
-                                    fontSize: '14px'
-                                }}
+                                className="showtime-form-input"
                             />
                             {formErrors.end_date && (
-                                <span style={{ color: '#ef4444', fontSize: '13px' }}>
-                                    {formErrors.end_date}
-                                </span>
+                                <span className="showtime-form-error">{formErrors.end_date}</span>
                             )}
                         </div>
                     </div>
 
                     {/* TIME - EDIT */}
                     {editingShowtime && (
-                        <div>
-                            <label style={{
-                                fontWeight: '500',
-                                display: 'block',
-                                marginBottom: '4px',
-                                color: '#1e293b'
-                            }}>
-                                Giờ chiếu
-                            </label>
+                        <div className="showtime-form-group">
+                            <label className="showtime-form-label">Giờ chiếu</label>
                             <input
                                 type="time"
                                 name="operating_start"
                                 value={scheduleData.operating_start || ''}
                                 onChange={handleChange}
-                                style={{
-                                    width: '100%',
-                                    padding: '8px 12px',
-                                    border: '1px solid #e2e8f0',
-                                    borderRadius: '6px',
-                                    fontSize: '14px'
-                                }}
+                                className="showtime-form-input"
                             />
                             {formErrors.operating_start && (
-                                <span style={{ color: '#ef4444', fontSize: '13px' }}>
-                                    {formErrors.operating_start}
-                                </span>
+                                <span className="showtime-form-error">{formErrors.operating_start}</span>
                             )}
                         </div>
                     )}
@@ -1167,20 +997,7 @@ const ShowTimePage = () => {
                         type="submit"
                         onClick={handleSubmit}
                         disabled={submitLoading}
-                        style={{
-                            padding: '12px 24px',
-                            background: submitLoading ? '#94a3b8' : '#3b82f6',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '6px',
-                            fontSize: '16px',
-                            fontWeight: '600',
-                            cursor: submitLoading ? 'not-allowed' : 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '8px'
-                        }}
+                        className={`showtime-submit-btn ${submitLoading ? 'loading' : ''}`}
                     >
                         {submitLoading ? (
                             <>
@@ -1191,7 +1008,6 @@ const ShowTimePage = () => {
                             editingShowtime ? 'Lưu thay đổi' : '🚀 Tạo lịch chiếu'
                         )}
                     </button>
-
                 </div>
             </AdminModal>
 

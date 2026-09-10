@@ -23,7 +23,6 @@ import {
     Search,
     AlertTriangle,
     CheckCircle2,
-    Lightbulb,
     Clock,
     Calendar,
     ChevronLeft,
@@ -48,7 +47,25 @@ const TIME_SLOTS = [
 
 const ROOM_TYPES = ['2D', '3D', 'VIP', 'IMAX'];
 
-const DEFAULT_INTERVAL = 45;
+// ✅ INTERVAL TYPES - ENUM
+const INTERVAL_TYPES = [
+    { key: 'HOT', label: '🔥 HOT', minutes: 45, description: 'Phim đông khách' },
+    { key: 'NORMAL', label: '📊 NORMAL', minutes: 75, description: 'Phim bình thường' },
+    { key: 'COOL', label: '❄️ COOL', minutes: 120, description: 'Phim ít khách' }
+];
+
+// Map để lấy minutes từ type
+const INTERVAL_MINUTES_MAP = {
+    'HOT': 45,
+    'NORMAL': 75,
+    'COOL': 120
+};
+
+const getIntervalMinutes = (type) => {
+    return INTERVAL_MINUTES_MAP[type] || 75;
+};
+
+const DEFAULT_INTERVAL_TYPE = 'NORMAL';
 const DEFAULT_MOVIE_DURATION = 120;
 const DEFAULT_CINEMA_OPEN = 8 * 60;
 const DEFAULT_CINEMA_CLOSE = 24 * 60;
@@ -212,9 +229,8 @@ const MovieShowtimeConfigPage = () => {
     const [configs, setConfigs] = useState({});
     const [expandedMovies, setExpandedMovies] = useState({});
 
-    // 🆕 FILTER STATE
-    const [filterRoomType, setFilterRoomType] = useState('ALL');
-    const [filterTimeSlot, setFilterTimeSlot] = useState('ALL'); // SÁNG/TRƯA/CHIỀU/TỐI
+    // ✅ State cho Interval Type
+    const [selectedInterval, setSelectedInterval] = useState(DEFAULT_INTERVAL_TYPE);
 
     const [dateRange, setDateRange] = useState({
         startDate: getTodayDate(),
@@ -300,7 +316,8 @@ const MovieShowtimeConfigPage = () => {
                         time_slot: config.time_slot || 'MORNING',
                         room_type: config.room_type || '2D',
                         slot_count: Number(config.slot_count) || 0,
-                        interval_minutes: Number(config.interval_minutes) || DEFAULT_INTERVAL,
+                        // ✅ Dùng interval_type thay vì interval_minutes
+                        interval_type: config.interval_type || DEFAULT_INTERVAL_TYPE,
                         day_type: config.day_type || 'MONDAY',
                         is_active: Number(config.is_active) === 1 ? 1 : 0
                     }));
@@ -327,24 +344,6 @@ const MovieShowtimeConfigPage = () => {
         setExpandedMovies(prev => ({ ...prev, [movieId]: !prev[movieId] }));
     };
 
-    const addConfigForDay = (movieId, dayKey) => {
-        setConfigs(prev => ({
-            ...prev,
-            [movieId]: [
-                ...(prev[movieId] || []),
-                {
-                    time_slot: 'MORNING',
-                    room_type: '2D',
-                    slot_count: 1,
-                    interval_minutes: DEFAULT_INTERVAL,
-                    day_type: dayKey,
-                    is_active: 1
-                }
-            ]
-        }));
-        setExpandedMovies(prev => ({ ...prev, [movieId]: true }));
-    };
-
     const addConfigForAllDays = (movieId) => {
         const currentConfigs = configs[movieId] || [];
         const existingDayKeys = currentConfigs.map(c => c.day_type);
@@ -355,9 +354,9 @@ const MovieShowtimeConfigPage = () => {
         }
         const newConfigs = missingDays.map(d => ({
             time_slot: 'MORNING',
-            room_type: filterRoomType !== 'ALL' ? filterRoomType : '2D',
+            room_type: '2D',
             slot_count: 1,
-            interval_minutes: DEFAULT_INTERVAL,
+            interval_type: selectedInterval || DEFAULT_INTERVAL_TYPE,  // ✅ Dùng interval_type
             day_type: d.dayKey,
             is_active: 1
         }));
@@ -367,6 +366,119 @@ const MovieShowtimeConfigPage = () => {
         }));
         setExpandedMovies(prev => ({ ...prev, [movieId]: true }));
         showAlert('Thành công', `Đã thêm cấu hình cho ${missingDays.length} ngày!`, 'success');
+    };
+
+    // ✅ Áp dụng Interval Type cho tất cả config
+    const applyIntervalToAll = (movieId) => {
+        const movieConfigs = configs[movieId] || [];
+        const preset = INTERVAL_TYPES.find(i => i.key === selectedInterval);
+        
+        if (!preset) return;
+        
+        if (movieConfigs.length === 0) {
+            showAlert('Thông báo', '📭 Chưa có cấu hình để áp dụng interval!', 'info');
+            return;
+        }
+        
+        const newConfigs = movieConfigs.map(config => ({
+            ...config,
+            interval_type: preset.key  // ✅ CHỈ CẦN interval_type
+        }));
+        
+        setConfigs(prev => ({
+            ...prev,
+            [movieId]: newConfigs
+        }));
+        
+        showAlert('Thành công', `✅ Đã áp dụng ${preset.label} (${preset.minutes} phút) cho tất cả!`, 'success');
+    };
+
+    // Auto fill - Điền số suất tối đa cho tất cả các ô
+    const handleAutoFill = (movieId) => {
+        const movie = getMovieByIdFromList(movies, movieId);
+        const duration = extractMovieDuration(movie);
+        
+        const currentConfigs = configs[movieId] || [];
+        const configMap = {};
+        currentConfigs.forEach((config, index) => {
+            const key = `${config.time_slot}_${config.room_type}_${config.day_type}`;
+            configMap[key] = { ...config, index };
+        });
+        
+        const newConfigs = [];
+        let hasChanges = false;
+        
+        TIME_SLOTS.forEach(timeSlot => {
+            ROOM_TYPES.forEach(roomType => {
+                datesInRange.forEach(d => {
+                    const key = `${timeSlot.key}_${roomType}_${d.dayKey}`;
+                    const existingConfig = configMap[key];
+                    
+                    // ✅ Lấy interval_minutes từ interval_type
+                    const intervalType = existingConfig?.interval_type || selectedInterval || DEFAULT_INTERVAL_TYPE;
+                    const intervalMinutes = getIntervalMinutes(intervalType);
+                    
+                    const mockConfig = {
+                        time_slot: timeSlot.key,
+                        room_type: roomType,
+                        slot_count: 1,
+                        interval_type: intervalType,
+                        day_type: d.dayKey,
+                        is_active: 1
+                    };
+                    
+                    const info = getConfigCapacityInfo(movieId, mockConfig);
+                    const maxSlots = info?.maxCapacity || 0;
+                    
+                    if (maxSlots <= 0) {
+                        if (existingConfig) {
+                            newConfigs.push({
+                                ...existingConfig,
+                                slot_count: 0,
+                                is_active: 0
+                            });
+                            hasChanges = true;
+                        }
+                        return;
+                    }
+                    
+                    if (existingConfig) {
+                        const currentSlotCount = Number(existingConfig.slot_count) || 0;
+                        if (currentSlotCount !== maxSlots) {
+                            newConfigs.push({
+                                ...existingConfig,
+                                slot_count: maxSlots,
+                                interval_type: intervalType,  // ✅ Dùng interval_type
+                                is_active: 1
+                            });
+                            hasChanges = true;
+                        } else {
+                            newConfigs.push(existingConfig);
+                        }
+                    } else {
+                        newConfigs.push({
+                            time_slot: timeSlot.key,
+                            room_type: roomType,
+                            slot_count: maxSlots,
+                            interval_type: intervalType,  // ✅ Dùng interval_type
+                            day_type: d.dayKey,
+                            is_active: 1
+                        });
+                        hasChanges = true;
+                    }
+                });
+            });
+        });
+        
+        if (hasChanges) {
+            setConfigs(prev => ({
+                ...prev,
+                [movieId]: newConfigs
+            }));
+            showAlert('Thành công', `🤖 Đã tự động điền số suất tối đa cho tất cả các ô!`, 'success');
+        } else {
+            showAlert('Thông báo', '📭 Tất cả các ô đã có số suất tối đa!', 'info');
+        }
     };
 
     const removeConfig = async (movieId, index) => {
@@ -392,7 +504,7 @@ const MovieShowtimeConfigPage = () => {
             const movieConfigs = [...(prev[movieId] || [])];
             if (!movieConfigs[index]) return prev;
             let normalizedValue = value;
-            if (field === 'slot_count' || field === 'interval_minutes') {
+            if (field === 'slot_count') {
                 normalizedValue = Number(value);
                 if (!Number.isFinite(normalizedValue)) normalizedValue = 0;
             }
@@ -404,6 +516,10 @@ const MovieShowtimeConfigPage = () => {
             if (field === 'room_type') {
                 const exists = ROOM_TYPES.includes(value);
                 if (!exists) normalizedValue = '2D';
+            }
+            if (field === 'interval_type') {
+                const exists = INTERVAL_TYPES.some(item => item.key === value);
+                if (!exists) normalizedValue = DEFAULT_INTERVAL_TYPE;
             }
             movieConfigs[index] = { ...movieConfigs[index], [field]: normalizedValue };
             return { ...prev, [movieId]: movieConfigs };
@@ -422,10 +538,14 @@ const MovieShowtimeConfigPage = () => {
         if (actualStart >= actualEnd) {
             return { validRange: false, duration, roomCount, maxCapacity: 0, requested: Number(config.slot_count) || 0 };
         }
+        
+        // ✅ Lấy interval_minutes từ interval_type
+        const intervalMinutes = getIntervalMinutes(config.interval_type);
+        
         const result = calculateSlotTimes({
             startMinutes: actualStart,
             endMinutes: actualEnd,
-            intervalMinutes: Number(config.interval_minutes) || DEFAULT_INTERVAL
+            intervalMinutes: intervalMinutes
         });
         const requested = Number(config.slot_count) || 0;
         return {
@@ -442,46 +562,6 @@ const MovieShowtimeConfigPage = () => {
             timeRange: `${minutesToTime(actualStart)} → ${minutesToTime(actualEnd)}`
         };
     }, [movies, selectedCinemaObject, cinemaOpen, cinemaClose]);
-
-    const getCapacityMessage = (movieId, config) => {
-        const info = getConfigCapacityInfo(movieId, config);
-        if (!info) return null;
-        if (!info.validRange) {
-            return { type: 'error', text: `❌ Ngoài giờ hoạt động`, maxSlots: 0 };
-        }
-        if (info.exceeded) {
-            return {
-                type: 'error',
-                text: `⚠️ ${info.requested}/${info.maxCapacity} suất`,
-                maxSlots: info.maxCapacity,
-                recommended: info.recommended,
-                slotTimes: info.slotTimes,
-                timeRange: info.timeRange
-            };
-        }
-        return {
-            type: 'success',
-            text: `✅ ${info.requested}/${info.maxCapacity} suất`,
-            maxSlots: info.maxCapacity,
-            slotTimes: info.slotTimes,
-            timeRange: info.timeRange
-        };
-    };
-
-    // 🆕 Lọc config theo room_type và time_slot
-    const getFilteredConfigs = (movieConfigs) => {
-        let filtered = movieConfigs;
-        
-        if (filterRoomType !== 'ALL') {
-            filtered = filtered.filter(c => c.room_type === filterRoomType);
-        }
-        
-        if (filterTimeSlot !== 'ALL') {
-            filtered = filtered.filter(c => c.time_slot === filterTimeSlot);
-        }
-        
-        return filtered;
-    };
 
     const handleSaveAll = async () => {
         if (!selectedCinema) {
@@ -524,7 +604,7 @@ const MovieShowtimeConfigPage = () => {
                 time_slot: String(config.time_slot).toUpperCase(),
                 room_type: String(config.room_type).toUpperCase(),
                 slot_count: Number(config.slot_count),
-                interval_minutes: Number(config.interval_minutes),
+                interval_type: String(config.interval_type || DEFAULT_INTERVAL_TYPE).toUpperCase(),  // ✅ Gửi interval_type
                 day_type: String(config.day_type || 'MONDAY').toUpperCase(),
                 is_active: 1
             }));
@@ -602,8 +682,7 @@ const MovieShowtimeConfigPage = () => {
 
     const getTotalSlots = (movieId) => {
         const movieConfigs = configs[movieId] || [];
-        const filtered = getFilteredConfigs(movieConfigs);
-        return filtered.filter(
+        return movieConfigs.filter(
             config => Number(config.slot_count) > 0 && Number(config.is_active) === 1
         ).length;
     };
@@ -630,7 +709,7 @@ const MovieShowtimeConfigPage = () => {
                 <div className="movie-showtime-config-page">
 
                     {/* ==========================================================
-                        TOOLBAR - CHỌN RẠP + FILTER
+                        TOOLBAR - CHỌN RẠP
                     ========================================================== */}
                     <div className="config-toolbar">
                         <div className="filter-group">
@@ -646,34 +725,6 @@ const MovieShowtimeConfigPage = () => {
                                         {cinema.cinema_name}
                                         {cinema.city ? ` - ${cinema.city}` : ''}
                                     </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="filter-group">
-                            <label className="config-label">🎯 Loại phòng</label>
-                            <select
-                                value={filterRoomType}
-                                onChange={e => setFilterRoomType(e.target.value)}
-                                className="config-select-main config-select-small"
-                            >
-                                <option value="ALL">Tất cả</option>
-                                {ROOM_TYPES.map(type => (
-                                    <option key={type} value={type}>{type}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="filter-group">
-                            <label className="config-label">🕐 Khung giờ</label>
-                            <select
-                                value={filterTimeSlot}
-                                onChange={e => setFilterTimeSlot(e.target.value)}
-                                className="config-select-main config-select-small"
-                            >
-                                <option value="ALL">Tất cả</option>
-                                {TIME_SLOTS.map(slot => (
-                                    <option key={slot.key} value={slot.key}>{slot.label}</option>
                                 ))}
                             </select>
                         </div>
@@ -768,9 +819,6 @@ const MovieShowtimeConfigPage = () => {
                             </div>
 
                             <div className="date-navigation">
-                                <button className="nav-btn">
-                                    <ChevronLeft size={16} />
-                                </button>
                                 <div className="date-list">
                                     {datesInRange.map((d, i) => (
                                         <span key={i} className={`date-tag ${d.isWeekend ? 'weekend' : ''}`}>
@@ -778,9 +826,6 @@ const MovieShowtimeConfigPage = () => {
                                         </span>
                                     ))}
                                 </div>
-                                <button className="nav-btn">
-                                    <ChevronRight size={16} />
-                                </button>
                             </div>
                         </>
                     )}
@@ -792,10 +837,9 @@ const MovieShowtimeConfigPage = () => {
                         <div className="config-container">
                             {selectedMovies.map((movieId, idx) => {
                                 const movieConfigs = configs[movieId] || [];
-                                const filteredConfigs = getFilteredConfigs(movieConfigs);
                                 const isExpanded = expandedMovies[movieId] !== false;
                                 const movieTitle = getMovieTitle(movieId);
-                                const totalSlots = filteredConfigs.filter(
+                                const totalSlots = movieConfigs.filter(
                                     c => Number(c.slot_count) > 0 && Number(c.is_active) === 1
                                 ).length;
                                 const movie = getMovieByIdFromList(movies, movieId);
@@ -831,130 +875,209 @@ const MovieShowtimeConfigPage = () => {
                                                     >
                                                         <Plus size={14} /> Thêm tất cả ngày
                                                     </button>
+                                                    <button
+                                                        type="button"
+                                                        className="btn-auto-fill"
+                                                        onClick={() => handleAutoFill(movieId)}
+                                                    >
+                                                        🤖 Auto
+                                                    </button>
                                                 </div>
 
-                                                {filteredConfigs.length === 0 ? (
+                                                {/* ✅ INTERVAL SECTION */}
+                                                <div className="interval-section">
+                                                    <div className="interval-header">
+                                                        <span className="interval-label">⏱️ Khoảng cách giữa các suất</span>
+                                                        <span className="interval-hint">(Ảnh hưởng đến số suất tối đa)</span>
+                                                    </div>
+                                                    <div className="interval-group">
+                                                        {INTERVAL_TYPES.map(preset => (
+                                                            <button
+                                                                key={preset.key}
+                                                                type="button"
+                                                                className={`interval-btn ${selectedInterval === preset.key ? 'active' : ''}`}
+                                                                onClick={() => setSelectedInterval(preset.key)}
+                                                            >
+                                                                <span className="interval-label-btn">{preset.label}</span>
+                                                                <span className="interval-minutes">{preset.minutes}p</span>
+                                                                <span className="interval-desc">{preset.description}</span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        className="btn-apply-interval"
+                                                        onClick={() => applyIntervalToAll(movieId)}
+                                                    >
+                                                        ✅ Áp dụng cho tất cả ngày
+                                                    </button>
+                                                </div>
+
+                                                {movieConfigs.length === 0 ? (
                                                     <div className="empty-config">
                                                         <p>📭 Chưa có cấu hình</p>
                                                         <p className="empty-hint">Bấm "Thêm tất cả ngày" để bắt đầu</p>
                                                     </div>
                                                 ) : (
-                                                    <div className="config-grid">
-                                                        {filteredConfigs.map((config, index) => {
-                                                            const actualIndex = movieConfigs.indexOf(config);
-                                                            const capacityMessage = getCapacityMessage(movieId, config);
-                                                            const isError = capacityMessage?.type === 'error';
-                                                            const dayInfo = datesInRange.find(d => d.dayKey === config.day_type);
-                                                            const dayDisplay = dayInfo ? `${dayInfo.shortDay} ${dayInfo.display}` : config.day_type;
-                                                            const isWeekend = dayInfo?.isWeekend || false;
-                                                            const timeLabel = TIME_SLOTS.find(s => s.key === config.time_slot)?.label || config.time_slot;
-
-                                                            return (
-                                                                <div
-                                                                    key={config.config_id || `${movieId}-${index}`}
-                                                                    className={`config-item ${isError ? 'error' : ''} ${isWeekend ? 'weekend' : ''}`}
-                                                                >
-                                                                    {/* Row 1: Ngày + Controls */}
-                                                                    <div className="config-item-header">
-                                                                        <span className="config-item-day">
-                                                                            {dayDisplay}
-                                                                            <span className="config-item-time">• {timeLabel}</span>
-                                                                        </span>
-                                                                        <div className="config-item-controls">
-                                                                            <label className="toggle-switch">
-                                                                                <input
-                                                                                    type="checkbox"
-                                                                                    checked={Number(config.is_active) === 1}
-                                                                                    onChange={e => updateConfig(movieId, actualIndex, 'is_active', e.target.checked ? 1 : 0)}
-                                                                                />
-                                                                                <span className="toggle-slider"></span>
-                                                                            </label>
-                                                                            <button
-                                                                                type="button"
-                                                                                className="btn-delete-config"
-                                                                                onClick={() => removeConfig(movieId, actualIndex)}
-                                                                            >
-                                                                                <Trash2 size={14} />
-                                                                            </button>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    {/* Row 2: Cấu hình - KHÔNG CÓ DROPDOWN NGÀY */}
-                                                                    <div className="config-item-fields">
-                                                                        <select
-                                                                            value={config.time_slot || 'MORNING'}
-                                                                            onChange={e => updateConfig(movieId, actualIndex, 'time_slot', e.target.value)}
-                                                                            className="config-field"
+                                                    <div className="config-table-wrapper">
+                                                        <table className="config-table">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th style={{ minWidth: '120px', textAlign: 'left' }}>
+                                                                        LOẠI PHÒNG
+                                                                    </th>
+                                                                    {datesInRange.map((d, idx) => (
+                                                                        <th 
+                                                                            key={idx} 
+                                                                            className={`date-header ${d.isWeekend ? 'weekend' : ''}`}
                                                                         >
-                                                                            {TIME_SLOTS.map(slot => (
-                                                                                <option key={slot.key} value={slot.key}>
-                                                                                    {slot.label}
-                                                                                </option>
-                                                                            ))}
-                                                                        </select>
+                                                                            {d.shortDay}<br/>
+                                                                            <span style={{ fontWeight: '400', fontSize: '10px', color: 'var(--text-muted)' }}>
+                                                                                {d.display}
+                                                                            </span>
+                                                                        </th>
+                                                                    ))}
+                                                                    <th style={{ minWidth: '40px', color: 'var(--accent-ice)' }}>📊</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {TIME_SLOTS.map(timeSlot => {
+                                                                    const slotConfigs = movieConfigs.filter(
+                                                                        c => c.time_slot === timeSlot.key && Number(c.is_active) === 1
+                                                                    );
 
-                                                                        <select
-                                                                            value={config.room_type || '2D'}
-                                                                            onChange={e => updateConfig(movieId, actualIndex, 'room_type', e.target.value)}
-                                                                            className="config-field config-field-small"
-                                                                        >
-                                                                            {ROOM_TYPES.map(type => (
-                                                                                <option key={type} value={type}>{type}</option>
-                                                                            ))}
-                                                                        </select>
+                                                                    return (
+                                                                        <React.Fragment key={timeSlot.key}>
+                                                                            <tr className="time-slot-header">
+                                                                                <td colSpan={datesInRange.length + 2} style={{ 
+                                                                                    padding: '6px 12px', 
+                                                                                    background: 'var(--bg-tertiary)',
+                                                                                    fontWeight: 'var(--fw-semibold)',
+                                                                                    color: 'var(--text-heading)',
+                                                                                    fontSize: '13px'
+                                                                                }}>
+                                                                                    {timeSlot.label}
+                                                                                </td>
+                                                                            </tr>
 
-                                                                        <input
-                                                                            type="number"
-                                                                            value={config.slot_count ?? 0}
-                                                                            onChange={e => updateConfig(movieId, actualIndex, 'slot_count', e.target.value)}
-                                                                            min="0"
-                                                                            max="30"
-                                                                            className={`config-field config-field-small ${isError ? 'error' : ''}`}
-                                                                            placeholder="Số"
-                                                                        />
+                                                                            {ROOM_TYPES.map(roomType => {
+                                                                                const roomConfigs = slotConfigs.filter(c => c.room_type === roomType);
+                                                                                
+                                                                                const dayTotals = datesInRange.map(d => {
+                                                                                    const config = roomConfigs.find(c => c.day_type === d.dayKey);
+                                                                                    return config ? Number(config.slot_count) || 0 : 0;
+                                                                                });
+                                                                                
+                                                                                const rowTotal = dayTotals.reduce((a, b) => a + b, 0);
+                                                                                const hasValue = dayTotals.some(v => v > 0);
 
-                                                                        <input
-                                                                            type="number"
-                                                                            value={config.interval_minutes ?? DEFAULT_INTERVAL}
-                                                                            onChange={e => updateConfig(movieId, actualIndex, 'interval_minutes', e.target.value)}
-                                                                            min="30"
-                                                                            max="120"
-                                                                            step="5"
-                                                                            className="config-field config-field-small"
-                                                                            placeholder="K/c"
-                                                                        />
-                                                                    </div>
+                                                                                return (
+                                                                                    <tr key={roomType} className={!hasValue ? 'empty-row' : ''}>
+                                                                                        <td className="room-label" style={{ paddingLeft: '24px' }}>
+                                                                                            {roomType}
+                                                                                        </td>
+                                                                                        {datesInRange.map((d, idx) => {
+                                                                                            const config = roomConfigs.find(c => c.day_type === d.dayKey);
+                                                                                            const actualIndex = config ? movieConfigs.indexOf(config) : -1;
+                                                                                            const value = config ? Number(config.slot_count) || 0 : 0;
+                                                                                            
+                                                                                            let isError = false;
+                                                                                            let capacityInfo = null;
+                                                                                            if (config && Number(config.slot_count) > 0) {
+                                                                                                const info = getConfigCapacityInfo(movieId, config);
+                                                                                                if (info?.exceeded) {
+                                                                                                    isError = true;
+                                                                                                    capacityInfo = info;
+                                                                                                }
+                                                                                            }
 
-                                                                    {/* Row 3: Status + Times */}
-                                                                    <div className="config-item-footer">
-                                                                        {capacityMessage && (
-                                                                            <div className={`config-status ${capacityMessage.type}`}>
-                                                                                {isError ? (
-                                                                                    <AlertTriangle size={12} />
-                                                                                ) : (
-                                                                                    <CheckCircle2 size={12} />
-                                                                                )}
-                                                                                <span>{capacityMessage.text}</span>
-                                                                                {isError && capacityMessage.recommended && (
-                                                                                    <span className="status-suggest">
-                                                                                        → <strong>{capacityMessage.recommended}</strong>
-                                                                                    </span>
-                                                                                )}
-                                                                            </div>
-                                                                        )}
-                                                                        {capacityMessage?.slotTimes && capacityMessage.slotTimes.length > 0 && (
-                                                                            <div className="config-times">
-                                                                                <Clock size={11} />
-                                                                                <span>
-                                                                                    {capacityMessage.slotTimes.slice(0, 4).map(t => t.startTime).join(' • ')}
-                                                                                    {capacityMessage.slotTimes.length > 4 && ` • +${capacityMessage.slotTimes.length - 4}`}
-                                                                                </span>
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            );
-                                                        })}
+                                                                                            const handleInputChange = (e) => {
+                                                                                                const newVal = e.target.value;
+                                                                                                
+                                                                                                if (config && actualIndex !== -1) {
+                                                                                                    updateConfig(movieId, actualIndex, 'slot_count', newVal);
+                                                                                                } else if (newVal !== '' && Number(newVal) > 0) {
+                                                                                                    const newConfig = {
+                                                                                                        time_slot: timeSlot.key,
+                                                                                                        room_type: roomType,
+                                                                                                        slot_count: Number(newVal),
+                                                                                                        interval_type: selectedInterval || DEFAULT_INTERVAL_TYPE,  // ✅ Dùng interval_type
+                                                                                                        day_type: d.dayKey,
+                                                                                                        is_active: 1
+                                                                                                    };
+                                                                                                    setConfigs(prev => ({
+                                                                                                        ...prev,
+                                                                                                        [movieId]: [...(prev[movieId] || []), newConfig]
+                                                                                                    }));
+                                                                                                }
+                                                                                            };
+
+                                                                                            return (
+                                                                                                <td key={idx}>
+                                                                                                    <input
+                                                                                                        type="number"
+                                                                                                        className={`config-input-cell ${value > 0 ? 'has-value' : ''} ${isError ? 'error' : ''}`}
+                                                                                                        value={value}
+                                                                                                        onChange={handleInputChange}
+                                                                                                        min="0"
+                                                                                                        max="30"
+                                                                                                        placeholder="-"
+                                                                                                        title={isError && capacityInfo ? `${capacityInfo.requested}/${capacityInfo.maxCapacity} suất tối đa` : ''}
+                                                                                                    />
+                                                                                                </td>
+                                                                                            );
+                                                                                        })}
+                                                                                        <td className="total-cell">{rowTotal}</td>
+                                                                                    </tr>
+                                                                                );
+                                                                            })}
+                                                                        </React.Fragment>
+                                                                    );
+                                                                })}
+
+                                                                <tr className="total-row">
+                                                                    <td className="room-label">📊 TỔNG</td>
+                                                                    {datesInRange.map((d, idx) => {
+                                                                        let dayTotal = 0;
+                                                                        ROOM_TYPES.forEach(roomType => {
+                                                                            TIME_SLOTS.forEach(timeSlot => {
+                                                                                const config = movieConfigs.find(
+                                                                                    c => c.time_slot === timeSlot.key && 
+                                                                                         c.room_type === roomType && 
+                                                                                         c.day_type === d.dayKey &&
+                                                                                         Number(c.is_active) === 1
+                                                                                );
+                                                                                if (config) {
+                                                                                    dayTotal += Number(config.slot_count) || 0;
+                                                                                }
+                                                                            });
+                                                                        });
+                                                                        return (
+                                                                            <td key={idx} className="total-cell">{dayTotal}</td>
+                                                                        );
+                                                                    })}
+                                                                    <td className="total-cell">
+                                                                        {datesInRange.reduce((sum, d) => {
+                                                                            let dayTotal = 0;
+                                                                            ROOM_TYPES.forEach(roomType => {
+                                                                                TIME_SLOTS.forEach(timeSlot => {
+                                                                                    const config = movieConfigs.find(
+                                                                                        c => c.time_slot === timeSlot.key && 
+                                                                                             c.room_type === roomType && 
+                                                                                             c.day_type === d.dayKey &&
+                                                                                             Number(c.is_active) === 1
+                                                                                    );
+                                                                                    if (config) {
+                                                                                        dayTotal += Number(config.slot_count) || 0;
+                                                                                    }
+                                                                                });
+                                                                            });
+                                                                            return sum + dayTotal;
+                                                                        }, 0)}
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
                                                     </div>
                                                 )}
                                             </div>

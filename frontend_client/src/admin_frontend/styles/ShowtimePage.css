@@ -1,0 +1,530 @@
+/* ==========================================================
+   SHOWTIME PAGE STYLES
+   ========================================================== */
+
+/* ==========================================================
+   CREATE INFO (Hướng dẫn tạo lịch)
+   ========================================================== */
+.showtime-create-info {
+    background: var(--glass-bg);
+    border: var(--border-premium);
+    border-radius: var(--radius-md);
+    padding: var(--space-lg);
+    margin-bottom: var(--space-xl);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.showtime-create-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-weight: var(--fw-bold);
+    font-size: 1.1rem;
+    color: var(--text-heading);
+    margin-bottom: var(--space-sm);
+}
+
+.showtime-create-header svg {
+    color: var(--accent-ice);
+    flex-shrink: 0;
+}
+
+.showtime-create-body {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.8;
+}
+
+.showtime-create-body strong {
+    color: var(--text-heading);
+}
+
+.showtime-create-body em {
+    color: var(--accent-ice);
+    font-style: normal;
+}
+
+/* ==========================================================
+   FORM
+   ========================================================== */
+.showtime-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+/* ==========================================================
+   FORM GROUP
+   ========================================================== */
+.showtime-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.showtime-form-label {
+    font-weight: var(--fw-medium);
+    font-size: 0.9rem;
+    color: var(--text-heading);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+.showtime-form-hint {
+    font-size: 0.75rem;
+    font-weight: var(--fw-regular);
+    color: var(--text-muted);
+}
+
+/* ==========================================================
+   FORM ROW (2 columns)
+   ========================================================== */
+.showtime-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
+}
+
+/* ==========================================================
+   FORM INPUTS
+   ========================================================== */
+.showtime-form-input,
+.showtime-form-select {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--bg-secondary);
+    border: var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-body);
+    font-size: 0.95rem;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    outline: none;
+}
+
+.showtime-form-input:focus,
+.showtime-form-select:focus {
+    border-color: var(--accent-ice);
+    box-shadow: 0 0 0 3px var(--accent-ice-soft);
+}
+
+.showtime-form-input:disabled,
+.showtime-form-select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.showtime-form-input-disabled {
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+.showtime-form-select option {
+    background: var(--bg-secondary);
+    color: var(--text-body);
+}
+
+/* ==========================================================
+   FORM ERROR
+   ========================================================== */
+.showtime-form-error {
+    font-size: 0.8rem;
+    color: #D85A5A;
+    margin-top: var(--space-xs);
+}
+
+/* ==========================================================
+   MOVIE CHECKBOX LIST (Create mode)
+   ========================================================== */
+.showtime-movie-checkbox-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    max-height: 240px;
+    overflow-y: auto;
+    padding: var(--space-sm);
+    background: var(--bg-secondary);
+    border: var(--border-subtle);
+    border-radius: var(--radius-sm);
+}
+
+.showtime-movie-checkbox {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: 6px 14px;
+    background: var(--bg-tertiary);
+    border: var(--border-subtle);
+    border-radius: var(--radius-round);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    user-select: none;
+}
+
+.showtime-movie-checkbox:hover {
+    border-color: var(--accent-ice-border);
+    color: var(--text-body);
+}
+
+.showtime-movie-checkbox.checked {
+    background: var(--accent-ice-bg);
+    border-color: var(--accent-ice);
+    color: var(--accent-ice);
+}
+
+.showtime-movie-checkbox input[type="checkbox"] {
+    display: none;
+}
+
+/* ==========================================================
+   ROOM CHECKBOX LIST (Edit mode)
+   ========================================================== */
+.showtime-room-checkbox-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+    background: var(--bg-secondary);
+    border: var(--border-subtle);
+    border-radius: var(--radius-sm);
+}
+
+.showtime-room-checkbox {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: 6px 14px;
+    background: var(--bg-tertiary);
+    border: var(--border-subtle);
+    border-radius: var(--radius-round);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    user-select: none;
+}
+
+.showtime-room-checkbox:hover {
+    border-color: var(--accent-ice-border);
+    color: var(--text-body);
+}
+
+.showtime-room-checkbox.checked {
+    background: var(--accent-ice-bg);
+    border-color: var(--accent-ice);
+    color: var(--accent-ice);
+}
+
+.showtime-room-checkbox input[type="checkbox"] {
+    display: none;
+}
+
+/* ==========================================================
+   SUBMIT BUTTON
+   ========================================================== */
+.showtime-submit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    padding: 12px 32px;
+    background: var(--btn-silver-bg);
+    color: var(--bg-primary) !important;
+    font-weight: var(--fw-bold);
+    font-size: 0.95rem;
+    border-radius: var(--radius-round);
+    box-shadow: var(--btn-silver-shadow);
+    transition: all var(--transition-normal);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: var(--space-sm);
+    width: 100%;
+}
+
+.showtime-submit-btn:hover:not(:disabled) {
+    filter: brightness(1.08);
+    box-shadow: 0 4px 32px rgba(159, 183, 210, 0.35);
+    transform: scale(1.01);
+    color: var(--bg-primary) !important;
+}
+
+.showtime-submit-btn:active:not(:disabled) {
+    transform: scale(0.97);
+}
+
+.showtime-submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.showtime-submit-btn.loading {
+    opacity: 0.8;
+}
+
+/* ==========================================================
+   SPIN ICON (Loader)
+   ========================================================== */
+.spin-icon {
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ==========================================================
+   TABLE CELLS (AdminTable override)
+   ========================================================== */
+.showtime-movie-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.showtime-movie-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--accent-ice-soft);
+    border-radius: var(--radius-sm);
+    color: var(--accent-ice);
+    flex-shrink: 0;
+}
+
+.showtime-movie-title {
+    font-weight: var(--fw-medium);
+    color: var(--text-heading);
+}
+
+.showtime-movie-duration {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.showtime-cinema-name {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    color: var(--text-body);
+    font-size: 0.9rem;
+}
+
+.showtime-cinema-name svg {
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.showtime-room-badge {
+    display: inline-block;
+    margin-top: var(--space-xs);
+    font-size: 0.7rem;
+    padding: 2px 10px;
+}
+
+.showtime-time-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: 0.8rem;
+    padding: 4px 12px;
+}
+
+.showtime-time-badge svg {
+    flex-shrink: 0;
+}
+
+/* ==========================================================
+   ADMIN TABLE ACTIONS
+   ========================================================== */
+.admin-table-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.admin-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+    color: var(--text-secondary);
+}
+
+.admin-action-btn:hover {
+    color: var(--text-heading);
+}
+
+.admin-action-btn.edit-btn:hover {
+    background: var(--accent-ice-soft);
+    color: var(--accent-ice);
+}
+
+.admin-action-btn.delete-btn:hover {
+    background: rgba(216, 90, 90, 0.15);
+    color: #D85A5A;
+}
+
+/* ==========================================================
+   STATUS BADGE (Reuse from global)
+   ========================================================== */
+.status-badge {
+    display: inline-block;
+    padding: 2px 12px;
+    border-radius: var(--radius-round);
+    font-size: 0.75rem;
+    font-weight: var(--fw-medium);
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: var(--border-subtle);
+}
+
+.status-badge.pending {
+    background: rgba(166, 193, 217, 0.12);
+    color: var(--accent-ice);
+    border-color: var(--accent-ice-border);
+}
+
+.status-badge.active {
+    background: rgba(67, 183, 122, 0.12);
+    color: #43B77A;
+    border-color: rgba(67, 183, 122, 0.2);
+}
+
+.status-badge.inactive {
+    background: rgba(216, 90, 90, 0.12);
+    color: #D85A5A;
+    border-color: rgba(216, 90, 90, 0.2);
+}
+
+/* ==========================================================
+   ADMIN LOADING
+   ========================================================== */
+.admin-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    padding: var(--space-3xl) 0;
+    color: var(--text-muted);
+}
+
+.admin-loading .spin-icon {
+    color: var(--accent-ice);
+}
+
+/* ==========================================================
+   ALERT MODAL CONTENT
+   ========================================================== */
+.admin-alert-content {
+    padding: var(--space-sm) 0;
+}
+
+.admin-alert-content p {
+    white-space: pre-wrap;
+    line-height: 1.6;
+    color: var(--text-body);
+}
+
+/* ==========================================================
+   RESPONSIVE
+   ========================================================== */
+
+/* Tablet */
+@media (max-width: 768px) {
+    .showtime-form-row {
+        grid-template-columns: 1fr;
+        gap: var(--space-sm);
+    }
+
+    .showtime-movie-checkbox-list,
+    .showtime-room-checkbox-list {
+        max-height: 180px;
+    }
+
+    .showtime-submit-btn {
+        padding: 10px 24px;
+        font-size: 0.9rem;
+    }
+
+    .showtime-create-body {
+        font-size: 0.85rem;
+    }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+    .showtime-movie-checkbox,
+    .showtime-room-checkbox {
+        font-size: 0.78rem;
+        padding: 4px 10px;
+    }
+
+    .showtime-form-input,
+    .showtime-form-select {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+
+    .showtime-create-info {
+        padding: var(--space-md);
+    }
+
+    .admin-table-actions {
+        gap: 2px;
+    }
+
+    .admin-action-btn {
+        width: 28px;
+        height: 28px;
+    }
+
+    .admin-action-btn svg {
+        width: 14px;
+        height: 14px;
+    }
+}
+
+/* ==========================================================
+   SCROLLBAR TRONG CHECKBOX LIST (Override)
+   ========================================================== */
+.showtime-movie-checkbox-list::-webkit-scrollbar,
+.showtime-room-checkbox-list::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.showtime-movie-checkbox-list::-webkit-scrollbar-track,
+.showtime-room-checkbox-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.showtime-movie-checkbox-list::-webkit-scrollbar-thumb,
+.showtime-room-checkbox-list::-webkit-scrollbar-thumb {
+    background: var(--text-disabled);
+    border-radius: var(--radius-round);
+    border: none;
+}
+
+.showtime-movie-checkbox-list::-webkit-scrollbar-thumb:hover,
+.showtime-room-checkbox-list::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* Firefox */
+.showtime-movie-checkbox-list,
+.showtime-room-checkbox-list {
+    scrollbar-width: thin;
+    scrollbar-color: var(--text-disabled) transparent;
+}

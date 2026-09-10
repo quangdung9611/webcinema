@@ -1,5 +1,5 @@
 /* ==========================================================
-   MOVIE SHOWTIME CONFIG PAGE
+   MOVIE SHOWTIME CONFIG PAGE - NO TAB, SCROLL VERTICAL + HORIZONTAL
    ========================================================== */
 
 .movie-showtime-config-page {
@@ -9,7 +9,7 @@
 }
 
 /* ==========================================================
-   TOOLBAR - CHỌN RẠP + FILTER
+   TOOLBAR - CHỌN RẠP
    ========================================================== */
 
 .config-toolbar {
@@ -51,10 +51,6 @@
 .config-select-main:focus {
     outline: none;
     border-color: var(--accent-ice);
-}
-
-.config-select-small {
-    min-width: 120px;
 }
 
 .cinema-info {
@@ -257,30 +253,13 @@
     border: var(--border-premium);
     border-radius: var(--radius-md);
     margin-bottom: var(--space-lg);
-}
-
-.nav-btn {
-    padding: 4px 8px;
-    border: var(--border-premium);
-    border-radius: var(--radius-sm);
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.nav-btn:hover {
-    background: var(--bg-elevated);
-    color: var(--text-heading);
+    overflow-x: auto;
 }
 
 .date-list {
     display: flex;
     gap: var(--space-xs);
     flex: 1;
-    overflow-x: auto;
     padding: var(--space-xs) 0;
 }
 
@@ -388,6 +367,7 @@
     display: flex;
     gap: var(--space-sm);
     margin-bottom: var(--space-md);
+    flex-wrap: wrap;
 }
 
 .btn-add-all {
@@ -412,244 +392,318 @@
 }
 
 /* ==========================================================
-   CONFIG GRID
+   NÚT AUTO FILL
    ========================================================== */
 
-.config-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--space-sm);
-    max-height: 500px;
-    overflow-y: auto;
-    padding-right: var(--space-xs);
-}
-
-.config-grid::-webkit-scrollbar {
-    width: 4px;
-}
-
-.config-grid::-webkit-scrollbar-track {
-    background: var(--bg-primary);
-    border-radius: var(--radius-sm);
-}
-
-.config-grid::-webkit-scrollbar-thumb {
-    background: var(--text-muted);
-    border-radius: var(--radius-round);
-}
-
-.config-grid::-webkit-scrollbar-thumb:hover {
-    background: var(--text-secondary);
-}
-
-/* ==========================================================
-   CONFIG ITEM
-   ========================================================== */
-
-.config-item {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-sm);
-    padding: 10px 14px;
-    transition: border-color var(--transition-fast);
-}
-
-.config-item:hover {
-    border-color: var(--accent-ice-border);
-}
-
-.config-item.error {
-    border-color: rgba(220, 38, 38, 0.3);
-    background: rgba(220, 38, 38, 0.04);
-}
-
-.config-item.weekend {
-    border-color: rgba(209, 173, 85, 0.15);
-    background: rgba(209, 173, 85, 0.04);
-}
-
-.config-item-header {
+.btn-auto-fill {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 6px;
-}
-
-.config-item-day {
+    gap: var(--space-xs);
+    padding: 6px 16px;
+    background: rgba(67, 183, 122, 0.12);
+    color: var(--seat-selected-color);
+    border: 1px solid rgba(67, 183, 122, 0.2);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
     font-size: 13px;
-    font-weight: var(--fw-semibold);
-    color: var(--text-heading);
-}
-
-.config-item-time {
-    font-weight: var(--fw-regular);
-    color: var(--text-secondary);
-    font-size: 12px;
-    margin-left: 4px;
-}
-
-.config-item-controls {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-}
-
-/* Toggle Switch */
-.toggle-switch {
-    position: relative;
-    display: inline-block;
-    width: 32px;
-    height: 18px;
-    cursor: pointer;
-}
-
-.toggle-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.toggle-slider {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--text-disabled);
-    border-radius: var(--radius-round);
-    transition: var(--transition-fast);
-}
-
-.toggle-slider::before {
-    content: '';
-    position: absolute;
-    height: 12px;
-    width: 12px;
-    left: 3px;
-    bottom: 3px;
-    background: var(--silver-light);
-    border-radius: 50%;
-    transition: var(--transition-fast);
-}
-
-.toggle-switch input:checked + .toggle-slider {
-    background: var(--accent-ice);
-}
-
-.toggle-switch input:checked + .toggle-slider::before {
-    transform: translateX(14px);
-}
-
-.btn-delete-config {
-    padding: 2px;
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    cursor: pointer;
-    border-radius: var(--radius-xs);
+    font-weight: var(--fw-medium);
     transition: all var(--transition-fast);
 }
 
-.btn-delete-config:hover {
-    color: var(--seat-sold-color);
-    background: rgba(216, 90, 90, 0.1);
+.btn-auto-fill:hover {
+    background: rgba(67, 183, 122, 0.2);
+    border-color: var(--seat-selected-color);
+    transform: translateY(-1px);
 }
 
 /* ==========================================================
-   CONFIG FIELDS
+   INTERVAL SECTION - CHỌN KHOẢNG CÁCH
    ========================================================== */
 
-.config-item-fields {
-    display: flex;
-    gap: var(--space-xs);
-    margin-bottom: 6px;
-}
-
-.config-field {
-    padding: 4px 8px;
+.interval-section {
+    padding: var(--space-md);
+    background: var(--bg-elevated);
     border: var(--border-premium);
-    border-radius: var(--radius-xs);
-    font-size: 12px;
-    background: var(--bg-card);
-    color: var(--text-body);
-    outline: none;
-    flex: 1;
-    min-width: 0;
-    transition: border-color var(--transition-fast);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-md);
 }
 
-.config-field:focus {
-    border-color: var(--accent-ice);
-}
-
-.config-field-small {
-    flex: 0.6;
-    min-width: 50px;
-}
-
-.config-field.error {
-    border-color: rgba(220, 38, 38, 0.4);
-}
-
-.config-field::-webkit-inner-spin-button {
-    opacity: 0.5;
-}
-
-/* ==========================================================
-   CONFIG FOOTER
-   ========================================================== */
-
-.config-item-footer {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.config-status {
+.interval-header {
     display: flex;
     align-items: center;
-    gap: 4px;
-    font-size: 12px;
-    padding: 2px 8px;
-    border-radius: var(--radius-xs);
+    gap: var(--space-sm);
+    margin-bottom: var(--space-sm);
 }
 
-.config-status.error {
-    color: var(--seat-sold-color);
-    background: rgba(216, 90, 90, 0.08);
-}
-
-.config-status.success {
-    color: var(--seat-selected-color);
-    background: rgba(67, 183, 122, 0.08);
-}
-
-.status-suggest {
-    color: var(--seat-vip-color);
-    font-size: 11px;
-}
-
-.status-suggest strong {
+.interval-label {
+    font-weight: var(--fw-semibold);
+    font-size: 14px;
     color: var(--text-heading);
 }
 
-.config-times {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 11px;
+.interval-hint {
+    font-size: 12px;
     color: var(--text-muted);
-    padding: 2px 8px;
-    background: var(--bg-elevated);
-    border-radius: var(--radius-xs);
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
 }
 
-.config-times span {
-    overflow: hidden;
-    text-overflow: ellipsis;
+.interval-group {
+    display: flex;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-sm);
+}
+
+.interval-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: 8px 16px;
+    border: 2px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    flex: 1;
+    min-width: 120px;
+}
+
+.interval-btn:hover {
+    border-color: var(--accent-ice-border);
+    transform: translateY(-2px);
+}
+
+.interval-btn.active {
+    border-color: var(--accent-ice);
+    background: var(--accent-ice-bg);
+}
+
+.interval-label-btn {
+    font-weight: var(--fw-semibold);
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.interval-btn.active .interval-label-btn {
+    color: var(--accent-ice);
+}
+
+.interval-minutes {
+    font-size: 12px;
+    font-weight: var(--fw-bold);
+    color: var(--text-muted);
+    background: var(--bg-primary);
+    padding: 2px 8px;
+    border-radius: var(--radius-round);
+}
+
+.interval-btn.active .interval-minutes {
+    color: var(--accent-ice);
+    background: var(--accent-ice-soft);
+}
+
+.interval-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-left: auto;
+}
+
+.btn-apply-interval {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    padding: 8px 24px;
+    background: var(--accent-ice-bg);
+    color: var(--accent-ice);
+    border: var(--border-ice);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: var(--fw-medium);
+    transition: all var(--transition-fast);
+    width: 100%;
+}
+
+.btn-apply-interval:hover {
+    background: var(--accent-ice-soft);
+    border-color: var(--accent-ice);
+    transform: translateY(-1px);
+}
+
+/* ==========================================================
+   TABLE CONFIG - SCROLL NGANG + DỌC
+   ========================================================== */
+
+.config-table-wrapper {
+    overflow: auto;
+    max-height: 600px;
+    border-radius: var(--radius-sm);
+    border: var(--border-subtle);
+}
+
+/* ==========================================================
+   BẢNG
+   ========================================================== */
+
+.config-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    min-width: 600px;
+}
+
+.config-table thead {
+    background: var(--bg-elevated);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.config-table th {
+    padding: 8px 12px;
+    text-align: center;
+    font-weight: var(--fw-medium);
+    color: var(--text-secondary);
+    border-bottom: var(--border-subtle);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.config-table th.date-header {
+    min-width: 60px;
+}
+
+.config-table th.date-header.weekend {
+    background: rgba(209, 173, 85, 0.08);
+    color: #D1AD55;
+}
+
+.config-table td {
+    padding: 4px 6px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    vertical-align: middle;
+}
+
+.config-table tbody tr:hover {
+    background: var(--bg-elevated);
+}
+
+/* ==========================================================
+   TIME SLOT HEADER (Dòng tiêu đề khung giờ)
+   ========================================================== */
+
+.config-table tbody tr.time-slot-header td {
+    padding: 6px 12px;
+    background: var(--bg-tertiary);
+    font-weight: var(--fw-semibold);
+    color: var(--text-heading);
+    font-size: 13px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.config-table tbody tr.time-slot-header:not(:first-child) td {
+    border-top: 2px solid var(--border-premium);
+}
+
+/* ==========================================================
+   ROOM LABEL
+   ========================================================== */
+
+.config-table .room-label {
+    font-weight: var(--fw-medium);
+    color: var(--text-secondary);
+    font-size: 12px;
+    text-align: left;
+    padding-left: 24px;
+    white-space: nowrap;
+}
+
+/* ==========================================================
+   HÀNG TRỐNG (KHÔNG CÓ CONFIG)
+   ========================================================== */
+
+.config-table tbody tr.empty-row {
+    opacity: 0.5;
+}
+
+.config-table tbody tr.empty-row:hover {
+    opacity: 0.8;
+}
+
+.config-table tbody tr.empty-row .room-label {
+    color: var(--text-muted);
+}
+
+/* ==========================================================
+   INPUT CELL
+   ========================================================== */
+
+.config-input-cell {
+    width: 44px;
+    min-width: 44px;
+    padding: 4px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-xs);
+    text-align: center;
+    font-size: 13px;
+    background: transparent;
+    color: var(--text-body);
+    transition: all var(--transition-fast);
+}
+
+.config-input-cell:hover {
+    border-color: var(--accent-ice-border);
+    background: var(--bg-elevated);
+}
+
+.config-input-cell:focus {
+    outline: none;
+    border-color: var(--accent-ice);
+    background: var(--bg-elevated);
+    box-shadow: 0 0 0 2px var(--accent-ice-soft);
+}
+
+.config-input-cell.has-value {
+    background: var(--accent-ice-soft);
+    border-color: var(--accent-ice-border);
+    color: var(--text-heading);
+}
+
+.config-input-cell.error {
+    border-color: rgba(220, 38, 38, 0.4);
+    background: rgba(220, 38, 38, 0.08);
+    color: var(--seat-sold-color);
+}
+
+.config-input-cell:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.config-input-cell::-webkit-inner-spin-button {
+    opacity: 0.3;
+}
+
+/* ==========================================================
+   TỔNG HÀNG/CỘT
+   ========================================================== */
+
+.config-table .total-row td {
+    font-weight: var(--fw-semibold);
+    background: var(--bg-elevated);
+    border-top: var(--border-subtle);
+    color: var(--text-heading);
+    font-size: 12px;
+    padding: 6px 12px;
+}
+
+.config-table .total-row .room-label {
+    color: var(--accent-ice);
+}
+
+.config-table .total-cell {
+    color: var(--accent-ice);
 }
 
 /* ==========================================================
@@ -671,6 +725,23 @@
     color: var(--text-disabled);
 }
 
+.empty-tab-config {
+    text-align: center;
+    padding: var(--space-xl);
+    color: var(--text-muted);
+    border: 2px dashed var(--border-subtle);
+    border-radius: var(--radius-sm);
+}
+
+.empty-tab-config p {
+    margin: 4px 0;
+}
+
+.empty-tab-hint {
+    font-size: 13px;
+    color: var(--text-disabled);
+}
+
 /* ==========================================================
    SAVE ALL
    ========================================================== */
@@ -680,6 +751,7 @@
     justify-content: flex-end;
     padding-top: var(--space-md);
     border-top: var(--border-subtle);
+    gap: var(--space-sm);
 }
 
 .btn-save-all {
@@ -740,17 +812,39 @@
    SCROLLBAR
    ========================================================== */
 
-.movie-chip-list::-webkit-scrollbar {
-    width: 4px;
+.movie-chip-list::-webkit-scrollbar,
+.time-slot-tabs::-webkit-scrollbar,
+.config-table-wrapper::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
 }
 
-.movie-chip-list::-webkit-scrollbar-track {
+.movie-chip-list::-webkit-scrollbar-track,
+.time-slot-tabs::-webkit-scrollbar-track,
+.config-table-wrapper::-webkit-scrollbar-track {
     background: var(--bg-primary);
+    border-radius: var(--radius-sm);
 }
 
-.movie-chip-list::-webkit-scrollbar-thumb {
+.movie-chip-list::-webkit-scrollbar-thumb,
+.time-slot-tabs::-webkit-scrollbar-thumb,
+.config-table-wrapper::-webkit-scrollbar-thumb {
     background: var(--text-muted);
     border-radius: var(--radius-round);
+}
+
+.movie-chip-list::-webkit-scrollbar-thumb:hover,
+.time-slot-tabs::-webkit-scrollbar-thumb:hover,
+.config-table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+/* Firefox */
+.movie-chip-list,
+.time-slot-tabs,
+.config-table-wrapper {
+    scrollbar-width: thin;
+    scrollbar-color: var(--text-muted) var(--bg-primary);
 }
 
 /* ==========================================================
@@ -790,24 +884,11 @@
     .date-range-group {
         flex-wrap: wrap;
     }
-    
-    .date-navigation {
-        flex-wrap: wrap;
-    }
 }
 
 @media (max-width: 768px) {
     .movie-showtime-config-page {
         padding: 12px;
-    }
-    
-    .config-item-fields {
-        flex-wrap: wrap;
-    }
-    
-    .config-field-small {
-        flex: 1;
-        min-width: 60px;
     }
     
     .movie-card-title {
@@ -830,22 +911,70 @@
     .btn-save-all {
         width: 100%;
         justify-content: center;
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+    
+    .config-table {
+        font-size: 12px;
+        min-width: 400px;
+    }
+    
+    .config-input-cell {
+        width: 36px;
+        min-width: 36px;
+        font-size: 12px;
+        padding: 2px;
+    }
+    
+    .config-table th,
+    .config-table td {
+        padding: 4px 6px;
+    }
+    
+    .config-table-wrapper {
+        max-height: 400px;
+    }
+    
+    /* Interval responsive */
+    .interval-btn {
+        min-width: 80px;
+        padding: 6px 12px;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .interval-desc {
+        margin-left: 0;
+        font-size: 10px;
+    }
+    
+    .interval-label-btn {
+        font-size: 12px;
     }
 }
 
 @media (max-width: 480px) {
-    .config-item-header {
-        flex-wrap: wrap;
-        gap: var(--space-xs);
+    .movie-showtime-config-page {
+        padding: 8px;
     }
     
-    .config-item-controls {
-        margin-left: auto;
-    }
-    
-    .config-field {
+    .config-input-cell {
+        width: 30px;
+        min-width: 30px;
         font-size: 11px;
-        padding: 3px 6px;
+        padding: 2px;
+    }
+    
+    .config-table th,
+    .config-table td {
+        padding: 2px 4px;
+    }
+    
+    .config-table {
+        font-size: 11px;
+        min-width: 320px;
     }
     
     .movie-chip {
@@ -856,5 +985,48 @@
     .date-input {
         width: 100px;
         font-size: 12px;
+    }
+    
+    .config-table .room-label {
+        font-size: 11px;
+        padding-left: 12px;
+    }
+    
+    .config-table-wrapper {
+        max-height: 320px;
+    }
+    
+    .config-toolbar {
+        padding: var(--space-sm) var(--space-md);
+    }
+    
+    .movie-select-section {
+        padding: var(--space-sm) var(--space-md);
+    }
+    
+    .movie-card-body {
+        padding: var(--space-sm);
+    }
+    
+    .btn-add-all,
+    .btn-auto-fill {
+        font-size: 12px;
+        padding: 4px 12px;
+    }
+    
+    /* Interval responsive */
+    .interval-btn {
+        min-width: 60px;
+        padding: 4px 8px;
+    }
+    
+    .interval-minutes {
+        font-size: 10px;
+        padding: 1px 6px;
+    }
+    
+    .btn-apply-interval {
+        font-size: 12px;
+        padding: 6px 16px;
     }
 }

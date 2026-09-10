@@ -24,7 +24,6 @@ class ShowtimeConfigService {
         'IMAX'
     ];
 
-    // 🆕 THÊM TẤT CẢ CÁC NGÀY TRONG TUẦN
     ALLOWED_DAY_TYPES = [
         'ALL',
         'WEEKDAY',
@@ -36,6 +35,13 @@ class ShowtimeConfigService {
         'FRIDAY',
         'SATURDAY',
         'SUNDAY'
+    ];
+
+    // ✅ THÊM INTERVAL TYPES
+    ALLOWED_INTERVAL_TYPES = [
+        'HOT',
+        'NORMAL',
+        'COOL'
     ];
 
     /*=========================================================
@@ -74,9 +80,12 @@ class ShowtimeConfigService {
 
             slot_count: Number(config.slot_count),
 
-            interval_minutes: Number(
-                config.interval_minutes
-            ),
+            // ✅ THAY interval_minutes → interval_type
+            interval_type: String(
+                config.interval_type || 'NORMAL'
+            )
+                .trim()
+                .toUpperCase(),
 
             day_type: String(
                 config.day_type || 'ALL'
@@ -120,16 +129,18 @@ class ShowtimeConfigService {
             return false;
         }
 
+        // ✅ VALIDATE interval_type
         if (
-            !Number.isFinite(config.slot_count) ||
-            config.slot_count <= 0
+            !this.ALLOWED_INTERVAL_TYPES.includes(
+                config.interval_type
+            )
         ) {
             return false;
         }
 
         if (
-            !Number.isFinite(config.interval_minutes) ||
-            config.interval_minutes <= 0
+            !Number.isFinite(config.slot_count) ||
+            config.slot_count <= 0
         ) {
             return false;
         }
@@ -162,7 +173,6 @@ class ShowtimeConfigService {
 
     /*=========================================================
         LẤY TẤT CẢ CONFIG
-        Bao gồm cả inactive.
     =========================================================*/
     async getAllConfig(movieId, cinemaId) {
 
@@ -183,26 +193,6 @@ class ShowtimeConfigService {
 
     /*=========================================================
         SAVE CONFIG
-
-        LOGIC:
-
-        1. Config có config_id
-           → UPDATE đúng config_id.
-
-        2. Config không có config_id
-           → kiểm tra bằng:
-              movie + cinema + day + slot + room
-
-           Nếu tồn tại:
-              → UPDATE
-
-           Nếu chưa tồn tại:
-              → INSERT
-
-        3. Config cũ không còn xuất hiện trong payload
-           → DELETE.
-
-        4. Không DELETE ALL rồi INSERT ALL.
     =========================================================*/
     async saveConfig(movieId, cinemaId, configs) {
 
@@ -317,8 +307,7 @@ class ShowtimeConfigService {
                 let existing = null;
 
                 // ---------------------------------------------
-                // TRƯỜNG HỢP 1:
-                // Frontend gửi config_id
+                // TRƯỜNG HỢP 1: Có config_id
                 // ---------------------------------------------
 
                 if (config.config_id) {
@@ -338,8 +327,6 @@ class ShowtimeConfigService {
                         );
                     }
 
-                    // Bảo vệ không cho config_id
-                    // trỏ sang movie/cinema khác
                     if (
                         Number(existing.movie_id) !==
                             Number(movieId) ||
@@ -355,10 +342,7 @@ class ShowtimeConfigService {
                 }
 
                 // ---------------------------------------------
-                // TRƯỜNG HỢP 2:
-                // Không có config_id
-                //
-                // Tìm bằng khóa logic
+                // TRƯỜNG HỢP 2: Không có config_id
                 // ---------------------------------------------
 
                 if (!existing) {
@@ -381,21 +365,11 @@ class ShowtimeConfigService {
                     await ShowtimeConfigRepository.update(
                         existing.config_id,
                         {
-                            day_type:
-                                config.day_type,
-
-                            time_slot:
-                                config.time_slot,
-
-                            room_type:
-                                config.room_type,
-
-                            slot_count:
-                                config.slot_count,
-
-                            interval_minutes:
-                                config.interval_minutes,
-
+                            day_type: config.day_type,
+                            time_slot: config.time_slot,
+                            room_type: config.room_type,
+                            slot_count: config.slot_count,
+                            interval_type: config.interval_type,  // ✅ ĐỔI
                             is_active: 1
                         },
                         connection
@@ -419,16 +393,11 @@ class ShowtimeConfigService {
                         {
                             movie_id: movieId,
                             cinema_id: cinemaId,
-                            day_type:
-                                config.day_type,
-                            time_slot:
-                                config.time_slot,
-                            room_type:
-                                config.room_type,
-                            slot_count:
-                                config.slot_count,
-                            interval_minutes:
-                                config.interval_minutes,
+                            day_type: config.day_type,
+                            time_slot: config.time_slot,
+                            room_type: config.room_type,
+                            slot_count: config.slot_count,
+                            interval_type: config.interval_type,  // ✅ ĐỔI
                             is_active: 1
                         },
                         connection
@@ -471,10 +440,6 @@ class ShowtimeConfigService {
             await ShowtimeConfigRepository
                 .commit(connection);
 
-            // =================================================
-            // RETURN
-            // =================================================
-
             return {
                 success: true,
                 inserted,
@@ -485,10 +450,6 @@ class ShowtimeConfigService {
             };
 
         } catch (error) {
-
-            // =================================================
-            // ROLLBACK
-            // =================================================
 
             await ShowtimeConfigRepository
                 .rollback(connection);
@@ -597,10 +558,13 @@ class ShowtimeConfigService {
                     ? Number(data.slot_count)
                     : Number(existing.slot_count),
 
-            interval_minutes:
-                data.interval_minutes !== undefined
-                    ? Number(data.interval_minutes)
-                    : Number(existing.interval_minutes),
+            // ✅ ĐỔI interval_minutes → interval_type
+            interval_type:
+                data.interval_type !== undefined
+                    ? String(data.interval_type)
+                        .trim()
+                        .toUpperCase()
+                    : existing.interval_type,
 
             is_active:
                 data.is_active !== undefined
@@ -650,6 +614,19 @@ class ShowtimeConfigService {
             );
         }
 
+        // ✅ VALIDATE interval_type
+        if (
+            !this.ALLOWED_INTERVAL_TYPES.includes(
+                normalized.interval_type
+            )
+        ) {
+            throw this.createError(
+                'Interval type không hợp lệ',
+                400,
+                'interval_type'
+            );
+        }
+
         if (
             !Number.isFinite(
                 normalized.slot_count
@@ -660,19 +637,6 @@ class ShowtimeConfigService {
                 'Số suất phải lớn hơn 0',
                 400,
                 'slot_count'
-            );
-        }
-
-        if (
-            !Number.isFinite(
-                normalized.interval_minutes
-            ) ||
-            normalized.interval_minutes <= 0
-        ) {
-            throw this.createError(
-                'Khoảng cách phải lớn hơn 0',
-                400,
-                'interval_minutes'
             );
         }
 
