@@ -400,39 +400,39 @@ class ShowtimeRepository {
         GET OPERATING HOURS FROM CINEMA
     =========================================================*/
     async getOperatingHours(cinemaId) {
-        const [rows] = await db.query(
-            `
-            SELECT 
-                weekday_open,
-                weekday_close,
-                weekend_open,
-                weekend_close
-            FROM cinemas
-            WHERE cinema_id = ?
-            LIMIT 1
-            `,
-            [cinemaId]
-        );
-        
-        if (rows.length === 0) {
-            return {
-                weekday: { open: '08:00:00', close: '23:30:00' },
-                weekend: { open: '08:00:00', close: '24:00:00' }
-            };
-        }
-        
-        const row = rows[0];
+    const [rows] = await db.query(
+        `
+        SELECT 
+            TIME_FORMAT(weekday_open, '%H:%i') AS weekday_open,
+            TIME_FORMAT(weekday_close, '%H:%i') AS weekday_close,
+            TIME_FORMAT(weekend_open, '%H:%i') AS weekend_open,
+            TIME_FORMAT(weekend_close, '%H:%i') AS weekend_close
+        FROM cinemas
+        WHERE cinema_id = ?
+        LIMIT 1
+        `,
+        [cinemaId]
+    );
+    
+    if (rows.length === 0) {
         return {
-            weekday: {
-                open: row.weekday_open || '08:00:00',
-                close: row.weekday_close || '23:30:00'
-            },
-            weekend: {
-                open: row.weekend_open || '08:00:00',
-                close: row.weekend_close || '24:00:00'
-            }
+            weekday: { open: '08:00', close: '23:30' },
+            weekend: { open: '08:00', close: '24:00' }
         };
     }
+    
+    const row = rows[0];
+    return {
+        weekday: {
+            open: row.weekday_open || '08:00',
+            close: row.weekday_close || '23:30'
+        },
+        weekend: {
+            open: row.weekend_open || '08:00',
+            close: row.weekend_close || '24:00'
+        }
+    };
+}
 
     /*=========================================================
         GET MOVIE SHOWTIME CONFIG - HỖ TRỢ TỪNG NGÀY

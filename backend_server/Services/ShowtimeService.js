@@ -123,11 +123,23 @@ const isWeekend = (date) => {
 // ==========================================================
 
 const timeToMinutes = (time) => {
-    if (time === "24:00") return 24 * 60;
-    const [hour, minute] = String(time).split(":").map(Number);
-    if (!Number.isInteger(hour) || !Number.isInteger(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+    let str = String(time).trim();
+    
+    // Bỏ giây nếu có
+    const parts = str.split(":");
+    if (parts.length >= 2) {
+        str = `${parts[0]}:${parts[1]}`;
+    }
+    
+    if (str === "24:00") return 24 * 60;
+    
+    const [hour, minute] = str.split(":").map(Number);
+    
+    if (!Number.isInteger(hour) || !Number.isInteger(minute) || 
+        hour < 0 || hour > 23 || minute < 0 || minute > 59) {
         throw new Error(`Giờ không hợp lệ: ${time}`);
     }
+    
     return hour * 60 + minute;
 };
 
