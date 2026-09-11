@@ -556,7 +556,7 @@ class MovieRepository {
     }
 
     /*=========================================================
-        ✨ MỚI: FIND NOW SHOWING WITH GENRES (cho AI chatbox)
+        FIND NOW SHOWING WITH GENRES (cho AI chatbox - cũ)
     =========================================================*/
     async findNowShowingWithGenres(limit = 30) {
         const [movies] = await db.query(
@@ -581,7 +581,6 @@ class MovieRepository {
 
         if (movies.length === 0) return [];
 
-        // Lấy genres cho tất cả phim trong 1 query
         const movieIds = movies.map(m => m.movie_id);
         const placeholders = movieIds.map(() => '?').join(',');
 
@@ -597,7 +596,6 @@ class MovieRepository {
             movieIds
         );
 
-        // Map genres vào từng movie
         const genreMap = {};
         for (const row of genreRows) {
             if (!genreMap[row.movie_id]) genreMap[row.movie_id] = [];
@@ -608,6 +606,114 @@ class MovieRepository {
             ...m,
             genres: genreMap[m.movie_id] || []
         }));
+    }
+
+    /*=========================================================
+        ✨ MỚI: GET FULL CONTEXT FOR AI
+        Bao gồm: phim + suất chiếu + rạp + giá + khuyến mãi + combo
+        KHÔNG bao gồm: users, bookings, reviews, OTP, tokens...
+    =========================================================*/
+    async getFullContextForAI() {
+        // 1. Phim đang chiếu + sắp chiếu (kèm genres)
+        const [movies] = await db.query(`
+            SELECT
+                m.movie_id,
+                m.title,
+                m.slug,
+                m.description,
+                m.duration,
+                m.age_rating,
+                m.nation,
+                m.director,
+                m.status,
+                m.release_date,
+                m.movie_poster,
+                GROUP_CONCAT(DISTINCT g.genre_name SEPARATOR ', ') AS genres
+            FROM movies m
+            LEFT JOIN movie_genres mg ON m.movie_id = mg.movie_id
+            LEFT JOIN genres g ON mg.genre_id = g.genre_id
+            WHERE m.status IN ('Đang chiếu', 'Sắp chiếu')
+            GROUP BY m.movie_id
+            ORDER BY m.status, m.release_date DESC
+            LIMIT 30
+        `);
+
+        // 2. Suất chiếu 7 ngày tới
+        const [showtimes] = await db.query(`
+            SELECT
+                s.movie_id,
+                m.title AS movie_title,
+                c.cinema_name,
+                r.room_name,
+                r.room_type,
+                DATE_FORMAT(s.start_time, '%d/%m %H:%i') AS start_time
+            FROM showtimes s
+            INNER JOIN movies m ON s.movie_id = m.movie_id
+            INNER JOIN rooms r ON s.room_id = r.room_id
+            INNER JOIN cinemas c ON r.cinema_id = c.cinema_id
+            WHERE s.start_time >= NOW()
+                AND s.start_time <= DATE_ADD(NOW(), INTERVAL 7 DAY)
+            ORDER BY s.start_time ASC
+            LIMIT 200
+        `);
+
+        // 3. Rạp đang hoạt động
+        const [cinemas] = await db.query(`
+            SELECT
+                cinema_id,
+                cinema_name,
+                address,
+                city,
+                hotline,
+                weekday_open,
+                weekday_close,
+                weekend_open,
+                weekend_close
+            FROM cinemas
+        `);
+
+        // 4. Giá vé (chỉ STANDARD, gọn)
+        const [prices] = await db.query(`
+            SELECT
+                room_type,
+                day_type,
+                time_slot,
+                price
+            FROM price_config
+            WHERE seat_type = 'STANDARD' AND status = 1
+            ORDER BY room_type, day_type, time_slot
+        `);
+
+        // 5. Khuyến mãi đang chạy
+        const [promotions] = await db.query(`
+            SELECT
+                title,
+                description
+            FROM promotions
+            WHERE is_active = 1
+            ORDER BY created_at DESC
+            LIMIT 5
+        `);
+
+        // 6. Combo bắp nước
+        const [products] = await db.query(`
+            SELECT
+                product_name,
+                price,
+                category
+            FROM product_menu
+            WHERE status = 1
+            ORDER BY category, price
+        `);
+
+        return {
+            movies,
+            showtimes,
+            cinemas,
+            prices,
+            promotions,
+            products
+        };
     }
 }
 
