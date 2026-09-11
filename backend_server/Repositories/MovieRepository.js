@@ -4,7 +4,6 @@ class MovieRepository {
 
     /*=========================================================
         FIND ALL MOVIES - KHÔNG PHÂN TRANG
-        RETURN: rows[]
     =========================================================*/
     async findAllAll(search = "") {
         search = typeof search === "string" ? search.trim() : "";
@@ -22,23 +21,10 @@ class MovieRepository {
         const [rows] = await db.query(
             `
             SELECT
-                movie_id,
-                title,
-                slug,
-                description,
-                director,
-                nation,
-                duration,
-                age_rating,
-                movie_poster,
-                movie_backdrop,
-                trailer_url,
-                release_date,
-                status,
-                total_likes,
-                views_count,
-                created_at,
-                updated_at
+                movie_id, title, slug, description, director, nation,
+                duration, age_rating, movie_poster, movie_backdrop,
+                trailer_url, release_date, status, total_likes,
+                views_count, created_at, updated_at
             FROM movies
             ${whereClause}
             ORDER BY movie_id DESC
@@ -51,7 +37,6 @@ class MovieRepository {
 
     /*=========================================================
         FIND ALL MOVIES - CÓ PHÂN TRANG
-        RETURN: { data: [], pagination: {} }
     =========================================================*/
     async findAll(page = 1, limit = 20, search = "") {
         page = Number.parseInt(page, 10);
@@ -78,23 +63,10 @@ class MovieRepository {
         const [rows] = await db.query(
             `
             SELECT
-                movie_id,
-                title,
-                slug,
-                description,
-                director,
-                nation,
-                duration,
-                age_rating,
-                movie_poster,
-                movie_backdrop,
-                trailer_url,
-                release_date,
-                status,
-                total_likes,
-                views_count,
-                created_at,
-                updated_at
+                movie_id, title, slug, description, director, nation,
+                duration, age_rating, movie_poster, movie_backdrop,
+                trailer_url, release_date, status, total_likes,
+                views_count, created_at, updated_at
             FROM movies
             ${whereClause}
             ORDER BY movie_id DESC
@@ -118,9 +90,7 @@ class MovieRepository {
         return {
             data: rows,
             pagination: {
-                page,
-                limit,
-                total,
+                page, limit, total,
                 totalPages: totalPages > 0 ? totalPages : 1,
                 hasPreviousPage: page > 1,
                 hasNextPage: page < totalPages
@@ -135,23 +105,10 @@ class MovieRepository {
         const [rows] = await db.query(
             `
             SELECT
-                movie_id,
-                title,
-                slug,
-                description,
-                director,
-                nation,
-                duration,
-                age_rating,
-                movie_poster,
-                movie_backdrop,
-                trailer_url,
-                release_date,
-                status,
-                total_likes,
-                views_count,
-                created_at,
-                updated_at
+                movie_id, title, slug, description, director, nation,
+                duration, age_rating, movie_poster, movie_backdrop,
+                trailer_url, release_date, status, total_likes,
+                views_count, created_at, updated_at
             FROM movies
             WHERE movie_id = ?
             LIMIT 1
@@ -221,12 +178,9 @@ class MovieRepository {
         const [rows] = await db.query(
             `
             SELECT
-                s.showtime_id,
-                s.start_time,
-                r.room_name,
-                r.room_type,
-                c.cinema_name,
-                c.address
+                s.showtime_id, s.start_time,
+                r.room_name, r.room_type,
+                c.cinema_name, c.address
             FROM showtimes s
             INNER JOIN rooms r ON s.room_id = r.room_id
             INNER JOIN cinemas c ON r.cinema_id = c.cinema_id
@@ -244,18 +198,9 @@ class MovieRepository {
     =========================================================*/
     async create(movieData) {
         const {
-            title,
-            slug,
-            description,
-            director,
-            nation,
-            duration,
-            age_rating,
-            movie_poster,
-            movie_backdrop,
-            trailer_url,
-            release_date,
-            status
+            title, slug, description, director, nation,
+            duration, age_rating, movie_poster, movie_backdrop,
+            trailer_url, release_date, status
         } = movieData;
 
         const [result] = await db.query(
@@ -267,18 +212,10 @@ class MovieRepository {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0)
             `,
             [
-                title,
-                slug,
-                description || "",
-                director,
-                nation,
-                duration,
-                age_rating,
-                movie_poster || null,
-                movie_backdrop || null,
-                trailer_url || null,
-                release_date,
-                status
+                title, slug, description || "", director, nation,
+                duration, age_rating,
+                movie_poster || null, movie_backdrop || null,
+                trailer_url || null, release_date, status
             ]
         );
         return result.insertId;
@@ -289,52 +226,26 @@ class MovieRepository {
     =========================================================*/
     async update(movieId, movieData) {
         const {
-            title,
-            slug,
-            director,
-            nation,
-            duration,
-            age_rating,
-            release_date,
-            status,
-            description,
-            movie_poster,
-            movie_backdrop,
-            trailer_url
+            title, slug, director, nation, duration, age_rating,
+            release_date, status, description, movie_poster,
+            movie_backdrop, trailer_url
         } = movieData;
 
         const [result] = await db.query(
             `
             UPDATE movies
             SET
-                title = ?,
-                slug = ?,
-                director = ?,
-                nation = ?,
-                duration = ?,
-                age_rating = ?,
-                release_date = ?,
-                status = ?,
-                description = ?,
-                movie_poster = ?,
-                movie_backdrop = ?,
-                trailer_url = ?
+                title = ?, slug = ?, director = ?, nation = ?,
+                duration = ?, age_rating = ?, release_date = ?,
+                status = ?, description = ?, movie_poster = ?,
+                movie_backdrop = ?, trailer_url = ?
             WHERE movie_id = ?
             `,
             [
-                title,
-                slug,
-                director,
-                nation,
-                duration,
-                age_rating,
-                release_date,
-                status,
-                description || "",
-                movie_poster,
-                movie_backdrop,
-                trailer_url || null,
-                movieId
+                title, slug, director, nation, duration, age_rating,
+                release_date, status, description || "",
+                movie_poster, movie_backdrop,
+                trailer_url || null, movieId
             ]
         );
         return result.affectedRows;
@@ -358,17 +269,9 @@ class MovieRepository {
         const [rows] = await db.query(
             `
             SELECT
-                movie_id,
-                title,
-                slug,
-                movie_poster,
-                movie_backdrop,
-                status,
-                age_rating,
-                trailer_url,
-                nation,
-                total_likes,
-                views_count
+                movie_id, title, slug, movie_poster, movie_backdrop,
+                status, age_rating, trailer_url, nation,
+                total_likes, views_count
             FROM movies
             WHERE status != 'Ngừng chiếu'
             ORDER BY release_date DESC
@@ -412,19 +315,10 @@ class MovieRepository {
         const [rows] = await db.query(
             `
             SELECT
-                m.movie_id,
-                m.title,
-                m.slug,
-                m.movie_poster,
-                m.movie_backdrop,
-                m.status,
-                m.age_rating,
-                m.release_date,
-                m.duration,
-                m.trailer_url,
-                m.nation,
-                m.total_likes,
-                m.views_count,
+                m.movie_id, m.title, m.slug, m.movie_poster,
+                m.movie_backdrop, m.status, m.age_rating,
+                m.release_date, m.duration, m.trailer_url,
+                m.nation, m.total_likes, m.views_count,
                 IFNULL(ROUND(AVG(r.rating_score), 1), 0) AS average_rating
             FROM movies m
             LEFT JOIN reviews r ON m.movie_id = r.movie_id
@@ -453,10 +347,7 @@ class MovieRepository {
         return {
             data: rows,
             pagination: {
-                page,
-                limit,
-                total,
-                totalPages,
+                page, limit, total, totalPages,
                 hasPreviousPage: page > 1,
                 hasNextPage: page < totalPages
             }
@@ -488,16 +379,9 @@ class MovieRepository {
 
         const dataSql = `
             SELECT DISTINCT
-                m.movie_id,
-                m.title,
-                m.slug,
-                m.movie_poster,
-                m.status,
-                m.age_rating,
-                m.release_date,
-                m.director,
-                m.nation,
-                m.created_at
+                m.movie_id, m.title, m.slug, m.movie_poster,
+                m.status, m.age_rating, m.release_date,
+                m.director, m.nation, m.created_at
             FROM movies m
             ${genreSlug ? `INNER JOIN movie_genres mg ON m.movie_id = mg.movie_id
             INNER JOIN genres g ON mg.genre_id = g.genre_id` : ''}
@@ -523,10 +407,7 @@ class MovieRepository {
         return {
             data: rows,
             pagination: {
-                page,
-                limit,
-                total,
-                totalPages,
+                page, limit, total, totalPages,
                 hasPreviousPage: page > 1,
                 hasNextPage: page < totalPages
             }
@@ -556,65 +437,18 @@ class MovieRepository {
     }
 
     /*=========================================================
-        FIND NOW SHOWING WITH GENRES (cho AI chatbox - cũ)
-    =========================================================*/
-    async findNowShowingWithGenres(limit = 30) {
-        const [movies] = await db.query(
-            `
-            SELECT
-                movie_id,
-                title,
-                slug,
-                description,
-                duration,
-                age_rating,
-                movie_poster,
-                nation,
-                director
-            FROM movies
-            WHERE status = 'Đang chiếu'
-            ORDER BY release_date DESC
-            LIMIT ?
-            `,
-            [limit]
-        );
-
-        if (movies.length === 0) return [];
-
-        const movieIds = movies.map(m => m.movie_id);
-        const placeholders = movieIds.map(() => '?').join(',');
-
-        const [genreRows] = await db.query(
-            `
-            SELECT
-                mg.movie_id,
-                g.genre_name
-            FROM movie_genres mg
-            INNER JOIN genres g ON mg.genre_id = g.genre_id
-            WHERE mg.movie_id IN (${placeholders})
-            `,
-            movieIds
-        );
-
-        const genreMap = {};
-        for (const row of genreRows) {
-            if (!genreMap[row.movie_id]) genreMap[row.movie_id] = [];
-            genreMap[row.movie_id].push(row.genre_name);
-        }
-
-        return movies.map(m => ({
-            ...m,
-            genres: genreMap[m.movie_id] || []
-        }));
-    }
-
-    /*=========================================================
-        ✨ MỚI: GET FULL CONTEXT FOR AI
-        Bao gồm: phim + suất chiếu + rạp + giá + khuyến mãi + combo
-        KHÔNG bao gồm: users, bookings, reviews, OTP, tokens...
+        ✨ GET FULL CONTEXT FOR AI
+        Bao gồm:
+        - Phim (JOIN movie_genres + genres)
+        - Suất chiếu 7 ngày tới
+        - Rạp
+        - Giá vé (đủ 5 hạng ghế)
+        - Khuyến mãi
+        - Combo bắp nước
     =========================================================*/
     async getFullContextForAI() {
-        // 1. Phim đang chiếu + sắp chiếu (kèm genres)
+
+        // 1. Phim đang chiếu + sắp chiếu (JOIN genres)
         const [movies] = await db.query(`
             SELECT
                 m.movie_id,
@@ -660,35 +494,28 @@ class MovieRepository {
         // 3. Rạp đang hoạt động
         const [cinemas] = await db.query(`
             SELECT
-                cinema_id,
-                cinema_name,
-                address,
-                city,
-                hotline,
-                weekday_open,
-                weekday_close,
-                weekend_open,
-                weekend_close
+                cinema_id, cinema_name, address, city, hotline,
+                weekday_open, weekday_close,
+                weekend_open, weekend_close
             FROM cinemas
         `);
 
-        // 4. Giá vé (chỉ STANDARD, gọn)
+        // 4. Giá vé — LẤY ĐỦ 5 HẠNG GHẾ
         const [prices] = await db.query(`
             SELECT
                 room_type,
                 day_type,
                 time_slot,
+                seat_type,
                 price
             FROM price_config
-            WHERE seat_type = 'STANDARD' AND status = 1
-            ORDER BY room_type, day_type, time_slot
+            WHERE status = 1
+            ORDER BY room_type, day_type, time_slot, seat_type
         `);
 
         // 5. Khuyến mãi đang chạy
         const [promotions] = await db.query(`
-            SELECT
-                title,
-                description
+            SELECT title, description
             FROM promotions
             WHERE is_active = 1
             ORDER BY created_at DESC
@@ -697,10 +524,7 @@ class MovieRepository {
 
         // 6. Combo bắp nước
         const [products] = await db.query(`
-            SELECT
-                product_name,
-                price,
-                category
+            SELECT product_name, price, category
             FROM product_menu
             WHERE status = 1
             ORDER BY category, price

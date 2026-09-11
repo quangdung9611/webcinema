@@ -13,7 +13,7 @@ const cache = new Map();
 const CACHE_TTL = 1000 * 60 * 30; // 30 phút
 
 const rateLimit = new Map();
-const RATE_LIMIT = 10;             // 10 câu/phút/IP
+const RATE_LIMIT = 10;
 const RATE_WINDOW = 1000 * 60;
 
 /* =========================================================
@@ -79,7 +79,7 @@ class AiService {
     buildSystemPrompt(context) {
         const { movies, showtimes, cinemas, prices, promotions, products } = context;
 
-        /* ---------- Movies ---------- */
+        /* ---------- Movies (kèm genres) ---------- */
         const movieList = movies.map(m => {
             const desc = (m.description || '')
                 .replace(/<[^>]*>/g, '')
@@ -115,15 +115,17 @@ class AiService {
             `- ${c.cinema_name}: ${c.address} | Hotline: ${c.hotline} | T2-T6: ${c.weekday_open}–${c.weekday_close} | T7-CN: ${c.weekend_open}–${c.weekend_close}`
         ).join('\n');
 
-        /* ---------- Prices ---------- */
+        /* ---------- Prices — 5 HẠNG GHẾ ---------- */
         const priceGroups = {};
         prices.forEach(p => {
-            const key = `${p.room_type} - ${p.day_type}`;
+            const key = `${p.room_type} | ${p.day_type} | ${p.time_slot}`;
             if (!priceGroups[key]) priceGroups[key] = [];
-            priceGroups[key].push(`${p.time_slot}: ${Number(p.price).toLocaleString('vi-VN')}đ`);
+            priceGroups[key].push(
+                `${p.seat_type}: ${Number(p.price).toLocaleString('vi-VN')}đ`
+            );
         });
         const priceList = Object.entries(priceGroups)
-            .map(([k, v]) => `- ${k}: ${v.join(' | ')}`)
+            .map(([k, v]) => `- ${k} → ${v.join(' | ')}`)
             .join('\n');
 
         /* ---------- Promotions ---------- */
@@ -145,7 +147,8 @@ class AiService {
         return `Bạn là "Cinema Assistant" — trợ lý tư vấn của Quang Dũng Cinema.
 
 NHIỆM VỤ:
-- Tư vấn phim, suất chiếu, giá vé, khuyến mãi, combo, địa chỉ rạp, giờ mở cửa.
+- Tư vấn phim, suất chiếu, giá vé (theo loại phòng + hạng ghế), khuyến mãi,
+  combo, địa chỉ rạp, giờ mở cửa.
 - Trả lời thân thiện, ngắn gọn (tối đa 4 câu), tiếng Việt tự nhiên.
 - Kết thúc bằng câu hỏi gợi mở.
 
@@ -155,6 +158,17 @@ RÀNG BUỘC BẮT BUỘC:
 - KHÔNG tiết lộ thông tin khách hàng, booking, tài khoản.
 - Nếu không có thông tin → nói thật là chưa có.
 - Nếu user hỏi ngoài chủ đề rạp phim → từ chối lịch sự.
+
+GIẢI THÍCH VỀ GIÁ VÉ:
+- "Loại phòng": 2D, 3D, VIP, 4DMAX, IMAX → khác nhau về công nghệ chiếu.
+- "Hạng ghế": STANDARD (thường), VIP (cao cấp), DELUXE (sang),
+  RECLINER (nằm), COUPLE (đôi) → khác nhau về vị trí + tiện nghi.
+- "Khung giờ": MORNING (sáng), AFTERNOON (chiều),
+  EVENING (tối), NIGHT (khuya).
+- "Ngày": WEEKDAY (T2-T6), WEEKEND (T7-CN).
+
+Khi user hỏi giá, hãy nêu RÕ cả 3 yếu tố: loại phòng + khung giờ + hạng ghế.
+VD: "Ghế VIP phòng 2D suất tối cuối tuần là 135,000đ"
 
 ═══════════════════════════════════════════
 📽️ PHIM (ĐANG CHIẾU + SẮP CHIẾU):
@@ -166,7 +180,7 @@ ${showtimeList}
 🏢 HỆ THỐNG RẠP:
 ${cinemaList}
 
-💰 GIÁ VÉ (ghế STANDARD):
+💰 BẢNG GIÁ VÉ (loại phòng | ngày | khung giờ → hạng ghế: giá):
 ${priceList}
 
 🎁 KHUYẾN MÃI ĐANG CHẠY:
