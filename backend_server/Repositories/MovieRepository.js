@@ -554,6 +554,61 @@ class MovieRepository {
         );
         return result.affectedRows;
     }
+
+    /*=========================================================
+        ✨ MỚI: FIND NOW SHOWING WITH GENRES (cho AI chatbox)
+    =========================================================*/
+    async findNowShowingWithGenres(limit = 30) {
+        const [movies] = await db.query(
+            `
+            SELECT
+                movie_id,
+                title,
+                slug,
+                description,
+                duration,
+                age_rating,
+                movie_poster,
+                nation,
+                director
+            FROM movies
+            WHERE status = 'Đang chiếu'
+            ORDER BY release_date DESC
+            LIMIT ?
+            `,
+            [limit]
+        );
+
+        if (movies.length === 0) return [];
+
+        // Lấy genres cho tất cả phim trong 1 query
+        const movieIds = movies.map(m => m.movie_id);
+        const placeholders = movieIds.map(() => '?').join(',');
+
+        const [genreRows] = await db.query(
+            `
+            SELECT
+                mg.movie_id,
+                g.genre_name
+            FROM movie_genres mg
+            INNER JOIN genres g ON mg.genre_id = g.genre_id
+            WHERE mg.movie_id IN (${placeholders})
+            `,
+            movieIds
+        );
+
+        // Map genres vào từng movie
+        const genreMap = {};
+        for (const row of genreRows) {
+            if (!genreMap[row.movie_id]) genreMap[row.movie_id] = [];
+            genreMap[row.movie_id].push(row.genre_name);
+        }
+
+        return movies.map(m => ({
+            ...m,
+            genres: genreMap[m.movie_id] || []
+        }));
+    }
 }
 
 module.exports = new MovieRepository();

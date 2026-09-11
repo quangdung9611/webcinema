@@ -8,6 +8,7 @@ import ScrollReveal from '../components/ScrollReveal';
 import CinemaCard from '../components/CinemaCard';
 import HeroBanner from '../components/HeroBanner';
 import ReviewModal from '../components/ReviewModal';
+import AIChatBox from '../components/AIChatBox';
 
 import {
   Ticket,
@@ -1163,7 +1164,7 @@ const UserHome = () => {
 
         <ScrollReveal
           direction="up"
-          duration={0.5}
+          duration={0.7}
           delay={0.2}
           threshold={0.08}
           once
@@ -1321,7 +1322,7 @@ const UserHome = () => {
                 <ScrollReveal
                   key={index}
                   direction="up"
-                  duration={0.4}
+                  duration={0.6}
                   delay={
                     0.3 + index * 0.08
                   }
@@ -1364,7 +1365,7 @@ const UserHome = () => {
 
           <ScrollReveal
             direction="up"
-            duration={0.5}
+            duration={0.7}
             delay={0.35}
             threshold={0.08}
             once
@@ -1430,7 +1431,7 @@ const UserHome = () => {
                             index
                           }
                           direction="up"
-                          duration={0.4}
+                          duration={0.6}
                           delay={
                             0.5 +
                             index * 0.08
@@ -1510,7 +1511,7 @@ const UserHome = () => {
 
           <ScrollReveal
             direction="up"
-            duration={0.5}
+            duration={0.7}
             delay={0.4}
             threshold={0.08}
             once
@@ -1540,7 +1541,7 @@ const UserHome = () => {
 
           <ScrollReveal
             direction="up"
-            duration={0.5}
+            duration={0.7}
             delay={0.5}
             threshold={0.08}
             once
@@ -1601,7 +1602,7 @@ const UserHome = () => {
                             promo.promotion_id
                           }
                           direction="up"
-                          duration={0.4}
+                          duration={0.6}
                           delay={
                             0.6 +
                             index * 0.08
@@ -1636,7 +1637,7 @@ const UserHome = () => {
 
           <ScrollReveal
             direction="up"
-            duration={0.5}
+            duration={0.7}
             delay={0.7}
             threshold={0.08}
             once
@@ -1695,7 +1696,7 @@ const UserHome = () => {
                         <ScrollReveal
                           key={news.blog_id}
                           direction="up"
-                          duration={0.4}
+                          duration={0.6}
                           delay={
                             0.8 +
                             index * 0.08
@@ -1730,7 +1731,7 @@ const UserHome = () => {
 
           <ScrollReveal
             direction="up"
-            duration={0.5}
+            duration={0.7}
             delay={0.85}
             threshold={0.08}
             once
@@ -1789,7 +1790,7 @@ const UserHome = () => {
                         <ScrollReveal
                           key={item.news_id}
                           direction="up"
-                          duration={0.4}
+                          duration={0.6}
                           delay={
                             0.95 +
                             index * 0.08
@@ -1829,7 +1830,7 @@ const UserHome = () => {
 
           <ScrollReveal
             direction="up"
-            duration={0.5}
+            duration={0.7}
             delay={0.9}
             threshold={0.08}
             once
@@ -1885,7 +1886,7 @@ const UserHome = () => {
                             cinema.cinema_id
                           }
                           direction="up"
-                          duration={0.4}
+                          duration={0.6}
                           delay={
                             1.0 +
                             index * 0.08
@@ -1930,6 +1931,8 @@ const UserHome = () => {
 
         </div>
       </div>
+
+      <AIChatBox />
     </>
   );
 };

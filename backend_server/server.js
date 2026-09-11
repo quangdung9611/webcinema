@@ -67,7 +67,7 @@ const bannerRoutes = require("./Routers/BannerRouter");
 const dashboardRouter = require("./Routers/DashboardRouter");
 const priceConfigRoutes = require("./Routers/PriceConfigRouter");
 const showtimeConfigRoutes = require('./Routers/ShowtimeConfigRouter');
-
+const aiRoutes = require('./Routers/AiRouter');
 // ============================================================
 // APP / SERVER
 // ============================================================
@@ -1332,7 +1332,7 @@ app.use(
     dashboardRouter
 );
 
-
+app.use('/api/ai', aiRoutes);
 // ============================================================
 // 404
 // ============================================================

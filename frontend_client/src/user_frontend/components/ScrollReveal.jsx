@@ -17,6 +17,9 @@ const ScrollReveal = ({
   const ref = useRef(null);
   const [isInView, setIsInView] = useState(false);
 
+  /* =========================================================
+     INTERSECTION OBSERVER
+  ========================================================= */
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -38,26 +41,31 @@ const ScrollReveal = ({
     };
   }, [once, threshold, rootMargin]);
 
-  // ===== Xác định vị trí ban đầu =====
+  /* =========================================================
+     VỊ TRÍ BAN ĐẦU
+  ========================================================= */
   const getInitialPos = () => {
     switch (direction) {
-      case "up":    return { y: 20 };
-      case "down":  return { y: -20 };
-      case "left":  return { x: -20 };
-      case "right": return { x: 20 };
+      case "up":    return { y: 24 };
+      case "down":  return { y: -24 };
+      case "left":  return { x: -24 };
+      case "right": return { x: 24 };
       case "zoom":  return { scale: 0.94 };
-      case "fade":  return { opacity: 0 };
-      default:      return { y: 20 };
+      case "fade":  return {};
+      default:      return { y: 24 };
     }
   };
 
   const initial = {
     opacity: 0,
     ...getInitialPos(),
-    ...(scale && direction !== "zoom" ? { scale: 0.95 } : {}),
+    ...(scale && direction !== "zoom" ? { scale: 0.96 } : {}),
     ...(blur ? { filter: "blur(4px)" } : {}),
   };
 
+  /* =========================================================
+     TRẠNG THÁI ACTIVE — easing mượt kiểu cinematic
+  ========================================================= */
   const animate = {
     opacity: 1,
     x: 0,
@@ -67,7 +75,7 @@ const ScrollReveal = ({
     transition: {
       duration,
       delay,
-      ease: [0.25, 0.1, 0.25, 1], // mượt tự nhiên
+      ease: [0.22, 1, 0.36, 1], // easeOutQuint — mượt & sang
     },
   };
 

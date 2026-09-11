@@ -1,10 +1,11 @@
 /* ==========================================================
    MOVIE SHOWTIME CONFIG PAGE
+   Style đồng bộ index.css - Silver / Premium / Cinematic
    ========================================================== */
 
 .movie-showtime-config-page {
-    padding: 20px;
-    max-width: 1400px;
+    padding: var(--space-lg);
+    max-width: 1600px;
     margin: 0 auto;
 }
 
@@ -31,26 +32,29 @@
 }
 
 .config-label {
-    font-size: 14px;
-    font-weight: var(--fw-medium);
-    color: var(--text-secondary);
+    font-size: 1rem;
+    font-weight: var(--fw-semibold);
+    color: var(--text-heading);
     white-space: nowrap;
 }
 
 .config-select-main {
-    padding: 6px 14px;
+    padding: 10px 16px;
     border: var(--border-premium);
     border-radius: var(--radius-sm);
-    font-size: 14px;
-    min-width: 180px;
+    font-size: 1rem;
+    font-weight: var(--fw-medium);
+    min-width: 240px;
     background: var(--bg-primary);
     color: var(--text-body);
     transition: border-color var(--transition-fast);
+    cursor: pointer;
 }
 
 .config-select-main:focus {
     outline: none;
-    border-color: var(--accent-ice);
+    border-color: var(--silver-primary);
+    box-shadow: 0 0 0 3px rgba(221, 226, 232, 0.1);
 }
 
 .cinema-info {
@@ -64,8 +68,13 @@
     display: flex;
     align-items: center;
     gap: var(--space-xs);
-    font-size: 13px;
-    color: var(--text-secondary);
+    font-size: 1rem;
+    font-weight: var(--fw-medium);
+    color: var(--silver-primary);
+    padding: 8px 16px;
+    background: rgba(221, 226, 232, 0.06);
+    border: 1px solid rgba(221, 226, 232, 0.18);
+    border-radius: var(--radius-round);
 }
 
 /* ==========================================================
@@ -84,11 +93,11 @@
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    margin-bottom: var(--space-sm);
+    margin-bottom: var(--space-md);
 }
 
 .movie-select-hint {
-    font-size: 13px;
+    font-size: 0.9rem;
     color: var(--text-muted);
 }
 
@@ -96,20 +105,22 @@
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    margin-bottom: var(--space-sm);
+    margin-bottom: var(--space-md);
 }
 
 .search-icon {
     color: var(--text-muted);
     flex-shrink: 0;
+    width: 20px;
+    height: 20px;
 }
 
 .search-input {
     flex: 1;
-    padding: 6px 12px;
+    padding: 10px 16px;
     border: var(--border-premium);
     border-radius: var(--radius-sm);
-    font-size: 14px;
+    font-size: 1rem;
     background: var(--bg-primary);
     color: var(--text-body);
     transition: border-color var(--transition-fast);
@@ -117,7 +128,8 @@
 
 .search-input:focus {
     outline: none;
-    border-color: var(--accent-ice);
+    border-color: var(--silver-primary);
+    box-shadow: 0 0 0 3px rgba(221, 226, 232, 0.1);
 }
 
 .search-input::placeholder {
@@ -125,21 +137,23 @@
 }
 
 .selected-count {
-    font-size: 13px;
+    font-size: 0.95rem;
     color: var(--text-secondary);
     white-space: nowrap;
     flex-shrink: 0;
 }
 
 .selected-count strong {
-    color: var(--text-heading);
+    color: var(--silver-light);
+    font-size: 1.1rem;
+    font-weight: var(--fw-bold);
 }
 
 .movie-chip-list {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-xs);
-    max-height: 120px;
+    gap: var(--space-sm);
+    max-height: 160px;
     overflow-y: auto;
     padding: var(--space-xs);
 }
@@ -148,10 +162,11 @@
     display: flex;
     align-items: center;
     gap: var(--space-xs);
-    padding: 4px 12px;
+    padding: 8px 16px;
     border-radius: var(--radius-round);
     cursor: pointer;
-    font-size: 13px;
+    font-size: 1rem;
+    font-weight: var(--fw-medium);
     background: var(--bg-elevated);
     border: 1px solid var(--border-subtle);
     transition: all var(--transition-fast);
@@ -160,36 +175,41 @@
 }
 
 .movie-chip:hover {
-    border-color: var(--accent-ice-border);
+    border-color: rgba(221, 226, 232, 0.25);
     color: var(--text-body);
+    transform: translateY(-1px);
 }
 
 .movie-chip.checked {
-    background: var(--accent-ice-bg);
-    border-color: var(--accent-ice);
-    color: var(--text-heading);
+    background: rgba(221, 226, 232, 0.1);
+    border-color: var(--silver-primary);
+    color: var(--silver-light);
+    box-shadow: 0 2px 12px rgba(221, 226, 232, 0.15);
 }
 
 .movie-chip input[type="checkbox"] {
-    accent-color: var(--accent-ice);
-    width: 14px;
-    height: 14px;
+    accent-color: var(--silver-primary);
+    width: 16px;
+    height: 16px;
     cursor: pointer;
 }
 
 .chip-badge {
-    font-size: 10px;
-    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: var(--fw-bold);
+    color: var(--silver-light);
     background: var(--bg-primary);
-    padding: 0 6px;
-    border-radius: 10px;
-    border: var(--border-subtle);
+    padding: 2px 10px;
+    border-radius: var(--radius-round);
+    border: 1px solid rgba(221, 226, 232, 0.2);
+    min-width: 24px;
+    text-align: center;
 }
 
 .no-movies {
     color: var(--text-muted);
-    padding: var(--space-sm);
-    font-size: 14px;
+    padding: var(--space-md);
+    font-size: 1rem;
 }
 
 /* ==========================================================
@@ -197,7 +217,7 @@
    ========================================================== */
 
 .date-range-section {
-    padding: var(--space-sm) var(--space-lg);
+    padding: var(--space-md) var(--space-lg);
     background: var(--bg-card);
     border: var(--border-premium);
     border-radius: var(--radius-md);
@@ -212,32 +232,43 @@
 }
 
 .date-icon {
-    color: var(--text-muted);
+    color: var(--silver-primary);
+    width: 20px;
+    height: 20px;
 }
 
 .date-input {
-    padding: 4px 10px;
+    padding: 8px 14px;
     border: var(--border-premium);
     border-radius: var(--radius-sm);
-    font-size: 13px;
+    font-size: 1rem;
+    font-weight: var(--fw-medium);
     background: var(--bg-primary);
     color: var(--text-body);
     outline: none;
-    width: 140px;
+    width: 170px;
+    cursor: pointer;
 }
 
 .date-input:focus {
-    border-color: var(--accent-ice);
+    border-color: var(--silver-primary);
+    box-shadow: 0 0 0 3px rgba(221, 226, 232, 0.1);
 }
 
 .date-arrow {
     color: var(--text-muted);
+    font-size: 1.2rem;
 }
 
 .date-info {
-    font-size: 12px;
-    color: var(--text-muted);
+    font-size: 0.95rem;
+    font-weight: var(--fw-medium);
+    color: var(--silver-light);
     white-space: nowrap;
+    padding: 6px 14px;
+    background: rgba(221, 226, 232, 0.08);
+    border-radius: var(--radius-round);
+    border: 1px solid rgba(221, 226, 232, 0.18);
 }
 
 /* ==========================================================
@@ -248,7 +279,7 @@
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    padding: var(--space-xs) var(--space-lg);
+    padding: var(--space-sm) var(--space-lg);
     background: var(--bg-card);
     border: var(--border-premium);
     border-radius: var(--radius-md);
@@ -258,24 +289,26 @@
 
 .date-list {
     display: flex;
-    gap: var(--space-xs);
+    gap: var(--space-sm);
     flex: 1;
     padding: var(--space-xs) 0;
 }
 
 .date-tag {
-    padding: 2px 12px;
+    padding: 6px 16px;
     border-radius: var(--radius-round);
-    background: var(--accent-ice-bg);
-    border: 1px solid var(--accent-ice-border);
-    font-size: 12px;
-    color: var(--accent-ice);
+    background: rgba(221, 226, 232, 0.08);
+    border: 1px solid rgba(221, 226, 232, 0.2);
+    font-size: 0.95rem;
+    font-weight: var(--fw-semibold);
+    color: var(--silver-primary);
     white-space: nowrap;
+    transition: all var(--transition-fast);
 }
 
 .date-tag.weekend {
     background: rgba(209, 173, 85, 0.15);
-    border-color: rgba(209, 173, 85, 0.3);
+    border-color: rgba(209, 173, 85, 0.4);
     color: #D1AD55;
 }
 
@@ -286,7 +319,7 @@
 .config-container {
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
+    gap: var(--space-lg);
     margin-top: var(--space-md);
 }
 
@@ -295,13 +328,18 @@
     border: var(--border-premium);
     border-radius: var(--radius-md);
     overflow: hidden;
+    transition: box-shadow var(--transition-fast);
+}
+
+.movie-card:hover {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .movie-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
+    padding: 16px 20px;
     background: var(--bg-elevated);
     cursor: pointer;
     transition: background var(--transition-fast);
@@ -319,33 +357,39 @@
 .movie-card-title {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
+    gap: var(--space-md);
     flex-wrap: wrap;
 }
 
 .movie-index {
+    font-family: var(--font-display);
     font-weight: var(--fw-bold);
-    color: var(--accent-ice);
-    font-size: 14px;
+    color: var(--silver-primary);
+    font-size: 1.75rem;
+    line-height: 1;
+    text-shadow: 0 0 20px rgba(221, 226, 232, 0.3);
 }
 
 .movie-name {
-    font-weight: var(--fw-semibold);
+    font-weight: var(--fw-bold);
     color: var(--text-heading);
-    font-size: 15px;
+    font-size: 1.15rem;
+    letter-spacing: -0.01em;
 }
 
 .movie-badge {
-    font-size: 12px;
-    color: var(--text-secondary);
-    background: var(--bg-primary);
-    padding: 1px 10px;
+    font-size: 0.9rem;
+    font-weight: var(--fw-semibold);
+    color: var(--silver-light);
+    background: rgba(221, 226, 232, 0.1);
+    padding: 4px 14px;
     border-radius: var(--radius-round);
-    border: var(--border-subtle);
+    border: 1px solid rgba(221, 226, 232, 0.2);
 }
 
 .movie-duration {
-    font-size: 12px;
+    font-size: 0.95rem;
+    font-weight: var(--fw-medium);
     color: var(--text-muted);
 }
 
@@ -360,14 +404,14 @@
    ========================================================== */
 
 .movie-card-body {
-    padding: var(--space-md);
+    padding: var(--space-lg);
     animation: fadeIn 0.25s ease-out;
 }
 
 .card-actions {
     display: flex;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-md);
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
     flex-wrap: wrap;
 }
 
@@ -376,36 +420,38 @@
     display: flex;
     align-items: center;
     gap: var(--space-xs);
-    padding: 6px 16px;
+    padding: 10px 20px;
     border-radius: var(--radius-sm);
     cursor: pointer;
-    font-size: 13px;
-    font-weight: var(--fw-medium);
+    font-size: 1rem;
+    font-weight: var(--fw-semibold);
     transition: all var(--transition-fast);
 }
 
 .btn-auto-fill {
-    background: rgba(67, 183, 122, 0.12);
-    color: var(--seat-selected-color);
-    border: 1px solid rgba(67, 183, 122, 0.2);
+    background: rgba(221, 226, 232, 0.08);
+    color: var(--silver-light);
+    border: 1px solid rgba(221, 226, 232, 0.25);
 }
 
 .btn-auto-fill:hover {
-    background: rgba(67, 183, 122, 0.2);
-    border-color: var(--seat-selected-color);
-    transform: translateY(-1px);
+    background: rgba(221, 226, 232, 0.15);
+    border-color: var(--silver-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(221, 226, 232, 0.15);
 }
 
 .btn-clear-all {
-    background: rgba(220, 38, 38, 0.08);
+    background: rgba(216, 90, 90, 0.1);
     color: var(--seat-sold-color);
-    border: 1px solid rgba(220, 38, 38, 0.2);
+    border: 1px solid rgba(216, 90, 90, 0.3);
 }
 
 .btn-clear-all:hover {
-    background: rgba(220, 38, 38, 0.15);
-    border-color: rgba(220, 38, 38, 0.4);
-    transform: translateY(-1px);
+    background: rgba(216, 90, 90, 0.2);
+    border-color: var(--seat-sold-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(216, 90, 90, 0.2);
 }
 
 /* ==========================================================
@@ -413,88 +459,95 @@
    ========================================================== */
 
 .interval-section {
-    padding: var(--space-md);
+    padding: var(--space-lg);
     background: var(--bg-elevated);
     border: var(--border-premium);
     border-radius: var(--radius-md);
-    margin-bottom: var(--space-md);
+    margin-bottom: var(--space-lg);
 }
 
 .interval-header {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-sm);
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
     flex-wrap: wrap;
 }
 
 .interval-label {
-    font-weight: var(--fw-semibold);
-    font-size: 14px;
+    font-weight: var(--fw-bold);
+    font-size: 1.05rem;
     color: var(--text-heading);
 }
 
 .interval-hint {
-    font-size: 12px;
-    color: var(--text-muted);
+    font-size: 0.95rem;
+    color: var(--silver-light);
+    font-weight: var(--fw-medium);
+    padding: 4px 12px;
+    background: rgba(221, 226, 232, 0.08);
+    border-radius: var(--radius-round);
+    border: 1px solid rgba(221, 226, 232, 0.18);
 }
 
 .interval-group {
     display: flex;
-    gap: var(--space-sm);
+    gap: var(--space-md);
     flex-wrap: wrap;
 }
 
 .interval-btn {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
-    padding: 8px 16px;
+    gap: var(--space-sm);
+    padding: 12px 20px;
     border: 2px solid var(--border-subtle);
     border-radius: var(--radius-sm);
     background: var(--bg-card);
     cursor: pointer;
     transition: all var(--transition-fast);
     flex: 1;
-    min-width: 120px;
+    min-width: 160px;
 }
 
 .interval-btn:hover {
-    border-color: var(--accent-ice-border);
+    border-color: rgba(221, 226, 232, 0.3);
     transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 .interval-btn.active {
-    border-color: var(--accent-ice);
-    background: var(--accent-ice-bg);
+    border-color: var(--silver-primary);
+    background: rgba(221, 226, 232, 0.1);
+    box-shadow: 0 4px 20px rgba(221, 226, 232, 0.15);
 }
 
 .interval-label-btn {
-    font-weight: var(--fw-semibold);
-    font-size: 14px;
+    font-weight: var(--fw-bold);
+    font-size: 1rem;
     color: var(--text-secondary);
 }
 
 .interval-btn.active .interval-label-btn {
-    color: var(--accent-ice);
+    color: var(--silver-light);
 }
 
 .interval-minutes {
-    font-size: 12px;
+    font-size: 0.9rem;
     font-weight: var(--fw-bold);
     color: var(--text-muted);
     background: var(--bg-primary);
-    padding: 2px 8px;
+    padding: 3px 10px;
     border-radius: var(--radius-round);
 }
 
 .interval-btn.active .interval-minutes {
-    color: var(--accent-ice);
-    background: var(--accent-ice-soft);
+    color: var(--silver-light);
+    background: var(--bg-card);
 }
 
 .interval-desc {
-    font-size: 11px;
+    font-size: 0.85rem;
     color: var(--text-muted);
     margin-left: auto;
 }
@@ -505,16 +558,17 @@
 
 .config-table-wrapper {
     overflow: auto;
-    max-height: 600px;
+    max-height: 700px;
     border-radius: var(--radius-sm);
     border: var(--border-subtle);
+    background: var(--bg-primary);
 }
 
 .config-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 13px;
-    min-width: 700px;
+    font-size: 1rem;
+    min-width: 800px;
 }
 
 .config-table thead {
@@ -525,28 +579,31 @@
 }
 
 .config-table th {
-    padding: 8px 12px;
+    padding: 12px 14px;
     text-align: center;
-    font-weight: var(--fw-medium);
-    color: var(--text-secondary);
-    border-bottom: var(--border-subtle);
-    font-size: 12px;
+    font-weight: var(--fw-bold);
+    color: var(--text-heading);
+    border-bottom: 2px solid var(--border-premium);
+    font-size: 1rem;
     white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
 .config-table th.date-header {
-    min-width: 90px;
+    min-width: 110px;
+    font-size: 1rem;
 }
 
 .config-table th.date-header.weekend {
-    background: rgba(209, 173, 85, 0.08);
+    background: rgba(209, 173, 85, 0.1);
     color: #D1AD55;
 }
 
 .config-table td {
-    padding: 4px 6px;
+    padding: 6px 8px;
     text-align: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     vertical-align: middle;
 }
 
@@ -559,13 +616,14 @@
    ========================================================== */
 
 .config-table tbody tr.time-slot-header td {
-    padding: 6px 12px;
+    padding: 12px 16px;
     background: var(--bg-tertiary);
-    font-weight: var(--fw-semibold);
+    font-weight: var(--fw-bold);
     color: var(--text-heading);
-    font-size: 13px;
+    font-size: 1.1rem;
     border-bottom: 1px solid var(--border-subtle);
     text-align: left;
+    letter-spacing: 0.02em;
 }
 
 .config-table tbody tr.time-slot-header:not(:first-child) td {
@@ -573,14 +631,15 @@
 }
 
 .time-slot-range {
-    font-weight: normal;
-    font-size: 11px;
-    color: var(--text-muted);
+    font-weight: var(--fw-medium);
+    font-size: 0.95rem;
+    color: var(--silver-primary);
+    margin-left: 8px;
 }
 
 .time-slot-range.disabled {
     color: var(--seat-sold-color);
-    opacity: 0.7;
+    opacity: 0.8;
 }
 
 /* ==========================================================
@@ -588,32 +647,33 @@
    ========================================================== */
 
 .config-table .room-label {
-    font-weight: var(--fw-medium);
-    color: var(--text-secondary);
-    font-size: 12px;
+    font-weight: var(--fw-bold);
+    color: var(--text-heading);
+    font-size: 1rem;
     text-align: left;
     padding-left: 24px;
     white-space: nowrap;
+    background: var(--bg-secondary);
 }
 
 .room-label-content {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 
 .room-slot-count {
-    font-size: 10px;
-    font-weight: 400;
+    font-size: 0.85rem;
+    font-weight: var(--fw-medium);
     color: var(--text-muted);
 }
 
 .config-table tbody tr.empty-row {
-    opacity: 0.55;
+    opacity: 0.6;
 }
 
 .config-table tbody tr.empty-row:hover {
-    opacity: 0.85;
+    opacity: 0.9;
 }
 
 /* ==========================================================
@@ -621,68 +681,70 @@
    ========================================================== */
 
 .slot-cell-container {
-    padding: 4px !important;
+    padding: 6px !important;
     vertical-align: top !important;
 }
 
 .slot-list {
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 4px;
     align-items: stretch;
-    max-height: 180px;
+    max-height: 220px;
     overflow-y: auto;
     padding: 2px;
 }
 
 .slot-list::-webkit-scrollbar {
-    width: 4px;
+    width: 6px;
 }
 
 .slot-list::-webkit-scrollbar-thumb {
-    background: var(--text-muted);
-    border-radius: 2px;
+    background: var(--silver-dark);
+    border-radius: var(--radius-round);
 }
 
 .slot-btn {
-    padding: 3px 8px;
+    padding: 6px 12px;
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-xs);
-    background: var(--bg-primary);
+    background: var(--bg-secondary);
     color: var(--text-secondary);
-    font-size: 11px;
-    font-weight: var(--fw-medium);
+    font-size: 0.95rem;
+    font-weight: var(--fw-semibold);
     cursor: pointer;
     transition: all var(--transition-fast);
     text-align: center;
     white-space: nowrap;
-    min-width: 56px;
+    min-width: 68px;
     font-family: inherit;
+    letter-spacing: 0.02em;
 }
 
 .slot-btn:hover {
-    border-color: var(--accent-ice-border);
+    border-color: rgba(221, 226, 232, 0.3);
     color: var(--text-heading);
     background: var(--bg-elevated);
-    transform: scale(1.03);
+    transform: scale(1.05);
 }
 
 .slot-btn.selected {
-    background: var(--accent-ice);
-    border-color: var(--accent-ice);
-    color: #fff;
-    font-weight: var(--fw-semibold);
-    box-shadow: 0 2px 6px var(--accent-ice-soft);
+    background: var(--premium-gradient);
+    border-color: var(--silver-primary);
+    color: var(--bg-primary);
+    font-weight: var(--fw-bold);
+    box-shadow: 0 3px 12px rgba(221, 226, 232, 0.3);
 }
 
 .slot-btn.selected:hover {
-    background: var(--accent-ice);
-    transform: scale(1.05);
+    background: var(--premium-gradient-hover);
+    transform: scale(1.08);
 }
 
 .no-slots {
     color: var(--text-disabled);
-    font-size: 12px;
+    font-size: 1rem;
+    font-weight: var(--fw-medium);
 }
 
 /* ==========================================================
@@ -690,20 +752,23 @@
    ========================================================== */
 
 .config-table .total-row td {
-    font-weight: var(--fw-semibold);
-    background: var(--bg-elevated);
-    border-top: var(--border-subtle);
+    font-weight: var(--fw-bold);
+    background: var(--bg-tertiary);
+    border-top: 2px solid var(--border-premium);
     color: var(--text-heading);
-    font-size: 12px;
-    padding: 6px 12px;
+    font-size: 1rem;
+    padding: 12px 14px;
 }
 
 .config-table .total-row .room-label {
-    color: var(--accent-ice);
+    color: var(--silver-light);
+    font-size: 1.05rem;
 }
 
 .config-table .total-cell {
-    color: var(--accent-ice);
+    color: var(--silver-light);
+    font-size: 1.1rem;
+    font-weight: var(--fw-bold);
 }
 
 /* ==========================================================
@@ -713,7 +778,7 @@
 .save-all-section {
     display: flex;
     justify-content: flex-end;
-    padding-top: var(--space-md);
+    padding-top: var(--space-lg);
     border-top: var(--border-subtle);
     gap: var(--space-sm);
 }
@@ -722,21 +787,24 @@
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    padding: 10px 32px;
-    background: var(--seat-selected-color);
-    color: #fff;
+    padding: 14px 40px;
+    background: var(--btn-silver-bg);
+    color: var(--bg-primary);
     border: none;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-round);
     cursor: pointer;
-    font-size: 15px;
-    font-weight: var(--fw-medium);
+    font-size: 1.1rem;
+    font-weight: var(--fw-bold);
     transition: all var(--transition-fast);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    box-shadow: var(--btn-silver-shadow);
 }
 
 .btn-save-all:hover:not(:disabled) {
-    background: #2d9d6a;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(67, 183, 122, 0.3);
+    filter: brightness(1.1);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(159, 183, 210, 0.4);
 }
 
 .btn-save-all:disabled {
@@ -750,7 +818,7 @@
 
 .empty-state {
     text-align: center;
-    padding: 60px 20px;
+    padding: 80px 20px;
     border: 2px dashed var(--border-subtle);
     border-radius: var(--radius-lg);
     color: var(--text-muted);
@@ -758,18 +826,22 @@
 
 .empty-icon {
     color: var(--text-disabled);
-    margin: 0 auto 12px;
+    margin: 0 auto 16px;
+    width: 64px;
+    height: 64px;
 }
 
 .empty-title {
-    margin-top: 12px;
-    font-size: 16px;
+    margin-top: 16px;
+    font-size: 1.25rem;
+    font-weight: var(--fw-bold);
     color: var(--text-secondary);
 }
 
 .empty-subtitle {
-    font-size: 14px;
-    margin-top: 4px;
+    font-size: 1rem;
+    margin-top: 8px;
+    color: var(--text-muted);
 }
 
 /* ==========================================================
@@ -778,8 +850,8 @@
 
 .movie-chip-list::-webkit-scrollbar,
 .config-table-wrapper::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
 }
 
 .movie-chip-list::-webkit-scrollbar-track,
@@ -790,20 +862,21 @@
 
 .movie-chip-list::-webkit-scrollbar-thumb,
 .config-table-wrapper::-webkit-scrollbar-thumb {
-    background: var(--text-muted);
+    background: var(--silver-dark);
     border-radius: var(--radius-round);
+    border: 2px solid var(--bg-primary);
 }
 
 .movie-chip-list::-webkit-scrollbar-thumb:hover,
 .config-table-wrapper::-webkit-scrollbar-thumb:hover {
-    background: var(--text-secondary);
+    background: var(--silver-primary);
 }
 
 /* Firefox */
 .movie-chip-list,
 .config-table-wrapper {
     scrollbar-width: thin;
-    scrollbar-color: var(--text-muted) var(--bg-primary);
+    scrollbar-color: var(--silver-dark) var(--bg-primary);
 }
 
 /* ==========================================================
@@ -813,7 +886,7 @@
 @keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(-4px);
+        transform: translateY(-6px);
     }
     to {
         opacity: 1;
@@ -825,11 +898,17 @@
    RESPONSIVE
    ========================================================== */
 
+@media (max-width: 1200px) {
+    .movie-showtime-config-page {
+        max-width: 100%;
+    }
+}
+
 @media (max-width: 992px) {
     .config-toolbar {
         flex-direction: column;
         align-items: stretch;
-        gap: var(--space-sm);
+        gap: var(--space-md);
     }
 
     .cinema-info {
@@ -839,24 +918,36 @@
     .date-range-group {
         flex-wrap: wrap;
     }
+
+    .interval-btn {
+        min-width: 140px;
+    }
 }
 
 @media (max-width: 768px) {
     .movie-showtime-config-page {
-        padding: 12px;
+        padding: var(--space-md);
     }
 
     .movie-card-title {
-        font-size: 13px;
+        gap: var(--space-sm);
+    }
+
+    .movie-index {
+        font-size: 1.5rem;
+    }
+
+    .movie-name {
+        font-size: 1rem;
     }
 
     .date-list {
-        gap: 4px;
+        gap: 6px;
     }
 
     .date-tag {
-        font-size: 11px;
-        padding: 1px 8px;
+        font-size: 0.85rem;
+        padding: 4px 12px;
     }
 
     .save-all-section {
@@ -866,33 +957,33 @@
     .btn-save-all {
         width: 100%;
         justify-content: center;
-        padding: 10px 16px;
-        font-size: 14px;
+        padding: 12px 24px;
+        font-size: 1rem;
     }
 
     .config-table {
-        font-size: 12px;
-        min-width: 500px;
+        font-size: 0.9rem;
+        min-width: 600px;
     }
 
     .config-table th,
     .config-table td {
-        padding: 4px 6px;
+        padding: 6px 8px;
     }
 
     .config-table-wrapper {
-        max-height: 400px;
+        max-height: 500px;
     }
 
     .slot-btn {
-        font-size: 10px;
-        padding: 2px 6px;
-        min-width: 48px;
+        font-size: 0.85rem;
+        padding: 4px 8px;
+        min-width: 56px;
     }
 
     .interval-btn {
-        min-width: 80px;
-        padding: 6px 12px;
+        min-width: 120px;
+        padding: 10px 14px;
         flex-direction: column;
         align-items: center;
         text-align: center;
@@ -900,46 +991,51 @@
 
     .interval-desc {
         margin-left: 0;
-        font-size: 10px;
+        font-size: 0.8rem;
     }
 
     .interval-label-btn {
-        font-size: 12px;
+        font-size: 0.9rem;
+    }
+
+    .movie-card-body {
+        padding: var(--space-md);
     }
 }
 
 @media (max-width: 480px) {
     .movie-showtime-config-page {
-        padding: 8px;
+        padding: var(--space-sm);
     }
 
     .config-table th,
     .config-table td {
-        padding: 2px 4px;
+        padding: 4px 6px;
     }
 
     .config-table {
-        font-size: 11px;
-        min-width: 400px;
+        font-size: 0.85rem;
+        min-width: 500px;
     }
 
     .movie-chip {
-        font-size: 12px;
-        padding: 3px 10px;
+        font-size: 0.9rem;
+        padding: 6px 12px;
     }
 
     .date-input {
-        width: 100px;
-        font-size: 12px;
+        width: 140px;
+        font-size: 0.9rem;
+        padding: 6px 10px;
     }
 
     .config-table .room-label {
-        font-size: 11px;
+        font-size: 0.9rem;
         padding-left: 12px;
     }
 
     .config-table-wrapper {
-        max-height: 320px;
+        max-height: 400px;
     }
 
     .config-toolbar {
@@ -950,29 +1046,33 @@
         padding: var(--space-sm) var(--space-md);
     }
 
-    .movie-card-body {
-        padding: var(--space-sm);
-    }
-
     .btn-auto-fill,
     .btn-clear-all {
-        font-size: 12px;
-        padding: 4px 12px;
+        font-size: 0.9rem;
+        padding: 8px 14px;
     }
 
     .slot-btn {
-        font-size: 10px;
-        padding: 2px 4px;
-        min-width: 42px;
+        font-size: 0.8rem;
+        padding: 4px 6px;
+        min-width: 50px;
     }
 
     .interval-btn {
-        min-width: 60px;
-        padding: 4px 8px;
+        min-width: 100px;
+        padding: 8px 10px;
     }
 
     .interval-minutes {
-        font-size: 10px;
-        padding: 1px 6px;
+        font-size: 0.8rem;
+        padding: 2px 8px;
+    }
+
+    .movie-index {
+        font-size: 1.25rem;
+    }
+
+    .movie-name {
+        font-size: 0.95rem;
     }
 }
