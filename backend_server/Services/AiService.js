@@ -10,7 +10,7 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
    CACHE + RATE LIMIT
 ========================================================== */
 const cache = new Map();
-const CACHE_TTL = 1000 * 60 * 30; // 30 phút
+const CACHE_TTL = 1000 * 60 * 30;
 
 const rateLimit = new Map();
 const RATE_LIMIT = 10;
@@ -74,20 +74,24 @@ class AiService {
     }
 
     /* -------------------------------------------------------
-       BUILD PROMPT — từ context đầy đủ
+       BUILD PROMPT — GỌN + CÓ VÍ DỤ
     ------------------------------------------------------- */
     buildSystemPrompt(context) {
-        const { movies, showtimes, cinemas, prices, promotions, products } = context;
+        const {
+            movies, showtimes, cinemas,
+            priceSummary, priceStandard,
+            promotions, products
+        } = context;
 
-        /* ---------- Movies (kèm genres) ---------- */
+        /* ---------- Movies ---------- */
         const movieList = movies.map(m => {
             const desc = (m.description || '')
                 .replace(/<[^>]*>/g, '')
                 .replace(/&nbsp;/g, ' ')
                 .trim()
-                .slice(0, 80);
+                .slice(0, 60);
 
-            return `- ID ${m.movie_id}: "${m.title}" [${m.status}] | Thể loại: ${m.genres || 'N/A'} | ${m.duration}p | T${m.age_rating} | ${m.nation} | ĐD: ${m.director} | ${desc}`;
+            return `- ID ${m.movie_id}: "${m.title}" [${m.status}] | ${m.genres || 'N/A'} | ${m.duration}p | T${m.age_rating} | ${m.director}`;
         }).join('\n');
 
         /* ---------- Showtimes (gom theo phim) ---------- */
@@ -106,25 +110,38 @@ class AiService {
 
         const showtimeList = Object.entries(showtimeByMovie)
             .map(([movieId, data]) =>
-                `📽️ ${data.title} (ID ${movieId}):\n   ${data.slots.slice(0, 10).join('\n   ')}`
+                `📽️ ${data.title} (ID ${movieId}):\n   ${data.slots.slice(0, 8).join('\n   ')}`
             )
             .join('\n\n') || 'Chưa có suất chiếu nào trong 7 ngày tới.';
 
         /* ---------- Cinemas ---------- */
         const cinemaList = cinemas.map(c =>
-            `- ${c.cinema_name}: ${c.address} | Hotline: ${c.hotline} | T2-T6: ${c.weekday_open}–${c.weekday_close} | T7-CN: ${c.weekend_open}–${c.weekend_close}`
+            `- ${c.cinema_name}: ${c.address} | Hotline: ${c.hotline}`
         ).join('\n');
 
-        /* ---------- Prices — 5 HẠNG GHẾ ---------- */
-        const priceGroups = {};
-        prices.forEach(p => {
-            const key = `${p.room_type} | ${p.day_type} | ${p.time_slot}`;
-            if (!priceGroups[key]) priceGroups[key] = [];
-            priceGroups[key].push(
-                `${p.seat_type}: ${Number(p.price).toLocaleString('vi-VN')}đ`
-            );
+        /* ---------- PRICE SUMMARY (theo hạng ghế) ---------- */
+        const summaryGroups = {};
+        priceSummary.forEach(p => {
+            if (!summaryGroups[p.room_type]) summaryGroups[p.room_type] = [];
+            const min = Number(p.min_price).toLocaleString('vi-VN');
+            const max = Number(p.max_price).toLocaleString('vi-VN');
+            const range = p.min_price === p.max_price ? `${min}đ` : `${min}đ - ${max}đ`;
+            summaryGroups[p.room_type].push(`${p.seat_type}: ${range}`);
         });
-        const priceList = Object.entries(priceGroups)
+
+        const priceSummaryList = Object.entries(summaryGroups)
+            .map(([room, list]) => `- ${room} → ${list.join(' | ')}`)
+            .join('\n');
+
+        /* ---------- PRICE STANDARD (theo phòng + ngày + giờ) ---------- */
+        const standardGroups = {};
+        priceStandard.forEach(p => {
+            const key = `${p.room_type} | ${p.day_type}`;
+            if (!standardGroups[key]) standardGroups[key] = [];
+            standardGroups[key].push(`${p.time_slot}: ${Number(p.price).toLocaleString('vi-VN')}đ`);
+        });
+
+        const priceStandardList = Object.entries(standardGroups)
             .map(([k, v]) => `- ${k} → ${v.join(' | ')}`)
             .join('\n');
 
@@ -134,7 +151,7 @@ class AiService {
                 .replace(/<[^>]*>/g, '')
                 .replace(/&nbsp;/g, ' ')
                 .trim()
-                .slice(0, 100);
+                .slice(0, 80);
             return `- ${p.title}: ${desc}`;
         }).join('\n') || 'Hiện chưa có khuyến mãi.';
 
@@ -147,47 +164,68 @@ class AiService {
         return `Bạn là "Cinema Assistant" — trợ lý tư vấn của Quang Dũng Cinema.
 
 NHIỆM VỤ:
-- Tư vấn phim, suất chiếu, giá vé (theo loại phòng + hạng ghế), khuyến mãi,
-  combo, địa chỉ rạp, giờ mở cửa.
-- Trả lời thân thiện, ngắn gọn (tối đa 4 câu), tiếng Việt tự nhiên.
-- Kết thúc bằng câu hỏi gợi mở.
+Tư vấn phim, suất chiếu, giá vé, khuyến mãi, combo, địa chỉ rạp.
 
-RÀNG BUỘC BẮT BUỘC:
+RÀNG BUỘC:
 - CHỈ dùng thông tin trong DỮ LIỆU bên dưới.
 - KHÔNG bịa tên phim, giá, suất chiếu, địa chỉ.
 - KHÔNG tiết lộ thông tin khách hàng, booking, tài khoản.
 - Nếu không có thông tin → nói thật là chưa có.
 - Nếu user hỏi ngoài chủ đề rạp phim → từ chối lịch sự.
+- Trả lời TỐI ĐA 4 câu. Không lan man.
 
-GIẢI THÍCH VỀ GIÁ VÉ:
-- "Loại phòng": 2D, 3D, VIP, 4DMAX, IMAX → khác nhau về công nghệ chiếu.
-- "Hạng ghế": STANDARD (thường), VIP (cao cấp), DELUXE (sang),
-  RECLINER (nằm), COUPLE (đôi) → khác nhau về vị trí + tiện nghi.
-- "Khung giờ": MORNING (sáng), AFTERNOON (chiều),
-  EVENING (tối), NIGHT (khuya).
-- "Ngày": WEEKDAY (T2-T6), WEEKEND (T7-CN).
+QUY TẮC TRẢ LỜI GIÁ VÉ:
+- Rạp CÓ 4 loại phòng: 2D, 3D, VIP, IMAX. KHÔNG CÓ 4DMAX.
+- Có 5 hạng ghế: STANDARD, VIP, DELUXE, RECLINER, COUPLE.
+- Có 4 khung giờ: MORNING (sáng), AFTERNOON (chiều), EVENING (tối), NIGHT (khuya).
+- Có 2 loại ngày: WEEKDAY (T2-T6), WEEKEND (T7-CN).
 
-Khi user hỏi giá, hãy nêu RÕ cả 3 yếu tố: loại phòng + khung giờ + hạng ghế.
-VD: "Ghế VIP phòng 2D suất tối cuối tuần là 135,000đ"
+Khi user hỏi giá:
+1. Nếu hỏi CHUNG ("Ghế VIP bao nhiêu?") → trả lời RANGE giá + hỏi lại phòng/giờ cụ thể.
+2. Nếu hỏi CỤ THỂ ("2D tối T7 ghế VIP") → trả lời CHÍNH XÁC 1 con số.
+3. Luôn nêu rõ: hạng ghế + loại phòng + khung giờ + ngày.
 
 ═══════════════════════════════════════════
-📽️ PHIM (ĐANG CHIẾU + SẮP CHIẾU):
+📽️ PHIM:
 ${movieList}
 
 🎬 SUẤT CHIẾU 7 NGÀY TỚI:
 ${showtimeList}
 
-🏢 HỆ THỐNG RẠP:
+🏢 RẠP:
 ${cinemaList}
 
-💰 BẢNG GIÁ VÉ (loại phòng | ngày | khung giờ → hạng ghế: giá):
-${priceList}
+💰 TÓM TẮT GIÁ THEO HẠNG GHẾ (mỗi phòng):
+${priceSummaryList}
 
-🎁 KHUYẾN MÃI ĐANG CHẠY:
+💰 GIÁ GHẾ STANDARD (theo phòng + ngày + khung giờ):
+${priceStandardList}
+
+🎁 KHUYẾN MÃI:
 ${promoList}
 
-🍿 COMBO BẮP NƯỚC:
+🍿 COMBO:
 ${productList}
+
+═══════════════════════════════════════════
+📌 VÍ DỤ TRẢ LỜI ĐÚNG:
+
+User: "Ghế VIP giá bao nhiêu?"
+Bot: "Ghế VIP có giá từ 75.000đ (2D sáng ngày thường) đến 495.000đ (IMAX đêm cuối tuần). Bạn muốn xem phòng nào và suất mấy giờ để mình báo giá chính xác?"
+
+User: "2D tối thứ 7 ghế đôi bao nhiêu?"
+Bot: "Ghế COUPLE phòng 2D suất EVENING cuối tuần là 270.000đ. Bạn muốn đặt vé luôn không?"
+
+User: "Phim Thỏ Ơi chiếu mấy giờ?"
+Bot: "Phim **Thỏ Ơi** có các suất chiếu:
+- 14:00 - Galaxy Nguyễn Du - Phòng 2D 01
+- 16:30 - Galaxy Tân Bình - Phòng 2D 03
+- 19:00 - Galaxy Quang Trung - Phòng 2D 02
+Bạn muốn xem suất nào?"
+
+User: "Rạp có phòng 4DMAX không?"
+Bot: "Rạp hiện có 4 loại phòng: 2D, 3D, VIP và IMAX. Chưa có phòng 4DMAX bạn nhé."
+
 ═══════════════════════════════════════════
 
 ĐỊNH DẠNG TRẢ VỀ (JSON):
@@ -203,7 +241,6 @@ Nếu không gợi ý phim cụ thể, để movie_ids = [].`;
        MAIN: CHAT WITH AI
     ------------------------------------------------------- */
     async chat({ message, history = [] }) {
-        /* ---------- 1. Lấy context đầy đủ ---------- */
         const context = await MovieRepository.getFullContextForAI();
 
         if (!context.movies || context.movies.length === 0) {
@@ -213,10 +250,8 @@ Nếu không gợi ý phim cụ thể, để movie_ids = [].`;
             };
         }
 
-        /* ---------- 2. Build prompt ---------- */
         const systemPrompt = this.buildSystemPrompt(context);
 
-        /* ---------- 3. Gọi Groq ---------- */
         const chatCompletion = await groq.chat.completions.create({
             messages: [
                 { role: 'system', content: systemPrompt },
@@ -224,12 +259,11 @@ Nếu không gợi ý phim cụ thể, để movie_ids = [].`;
                 { role: 'user', content: message }
             ],
             model: 'openai/gpt-oss-20b',
-            temperature: 0.7,
+            temperature: 0.6,
             max_tokens: 500,
             response_format: { type: 'json_object' }
         });
 
-        /* ---------- 4. Parse JSON ---------- */
         let aiResponse;
         try {
             aiResponse = JSON.parse(chatCompletion.choices[0].message.content);
@@ -240,7 +274,6 @@ Nếu không gợi ý phim cụ thể, để movie_ids = [].`;
             };
         }
 
-        /* ---------- 5. Validate movie_ids ---------- */
         const validIds = (aiResponse.movie_ids || [])
             .map(Number)
             .filter(id => context.movies.some(m => m.movie_id === id));

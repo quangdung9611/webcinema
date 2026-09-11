@@ -446,6 +446,9 @@ class MovieRepository {
         - Khuyến mãi
         - Combo bắp nước
     =========================================================*/
+        /*=========================================================
+        ✨ GET FULL CONTEXT FOR AI
+    =========================================================*/
     async getFullContextForAI() {
 
         // 1. Phim đang chiếu + sắp chiếu (JOIN genres)
@@ -500,23 +503,36 @@ class MovieRepository {
             FROM cinemas
         `);
 
-        // 4. ✨ Giá vé — CHỈ lấy loại phòng có thật trong bảng rooms
-        const [prices] = await db.query(`
-            SELECT DISTINCT
+        // 4. ✨ TÓM TẮT GIÁ THEO HẠNG GHẾ (range min-max, gọn)
+        const [priceSummary] = await db.query(`
+            SELECT
+                pc.room_type,
+                pc.seat_type,
+                MIN(pc.price) AS min_price,
+                MAX(pc.price) AS max_price
+            FROM price_config pc
+            WHERE pc.status = 1
+                AND pc.room_type IN (SELECT DISTINCT room_type FROM rooms)
+            GROUP BY pc.room_type, pc.seat_type
+            ORDER BY pc.room_type,
+                FIELD(pc.seat_type, 'STANDARD', 'VIP', 'DELUXE', 'RECLINER', 'COUPLE')
+        `);
+
+        // 5. ✨ GIÁ CƠ BẢN THEO PHÒNG + NGÀY + KHUNG GIỜ (chỉ STANDARD)
+        const [priceStandard] = await db.query(`
+            SELECT
                 pc.room_type,
                 pc.day_type,
                 pc.time_slot,
-                pc.seat_type,
                 pc.price
             FROM price_config pc
             WHERE pc.status = 1
-                AND pc.room_type IN (
-                    SELECT DISTINCT room_type FROM rooms
-                )
-            ORDER BY pc.room_type, pc.day_type, pc.time_slot, pc.seat_type
+                AND pc.seat_type = 'STANDARD'
+                AND pc.room_type IN (SELECT DISTINCT room_type FROM rooms)
+            ORDER BY pc.room_type, pc.day_type, pc.time_slot
         `);
 
-        // 5. Khuyến mãi đang chạy
+        // 6. Khuyến mãi đang chạy
         const [promotions] = await db.query(`
             SELECT title, description
             FROM promotions
@@ -525,7 +541,7 @@ class MovieRepository {
             LIMIT 5
         `);
 
-        // 6. Combo bắp nước
+        // 7. Combo bắp nước
         const [products] = await db.query(`
             SELECT product_name, price, category
             FROM product_menu
@@ -537,7 +553,8 @@ class MovieRepository {
             movies,
             showtimes,
             cinemas,
-            prices,
+            priceSummary,
+            priceStandard,
             promotions,
             products
         };
