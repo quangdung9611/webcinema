@@ -442,7 +442,7 @@ class MovieRepository {
         - Phim (JOIN movie_genres + genres)
         - Suất chiếu 7 ngày tới
         - Rạp
-        - Giá vé (đủ 5 hạng ghế)
+        - Giá vé (chỉ loại phòng có trong bảng rooms)
         - Khuyến mãi
         - Combo bắp nước
     =========================================================*/
@@ -500,17 +500,20 @@ class MovieRepository {
             FROM cinemas
         `);
 
-        // 4. Giá vé — LẤY ĐỦ 5 HẠNG GHẾ
+        // 4. ✨ Giá vé — CHỈ lấy loại phòng có thật trong bảng rooms
         const [prices] = await db.query(`
-            SELECT
-                room_type,
-                day_type,
-                time_slot,
-                seat_type,
-                price
-            FROM price_config
-            WHERE status = 1
-            ORDER BY room_type, day_type, time_slot, seat_type
+            SELECT DISTINCT
+                pc.room_type,
+                pc.day_type,
+                pc.time_slot,
+                pc.seat_type,
+                pc.price
+            FROM price_config pc
+            WHERE pc.status = 1
+                AND pc.room_type IN (
+                    SELECT DISTINCT room_type FROM rooms
+                )
+            ORDER BY pc.room_type, pc.day_type, pc.time_slot, pc.seat_type
         `);
 
         // 5. Khuyến mãi đang chạy
