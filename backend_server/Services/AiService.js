@@ -139,7 +139,7 @@ Nếu không gợi ý phim nào, để movie_ids = [].`;
                 ...history.slice(-6),
                 { role: 'user', content: message }
             ],
-            model: 'llama-3.1-8b-instant',
+            model: 'openai/gpt-oss-20b',   // ← ĐÃ SỬA: model mới
             temperature: 0.7,
             max_tokens: 400,
             response_format: { type: 'json_object' }
