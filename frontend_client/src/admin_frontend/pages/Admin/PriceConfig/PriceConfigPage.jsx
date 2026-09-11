@@ -27,7 +27,7 @@ import AdminPagination from '../../../components/AdminPagination';
 // CONSTANTS
 // ==========================================================
 
-const ROOM_TYPES = ['2D', '3D', '4DMAX', 'IMAX', 'VIP'];
+const ROOM_TYPES = ['2D', '3D', '4DMAX', 'VIP'];
 const TIME_SLOTS = ['MORNING', 'AFTERNOON', 'EVENING', 'NIGHT'];
 const DAY_TYPES = ['WEEKDAY', 'WEEKEND'];
 const SEAT_TYPES = ['STANDARD', 'VIP', 'DELUXE', 'RECLINER', 'COUPLE'];

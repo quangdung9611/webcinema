@@ -145,7 +145,6 @@ class PriceConfigService {
                     data.day_type,
                     data.seat_type
                 );
-                // Nếu tìm thấy và không phải chính nó
                 if (existing && existing.price_config_id && existing.price_config_id !== parseInt(id)) {
                     const err = new Error(
                         `Cấu hình giá cho ${data.room_type} - ${data.time_slot} - ${data.day_type} - ${data.seat_type} đã tồn tại`
@@ -188,7 +187,7 @@ class PriceConfigService {
     }
 
     // ==========================================================
-    // SEED DỮ LIỆU MẶC ĐỊNH (CÓ SEAT_TYPE)
+    // SEED DỮ LIỆU MẶC ĐỊNH (CHỈ 4 LOẠI PHÒNG: 2D, VIP, 3D, IMAX)
     // ==========================================================
 
     async seedDefaultPrices() {
@@ -341,54 +340,6 @@ class PriceConfigService {
             { room_type: '3D', time_slot: 'NIGHT', day_type: 'WEEKEND', seat_type: 'DELUXE', price: 276000 },
             { room_type: '3D', time_slot: 'NIGHT', day_type: 'WEEKEND', seat_type: 'RECLINER', price: 345000 },
             { room_type: '3D', time_slot: 'NIGHT', day_type: 'WEEKEND', seat_type: 'COUPLE', price: 414000 },
-
-            // ================================================
-            // 4DMAX - WEEKDAY
-            // ================================================
-            { room_type: '4DMAX', time_slot: 'MORNING', day_type: 'WEEKDAY', seat_type: 'STANDARD', price: 180000 },
-            { room_type: '4DMAX', time_slot: 'MORNING', day_type: 'WEEKDAY', seat_type: 'VIP', price: 220000 },
-            { room_type: '4DMAX', time_slot: 'MORNING', day_type: 'WEEKDAY', seat_type: 'DELUXE', price: 260000 },
-            { room_type: '4DMAX', time_slot: 'MORNING', day_type: 'WEEKDAY', seat_type: 'RECLINER', price: 300000 },
-            { room_type: '4DMAX', time_slot: 'MORNING', day_type: 'WEEKDAY', seat_type: 'COUPLE', price: 340000 },
-            { room_type: '4DMAX', time_slot: 'AFTERNOON', day_type: 'WEEKDAY', seat_type: 'STANDARD', price: 200000 },
-            { room_type: '4DMAX', time_slot: 'AFTERNOON', day_type: 'WEEKDAY', seat_type: 'VIP', price: 240000 },
-            { room_type: '4DMAX', time_slot: 'AFTERNOON', day_type: 'WEEKDAY', seat_type: 'DELUXE', price: 280000 },
-            { room_type: '4DMAX', time_slot: 'AFTERNOON', day_type: 'WEEKDAY', seat_type: 'RECLINER', price: 320000 },
-            { room_type: '4DMAX', time_slot: 'AFTERNOON', day_type: 'WEEKDAY', seat_type: 'COUPLE', price: 360000 },
-            { room_type: '4DMAX', time_slot: 'EVENING', day_type: 'WEEKDAY', seat_type: 'STANDARD', price: 230000 },
-            { room_type: '4DMAX', time_slot: 'EVENING', day_type: 'WEEKDAY', seat_type: 'VIP', price: 270000 },
-            { room_type: '4DMAX', time_slot: 'EVENING', day_type: 'WEEKDAY', seat_type: 'DELUXE', price: 310000 },
-            { room_type: '4DMAX', time_slot: 'EVENING', day_type: 'WEEKDAY', seat_type: 'RECLINER', price: 350000 },
-            { room_type: '4DMAX', time_slot: 'EVENING', day_type: 'WEEKDAY', seat_type: 'COUPLE', price: 390000 },
-            { room_type: '4DMAX', time_slot: 'NIGHT', day_type: 'WEEKDAY', seat_type: 'STANDARD', price: 240000 },
-            { room_type: '4DMAX', time_slot: 'NIGHT', day_type: 'WEEKDAY', seat_type: 'VIP', price: 280000 },
-            { room_type: '4DMAX', time_slot: 'NIGHT', day_type: 'WEEKDAY', seat_type: 'DELUXE', price: 320000 },
-            { room_type: '4DMAX', time_slot: 'NIGHT', day_type: 'WEEKDAY', seat_type: 'RECLINER', price: 360000 },
-            { room_type: '4DMAX', time_slot: 'NIGHT', day_type: 'WEEKDAY', seat_type: 'COUPLE', price: 400000 },
-
-            // ================================================
-            // 4DMAX - WEEKEND
-            // ================================================
-            { room_type: '4DMAX', time_slot: 'MORNING', day_type: 'WEEKEND', seat_type: 'STANDARD', price: 216000 },
-            { room_type: '4DMAX', time_slot: 'MORNING', day_type: 'WEEKEND', seat_type: 'VIP', price: 264000 },
-            { room_type: '4DMAX', time_slot: 'MORNING', day_type: 'WEEKEND', seat_type: 'DELUXE', price: 312000 },
-            { room_type: '4DMAX', time_slot: 'MORNING', day_type: 'WEEKEND', seat_type: 'RECLINER', price: 360000 },
-            { room_type: '4DMAX', time_slot: 'MORNING', day_type: 'WEEKEND', seat_type: 'COUPLE', price: 408000 },
-            { room_type: '4DMAX', time_slot: 'AFTERNOON', day_type: 'WEEKEND', seat_type: 'STANDARD', price: 240000 },
-            { room_type: '4DMAX', time_slot: 'AFTERNOON', day_type: 'WEEKEND', seat_type: 'VIP', price: 288000 },
-            { room_type: '4DMAX', time_slot: 'AFTERNOON', day_type: 'WEEKEND', seat_type: 'DELUXE', price: 336000 },
-            { room_type: '4DMAX', time_slot: 'AFTERNOON', day_type: 'WEEKEND', seat_type: 'RECLINER', price: 384000 },
-            { room_type: '4DMAX', time_slot: 'AFTERNOON', day_type: 'WEEKEND', seat_type: 'COUPLE', price: 432000 },
-            { room_type: '4DMAX', time_slot: 'EVENING', day_type: 'WEEKEND', seat_type: 'STANDARD', price: 276000 },
-            { room_type: '4DMAX', time_slot: 'EVENING', day_type: 'WEEKEND', seat_type: 'VIP', price: 324000 },
-            { room_type: '4DMAX', time_slot: 'EVENING', day_type: 'WEEKEND', seat_type: 'DELUXE', price: 372000 },
-            { room_type: '4DMAX', time_slot: 'EVENING', day_type: 'WEEKEND', seat_type: 'RECLINER', price: 420000 },
-            { room_type: '4DMAX', time_slot: 'EVENING', day_type: 'WEEKEND', seat_type: 'COUPLE', price: 468000 },
-            { room_type: '4DMAX', time_slot: 'NIGHT', day_type: 'WEEKEND', seat_type: 'STANDARD', price: 288000 },
-            { room_type: '4DMAX', time_slot: 'NIGHT', day_type: 'WEEKEND', seat_type: 'VIP', price: 336000 },
-            { room_type: '4DMAX', time_slot: 'NIGHT', day_type: 'WEEKEND', seat_type: 'DELUXE', price: 384000 },
-            { room_type: '4DMAX', time_slot: 'NIGHT', day_type: 'WEEKEND', seat_type: 'RECLINER', price: 432000 },
-            { room_type: '4DMAX', time_slot: 'NIGHT', day_type: 'WEEKEND', seat_type: 'COUPLE', price: 480000 },
 
             // ================================================
             // IMAX - WEEKDAY
