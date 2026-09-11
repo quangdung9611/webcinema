@@ -8,7 +8,7 @@ import ScrollReveal from '../components/ScrollReveal';
 import CinemaCard from '../components/CinemaCard';
 import HeroBanner from '../components/HeroBanner';
 import ReviewModal from '../components/ReviewModal';
-import AIChatBox from '../components/AIChatBox';
+import AIChatBox from '../components/AiChatBox';
 
 import {
   Ticket,

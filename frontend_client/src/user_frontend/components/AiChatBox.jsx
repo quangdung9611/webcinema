@@ -49,7 +49,7 @@ const MovieSuggestCard = ({ movie, onClick }) => {
 /* ==========================================================
    MAIN CHATBOX
 ========================================================== */
-const AIChatBox = () => {
+const AiChatBox = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
@@ -318,4 +318,4 @@ const AIChatBox = () => {
   );
 };
 
-export default AIChatBox;
+export default AiChatBox;
