@@ -1,8 +1,9 @@
+// admin_frontend/App.jsx (hoặc src/App.jsx tùy cấu trúc)
 import React, { Suspense, lazy, useEffect, useState } from "react";
 import { Routes, Route, Navigate, Outlet, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import api from "./api/api";
-import adminapi from "./api/adminapi"; // 🔥 IMPORT ADMINAPI
+import adminapi from "./api/adminapi";
 
 // ============================================================
 // CONTEXT
@@ -35,7 +36,7 @@ axios.defaults.withCredentials = true;
 const lazyRetry = (componentImport, maxRetries = 2) => {
     return new Promise((resolve, reject) => {
         let retries = 0;
-        
+
         const tryLoad = () => {
             componentImport()
                 .then((component) => {
@@ -44,8 +45,11 @@ const lazyRetry = (componentImport, maxRetries = 2) => {
                 })
                 .catch((error) => {
                     retries++;
-                    console.warn(`🔄 Lazy load failed (attempt ${retries}/${maxRetries}), retrying...`, error);
-                    
+                    console.warn(
+                        `🔄 Lazy load failed (attempt ${retries}/${maxRetries}), retrying...`,
+                        error
+                    );
+
                     if (retries < maxRetries) {
                         setTimeout(tryLoad, 1000 * retries);
                     } else {
@@ -54,7 +58,7 @@ const lazyRetry = (componentImport, maxRetries = 2) => {
                     }
                 });
         };
-        
+
         tryLoad();
     });
 };
@@ -130,7 +134,13 @@ const PriceConfigPage = lazy(() => lazyRetry(() => import("./admin_frontend/page
 // ============================================================
 
 const SuspenseLoading = () => (
-    <LoadingSpinner size={72} color="#dc2626" message="Đang tải Cinema Star..." blur={true} zIndex={9999} />
+    <LoadingSpinner
+        size={72}
+        color="#dc2626"
+        message="Đang tải Cinema Star..."
+        blur={true}
+        zIndex={9999}
+    />
 );
 
 const ScrollToTop = () => {
@@ -145,31 +155,37 @@ const ScrollToTop = () => {
 const NotFoundPage = () => {
     const navigate = useNavigate();
     return (
-        <div style={{ 
-            minHeight: "100vh", 
-            display: "flex", 
-            flexDirection: "column", 
-            alignItems: "center", 
-            justifyContent: "center", 
-            textAlign: "center", 
-            padding: "20px",
-            background: "#0a0a14",
-            color: "#f1f1f1"
-        }}>
+        <div
+            style={{
+                minHeight: "100vh",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                textAlign: "center",
+                padding: "20px",
+                background: "#0a0a14",
+                color: "#f1f1f1",
+            }}
+        >
             <h1 style={{ fontSize: "100px", margin: 0, color: "#f37021" }}>404</h1>
-            <h2 style={{ color: "#fff", marginBottom: "8px" }}>Oops! Trang bạn tìm kiếm không tồn tại</h2>
-            <p style={{ color: "#94a3b8", marginBottom: "20px" }}>Trang này có thể đã bị xóa hoặc di chuyển.</p>
-            <button 
-                onClick={() => navigate("/")} 
-                style={{ 
-                    padding: "10px 24px", 
-                    cursor: "pointer", 
+            <h2 style={{ color: "#fff", marginBottom: "8px" }}>
+                Oops! Trang bạn tìm kiếm không tồn tại
+            </h2>
+            <p style={{ color: "#94a3b8", marginBottom: "20px" }}>
+                Trang này có thể đã bị xóa hoặc di chuyển.
+            </p>
+            <button
+                onClick={() => navigate("/")}
+                style={{
+                    padding: "10px 24px",
+                    cursor: "pointer",
                     background: "linear-gradient(135deg, #f37021, #f5a623)",
                     color: "#0a0a14",
                     border: "none",
                     borderRadius: "8px",
                     fontWeight: "bold",
-                    fontSize: "14px"
+                    fontSize: "14px",
                 }}
             >
                 🏠 QUAY LẠI TRANG CHỦ
@@ -182,40 +198,13 @@ const NotFoundPage = () => {
 // ROUTE GUARDS
 // ============================================================
 
-// 🔥 ADMIN ROUTE GUARD - DÙNG ADMINAPI
-const AdminRouteGuard = ({ children }) => {
-    const navigate = useNavigate();
-    const [isLoading, setIsLoading] = useState(true);
-    const [isAuth, setIsAuth] = useState(false);
+// 🔥 LƯU Ý: AdminRouteGuard ĐÃ BỊ XÓA
+// Lý do: AdminSessionGuard đã tự lo phần check auth (gọi /admin/api/auth/me)
+// và redirect về /login nếu chưa đăng nhập.
+// Việc giữ cả 2 guard sẽ gây ra 2 request /me song song → race condition
+// → dễ bị emit sessionExpired oan uổng khi vừa login xong.
 
-    useEffect(() => {
-        const checkAdmin = async () => {
-            try {
-                // 🔥 DÙNG ADMINAPI VÀ ROUTE /admin/api/auth/me
-                const response = await adminapi.get("/admin/api/auth/me");
-                const account = response?.data?.user || response?.data?.data?.user || response;
-                if (account?.role === "admin") {
-                    setIsAuth(true);
-                } else {
-                    navigate("/login", { replace: true });
-                }
-            } catch (error) {
-                console.warn("🔴 [ADMIN GUARD] Unauthorized:", error);
-                navigate("/login", { replace: true });
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        checkAdmin();
-    }, [navigate]);
-
-    if (isLoading) {
-        return <LoadingSpinner size={72} color="#dc2626" message="Đang tải quyền truy cập..." />;
-    }
-    return isAuth ? children : null;
-};
-
-// User Guard
+// User Guard (giữ nguyên)
 const UserRouteGuard = ({ children }) => {
     const navigate = useNavigate();
     const { user, isLoading } = useAuth();
@@ -227,7 +216,13 @@ const UserRouteGuard = ({ children }) => {
     }, [user, isLoading, navigate]);
 
     if (isLoading) {
-        return <LoadingSpinner size={72} color="#dc2626" message="Đang tải quyền truy cập..." />;
+        return (
+            <LoadingSpinner
+                size={72}
+                color="#dc2626"
+                message="Đang tải quyền truy cập..."
+            />
+        );
     }
     return user ? children : null;
 };
@@ -269,12 +264,54 @@ const MAIN_ROUTES = [
     { path: "booking-guide", element: <BookingGuide /> },
     { path: "contact", element: <ContactSupport /> },
     { path: "membership", element: <MemberShip /> },
-    { path: "profile", element: <UserRouteGuard><Profile /></UserRouteGuard> },
-    { path: "booking/:slug", element: <UserRouteGuard><Booking /></UserRouteGuard> },
-    { path: "payment", element: <UserRouteGuard><Payment /></UserRouteGuard> },
-    { path: "confirm-success", element: <UserRouteGuard><ConfirmSuccess /></UserRouteGuard> },
-    { path: "bank-app", element: <UserRouteGuard><BankApp /></UserRouteGuard> },
-    { path: "momo-app", element: <UserRouteGuard><MomoApp /></UserRouteGuard> },
+    {
+        path: "profile",
+        element: (
+            <UserRouteGuard>
+                <Profile />
+            </UserRouteGuard>
+        ),
+    },
+    {
+        path: "booking/:slug",
+        element: (
+            <UserRouteGuard>
+                <Booking />
+            </UserRouteGuard>
+        ),
+    },
+    {
+        path: "payment",
+        element: (
+            <UserRouteGuard>
+                <Payment />
+            </UserRouteGuard>
+        ),
+    },
+    {
+        path: "confirm-success",
+        element: (
+            <UserRouteGuard>
+                <ConfirmSuccess />
+            </UserRouteGuard>
+        ),
+    },
+    {
+        path: "bank-app",
+        element: (
+            <UserRouteGuard>
+                <BankApp />
+            </UserRouteGuard>
+        ),
+    },
+    {
+        path: "momo-app",
+        element: (
+            <UserRouteGuard>
+                <MomoApp />
+            </UserRouteGuard>
+        ),
+    },
 ];
 
 const ADMIN_ROUTES = [
@@ -289,7 +326,7 @@ const ADMIN_ROUTES = [
     { path: "genres", element: <GenresPage /> },
     { path: "cinemas", element: <CinemaPage /> },
     { path: "showtimes", element: <ShowTimePage /> },
-    {path: "showtime-config", element: <MovieShowtimeConfigPage /> },
+    { path: "showtime-config", element: <MovieShowtimeConfigPage /> },
     { path: "price-config", element: <PriceConfigPage /> },
     { path: "seats", element: <SeatList /> },
     { path: "movie-genres", element: <MovieGenrePage /> },
@@ -307,21 +344,25 @@ const ADMIN_ROUTES = [
 
 const AdminRoutesComponent = () => (
     <Routes>
+        {/* 🔥 Public route: chỉ render AdminLogin, KHÔNG bọc guard */}
         <Route path="/login" element={<AdminLogin />} />
-        <Route element={
-            <AdminRouteGuard>
+
+        {/* 🔥 Protected routes: AdminSessionGuard tự lo check auth + redirect */}
+        <Route
+            element={
                 <AdminSessionGuard>
                     <AdminLayout>
                         <Outlet />
                     </AdminLayout>
                 </AdminSessionGuard>
-            </AdminRouteGuard>
-        }>
+            }
+        >
             <Route index element={<AdminDashboard />} />
             {ADMIN_ROUTES.map(({ path, element }) => (
                 <Route key={path} path={path} element={element} />
             ))}
         </Route>
+
         <Route path="*" element={<NotFoundPage />} />
     </Routes>
 );
@@ -332,11 +373,14 @@ const UserRoutesComponent = () => (
             <Route key={path} path={path} element={element} />
         ))}
 
-        <Route path="/" element={
-            <SessionGuard>
-                <UserLayout />
-            </SessionGuard>
-        }>
+        <Route
+            path="/"
+            element={
+                <SessionGuard>
+                    <UserLayout />
+                </SessionGuard>
+            }
+        >
             {MAIN_ROUTES.map(({ path, element }) => (
                 <Route key={path} path={path} element={element} />
             ))}
@@ -353,24 +397,29 @@ const UserRoutesComponent = () => (
 
 const AppContent = () => {
     const { loading: routeLoading } = useRouteLoading();
-    const isAdminDomain = window.location.hostname === "admin.quangdungcinema.id.vn";
+    const isAdminDomain =
+        window.location.hostname === "admin.quangdungcinema.id.vn";
 
     return (
         <>
             {routeLoading && (
-                <LoadingSpinner 
-                    size={72} 
-                    color="#dc2626" 
-                    message="Đang chuyển trang..." 
-                    blur={true} 
-                    zIndex={10000} 
+                <LoadingSpinner
+                    size={72}
+                    color="#dc2626"
+                    message="Đang chuyển trang..."
+                    blur={true}
+                    zIndex={10000}
                 />
             )}
             <ScrollToTop />
-            
+
             <LazyErrorBoundary>
                 <Suspense fallback={<SuspenseLoading />}>
-                    {isAdminDomain ? <AdminRoutesComponent /> : <UserRoutesComponent />}
+                    {isAdminDomain ? (
+                        <AdminRoutesComponent />
+                    ) : (
+                        <UserRoutesComponent />
+                    )}
                 </Suspense>
             </LazyErrorBoundary>
         </>

@@ -26,7 +26,7 @@
 
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 
-  transition: box-shadow 0.3s ease;
+  transition: box-shadow var(--transition-normal);
 }
 
 .ai-chat-fab:hover {
@@ -71,17 +71,15 @@
   display: flex;
   flex-direction: column;
 
-  border: 1px solid rgba(159, 183, 210, 0.2);
-  border-radius: 20px;
+  border: var(--border-premium);
+  border-radius: var(--radius-xl);
 
-  background: rgba(15, 18, 22, 0.96);
+  background: var(--bg-card);
 
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
 
-  box-shadow:
-    0 24px 60px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  box-shadow: var(--glass-shadow);
 
   overflow: hidden;
 }
@@ -94,7 +92,7 @@
 
   padding: 14px 16px;
 
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: var(--border-subtle);
 
   background: rgba(255, 255, 255, 0.02);
 }
@@ -122,7 +120,7 @@
 .ai-header-left h4 {
   margin: 0;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: var(--fw-bold);
   color: var(--text-heading);
 }
 
@@ -167,12 +165,19 @@
 
   cursor: pointer;
 
-  transition: background 0.2s, color 0.2s;
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 
 .ai-close-btn:hover {
   background: rgba(255, 255, 255, 0.06);
   color: var(--text-heading);
+}
+
+/* ---------- HEADER ACTIONS ---------- */
+.ai-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* ---------- BODY ---------- */
@@ -315,14 +320,14 @@
 
   padding: 8px;
 
-  border: 1px solid rgba(159, 183, 210, 0.15);
-  border-radius: 12px;
+  border: var(--border-ice);
+  border-radius: var(--radius-md);
 
   background: rgba(255, 255, 255, 0.03);
 
   cursor: pointer;
 
-  transition: all 0.25s ease;
+  transition: all var(--transition-normal);
 }
 
 .ai-movie-card:hover {
@@ -335,7 +340,7 @@
   width: 48px;
   height: 68px;
 
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   object-fit: cover;
 
   flex-shrink: 0;
@@ -355,7 +360,7 @@
   margin: 0;
 
   font-size: 13px;
-  font-weight: 700;
+  font-weight: var(--fw-bold);
 
   color: var(--text-heading);
 
@@ -377,13 +382,13 @@
 .ai-age {
   padding: 1px 6px;
 
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
 
   background: rgba(245, 197, 24, 0.15);
   color: #f5c518;
 
   font-size: 10px;
-  font-weight: 700;
+  font-weight: var(--fw-bold);
 }
 
 .ai-movie-genre {
@@ -405,7 +410,7 @@
 
   padding: 12px 14px;
 
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: var(--border-subtle);
 
   background: rgba(255, 255, 255, 0.02);
 }
@@ -417,8 +422,8 @@
   height: 40px;
   padding: 0 14px;
 
-  border: 1px solid rgba(159, 183, 210, 0.18);
-  border-radius: 20px;
+  border: var(--border-ice);
+  border-radius: var(--radius-round);
 
   background: rgba(255, 255, 255, 0.04);
   color: var(--text-body);
@@ -427,7 +432,7 @@
 
   outline: none;
 
-  transition: border-color 0.2s, background 0.2s;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
 }
 
 .ai-chat-input input:focus {
@@ -462,7 +467,7 @@
 
   cursor: pointer;
 
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .ai-send-btn:hover:not(:disabled) {

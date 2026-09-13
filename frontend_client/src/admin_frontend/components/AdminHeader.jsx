@@ -13,13 +13,12 @@ import {
     UserCircle,
     LayoutDashboard,
     Settings,
-    ShieldCheck
+    ShieldCheck,
 } from 'lucide-react';
 
 import '../styles/AdminHeader.css';
 
 const AdminHeader = ({ toggleSidebar }) => {
-
     const navigate = useNavigate();
 
     const [admin, setAdmin] = useState(null);
@@ -28,7 +27,7 @@ const AdminHeader = ({ toggleSidebar }) => {
     const [toast, setToast] = useState({
         show: false,
         message: '',
-        type: 'success'
+        type: 'success',
     });
 
     const dropdownRef = useRef(null);
@@ -47,14 +46,14 @@ const AdminHeader = ({ toggleSidebar }) => {
         setToast({
             show: true,
             message,
-            type
+            type,
         });
 
         toastTimeoutRef.current = setTimeout(() => {
             setToast({
                 show: false,
                 message: '',
-                type: 'success'
+                type: 'success',
             });
             toastTimeoutRef.current = null;
         }, 4000);
@@ -63,69 +62,87 @@ const AdminHeader = ({ toggleSidebar }) => {
     // ============================================================
     // HÀM LOGOUT THỰC TẾ
     // ============================================================
-    const performLogout = useCallback(async (redirectToLogin = true) => {
-        if (isLoggingOut) return;
-        setIsLoggingOut(true);
+    const performLogout = useCallback(
+        async (redirectToLogin = true) => {
+            if (isLoggingOut) return;
+            setIsLoggingOut(true);
 
-        console.log('🔴 [ADMIN HEADER] Đang thực hiện logout...');
+            console.log('🔴 [ADMIN HEADER] Đang thực hiện logout...');
 
-        try {
-            await logout();
-            
-            if (redirectToLogin) {
-                showToast('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'warning');
-            } else {
-                showToast('Đăng xuất thành công! Hẹn gặp lại bạn 👋', 'success');
-            }
+            try {
+                await logout();
 
-            if (redirectTimeoutRef.current) {
-                clearTimeout(redirectTimeoutRef.current);
-                redirectTimeoutRef.current = null;
-            }
-
-            redirectTimeoutRef.current = setTimeout(() => {
-                localStorage.removeItem('admin_info');
-                socketService.disconnect();
-                setAdmin(null);
-                setShowDropdown(false);
-                setIsLoggingOut(false);
-                delete adminapi.defaults.headers.common['Authorization'];
-                
                 if (redirectToLogin) {
-                    navigate('/login', { 
-                        replace: true, 
-                        state: { expired: true, message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.' } 
-                    });
+                    showToast(
+                        'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+                        'warning'
+                    );
                 } else {
-                    navigate('/login', { 
-                        replace: true, 
-                        state: { loggedOut: true, message: 'Đăng xuất thành công!' } 
-                    });
+                    showToast(
+                        'Đăng xuất thành công! Hẹn gặp lại bạn 👋',
+                        'success'
+                    );
                 }
-                redirectTimeoutRef.current = null;
-            }, 1500);
 
-        } catch (error) {
-            console.error('🔴 [ADMIN HEADER] Logout error:', error);
-            showToast('Có lỗi xảy ra khi đăng xuất. Vui lòng thử lại.', 'error');
+                if (redirectTimeoutRef.current) {
+                    clearTimeout(redirectTimeoutRef.current);
+                    redirectTimeoutRef.current = null;
+                }
 
-            if (redirectTimeoutRef.current) {
-                clearTimeout(redirectTimeoutRef.current);
-                redirectTimeoutRef.current = null;
+                redirectTimeoutRef.current = setTimeout(() => {
+                    localStorage.removeItem('admin_info');
+                    socketService.disconnect();
+                    setAdmin(null);
+                    setShowDropdown(false);
+                    setIsLoggingOut(false);
+                    delete adminapi.defaults.headers.common['Authorization'];
+
+                    if (redirectToLogin) {
+                        navigate('/login', {
+                            replace: true,
+                            state: {
+                                expired: true,
+                                message:
+                                    'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+                            },
+                        });
+                    } else {
+                        navigate('/login', {
+                            replace: true,
+                            state: {
+                                loggedOut: true,
+                                message: 'Đăng xuất thành công!',
+                            },
+                        });
+                    }
+                    redirectTimeoutRef.current = null;
+                }, 1500);
+            } catch (error) {
+                console.error('🔴 [ADMIN HEADER] Logout error:', error);
+                showToast(
+                    'Có lỗi xảy ra khi đăng xuất. Vui lòng thử lại.',
+                    'error'
+                );
+
+                if (redirectTimeoutRef.current) {
+                    clearTimeout(redirectTimeoutRef.current);
+                    redirectTimeoutRef.current = null;
+                }
+
+                redirectTimeoutRef.current = setTimeout(() => {
+                    localStorage.removeItem('admin_info');
+                    socketService.disconnect();
+                    setAdmin(null);
+                    setShowDropdown(false);
+                    setIsLoggingOut(false);
+                    delete adminapi.defaults.headers.common['Authorization'];
+                    navigate('/login', { replace: true });
+                    redirectTimeoutRef.current = null;
+                }, 2000);
             }
-
-            redirectTimeoutRef.current = setTimeout(() => {
-                localStorage.removeItem('admin_info');
-                socketService.disconnect();
-                setAdmin(null);
-                setShowDropdown(false);
-                setIsLoggingOut(false);
-                delete adminapi.defaults.headers.common['Authorization'];
-                navigate('/login', { replace: true });
-                redirectTimeoutRef.current = null;
-            }, 2000);
-        }
-    }, [isLoggingOut, navigate, showToast]);
+        },
+        [isLoggingOut, navigate, showToast]
+    );
 
     // ============================================================
     // LOAD ADMIN INFO
@@ -133,13 +150,18 @@ const AdminHeader = ({ toggleSidebar }) => {
     useEffect(() => {
         const fetchAdmin = async () => {
             try {
-                const res = await adminapi.get('/admin/api/auth/me');
+                const res = await adminapi.get('/admin/api/auth/me', {
+                    force: true,
+                });
                 const adminUser = res.data?.user || null;
                 setAdmin(adminUser);
 
                 if (adminUser) {
                     socketService.connect(adminUser.user_id);
-                    console.log('🟢 [ADMIN HEADER] Đã kết nối WebSocket cho admin:', adminUser.user_id);
+                    console.log(
+                        '🟢 [ADMIN HEADER] Đã kết nối WebSocket cho admin:',
+                        adminUser.user_id
+                    );
                 }
             } catch (error) {
                 console.error('Không thể lấy thông tin Admin:', error);
@@ -162,7 +184,7 @@ const AdminHeader = ({ toggleSidebar }) => {
     }, []);
 
     // ============================================================
-    // LẮNG NGHE SỰ KIỆN WINDOW - GIỐNG UserHeader
+    // LẮNG NGHE SỰ KIỆN WINDOW
     // ============================================================
     useEffect(() => {
         const handleAuthCleanedUp = (event) => {
@@ -177,9 +199,12 @@ const AdminHeader = ({ toggleSidebar }) => {
         };
 
         const handleAdminLoggedIn = (event) => {
-            console.log('🟢 [ADMIN HEADER] Admin logged in - updating immediately');
-            adminapi.get('/admin/api/auth/me', { force: true })
-                .then(res => {
+            console.log(
+                '🟢 [ADMIN HEADER] Admin logged in - updating immediately'
+            );
+            adminapi
+                .get('/admin/api/auth/me', { force: true })
+                .then((res) => {
                     const adminUser = res.data?.user || null;
                     setAdmin(adminUser);
                     if (adminUser) {
@@ -216,7 +241,10 @@ const AdminHeader = ({ toggleSidebar }) => {
     // ============================================================
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(event.target)
+            ) {
                 setShowDropdown(false);
             }
         };
@@ -238,7 +266,7 @@ const AdminHeader = ({ toggleSidebar }) => {
     // TOGGLE USER DROPDOWN
     // ============================================================
     const toggleDropdown = () => {
-        setShowDropdown(prev => !prev);
+        setShowDropdown((prev) => !prev);
     };
 
     // ============================================================
@@ -252,7 +280,8 @@ const AdminHeader = ({ toggleSidebar }) => {
 
     const avatarSource = admin?.user_avatar || admin?.avatar;
     const avatarUrl = getAvatarUrl(avatarSource);
-    const displayName = admin?.full_name || admin?.username || 'Quản trị viên';
+    const displayName =
+        admin?.full_name || admin?.username || 'Quản trị viên';
 
     // ============================================================
     // RENDER
@@ -269,10 +298,14 @@ const AdminHeader = ({ toggleSidebar }) => {
                         </span>
                         <span className="toast-message">{toast.message}</span>
                     </div>
-                    <button 
+                    <button
                         className="toast-close"
                         onClick={() => {
-                            setToast({ show: false, message: '', type: 'success' });
+                            setToast({
+                                show: false,
+                                message: '',
+                                type: 'success',
+                            });
                             if (toastTimeoutRef.current) {
                                 clearTimeout(toastTimeoutRef.current);
                                 toastTimeoutRef.current = null;
@@ -285,7 +318,6 @@ const AdminHeader = ({ toggleSidebar }) => {
             )}
 
             <header className="admin-header-main">
-
                 <div className="admin-header-left">
                     <button
                         className="admin-hamburger-trigger"
@@ -295,7 +327,6 @@ const AdminHeader = ({ toggleSidebar }) => {
                         <Menu size={24} />
                     </button>
 
-                    {/* 🔥 SỬA: /dashboard → / */}
                     <Link to="/" className="admin-brand-logo">
                         <img
                             src="https://api.quangdungcinema.id.vn/uploads/logo/logocinema.png"
@@ -315,14 +346,13 @@ const AdminHeader = ({ toggleSidebar }) => {
                 </div>
 
                 <div className="admin-header-right">
-
                     <button className="admin-notification-btn" type="button">
                         <Bell size={20} />
                         <span className="admin-notification-badge">5</span>
                     </button>
 
-                    <div 
-                        className="admin-user-dropdown" 
+                    <div
+                        className="admin-user-dropdown"
                         ref={dropdownRef}
                         onClick={toggleDropdown}
                     >
@@ -335,7 +365,7 @@ const AdminHeader = ({ toggleSidebar }) => {
                                         width: '36px',
                                         height: '36px',
                                         borderRadius: '50%',
-                                        objectFit: 'cover'
+                                        objectFit: 'cover',
                                     }}
                                 />
                             ) : (
@@ -344,7 +374,9 @@ const AdminHeader = ({ toggleSidebar }) => {
                         </div>
 
                         <div className="admin-user-info">
-                            <span className="admin-user-greeting">Xin chào,</span>
+                            <span className="admin-user-greeting">
+                                Xin chào,
+                            </span>
                             <strong className="admin-user-name">
                                 {displayName}
                             </strong>
@@ -352,7 +384,9 @@ const AdminHeader = ({ toggleSidebar }) => {
 
                         <ChevronDown
                             size={18}
-                            className={`admin-user-arrow ${showDropdown ? 'rotate' : ''}`}
+                            className={`admin-user-arrow ${
+                                showDropdown ? 'rotate' : ''
+                            }`}
                         />
                     </div>
 
@@ -370,7 +404,6 @@ const AdminHeader = ({ toggleSidebar }) => {
 
                             <div className="admin-dropdown-divider" />
 
-                            {/* 🔥 SỬA: /dashboard → / */}
                             <div
                                 className="admin-dropdown-item"
                                 onClick={() => {
@@ -407,29 +440,33 @@ const AdminHeader = ({ toggleSidebar }) => {
                             <div className="admin-dropdown-divider" />
 
                             <div
-                                className={`admin-dropdown-item admin-dropdown-logout ${isLoggingOut ? 'loading' : ''}`}
+                                className={`admin-dropdown-item admin-dropdown-logout ${
+                                    isLoggingOut ? 'loading' : ''
+                                }`}
                                 onClick={handleLogout}
                             >
                                 <LogOut size={18} />
                                 <span>
-                                    {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
+                                    {isLoggingOut
+                                        ? 'Đang đăng xuất...'
+                                        : 'Đăng xuất'}
                                 </span>
                             </div>
                         </div>
                     )}
 
-                    <button 
-                        className="admin-logout-btn" 
-                        onClick={handleLogout} 
+                    <button
+                        className="admin-logout-btn"
+                        onClick={handleLogout}
                         type="button"
                         disabled={isLoggingOut}
                     >
                         <LogOut size={18} />
-                        <span>{isLoggingOut ? 'Đang...' : 'Đăng xuất'}</span>
+                        <span>
+                            {isLoggingOut ? 'Đang...' : 'Đăng xuất'}
+                        </span>
                     </button>
-
                 </div>
-
             </header>
         </>
     );

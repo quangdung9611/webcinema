@@ -1,3 +1,4 @@
+// admin_frontend/api/adminapi.js
 import axios from 'axios';
 
 const API_BASE = 'https://api.quangdungcinema.id.vn';
@@ -15,6 +16,9 @@ let cachedAdmin = null;
 let cachedTime = 0;
 let isSessionExpiredEmitted = false;
 
+// ============================================================
+// EMIT SESSION EXPIRED
+// ============================================================
 const emitSessionExpired = (detail = {}) => {
     if (isSessionExpiredEmitted) {
         console.log('⚠️ [ADMIN API] sessionExpired already emitted');
@@ -41,6 +45,9 @@ const emitSessionExpired = (detail = {}) => {
     );
 };
 
+// ============================================================
+// OVERRIDE GET - CACHE /admin/api/auth/me
+// ============================================================
 const originalGet = adminApi.get;
 
 adminApi.get = function (url, config = {}) {
@@ -70,6 +77,9 @@ adminApi.get = function (url, config = {}) {
     return originalGet.call(this, url, requestConfig);
 };
 
+// ============================================================
+// RESPONSE INTERCEPTOR
+// ============================================================
 adminApi.interceptors.response.use(
     (response) => {
         const requestUrl = response.config?.url || '';
@@ -99,7 +109,9 @@ adminApi.interceptors.response.use(
 
             const responseData = error?.response?.data || {};
             const errorCode = responseData.code || 'TOKEN_EXPIRED';
-            const errorMessage = responseData.message || 'Phiên đăng nhập admin đã hết hạn. Vui lòng đăng nhập lại.';
+            const errorMessage =
+                responseData.message ||
+                'Phiên đăng nhập admin đã hết hạn. Vui lòng đăng nhập lại.';
 
             console.warn('🔴 [ADMIN API] 401 Unauthorized:', {
                 url: normalizedUrl,
@@ -129,6 +141,9 @@ adminApi.interceptors.response.use(
     }
 );
 
+// ============================================================
+// RESET HELPERS
+// ============================================================
 adminApi.resetAdminCache = function () {
     cachedAdmin = null;
     cachedTime = 0;
@@ -140,9 +155,13 @@ adminApi.resetSessionExpiredLock = function () {
     console.log('🔓 [ADMIN API] Reset session expired lock');
 };
 
+// ============================================================
+// GLOBAL EVENT LISTENERS
+// ============================================================
 window.addEventListener('adminLoggedIn', () => {
     adminApi.resetAdminCache();
     adminApi.resetSessionExpiredLock();
+    console.log('🟢 [ADMIN API] Admin logged in - cache & lock reset');
 });
 
 window.addEventListener('sessionExpired', () => {

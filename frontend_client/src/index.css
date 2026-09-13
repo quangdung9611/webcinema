@@ -168,6 +168,50 @@
         var(--border-premium);
 
     /* ======================================================
+       OVERLAY GRADIENT (cho card ảnh ngang)
+       ====================================================== */
+    --card-overlay-gradient:
+        linear-gradient(
+            to bottom,
+            rgba(7, 8, 10, 0.05) 0%,
+            rgba(7, 8, 10, 0.20) 40%,
+            rgba(7, 8, 10, 0.75) 75%,
+            rgba(7, 8, 10, 0.95) 100%
+        );
+
+    --card-hover-overlay-gradient:
+        linear-gradient(
+            180deg,
+            rgba(5, 6, 7, 0.55) 0%,
+            rgba(5, 6, 7, 0.85) 100%
+        );
+
+    /* ======================================================
+       BADGE COLORS (Silver / Premium variants)
+       ====================================================== */
+    --badge-promotion-bg:
+        linear-gradient(135deg, #E8B65A 0%, #C28B3A 100%);
+    --badge-promotion-color: #1a1206;
+
+    --badge-news-bg:
+        linear-gradient(135deg, #A6C1D9 0%, #738FA9 100%);
+    --badge-news-color: #07111e;
+
+    --badge-blog-bg:
+        linear-gradient(135deg, #B8C0C9 0%, #7D7D86 100%);
+    --badge-blog-color: #07111e;
+
+    --badge-cinema-bg:
+        linear-gradient(135deg, #F4F6F8 0%, #A9B2BC 100%);
+    --badge-cinema-color: #07111e;
+
+    /* ======================================================
+       ASPECT RATIO (Card ảnh ngang)
+       ====================================================== */
+    --card-aspect-landscape: 16 / 9;
+    --card-aspect-cinema: 16 / 9;
+
+    /* ======================================================
        BUTTONS
        ====================================================== */
     --btn-silver-bg:
@@ -177,7 +221,7 @@
         0 4px 20px rgba(159, 183, 210, 0.25),
         inset 0 1px 0 rgba(255, 255, 255, 0.80);
 
-    --btn-silver-hover:
+    --btn-silver-hover: 
         filter: brightness(1.1);
         box-shadow: 0 4px 28px rgba(159, 183, 210, 0.40);
 
@@ -253,27 +297,23 @@
    FIREFOX
    ========================================================== */
 * {
-    scrollbar-width: auto; /* 👈 TỪ thin -> auto (dày hơn) */
+    scrollbar-width: auto;
     scrollbar-color: var(--silver-primary) var(--bg-primary);
 }
 
 /* ==========================================================
    CHROME / EDGE / SAFARI
    ========================================================== */
-
-/* Scrollbar dọc + ngang - TĂNG KÍCH THƯỚC */
 ::-webkit-scrollbar {
-    width: 14px;  /* 👈 TỪ 10px -> 14px (dày hơn) */
-    height: 14px; /* 👈 TỪ 10px -> 14px (dày hơn) */
+    width: 14px;
+    height: 14px;
 }
 
-/* Track */
 ::-webkit-scrollbar-track {
     background: var(--bg-primary);
-    border-radius: var(--radius-sm); /* 👈 THÊM BO TRÒN CHO TRACK */
+    border-radius: var(--radius-sm);
 }
 
-/* Thumb */
 ::-webkit-scrollbar-thumb {
     background: linear-gradient(
         180deg,
@@ -281,15 +321,14 @@
         var(--silver-primary) 50%,
         var(--silver-dark) 100%
     );
-    border: 3px solid var(--bg-primary); /* 👈 TỪ 2px -> 3px */
+    border: 3px solid var(--bg-primary);
     border-radius: var(--radius-round);
     background-clip: padding-box;
-    min-height: 60px; /* 👈 THÊM CHIỀU CAO TỐI THIỂU */
-    min-width: 60px;  /* 👈 THÊM CHIỀU RỘNG TỐI THIỂU */
+    min-height: 60px;
+    min-width: 60px;
     transition: background 0.2s ease;
 }
 
-/* Hover */
 ::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(
         180deg,
@@ -300,13 +339,11 @@
     background-clip: padding-box;
 }
 
-/* Active (khi đang kéo) */
 ::-webkit-scrollbar-thumb:active {
     background: var(--silver-light);
     background-clip: padding-box;
 }
 
-/* Góc giữa scrollbar dọc + ngang */
 ::-webkit-scrollbar-corner {
     background: var(--bg-primary);
 }

@@ -5,6 +5,7 @@ class NewsRepository {
 
     /*=========================================================
         FIND ALL NEWS - KHÔNG PHÂN TRANG (PUBLIC)
+        SỬA: trả content giống Blog trả description
     =========================================================*/
     async findAllAll(search = '') {
         search = typeof search === 'string' ? search.trim() : '';
@@ -25,13 +26,14 @@ class NewsRepository {
                 news_id,
                 title,
                 slug,
+                content,
                 news_image,
                 news_backdrop,
                 views,
                 likes,
                 created_at,
-                DATE_FORMAT(created_at, '%d/%m/%Y') AS date,
-                IF(LENGTH(content) > 150, CONCAT(LEFT(content, 150), '...'), content) AS short_content
+                updated_at,
+                DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') AS full_date
             FROM news
             ${whereClause}
             ORDER BY created_at DESC, news_id DESC
@@ -143,7 +145,7 @@ class NewsRepository {
     }
 
     /*=========================================================
-        GET IMAGES (cả ảnh chính và backdrop)
+        GET IMAGES
     =========================================================*/
     async getImages(newsId) {
         const [rows] = await db.query(`

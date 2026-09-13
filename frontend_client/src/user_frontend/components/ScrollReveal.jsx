@@ -5,21 +5,20 @@ const ScrollReveal = ({
   children,
   direction = "up",
   delay = 0,
-  duration = 0.6,
+  duration = 1,
   blur = false,
   scale = false,
   className = "",
-  threshold = 0.08,
+  threshold = 0.1,
   once = true,
   rootMargin = "0px 0px -50px 0px",
+  releaseTransform = false,        // 👈 MỚI: nhả transform sau khi active
   ...rest
 }) => {
   const ref = useRef(null);
   const [isInView, setIsInView] = useState(false);
+  const [isDone, setIsDone] = useState(false);   // 👈 track animation xong
 
-  /* =========================================================
-     INTERSECTION OBSERVER
-  ========================================================= */
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -28,6 +27,7 @@ const ScrollReveal = ({
           if (once) observer.disconnect();
         } else if (!once) {
           setIsInView(false);
+          setIsDone(false);
         }
       },
       { threshold, rootMargin }
@@ -41,18 +41,15 @@ const ScrollReveal = ({
     };
   }, [once, threshold, rootMargin]);
 
-  /* =========================================================
-     VỊ TRÍ BAN ĐẦU
-  ========================================================= */
   const getInitialPos = () => {
     switch (direction) {
-      case "up":    return { y: 24 };
-      case "down":  return { y: -24 };
-      case "left":  return { x: -24 };
-      case "right": return { x: 24 };
+      case "up":    return { y: 30 };
+      case "down":  return { y: -30 };
+      case "left":  return { x: -30 };
+      case "right": return { x: 30 };
       case "zoom":  return { scale: 0.94 };
       case "fade":  return {};
-      default:      return { y: 24 };
+      default:      return { y: 30 };
     }
   };
 
@@ -63,9 +60,6 @@ const ScrollReveal = ({
     ...(blur ? { filter: "blur(4px)" } : {}),
   };
 
-  /* =========================================================
-     TRẠNG THÁI ACTIVE — easing mượt kiểu cinematic
-  ========================================================= */
   const animate = {
     opacity: 1,
     x: 0,
@@ -75,9 +69,19 @@ const ScrollReveal = ({
     transition: {
       duration,
       delay,
-      ease: [0.22, 1, 0.36, 1], // easeOutQuint — mượt & sang
+      ease: [0, 0, 0.58, 1],
     },
   };
+
+  /* 👇 Nếu releaseTransform = true, sau khi animation xong thì
+     để wrapper không còn transform nữa — con bên trong tự do */
+  const wrapperStyle =
+    releaseTransform && isDone
+      ? { willChange: "auto" }           // ← bỏ transform
+      : {
+          willChange: "transform, opacity",
+          transform: "translateZ(0)",
+        };
 
   return (
     <motion.div
@@ -85,10 +89,10 @@ const ScrollReveal = ({
       className={className}
       initial={initial}
       animate={isInView ? animate : initial}
-      style={{
-        willChange: "transform, opacity",
-        transform: "translateZ(0)",
+      onAnimationComplete={() => {
+        if (releaseTransform) setIsDone(true);
       }}
+      style={wrapperStyle}
       {...rest}
     >
       {children}

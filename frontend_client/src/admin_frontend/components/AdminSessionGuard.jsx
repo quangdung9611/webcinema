@@ -14,7 +14,7 @@ import {
 import adminapi from '../../api/adminapi';
 import socketService from '../../api/socket';
 
-import DeviceLoginModal from '../../user_frontend/components/DeviceLogicModal'; // 🔥 IMPORT TỪ USER
+import DeviceLoginModal from '../../user_frontend/components/DeviceLogicModal';
 
 import '../styles/AdminSessionGuard.css';
 
@@ -44,11 +44,13 @@ const AdminSessionGuard = ({ children }) => {
             // '/forgot-password',
             // '/reset-password',
         ];
-        return publicPaths.some(p => path === p || path.startsWith(p + '/'));
+        return publicPaths.some(
+            (p) => path === p || path.startsWith(p + '/')
+        );
     }, [location.pathname]);
 
     // ============================================================
-    // XÓA SESSION ADMIN
+    // XÓA SESSION ADMIN (CHỈ XÓA ADMIN, KHÔNG ĐỤNG USER)
     // ============================================================
     const clearAdminSession = useCallback(() => {
         console.log('🧹 [ADMIN SESSION GUARD] Clearing admin session...');
@@ -66,8 +68,9 @@ const AdminSessionGuard = ({ children }) => {
             sessionStorage.removeItem(key);
         });
 
-        document.cookie = 'admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-        document.cookie = 'user_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        // 🔥 CHỈ XÓA admin_token, KHÔNG XÓA user_token
+        document.cookie =
+            'admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 
         delete adminapi.defaults.headers.common['Authorization'];
 
@@ -79,9 +82,12 @@ const AdminSessionGuard = ({ children }) => {
     // ============================================================
     const handleModalConfirm = useCallback(() => {
         console.log('➡️ [ADMIN SESSION GUARD] Clicking "Đăng nhập lại"!');
-        
+
         setShowModal(false);
         hasRedirectedRef.current = false;
+
+        // 🔥 Reset isProcessingRef ngay khi rời modal
+        isProcessingRef.current = false;
 
         navigate('/login', {
             replace: true,
@@ -96,46 +102,50 @@ const AdminSessionGuard = ({ children }) => {
     // ============================================================
     // OPEN SESSION MODAL
     // ============================================================
-    const openSessionModal = useCallback(
-        (detail = {}) => {
-            if (!isMountedRef.current) return;
-            if (hasRedirectedRef.current) return;
+    const openSessionModal = useCallback((detail = {}) => {
+        if (!isMountedRef.current) return;
+        if (hasRedirectedRef.current) return;
 
-            const code = detail.code || 'TOKEN_EXPIRED';
-            const message = detail.message || (code === 'SESSION_REPLACED'
+        const code = detail.code || 'TOKEN_EXPIRED';
+        const message =
+            detail.message ||
+            (code === 'SESSION_REPLACED'
                 ? 'Tài khoản admin đã được đăng nhập trên thiết bị khác.'
                 : 'Phiên đăng nhập admin đã hết hạn. Vui lòng đăng nhập lại.');
-            const newDevice = detail.newDevice || null;
+        const newDevice = detail.newDevice || null;
 
-            console.warn('🔐 [ADMIN SESSION GUARD] Opening modal:', {
-                code,
-                message,
-                newDevice,
-            });
+        console.warn('🔐 [ADMIN SESSION GUARD] Opening modal:', {
+            code,
+            message,
+            newDevice,
+        });
 
-            setModalCode(code);
-            setModalMessage(message);
-            setModalNewDevice(newDevice);
-            setShowModal(true);
-            setCountdown(COUNTDOWN_SECONDS);
-        },
-        []
-    );
+        setModalCode(code);
+        setModalMessage(message);
+        setModalNewDevice(newDevice);
+        setShowModal(true);
+        setCountdown(COUNTDOWN_SECONDS);
+    }, []);
 
     // ============================================================
-    // HANDLE SESSION EXPIRED - GIỐNG HỆT SessionGuard
+    // HANDLE SESSION EXPIRED - ĐỒNG BỘ VỚI SessionGuard
     // ============================================================
     const handleSessionExpired = useCallback(
         async (eventOrDetail = {}) => {
             if (!isMountedRef.current) return;
-            
+
             if (isProcessingRef.current) {
-                console.log('⚠️ [ADMIN SESSION GUARD] Already processed, skip');
+                console.log(
+                    '⚠️ [ADMIN SESSION GUARD] Already processed, skip'
+                );
                 return;
             }
 
+            // 🔥 QUAN TRỌNG: Kiểm tra public route TRƯỚC KHI set isProcessing
             if (isAdminPublicRoute()) {
-                console.log('⏭️ [ADMIN SESSION GUARD] Public route, skip session expired');
+                console.log(
+                    '⏭️ [ADMIN SESSION GUARD] Public route, skip session expired'
+                );
                 return;
             }
 
@@ -144,9 +154,10 @@ const AdminSessionGuard = ({ children }) => {
             const detail = eventOrDetail?.detail || eventOrDetail || {};
             const code = detail.code || 'TOKEN_EXPIRED';
 
-            console.warn(`🔴 [ADMIN SESSION GUARD] SESSION EXPIRED (${code})`, {
-                ...detail,
-            });
+            console.warn(
+                `🔴 [ADMIN SESSION GUARD] SESSION EXPIRED (${code})`,
+                { ...detail }
+            );
 
             if (typeof adminapi.resetAdminCache === 'function') {
                 adminapi.resetAdminCache();
@@ -165,6 +176,7 @@ const AdminSessionGuard = ({ children }) => {
                 code,
             });
 
+            // 🔥 Reset isProcessingRef sau 500ms (giống User)
             setTimeout(() => {
                 isProcessingRef.current = false;
             }, 500);
@@ -189,7 +201,10 @@ const AdminSessionGuard = ({ children }) => {
     // ============================================================
     useEffect(() => {
         const handleSessionEvent = (event) => {
-            console.log('📨 [ADMIN SESSION GUARD] sessionExpired event:', event?.detail);
+            console.log(
+                '📨 [ADMIN SESSION GUARD] sessionExpired event:',
+                event?.detail
+            );
             handleSessionExpired(event);
         };
 
@@ -256,6 +271,7 @@ const AdminSessionGuard = ({ children }) => {
             isProcessingRef.current = false;
             hasRedirectedRef.current = false;
             setShowModal(false);
+            setCountdown(COUNTDOWN_SECONDS);
         };
 
         window.addEventListener('adminLoggedIn', handleAdminLoggedIn);
@@ -266,13 +282,25 @@ const AdminSessionGuard = ({ children }) => {
     }, []);
 
     // ============================================================
+    // RESET KHI RỜI KHỎI PUBLIC ROUTE (QUAN TRỌNG!)
+    // ============================================================
+    useEffect(() => {
+        if (isAdminPublicRoute()) {
+            console.log(
+                '🧹 [ADMIN SESSION GUARD] Entering public route → reset flags'
+            );
+            isProcessingRef.current = false;
+            hasRedirectedRef.current = false;
+        }
+    }, [location.pathname, isAdminPublicRoute]);
+
+    // ============================================================
     // RENDER
     // ============================================================
     return (
         <>
             {children}
 
-            {/* 🔥 DÙNG DeviceLoginModal CỦA USER - GIỐNG HỆT SessionGuard */}
             <DeviceLoginModal
                 show={showModal}
                 type="warning"
@@ -284,7 +312,9 @@ const AdminSessionGuard = ({ children }) => {
                 message={modalMessage}
                 onConfirm={handleModalConfirm}
                 confirmText={
-                    countdown > 0 ? `Đăng nhập lại (${countdown}s)` : 'Đăng nhập lại'
+                    countdown > 0
+                        ? `Đăng nhập lại (${countdown}s)`
+                        : 'Đăng nhập lại'
                 }
                 className="admin-session-expired-modal-wrapper"
             >
@@ -310,7 +340,8 @@ const AdminSessionGuard = ({ children }) => {
 
                 {modalCode === 'SESSION_REPLACED' && (
                     <div className="admin-session-expired-security">
-                        🛡️ Nếu đây không phải là bạn, vui lòng đổi mật khẩu ngay lập tức.
+                        🛡️ Nếu đây không phải là bạn, vui lòng đổi mật khẩu
+                        ngay lập tức.
                     </div>
                 )}
             </DeviceLoginModal>

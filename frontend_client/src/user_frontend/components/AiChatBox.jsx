@@ -1,12 +1,51 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, X, Send, Bot, User } from 'lucide-react';
+import { Sparkles, X, Send, Bot, User, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/api';
 import '../styles/AiChat.css';
 
 /* ==========================================================
-   TYPING INDICATOR (3 chấm nhảy)
+   LOCALSTORAGE
+========================================================== */
+const STORAGE_KEY = 'cinema_ai_chat_history';
+const STORAGE_MAX_MESSAGES = 100;
+
+const loadMessagesFromStorage = () => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return null;
+
+    const parsed = JSON.parse(saved);
+    if (!Array.isArray(parsed) || parsed.length === 0) return null;
+
+    return parsed;
+  } catch (err) {
+    console.warn('[AiChatBox] Không load được chat history:', err);
+    return null;
+  }
+};
+
+const saveMessagesToStorage = (msgs) => {
+  try {
+    const toSave = msgs.slice(-STORAGE_MAX_MESSAGES);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+  } catch (err) {
+    console.warn('[AiChatBox] Không save được chat history:', err);
+  }
+};
+
+const DEFAULT_MESSAGES = [
+  {
+    role: 'assistant',
+    content:
+      'Xin chào! Mình là trợ lý AI của Quang Dũng Cinema. Bạn muốn xem phim gì hôm nay? 🎬',
+    movies: []
+  }
+];
+
+/* ==========================================================
+   TYPING INDICATOR
 ========================================================== */
 const TypingIndicator = () => (
   <div className="ai-typing">
@@ -52,19 +91,31 @@ const MovieSuggestCard = ({ movie, onClick }) => {
 const AiChatBox = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    {
-      role: 'assistant',
-      content:
-        'Xin chào! Mình là trợ lý AI của Quang Dũng Cinema. Bạn muốn xem phim gì hôm nay? 🎬',
-      movies: []
+
+  /* ✨ LOAD TỪ LOCALSTORAGE */
+  const [messages, setMessages] = useState(() => {
+    const saved = loadMessagesFromStorage();
+    if (saved && saved.length > 0) {
+      return saved;
     }
-  ]);
+    return DEFAULT_MESSAGES;
+  });
+
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [hasNewMessage, setHasNewMessage] = useState(false);
+
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+
+  /* =========================================================
+     AUTO SAVE VÀO LOCALSTORAGE
+  ========================================================= */
+  useEffect(() => {
+    if (messages.length > 0) {
+      saveMessagesToStorage(messages);
+    }
+  }, [messages]);
 
   /* Auto scroll xuống cuối */
   useEffect(() => {
@@ -85,6 +136,19 @@ const AiChatBox = () => {
       setHasNewMessage(true);
     }
   }, [messages, isOpen]);
+
+  /* =========================================================
+     XÓA LỊCH SỬ CHAT
+  ========================================================= */
+  const handleClearHistory = () => {
+    if (!window.confirm('Bạn có chắc muốn xóa toàn bộ cuộc trò chuyện?')) {
+      return;
+    }
+
+    localStorage.removeItem(STORAGE_KEY);
+    setMessages(DEFAULT_MESSAGES);
+    setInput('');
+  };
 
   /* =========================================================
      GỬI TIN NHẮN
@@ -229,13 +293,24 @@ const AiChatBox = () => {
                 </div>
               </div>
 
-              <button
-                className="ai-close-btn"
-                onClick={() => setIsOpen(false)}
-                aria-label="Đóng"
-              >
-                <X size={18} />
-              </button>
+              <div className="ai-header-actions">
+                <button
+                  className="ai-close-btn"
+                  onClick={handleClearHistory}
+                  title="Xóa cuộc trò chuyện"
+                  aria-label="Xóa cuộc trò chuyện"
+                >
+                  <Trash2 size={16} />
+                </button>
+
+                <button
+                  className="ai-close-btn"
+                  onClick={() => setIsOpen(false)}
+                  aria-label="Đóng"
+                >
+                  <X size={18} />
+                </button>
+              </div>
             </div>
 
             {/* MESSAGES */}
