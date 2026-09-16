@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import adminapi from '../../api/adminapi';
 import socketService from '../../api/socket';
-import { adminLogout } from '../../utils/adminAuthCleanup';  // ✅ ĐỔI IMPORT
+import { adminLogout } from '../../utils/adminAuthCleanup';
 import {
     Menu,
     Search,
@@ -71,7 +71,6 @@ const AdminHeader = ({ toggleSidebar }) => {
             console.log('🔴 [ADMIN HEADER] Đang thực hiện logout...');
 
             try {
-                // ✅ GỌI ADMIN LOGOUT — giống userLogout
                 await adminLogout();
 
                 if (redirectToLogin) {
@@ -148,6 +147,7 @@ const AdminHeader = ({ toggleSidebar }) => {
 
     // ============================================================
     // LOAD ADMIN INFO
+    // ✅ FIX: KHÔNG disconnect socket khi gặp 401
     // ============================================================
     useEffect(() => {
         const fetchAdmin = async () => {
@@ -167,7 +167,16 @@ const AdminHeader = ({ toggleSidebar }) => {
                 }
             } catch (error) {
                 console.error('Không thể lấy thông tin Admin:', error);
-                socketService.disconnect();
+
+                // ✅ FIX: KHÔNG disconnect socket khi 401
+                // Để AdminSessionGuard xử lý event session_expired
+                if (error?.response?.status !== 401) {
+                    socketService.disconnect();
+                } else {
+                    console.log(
+                        '⚠️ [ADMIN HEADER] 401 → để AdminSessionGuard xử lý, KHÔNG disconnect socket'
+                    );
+                }
             }
         };
 
@@ -220,6 +229,8 @@ const AdminHeader = ({ toggleSidebar }) => {
             console.warn('🔴 [ADMIN HEADER] Session expired:', event?.detail);
             setAdmin(null);
             setShowDropdown(false);
+            // ✅ Disconnect socket CHỈ KHI session thực sự expired
+            // (không phải khi login thiết bị khác)
             try {
                 socketService.disconnect();
             } catch (error) {

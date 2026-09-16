@@ -204,7 +204,8 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
             message: "Vui lòng xác thực email trước khi đăng nhập. Kiểm tra hộp thư của bạn."
         };
     }
-        // ========================================================
+
+    // ========================================================
     // ✅ QUẢN LÝ THIẾT BỊ — PHÂN BIỆT ADMIN / USER
     // ========================================================
     const maxDevices = user.role === 'admin' 
@@ -235,9 +236,13 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
 
             console.log(`🔄 [REVOKE] Revoke token cũ nhất | token_id=${oldestToken.token_id} | role=${user.role} | Lý do: ${reason}`);
 
-            // ✅ EMIT SOCKET CHO THIẾT BỊ CŨ
-            if (ioInstance && user.user_id) {
-                ioInstance.to(`user_${user.user_id}`).emit('session_expired', {
+            // ✅ FIX: Lấy socket_id CŨ và emit CHỈ CHO SOCKET ĐÓ
+            const oldSocketId = await CacheService.getUserSocket(user.user_id);
+            
+            console.log(`📌 [SOCKET] Old socket_id của user ${user.user_id}: ${oldSocketId}`);
+
+            if (ioInstance && user.user_id && oldSocketId) {
+                ioInstance.to(oldSocketId).emit('session_expired', {
                     code: 'SESSION_REPLACED',
                     // ✅ FIX: Dùng CÙNG message cho cả admin + user
                     message: 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.',
@@ -247,7 +252,13 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
                     },
                     timestamp: new Date().toISOString()
                 });
+
+                console.log(`📤 [SOCKET] session_expired sent to OLD socket: ${oldSocketId}`);
+
+                // ✅ XÓA socket cũ khỏi cache SAU KHI emit
                 await CacheService.deleteUserSocket(user.user_id);
+            } else {
+                console.warn(`⚠️ [SOCKET] Không có oldSocketId để emit session_expired`);
             }
         }
     } else {
@@ -1115,4 +1126,4 @@ exports.loginAfterRegistration = async (user, req, res) => {
 // EXPORT SOCKET + HELPER
 // ============================================================
 exports.setIO = setIO;
-exports.getFrontendUrlByRole = getFrontendUrlByRole; // ✅ export để dùng nơi khác nếu cần
+exports.getFrontendUrlByRole = getFrontendUrlByRole;
