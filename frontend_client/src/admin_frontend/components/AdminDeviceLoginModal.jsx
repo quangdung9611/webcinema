@@ -1,89 +1,96 @@
-import React, { useState, useEffect } from 'react';
-import AdminModal from './AdminModal';
+// admin_frontend/components/AdminDeviceLoginModal.jsx
+// ============================================================
+// ADMIN DEVICE LOGIN MODAL
+// Cấu trúc giống DeviceLogicModal của user:
+// - Nhận children để custom
+// - Nhận className từ ngoài
+// - Dùng type/title/message chuẩn
+// ============================================================
+
+import React from 'react';
+import { X } from 'lucide-react';
 import '../styles/AdminDeviceModal.css';
 
 const AdminDeviceLoginModal = ({
     show,
-    type = 'warning',
-    title = '🔐 Phát hiện đăng nhập trên thiết bị khác',
-    message = 'Tài khoản admin đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.',
+    onClose = () => {},
+    title,
+    message,
+    children,
+    type = 'default',
+    className = '',
     onConfirm,
     onCancel,
     confirmText = 'Đăng nhập lại',
     cancelText = 'Ở lại',
-    countdown = 10,
-    children,
-    className = '',
 }) => {
-    const [timeLeft, setTimeLeft] = useState(countdown);
-
-    useEffect(() => {
-        if (!show) {
-            setTimeLeft(countdown);
-            return;
-        }
-
-        setTimeLeft(countdown);
-
-        const interval = setInterval(() => {
-            setTimeLeft((prev) => {
-                if (prev <= 1) {
-                    clearInterval(interval);
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
-
-        return () => clearInterval(interval);
-    }, [show, countdown]);
-
-    useEffect(() => {
-        if (show && timeLeft === 0) {
-            if (onConfirm) onConfirm();
-        }
-    }, [show, timeLeft, onConfirm]);
-
     if (!show) return null;
 
+    const handleClose = () => {
+        if (onCancel) {
+            onCancel();
+        } else {
+            onClose();
+        }
+    };
+
+    const renderHeaderIcon = () => {
+        switch (type) {
+            case 'success': return <span className="modal-icon success-icon">✅</span>;
+            case 'error': return <span className="modal-icon error-icon">❌</span>;
+            case 'warning': return <span className="modal-icon warning-icon">⚠️</span>;
+            case 'info': return <span className="modal-icon info-icon">ℹ️</span>;
+            default: return null;
+        }
+    };
+
     return (
-        <AdminModal
-            open={show}
-            type={type}
-            title={title}
-            onClose={onCancel}
-            size="md"
-        >
-            <div className={`admin-device-modal-content ${className}`}>
-                <p className="admin-device-modal-message">{message}</p>
+        <div className="modal-overlay" onClick={handleClose}>
+            <div
+                className={`modal-container ${className}`}
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* Nút đóng (X) */}
+                <button className="modal-close-btn" onClick={handleClose}>
+                    <X size={20} />
+                </button>
 
-                {children}
+                <div className="modal-content">
+                    <div className={`modal-title-group ${type}`}>
+                        {type !== 'default' && renderHeaderIcon()}
+                        <h2 className="modal-title">{title}</h2>
+                    </div>
 
-                <div className="admin-device-modal-countdown">
-                    ⏳ Tự động chuyển đến trang đăng nhập sau{' '}
-                    <strong>{timeLeft}</strong> giây...
-                </div>
+                    <div className="modal-divider" />
 
-                <div className="admin-device-modal-actions">
-                    {onCancel && (
-                        <button
-                            className="admin-device-btn admin-device-btn-secondary"
-                            onClick={onCancel}
-                        >
-                            {cancelText}
-                        </button>
-                    )}
-                    <button
-                        className="admin-device-btn admin-device-btn-primary"
-                        onClick={onConfirm}
-                        disabled={timeLeft > 0}
-                    >
-                        {timeLeft > 0 ? `${confirmText} (${timeLeft}s)` : confirmText}
-                    </button>
+                    <div className="modal-body">
+                        {message ? <p>{message}</p> : children}
+                    </div>
+
+                    {/* 2 nút: Cancel + Confirm */}
+                    <div className="modal-footer modal-footer-2btns">
+                        {onCancel && (
+                            <button
+                                className="modal-btn-cancel"
+                                onClick={onCancel}
+                            >
+                                {cancelText}
+                            </button>
+                        )}
+
+                        {onConfirm && (
+                            <button
+                                className="modal-btn-confirm"
+                                onClick={onConfirm}
+                            >
+                                {confirmText}
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
-        </AdminModal>
+        </div>
     );
 };
 
-export default  AdminDeviceLoginModal;
+export default AdminDeviceLoginModal;

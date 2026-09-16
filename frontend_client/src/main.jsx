@@ -6,17 +6,10 @@ import './index.css';
 import App from './App.jsx';
 
 // ============================================================
-// 🔇 TẮT CONSOLE.LOG — CHỈ GIỮ CONSOLE.ERROR
+// CONSOLE — GIỮ NGUYÊN TẤT CẢ
 // ============================================================
-// Từ giờ, mọi console.log / info / warn / debug đều bị ẩn
-// CHỈ console.error mới hiện ra (dùng cho lỗi thật)
-
-console.log = () => {};
-console.info = () => {};
-console.warn = () => {};
-console.debug = () => {};
-
-// console.error GIỮ NGUYÊN — không tắt
+// Đã BỎ đoạn tắt console.log/warn/info/debug
+// Tất cả log sẽ hiện ra bình thường để debug
 // ============================================================
 
 const router = createBrowserRouter([

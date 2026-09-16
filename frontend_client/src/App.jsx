@@ -30,6 +30,10 @@ import {
 } from "./context/AuthContext";
 
 import {
+    AdminAuthProvider,
+} from "./context/AdminAuthContext";
+
+import {
     RouteLoadingProvider,
     useRouteLoading,
 } from "./context/RouteLoadingContext";
@@ -572,7 +576,7 @@ const PriceConfigPage = lazy(() =>
 );
 
 // ============================================================
-// ✅ LAZY LOAD - CHECK-IN PAGE (MỚI)
+// ✅ LAZY LOAD - CHECK-IN PAGE
 // ============================================================
 
 const CheckIn = lazy(() =>
@@ -1397,14 +1401,34 @@ const AppContent = () => {
 // ============================================================
 // APP
 // ============================================================
+// ✅ FIX: CHỈ mount 1 Provider phù hợp với domain
+//
+// Kiến trúc:
+// - RouteLoadingProvider:  Loading state toàn cục
+// - NetworkProvider:        Network state toàn cục
+// - Conditional Provider:
+//   + Admin domain  → CHỈ AdminAuthProvider
+//   + User domain   → CHỈ AuthProvider
+//
+// KHÔNG mount cả 2 → tránh conflict socket + auth state.
+// ============================================================
 
 function App() {
+    const isAdminDomain =
+        window.location.hostname === "admin.quangdungcinema.id.vn";
+
     return (
         <RouteLoadingProvider>
             <NetworkProvider>
-                <AuthProvider>
-                    <AppContent />
-                </AuthProvider>
+                {isAdminDomain ? (
+                    <AdminAuthProvider>
+                        <AppContent />
+                    </AdminAuthProvider>
+                ) : (
+                    <AuthProvider>
+                        <AppContent />
+                    </AuthProvider>
+                )}
             </NetworkProvider>
         </RouteLoadingProvider>
     );

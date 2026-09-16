@@ -1,4 +1,8 @@
 // admin_frontend/components/AdminSessionGuard.jsx
+// ============================================================
+// ADMIN SESSION GUARD — Dùng AdminDeviceLoginModal
+// ============================================================
+
 import React, {
     useCallback,
     useEffect,
@@ -13,8 +17,9 @@ import {
 
 import adminapi from '../../api/adminapi';
 import socketService from '../../api/socket';
+import { useAdminAuth } from '../../context/AdminAuthContext';
 
-import DeviceLoginModal from '../../user_frontend/components/DeviceLogicModal';
+import AdminDeviceLoginModal from './AdminDeviceLoginModal';
 
 import '../styles/AdminSessionGuard.css';
 
@@ -23,6 +28,10 @@ const COUNTDOWN_SECONDS = 10;
 const AdminSessionGuard = ({ children }) => {
     const navigate = useNavigate();
     const location = useLocation();
+
+    const {
+        clearAuthState,
+    } = useAdminAuth();
 
     const isMountedRef = useRef(false);
     const isProcessingRef = useRef(false);
@@ -33,54 +42,21 @@ const AdminSessionGuard = ({ children }) => {
     const [modalMessage, setModalMessage] = useState('');
     const [modalNewDevice, setModalNewDevice] = useState(null);
     const [modalCode, setModalCode] = useState('TOKEN_EXPIRED');
-    const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
+    const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);  // ✅ State đếm ngược
 
     // ============================================================
     // KIỂM TRA TRANG PUBLIC CỦA ADMIN
     // ============================================================
     const isAdminPublicRoute = useCallback(() => {
         const path = location.pathname;
-        const publicPaths = [
-            '/login',
-        ];
+        const publicPaths = ['/login'];
         return publicPaths.some(
             (p) => path === p || path.startsWith(p + '/')
         );
     }, [location.pathname]);
 
     // ============================================================
-    // XÓA SESSION ADMIN
-    // ✅ KHÔNG DÙNG document.cookie — HttpOnly cookie chỉ server xóa được
-    // ============================================================
-    const clearAdminSession = useCallback(() => {
-        console.log('🧹 [ADMIN SESSION GUARD] Clearing admin session state...');
-
-        // ✅ CHỈ XÓA STATE LOCAL — KHÔNG ĐỤNG COOKIE
-        const adminKeys = [
-            'admin_info',
-            'adminLockedEmail',
-            'admin_login_lock',
-            'admin_remember_me',
-        ];
-
-        adminKeys.forEach((key) => {
-            localStorage.removeItem(key);
-            sessionStorage.removeItem(key);
-        });
-
-        // ✅ XÓA Authorization HEADER (nếu có)
-        delete adminapi.defaults.headers.common['Authorization'];
-
-        // ✅ RESET ADMIN API CACHE
-        if (typeof adminapi.resetAdminCache === 'function') {
-            adminapi.resetAdminCache();
-        }
-
-        console.log('✅ [ADMIN SESSION GUARD] Admin session state cleared');
-    }, []);
-
-    // ============================================================
-    // HANDLE MODAL CONFIRM
+    // HANDLE MODAL CONFIRM — Đăng nhập lại
     // ============================================================
     const handleModalConfirm = useCallback(() => {
         console.log('➡️ [ADMIN SESSION GUARD] Clicking "Đăng nhập lại"!');
@@ -100,24 +76,31 @@ const AdminSessionGuard = ({ children }) => {
     }, [navigate, modalMessage, modalCode]);
 
     // ============================================================
+    // HANDLE MODAL CANCEL — Ở lại
+    // ============================================================
+    const handleModalCancel = useCallback(() => {
+        console.log('➡️ [ADMIN SESSION GUARD] Clicking "Ở lại"!');
+        setShowModal(false);
+    }, []);
+
+    // ============================================================
     // OPEN SESSION MODAL
-    // ✅ FIX: Check cả SESSION_REPLACED và SESSION_EXPIRED
+    // ✅ FIX: Message có chữ "admin"
     // ============================================================
     const openSessionModal = useCallback((detail = {}) => {
         if (!isMountedRef.current) return;
         if (hasRedirectedRef.current) return;
 
         const code = detail.code || 'TOKEN_EXPIRED';
-        
-        // ✅ FIX: Check cả 2 code
-        const isDeviceReplaced = 
-            code === 'SESSION_REPLACED' || 
+
+        const isDeviceReplaced =
+            code === 'SESSION_REPLACED' ||
             code === 'SESSION_EXPIRED';
 
         const message =
             detail.message ||
             (isDeviceReplaced
-                ? 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.'
+                ? 'Tài khoản admin của bạn đã được đăng nhập trên thiết bị khác.'
                 : 'Phiên đăng nhập admin đã hết hạn. Vui lòng đăng nhập lại.');
 
         const newDevice = detail.newDevice || null;
@@ -144,23 +127,17 @@ const AdminSessionGuard = ({ children }) => {
             if (!isMountedRef.current) return;
 
             if (isLoggingOutRef.current) {
-                console.log(
-                    '⏭️ [ADMIN SESSION GUARD] Đang logout → bỏ qua session expired'
-                );
+                console.log('⏭️ [ADMIN SESSION GUARD] Đang logout → bỏ qua');
                 return;
             }
 
             if (isProcessingRef.current) {
-                console.log(
-                    '⚠️ [ADMIN SESSION GUARD] Already processed, skip'
-                );
+                console.log('⚠️ [ADMIN SESSION GUARD] Already processed, skip');
                 return;
             }
 
             if (isAdminPublicRoute()) {
-                console.log(
-                    '⏭️ [ADMIN SESSION GUARD] Public route, skip session expired'
-                );
+                console.log('⏭️ [ADMIN SESSION GUARD] Public route, skip');
                 return;
             }
 
@@ -169,16 +146,12 @@ const AdminSessionGuard = ({ children }) => {
             const detail = eventOrDetail?.detail || eventOrDetail || {};
             const code = detail.code || 'TOKEN_EXPIRED';
 
-            console.warn(
-                `🔴 [ADMIN SESSION GUARD] SESSION EXPIRED (${code})`,
-                { ...detail }
-            );
+            console.warn(`🔴 [ADMIN SESSION GUARD] SESSION EXPIRED (${code})`, {
+                ...detail,
+            });
 
-            if (typeof adminapi.resetAdminCache === 'function') {
-                adminapi.resetAdminCache();
-            }
-
-            clearAdminSession();
+            adminapi.resetAdminCache();
+            clearAuthState();
 
             try {
                 socketService.disconnect();
@@ -186,17 +159,41 @@ const AdminSessionGuard = ({ children }) => {
                 console.warn('Socket disconnect error:', error);
             }
 
-            openSessionModal({
-                ...detail,
-                code,
-            });
+            openSessionModal({ ...detail, code });
 
             setTimeout(() => {
                 isProcessingRef.current = false;
             }, 500);
         },
-        [clearAdminSession, openSessionModal, isAdminPublicRoute]
+        [clearAuthState, openSessionModal, isAdminPublicRoute]
     );
+
+    // ============================================================
+    // COUNTDOWN TIMER
+    // ============================================================
+    useEffect(() => {
+        if (!showModal) return;
+
+        const interval = setInterval(() => {
+            setCountdown((previous) => {
+                if (previous <= 1) return 0;
+                return previous - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [showModal]);
+
+    // ============================================================
+    // AUTO CONFIRM KHI COUNTDOWN = 0
+    // ============================================================
+    useEffect(() => {
+        if (!showModal || countdown !== 0) return;
+        if (hasRedirectedRef.current) return;
+
+        hasRedirectedRef.current = true;
+        handleModalConfirm();
+    }, [countdown, showModal, handleModalConfirm]);
 
     // ============================================================
     // MOUNT + LẮNG NGHE authCleanedUp
@@ -206,10 +203,7 @@ const AdminSessionGuard = ({ children }) => {
         console.log('🛡️ [ADMIN SESSION GUARD] Started');
 
         const handleAuthCleanedUp = (event) => {
-            console.log(
-                '🧹 [ADMIN SESSION GUARD] authCleanedUp:',
-                event?.detail
-            );
+            console.log('🧹 [ADMIN SESSION GUARD] authCleanedUp:', event?.detail);
             isLoggingOutRef.current = true;
 
             setTimeout(() => {
@@ -230,10 +224,7 @@ const AdminSessionGuard = ({ children }) => {
     // ============================================================
     useEffect(() => {
         const handleSessionEvent = (event) => {
-            console.log(
-                '📨 [ADMIN SESSION GUARD] sessionExpired event:',
-                event?.detail
-            );
+            console.log('📨 [ADMIN SESSION GUARD] sessionExpired:', event?.detail);
             handleSessionExpired(event);
         };
 
@@ -265,33 +256,6 @@ const AdminSessionGuard = ({ children }) => {
     }, [handleSessionExpired]);
 
     // ============================================================
-    // COUNTDOWN TIMER
-    // ============================================================
-    useEffect(() => {
-        if (!showModal) return;
-
-        const interval = setInterval(() => {
-            setCountdown((previous) => {
-                if (previous <= 1) return 0;
-                return previous - 1;
-            });
-        }, 1000);
-
-        return () => clearInterval(interval);
-    }, [showModal]);
-
-    // ============================================================
-    // AUTO CONFIRM KHI COUNTDOWN = 0
-    // ============================================================
-    useEffect(() => {
-        if (!showModal || countdown !== 0) return;
-        if (hasRedirectedRef.current) return;
-
-        hasRedirectedRef.current = true;
-        handleModalConfirm();
-    }, [countdown, showModal, handleModalConfirm]);
-
-    // ============================================================
     // RESET KHI ADMIN LOGIN
     // ============================================================
     useEffect(() => {
@@ -316,9 +280,7 @@ const AdminSessionGuard = ({ children }) => {
     // ============================================================
     useEffect(() => {
         if (isAdminPublicRoute()) {
-            console.log(
-                '🧹 [ADMIN SESSION GUARD] Entering public route → reset flags'
-            );
+            console.log('🧹 [ADMIN SESSION GUARD] Entering public route → reset');
             isProcessingRef.current = false;
             hasRedirectedRef.current = false;
         }
@@ -326,7 +288,6 @@ const AdminSessionGuard = ({ children }) => {
 
     // ============================================================
     // RENDER
-    // ✅ FIX: Check cả SESSION_REPLACED và SESSION_EXPIRED
     // ============================================================
     const isDeviceReplacedCode =
         modalCode === 'SESSION_REPLACED' || modalCode === 'SESSION_EXPIRED';
@@ -335,7 +296,7 @@ const AdminSessionGuard = ({ children }) => {
         <>
             {children}
 
-            <DeviceLoginModal
+            <AdminDeviceLoginModal
                 show={showModal}
                 type="warning"
                 title={
@@ -345,11 +306,13 @@ const AdminSessionGuard = ({ children }) => {
                 }
                 message={modalMessage}
                 onConfirm={handleModalConfirm}
+                onCancel={handleModalCancel}
                 confirmText={
                     countdown > 0
                         ? `Đăng nhập lại (${countdown}s)`
                         : 'Đăng nhập lại'
                 }
+                cancelText="Ở lại"
                 className="admin-session-expired-modal-wrapper"
             >
                 {isDeviceReplacedCode && modalNewDevice && (
@@ -378,7 +341,7 @@ const AdminSessionGuard = ({ children }) => {
                         ngay lập tức.
                     </div>
                 )}
-            </DeviceLoginModal>
+            </AdminDeviceLoginModal>
         </>
     );
 };

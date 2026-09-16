@@ -20,6 +20,16 @@ import SuccessModal from '../../../user_frontend/components/SuccessModal';
 import LoginLockModal from '../../../user_frontend/components/LoginLockModal';
 import '../../styles/AdminAuth.css';
 
+// ============================================================
+// ADMIN LOGIN
+// ============================================================
+// Format giống UserLogin:
+// - KHÔNG tự gọi API /me
+// - KHÔNG tự connect socket
+// - Chỉ lo form login + lock
+// - Để AdminAuthContext (parent) xử lý session
+// ============================================================
+
 const AdminLogin = () => {
     /* ===================================================== REF ===================================================== */
     const formRef = useRef(null);
@@ -45,6 +55,8 @@ const AdminLogin = () => {
     /* ===================================================== ROUTER ===================================================== */
     const navigate = useNavigate();
     const location = useLocation();
+
+    const isExpired = Boolean(location.state?.expired);
 
     /* ===================================================== LOCAL STORAGE KEY ===================================================== */
     const LOCK_STORAGE_KEY = 'admin_login_lock';
@@ -224,42 +236,12 @@ const AdminLogin = () => {
         window.history.replaceState({}, document.title);
     }, [location.state]);
 
-    /* ===================================================== CHECK ADMIN SESSION ===================================================== */
-    useEffect(() => {
-        let cancelled = false;
-        const checkAdminSession = async () => {
-            try {
-                const res = await adminapi.get('/admin/api/auth/me', {
-                    force: true,
-                });
-                if (cancelled) return;
-                const adminUser = res.data?.user;
-                if (adminUser && adminUser.role === 'admin') {
-                    console.log(
-                        '🟢 [ADMIN LOGIN] Đã có session admin:',
-                        adminUser.user_id
-                    );
-                    try {
-                        socketService.connect(adminUser.user_id);
-                    } catch (socketError) {
-                        console.warn(
-                            '⚠️ [ADMIN LOGIN] Không thể kết nối WebSocket:',
-                            socketError
-                        );
-                    }
-                    navigate('/', { replace: true });
-                }
-            } catch (error) {
-                console.log(
-                    'ℹ️ [ADMIN LOGIN] Chưa đăng nhập admin → hiển thị form login.'
-                );
-            }
-        };
-        checkAdminSession();
-        return () => {
-            cancelled = true;
-        };
-    }, [navigate]);
+    /* ===================================================== ✅ XÓA: CHECK ADMIN SESSION =====================================================
+     * BỎ HOÀN TOÀN useEffect gọi /me + socketService.connect()
+     * Vì AdminAuthContext (parent) đã xử lý session rồi.
+     * AdminLogin chỉ lo form login.
+     * ============================================================================================================================
+     */
 
     /* ===================================================== MODAL ===================================================== */
     const [modalConfig, setModalConfig] = useState({
@@ -303,9 +285,12 @@ const AdminLogin = () => {
             return;
         }
         if (!validate()) return;
+
         setLoading(true);
         setServerError('');
         setSuccessMessage('');
+        setErrors({});
+
         try {
             const response = await adminapi.post('/admin/api/auth/login', {
                 email: email.trim(),
@@ -330,7 +315,10 @@ const AdminLogin = () => {
                 return;
             }
 
-            /* ================================================ 🔥 RESET CACHE & PHÁT TÍN HIỆU LOGIN ================================================ */
+            /* ================================================ 🔥 RESET CACHE & PHÁT TÍN HIỆU LOGIN ================================================
+             * Chỉ dispatch event 'adminLoggedIn' - AdminAuthContext sẽ tự fetch /me + connect socket
+             * ============================================================================================================================
+             */
             adminapi.resetAdminCache();
             adminapi.resetSessionExpiredLock();
 
@@ -343,21 +331,11 @@ const AdminLogin = () => {
                 '🟢 [ADMIN LOGIN] Đã phát tín hiệu adminLoggedIn & reset cache'
             );
 
-            /* ================================================ KẾT NỐI SOCKET SAU KHI LOGIN THÀNH CÔNG ================================================ */
-            if (adminUser) {
-                try {
-                    socketService.connect(adminUser.user_id);
-                    console.log(
-                        '🟢 [ADMIN LOGIN] Đã kết nối WebSocket cho admin:',
-                        adminUser.user_id
-                    );
-                } catch (socketError) {
-                    console.warn(
-                        '⚠️ [ADMIN LOGIN] Không thể kết nối WebSocket:',
-                        socketError
-                    );
-                }
-            }
+            /* ================================================ ✅ XÓA: KẾT NỐI SOCKET SAU KHI LOGIN ================================================
+             * KHÔNG gọi socketService.connect() ở đây.
+             * AdminAuthContext (parent) sẽ tự connect khi nhận event 'adminLoggedIn'.
+             * ============================================================================================================================
+             */
 
             /* ================================================ LOGIN SUCCESS ================================================ */
             setLoggedInUser(adminUser);
@@ -444,7 +422,7 @@ const AdminLogin = () => {
     const handleLoginSuccessConfirm = () => {
         setShowLoginSuccessModal(false);
         setLoggedInUser(null);
-        navigate('/dashboard', { replace: true });
+        navigate('/', { replace: true });
     };
 
     /* ===================================================== CLOSE LOCK MODAL ===================================================== */
