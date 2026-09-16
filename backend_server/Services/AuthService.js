@@ -23,7 +23,7 @@ const setIO = (io) => {
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // ✅ URL RIÊNG CHO TỪNG PHÍA
-const USER_FRONTEND_URL  = process.env.USER_FRONTEND_URL  || 'https://quangdungcinema.id.vn';
+const USER_FRONTEND_URL = process.env.USER_FRONTEND_URL || 'https://quangdungcinema.id.vn';
 const ADMIN_FRONTEND_URL = process.env.ADMIN_FRONTEND_URL || 'https://admin.quangdungcinema.id.vn';
 
 // ✅ Helper chọn URL theo role
@@ -52,14 +52,19 @@ const validateLogin = (email, password) => {
 
 // ============================================================
 // GENERATE ACCESS TOKEN
+// ✅ FIX: XÓA user_token khi login admin để tránh conflict socket
 // ============================================================
 const generateAndSetTokens = (user, res, rememberMe = false) => {
     const accessToken = Jwt.generateAccessToken(user);
+
     if (user.role === "admin") {
+        // ✅ Xóa user_token cũ nếu có → tránh socket đọc nhầm
+        Cookie.clearUserCookies(res);
         Cookie.setAdminAccessToken(res, accessToken, rememberMe);
     } else {
         Cookie.setUserAccessToken(res, accessToken, rememberMe);
     }
+
     return accessToken;
 };
 
@@ -100,7 +105,7 @@ exports.checkLockStatus = async (email) => {
  */
 exports.login = async (email, password, rememberMe = false, req, res, expectedRole = null) => {
     validateLogin(email, password);
-    
+
     // CHECK RATE LIMIT
     const loginRateLimit = await CacheService.checkRateLimit(email, "login", 5, 60);
     if (!loginRateLimit.allowed) {
@@ -208,8 +213,8 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
     // ========================================================
     // ✅ QUẢN LÝ THIẾT BỊ — PHÂN BIỆT ADMIN / USER
     // ========================================================
-    const maxDevices = user.role === 'admin' 
-        ? MAX_DEVICES_ADMIN 
+    const maxDevices = user.role === 'admin'
+        ? MAX_DEVICES_ADMIN
         : MAX_DEVICES_CUSTOMER;
 
     const activeTokens = await RefreshTokenRepository.getActiveByUser(user.user_id);
@@ -225,27 +230,30 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
             return a.token_id - b.token_id;
         });
 
-        const oldestToken = sorted[0]; // ✅ Lấy cũ nhất (đầu mảng sau sort ASC)
+        const oldestToken = sorted[0]; // ✅ Lấy cũ nhất
 
         if (oldestToken) {
+            // ✅ 1. LẤY SOCKET CŨ **TRƯỚC KHI REVOKE**
+            const oldSocketId = await CacheService.getUserSocket(user.user_id);
+            console.log(`📌 [SOCKET] Old socket_id của user ${user.user_id}: ${oldSocketId}`);
+
+            // ✅ 2. REVOKE TOKEN CŨ
             const reason = user.role === 'admin'
                 ? `Vượt quá ${maxDevices} thiết bị admin`
                 : "Đăng nhập từ thiết bị khác";
 
             await RefreshTokenRepository.revoke(oldestToken.token_hash, reason);
 
-            console.log(`🔄 [REVOKE] Revoke token cũ nhất | token_id=${oldestToken.token_id} | role=${user.role} | Lý do: ${reason}`);
+            console.log(`🔄 [REVOKE] Revoke token cũ nhất | token_id=${oldestToken.token_id} | role=${user.role}`);
 
-            // ✅ FIX: Lấy socket_id CŨ và emit CHỈ CHO SOCKET ĐÓ
-            const oldSocketId = await CacheService.getUserSocket(user.user_id);
-            
-            console.log(`📌 [SOCKET] Old socket_id của user ${user.user_id}: ${oldSocketId}`);
-
+            // ✅ 3. EMIT SESSION_EXPIRED VÀO SOCKET CŨ (KHÔNG PHẢI ROOM)
             if (ioInstance && user.user_id && oldSocketId) {
                 ioInstance.to(oldSocketId).emit('session_expired', {
                     code: 'SESSION_REPLACED',
-                    // ✅ FIX: Dùng CÙNG message cho cả admin + user
-                    message: 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.',
+                    // ✅ FIX: Phân biệt message admin/user
+                    message: user.role === 'admin'
+                        ? 'Tài khoản admin của bạn đã được đăng nhập trên thiết bị khác.'
+                        : 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.',
                     newDevice: {
                         ip: req.ip || req.connection?.remoteAddress || 'Unknown',
                         userAgent: req.headers?.['user-agent']?.substring(0, 100) || 'Unknown'
@@ -255,14 +263,14 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
 
                 console.log(`📤 [SOCKET] session_expired sent to OLD socket: ${oldSocketId}`);
 
-                // ✅ XÓA socket cũ khỏi cache SAU KHI emit
+                // ✅ 4. XÓA CACHE SOCKET CŨ SAU KHI EMIT
                 await CacheService.deleteUserSocket(user.user_id);
             } else {
-                console.warn(`⚠️ [SOCKET] Không có oldSocketId để emit session_expired`);
+                console.warn(`⚠️ [SOCKET] Không có oldSocketId để emit`);
             }
         }
     } else {
-        console.log(`✅ [LOGIN] ${user.role} login OK — device ${activeTokens.length + 1}/${maxDevices} (không revoke)`);
+        console.log(`✅ [LOGIN] ${user.role} login OK — device ${activeTokens.length + 1}/${maxDevices}`);
     }
 
     // TẠO TOKEN MỚI
@@ -315,19 +323,19 @@ exports.logout = async (req, res) => {
         token = Cookie.getUserAccessToken(req);
         if (token) Cookie.clearUserCookies(res);
     }
-    
+
     if (token) {
         const tokenHash = Jwt.hashRefreshToken(token);
         const deleted = await RefreshTokenRepository.deleteByTokenHash(tokenHash);
         console.log(`🗑️ [LOGOUT] Đã xóa ${deleted} token khỏi DB`);
     }
-    
+
     try {
         if (req.user?.user_id) await CacheService.deleteUserSocket(req.user.user_id);
     } catch (error) {
         console.error('❌ [LOGOUT] Lỗi khi xóa socket:', error.message);
     }
-    
+
     return { success: true, message: "Đăng xuất thành công" };
 };
 
@@ -337,12 +345,13 @@ exports.logout = async (req, res) => {
 exports.logoutAllDevices = async (userId, res) => {
     const deleted = await RefreshTokenRepository.deleteAllByUser(userId);
     console.log(`🗑️ [LOGOUT_ALL] Đã xóa ${deleted} token của user ${userId}`);
-    
+
     try {
         await CacheService.deleteUserSocket(userId);
     } catch (error) {
         console.error('❌ [LOGOUT_ALL] Lỗi khi xóa socket:', error.message);
     }
+
     Cookie.clearAllCookies(res);
     return { success: true, message: "Đã đăng xuất tất cả thiết bị" };
 };
@@ -367,9 +376,9 @@ exports.changePassword = async (userId, passwordData) => {
 
     const rateLimit = await CacheService.checkRateLimit(user.email, "change-password", 3, 60);
     if (!rateLimit.allowed) {
-        throw { 
-            statusCode: 429, 
-            message: `Bạn đã thử đổi mật khẩu quá nhiều lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 60} giây.` 
+        throw {
+            statusCode: 429,
+            message: `Bạn đã thử đổi mật khẩu quá nhiều lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 60} giây.`
         };
     }
 
@@ -386,6 +395,7 @@ exports.changePassword = async (userId, passwordData) => {
     const hashedPassword = await Password.hash(newPassword);
     await UserRepository.updatePassword(userId, hashedPassword);
     await RefreshTokenRepository.revokeByUser(userId, "Đổi mật khẩu");
+
     try {
         await CacheService.deleteUserSocket(userId);
     } catch (error) {
@@ -403,34 +413,34 @@ exports.forgotPassword = async (email, req) => {
     if (!EMAIL_REGEX.test(email)) throw { statusCode: 400, field: "email", message: "Email không hợp lệ" };
 
     const user = await UserRepository.findByEmail(email);
-    
+
     if (!user) {
-        throw { 
-            statusCode: 404, 
+        throw {
+            statusCode: 404,
             field: "email",
-            message: "Email này chưa được đăng ký trong hệ thống. Vui lòng kiểm tra lại." 
+            message: "Email này chưa được đăng ký trong hệ thống. Vui lòng kiểm tra lại."
         };
     }
 
     if (!user.email_verified) {
-        throw { 
-            statusCode: 400, 
+        throw {
+            statusCode: 400,
             field: "email",
-            message: "Tài khoản chưa được xác thực email. Vui lòng kiểm tra hộp thư để xác thực." 
+            message: "Tài khoản chưa được xác thực email. Vui lòng kiểm tra hộp thư để xác thực."
         };
     }
 
     if (user.status === 'banned') {
-        throw { 
-            statusCode: 403, 
-            message: "Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ để được giúp đỡ." 
+        throw {
+            statusCode: 403,
+            message: "Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ để được giúp đỡ."
         };
     }
 
     const rateLimit = await CacheService.checkRateLimit(email, "password-reset", 3, 300);
     if (!rateLimit.allowed) {
-        throw { 
-            statusCode: 429, 
+        throw {
+            statusCode: 429,
             message: `Bạn chỉ được gửi tối đa 3 lần trong 5 phút. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 300} giây.`,
             data: {
                 remainingSeconds: rateLimit.remainingSeconds || 300,
@@ -442,7 +452,7 @@ exports.forgotPassword = async (email, req) => {
     await CacheService.markOTPAsUsed(email, OtpService.PURPOSE.RESET_PASSWORD);
     const otpResult = await OtpService.createOTP(email, OtpService.PURPOSE.RESET_PASSWORD);
     const serverTime = Date.now();
-    
+
     await MailService.sendResetPasswordOTP(email, otpResult.otp, user.full_name)
         .then(() => console.log(`✅ Email sent to ${email}`))
         .catch(err => console.error(`❌ Email failed: ${err.message}`));
@@ -485,8 +495,8 @@ exports.submitNewPassword = async (token, newPassword) => {
 
     const rateLimit = await CacheService.checkRateLimit(user.email, "submit-password", 3, 60);
     if (!rateLimit.allowed) {
-        throw { 
-            statusCode: 429, 
+        throw {
+            statusCode: 429,
             message: `Bạn chỉ được gửi tối đa 3 lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 60} giây.`,
             data: {
                 remainingSeconds: rateLimit.remainingSeconds || 60,
@@ -497,7 +507,7 @@ exports.submitNewPassword = async (token, newPassword) => {
 
     const otpResult = await OtpService.createOTP(user.email, OtpService.PURPOSE.RESET_PASSWORD);
     const serverTime = Date.now();
-    
+
     await MailService.sendResetPasswordOTP(user.email, otpResult.otp, user.full_name)
         .then(() => console.log(`✅ Email sent to ${user.email}`))
         .catch(err => console.error(`❌ Email failed: ${err.message}`));
@@ -519,8 +529,8 @@ exports.submitNewPassword = async (token, newPassword) => {
 exports.verifyOtpAndReset = async (email, otp, newPassword) => {
     const rateLimit = await CacheService.checkRateLimit(email, "verify-otp-reset", 5, 300);
     if (!rateLimit.allowed) {
-        throw { 
-            statusCode: 429, 
+        throw {
+            statusCode: 429,
             message: `Bạn đã thử OTP quá nhiều lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 300} giây.`,
             data: {
                 remainingSeconds: rateLimit.remainingSeconds || 300,
@@ -539,12 +549,12 @@ exports.verifyOtpAndReset = async (email, otp, newPassword) => {
     }
 
     const otpResult = await OtpService.verifyOTP(
-        email, 
-        otp, 
-        OtpService.PURPOSE.RESET_PASSWORD, 
+        email,
+        otp,
+        OtpService.PURPOSE.RESET_PASSWORD,
         false
     );
-    
+
     if (!otpResult.success) {
         throw {
             statusCode: otpResult.code === "OTP_LOCKED" ? 429 : 400,
@@ -574,6 +584,7 @@ exports.verifyOtpAndReset = async (email, otp, newPassword) => {
     const hashedPassword = await Password.hash(newPassword);
     await UserRepository.updatePassword(user.user_id, hashedPassword);
     await RefreshTokenRepository.revokeByUser(user.user_id, "Đặt lại mật khẩu");
+
     try {
         await CacheService.deleteUserSocket(user.user_id);
     } catch (error) {
@@ -601,8 +612,8 @@ exports.sendVerificationEmail = async (email) => {
 
     const rateLimit = await CacheService.checkRateLimit(email, "send-verify", 3, 300);
     if (!rateLimit.allowed) {
-        throw { 
-            statusCode: 429, 
+        throw {
+            statusCode: 429,
             message: `Bạn chỉ được gửi tối đa 3 lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 300} giây.`,
             data: {
                 remainingSeconds: rateLimit.remainingSeconds || 300,
@@ -613,7 +624,6 @@ exports.sendVerificationEmail = async (email) => {
 
     const verifyToken = Jwt.generateEmailVerifyToken({ user_id: user.user_id, email: user.email });
 
-    // ✅ FIX: chọn URL theo role
     const frontendUrl = getFrontendUrlByRole(user.role);
     const verifyUrl = `${frontendUrl}/verify-email?token=${verifyToken}`;
 
@@ -640,6 +650,7 @@ exports.verifyEmail = async (verifyToken) => {
     if (user.email_verified) throw { statusCode: 400, message: "Email đã được xác thực" };
 
     await UserRepository.updateEmailVerified(user.user_id, true);
+
     return {
         success: true,
         message: "Xác thực email thành công!",
@@ -658,6 +669,7 @@ exports.verifyEmail = async (verifyToken) => {
 exports.getActiveDevices = async (userId) => {
     if (!userId) throw { statusCode: 401, message: "Chưa đăng nhập" };
     const tokens = await RefreshTokenRepository.getActiveByUser(userId);
+
     return {
         success: true,
         devices: tokens.map(token => ({
@@ -679,11 +691,13 @@ exports.revokeDeviceById = async (userId, tokenId) => {
     if (!userId) throw { statusCode: 401, message: "Chưa đăng nhập" };
     const tokens = await RefreshTokenRepository.getActiveByUser(userId);
     const targetToken = tokens.find(t => t.token_id === parseInt(tokenId));
+
     if (!targetToken) {
         throw { statusCode: 404, message: "Không tìm thấy thiết bị hoặc thiết bị đã bị đăng xuất" };
     }
 
     await RefreshTokenRepository.revoke(targetToken.token_hash, "Người dùng chủ động đăng xuất");
+
     return {
         success: true,
         message: "Đã đăng xuất thiết bị thành công",
@@ -703,34 +717,34 @@ exports.forgotPin = async (email) => {
     }
 
     const user = await UserRepository.findByEmail(email);
-    
+
     if (!user) {
-        throw { 
-            statusCode: 404, 
+        throw {
+            statusCode: 404,
             field: "email",
-            message: "Email này chưa được đăng ký trong hệ thống. Vui lòng kiểm tra lại." 
+            message: "Email này chưa được đăng ký trong hệ thống. Vui lòng kiểm tra lại."
         };
     }
 
     if (!user.email_verified) {
-        throw { 
-            statusCode: 400, 
+        throw {
+            statusCode: 400,
             field: "email",
-            message: "Tài khoản chưa được xác thực email. Vui lòng kiểm tra hộp thư để xác thực." 
+            message: "Tài khoản chưa được xác thực email. Vui lòng kiểm tra hộp thư để xác thực."
         };
     }
 
     if (user.status === 'banned') {
-        throw { 
-            statusCode: 403, 
-            message: "Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ để được giúp đỡ." 
+        throw {
+            statusCode: 403,
+            message: "Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ để được giúp đỡ."
         };
     }
 
     const rateLimit = await CacheService.checkRateLimit(email, "forgot-pin", 3, 300);
     if (!rateLimit.allowed) {
-        throw { 
-            statusCode: 429, 
+        throw {
+            statusCode: 429,
             message: `Bạn chỉ được gửi tối đa 3 lần trong 5 phút. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 300} giây.`,
             data: {
                 remainingSeconds: rateLimit.remainingSeconds || 300,
@@ -742,7 +756,7 @@ exports.forgotPin = async (email) => {
     await CacheService.markOTPAsUsed(email, OtpService.PURPOSE.FORGOT_PIN);
     const otpResult = await OtpService.createOTP(email, OtpService.PURPOSE.FORGOT_PIN);
     const serverTime = Date.now();
-    
+
     await MailService.sendForgotPinOTP(email, otpResult.otp, user.full_name)
         .then(() => console.log(`✅ Forgot PIN email sent to ${email}`))
         .catch(err => console.error(`❌ Forgot PIN email failed: ${err.message}`));
@@ -766,8 +780,8 @@ exports.forgotPin = async (email) => {
 exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
     const rateLimit = await CacheService.checkRateLimit(email, "verify-otp-pin", 5, 300);
     if (!rateLimit.allowed) {
-        throw { 
-            statusCode: 429, 
+        throw {
+            statusCode: 429,
             message: `Bạn đã thử OTP quá nhiều lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 300} giây.`,
             data: {
                 remainingSeconds: rateLimit.remainingSeconds || 300,
@@ -786,12 +800,12 @@ exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
     }
 
     const otpResult = await OtpService.verifyOTP(
-        email, 
-        otp, 
-        OtpService.PURPOSE.FORGOT_PIN, 
+        email,
+        otp,
+        OtpService.PURPOSE.FORGOT_PIN,
         false
     );
-    
+
     if (!otpResult.success) {
         throw {
             statusCode: otpResult.code === "OTP_LOCKED" ? 429 : 400,
@@ -867,8 +881,8 @@ exports.registerStep1 = async (data) => {
 
     const rateLimit = await CacheService.checkRateLimit(email, "register", 3, 300);
     if (!rateLimit.allowed) {
-        throw { 
-            statusCode: 429, 
+        throw {
+            statusCode: 429,
             message: `Bạn chỉ được gửi tối đa 3 lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 300} giây.`,
             data: {
                 remainingSeconds: rateLimit.remainingSeconds || 300,
@@ -877,10 +891,10 @@ exports.registerStep1 = async (data) => {
         };
     }
 
-    const tempToken = Jwt.generateResetToken({ 
+    const tempToken = Jwt.generateResetToken({
         purpose: "register",
         email: email,
-        username: username 
+        username: username
     });
 
     return {
@@ -894,15 +908,15 @@ exports.registerStep1 = async (data) => {
 };
 
 // ============================================================
-// COMPLETE REGISTRATION — ✅ FIX URL (dùng role customer)
+// COMPLETE REGISTRATION
 // ============================================================
 exports.completeRegistration = async (data, req, res) => {
     const { temp_token, pin, username, full_name, email, phone, password, address } = data;
 
     const rateLimit = await CacheService.checkRateLimit(email, "register", 3, 300);
     if (!rateLimit.allowed) {
-        throw { 
-            statusCode: 429, 
+        throw {
+            statusCode: 429,
             message: `Bạn chỉ được gửi tối đa 3 lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 300} giây.`,
             data: {
                 remainingSeconds: rateLimit.remainingSeconds || 300,
@@ -956,7 +970,6 @@ exports.completeRegistration = async (data, req, res) => {
 
     const verifyToken = Jwt.generateEmailVerifyToken({ user_id: userId, email: email });
 
-    // ✅ FIX: dùng USER_FRONTEND_URL vì đây là đăng ký customer
     const frontendUrl = getFrontendUrlByRole("customer");
     const verifyUrl = `${frontendUrl}/verify-email?token=${verifyToken}`;
 
@@ -982,8 +995,8 @@ exports.resendVerificationAfterLogin = async (userId) => {
 
     const rateLimit = await CacheService.checkRateLimit(user.email, "resend-verify", 3, 120);
     if (!rateLimit.allowed) {
-        throw { 
-            statusCode: 429, 
+        throw {
+            statusCode: 429,
             message: `Bạn chỉ được gửi tối đa 3 lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 120} giây.`,
             data: {
                 remainingSeconds: rateLimit.remainingSeconds || 120,
@@ -994,7 +1007,6 @@ exports.resendVerificationAfterLogin = async (userId) => {
 
     const verifyToken = Jwt.generateEmailVerifyToken({ user_id: user.user_id, email: user.email });
 
-    // ✅ FIX: chọn URL theo role
     const frontendUrl = getFrontendUrlByRole(user.role);
     const verifyUrl = `${frontendUrl}/verify-email?token=${verifyToken}`;
 
@@ -1047,8 +1059,8 @@ exports.resendOtp = async (email, purpose) => {
 
     const rateLimit = await CacheService.checkRateLimit(email, `${purpose}-resend`, 3, 300);
     if (!rateLimit.allowed) {
-        throw { 
-            statusCode: 429, 
+        throw {
+            statusCode: 429,
             message: `Bạn chỉ được gửi tối đa 3 lần trong 5 phút. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 300} giây.`,
             data: {
                 remainingSeconds: rateLimit.remainingSeconds || 300,
@@ -1060,7 +1072,7 @@ exports.resendOtp = async (email, purpose) => {
     await CacheService.markOTPAsUsed(email, purpose);
     const otpResult = await OtpService.createOTP(email, purpose);
     const serverTime = Date.now();
-    
+
     if (purpose === OtpService.PURPOSE.FORGOT_PIN) {
         await MailService.sendForgotPinOTP(email, otpResult.otp, user.full_name)
             .then(() => console.log(`✅ Forgot PIN email sent to ${email}`))
@@ -1072,7 +1084,6 @@ exports.resendOtp = async (email, purpose) => {
     } else if (purpose === OtpService.PURPOSE.REGISTER) {
         const verifyToken = Jwt.generateEmailVerifyToken({ user_id: user.user_id, email: email });
 
-        // ✅ FIX: chọn URL theo role
         const frontendUrl = getFrontendUrlByRole(user.role);
         const verifyUrl = `${frontendUrl}/verify-email?token=${verifyToken}`;
 

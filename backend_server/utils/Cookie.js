@@ -37,7 +37,6 @@ class Cookie {
             maxAge
         };
 
-        // ✅ FIX: Thêm domain cho production — chia sẻ giữa các subdomain
         if (isProduction) {
             options.domain = COOKIE_DOMAIN;
         }
@@ -65,7 +64,11 @@ class Cookie {
         return req.cookies?.[USER_ACCESS_COOKIE_NAME] || null;
     }
 
-    clearUserCookies(res, io = null, userId = null, deviceInfo = null) {
+    /**
+     * ✅ FIX: XÓA HOÀN TOÀN emit session_expired
+     * Chỉ clear cookie, không gửi socket notification
+     */
+    clearUserCookies(res) {
         const isProduction = process.env.NODE_ENV === "production";
 
         const clearOptions = {
@@ -75,17 +78,11 @@ class Cookie {
             path: "/"
         };
 
-        // ✅ FIX: Phải xóa với đúng domain đã set
         if (isProduction) {
             clearOptions.domain = COOKIE_DOMAIN;
         }
 
         res.clearCookie(USER_ACCESS_COOKIE_NAME, clearOptions);
-
-        // 🔥 Gửi socket notification ngay lập tức
-        if (io && userId) {
-            this.emitSessionExpired(io, userId, deviceInfo);
-        }
     }
 
     /*=====================================================
@@ -108,7 +105,10 @@ class Cookie {
         return req.cookies?.[ADMIN_ACCESS_COOKIE_NAME] || null;
     }
 
-    clearAdminCookies(res, io = null, userId = null, deviceInfo = null) {
+    /**
+     * ✅ FIX: XÓA HOÀN TOÀN emit session_expired
+     */
+    clearAdminCookies(res) {
         const isProduction = process.env.NODE_ENV === "production";
 
         const clearOptions = {
@@ -118,69 +118,20 @@ class Cookie {
             path: "/"
         };
 
-        // ✅ FIX: Phải xóa với đúng domain đã set
         if (isProduction) {
             clearOptions.domain = COOKIE_DOMAIN;
         }
 
         res.clearCookie(ADMIN_ACCESS_COOKIE_NAME, clearOptions);
-
-        // 🔥 Gửi socket notification ngay lập tức
-        if (io && userId) {
-            this.emitSessionExpired(io, userId, deviceInfo);
-        }
     }
 
     /*=====================================================
         CLEAR ALL
     =====================================================*/
 
-    clearAllCookies(res, io = null, userId = null, deviceInfo = null) {
-        this.clearUserCookies(res, io, userId, deviceInfo);
-        this.clearAdminCookies(res, io, userId, deviceInfo);
-    }
-
-    /*=====================================================
-        🔥 EMIT SESSION EXPIRED VIA SOCKET.IO
-    =====================================================*/
-
-    emitSessionExpired(io, userId, deviceInfo = null) {
-        if (!io || !userId) {
-            console.warn('⚠️ [COOKIE] Cannot emit session_expired: missing io or userId');
-            return;
-        }
-
-        console.log(`🔴 [COOKIE] Emitting session_expired for user: ${userId}`);
-
-        // ✅ FIX: Phân biệt code theo ngữ cảnh
-        const isDeviceReplaced = !!deviceInfo;
-
-        const payload = {
-            code: isDeviceReplaced ? 'SESSION_REPLACED' : 'SESSION_EXPIRED',
-            type: isDeviceReplaced ? 'device' : 'expired',
-            message: isDeviceReplaced
-                ? 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.'
-                : 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
-            newDevice: deviceInfo || null,
-            timestamp: new Date().toISOString()
-        };
-
-        // Gửi đến room của user
-        io.to(`user_${userId}`).emit('session_expired', payload);
-
-        console.log(`✅ [COOKIE] session_expired sent to user_${userId}`, payload);
-    }
-
-    /*=====================================================
-        🔥 FORCE LOGOUT - CLEAR COOKIE + SOCKET NOTIFY
-    =====================================================*/
-
-    forceLogout(res, io, userId, deviceInfo = null) {
-        console.log(`🔴 [COOKIE] Force logout for user: ${userId}`);
-
-        this.clearAllCookies(res, io, userId, deviceInfo);
-
-        console.log(`✅ [COOKIE] Force logout completed for user: ${userId}`);
+    clearAllCookies(res) {
+        this.clearUserCookies(res);
+        this.clearAdminCookies(res);
     }
 }
 
