@@ -8,25 +8,14 @@ function CheckIn() {
     const navigate = useNavigate();
     const { ticketCode: urlTicketCode } = useParams();
 
-    // ============================================
-    // STATE
-    // ============================================
     const [scanning, setScanning] = useState(!urlTicketCode);
     const [result, setResult] = useState(null);
-    const [manualCode, setManualCode] = useState("");
-    const [history, setHistory] = useState([]);
-    const [showHistory, setShowHistory] = useState(false);
     const [cameraError, setCameraError] = useState(null);
     const [torchOn, setTorchOn] = useState(false);
-    const [checkedCount, setCheckedCount] = useState(0);
 
-    // ============================================
-    // REFS
-    // ============================================
     const scannerRef = useRef(null);
     const isProcessingRef = useRef(false);
     const initialCheckDoneRef = useRef(false);
-    const fileInputRef = useRef(null);
 
     // ============================================
     // AUTO CHECK-IN NẾU CÓ URL PARAM
@@ -34,8 +23,6 @@ function CheckIn() {
     useEffect(() => {
         if (!urlTicketCode || initialCheckDoneRef.current) return;
         initialCheckDoneRef.current = true;
-
-        console.log("🔗 Auto check-in từ URL:", urlTicketCode);
         doCheckIn(urlTicketCode);
     }, [urlTicketCode]);
 
@@ -56,7 +43,7 @@ function CheckIn() {
                     { facingMode: "environment" },
                     {
                         fps: 10,
-                        qrbox: { width: 250, height: 250 },
+                        qrbox: { width: 260, height: 260 },
                         aspectRatio: 1.0,
                     },
                     async (decodedText) => {
@@ -64,8 +51,6 @@ function CheckIn() {
                         isProcessingRef.current = true;
 
                         const code = extractCode(decodedText);
-                        console.log("📷 Quét được:", code);
-
                         await doCheckIn(code);
 
                         setTimeout(() => {
@@ -79,7 +64,7 @@ function CheckIn() {
             } catch (err) {
                 console.error("❌ Không mở được camera:", err);
                 setCameraError(
-                    "Không mở được camera. Vui lòng cấp quyền hoặc nhập mã thủ công."
+                    "Không mở được camera. Vui lòng cấp quyền camera cho trình duyệt."
                 );
             }
         };
@@ -98,26 +83,28 @@ function CheckIn() {
     }, [scanning, urlTicketCode, result]);
 
     // ============================================
-    // AUTO VỀ CAMERA SAU 5S (nếu thành công)
+    // AUTO VỀ CAMERA SAU 3S
     // ============================================
     useEffect(() => {
         if (result?.success) {
             const timer = setTimeout(() => {
-                handleScanAgain();
-            }, 5000);
+                setResult(null);
+                setScanning(true);
+                initialCheckDoneRef.current = false;
+                if (urlTicketCode) navigate("/check-in", { replace: true });
+            }, 3000);
 
             return () => clearTimeout(timer);
         }
     }, [result]);
 
     // ============================================
-    // TRÍCH CODE TỪ QR
+    // EXTRACT CODE TỪ QR
     // ============================================
     const extractCode = (text) => {
         if (text.includes("/check-in/")) {
             const parts = text.split("/check-in/");
-            const lastPart = parts[parts.length - 1];
-            return lastPart.split("?")[0].trim();
+            return parts[parts.length - 1].split("?")[0].trim();
         }
         return text.trim();
     };
@@ -137,14 +124,8 @@ function CheckIn() {
                 ticket: res.data.ticket,
             });
 
-            setCheckedCount((prev) => prev + 1);
-
-            if (navigator.vibrate) {
-                navigator.vibrate([200, 100, 200]);
-            }
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
             playSound("success");
-
-            if (showHistory) loadHistory();
         } catch (err) {
             setResult({
                 success: false,
@@ -170,7 +151,6 @@ function CheckIn() {
     // ============================================
     const toggleTorch = async () => {
         if (!scannerRef.current) return;
-
         try {
             const newState = !torchOn;
             await scannerRef.current.applyVideoConstraints({
@@ -183,313 +163,93 @@ function CheckIn() {
     };
 
     // ============================================
-    // CHỌN ẢNH TỪ THƯ VIỆN
-    // ============================================
-    const handleFileUpload = async (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        try {
-            const html5QrCode = new Html5Qrcode("qr-reader-hidden");
-            const decodedText = await html5QrCode.scanFile(file, true);
-            const code = extractCode(decodedText);
-            await doCheckIn(code);
-        } catch (err) {
-            setResult({
-                success: false,
-                message: "Không đọc được QR từ ảnh này",
-            });
-        } finally {
-            e.target.value = "";
-        }
-    };
-
-    // ============================================
-    // QUÉT TIẾP
-    // ============================================
-    const handleScanAgain = () => {
-        setResult(null);
-        setManualCode("");
-        setScanning(true);
-        setCameraError(null);
-        setTorchOn(false);
-        initialCheckDoneRef.current = false;
-
-        if (urlTicketCode) {
-            navigate("/check-in", { replace: true });
-        }
-    };
-
-    // ============================================
-    // NHẬP THỦ CÔNG
-    // ============================================
-    const handleManualSubmit = (e) => {
-        e.preventDefault();
-        const code = manualCode.trim().toUpperCase();
-        if (!code) return;
-
-        doCheckIn(code);
-        setManualCode("");
-    };
-
-    // ============================================
-    // LỊCH SỬ
-    // ============================================
-    const loadHistory = async () => {
-        try {
-            const res = await adminapi.get("/api/tickets/checkin-history");
-            setHistory(res.data.data || []);
-        } catch (err) {
-            console.error("Lỗi tải lịch sử:", err);
-        }
-    };
-
-    useEffect(() => {
-        if (showHistory) loadHistory();
-    }, [showHistory]);
-
-    // ============================================
     // RENDER
     // ============================================
     return (
-        <div className="checkin-page">
-            {/* HEADER */}
-            <div className="checkin-header">
-                <h1 className="checkin-title">
-                    <span className="checkin-icon">🎫</span>
-                    SOÁT VÉ
-                </h1>
-
-                <div className="checkin-header-actions">
-                    <span className="checkin-count">
-                        ✅ {checkedCount} vé
-                    </span>
-                    <button
-                        onClick={() => setShowHistory((v) => !v)}
-                        className="checkin-btn checkin-btn-history"
-                    >
-                        {showHistory ? "📷 Quét vé" : "📋 Lịch sử"}
-                    </button>
-                </div>
+        <div className="qr-scan-page">
+            {/* HEADER NHỎ */}
+            <div className="qr-header">
+                <button
+                    className="qr-back-btn"
+                    onClick={() => navigate(-1)}
+                    aria-label="Quay lại"
+                >
+                    ←
+                </button>
+                <span className="qr-header-title">Quét QR</span>
             </div>
 
-            {/* ============ CHẾ ĐỘ QUÉT ============ */}
-            {!showHistory && (
-                <>
-                    {/* CAMERA */}
-                    {scanning && !result && !urlTicketCode && (
-                        <div className="checkin-scan">
-                            <p className="checkin-hint">
-                                📷 Đưa mã QR của khách vào khung hình
-                            </p>
+            {/* CAMERA */}
+            {scanning && !result && !urlTicketCode && (
+                <div className="qr-scanner-wrap">
+                    <div className="qr-frame">
+                        <div id="qr-reader" className="qr-reader" />
 
-                            <div className="checkin-camera-wrapper">
-                                <div id="qr-reader" className="checkin-camera" />
-
-                                {/* Nút đèn flash */}
-                                <button
-                                    onClick={toggleTorch}
-                                    className="checkin-torch-btn"
-                                    title="Bật/tắt đèn"
-                                >
-                                    {torchOn ? "🔦" : "💡"}
-                                </button>
-                            </div>
-
-                            {/* Nút phụ */}
-                            <div className="checkin-camera-actions">
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    ref={fileInputRef}
-                                    onChange={handleFileUpload}
-                                    style={{ display: "none" }}
-                                />
-                                <button
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="checkin-btn checkin-btn-secondary"
-                                >
-                                    📁 Chọn từ thư viện
-                                </button>
-                            </div>
-
-                            {/* LỖI CAMERA */}
-                            {cameraError && (
-                                <div className="checkin-camera-error">
-                                    ⚠️ {cameraError}
-                                </div>
-                            )}
-
-                            {/* NHẬP THỦ CÔNG */}
-                            <div className="checkin-manual">
-                                <p className="checkin-manual-label">
-                                    Hoặc nhập mã vé thủ công:
-                                </p>
-                                <form
-                                    onSubmit={handleManualSubmit}
-                                    className="checkin-form"
-                                >
-                                    <input
-                                        type="text"
-                                        value={manualCode}
-                                        onChange={(e) =>
-                                            setManualCode(e.target.value)
-                                        }
-                                        placeholder="VD: K7M2P9X4"
-                                        className="checkin-input"
-                                        maxLength={20}
-                                        autoComplete="off"
-                                    />
-                                    <button
-                                        type="submit"
-                                        className="checkin-btn checkin-btn-primary"
-                                    >
-                                        ✅ Soát
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* LOADING */}
-                    {urlTicketCode && !result && (
-                        <div className="checkin-loading">
-                            <div className="checkin-loading-icon">⏳</div>
-                            <p className="checkin-loading-text">
-                                Đang kiểm tra vé <b>{urlTicketCode}</b>...
-                            </p>
-                        </div>
-                    )}
-
-                    {/* KẾT QUẢ */}
-                    {result && (
-                        <div
-                            className={`checkin-result ${
-                                result.success
-                                    ? "checkin-result-success"
-                                    : "checkin-result-error"
-                            }`}
+                        {/* Nút đèn flash */}
+                        <button
+                            className="qr-torch-btn"
+                            onClick={toggleTorch}
+                            title="Bật/tắt đèn"
                         >
-                            <div className="checkin-result-icon">
-                                {result.success ? "✅" : "❌"}
-                            </div>
+                            {torchOn ? "🔦" : "💡"}
+                        </button>
+                    </div>
 
-                            <h1 className="checkin-result-title">
-                                {result.success ? "THÀNH CÔNG" : "THẤT BẠI"}
-                            </h1>
+                    <p className="qr-hint">Đưa mã QR vào khung để quét</p>
 
-                            <p className="checkin-result-message">
-                                {result.message}
-                            </p>
-
-                            {result.ticket && (
-                                <div className="checkin-ticket-info">
-                                    <div className="checkin-ticket-row">
-                                        <span className="checkin-ticket-label">
-                                            🎬 Phim
-                                        </span>
-                                        <span className="checkin-ticket-value">
-                                            {result.ticket.movie_title}
-                                        </span>
-                                    </div>
-                                    <div className="checkin-ticket-row">
-                                        <span className="checkin-ticket-label">
-                                            🏢 Rạp
-                                        </span>
-                                        <span className="checkin-ticket-value">
-                                            {result.ticket.cinema_name}
-                                        </span>
-                                    </div>
-                                    <div className="checkin-ticket-row">
-                                        <span className="checkin-ticket-label">
-                                            🚪 Phòng
-                                        </span>
-                                        <span className="checkin-ticket-value">
-                                            {result.ticket.room_name}
-                                        </span>
-                                    </div>
-                                    <div className="checkin-ticket-row checkin-ticket-highlight">
-                                        <span className="checkin-ticket-label">
-                                            💺 Ghế
-                                        </span>
-                                        <span className="checkin-ticket-value checkin-seat">
-                                            {result.ticket.seat_label}
-                                        </span>
-                                    </div>
-                                    <div className="checkin-ticket-row">
-                                        <span className="checkin-ticket-label">
-                                            ⏰ Suất
-                                        </span>
-                                        <span className="checkin-ticket-value">
-                                            {result.ticket.showtime}
-                                        </span>
-                                    </div>
-                                    <div className="checkin-ticket-row">
-                                        <span className="checkin-ticket-label">
-                                            👤 Khách
-                                        </span>
-                                        <span className="checkin-ticket-value">
-                                            {result.ticket.customer_name}
-                                        </span>
-                                    </div>
-                                </div>
-                            )}
-
-                            <button
-                                onClick={handleScanAgain}
-                                className="checkin-btn checkin-btn-primary checkin-btn-large"
-                            >
-                                🔄 Quét vé tiếp theo
-                            </button>
-
-                            {result.success && (
-                                <p className="checkin-auto-hint">
-                                    Tự động quay lại sau 5 giây...
-                                </p>
-                            )}
-                        </div>
+                    {cameraError && (
+                        <div className="qr-error">⚠️ {cameraError}</div>
                     )}
-                </>
+                </div>
             )}
 
-            {/* ============ CHẾ ĐỘ LỊCH SỬ ============ */}
-            {showHistory && (
-                <div className="checkin-history">
-                    <h2 className="checkin-history-title">
-                        📋 100 vé soát gần nhất
+            {/* LOADING */}
+            {urlTicketCode && !result && (
+                <div className="qr-loading">
+                    <div className="qr-loading-spinner" />
+                    <p>Đang kiểm tra vé...</p>
+                </div>
+            )}
+
+            {/* KẾT QUẢ */}
+            {result && (
+                <div
+                    className={`qr-result ${
+                        result.success ? "qr-result-ok" : "qr-result-fail"
+                    }`}
+                >
+                    <div className="qr-result-icon">
+                        {result.success ? "✓" : "✕"}
+                    </div>
+
+                    <h2 className="qr-result-title">
+                        {result.success ? "THÀNH CÔNG" : "THẤT BẠI"}
                     </h2>
 
-                    {history.length === 0 ? (
-                        <p className="checkin-history-empty">
-                            Chưa có vé nào được soát
-                        </p>
-                    ) : (
-                        <div className="checkin-history-list">
-                            {history.map((item) => (
-                                <div
-                                    key={item.ticket_id}
-                                    className="checkin-history-item"
-                                >
-                                    <div className="checkin-history-left">
-                                        <div className="checkin-history-code">
-                                            {item.ticket_code}
-                                        </div>
-                                        <div className="checkin-history-movie">
-                                            🎬 {item.movie_title}
-                                        </div>
-                                        <div className="checkin-history-seat">
-                                            💺 {item.seat_row}
-                                            {item.seat_number} —{" "}
-                                            {item.customer_name}
-                                        </div>
-                                    </div>
-                                    <div className="checkin-history-time">
-                                        {new Date(
-                                            item.checked_in_at
-                                        ).toLocaleString("vi-VN")}
-                                    </div>
-                                </div>
-                            ))}
+                    <p className="qr-result-msg">{result.message}</p>
+
+                    {result.ticket && result.success && (
+                        <div className="qr-ticket">
+                            <div className="qr-ticket-row">
+                                <span>Phim</span>
+                                <b>{result.ticket.movie_title}</b>
+                            </div>
+                            <div className="qr-ticket-row">
+                                <span>Rạp</span>
+                                <b>{result.ticket.cinema_name}</b>
+                            </div>
+                            <div className="qr-ticket-row">
+                                <span>Phòng</span>
+                                <b>{result.ticket.room_name}</b>
+                            </div>
+                            <div className="qr-ticket-row qr-ticket-seat">
+                                <span>Ghế</span>
+                                <b>{result.ticket.seat_label}</b>
+                            </div>
+                            <div className="qr-ticket-row">
+                                <span>Suất</span>
+                                <b>{result.ticket.showtime}</b>
+                            </div>
                         </div>
                     )}
                 </div>

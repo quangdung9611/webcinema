@@ -34,6 +34,10 @@ const TicketList = () => {
     const [loadingShowtimes, setLoadingShowtimes] = useState(false);
     const [loadingRooms, setLoadingRooms] = useState(false);
 
+    // ✅ STATE CHO LỊCH SỬ
+    const [history, setHistory] = useState([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
+
     const [filters, setFilters] = useState({
         cinemaId: '',
         roomId: '',
@@ -214,7 +218,32 @@ const TicketList = () => {
         fetchTickets(filters.showtimeId);
     }, [filters.showtimeId, fetchTickets]);
 
-    // ----- 5. CHECK-IN -----
+    // ============================================================
+    // ✅ 5. FETCH LỊCH SỬ SOÁT VÉ
+    // ============================================================
+    const fetchHistory = useCallback(async () => {
+        setLoadingHistory(true);
+        try {
+            const res = await api.get('/api/tickets/checkin-history');
+            const historyData = res.data?.data || [];
+            setHistory(Array.isArray(historyData) ? historyData : []);
+            console.log(`✅ [History] Đã tải:`, historyData.length, 'vé đã soát');
+        } catch (err) {
+            handleApiError(err, 'Không thể tải lịch sử soát vé.');
+            setHistory([]);
+        } finally {
+            setLoadingHistory(false);
+        }
+    }, [handleApiError]);
+
+    // Auto load khi chuyển sang tab Lịch sử
+    useEffect(() => {
+        if (viewMode === 'history') {
+            fetchHistory();
+        }
+    }, [viewMode, fetchHistory]);
+
+    // ----- 6. CHECK-IN -----
     const handleCheckIn = useCallback((code) => {
         if (!code) {
             showModal({
@@ -286,12 +315,10 @@ const TicketList = () => {
         return `${title} | ${dateVN} | ${timePart}`;
     };
 
-    // ----- FORMAT DATE FOR TABLE (đã sửa để bỏ T và Z) -----
+    // ----- FORMAT DATE FOR TABLE -----
     const formatDateDisplay = (dateStr) => {
         if (!dateStr) return '--';
-        // Cắt bỏ phần .000Z và thay T thành khoảng trắng
         let cleanDateStr = dateStr.replace(/\.\d+Z$/, '').replace('T', ' ');
-        // Khớp định dạng YYYY-MM-DD HH:MM
         const match = cleanDateStr.match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/);
         if (match) {
             const [_, year, month, day, hour, minute] = match;
@@ -321,7 +348,6 @@ const TicketList = () => {
             key: 'customer_name',
             render: (row) => row.customer_name || row.full_name || 'N/A'
         },
-      
         {
             title: 'Trạng thái',
             key: 'ticket_status',
@@ -370,6 +396,62 @@ const TicketList = () => {
         }
     ];
 
+    // ============================================================
+    // ✅ COLUMNS: LỊCH SỬ SOÁT VÉ
+    // ============================================================
+    const historyColumns = [
+        {
+            title: 'Mã Vé',
+            key: 'ticket_code',
+            render: (row) => (
+                <span className="ticket-code">{row.ticket_code}</span>
+            )
+        },
+        {
+            title: 'Phim',
+            key: 'movie_title',
+            render: (row) => row.movie_title || 'N/A'
+        },
+        {
+            title: 'Rạp',
+            key: 'cinema_name',
+            render: (row) => row.cinema_name || 'N/A'
+        },
+        {
+            title: 'Phòng',
+            key: 'room_name',
+            render: (row) => row.room_name || 'N/A'
+        },
+        {
+            title: 'Ghế',
+            key: 'seat',
+            render: (row) => (
+                <span className="seat-label">
+                    {row.seat_row}{row.seat_number}
+                </span>
+            )
+        },
+        {
+            title: 'Khách hàng',
+            key: 'customer_name',
+            render: (row) => row.customer_name || 'N/A'
+        },
+        {
+            title: 'Thời gian soát',
+            key: 'checked_in_at',
+            render: (row) => formatDateDisplay(row.checked_in_at)
+        },
+        {
+            title: 'Trạng thái',
+            key: 'ticket_status',
+            render: () => (
+                <span className="status-badge used">
+                    <Check size={12} /> Đã soát
+                </span>
+            )
+        }
+    ];
+
     // ----- LOADING STATE -----
     const isLoading = loadingTickets || loadingShowtimes;
 
@@ -392,7 +474,13 @@ const TicketList = () => {
                 </h2>
 
                 <div className="top-toolbar">
-                    <div className="filter-selection-grid">
+                    {/* ✅ ẨN FILTER KHI Ở TAB LỊCH SỬ */}
+                    <div
+                        className="filter-selection-grid"
+                        style={{
+                            display: viewMode === 'history' ? 'none' : undefined,
+                        }}
+                    >
                         <div className="filter-group">
                             <label>Rạp chiếu:</label>
                             <select
@@ -460,10 +548,23 @@ const TicketList = () => {
                         >
                             <LayoutGrid size={18} style={{ marginRight: '6px' }} /> Sơ đồ ghế
                         </button>
+                        {/* ✅ TAB LỊCH SỬ */}
+                        <button
+                            className={viewMode === 'history' ? 'active' : ''}
+                            onClick={() => setViewMode('history')}
+                        >
+                            <Clock size={18} style={{ marginRight: '6px' }} /> Lịch sử
+                        </button>
                     </div>
                 </div>
 
-                <div className="ticket-stats-cards">
+                {/* ✅ ẨN STATS KHI Ở TAB LỊCH SỬ */}
+                <div
+                    className="ticket-stats-cards"
+                    style={{
+                        display: viewMode === 'history' ? 'none' : undefined,
+                    }}
+                >
                     <div className="stat-card blue">
                         <span>{stats.total}</span>
                         <p><Ticket size={16} style={{ marginRight: '5px' }} /> VÉ ĐÃ BÁN</p>
@@ -480,7 +581,43 @@ const TicketList = () => {
             </div>
 
             <div className="content-body">
-                {isLoading ? (
+                {/* ============================================ */}
+                {/* ✅ TAB LỊCH SỬ */}
+                {/* ============================================ */}
+                {viewMode === 'history' ? (
+                    loadingHistory ? (
+                        <div className="loader">
+                            <Loader2 size={24} className="spin" style={{ marginRight: '10px' }} />
+                            Đang tải lịch sử...
+                        </div>
+                    ) : history.length === 0 ? (
+                        <div className="empty-msg">
+                            <Info size={20} style={{ marginRight: '8px' }} />
+                            Chưa có vé nào được soát.
+                        </div>
+                    ) : (
+                        <div className="table-section">
+                            <div className="history-header">
+                                <h3>
+                                    <Clock size={20} style={{ marginRight: '8px' }} />
+                                    LỊCH SỬ SOÁT VÉ — {history.length} vé gần nhất
+                                </h3>
+                                <button
+                                    className="refresh-btn"
+                                    onClick={fetchHistory}
+                                    disabled={loadingHistory}
+                                >
+                                    🔄 Làm mới
+                                </button>
+                            </div>
+                            <AdminTable
+                                columns={historyColumns}
+                                data={history}
+                                emptyText="Chưa có vé nào được soát."
+                            />
+                        </div>
+                    )
+                ) : isLoading ? (
                     <div className="loader">
                         <Loader2 size={24} className="spin" style={{ marginRight: '10px' }} />
                         Đang tải dữ liệu...

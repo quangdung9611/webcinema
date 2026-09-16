@@ -23,6 +23,10 @@ const setIO = (io) => {
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const FRONTEND_URL = 'https://quangdungcinema.id.vn';
 
+// ✅ SỐ THIẾT BỊ TỐI ĐA
+const MAX_DEVICES_ADMIN = 1;      // Admin: 1 thiết bị (máy tính + điện thoại)
+const MAX_DEVICES_CUSTOMER = 1;   // User: 1 thiết bị (single-session)
+
 // ============================================================
 // VALIDATE LOGIN
 // ============================================================
@@ -76,11 +80,14 @@ exports.checkLockStatus = async (email) => {
 };
 
 // ============================================================
-// LOGIN
+// LOGIN — ✅ ĐÃ SỬA: PHÂN BIỆT ADMIN / USER
 // ============================================================
 exports.login = async (email, password, rememberMe = false, req, res) => {
     validateLogin(email, password);
     
+    // ========================================================
+    // CHECK RATE LIMIT
+    // ========================================================
     const loginRateLimit = await CacheService.checkRateLimit(email, "login", 5, 60);
     if (!loginRateLimit.allowed) {
         throw {
@@ -93,6 +100,9 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         };
     }
 
+    // ========================================================
+    // CHECK LOCK
+    // ========================================================
     const lockInfo = await CacheService.getLockoutInfo(email);
     if (lockInfo && lockInfo.isLocked) {
         throw {
@@ -110,6 +120,9 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         };
     }
 
+    // ========================================================
+    // FIND USER
+    // ========================================================
     const user = await UserRepository.findByEmail(email);
     if (!user) {
         const attempts = await CacheService.incrementLoginAttempts(email);
@@ -136,6 +149,9 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         };
     }
 
+    // ========================================================
+    // CHECK PASSWORD
+    // ========================================================
     const matched = await Password.compare(password, user.password);
     if (!matched) {
         const attempts = await CacheService.incrementLoginAttempts(email);
@@ -162,6 +178,9 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         };
     }
 
+    // ========================================================
+    // CHECK EMAIL VERIFIED
+    // ========================================================
     await CacheService.resetLoginAttempts(email);
     if (!user.email_verified) {
         throw {
@@ -171,24 +190,60 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         };
     }
 
-    await RefreshTokenRepository.revokeByUser(user.user_id, "Đăng nhập từ thiết bị khác");
-    console.log(`🔴 [REVOKE] Đã revoke tất cả token cũ của user: ${user.user_id}`);
+    // ========================================================
+    // ✅ QUẢN LÝ THIẾT BỊ — PHÂN BIỆT ADMIN / USER
+    // ========================================================
+    // Admin: tối đa 2 thiết bị
+    // User:  tối đa 1 thiết bị (single-session)
+    // ========================================================
 
-    if (ioInstance && user.user_id) {
-        ioInstance.to(`user_${user.user_id}`).emit('session_expired', {
-            code: 'SESSION_REPLACED',
-            message: 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.',
-            newDevice: {
-                ip: req.ip || req.connection?.remoteAddress || 'Unknown',
-                userAgent: req.headers?.['user-agent']?.substring(0, 100) || 'Unknown'
-            },
-            timestamp: new Date().toISOString()
-        });
-        await CacheService.deleteUserSocket(user.user_id);
+    const maxDevices = user.role === 'admin' 
+        ? MAX_DEVICES_ADMIN 
+        : MAX_DEVICES_CUSTOMER;
+
+    const activeTokens = await RefreshTokenRepository.getActiveByUser(user.user_id);
+
+    console.log(`📊 [LOGIN] Role: ${user.role} | Active devices: ${activeTokens.length}/${maxDevices}`);
+
+    if (activeTokens.length >= maxDevices) {
+        // ✅ VƯỢT QUÁ GIỚI HẠN → Revoke token CŨ NHẤT
+        const oldestToken = activeTokens[activeTokens.length - 1]; // DESC order → lấy cuối
+
+        if (oldestToken) {
+            const reason = user.role === 'admin'
+                ? `Vượt quá ${maxDevices} thiết bị admin`
+                : "Đăng nhập từ thiết bị khác";
+
+            await RefreshTokenRepository.revoke(oldestToken.token_hash, reason);
+
+            console.log(`🔄 [REVOKE] Revoke token cũ nhất của ${user.role} ${user.user_id} | Lý do: ${reason}`);
+
+            // ✅ CHỈ emit socket khi VƯỢT QUÁ giới hạn
+            if (ioInstance && user.user_id) {
+                ioInstance.to(`user_${user.user_id}`).emit('session_expired', {
+                    code: 'SESSION_REPLACED',
+                    message: user.role === 'admin'
+                        ? `Tài khoản admin đã vượt quá ${maxDevices} thiết bị. Thiết bị cũ nhất đã bị đăng xuất.`
+                        : 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.',
+                    newDevice: {
+                        ip: req.ip || req.connection?.remoteAddress || 'Unknown',
+                        userAgent: req.headers?.['user-agent']?.substring(0, 100) || 'Unknown'
+                    },
+                    timestamp: new Date().toISOString()
+                });
+                await CacheService.deleteUserSocket(user.user_id);
+            }
+        }
+    } else {
+        console.log(`✅ [LOGIN] ${user.role} login OK — device ${activeTokens.length + 1}/${maxDevices} (không revoke)`);
     }
 
+    // ========================================================
+    // TẠO TOKEN MỚI
+    // ========================================================
     const accessToken = generateAndSetTokens(user, res, rememberMe);
     const accessTokenHash = Jwt.hashRefreshToken(accessToken);
+
     await RefreshTokenRepository.create({
         user_id: user.user_id,
         token_hash: accessTokenHash,
@@ -225,7 +280,7 @@ exports.getMe = async (userId) => {
 };
 
 // ============================================================
-// LOGOUT
+// ✅ LOGOUT — XÓA HẲN TOKEN KHỎI DB
 // ============================================================
 exports.logout = async (req, res) => {
     let token = Cookie.getAdminAccessToken(req);
@@ -235,16 +290,38 @@ exports.logout = async (req, res) => {
         token = Cookie.getUserAccessToken(req);
         if (token) Cookie.clearUserCookies(res);
     }
+    
     if (token) {
         const tokenHash = Jwt.hashRefreshToken(token);
-        await RefreshTokenRepository.revoke(tokenHash, "Đăng xuất");
+        // ✅ XÓA HẲN TOKEN KHỎI DB
+        const deleted = await RefreshTokenRepository.deleteByTokenHash(tokenHash);
+        console.log(`🗑️ [LOGOUT] Đã xóa ${deleted} token khỏi DB`);
     }
+    
     try {
         if (req.user?.user_id) await CacheService.deleteUserSocket(req.user.user_id);
     } catch (error) {
         console.error('❌ [LOGOUT] Lỗi khi xóa socket:', error.message);
     }
+    
     return { success: true, message: "Đăng xuất thành công" };
+};
+
+// ============================================================
+// ✅ LOGOUT ALL DEVICES — XÓA HẲN TẤT CẢ TOKEN
+// ============================================================
+exports.logoutAllDevices = async (userId, res) => {
+    // ✅ XÓA HẲN TẤT CẢ TOKEN KHỎI DB
+    const deleted = await RefreshTokenRepository.deleteAllByUser(userId);
+    console.log(`🗑️ [LOGOUT_ALL] Đã xóa ${deleted} token của user ${userId}`);
+    
+    try {
+        await CacheService.deleteUserSocket(userId);
+    } catch (error) {
+        console.error('❌ [LOGOUT_ALL] Lỗi khi xóa socket:', error.message);
+    }
+    Cookie.clearAllCookies(res);
+    return { success: true, message: "Đã đăng xuất tất cả thiết bị" };
 };
 
 // ============================================================
@@ -296,7 +373,7 @@ exports.changePassword = async (userId, passwordData) => {
 };
 
 // ============================================================
-// FORGOT PASSWORD - CÓ KIỂM TRA EMAIL CHƯA ĐĂNG KÝ
+// FORGOT PASSWORD
 // ============================================================
 exports.forgotPassword = async (email, req) => {
     if (!email?.trim()) throw { statusCode: 400, field: "email", message: "Email không được để trống" };
@@ -339,15 +416,10 @@ exports.forgotPassword = async (email, req) => {
         };
     }
 
-    // 🔥 Đánh dấu OTP cũ là used (is_used = 1)
     await CacheService.markOTPAsUsed(email, OtpService.PURPOSE.RESET_PASSWORD);
-
     const otpResult = await OtpService.createOTP(email, OtpService.PURPOSE.RESET_PASSWORD);
-    
-    // ⏰ Lấy mốc thời gian hiện tại của server (để Frontend đồng bộ timer)
     const serverTime = Date.now();
     
-    // ✅ SỬA: CHỜ GỬI EMAIL XONG RỒI MỚI TRẢ VỀ
     await MailService.sendResetPasswordOTP(email, otpResult.otp, user.full_name)
         .then(() => console.log(`✅ Email sent to ${email}`))
         .catch(err => console.error(`❌ Email failed: ${err.message}`));
@@ -360,27 +432,9 @@ exports.forgotPassword = async (email, req) => {
         message: "Mã OTP đã được gửi tới email của bạn.",
         data: {
             expiresIn: ttl > 0 ? ttl : 300,
-            serverTime: serverTime // 👈 Gửi mốc thời gian này về cho Frontend
+            serverTime: serverTime
         }
     };
-};
-
-// ============================================================
-// VERIFY RESET TOKEN
-// ============================================================
-exports.verifyResetToken = async (token) => {
-    if (!token) throw { statusCode: 400, message: "Token không được để trống" };
-    let payload;
-    try {
-        payload = Jwt.verifyResetToken(token);
-        if (!payload) throw new Error('Invalid token');
-    } catch (error) {
-        throw { statusCode: 401, message: "Link không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu gửi lại." };
-    }
-
-    const user = await UserRepository.findByEmail(payload.email);
-    if (!user) throw { statusCode: 404, message: "Không tìm thấy người dùng" };
-    return { success: true, userId: user.user_id, email: user.email };
 };
 
 // ============================================================
@@ -419,11 +473,8 @@ exports.submitNewPassword = async (token, newPassword) => {
     }
 
     const otpResult = await OtpService.createOTP(user.email, OtpService.PURPOSE.RESET_PASSWORD);
-    
-    // ⏰ Lấy mốc thời gian hiện tại của server
     const serverTime = Date.now();
     
-    // ✅ SỬA: CHỜ GỬI EMAIL XONG RỒI MỚI TRẢ VỀ
     await MailService.sendResetPasswordOTP(user.email, otpResult.otp, user.full_name)
         .then(() => console.log(`✅ Email sent to ${user.email}`))
         .catch(err => console.error(`❌ Email failed: ${err.message}`));
@@ -434,7 +485,7 @@ exports.submitNewPassword = async (token, newPassword) => {
         email: user.email,
         data: {
             expiresIn: otpResult.expiresIn || 300,
-            serverTime: serverTime // 👈 Gửi mốc thời gian này về cho Frontend
+            serverTime: serverTime
         }
     };
 };
@@ -506,7 +557,6 @@ exports.verifyOtpAndReset = async (email, otp, newPassword) => {
         console.error('❌ [RESET_PASSWORD] Lỗi khi xóa socket:', error.message);
     }
 
-    // 🔥 Đánh dấu OTP đã sử dụng (is_used = 1)
     await CacheService.markOTPAsUsed(email, OtpService.PURPOSE.RESET_PASSWORD);
 
     return {
@@ -576,20 +626,6 @@ exports.verifyEmail = async (verifyToken) => {
 };
 
 // ============================================================
-// LOGOUT ALL DEVICES
-// ============================================================
-exports.logoutAllDevices = async (userId, res) => {
-    await RefreshTokenRepository.revokeByUser(userId, "Đăng xuất tất cả thiết bị");
-    try {
-        await CacheService.deleteUserSocket(userId);
-    } catch (error) {
-        console.error('❌ [LOGOUT_ALL] Lỗi khi xóa socket:', error.message);
-    }
-    Cookie.clearAllCookies(res);
-    return { success: true, message: "Đã đăng xuất tất cả thiết bị" };
-};
-
-// ============================================================
 // GET ACTIVE DEVICES
 // ============================================================
 exports.getActiveDevices = async (userId) => {
@@ -632,7 +668,7 @@ exports.revokeDeviceById = async (userId, tokenId) => {
 };
 
 // ============================================================
-// QUÊN MÃ PIN (FORGOT PIN) - CÓ SERVER TIME
+// FORGOT PIN
 // ============================================================
 exports.forgotPin = async (email) => {
     if (!email?.trim()) {
@@ -676,15 +712,10 @@ exports.forgotPin = async (email) => {
         };
     }
 
-    // 🔥 Đánh dấu OTP cũ là used (is_used = 1)
     await CacheService.markOTPAsUsed(email, OtpService.PURPOSE.FORGOT_PIN);
-
     const otpResult = await OtpService.createOTP(email, OtpService.PURPOSE.FORGOT_PIN);
-    
-    // ⏰ Lấy mốc thời gian hiện tại của server
     const serverTime = Date.now();
     
-    // ✅ SỬA: CHỜ GỬI EMAIL XONG RỒI MỚI TRẢ VỀ
     await MailService.sendForgotPinOTP(email, otpResult.otp, user.full_name)
         .then(() => console.log(`✅ Forgot PIN email sent to ${email}`))
         .catch(err => console.error(`❌ Forgot PIN email failed: ${err.message}`));
@@ -697,7 +728,7 @@ exports.forgotPin = async (email) => {
         message: "Mã OTP đã được gửi tới email. Vui lòng kiểm tra hộp thư.",
         data: {
             expiresIn: ttl > 0 ? ttl : 300,
-            serverTime: serverTime // 👈 Gửi mốc thời gian này về cho Frontend
+            serverTime: serverTime
         }
     };
 };
@@ -758,7 +789,6 @@ exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
     const hashedPin = await Password.hash(newPin);
     await UserRepository.updatePinHash(user.user_id, hashedPin);
 
-    // 🔥 Đánh dấu OTP đã sử dụng (is_used = 1)
     await CacheService.markOTPAsUsed(email, OtpService.PURPOSE.FORGOT_PIN);
 
     return {
@@ -968,7 +998,7 @@ exports.checkOtpTTL = async (email, purpose) => {
 };
 
 // ============================================================
-// RESEND OTP - CÓ SERVER TIME
+// RESEND OTP
 // ============================================================
 exports.resendOtp = async (email, purpose) => {
     if (!email?.trim()) {
@@ -992,15 +1022,10 @@ exports.resendOtp = async (email, purpose) => {
         };
     }
 
-    // 🔥 Đánh dấu OTP cũ là used (is_used = 1)
     await CacheService.markOTPAsUsed(email, purpose);
-
     const otpResult = await OtpService.createOTP(email, purpose);
-    
-    // ⏰ Lấy mốc thời gian hiện tại của server
     const serverTime = Date.now();
     
-    // ✅ SỬA: CHỜ GỬI EMAIL XONG RỒI MỚI TRẢ VỀ
     if (purpose === OtpService.PURPOSE.FORGOT_PIN) {
         await MailService.sendForgotPinOTP(email, otpResult.otp, user.full_name)
             .then(() => console.log(`✅ Forgot PIN email sent to ${email}`))
@@ -1022,7 +1047,7 @@ exports.resendOtp = async (email, purpose) => {
         message: "Mã OTP đã được gửi lại tới email.",
         data: {
             expiresIn: otpResult.expiresIn || 300,
-            serverTime: serverTime // 👈 Gửi mốc thời gian này về cho Frontend
+            serverTime: serverTime
         }
     };
 };

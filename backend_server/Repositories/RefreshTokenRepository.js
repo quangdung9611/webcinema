@@ -65,7 +65,7 @@ class RefreshTokenRepository {
     }
 
     /*=========================================================
-        REVOKE 1 TOKEN CỤ THỂ (DÙNG CHO LOGOUT)
+        REVOKE 1 TOKEN CỤ THỂ
     =========================================================*/
     async revoke(tokenHash, reason = "Đăng xuất") {
         const [result] = await db.query(
@@ -83,8 +83,7 @@ class RefreshTokenRepository {
     }
 
     /*=========================================================
-        REVOKE TẤT CẢ TOKEN CỦA USER (DÙNG CHO LOGIN MỚI)
-        👉 ĐÂY LÀ HÀM QUAN TRỌNG NHẤT - ĐÁ THIẾT BỊ CŨ
+        REVOKE TẤT CẢ TOKEN CỦA USER
     =========================================================*/
     async revokeByUser(userId, reason = "Đăng nhập từ thiết bị khác") {
         const [result] = await db.query(
@@ -99,6 +98,36 @@ class RefreshTokenRepository {
             [reason, userId]
         );
         console.log(`🔄 [REVOKE] Đã revoke ${result.affectedRows} token của user ${userId} - Lý do: ${reason}`);
+        return result.affectedRows;
+    }
+
+    /*=========================================================
+        ✅ XÓA HẲN TOKEN KHỎI DB (DÙNG CHO LOGOUT)
+    =========================================================*/
+    async deleteByTokenHash(tokenHash) {
+        const [result] = await db.query(
+            `
+            DELETE FROM refresh_tokens
+            WHERE token_hash = ?
+            `,
+            [tokenHash]
+        );
+        console.log(`🗑️ [DELETE] Đã xóa ${result.affectedRows} token khỏi DB`);
+        return result.affectedRows;
+    }
+
+    /*=========================================================
+        ✅ XÓA TẤT CẢ TOKEN CỦA USER (DÙNG CHO LOGOUT ALL)
+    =========================================================*/
+    async deleteAllByUser(userId) {
+        const [result] = await db.query(
+            `
+            DELETE FROM refresh_tokens
+            WHERE user_id = ?
+            `,
+            [userId]
+        );
+        console.log(`🗑️ [DELETE ALL] Đã xóa ${result.affectedRows} token của user ${userId}`);
         return result.affectedRows;
     }
 

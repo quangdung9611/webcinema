@@ -8,7 +8,8 @@ import {
     Loader2,
     Eye,
     Heart,
-    ExternalLink
+    ExternalLink,
+    Image as ImageIcon       // ✅ THÊM
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -308,7 +309,9 @@ const NewsPage = () => {
         );
     };
 
+    // ======================================================
     // TABLE COLUMNS
+    // ======================================================
     const columns = [
         {
             title: 'Hình ảnh',
@@ -320,6 +323,31 @@ const NewsPage = () => {
                     style={{ width: '70px', height: '100px', objectFit: 'cover', borderRadius: '10px' }}
                     onError={(e) => { e.target.src = 'https://via.placeholder.com/70x100?text=No+Image'; }}
                 />
+            )
+        },
+        // ✅ CỘT BACKDROP (MỚI THÊM)
+        {
+            title: 'Backdrop',
+            key: 'news_backdrop',
+            render: (row) => (
+                row.news_backdrop ? (
+                    <img
+                        src={getImageUrl(row.news_backdrop)}
+                        alt="backdrop"
+                        style={{
+                            width: '120px',
+                            height: '50px',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            border: '1px solid rgba(255,255,255,0.1)'
+                        }}
+                        onError={(e) => { e.target.src = 'https://via.placeholder.com/120x50?text=No+Image'; }}
+                    />
+                ) : (
+                    <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
+                        <ImageIcon size={16} style={{ verticalAlign: 'middle' }} /> Chưa có
+                    </span>
+                )
             )
         },
         { title: 'Tiêu đề', key: 'title' },
