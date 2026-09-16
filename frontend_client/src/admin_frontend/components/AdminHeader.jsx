@@ -1,4 +1,6 @@
 // admin_frontend/components/AdminHeader.jsx
+// ✅ Dùng adminSocketService (RIÊNG cho admin)
+
 import React, {
     useState,
     useEffect,
@@ -12,7 +14,7 @@ import {
 } from 'react-router-dom';
 
 import adminapi from '../../api/adminapi';
-import socketService from '../../api/socket';
+import adminSocketService from '../../api/adminsocket';   // ✅ ĐỔI
 
 import { useAdminAuth } from '../../context/AdminAuthContext';
 
@@ -37,7 +39,7 @@ import '../styles/AdminHeader.css';
 // Pattern GIỐNG HỆT UserHeader:
 // - Dùng useAdminAuth() từ Context
 // - Không tự gọi API /me
-// - Context quản lý socket
+// - Context quản lý socket (qua adminSocketService)
 // ============================================================
 
 const AdminHeader = ({ toggleSidebar }) => {
@@ -126,7 +128,7 @@ const AdminHeader = ({ toggleSidebar }) => {
             setShowDropdown(false);
 
             try {
-                socketService.disconnect();
+                adminSocketService.disconnect();   // ✅ ĐỔI
             } catch (error) {
                 console.warn(
                     'Socket disconnect error:',
@@ -153,7 +155,7 @@ const AdminHeader = ({ toggleSidebar }) => {
             setShowDropdown(false);
 
             try {
-                socketService.disconnect();
+                adminSocketService.disconnect();   // ✅ ĐỔI
             } catch (error) {
                 console.warn(
                     'Socket disconnect error:',
@@ -255,7 +257,7 @@ const AdminHeader = ({ toggleSidebar }) => {
             redirectTimeoutRef.current =
                 setTimeout(() => {
                     localStorage.removeItem('admin_info');
-                    socketService.disconnect();
+                    adminSocketService.disconnect();   // ✅ ĐỔI
                     delete adminapi.defaults.headers.common['Authorization'];
 
                     navigate('/login', {
@@ -288,7 +290,7 @@ const AdminHeader = ({ toggleSidebar }) => {
             redirectTimeoutRef.current =
                 setTimeout(() => {
                     localStorage.removeItem('admin_info');
-                    socketService.disconnect();
+                    adminSocketService.disconnect();   // ✅ ĐỔI
                     setAdmin(null);
                     setShowDropdown(false);
                     setIsLoggingOut(false);

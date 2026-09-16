@@ -1,8 +1,6 @@
 // src/context/AdminAuthContext.jsx
-// ============================================================
-// ADMIN AUTH CONTEXT — RIÊNG CHO ADMIN
-// Pattern giống hệt AuthContext của user
-// ============================================================
+// ✅ Dùng adminSocketService (RIÊNG cho admin)
+// ✅ Chặn fetch 2 lần
 
 import React, {
     createContext,
@@ -15,7 +13,7 @@ import React, {
 
 import { useLocation } from 'react-router-dom';
 import adminapi from '../api/adminapi';
-import socketService from '../api/socket';
+import adminSocketService from '../api/adminsocket'; // ✅ ĐỔI
 
 const AdminAuthContext = createContext(null);
 
@@ -40,8 +38,11 @@ export const AdminAuthProvider = ({ children }) => {
     const mountedRef = useRef(true);
     const isAuthCheckDoneRef = useRef(false);
 
+    // ✅ FIX: Chống fetch 2 lần
+    const lastFetchTimeRef = useRef(0);
+
     // ========================================================
-    // PUBLIC ROUTES CHO ADMIN
+    // PUBLIC ROUTES
     // ========================================================
     const isPublicRoute = useCallback(() => {
         const pathname = location.pathname;
@@ -88,7 +89,7 @@ export const AdminAuthProvider = ({ children }) => {
     const fetchAdmin = useCallback(
         async (force = false) => {
             if (isPublicRoute()) {
-                console.log('⏭️ [ADMIN AUTH] Public route, skip fetching admin');
+                console.log('⏭️ [ADMIN AUTH] Public route, skip');
                 setIsLoading(false);
                 return null;
             }
@@ -102,6 +103,14 @@ export const AdminAuthProvider = ({ children }) => {
                 console.log('⏭️ [ADMIN AUTH] Already fetching, skip');
                 return adminRef.current;
             }
+
+            // ✅ FIX: Chặn fetch 2 lần trong 2 giây
+            const now = Date.now();
+            if (now - lastFetchTimeRef.current < 2000 && !force) {
+                console.log('⏭️ [ADMIN AUTH] Fetch too recent, skip');
+                return adminRef.current;
+            }
+            lastFetchTimeRef.current = now;
 
             isFetchingRef.current = true;
 
@@ -130,7 +139,7 @@ export const AdminAuthProvider = ({ children }) => {
                     }
 
                     if (adminData.user_id && !isPublicRoute()) {
-                        socketService.connect(adminData.user_id);
+                        adminSocketService.connect(adminData.user_id);
                     }
 
                     return adminData;
@@ -138,7 +147,7 @@ export const AdminAuthProvider = ({ children }) => {
 
                 console.log('🔵 [ADMIN AUTH] No active admin');
                 clearAuthState();
-                socketService.disconnect();
+                adminSocketService.disconnect();
 
                 return null;
 
@@ -162,7 +171,7 @@ export const AdminAuthProvider = ({ children }) => {
                 }
 
                 clearAuthState();
-                socketService.disconnect();
+                adminSocketService.disconnect();
                 throw error;
 
             } finally {
@@ -203,7 +212,7 @@ export const AdminAuthProvider = ({ children }) => {
                 adminapi.resetSessionExpiredLock();
             }
 
-            socketService.disconnect();
+            adminSocketService.disconnect();
 
             window.dispatchEvent(
                 new CustomEvent('authCleanedUp', {
@@ -226,7 +235,7 @@ export const AdminAuthProvider = ({ children }) => {
         const handleAuthCleanedUp = () => {
             console.log('🧹 [ADMIN AUTH] authCleanedUp received');
             clearAuthState();
-            socketService.disconnect();
+            adminSocketService.disconnect();
         };
 
         window.addEventListener('authCleanedUp', handleAuthCleanedUp);
@@ -243,7 +252,7 @@ export const AdminAuthProvider = ({ children }) => {
         const handleSessionExpired = (event) => {
             console.warn('🔴 [ADMIN AUTH] Session expired:', event?.detail);
             clearAuthState();
-            socketService.disconnect();
+            adminSocketService.disconnect();
         };
 
         window.addEventListener('sessionExpired', handleSessionExpired);
@@ -255,6 +264,7 @@ export const AdminAuthProvider = ({ children }) => {
 
     // ========================================================
     // LISTEN ADMIN LOGGED IN
+    // ✅ FIX: Chặn fetch 2 lần
     // ========================================================
     useEffect(() => {
         const handleAdminLoggedIn = () => {
@@ -295,7 +305,7 @@ export const AdminAuthProvider = ({ children }) => {
 
     const value = {
         admin,
-        user: admin, // alias để giống AuthContext user
+        user: admin,
         isLoading,
         isAuthenticated,
         fetchAdmin,

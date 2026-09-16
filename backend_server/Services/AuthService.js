@@ -22,11 +22,9 @@ const setIO = (io) => {
 // ============================================================
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// ✅ URL RIÊNG CHO TỪNG PHÍA
 const USER_FRONTEND_URL = process.env.USER_FRONTEND_URL || 'https://quangdungcinema.id.vn';
 const ADMIN_FRONTEND_URL = process.env.ADMIN_FRONTEND_URL || 'https://admin.quangdungcinema.id.vn';
 
-// ✅ Helper chọn URL theo role
 const getFrontendUrlByRole = (role) => {
     return role === 'admin' ? ADMIN_FRONTEND_URL : USER_FRONTEND_URL;
 };
@@ -34,6 +32,9 @@ const getFrontendUrlByRole = (role) => {
 // ✅ SỐ THIẾT BỊ TỐI ĐA
 const MAX_DEVICES_ADMIN = 1;
 const MAX_DEVICES_CUSTOMER = 1;
+
+// ✅ NGƯỠNG TOKEN MỚI (5 giây) — tránh double-submit
+const TOKEN_AGE_THRESHOLD = 5000;
 
 // ============================================================
 // VALIDATE LOGIN
@@ -52,7 +53,7 @@ const validateLogin = (email, password) => {
 
 // ============================================================
 // GENERATE ACCESS TOKEN
-// ✅ FIX: XÓA user_token khi login admin để tránh conflict socket
+// ✅ XÓA user_token khi login admin để tránh conflict socket
 // ============================================================
 const generateAndSetTokens = (user, res, rememberMe = false) => {
     const accessToken = Jwt.generateAccessToken(user);
@@ -93,16 +94,8 @@ exports.checkLockStatus = async (email) => {
 };
 
 // ============================================================
-// LOGIN — ✅ HỖ TRỢ expectedRole ĐỂ CHẶN SAI CỔNG
+// LOGIN
 // ============================================================
-/**
- * @param {string} email
- * @param {string} password
- * @param {boolean} rememberMe
- * @param {Request} req
- * @param {Response} res
- * @param {'admin'|'customer'|null} expectedRole - Nếu truyền vào, sẽ chặn login sai role
- */
 exports.login = async (email, password, rememberMe = false, req, res, expectedRole = null) => {
     validateLogin(email, password);
 
@@ -189,7 +182,7 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
         };
     }
 
-    // ✅ CHECK ROLE NGAY SAU KHI XÁC THỰC PASSWORD — TRƯỚC KHI TẠO TOKEN
+    // CHECK ROLE
     if (expectedRole && user.role !== expectedRole) {
         throw {
             statusCode: 403,
@@ -211,7 +204,7 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
     }
 
     // ========================================================
-    // ✅ QUẢN LÝ THIẾT BỊ — PHÂN BIỆT ADMIN / USER
+    // ✅ QUẢN LÝ THIẾT BỊ
     // ========================================================
     const maxDevices = user.role === 'admin'
         ? MAX_DEVICES_ADMIN
@@ -222,7 +215,7 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
     console.log(`📊 [LOGIN] Role: ${user.role} | Active devices: ${activeTokens.length}/${maxDevices}`);
 
     if (activeTokens.length >= maxDevices) {
-        // ✅ FIX: Sort ổn định — tránh bug trùng created_at
+        // ✅ Sort ổn định
         const sorted = [...activeTokens].sort((a, b) => {
             const timeA = new Date(a.created_at).getTime();
             const timeB = new Date(b.created_at).getTime();
@@ -230,43 +223,46 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
             return a.token_id - b.token_id;
         });
 
-        const oldestToken = sorted[0]; // ✅ Lấy cũ nhất
+        const oldestToken = sorted[0];
 
         if (oldestToken) {
-            // ✅ 1. LẤY SOCKET CŨ **TRƯỚC KHI REVOKE**
-            const oldSocketId = await CacheService.getUserSocket(user.user_id);
-            console.log(`📌 [SOCKET] Old socket_id của user ${user.user_id}: ${oldSocketId}`);
+            // ✅ FIX: Check token age — tránh double-submit
+            const tokenAge = Date.now() - new Date(oldestToken.created_at).getTime();
+            console.log(`🔍 [CHECK] Token age: ${tokenAge}ms | token_id=${oldestToken.token_id}`);
 
-            // ✅ 2. REVOKE TOKEN CŨ
             const reason = user.role === 'admin'
                 ? `Vượt quá ${maxDevices} thiết bị admin`
                 : "Đăng nhập từ thiết bị khác";
 
+            // ✅ Luôn revoke token cũ
             await RefreshTokenRepository.revoke(oldestToken.token_hash, reason);
+            console.log(`🔄 [REVOKE] Revoked token_id=${oldestToken.token_id}`);
 
-            console.log(`🔄 [REVOKE] Revoke token cũ nhất | token_id=${oldestToken.token_id} | role=${user.role}`);
+            // ✅ CHỈ EMIT nếu token cũ > TOKEN_AGE_THRESHOLD
+            if (tokenAge >= TOKEN_AGE_THRESHOLD) {
+                const oldSocketId = await CacheService.getUserSocket(user.user_id);
+                console.log(`📌 [SOCKET] Old socket_id: ${oldSocketId}`);
 
-            // ✅ 3. EMIT SESSION_EXPIRED VÀO SOCKET CŨ (KHÔNG PHẢI ROOM)
-            if (ioInstance && user.user_id && oldSocketId) {
-                ioInstance.to(oldSocketId).emit('session_expired', {
-                    code: 'SESSION_REPLACED',
-                    // ✅ FIX: Phân biệt message admin/user
-                    message: user.role === 'admin'
-                        ? 'Tài khoản admin của bạn đã được đăng nhập trên thiết bị khác.'
-                        : 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.',
-                    newDevice: {
-                        ip: req.ip || req.connection?.remoteAddress || 'Unknown',
-                        userAgent: req.headers?.['user-agent']?.substring(0, 100) || 'Unknown'
-                    },
-                    timestamp: new Date().toISOString()
-                });
+                if (ioInstance && user.user_id && oldSocketId) {
+                    ioInstance.to(oldSocketId).emit('session_expired', {
+                        code: 'SESSION_REPLACED',
+                        message: user.role === 'admin'
+                            ? 'Tài khoản admin của bạn đã được đăng nhập trên thiết bị khác.'
+                            : 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.',
+                        newDevice: {
+                            ip: req.ip || req.connection?.remoteAddress || 'Unknown',
+                            userAgent: req.headers?.['user-agent']?.substring(0, 100) || 'Unknown'
+                        },
+                        timestamp: new Date().toISOString()
+                    });
 
-                console.log(`📤 [SOCKET] session_expired sent to OLD socket: ${oldSocketId}`);
-
-                // ✅ 4. XÓA CACHE SOCKET CŨ SAU KHI EMIT
-                await CacheService.deleteUserSocket(user.user_id);
+                    console.log(`📤 [SOCKET] session_expired sent to: ${oldSocketId}`);
+                    await CacheService.deleteUserSocket(user.user_id);
+                } else {
+                    console.warn(`⚠️ [SOCKET] Không có oldSocketId để emit`);
+                }
             } else {
-                console.warn(`⚠️ [SOCKET] Không có oldSocketId để emit`);
+                console.log(`⚠️ [SKIP EMIT] Token quá mới (${tokenAge}ms) — không emit session_expired`);
             }
         }
     } else {
@@ -600,7 +596,7 @@ exports.verifyOtpAndReset = async (email, otp, newPassword) => {
 };
 
 // ============================================================
-// SEND VERIFICATION EMAIL — ✅ FIX URL THEO ROLE
+// SEND VERIFICATION EMAIL
 // ============================================================
 exports.sendVerificationEmail = async (email) => {
     if (!email?.trim()) throw { statusCode: 400, field: "email", message: "Email không được để trống" };
@@ -986,7 +982,7 @@ exports.completeRegistration = async (data, req, res) => {
 };
 
 // ============================================================
-// RESEND VERIFICATION — ✅ FIX URL THEO ROLE
+// RESEND VERIFICATION
 // ============================================================
 exports.resendVerificationAfterLogin = async (userId) => {
     const user = await UserRepository.findById(userId);
@@ -1045,7 +1041,7 @@ exports.checkOtpTTL = async (email, purpose) => {
 };
 
 // ============================================================
-// RESEND OTP — ✅ FIX URL THEO ROLE
+// RESEND OTP
 // ============================================================
 exports.resendOtp = async (email, purpose) => {
     if (!email?.trim()) {

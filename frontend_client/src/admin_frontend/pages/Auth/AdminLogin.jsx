@@ -1,4 +1,7 @@
 // admin_frontend/pages/Auth/AdminLogin.jsx
+// ✅ Dùng adminSocketService
+// ✅ Chặn double-submit
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -13,22 +16,12 @@ import {
     Timer,
 } from 'lucide-react';
 import adminapi from '../../../api/adminapi';
-import socketService from '../../../api/socket';
+import adminSocketService from '../../../api/adminsocket'; // ✅ ĐỔI
 import Modal from '../../components/AdminModal';
 import LoadingButton from '../../../user_frontend/components/LoadingButton';
 import SuccessModal from '../../../user_frontend/components/SuccessModal';
 import LoginLockModal from '../../../user_frontend/components/LoginLockModal';
 import '../../styles/AdminAuth.css';
-
-// ============================================================
-// ADMIN LOGIN
-// ============================================================
-// Format giống UserLogin:
-// - KHÔNG tự gọi API /me
-// - KHÔNG tự connect socket
-// - Chỉ lo form login + lock
-// - Để AdminAuthContext (parent) xử lý session
-// ============================================================
 
 const AdminLogin = () => {
     /* ===================================================== REF ===================================================== */
@@ -236,13 +229,6 @@ const AdminLogin = () => {
         window.history.replaceState({}, document.title);
     }, [location.state]);
 
-    /* ===================================================== ✅ XÓA: CHECK ADMIN SESSION =====================================================
-     * BỎ HOÀN TOÀN useEffect gọi /me + socketService.connect()
-     * Vì AdminAuthContext (parent) đã xử lý session rồi.
-     * AdminLogin chỉ lo form login.
-     * ============================================================================================================================
-     */
-
     /* ===================================================== MODAL ===================================================== */
     const [modalConfig, setModalConfig] = useState({
         show: false,
@@ -280,10 +266,18 @@ const AdminLogin = () => {
     /* ===================================================== HANDLE ADMIN LOGIN ===================================================== */
     const handleAdminLogin = async (e) => {
         e.preventDefault();
+
+        // ✅ FIX: Chặn double-submit
+        if (loading) {
+            console.log('⚠️ [ADMIN LOGIN] Already loading — skip');
+            return;
+        }
+
         if (lockInfo && lockInfo.lockedUntil > Date.now()) {
             setShowLockModal(true);
             return;
         }
+
         if (!validate()) return;
 
         setLoading(true);
@@ -315,10 +309,7 @@ const AdminLogin = () => {
                 return;
             }
 
-            /* ================================================ 🔥 RESET CACHE & PHÁT TÍN HIỆU LOGIN ================================================
-             * Chỉ dispatch event 'adminLoggedIn' - AdminAuthContext sẽ tự fetch /me + connect socket
-             * ============================================================================================================================
-             */
+            /* ================================================ RESET CACHE & PHÁT TÍN HIỆU LOGIN ================================================ */
             adminapi.resetAdminCache();
             adminapi.resetSessionExpiredLock();
 
@@ -330,12 +321,6 @@ const AdminLogin = () => {
             console.log(
                 '🟢 [ADMIN LOGIN] Đã phát tín hiệu adminLoggedIn & reset cache'
             );
-
-            /* ================================================ ✅ XÓA: KẾT NỐI SOCKET SAU KHI LOGIN ================================================
-             * KHÔNG gọi socketService.connect() ở đây.
-             * AdminAuthContext (parent) sẽ tự connect khi nhận event 'adminLoggedIn'.
-             * ============================================================================================================================
-             */
 
             /* ================================================ LOGIN SUCCESS ================================================ */
             setLoggedInUser(adminUser);
@@ -402,10 +387,10 @@ const AdminLogin = () => {
                     errorMessage ||
                         'Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.'
                 );
-                socketService.disconnect();
+                adminSocketService.disconnect();
             } else if (errorCode === 'UNAUTHORIZED') {
                 setServerError(errorMessage || 'Vui lòng đăng nhập để tiếp tục.');
-                socketService.disconnect();
+                adminSocketService.disconnect();
             } else if (errorData?.field === 'email') {
                 setErrors({ email: errorMessage });
             } else if (errorData?.field === 'password') {

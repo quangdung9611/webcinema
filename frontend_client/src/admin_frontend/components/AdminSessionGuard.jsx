@@ -1,6 +1,7 @@
 // admin_frontend/components/AdminSessionGuard.jsx
 // ============================================================
 // ADMIN SESSION GUARD — Dùng AdminDeviceLoginModal
+// ✅ Dùng adminSocketService (RIÊNG cho admin)
 // ============================================================
 
 import React, {
@@ -16,7 +17,7 @@ import {
 } from 'react-router-dom';
 
 import adminapi from '../../api/adminapi';
-import socketService from '../../api/socket';
+import adminSocketService from '../../api/adminsocket';   // ✅ ĐỔI
 import { useAdminAuth } from '../../context/AdminAuthContext';
 
 import AdminDeviceLoginModal from './AdminDeviceLoginModal';
@@ -42,7 +43,7 @@ const AdminSessionGuard = ({ children }) => {
     const [modalMessage, setModalMessage] = useState('');
     const [modalNewDevice, setModalNewDevice] = useState(null);
     const [modalCode, setModalCode] = useState('TOKEN_EXPIRED');
-    const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);  // ✅ State đếm ngược
+    const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
 
     // ============================================================
     // KIỂM TRA TRANG PUBLIC CỦA ADMIN
@@ -85,7 +86,6 @@ const AdminSessionGuard = ({ children }) => {
 
     // ============================================================
     // OPEN SESSION MODAL
-    // ✅ FIX: Message có chữ "admin"
     // ============================================================
     const openSessionModal = useCallback((detail = {}) => {
         if (!isMountedRef.current) return;
@@ -154,7 +154,7 @@ const AdminSessionGuard = ({ children }) => {
             clearAuthState();
 
             try {
-                socketService.disconnect();
+                adminSocketService.disconnect();   // ✅ ĐỔI
             } catch (error) {
                 console.warn('Socket disconnect error:', error);
             }
@@ -237,6 +237,7 @@ const AdminSessionGuard = ({ children }) => {
 
     // ============================================================
     // LẮNG NGHE SESSION EXPIRED TỪ SOCKET
+    // ✅ ĐỔI sang adminSocketService
     // ============================================================
     useEffect(() => {
         const handleSocketSessionExpired = (detail = {}) => {
@@ -248,10 +249,10 @@ const AdminSessionGuard = ({ children }) => {
             });
         };
 
-        socketService.setOnSessionExpired(handleSocketSessionExpired);
+        adminSocketService.setOnSessionExpired(handleSocketSessionExpired);   // ✅ ĐỔI
 
         return () => {
-            socketService.setOnSessionExpired(null);
+            adminSocketService.setOnSessionExpired(null);   // ✅ ĐỔI
         };
     }, [handleSessionExpired]);
 
