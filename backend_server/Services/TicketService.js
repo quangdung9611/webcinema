@@ -1,5 +1,6 @@
 const TicketRepository = require("../Repositories/TicketRepository");
-const PriceConfigService = require("./PriceConfigService"); // 👈 IMPORT
+const PriceConfigService = require("./PriceConfigService");
+const crypto = require("crypto");
 
 class TicketService {
 
@@ -44,6 +45,18 @@ class TicketService {
     }
 
     // ==========================================================
+    // 🔥 SINH TICKET CODE NGẮN 8 KÝ TỰ
+    // ==========================================================
+    // Giống SQL: UPPER(SUBSTRING(MD5(CONCAT(...)), 1, 8))
+    // ==========================================================
+
+    generateTicketCode(seed = "") {
+        const input = `${seed}-${Date.now()}-${Math.random()}-${crypto.randomBytes(4).toString("hex")}`;
+        const hash = crypto.createHash("md5").update(input).digest("hex");
+        return hash.substring(0, 8).toUpperCase();
+    }
+
+    // ==========================================================
     // 🔥 TẠO VÉ (CÓ TÍCH HỢP PRICE_CONFIG)
     // ==========================================================
 
@@ -65,16 +78,20 @@ class TicketService {
         }
 
         const roomType = showtimeInfo.room_type || '2D';
-        const startTime = showtimeInfo.start_time ? new Date(showtimeInfo.start_time).toTimeString().slice(0, 8) : '09:00:00';
-        const showDate = showtimeInfo.start_time ? new Date(showtimeInfo.start_time).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+        const startTime = showtimeInfo.start_time
+            ? new Date(showtimeInfo.start_time).toTimeString().slice(0, 8)
+            : '09:00:00';
+        const showDate = showtimeInfo.start_time
+            ? new Date(showtimeInfo.start_time).toISOString().split('T')[0]
+            : new Date().toISOString().split('T')[0];
 
-        // 4. Tạo vé với giá từ price_config
+        // 4. Tạo vé với CODE NGẮN 8 KÝ TỰ
         const ticketsData = await Promise.all(seatDetails.map(async (item) => {
             // Lấy thông tin ghế để biết seat_type
             const seatInfo = await TicketRepository.getSeatInfo(connection, item.seat_id);
             const seatType = seatInfo?.seat_type || 'STANDARD';
 
-            // 🔥 Lấy giá từ price_config
+            // Lấy giá từ price_config
             const price = await PriceConfigService.getPrice(
                 roomType,
                 startTime,
@@ -82,14 +99,17 @@ class TicketService {
                 seatType
             );
 
+            // ✅ Sinh code ngắn 8 ký tự
+            const ticketCode = this.generateTicketCode(`${bookingId}-${item.seat_id}`);
+
             return [
                 bookingId,
                 showtime_id,
                 room_id,
                 cinema_id,
                 item.seat_id,
-                `TIC-${bookingId}-${item.seat_id}-${Date.now()}`,
-                price || item.price || 0, // Fallback nếu không có giá
+                ticketCode,                     // ← CODE NGẮN
+                price || item.price || 0,
                 "Booked",
                 "Valid"
             ];
@@ -122,8 +142,12 @@ class TicketService {
         if (!showtimeInfo) return 0;
 
         const roomType = showtimeInfo.room_type || '2D';
-        const startTime = showtimeInfo.start_time ? new Date(showtimeInfo.start_time).toTimeString().slice(0, 8) : '09:00:00';
-        const showDate = showtimeInfo.start_time ? new Date(showtimeInfo.start_time).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+        const startTime = showtimeInfo.start_time
+            ? new Date(showtimeInfo.start_time).toTimeString().slice(0, 8)
+            : '09:00:00';
+        const showDate = showtimeInfo.start_time
+            ? new Date(showtimeInfo.start_time).toISOString().split('T')[0]
+            : new Date().toISOString().split('T')[0];
 
         let updated = 0;
 
@@ -151,6 +175,14 @@ class TicketService {
         }
 
         return updated;
+    }
+
+    // ==========================================================
+    // ✅ LỊCH SỬ SOÁT VÉ (MỚI THÊM)
+    // ==========================================================
+
+    async getCheckinHistory(connection, limit = 100) {
+        return await TicketRepository.getCheckinHistory(connection, limit);
     }
 }
 

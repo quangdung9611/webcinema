@@ -14,6 +14,7 @@ import {
     LayoutDashboard,
     Settings,
     ShieldCheck,
+    ScanLine,       // ✅ THÊM: Icon quét QR
 } from 'lucide-react';
 
 import '../styles/AdminHeader.css';
@@ -270,6 +271,13 @@ const AdminHeader = ({ toggleSidebar }) => {
     };
 
     // ============================================================
+    // ✅ ĐI ĐẾN TRANG SOÁT VÉ
+    // ============================================================
+    const goToCheckIn = () => {
+        navigate('/check-in');
+    };
+
+    // ============================================================
     // GET AVATAR URL
     // ============================================================
     const getAvatarUrl = (avatar) => {
@@ -346,6 +354,19 @@ const AdminHeader = ({ toggleSidebar }) => {
                 </div>
 
                 <div className="admin-header-right">
+
+                    {/* ✅ NÚT SOÁT VÉ — NỔI BẬT */}
+                    <button
+                        className="admin-checkin-btn"
+                        onClick={goToCheckIn}
+                        type="button"
+                        title="Soát vé"
+                    >
+                        <ScanLine size={22} />
+                        <span className="admin-checkin-text">Soát vé</span>
+                        <span className="admin-checkin-pulse" />
+                    </button>
+
                     <button className="admin-notification-btn" type="button">
                         <Bell size={20} />
                         <span className="admin-notification-badge">5</span>

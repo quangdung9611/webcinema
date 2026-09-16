@@ -1,175 +1,576 @@
-// admin_frontend/api/adminapi.js
-import axios from 'axios';
+import axios from "axios";
 
-const API_BASE = 'https://api.quangdungcinema.id.vn';
+const API_BASE =
+    "https://api.quangdungcinema.id.vn";
+
 const CACHE_DURATION = 5000;
+
+// ============================================================
+// AXIOS INSTANCE
+// ============================================================
 
 const adminApi = axios.create({
     baseURL: API_BASE,
+
     withCredentials: true,
+
     headers: {
-        'Content-Type': 'application/json',
+        "Content-Type":
+            "application/json",
     },
 });
 
+// ============================================================
+// CACHE ADMIN
+// ============================================================
+
 let cachedAdmin = null;
 let cachedTime = 0;
-let isSessionExpiredEmitted = false;
+
+// ============================================================
+// SESSION EXPIRED LOCK
+// ============================================================
+
+let isSessionExpiredEmitted =
+    false;
+
+// ============================================================
+// NETWORK ERROR LOCK
+// ============================================================
+
+let lastNetworkErrorTime = 0;
+
+const NETWORK_ERROR_DEBOUNCE =
+    1000;
 
 // ============================================================
 // EMIT SESSION EXPIRED
 // ============================================================
-const emitSessionExpired = (detail = {}) => {
-    if (isSessionExpiredEmitted) {
-        console.log('⚠️ [ADMIN API] sessionExpired already emitted');
+
+const emitSessionExpired = (
+    detail = {}
+) => {
+    if (
+        isSessionExpiredEmitted
+    ) {
+        console.log(
+            "⚠️ [ADMIN API] sessionExpired already emitted"
+        );
+
         return;
     }
 
-    isSessionExpiredEmitted = true;
+    isSessionExpiredEmitted =
+        true;
 
     const payload = {
-        code: detail.code || 'TOKEN_EXPIRED',
-        message: detail.message || 'Phiên đăng nhập admin đã hết hạn. Vui lòng đăng nhập lại.',
-        newDevice: detail.newDevice || null,
-        source: detail.source || 'admin_api',
+        code:
+            detail.code ||
+            "TOKEN_EXPIRED",
+
+        message:
+            detail.message ||
+            "Phiên đăng nhập admin đã hết hạn. Vui lòng đăng nhập lại.",
+
+        newDevice:
+            detail.newDevice ||
+            null,
+
+        source:
+            detail.source ||
+            "admin_api",
+
         fromSocket: false,
-        timestamp: detail.timestamp || new Date().toISOString(),
+
+        timestamp:
+            detail.timestamp ||
+            new Date().toISOString(),
     };
 
-    console.warn('🔴 [ADMIN API] EMIT SESSION EXPIRED:', payload);
+    console.warn(
+        "🔴 [ADMIN API] EMIT SESSION EXPIRED:",
+        payload
+    );
 
     window.dispatchEvent(
-        new CustomEvent('sessionExpired', {
-            detail: payload,
-        })
+        new CustomEvent(
+            "sessionExpired",
+            {
+                detail: payload,
+            }
+        )
     );
 };
 
 // ============================================================
-// OVERRIDE GET - CACHE /admin/api/auth/me
+// EMIT NETWORK ERROR
 // ============================================================
-const originalGet = adminApi.get;
 
-adminApi.get = function (url, config = {}) {
-    const normalizedUrl = typeof url === 'string' ? url.split('?')[0] : url;
-    const isMeEndpoint = normalizedUrl === '/admin/api/auth/me';
+const emitNetworkError = (
+    error
+) => {
+    // --------------------------------------------------------
+    // Có HTTP response
+    // => server đã phản hồi
+    // => không phải network error
+    // --------------------------------------------------------
 
-    if (isMeEndpoint && !config.force) {
+    if (error?.response) {
+        return;
+    }
+
+    // --------------------------------------------------------
+    // Không có config
+    // --------------------------------------------------------
+
+    if (!error?.config) {
+        return;
+    }
+
+    const now = Date.now();
+
+    // --------------------------------------------------------
+    // Debounce
+    // --------------------------------------------------------
+
+    if (
+        now -
+            lastNetworkErrorTime <
+        NETWORK_ERROR_DEBOUNCE
+    ) {
+        return;
+    }
+
+    lastNetworkErrorTime =
+        now;
+
+    const requestUrl =
+        error?.config?.url ||
+        "";
+
+    const errorCode =
+        error?.code ||
+        "";
+
+    const errorName =
+        error?.name ||
+        "";
+
+    // --------------------------------------------------------
+    // TIMEOUT
+    // --------------------------------------------------------
+
+    const isTimeout =
+        errorCode ===
+            "ECONNABORTED" ||
+        errorCode ===
+            "ETIMEDOUT" ||
+        (
+            errorName ===
+                "AxiosError" &&
+            error?.message
+                ?.toLowerCase()
+                ?.includes(
+                    "timeout"
+                )
+        );
+
+    // --------------------------------------------------------
+    // NETWORK
+    // --------------------------------------------------------
+
+    const isNetworkError =
+        errorCode ===
+            "ERR_NETWORK" ||
+        !error?.response;
+
+    if (
+        !isNetworkError
+    ) {
+        return;
+    }
+
+    // --------------------------------------------------------
+    // MODE + CODE
+    // --------------------------------------------------------
+
+    let mode = "network";
+
+    let displayCode =
+        "ERR_NETWORK";
+
+    if (isTimeout) {
+        mode = "timeout";
+
+        displayCode =
+            "ERR_CONNECTION_TIMED_OUT";
+    }
+
+    // --------------------------------------------------------
+    // Browser offline
+    // --------------------------------------------------------
+
+    if (
+        typeof navigator !==
+            "undefined" &&
+        !navigator.onLine
+    ) {
+        mode = "offline";
+
+        displayCode =
+            "ERR_INTERNET_DISCONNECTED";
+    }
+
+    // --------------------------------------------------------
+    // PAYLOAD
+    // --------------------------------------------------------
+
+    const payload = {
+        mode,
+
+        code: displayCode,
+
+        url:
+            typeof window !==
+                "undefined"
+                ? window.location.hostname
+                : "",
+
+        message:
+            isTimeout
+                ? "The server took too long to respond."
+                : "A network error occurred while trying to connect to the server.",
+
+        source: "admin_api",
+
+        requestUrl,
+
+        timestamp:
+            new Date().toISOString(),
+    };
+
+    console.warn(
+        "🔴 [ADMIN API] NETWORK ERROR:",
+        payload
+    );
+
+    // --------------------------------------------------------
+    // SEND TO APP
+    // --------------------------------------------------------
+
+    if (
+        typeof window !==
+        "undefined"
+    ) {
+        window.dispatchEvent(
+            new CustomEvent(
+                "networkError",
+                {
+                    detail: payload,
+                }
+            )
+        );
+    }
+};
+
+// ============================================================
+// OVERRIDE GET
+// ============================================================
+
+const originalGet =
+    adminApi.get;
+
+adminApi.get = function (
+    url,
+    config = {}
+) {
+    const normalizedUrl =
+        typeof url ===
+        "string"
+            ? url.split("?")[0]
+            : url;
+
+    const isMeEndpoint =
+        normalizedUrl ===
+        "/admin/api/auth/me";
+
+    // --------------------------------------------------------
+    // CACHE ADMIN /auth/me
+    // --------------------------------------------------------
+
+    if (
+        isMeEndpoint &&
+        !config.force
+    ) {
         const now = Date.now();
-        if (cachedAdmin && now - cachedTime < CACHE_DURATION) {
-            console.log('💾 [ADMIN API] Return cached /admin/api/auth/me');
+
+        if (
+            cachedAdmin &&
+            now - cachedTime <
+                CACHE_DURATION
+        ) {
+            console.log(
+                "💾 [ADMIN API] Return cached /admin/api/auth/me"
+            );
+
             return Promise.resolve({
-                data: cachedAdmin,
+                data:
+                    cachedAdmin,
+
                 status: 200,
-                statusText: 'OK',
+
+                statusText: "OK",
+
                 headers: {},
+
                 config,
+
                 request: {},
             });
         }
     }
 
-    const requestConfig = { ...config };
-    if ('force' in requestConfig) {
+    // --------------------------------------------------------
+    // Remove custom force
+    // --------------------------------------------------------
+
+    const requestConfig = {
+        ...config,
+    };
+
+    if (
+        "force" in
+        requestConfig
+    ) {
         delete requestConfig.force;
     }
 
-    return originalGet.call(this, url, requestConfig);
+    return originalGet.call(
+        this,
+        url,
+        requestConfig
+    );
 };
 
 // ============================================================
 // RESPONSE INTERCEPTOR
 // ============================================================
-adminApi.interceptors.response.use(
-    (response) => {
-        const requestUrl = response.config?.url || '';
-        const normalizedUrl = requestUrl.split('?')[0];
 
-        if (normalizedUrl === '/admin/api/auth/me') {
-            cachedAdmin = response.data;
-            cachedTime = Date.now();
-            console.log('💾 [ADMIN API] Cached /admin/api/auth/me response');
+adminApi.interceptors.response.use(
+
+    // ========================================================
+    // SUCCESS
+    // ========================================================
+
+    (response) => {
+        const requestUrl =
+            response.config?.url ||
+            "";
+
+        const normalizedUrl =
+            requestUrl.split("?")[0];
+
+        // ----------------------------------------------------
+        // CACHE ADMIN
+        // ----------------------------------------------------
+
+        if (
+            normalizedUrl ===
+            "/admin/api/auth/me"
+        ) {
+            cachedAdmin =
+                response.data;
+
+            cachedTime =
+                Date.now();
+
+            console.log(
+                "💾 [ADMIN API] Cached /admin/api/auth/me response"
+            );
         }
 
-        if (normalizedUrl === '/admin/api/auth/login') {
+        // ----------------------------------------------------
+        // RESET SESSION LOCK ON LOGIN
+        // ----------------------------------------------------
+
+        if (
+            normalizedUrl ===
+            "/admin/api/auth/login"
+        ) {
             adminApi.resetSessionExpiredLock();
-            console.log('🔓 [ADMIN API] Reset session expired lock on login');
+
+            console.log(
+                "🔓 [ADMIN API] Reset session expired lock on login"
+            );
         }
 
         return response;
     },
-    (error) => {
-        const status = error?.response?.status;
-        const requestUrl = error?.config?.url || '';
-        const normalizedUrl = requestUrl.split('?')[0];
 
-        if (status === 401) {
+    // ========================================================
+    // ERROR
+    // ========================================================
+
+    (error) => {
+        const status =
+            error?.response?.status;
+
+        const requestUrl =
+            error?.config?.url ||
+            "";
+
+        const normalizedUrl =
+            requestUrl.split("?")[0];
+
+        // ====================================================
+        // NETWORK ERROR
+        // ====================================================
+
+        if (
+            !error?.response &&
+            error?.config
+        ) {
+            emitNetworkError(
+                error
+            );
+        }
+
+        // ====================================================
+        // 401 UNAUTHORIZED
+        // ====================================================
+
+        if (
+            status === 401
+        ) {
             cachedAdmin = null;
+
             cachedTime = 0;
 
-            const responseData = error?.response?.data || {};
-            const errorCode = responseData.code || 'TOKEN_EXPIRED';
+            const responseData =
+                error?.response
+                    ?.data || {};
+
+            const errorCode =
+                responseData.code ||
+                "TOKEN_EXPIRED";
+
             const errorMessage =
                 responseData.message ||
-                'Phiên đăng nhập admin đã hết hạn. Vui lòng đăng nhập lại.';
+                "Phiên đăng nhập admin đã hết hạn. Vui lòng đăng nhập lại.";
 
-            console.warn('🔴 [ADMIN API] 401 Unauthorized:', {
-                url: normalizedUrl,
-                code: errorCode,
-                message: errorMessage,
-            });
+            console.warn(
+                "🔴 [ADMIN API] 401 Unauthorized:",
+                {
+                    url:
+                        normalizedUrl,
 
-            const excludedEndpoints = [
-                '/admin/api/auth/login',
-                '/admin/api/auth/refresh',
-            ];
+                    code:
+                        errorCode,
 
-            const shouldHandleSession = !excludedEndpoints.some((endpoint) =>
-                normalizedUrl.includes(endpoint)
+                    message:
+                        errorMessage,
+                }
             );
 
-            if (shouldHandleSession) {
+            const excludedEndpoints = [
+                "/admin/api/auth/login",
+                "/admin/api/auth/refresh",
+            ];
+
+            const shouldHandleSession =
+                !excludedEndpoints.some(
+                    (
+                        endpoint
+                    ) =>
+                        normalizedUrl.includes(
+                            endpoint
+                        )
+                );
+
+            if (
+                shouldHandleSession
+            ) {
                 emitSessionExpired({
-                    code: errorCode,
-                    message: errorMessage,
-                    source: 'admin_api',
+                    code:
+                        errorCode,
+
+                    message:
+                        errorMessage,
+
+                    source:
+                        "admin_api",
                 });
             }
         }
 
-        return Promise.reject(error);
+        return Promise.reject(
+            error
+        );
     }
 );
 
 // ============================================================
-// RESET HELPERS
+// RESET ADMIN CACHE
 // ============================================================
-adminApi.resetAdminCache = function () {
-    cachedAdmin = null;
-    cachedTime = 0;
-    console.log('🔄 [ADMIN API] Reset admin cache');
-};
 
-adminApi.resetSessionExpiredLock = function () {
-    isSessionExpiredEmitted = false;
-    console.log('🔓 [ADMIN API] Reset session expired lock');
-};
+adminApi.resetAdminCache =
+    function () {
+        cachedAdmin = null;
+
+        cachedTime = 0;
+
+        console.log(
+            "🔄 [ADMIN API] Reset admin cache"
+        );
+    };
 
 // ============================================================
-// GLOBAL EVENT LISTENERS
+// RESET SESSION EXPIRED LOCK
 // ============================================================
-window.addEventListener('adminLoggedIn', () => {
-    adminApi.resetAdminCache();
-    adminApi.resetSessionExpiredLock();
-    console.log('🟢 [ADMIN API] Admin logged in - cache & lock reset');
-});
 
-window.addEventListener('sessionExpired', () => {
-    adminApi.resetAdminCache();
-});
+adminApi.resetSessionExpiredLock =
+    function () {
+        isSessionExpiredEmitted =
+            false;
 
-window.addEventListener('authCleanedUp', () => {
-    adminApi.resetAdminCache();
-});
+        console.log(
+            "🔓 [ADMIN API] Reset session expired lock"
+        );
+    };
+
+// ============================================================
+// GLOBAL EVENTS
+// ============================================================
+
+window.addEventListener(
+    "adminLoggedIn",
+    () => {
+        adminApi.resetAdminCache();
+
+        adminApi.resetSessionExpiredLock();
+
+        console.log(
+            "🟢 [ADMIN API] Admin logged in - cache & lock reset"
+        );
+    }
+);
+
+window.addEventListener(
+    "sessionExpired",
+    () => {
+        adminApi.resetAdminCache();
+    }
+);
+
+window.addEventListener(
+    "authCleanedUp",
+    () => {
+        adminApi.resetAdminCache();
+    }
+);
+
+// ============================================================
+// EXPORT
+// ============================================================
 
 export default adminApi;

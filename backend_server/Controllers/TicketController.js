@@ -1,26 +1,56 @@
 const TicketService = require("../Services/TicketService");
 const TicketRepository = require("../Repositories/TicketRepository");
 const QRCode = require("qrcode");
-const PriceConfigService = require("../Services/PriceConfigService"); // 👈 IMPORT
+const PriceConfigService = require("../Services/PriceConfigService");
 
 // ==========================================================
-// PUBLIC - LẤY MÃ QR
+// PUBLIC - LẤY MÃ QR (CHỨA URL CHECK-IN)
 // ==========================================================
 
 exports.getTicketQR = async (req, res) => {
+    let connection;
     try {
         const { ticketCode } = req.params;
-        const qrCodeUrl = await QRCode.toDataURL(ticketCode, {
-            width: 300,
-            margin: 2,
-            color: { dark: "#000000", light: "#FFFFFF" },
+
+        // ✅ BƯỚC 1: Verify vé tồn tại
+        connection = await TicketRepository.getConnection();
+        const ticket = await TicketService.getTicketByCode(connection, ticketCode);
+        connection.release();
+
+        if (!ticket) {
+            return res.status(404).json({
+                success: false,
+                message: "Vé không tồn tại",
+            });
+        }
+
+        // ✅ BƯỚC 2: Tạo URL check-in
+        const frontendUrl =
+            process.env.FRONTEND_URL ||
+            "https://admin.quangdungcinema.id.vn";
+
+        const checkinUrl = `${frontendUrl}/check-in/${ticketCode}`;
+
+        // ✅ BƯỚC 3: Tạo QR với config tối ưu
+        const qrCodeUrl = await QRCode.toDataURL(checkinUrl, {
+            width: 500,
+            margin: 4,
+            errorCorrectionLevel: "H",
+            color: {
+                dark: "#000000",
+                light: "#FFFFFF",
+            },
         });
 
         return res.status(200).json({
             success: true,
             qrCodeUrl,
+            checkinUrl,
+            ticketCode,
         });
+
     } catch (error) {
+        if (connection) connection.release();
         console.error("getTicketQR error:", error);
         return res.status(500).json({
             success: false,
@@ -47,6 +77,7 @@ exports.checkInTicket = async (req, res) => {
 
         connection = await TicketRepository.getConnection();
         const ticket = await TicketService.getTicketByCode(connection, ticketCode);
+
         if (!ticket) {
             connection.release();
             return res.status(404).json({
@@ -160,6 +191,31 @@ exports.getTicketSeatMap = async (req, res) => {
     } catch (error) {
         if (connection) connection.release();
         console.error("getTicketSeatMap error:", error);
+        return res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
+// ==========================================================
+// ADMIN - LỊCH SỬ SOÁT VÉ (MỚI THÊM)
+// ==========================================================
+
+exports.getCheckinHistory = async (req, res) => {
+    let connection;
+    try {
+        connection = await TicketRepository.getConnection();
+        const history = await TicketService.getCheckinHistory(connection, 100);
+        connection.release();
+
+        return res.status(200).json({
+            success: true,
+            data: history,
+        });
+    } catch (error) {
+        if (connection) connection.release();
+        console.error("getCheckinHistory error:", error);
         return res.status(500).json({
             success: false,
             message: error.message,

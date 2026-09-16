@@ -1,13 +1,13 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, MapPin, Phone, ExternalLink } from "lucide-react";
+import { ArrowUpRight, MapPin, Phone, ExternalLink } from "lucide-react";
 import "../styles/CinemaCard.css";
 
 const CinemaCard = ({
-    type = "movie", // "movie" | "cinema" | "promotion" | "news" | "blog"
+    type = "movie",
     image,
     title,
-    badge,
+    text,                          // Text mô tả (giống PromotionCard)
     buttonText = "Xem chi tiết",
     link,
     onClick,
@@ -17,165 +17,130 @@ const CinemaCard = ({
     mapLink,
     // Detail props
     slug,
-    detailType, // 'news' | 'promotion' | 'blog' | 'cinema'
+    detailType,                    // Vẫn giữ để navigate
+    index = 0,
 }) => {
-
     const navigate = useNavigate();
 
     // ==========================================================
     // HANDLE NAVIGATION TO DETAIL
     // ==========================================================
     const navigateToDetail = () => {
-        // Nếu có link custom thì dùng link đó
         if (link) {
             navigate(link);
             return;
         }
 
-        // Nếu có slug và detailType thì điều hướng đến trang chi tiết
         if (slug && detailType) {
             const paths = {
-                'promotion': `/promotion/detail/${slug}`,
-                'news': `/news/detail/${slug}`,
-                'blog': `/blog-cinema/detail/${slug}`,
-                'cinema': `/cinema/detail/${slug}`,
-                'movie': `/movie/detail/${slug}`
+                promotion: `/promotion/detail/${slug}`,
+                news:      `/news/detail/${slug}`,
+                blog:      `/blog-cinema/detail/${slug}`,
+                cinema:    `/cinema/detail/${slug}`,
+                movie:     `/movie/detail/${slug}`,
             };
-            
+
             const path = paths[detailType] || `/${detailType}/detail/${slug}`;
             navigate(path);
             return;
         }
 
-        // Fallback: nếu có link thì dùng
         if (link) {
             navigate(link);
         }
     };
 
-    const handleActionClick = (e) => {
-        e.stopPropagation();
-        if (onClick) {
-            onClick();
-            return;
-        }
+    const handleNavigate = () => {
+        if (onClick) return onClick();
         navigateToDetail();
-    };
-
-    const handleCardClick = () => {
-        if (onClick) {
-            onClick();
-            return;
-        }
-        navigateToDetail();
-    };
-
-    // ==========================================================
-    // DETERMINE BADGE COLOR & TEXT
-    // ==========================================================
-    const getBadgeClass = () => {
-        switch (detailType) {
-            case 'promotion':
-                return 'badge-promotion';
-            case 'news':
-                return 'badge-news';
-            case 'blog':
-                return 'badge-blog';
-            case 'cinema':
-                return 'badge-cinema';
-            default:
-                return '';
-        }
-    };
-
-    const getBadgeText = () => {
-        if (badge) return badge;
-        switch (detailType) {
-            case 'promotion':
-                return '🎁 Khuyến mãi';
-            case 'news':
-                return '📰 Tin tức';
-            case 'blog':
-                return '📝 Blog';
-            case 'cinema':
-                return '🎬 Rạp';
-            default:
-                return '';
-        }
     };
 
     const isCinema = type === "cinema";
 
     return (
         <div
-            className={`cinema-card ${type}`}
-            onClick={handleCardClick}
+            className={`cinema-card cinema-card--${type} card-animated`}
+            style={{ "--card-index": index }}
+            onClick={handleNavigate}
             role="button"
             tabIndex={0}
             aria-label={title}
         >
-            <div className="cinema-card-inner">
+            {/* ==================================================
+                IMAGE AREA
+            ================================================== */}
+            <div className="cinema-card__image">
+                <div className="cinema-card__gradient" />
 
-                {/* IMAGE & HOVER OVERLAY */}
-                <div className="cinema-card-image">
-                    <img 
-                        src={image} 
-                        alt={title} 
-                        loading="lazy"
-                        draggable={false}
-                    />
+                <img
+                    src={image}
+                    alt={title}
+                    loading="lazy"
+                    draggable={false}
+                />
+            </div>
 
-                    {(badge || detailType) && (
-                        <h4 className={`cinema-card-badge ${getBadgeClass()}`}>
-                            {getBadgeText()}
-                        </h4>
+            {/* ==================================================
+                CONTENT AREA
+            ================================================== */}
+            <div className="cinema-card__content">
+                <div className="cinema-card__body">
+                    <h3 className="cinema-card__title">{title}</h3>
+
+                    {/* Text mô tả */}
+                    {text && (
+                        <p className="cinema-card__text">{text}</p>
                     )}
 
-                    <div className="cinema-card-overlay">
-                        <button 
-                            className="btn-card-action"
-                            onClick={handleActionClick}
-                        >
-                            <span>{buttonText}</span>
-                            <ChevronRight size={16} />
-                        </button>
-                    </div>
-                </div>
-
-                {/* INFO */}
-                <div className="cinema-card-info">
-                    <h3 className="cinema-card-title">{title}</h3>
-                    
+                    {/* Cinema info: address + hotline */}
                     {isCinema && (
                         <>
                             {address && (
-                                <div className="cinema-card-address">
+                                <div className="cinema-card__address">
                                     <MapPin size={14} />
                                     <span>{address}</span>
                                 </div>
                             )}
                             {hotline && (
-                                <div className="cinema-card-hotline">
+                                <div className="cinema-card__hotline">
                                     <Phone size={14} />
                                     <span>{hotline}</span>
                                 </div>
-                            )}
-                            {mapLink && (
-                                <a
-                                    href={mapLink}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="cinema-card-map"
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    <ExternalLink size={14} />
-                                    Xem Google Maps
-                                </a>
                             )}
                         </>
                     )}
                 </div>
 
+                <div className="cinema-card__footer">
+                    {/* Nút "Xem chi tiết" */}
+                    <a
+                        className="cinema-card__link"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleNavigate();
+                        }}
+                    >
+                        {buttonText}
+                        <ArrowUpRight
+                            size={16}
+                            className="cinema-card__link-icon"
+                        />
+                    </a>
+
+                    {/* Link Google Maps (chỉ cinema) */}
+                    {isCinema && mapLink && (
+                        <a
+                            href={mapLink}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="cinema-card__map"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <ExternalLink size={14} />
+                            Google Maps
+                        </a>
+                    )}
+                </div>
             </div>
         </div>
     );

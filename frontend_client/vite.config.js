@@ -1,25 +1,60 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
 export default defineConfig({
-  plugins: [react()],
-  
-  // Khi đang code thì nên để true để dễ sửa lỗi, khi nào xong xuôi hãy tắt
-  css: {
-    devSourcemap: true, 
-  },
+    plugins: [react()],
 
-  build: {
-    sourcemap: true,
-    minify: false, // Tắt nén để Docker chạy nhẹ hơn khi đang dev
-  },
+    // ============================================================
+    // CSS
+    // ============================================================
 
-  server: {
-    watch: {
-      usePolling: true, 
+    css: {
+        // Chỉ hỗ trợ debug khi development
+        devSourcemap: true,
     },
-    host: '0.0.0.0',    
-    port: 5173,        
-    strictPort: true,
-  }
-})
+
+    // ============================================================
+    // BUILD
+    // ============================================================
+
+    build: {
+        // Production không cần sourcemap công khai
+        sourcemap: false,
+
+        // Bật minify khi deploy
+        minify: true,
+
+        rollupOptions: {
+            output: {
+                // File JS entry có hash
+                entryFileNames:
+                    "assets/[name]-[hash].js",
+
+                // File chunk lazy có hash
+                chunkFileNames:
+                    "assets/[name]-[hash].js",
+
+                // CSS / image / font... có hash
+                assetFileNames:
+                    "assets/[name]-[hash][extname]",
+            },
+        },
+    },
+
+    // ============================================================
+    // DEVELOPMENT SERVER
+    // ============================================================
+
+    server: {
+        watch: {
+            // Giữ nguyên cho môi trường development của bạn
+            usePolling: true,
+        },
+
+        host: "0.0.0.0",
+
+        port: 5173,
+
+        strictPort: true,
+    },
+});

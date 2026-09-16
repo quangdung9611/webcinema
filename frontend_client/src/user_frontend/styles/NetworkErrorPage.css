@@ -1,0 +1,486 @@
+
+/* =========================================================
+   NETWORK ERROR PAGE — CINEMA DARK / CHROME INSPIRED
+   ========================================================= */
+
+/* =========================================================
+   PAGE
+   ========================================================= */
+
+.network-error-page {
+    min-height: 100dvh;
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: var(--space-2xl);
+
+    background:
+        radial-gradient(
+            circle at 50% 35%,
+            rgba(255, 255, 255, 0.025),
+            transparent 42%
+        ),
+        var(--bg-primary);
+
+    color: var(--text-body);
+    font-family: var(--font-primary);
+
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+
+    box-sizing: border-box;
+}
+
+.network-error-page *,
+.network-error-page *::before,
+.network-error-page *::after {
+    box-sizing: border-box;
+}
+
+
+/* =========================================================
+   CONTENT
+   ========================================================= */
+
+.network-error-page__content {
+    width: min(100%, 680px);
+
+    padding: var(--space-2xl) 0;
+
+    text-align: left;
+
+    animation:
+        networkErrorFadeIn
+        0.35s
+        cubic-bezier(0.16, 1, 0.3, 1)
+        both;
+}
+
+@keyframes networkErrorFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* =========================================================
+   ICON
+   ========================================================= */
+
+.network-error-page__icon {
+    width: 76px;
+    height: 76px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-bottom: var(--space-xl);
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-lg);
+
+    background: rgba(255, 255, 255, 0.035);
+
+    color: var(--silver-primary);
+
+    transition:
+        background var(--transition-normal),
+        border-color var(--transition-normal);
+}
+
+.network-error-page__icon svg {
+    width: 44px;
+    height: 44px;
+}
+
+
+/* =========================================================
+   ERROR TYPE — OFFLINE
+   ========================================================= */
+
+.network-error-page--offline
+    .network-error-page__icon {
+    color: #d1d5db;
+}
+
+
+/* =========================================================
+   ERROR TYPE — DNS
+   ========================================================= */
+
+.network-error-page--dns
+    .network-error-page__icon {
+    color: #d4d4d8;
+}
+
+
+/* =========================================================
+   ERROR TYPE — TIMEOUT
+   ========================================================= */
+
+.network-error-page--timeout
+    .network-error-page__icon {
+    color: #d4d4d8;
+}
+
+
+/* =========================================================
+   ERROR TYPE — CONNECTION
+   ========================================================= */
+
+.network-error-page--connection
+    .network-error-page__icon {
+    color: #d4d4d8;
+}
+
+
+/* =========================================================
+   ERROR TYPE — GENERIC NETWORK
+   ========================================================= */
+
+.network-error-page--network
+    .network-error-page__icon {
+    color: #d4d4d8;
+}
+
+
+/* =========================================================
+   TITLE
+   ========================================================= */
+
+.network-error-page__title {
+    margin: 0 0 var(--space-md);
+
+    color: var(--text-heading);
+
+    font-family: var(--font-heading);
+    font-size: clamp(
+        28px,
+        4vw,
+        40px
+    );
+
+    font-weight: var(--fw-bold);
+
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+
+    text-transform: none;
+}
+
+
+/* =========================================================
+   MESSAGE
+   ========================================================= */
+
+.network-error-page__message {
+    max-width: 620px;
+
+    margin: 0 0 var(--space-lg);
+
+    color: var(--text-secondary);
+
+    font-size: var(--font-size-h5);
+    font-weight: var(--fw-regular);
+
+    line-height: 1.65;
+}
+
+.network-error-page__message strong {
+    color: var(--text-heading);
+    font-weight: var(--fw-bold);
+}
+
+
+/* =========================================================
+   TIPS
+   ========================================================= */
+
+.network-error-page__tips {
+    max-width: 620px;
+
+    margin: 0 0 var(--space-xl);
+
+    color: var(--text-secondary);
+
+    font-size: var(--font-size-h6);
+    line-height: 1.65;
+}
+
+.network-error-page__tips > span {
+    color: var(--text-heading);
+    font-weight: var(--fw-bold);
+}
+
+.network-error-page__tips ul {
+    margin: var(--space-sm) 0 0;
+    padding-left: 22px;
+}
+
+.network-error-page__tips li {
+    margin-bottom: 4px;
+}
+
+.network-error-page__tips li:last-child {
+    margin-bottom: 0;
+}
+
+
+/* =========================================================
+   ERROR CODE
+   ========================================================= */
+
+.network-error-page__code {
+    display: inline-flex;
+    align-items: center;
+
+    min-height: 32px;
+
+    margin-bottom: var(--space-xl);
+    padding: 5px 10px;
+
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: var(--radius-sm);
+
+    background: rgba(255, 255, 255, 0.035);
+
+    color: #a1a1aa;
+
+    font-family:
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
+        "Courier New",
+        monospace;
+
+    font-size: 12px;
+    font-weight: 500;
+
+    line-height: 1;
+
+    letter-spacing: 0.02em;
+}
+
+
+/* =========================================================
+   BUTTON
+   ========================================================= */
+
+.network-error-page__btn {
+    min-width: 116px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: var(--space-sm);
+
+    padding: 10px 22px;
+
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: var(--radius-sm);
+
+    background: var(--btn-silver-bg);
+    color: var(--bg-primary);
+
+    font-family: var(--font-primary);
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-bold);
+
+    line-height: 1.2;
+
+    cursor: pointer;
+
+    box-shadow: var(--btn-silver-shadow);
+
+    transition:
+        background var(--transition-normal),
+        border-color var(--transition-normal),
+        transform var(--transition-normal),
+        box-shadow var(--transition-normal),
+        opacity var(--transition-normal);
+}
+
+.network-error-page__btn:hover:not(:disabled) {
+    background: var(--premium-gradient-hover);
+
+    border-color: rgba(255, 255, 255, 0.2);
+
+    transform: translateY(-1px);
+
+    box-shadow: var(--btn-silver-hover);
+}
+
+.network-error-page__btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.network-error-page__btn:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 3px;
+}
+
+
+/* =========================================================
+   BUTTON — DISABLED / CHECKING
+   ========================================================= */
+
+.network-error-page__btn:disabled {
+    opacity: 0.65;
+    cursor: wait;
+    transform: none;
+}
+
+
+/* =========================================================
+   LOADING ICON
+   ========================================================= */
+
+.network-error-page__spinner {
+    animation:
+        networkErrorSpin
+        0.9s
+        linear
+        infinite;
+}
+
+@keyframes networkErrorSpin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 768px) {
+    .network-error-page {
+        align-items: flex-start;
+
+        padding:
+            var(--space-2xl)
+            var(--space-lg);
+    }
+
+    .network-error-page__content {
+        padding-top: 12vh;
+    }
+
+    .network-error-page__icon {
+        width: 68px;
+        height: 68px;
+
+        margin-bottom: var(--space-lg);
+    }
+
+    .network-error-page__icon svg {
+        width: 38px;
+        height: 38px;
+    }
+
+    .network-error-page__title {
+        font-size: clamp(
+            26px,
+            7vw,
+            34px
+        );
+    }
+
+    .network-error-page__message {
+        font-size: var(--font-size-h6);
+        line-height: 1.6;
+    }
+
+    .network-error-page__tips {
+        font-size: var(--font-size-h6);
+    }
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 480px) {
+    .network-error-page {
+        padding:
+            var(--space-xl)
+            var(--space-md);
+    }
+
+    .network-error-page__content {
+        padding-top: 8vh;
+    }
+
+    .network-error-page__icon {
+        width: 60px;
+        height: 60px;
+    }
+
+    .network-error-page__icon svg {
+        width: 34px;
+        height: 34px;
+    }
+
+    .network-error-page__title {
+        font-size: 26px;
+        line-height: 1.25;
+    }
+
+    .network-error-page__message {
+        font-size: 15px;
+    }
+
+    .network-error-page__tips {
+        font-size: 14px;
+    }
+
+    .network-error-page__code {
+        max-width: 100%;
+
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .network-error-page__btn {
+        width: 100%;
+        min-height: 44px;
+    }
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+    .network-error-page__content {
+        animation: none;
+    }
+
+    .network-error-page__spinner {
+        animation: none;
+    }
+
+    .network-error-page__btn {
+        transition: none;
+    }
+}
+

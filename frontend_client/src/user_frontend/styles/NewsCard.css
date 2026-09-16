@@ -1,16 +1,18 @@
 /* ==========================================================
    NEWS CARD — MAGAZINE 50/50
    ==========================================================
+   ✅ HOVER GIỐNG PROMOTION CARD 100%:
+      — Hover vào HÌNH  → ẢNH zoom nhẹ (1.03) + CARD nhích lên
+      — Hover vào INFO  → CHỈ CARD nhích lên (ảnh không zoom)
 
-   NGUYÊN TẮC:
-   - Layout 50 / 50
-   - Featured bên trái
-   - 3 Small bên phải
-   - Small image GIỮ NGUYÊN 16:9
-   - Không crop ảnh small
-   - 3 card phải có tổng chiều cao = card trái
-   - Hover NHẸ NHÀNG giống PROMOTION
-   - CẢ 2 CARD ĐỀU CÓ DESCRIPTION (từ field content)
+   ✅ DÙNG 100% BIẾN var() TỪ index.css:
+      — --card-border-base    → viền bạc mờ (1.5px)
+      — --card-border-hover   → viền bạc sáng hơn (1.5px)
+      — --card-border-active  → viền bạc sáng nhất (1.5px)
+
+   ✅ ĐÃ BỎ BADGE "NỔI BẬT"
+
+   Breakpoints: 1200 / 992 / 768 / 480
 ========================================================== */
 
 
@@ -25,7 +27,7 @@
         minmax(0, 1fr)
         minmax(0, 1fr);
 
-    gap: 20px;
+    gap: var(--space-lg);
 
     width: 100%;
 
@@ -56,14 +58,14 @@
 
     flex-direction: column;
 
-    gap: 14px;
+    gap: var(--space-md);
 
     height: 100%;
 }
 
 
 /* ==========================================================
-   4. CARD BASE — STYLE GIỐNG PROMOTION (nhẹ nhàng)
+   4. CARD BASE
 ========================================================== */
 
 .news-card {
@@ -80,26 +82,22 @@
 
     cursor: pointer;
 
-    background: rgba(255, 255, 255, 0.02);
+    background: rgba(255, 255, 255, 0.01);
+
+    border: var(--card-border-base);
+
+    border-radius: var(--radius-xl);
 
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-
-    border: 1px solid rgba(244, 246, 248, 0.12);
-
-    border-radius: var(--radius-xl);
 
     box-shadow:
         0 4px 20px rgba(0, 0, 0, 0.30),
         inset 0 1px 0 rgba(244, 246, 248, 0.05);
 
-    transition:
-        background 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-        border-color 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-        transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
-        box-shadow 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 
-    will-change: transform, box-shadow;
+    will-change: transform, background, border-color, box-shadow;
 
     backface-visibility: hidden;
 
@@ -110,37 +108,35 @@
 
 
 /* ==========================================================
-   5. CARD HOVER
+   HOVER CARD
 ========================================================== */
 
 .news-card:hover {
-    background: rgba(255, 255, 255, 0.035);
+    background: rgba(255, 255, 255, 0.03);
 
-    border-color: rgba(244, 246, 248, 0.28);
+    border: var(--card-border-hover);
 
-    transform: translate3d(0, -4px, 0) scale(1.008);
+    transform: translateY(-4px);
 
     box-shadow:
-        0 14px 40px rgba(0, 0, 0, 0.50),
-        0 0 0 1px rgba(244, 246, 248, 0.10),
-        inset 0 1px 0 rgba(244, 246, 248, 0.06);
+        0 20px 48px rgba(0, 0, 0, 0.50),
+        0 0 0 1px rgba(244, 246, 248, 0.12);
 }
 
 .news-card:active {
-    transform: translate3d(0, -1px, 0) scale(0.998);
-
+    border: var(--card-border-active);
+    transform: translateY(-1px) scale(0.998);
     transition-duration: 0.18s;
 }
 
 .news-card:focus-visible {
     outline: 2px solid var(--silver-light);
-
     outline-offset: 4px;
 }
 
 
 /* ==========================================================
-   6. IMAGE BASE
+   5. IMAGE BASE
 ========================================================== */
 
 .news-card__image {
@@ -166,16 +162,18 @@
     transform: scale(1);
 
     transition:
-        transform 0.9s cubic-bezier(0.22, 1, 0.36, 1),
-        opacity 0.7s ease,
-        filter 0.7s ease;
+        transform var(--transition-slow),
+        opacity var(--transition-normal),
+        filter var(--transition-normal);
 
     backface-visibility: hidden;
+
+    will-change: transform;
 }
 
 
 /* ==========================================================
-   7. FEATURED IMAGE — 16:9
+   6. FEATURED IMAGE — 16:9
 ========================================================== */
 
 .news-card--featured .news-card__image {
@@ -199,7 +197,7 @@
 
 
 /* ==========================================================
-   8. SMALL IMAGE — GIỮ 16:9
+   7. SMALL IMAGE — GIỮ 16:9
 ========================================================== */
 
 .news-card--small .news-card__image {
@@ -223,11 +221,11 @@
 
 
 /* ==========================================================
-   9. IMAGE HOVER
+   HOVER HÌNH — CHỈ ẢNH ZOOM NHẸ 1.03
 ========================================================== */
 
-.news-card:hover .news-card__image img {
-    transform: scale(1.05);
+.news-card__image:hover img {
+    transform: scale(1.03);
 
     opacity: 1;
 
@@ -236,7 +234,7 @@
 
 
 /* ==========================================================
-   10. IMAGE GRADIENT
+   9. IMAGE GRADIENT
 ========================================================== */
 
 .news-card__gradient {
@@ -267,7 +265,7 @@
 
 
 /* ==========================================================
-   11. FEATURED CARD
+   10. FEATURED CARD
 ========================================================== */
 
 .news-card--featured {
@@ -278,7 +276,7 @@
 
 
 /* ==========================================================
-   12. FEATURED CONTENT
+   11. FEATURED CONTENT
 ========================================================== */
 
 .news-card--featured .news-card__content {
@@ -286,13 +284,13 @@
 
     flex-direction: column;
 
-    gap: 9px;
+    gap: var(--space-sm);
 
     width: 100%;
 
     min-width: 0;
 
-    padding: 19px 22px 20px;
+    padding: var(--space-md) var(--space-lg) var(--space-lg);
 
     flex: 1;
 
@@ -301,7 +299,7 @@
 
 
 /* ==========================================================
-   13. SMALL CARD — HORIZONTAL
+   12. SMALL CARD — HORIZONTAL
 ========================================================== */
 
 .news-card--small {
@@ -320,8 +318,7 @@
 
 
 /* ==========================================================
-   14. SMALL CONTENT
-   — justify-content: flex-start để desc không bị đẩy xuống
+   13. SMALL CONTENT
 ========================================================== */
 
 .news-card--small .news-card__content {
@@ -329,11 +326,11 @@
 
     flex-direction: column;
 
-    justify-content: flex-start;   /* ← KHÔNG space-between */
+    justify-content: flex-start;
 
     align-items: stretch;
 
-    gap: 8px;
+    gap: var(--space-sm);
 
     min-width: 0;
 
@@ -341,12 +338,12 @@
 
     overflow: hidden;
 
-    padding: 18px 18px;
+    padding: var(--space-md);
 }
 
 
 /* ==========================================================
-   15. BODY WRAPPER (dùng cho cả featured lẫn small)
+   14. BODY WRAPPER
 ========================================================== */
 
 .news-card__body {
@@ -354,7 +351,7 @@
 
     flex-direction: column;
 
-    gap: 6px;
+    gap: var(--space-xs);
 
     min-width: 0;
 
@@ -367,7 +364,7 @@
 
 
 /* ==========================================================
-   16. META
+   15. META
 ========================================================== */
 
 .news-card__meta {
@@ -375,7 +372,7 @@
 
     align-items: center;
 
-    gap: 12px;
+    gap: var(--space-sm);
 
     flex-wrap: wrap;
 
@@ -387,7 +384,7 @@
 
     align-items: center;
 
-    gap: 5px;
+    gap: var(--space-xs);
 
     min-width: 0;
 
@@ -395,7 +392,7 @@
 
     font-family: var(--font-primary);
 
-    font-size: 0.6875rem;
+    font-size: var(--font-size-h6);
 
     font-weight: var(--fw-semibold);
 
@@ -418,7 +415,7 @@
 
 
 /* ==========================================================
-   17. TITLE
+   16. TITLE
 ========================================================== */
 
 .news-card__title {
@@ -463,18 +460,18 @@
 
 
 /* ==========================================================
-   18. FEATURED TITLE
+   17. FEATURED TITLE
 ========================================================== */
 
 .news-card--featured .news-card__title {
-    font-size: 1.25rem;
+    font-size: var(--font-size-h3);
 
     -webkit-line-clamp: 2;
 }
 
 
 /* ==========================================================
-   19. DESCRIPTION — 2 DÒNG
+   18. DESCRIPTION — 2 DÒNG
 ========================================================== */
 
 .news-card__desc {
@@ -484,9 +481,9 @@
 
     font-family: var(--font-primary);
 
-    font-size: 0.8125rem;
+    font-size: var(--font-size-h6);
 
-    font-weight: 300;
+    font-weight: var(--fw-regular);
 
     line-height: 1.55;
 
@@ -509,11 +506,11 @@
 
 
 /* ==========================================================
-   20. SMALL DESCRIPTION — 2 DÒNG
+   19. SMALL DESCRIPTION — 2 DÒNG
 ========================================================== */
 
 .news-card--small .news-card__desc {
-    font-size: 0.75rem;
+    font-size: var(--font-size-h6);
 
     line-height: 1.5;
 
@@ -521,13 +518,12 @@
 
     margin-top: 2px;
 
-    /* 👇 Quan trọng: không cho desc bị co khi card bị ép cao */
     flex-shrink: 0;
 }
 
 
 /* ==========================================================
-   21. READ MORE — GIỐNG PROMOTION LINK
+   20. READ MORE — GIỐNG PROMOTION LINK
 ========================================================== */
 
 .btn-news-action {
@@ -536,13 +532,13 @@
     align-items: center;
     justify-content: center;
 
-    gap: 8px;
+    gap: var(--space-sm);
 
     width: fit-content;
 
     flex-shrink: 0;
 
-    margin-top: auto;              /* ← đẩy nút xuống đáy */
+    margin-top: auto;
 
     padding: 0;
 
@@ -556,7 +552,7 @@
 
     font-family: var(--font-primary);
 
-    font-size: 0.75rem;
+    font-size: var(--font-size-h6);
 
     font-weight: var(--fw-bold);
 
@@ -601,7 +597,7 @@
 
     transform: none;
 
-    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: transform var(--transition-normal);
 }
 
 .btn-news-action:hover .btn-news-action__icon,
@@ -611,22 +607,22 @@
 
 
 /* ==========================================================
-   22. FEATURED BUTTON
+   21. FEATURED BUTTON
 ========================================================== */
 
 .news-card--featured .btn-news-action {
-    margin-top: 4px;
+    margin-top: auto;
 }
 
 
 /* ==========================================================
-   23. SMALL BUTTON
+   22. SMALL BUTTON
 ========================================================== */
 
 .news-card--small .btn-news-action {
-    margin-top: auto;              /* ← đẩy nút xuống đáy */
+    margin-top: auto;
 
-    font-size: 0.6875rem;
+    font-size: var(--font-size-h6);
 
     flex-shrink: 0;
 }
@@ -638,87 +634,31 @@
 
 
 /* ==========================================================
-   24. BADGE
+   23. TABLET — <= 1200px
 ========================================================== */
 
-.news-card__badge {
-    position: absolute;
-
-    top: 12px;
-    right: 12px;
-
-    z-index: 6;
-
-    display: inline-flex;
-
-    align-items: center;
-    justify-content: center;
-
-    gap: 5px;
-
-    padding: 5px 11px;
-
-    border-radius: var(--radius-round);
-
-    color: var(--badge-news-color, #07111e);
-
-    background: var(--badge-news-bg,
-        linear-gradient(135deg, #A6C1D9 0%, #738FA9 100%));
-
-    font-family: var(--font-primary);
-
-    font-size: 0.625rem;
-
-    font-weight: var(--fw-bold);
-
-    line-height: 1.4;
-
-    letter-spacing: 0.05em;
-
-    text-transform: uppercase;
-
-    box-shadow: 0 2px 12px rgba(166, 193, 217, 0.25);
-
-    white-space: nowrap;
-
-    transition:
-        transform var(--transition-normal),
-        box-shadow var(--transition-normal);
-}
-
-.news-card:hover .news-card__badge {
-    transform: translate3d(0, -1px, 0);
-
-    box-shadow: 0 3px 10px rgba(166, 193, 217, 0.28);
-}
-
-
-/* ==========================================================
-   25. TABLET — <= 1100px
-========================================================== */
-
-@media (max-width: 1100px) {
+@media (max-width: 1200px) {
 
     .news-magazine-layout {
-        gap: 16px;
+        gap: var(--space-lg);
     }
 
     .news-magazine-layout__side {
-        gap: 12px;
+        gap: var(--space-md);
     }
 
     .news-card--featured .news-card__content {
-        padding: 16px 18px 18px;
+        padding: var(--space-md) var(--space-lg);
 
-        gap: 8px;
+        gap: var(--space-sm);
     }
 
     .news-card--featured .news-card__title {
-        font-size: 1.1rem;
+        font-size: var(--font-size-h4);
     }
 
     .news-card--featured .news-card__desc {
-        font-size: 0.77rem;
+        font-size: var(--font-size-h6);
     }
 
     .news-card--small {
@@ -728,27 +668,69 @@
     }
 
     .news-card--small .news-card__content {
-        padding: 14px 15px;
+        padding: var(--space-md);
 
-        gap: 7px;
+        gap: var(--space-sm);
     }
 
     .news-card--small .news-card__title {
-        font-size: 0.875rem;
+        font-size: var(--font-size-h6);
     }
 
     .news-card--small .news-card__desc {
-        font-size: 0.72rem;
-    }
-
-    .news-card--small .news-card__meta-item {
-        font-size: 0.625rem;
+        font-size: var(--font-size-h6);
     }
 }
 
 
 /* ==========================================================
-   26. MOBILE — <= 768px
+   24. TABLET NHỎ — <= 992px
+========================================================== */
+
+@media (max-width: 992px) {
+
+    .news-magazine-layout {
+        gap: var(--space-md);
+    }
+
+    .news-magazine-layout__side {
+        gap: var(--space-sm);
+    }
+
+    .news-card--featured .news-card__content {
+        padding: var(--space-md);
+    }
+
+    .news-card--featured .news-card__title {
+        font-size: var(--font-size-h4);
+    }
+
+    .news-card--small {
+        grid-template-columns:
+            minmax(0, 42%)
+            minmax(0, 58%);
+    }
+
+    .news-card--small .news-card__content {
+        padding: var(--space-sm) var(--space-md);
+
+        gap: var(--space-xs);
+    }
+
+    .news-card--small .news-card__title {
+        font-size: var(--font-size-h6);
+    }
+
+    .news-card--small .news-card__desc {
+        font-size: var(--font-size-h6);
+
+        -webkit-line-clamp: 2;
+    }
+}
+
+
+/* ==========================================================
+   25. MOBILE — <= 768px
 ========================================================== */
 
 @media (max-width: 768px) {
@@ -756,13 +738,13 @@
     .news-magazine-layout {
         grid-template-columns: 1fr;
 
-        gap: 16px;
+        gap: var(--space-md);
 
         align-items: start;
     }
 
     .news-magazine-layout__side {
-        gap: 14px;
+        gap: var(--space-md);
 
         height: auto;
     }
@@ -772,17 +754,17 @@
     }
 
     .news-card--featured .news-card__content {
-        padding: 16px 16px 18px;
+        padding: var(--space-md);
 
         flex: initial;
     }
 
     .news-card--featured .news-card__title {
-        font-size: 1.05rem;
+        font-size: var(--font-size-h4);
     }
 
     .news-card--featured .news-card__desc {
-        font-size: 0.78rem;
+        font-size: var(--font-size-h6);
 
         -webkit-line-clamp: 3;
     }
@@ -798,53 +780,51 @@
     }
 
     .news-card--small .news-card__content {
-        padding: 14px 15px;
+        padding: var(--space-sm) var(--space-md);
 
-        gap: 7px;
+        gap: var(--space-sm);
 
         justify-content: center;
     }
 
     .news-card--small .news-card__title {
-        font-size: 0.9rem;
+        font-size: var(--font-size-h6);
     }
 
     .news-card--small .news-card__desc {
-        font-size: 0.72rem;
-    }
+        font-size: var(--font-size-h6);
 
-    .news-card:hover {
-        transform: translate3d(0, -2px, 0) scale(1);
+        -webkit-line-clamp: 2;
     }
 }
 
 
 /* ==========================================================
-   27. SMALL MOBILE — <= 560px
+   26. SMALL MOBILE — <= 480px
 ========================================================== */
 
-@media (max-width: 560px) {
+@media (max-width: 480px) {
 
     .news-magazine-layout {
-        gap: 14px;
+        gap: var(--space-sm);
     }
 
     .news-magazine-layout__side {
-        gap: 12px;
+        gap: var(--space-sm);
     }
 
     .news-card--featured .news-card__content {
-        padding: 14px 15px 16px;
+        padding: var(--space-sm) var(--space-md);
 
-        gap: 7px;
+        gap: var(--space-sm);
     }
 
     .news-card--featured .news-card__title {
-        font-size: 1rem;
+        font-size: var(--font-size-h5);
     }
 
     .news-card--featured .news-card__desc {
-        font-size: 0.75rem;
+        font-size: var(--font-size-h6);
 
         line-height: 1.5;
     }
@@ -856,74 +836,33 @@
     }
 
     .news-card--small .news-card__content {
-        padding: 12px 13px;
+        padding: var(--space-sm);
 
-        gap: 6px;
+        gap: var(--space-xs);
     }
 
     .news-card--small .news-card__title {
-        font-size: 0.82rem;
+        font-size: var(--font-size-h6);
     }
 
     .news-card--small .news-card__meta-item {
-        font-size: 0.58rem;
+        font-size: var(--font-size-h6);
     }
 
     .news-card--small .news-card__desc {
-        font-size: 0.68rem;
+        font-size: var(--font-size-h6);
 
         line-height: 1.45;
+
+        -webkit-line-clamp: 2;
     }
 
     .news-card--small .btn-news-action {
-        font-size: 0.63rem;
+        font-size: var(--font-size-h6);
     }
 
     .news-card--small .btn-news-action__icon {
         width: 14px;
         height: 14px;
-    }
-
-    .news-card__badge {
-        top: 9px;
-        right: 9px;
-
-        padding: 4px 9px;
-
-        font-size: 0.56rem;
-    }
-}
-
-
-/* ==========================================================
-   28. VERY SMALL MOBILE — <= 400px
-========================================================== */
-
-@media (max-width: 400px) {
-
-    .news-card--small {
-        grid-template-columns:
-            minmax(0, 38%)
-            minmax(0, 62%);
-    }
-
-    .news-card--small .news-card__content {
-        padding: 10px 11px;
-    }
-
-    .news-card--small .news-card__title {
-        font-size: 0.78rem;
-    }
-
-    .news-card--small .news-card__meta-item {
-        font-size: 0.55rem;
-    }
-
-    .news-card--small .news-card__desc {
-        font-size: 0.65rem;
-    }
-
-    .news-card--small .btn-news-action {
-        font-size: 0.59rem;
     }
 }

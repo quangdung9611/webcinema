@@ -8,8 +8,7 @@ const PromotionCard = ({
     image,
     title,
     text,
-    tag = "Khuyến mãi",
-    index = 0,          // 👈 THÊM PROP index
+    index = 0,
     onClick,
 }) => {
     const navigate = useNavigate();
@@ -21,16 +20,12 @@ const PromotionCard = ({
 
     return (
         <div
-            className="promotion-card card-animated"        // 👈 THÊM class
-            style={{ '--card-index': index }}              // 👈 THÊM style
+            className="promotion-card card-animated"
+            style={{ '--card-index': index }}
             onClick={handleNavigate}
         >
             <div className="promotion-card__image">
                 <div className="promotion-card__gradient" />
-
-                <div className="promotion-card__tag">
-                    {tag}
-                </div>
 
                 <img
                     src={image}

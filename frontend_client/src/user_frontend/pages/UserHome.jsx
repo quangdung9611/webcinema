@@ -783,7 +783,7 @@ const UserHome = () => {
 
       <div className="user-home">
 
-        <HeroBanner videoSrc="/vutru_video.mp4" />
+        <HeroBanner videoSrc="/movietheater_video.mp4" />
 
         {/* ==================================================
             QUICK BOOKING
@@ -882,7 +882,7 @@ const UserHome = () => {
         <div className="home-container">
 
           {/* ==================================================
-              FEATURES
+              FEATURES — Card xuất hiện lần lượt
           ================================================== */}
 
           <section className="home-features-section">
@@ -898,7 +898,7 @@ const UserHome = () => {
                   key={index}
                   direction="up"
                   duration={0.7}
-                  delay={0.3 + index * 0.08}
+                  delay={0.15 + index * 0.1}
                   once
                 >
                   <div className="feature-item">
@@ -924,12 +924,12 @@ const UserHome = () => {
           <StatsSection />
 
           {/* ==================================================
-              TESTIMONIALS
+              TESTIMONIALS — Card xuất hiện lần lượt
           ================================================== */}
 
-          <ScrollReveal direction="up" delay={0.35} once>
-            <section className="testimonials-section">
+          <section className="testimonials-section">
 
+            <ScrollReveal direction="up" delay={0.1} once>
               <div className="testimonials-header">
                 <div className="testimonials-title-group">
                   <Quote size={32} className="testimonials-icon" />
@@ -952,25 +952,29 @@ const UserHome = () => {
                   Gửi đánh giá
                 </button>
               </div>
+            </ScrollReveal>
 
-              <div className="testimonials-grid">
+            <div className="testimonials-grid">
 
-                {testimonials.length > 0 ? (
-                  testimonials.map((item, index) => {
-                    const avatarUrl = item.customer_avatar
-                      ? item.customer_avatar.startsWith('http')
-                        ? item.customer_avatar
-                        : `https://api.quangdungcinema.id.vn/uploads/avatars/${item.customer_avatar}`
-                      : `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                          item.customer_name || 'User'
-                        )}&background=random&size=80&color=fff&bold=true`;
+              {testimonials.length > 0 ? (
+                testimonials.map((item, index) => {
+                  const avatarUrl = item.customer_avatar
+                    ? item.customer_avatar.startsWith('http')
+                      ? item.customer_avatar
+                      : `https://api.quangdungcinema.id.vn/uploads/avatars/${item.customer_avatar}`
+                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                        item.customer_name || 'User'
+                      )}&background=random&size=80&color=fff&bold=true`;
 
-                    return (
-                      <div
-                        key={item.testimonial_id || index}
-                        className="testimonial-card card-animated"
-                        style={{ '--card-index': index }}
-                      >
+                  return (
+                    <ScrollReveal
+                      key={item.testimonial_id || index}
+                      direction="up"
+                      delay={0.2 + index * 0.1}
+                      duration={0.7}
+                      once
+                    >
+                      <div className="testimonial-card">
                         <div className="testimonial-header">
                           <div className="testimonial-avatar">
                             <img
@@ -999,17 +1003,17 @@ const UserHome = () => {
                           <span>{formatDate(item.created_at)}</span>
                         </div>
                       </div>
-                    );
-                  })
-                ) : (
-                  <div className="testimonials-empty">
-                    <p>Chưa có đánh giá nào.</p>
-                  </div>
-                )}
+                    </ScrollReveal>
+                  );
+                })
+              ) : (
+                <div className="testimonials-empty">
+                  <p>Chưa có đánh giá nào.</p>
+                </div>
+              )}
 
-              </div>
-            </section>
-          </ScrollReveal>
+            </div>
+          </section>
 
           {/* ==================================================
               MOVIES
@@ -1028,13 +1032,12 @@ const UserHome = () => {
           </ScrollReveal>
 
           {/* ==================================================
-              PROMOTIONS — 3 card hàng ngang
-              Bỏ ScrollReveal bọc từng card, dùng CSS animation
+              PROMOTIONS — Card xuất hiện lần lượt
           ================================================== */}
 
-          <ScrollReveal direction="up" delay={0.5} once>
-            <section className="promotions-section">
+          <section className="promotions-section">
 
+            <ScrollReveal direction="up" delay={0.1} once>
               <div className="section-header">
                 <div className="section-header-left">
                   <h3 className="section-title">
@@ -1051,33 +1054,40 @@ const UserHome = () => {
                   <ChevronRight size={18} />
                 </button>
               </div>
+            </ScrollReveal>
 
-              <div className="promotion-grid">
+            <div className="promotion-grid">
 
-                {promotions?.slice(0, 3).map((promo, index) => {
-                  const imageField =
-                    promo.promotion_backdrop ||
-                    promo.promotion_image ||
-                    promo.image_url;
+              {promotions?.slice(0, 3).map((promo, index) => {
+                const imageField =
+                  promo.promotion_backdrop ||
+                  promo.promotion_image ||
+                  promo.image_url;
 
-                  const imageUrl = getImageUrl(
-                    imageField,
-                    'https://api.quangdungcinema.id.vn/uploads/promotions/'
-                  );
+                const imageUrl = getImageUrl(
+                  imageField,
+                  'https://api.quangdungcinema.id.vn/uploads/promotions/'
+                );
 
-                  const cleanText = String(promo.description || '')
-                    .replace(/<[^>]*>/g, '')
-                    .replace(/&nbsp;/g, ' ')
-                    .trim();
+                const cleanText = String(promo.description || '')
+                  .replace(/<[^>]*>/g, '')
+                  .replace(/&nbsp;/g, ' ')
+                  .trim();
 
-                  const shortText =
-                    cleanText.length > 120
-                      ? `${cleanText.slice(0, 120)}...`
-                      : cleanText;
+                const shortText =
+                  cleanText.length > 120
+                    ? `${cleanText.slice(0, 120)}...`
+                    : cleanText;
 
-                  return (
+                return (
+                  <ScrollReveal
+                    key={promo.promotion_id}
+                    direction="up"
+                    delay={0.25 + index * 0.12}
+                    duration={0.8}
+                    once
+                  >
                     <PromotionCard
-                      key={promo.promotion_id}
                       slug={promo.slug}
                       image={imageUrl}
                       title={promo.title}
@@ -1085,20 +1095,20 @@ const UserHome = () => {
                       tag="Khuyến mãi"
                       index={index}
                     />
-                  );
-                })}
+                  </ScrollReveal>
+                );
+              })}
 
-              </div>
-            </section>
-          </ScrollReveal>
+            </div>
+          </section>
 
           {/* ==================================================
-              BLOG CINEMA — Magazine 60/40
+              BLOG CINEMA
           ================================================== */}
 
-          <ScrollReveal direction="up" delay={0.7} once>
-            <section className="cinema-corner-section">
+          <section className="cinema-corner-section">
 
+            <ScrollReveal direction="up" delay={0.1} once>
               <div className="section-header">
                 <div className="section-header-left">
                   <h3 className="section-title">
@@ -1115,8 +1125,15 @@ const UserHome = () => {
                   <ChevronRight size={18} />
                 </button>
               </div>
+            </ScrollReveal>
 
-              {cinemaNews?.length > 0 && (
+            {cinemaNews?.length > 0 && (
+              <ScrollReveal
+                direction="up"
+                delay={0.25}
+                duration={0.8}
+                once
+              >
                 <BlogCinemaCard
                   blogs={cinemaNews.slice(0, 4).map((item) => ({
                     blog_id: item.blog_id,
@@ -1128,18 +1145,18 @@ const UserHome = () => {
                     blog_backdrop: item.blog_backdrop,
                   }))}
                 />
-              )}
+              </ScrollReveal>
+            )}
 
-            </section>
-          </ScrollReveal>
+          </section>
 
           {/* ==================================================
-              NEWS — Magazine 40/60
+              NEWS
           ================================================== */}
 
-          <ScrollReveal direction="up" delay={0.85} once>
-            <section className="news-section">
+          <section className="news-section">
 
+            <ScrollReveal direction="up" delay={0.1} once>
               <div className="section-header">
                 <div className="section-header-left">
                   <h3 className="section-title">
@@ -1156,8 +1173,15 @@ const UserHome = () => {
                   <ChevronRight size={18} />
                 </button>
               </div>
+            </ScrollReveal>
 
-              {newsItems?.length > 0 && (
+            {newsItems?.length > 0 && (
+              <ScrollReveal
+                direction="up"
+                delay={0.25}
+                duration={0.8}
+                once
+              >
                 <NewsCard
                   news={newsItems.slice(0, 4).map((item) => ({
                     news_id: item.news_id,
@@ -1169,19 +1193,18 @@ const UserHome = () => {
                     news_backdrop: item.news_backdrop,
                   }))}
                 />
-              )}
+              </ScrollReveal>
+            )}
 
-            </section>
-          </ScrollReveal>
+          </section>
 
           {/* ==================================================
-              CINEMAS — 4 card hàng ngang
-              Bỏ ScrollReveal bọc từng card
+              CINEMAS — Card xuất hiện lần lượt
           ================================================== */}
 
-          <ScrollReveal direction="up" delay={0.9} once>
-            <section className="cinema-section">
+          <section className="cinema-section">
 
+            <ScrollReveal direction="up" delay={0.1} once>
               <div className="section-header">
                 <div className="section-header-left">
                   <h3 className="section-title">
@@ -1198,17 +1221,24 @@ const UserHome = () => {
                   <ChevronRight size={18} />
                 </button>
               </div>
+            </ScrollReveal>
 
-              <div className="cinema-grid">
+            <div className="cinema-grid">
 
-                {cinemas.slice(0, 4).map((cinema, index) => {
-                  const backdropUrl = cinema.cinema_backdrop
-                    ? getBackdropUrl(cinema.cinema_backdrop)
-                    : null;
+              {cinemas.slice(0, 4).map((cinema, index) => {
+                const backdropUrl = cinema.cinema_backdrop
+                  ? getBackdropUrl(cinema.cinema_backdrop)
+                  : null;
 
-                  return (
+                return (
+                  <ScrollReveal
+                    key={cinema.cinema_id}
+                    direction="up"
+                    delay={0.25 + index * 0.12}
+                    duration={0.8}
+                    once
+                  >
                     <CinemaCard
-                      key={cinema.cinema_id}
                       type="cinema"
                       detailType="cinema"
                       slug={cinema.slug}
@@ -1220,12 +1250,12 @@ const UserHome = () => {
                       mapLink={cinema.map_link}
                       index={index}
                     />
-                  );
-                })}
+                  </ScrollReveal>
+                );
+              })}
 
-              </div>
-            </section>
-          </ScrollReveal> 
+            </div>
+          </section>
 
         </div>
       </div>

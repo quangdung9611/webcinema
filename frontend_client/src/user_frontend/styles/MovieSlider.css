@@ -1,8 +1,17 @@
 /* ==========================================================
    MOVIE SLIDER PAGE – TABS + SLIDER GRID
-   SMOOTH EDITION — hover mềm mại như card mẫu
-   ========================================================== */
+   SMOOTH EDITION — hover nhẹ nhàng theo index.css
+   ----------------------------------------------------------
+   ✅ Dùng 100% biến var() từ index.css
+   ✅ Hover chỉ lift -1px, không scale, không filter
+   ✅ Transition ngắn (var(--transition-fast/normal))
+   ✅ Đồng bộ với CinemaCard / PromotionCard
+========================================================== */
 
+
+/* ==========================================================
+   1. PAGE WRAPPER
+========================================================== */
 .movie-slider-page {
     width: 100%;
     max-width: 1400px;
@@ -10,9 +19,10 @@
     padding: var(--space-2xl) var(--space-lg);
 }
 
+
 /* ==========================================================
-   TABS (giống FilmGenre)
-   ========================================================== */
+   2. GENRE TABS
+========================================================== */
 .genre-tabs {
     display: flex;
     flex-wrap: wrap;
@@ -22,39 +32,43 @@
 
 .genre-tab {
     cursor: pointer;
+
     padding: var(--space-sm) var(--space-lg);
+
     border-radius: var(--radius-round);
     background: transparent;
+
     color: var(--text-secondary);
     border: var(--border-premium);
+
+    font-family: var(--font-primary);
     font-size: var(--font-size-base);
     font-weight: var(--fw-medium);
-    font-family: var(--font-primary);
     letter-spacing: 0.01em;
     white-space: nowrap;
 
-    /* Transition mềm, easing mới */
+    /* ✅ Transition ngắn, mượt */
     transition:
-        color 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-        background 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-        border-color 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-        box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-        transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+        color var(--transition-fast),
+        background var(--transition-fast),
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast),
+        transform var(--transition-fast);
 
     will-change: transform;
-    transform: translate3d(0, 0, 0) scale(1);
     backface-visibility: hidden;
 }
 
+/* ✅ Hover nhẹ — chỉ lift -1px, không scale */
 .genre-tab:hover {
-    /* Nhẹ hơn: lift -1px, scale 1.008 */
-    transform: translate3d(0, -1px, 0) scale(1.008);
+    transform: translateY(-1px);
     color: var(--text-body);
     border-color: rgba(245, 245, 246, 0.28);
     background: rgba(245, 245, 246, 0.035);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
+/* Active tab — nền bạc */
 .genre-tab.active {
     color: var(--bg-primary);
     background: var(--premium-gradient);
@@ -64,38 +78,40 @@
 }
 
 .genre-tab.active:hover {
-    transform: translate3d(0, -1px, 0) scale(1.008);
+    transform: translateY(-1px);
+    filter: brightness(1.04);
     box-shadow:
         var(--btn-silver-shadow),
         0 4px 14px rgba(245, 245, 246, 0.12);
-    filter: brightness(1.04);
 }
 
 .genre-tab:active {
-    transform: translate3d(0, 0, 0) scale(0.998);
-    transition-duration: 0.18s;
+    transform: translateY(0) scale(0.998);
+    transition-duration: 0.15s;
 }
 
+
 /* ==========================================================
-   SLIDER GROUP (mỗi status)
-   ========================================================== */
+   3. SLIDER GROUP
+========================================================== */
 .movie-slider-group {
-    margin-bottom: 60px;
+    margin-bottom: var(--space-3xl);
 }
 
 .movie-slider-group:last-child {
     margin-bottom: 0;
 }
 
+
 /* ==========================================================
-   HEADER
-   ========================================================== */
+   4. HEADER
+========================================================== */
 .movie-slider-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--space-lg, 20px);
-    margin-bottom: var(--space-xl, 30px);
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
     flex-wrap: wrap;
 }
 
@@ -110,14 +126,17 @@
     display: inline-flex;
     align-items: center;
     gap: var(--space-md);
+
     margin: 0;
-    color: var(--silver-primary) !important;
-    font-family: var(--font-heading, inherit);
-    font-size: var(--font-size-h2, 2.2rem);
-    font-weight: var(--fw-extrabold, 900);
+
+    color: var(--silver-primary);
+    font-family: var(--font-heading);
+    font-size: var(--font-size-h2);
+    font-weight: var(--fw-extrabold);
     line-height: 1.1;
     text-transform: uppercase;
     letter-spacing: 0.02em;
+
     transition: color var(--transition-normal);
 }
 
@@ -128,201 +147,222 @@
 }
 
 .movie-slider-group:hover .section-title {
-    color: var(--silver-light) !important;
+    color: var(--silver-light);
 }
 
 .movie-slider-group:hover .section-icon {
     color: var(--silver-light);
 }
 
+
 /* ==========================================================
-   NÚT XEM TẤT CẢ — mềm mại như btn-silver
-   ========================================================== */
+   5. NÚT XEM TẤT CẢ
+========================================================== */
 .btn-view-all {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-sm, 8px);
+    gap: var(--space-sm);
+
     flex-shrink: 0;
+
     padding: 10px 24px;
-    border: var(--border-ice, 1px solid rgba(255, 255, 255, 0.15));
-    border-radius: var(--radius-round, 999px);
+
+    border: var(--border-ice);
+    border-radius: var(--radius-round);
+
     background: transparent;
-    color: var(--text-body, #e0e0e0);
-    font-size: var(--font-size-base, 1rem);
-    font-weight: var(--fw-semibold, 600);
+    color: var(--text-body);
+
     font-family: var(--font-primary);
-    cursor: pointer;
-    text-transform: uppercase;
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-semibold);
     letter-spacing: 0.04em;
+    text-transform: uppercase;
     white-space: nowrap;
 
-    /* Transition mềm */
+    cursor: pointer;
+
+    /* ✅ Transition ngắn, mượt */
     transition:
-        color 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-        background 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-        border-color 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-        box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-        transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-        filter 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+        color var(--transition-fast),
+        background var(--transition-fast),
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast),
+        transform var(--transition-fast),
+        filter var(--transition-fast);
 
     will-change: transform;
-    transform: translate3d(0, 0, 0) scale(1);
     backface-visibility: hidden;
 }
 
+/* ✅ Hover nhẹ — lift -1px, không scale */
 .btn-view-all:hover {
-    /* Nhẹ hơn: lift -1px, scale 1.008 */
-    transform: translate3d(0, -1px, 0) scale(1.008);
+    transform: translateY(-1px);
     border-color: transparent;
-    background: var(--premium-gradient, linear-gradient(90deg, #e8e8e8, #b0b0b0));
-    color: var(--bg-primary, #0a0a0a);
-    box-shadow: 0 6px 18px rgba(232, 232, 232, 0.16);
+    background: var(--premium-gradient);
+    color: var(--bg-primary);
+    box-shadow: 0 4px 14px rgba(232, 232, 232, 0.14);
     filter: brightness(1.03);
 }
 
 .btn-view-all:active {
-    transform: translate3d(0, 0, 0) scale(0.998);
-    transition-duration: 0.18s;
+    transform: translateY(0) scale(0.998);
+    transition-duration: 0.15s;
 }
 
 .btn-view-all svg {
-    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: transform var(--transition-fast);
 }
 
 .btn-view-all:hover svg {
-    /* Nhẹ hơn: dịch 2px thay vì 3px */
+    /* ✅ Dịch 2px nhẹ */
     transform: translateX(2px);
 }
 
+
 /* ==========================================================
-   GRID PHIM (4 CỘT)
-   ========================================================== */
+   6. GRID PHIM (4 CỘT)
+========================================================== */
 .movie-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
+    gap: var(--space-lg);
     margin-top: 0;
 }
 
+
 /* ==========================================================
-   LOADING & EMPTY
-   ========================================================== */
+   7. LOADING & EMPTY
+========================================================== */
 .loading-movies,
 .empty-movies {
     text-align: center;
     padding: var(--space-2xl) var(--space-lg);
+
     color: var(--text-muted);
+
+    font-family: var(--font-primary);
     font-size: var(--font-size-h5);
     font-weight: var(--fw-medium);
     letter-spacing: 0.02em;
 }
 
-/* ==========================================================
-   REDUCED MOTION
-   ========================================================== */
-@media (prefers-reduced-motion: reduce) {
-    .genre-tab,
-    .btn-view-all,
-    .btn-view-all svg,
-    .section-title,
-    .section-icon {
-        transition: none !important;
-    }
-    .genre-tab:hover,
-    .btn-view-all:hover,
-    .genre-tab.active:hover,
-    .btn-view-all:hover svg {
-        transform: none !important;
-    }
-}
+
 
 /* ==========================================================
-   RESPONSIVE
-   ========================================================== */
-
+   9. RESPONSIVE — 1200px
+========================================================== */
 @media (max-width: 1200px) {
     .movie-slider-page {
         padding: var(--space-xl) var(--space-lg);
     }
 }
 
+
+/* ==========================================================
+   10. RESPONSIVE — 992px
+========================================================== */
 @media (max-width: 992px) {
     .movie-slider-page {
         padding: var(--space-xl) var(--space-md);
     }
+
     .movie-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 16px;
+        gap: var(--space-md);
     }
+
     .section-title {
-        font-size: var(--font-size-h3, 1.8rem);
+        font-size: var(--font-size-h3);
     }
+
     .btn-view-all {
         padding: 8px 18px;
-        font-size: var(--font-size-h6, 0.9rem);
+        font-size: var(--font-size-h6);
     }
+
     .genre-tab {
         padding: var(--space-sm) var(--space-lg);
         font-size: var(--font-size-h6);
     }
 }
 
+
+/* ==========================================================
+   11. RESPONSIVE — 768px
+========================================================== */
 @media (max-width: 768px) {
     .movie-slider-page {
         padding: var(--space-lg) var(--space-md);
     }
+
     .movie-slider-group {
-        margin-bottom: 40px;
+        margin-bottom: var(--space-2xl);
     }
+
     .movie-grid {
-        gap: 12px;
+        gap: var(--space-sm);
     }
+
     .section-title {
-        font-size: var(--font-size-h4, 1.4rem);
+        font-size: var(--font-size-h4);
     }
+
     .btn-view-all {
         padding: 6px 14px;
-        font-size: var(--font-size-h6, 0.8rem);
+        font-size: var(--font-size-h6);
     }
+
     .genre-tabs {
         gap: var(--space-xs);
         margin-bottom: var(--space-xl);
     }
+
     .genre-tab {
         padding: var(--space-xs) var(--space-md);
         font-size: var(--font-size-h6);
     }
 
-    /* Mobile: hover chỉ lift nhẹ, bỏ scale */
+    /* ✅ Mobile: bỏ hẳn lift, chỉ đổi màu */
     .genre-tab:hover,
     .genre-tab.active:hover,
     .btn-view-all:hover {
-        transform: translate3d(0, -1px, 0) scale(1);
+        transform: none;
     }
 }
 
+
+/* ==========================================================
+   12. RESPONSIVE — 480px
+========================================================== */
 @media (max-width: 480px) {
     .movie-slider-page {
         padding: var(--space-lg) var(--space-sm);
     }
+
     .movie-slider-group {
-        margin-bottom: 30px;
+        margin-bottom: var(--space-xl);
     }
+
     .movie-grid {
-        gap: 8px;
+        gap: var(--space-sm);
     }
+
     .section-title {
-        font-size: var(--font-size-h5, 1.1rem);
+        font-size: var(--font-size-h5);
     }
+
     .btn-view-all {
         padding: 4px 12px;
         font-size: 0.7rem;
     }
+
     .genre-tabs {
         gap: var(--space-xs);
         margin-bottom: var(--space-lg);
     }
+
     .genre-tab {
         padding: var(--space-xs) var(--space-sm);
         font-size: var(--font-size-h6);

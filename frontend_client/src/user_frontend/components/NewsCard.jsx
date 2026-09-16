@@ -2,7 +2,6 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import {
     ArrowUpRight,
-    Newspaper,
     Eye,
     Calendar
 } from "lucide-react";
@@ -11,34 +10,7 @@ import "../styles/NewsCard.css";
 
 /* ==========================================================
    NEWS CARD — MAGAZINE 50/50
-
-   DESKTOP:
-
-   ┌──────────────────────────────┬──────────────────────────────┐
-   │                              │ ┌──────────┬───────────────┐ │
-   │                              │ │          │ TITLE         │ │
-   │         FEATURED             │ │  IMAGE   │ DATE          │ │
-   │                              │ │  16:9    │ XEM THÊM ↗    │ │
-   │         IMAGE 16:9           │ └──────────┴───────────────┘ │
-   │                              │ ┌──────────┬───────────────┐ │
-   │         CONTENT              │ │          │ TITLE         │ │
-   │                              │ │  IMAGE   │ DATE          │ │
-   │         XEM THÊM ↗           │ │  16:9    │ XEM THÊM ↗    │ │
-   │                              │ └──────────┴───────────────┘ │
-   │                              │ ┌──────────┬───────────────┐ │
-   │                              │ │          │ TITLE         │ │
-   │                              │ │  IMAGE   │ DATE          │ │
-   │                              │ │  16:9    │ XEM THÊM ↗    │ │
-   └──────────────────────────────┴─┴──────────┴───────────────┘
-
-   - Layout 50 / 50
-   - Featured bên trái
-   - 3 Small bên phải
-   - Small image GIỮ 16:9
-   - Không crop ảnh small
-   - 3 card phải có tổng chiều cao = card trái
-   - Hover NHẸ NHÀNG giống PROMOTION
-   - CẢ 2 CARD ĐỀU CÓ DESCRIPTION (từ field content)
+   ✅ ĐÃ BỎ BADGE "NỔI BẬT"
 ========================================================== */
 
 const getBackdropUrl = (backdrop) => {
@@ -103,11 +75,10 @@ const NewsCard = ({ news = [] }) => {
     };
 
     /* ======================================================
-       FEATURED CARD — description từ item.content
+       FEATURED CARD
     ====================================================== */
 
     const FeaturedCard = ({ item }) => {
-        // 👇 Featured dùng content với max 140 ký tự
         const excerpt = renderExcerpt(item.content, 140);
 
         return (
@@ -131,11 +102,6 @@ const NewsCard = ({ news = [] }) => {
                     />
 
                     <div className="news-card__gradient" />
-
-                    <span className="news-card__badge">
-                        <Newspaper size={12} />
-                        Nổi bật
-                    </span>
                 </div>
 
 
@@ -193,11 +159,10 @@ const NewsCard = ({ news = [] }) => {
     };
 
     /* ======================================================
-       SMALL CARD — description từ item.content
+       SMALL CARD
     ====================================================== */
 
     const SmallCard = ({ item }) => {
-        // 👇 Small dùng content với max 90 ký tự (2 dòng)
         const excerpt = renderExcerpt(item.content, 90);
 
         return (
@@ -279,14 +244,14 @@ const NewsCard = ({ news = [] }) => {
     return (
         <div className="news-magazine-layout">
 
-            {/* LEFT — 50% (Featured) */}
+            {/* LEFT — Featured */}
 
             <div className="news-magazine-layout__featured">
                 <FeaturedCard item={featured} />
             </div>
 
 
-            {/* RIGHT — 50% (3 Small) */}
+            {/* RIGHT — 3 Small */}
 
             <div className="news-magazine-layout__side">
                 {rest.map((item, idx) => (

@@ -2,7 +2,6 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import {
     ArrowUpRight,
-    Newspaper,
     Eye,
     Calendar
 } from "lucide-react";
@@ -11,36 +10,7 @@ import "../styles/BlogCinemaCard.css";
 
 /* ==========================================================
    BLOG CINEMA CARD — MAGAZINE 50/50
-
-   DESKTOP:
-
-   ┌──────────────────────────────┬──────────────────────────────┐
-   │                              │ ┌──────────┬───────────────┐ │
-   │                              │ │          │ TITLE         │ │
-   │         FEATURED             │ │  IMAGE   │ DATE          │ │
-   │                              │ │  16:9    │ ĐỌC THÊM ↗    │ │
-   │         IMAGE 16:9           │ └──────────┴───────────────┘ │
-   │                              │ ┌──────────┬───────────────┐ │
-   │         CONTENT              │ │          │ TITLE         │ │
-   │                              │ │  IMAGE   │ DATE          │ │
-   │         ĐỌC THÊM ↗           │ │  16:9    │ ĐỌC THÊM ↗    │ │
-   │                              │ └──────────┴───────────────┘ │
-   │                              │ ┌──────────┬───────────────┐ │
-   │                              │ │          │ TITLE         │ │
-   │                              │ │  IMAGE   │ DATE          │ │
-   │                              │ │  16:9    │ ĐỌC THÊM ↗    │ │
-   └──────────────────────────────┴─┴──────────┴───────────────┘
-
-   - Layout 50 / 50
-   - Featured bên trái
-   - 3 Small bên phải
-   - Small card nằm ngang
-   - Small image GIỮ 16:9
-   - Không ép image full-height
-   - Không overlay CTA
-   - Đọc thêm nằm dưới content
-   - Hover + Nút giống Promotion
-   - Small card CÓ description 2 dòng giống featured
+   ✅ ĐÃ BỎ BADGE "NỔI BẬT"
 ========================================================== */
 
 
@@ -200,11 +170,6 @@ const BlogCinemaCard = ({ blogs = [] }) => {
                     />
 
                     <div className="blog-card__gradient" />
-
-                    <span className="blog-card__badge">
-                        <Newspaper size={12} />
-                        Nổi bật
-                    </span>
                 </div>
 
 
@@ -265,18 +230,9 @@ const BlogCinemaCard = ({ blogs = [] }) => {
 
     /* ======================================================
        SMALL CARD
-       — CÓ DESCRIPTION 2 DÒNG giống featured
-
-       QUAN TRỌNG:
-       Image luôn giữ tỷ lệ 16:9.
-
-       Không ép:
-       height: 100%
-       object-fit: cover
     ====================================================== */
 
     const SmallCard = ({ blog }) => {
-        // 👇 THÊM: render excerpt cho small card
         const excerpt = renderExcerpt(
             blog.description,
             90
@@ -335,7 +291,6 @@ const BlogCinemaCard = ({ blogs = [] }) => {
                         </div>
 
 
-                        {/* 👇 THÊM: description 2 dòng cho small card */}
                         {excerpt && (
                             <p className="blog-card__desc">
                                 {excerpt}

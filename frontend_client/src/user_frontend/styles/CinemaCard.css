@@ -1,107 +1,119 @@
 /* ==========================================================
-   CINEMA CARD – SILVER PREMIUM EDITION
-   HOVER: SCALE CARD 1.02 + SCALE HÌNH 1.08
+   CINEMA CARD — SILVER PREMIUM EDITION
+   ----------------------------------------------------------
+   ✅ Cấu trúc giống PromotionCard 100%
+   ✅ Giữ 2 aspect ratio: 2/3 (movie) + 3/2 (cinema)
+   ✅ Dùng 100% biến var() từ index.css
+   ✅ ĐÃ BỎ HOÀN TOÀN BADGE / LABEL
+   Breakpoints: 1200 / 992 / 768 / 480 / 360
 ========================================================== */
+
 
 /* ==========================================================
    1. CARD WRAPPER
 ========================================================== */
 .cinema-card {
-    position: relative;
+    display: flex;
+    flex-direction: column;
+
     width: 100%;
-    cursor: pointer;
-    border-radius: var(--radius-md);
+    height: 100%;
+
     overflow: hidden;
-    background: var(--bg-card);
-    border: var(--border-premium);
-    box-shadow: var(--glass-shadow);
 
-    /* 👇 BASE TRANSFORM — cần cho scale hover */
-    transform: translate3d(0, 0, 0) scale(1);
+    cursor: pointer;
+    position: relative;
 
-    transition:
-        transform var(--transition-normal),
-        box-shadow var(--transition-normal),
-        background var(--transition-normal),
-        border-color var(--transition-normal);
+    background: rgba(255, 255, 255, 0.01);
+
+    border: var(--card-border-base);
+    border-radius: var(--radius-xl);
+
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+
+    box-shadow:
+        0 4px 20px rgba(0, 0, 0, 0.30),
+        inset 0 1px 0 rgba(244, 246, 248, 0.05);
+
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+
+    will-change: transform, background, border-color, box-shadow;
 
     backface-visibility: hidden;
+    transform: translate3d(0, 0, 0) scale(1);
+
     -webkit-font-smoothing: antialiased;
 }
 
-/* ==========================================================
-   2. CARD HOVER — SCALE CARD 1.02
-========================================================== */
 .cinema-card:hover {
-    transform: translate3d(0, -6px, 0) scale(1.02);
-    border-color: var(--silver-primary);
+    background: rgba(255, 255, 255, 0.03);
+    border: var(--card-border-hover);
+    transform: translateY(-4px);
+
     box-shadow:
-        var(--card-shadow-hover),
-        0 0 0 1px rgba(244, 246, 248, 0.10);
-    background: var(--bg-elevated);
-    z-index: 2;   /* nổi lên trên card khác */
+        0 20px 48px rgba(0, 0, 0, 0.50),
+        0 0 0 1px rgba(244, 246, 248, 0.12);
 }
 
 .cinema-card:active {
-    transform: translate3d(0, -2px, 0) scale(0.99);
-    transition-duration: 0.15s;
+    border: var(--card-border-active);
+    transform: translateY(-1px) scale(0.998);
+    transition-duration: 0.18s;
 }
 
 .cinema-card:focus-visible {
     outline: 2px solid var(--silver-light);
     outline-offset: 4px;
-    border-color: var(--silver-light);
-    box-shadow:
-        0 0 0 4px rgba(245, 245, 246, 0.08),
-        var(--card-shadow-hover);
 }
 
-/* ==========================================================
-   3. CARD INNER
-========================================================== */
-.cinema-card-inner {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: 100%;
-    min-width: 0;
-}
 
 /* ==========================================================
-   4. POSTER IMAGE
+   2. IMAGE AREA
 ========================================================== */
-.cinema-card-image {
+.cinema-card__image {
     position: relative;
     width: 100%;
+
+    /* ✅ MẶC ĐỊNH 2:3 — POSTER DỌC */
+    aspect-ratio: 2 / 3;
+
+    flex-shrink: 0;
     overflow: hidden;
     background: var(--bg-secondary);
 }
 
-/* MOVIE: 2:3 (dọc) */
-.cinema-card.movie .cinema-card-image {
-    aspect-ratio: 2 / 3;
+/* ✅ Cinema → 3:2 ngang */
+.cinema-card--cinema .cinema-card__image {
+    aspect-ratio: 3 / 2;
 }
 
-/* CINEMA: 16:9 (ngang) */
-.cinema-card.cinema .cinema-card-image {
-    aspect-ratio: 16 / 9;
+@supports not (aspect-ratio: 2 / 3) {
+    .cinema-card__image {
+        height: 0;
+        padding-bottom: 150%;
+    }
+    .cinema-card--cinema .cinema-card__image {
+        padding-bottom: 66.6667%;
+    }
+    .cinema-card__image img {
+        position: absolute;
+        inset: 0;
+    }
 }
 
-/* ==========================================================
-   5. IMAGE — BASE
-========================================================== */
-.cinema-card-image img {
+.cinema-card__image img {
     width: 100%;
     height: 100%;
     display: block;
+
     object-fit: cover;
     object-position: center;
+
     opacity: 0.94;
-    transform: scale(1);
 
     transition:
-        transform 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+        transform var(--transition-slow),
         opacity var(--transition-normal),
         filter var(--transition-normal);
 
@@ -109,376 +121,398 @@
     backface-visibility: hidden;
 }
 
+
 /* ==========================================================
-   6. IMAGE HOVER — SCALE HÌNH 1.08
+   3. GRADIENT OVERLAY
 ========================================================== */
-.cinema-card:hover .cinema-card-image img {
-    transform: scale(1.08);
+.cinema-card__gradient {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+
+    background: linear-gradient(
+        to top,
+        rgba(7, 8, 10, 0.9) 0%,
+        rgba(7, 8, 10, 0.5) 40%,
+        transparent 80%
+    );
+
+    opacity: 0.85;
+    transition: opacity var(--transition-normal);
+}
+
+.cinema-card:hover .cinema-card__gradient {
+    opacity: 0.72;
+}
+
+
+/* ==========================================================
+   4. HOVER — ẢNH ZOOM
+========================================================== */
+.cinema-card__image:hover img {
+    transform: scale(1.05);
     opacity: 1;
     filter: brightness(1.05) contrast(1.02);
 }
 
-/* ==========================================================
-   7. BADGE
-========================================================== */
-.cinema-card-badge {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    z-index: 5;
-    margin: 0;
-    padding: 4px 14px;
-    border-radius: var(--radius-round);
-    font-family: var(--font-primary);
-    font-size: var(--font-size-h6);
-    font-weight: var(--fw-bold);
-    line-height: 1.4;
-    letter-spacing: 0.6px;
-    text-transform: uppercase;
-    color: var(--bg-primary);
-    background: var(--premium-gradient);
-    box-shadow: 0 2px 12px rgba(245, 245, 246, 0.12);
-    transition:
-        transform var(--transition-normal),
-        box-shadow var(--transition-normal);
-}
-
-.cinema-card:hover .cinema-card-badge {
-    transform: translate3d(0, -2px, 0);
-    box-shadow: 0 5px 18px rgba(245, 245, 246, 0.22);
-}
 
 /* ==========================================================
-   8. OVERLAY
+   5. CONTENT AREA
 ========================================================== */
-.cinema-card-overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 4;
+.cinema-card__content {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(180deg, rgba(5, 6, 7, 0.48), rgba(5, 6, 7, 0.82));
-    backdrop-filter: blur(0px);
-    -webkit-backdrop-filter: blur(0px);
-    opacity: 0;
-    transition:
-        opacity var(--transition-normal),
-        backdrop-filter var(--transition-normal);
-    pointer-events: none;
+    flex-direction: column;
+    justify-content: space-between;
+    flex: 1;
+    min-height: 0;
+
+    padding: var(--space-xl);
+
+    transition: background var(--transition-normal);
 }
 
-.cinema-card:hover .cinema-card-overlay {
-    opacity: 1;
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
-}
-
-/* ==========================================================
-   9. BUTTON XEM CHI TIẾT
-========================================================== */
-.btn-card-action {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    padding: 10px 21px;
-    border-radius: var(--radius-round);
-    border: none;
-    background: var(--premium-gradient);
-    color: var(--bg-primary);
-    font-family: var(--font-primary);
-    font-size: var(--font-size-h6);
-    font-weight: var(--fw-bold);
-    letter-spacing: 0.45px;
-    text-transform: uppercase;
-    box-shadow: var(--btn-silver-shadow);
-    opacity: 0;
-    transform: translate3d(0, 10px, 0) scale(0.94);
-    transition:
-        opacity var(--transition-normal),
-        transform var(--transition-normal),
-        box-shadow var(--transition-normal),
-        filter var(--transition-normal);
-    pointer-events: auto;
-    cursor: pointer;
-    white-space: nowrap;
-}
-
-.cinema-card:hover .btn-card-action {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-}
-
-.btn-card-action:hover {
-    transform: translate3d(0, -2px, 0) scale(1.045) !important;
-    filter: brightness(1.08);
-    box-shadow: 0 10px 28px rgba(245, 245, 246, 0.22);
-}
-
-/* ==========================================================
-   10. INFO
-========================================================== */
-.cinema-card-info {
-    padding: var(--space-md) var(--space-lg) var(--space-lg);
+.cinema-card__body {
     display: flex;
     flex-direction: column;
     gap: var(--space-xs);
+    margin-bottom: var(--space-md);
+    min-height: 0;
 }
 
+
 /* ==========================================================
-   11. MOVIE TITLE
+   6. TITLE
 ========================================================== */
-.cinema-card.movie .cinema-card-title {
-    width: 100%;
-    min-width: 0;
-    min-height: 54px;
-    max-height: 54px;
-    margin: 0;
-    padding: 13px 12px 14px;
+.cinema-card__title {
+    margin: 0 0 var(--space-sm) 0;
+
+    color: var(--text-heading);
+
+    font-family: var(--font-primary);
+    font-size: var(--font-size-h3);
+    font-weight: var(--fw-bold);
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+
+    overflow-wrap: anywhere;
+    word-break: break-word;
+
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
     overflow: hidden;
     text-overflow: ellipsis;
-    text-align: center;
-    color: var(--text-body);
-    background: transparent;
-    font-family: var(--font-primary);
-    font-size: var(--font-size-h5);
-    font-weight: var(--fw-bold);
-    line-height: 1.4;
-    letter-spacing: -0.01em;
-    overflow-wrap: anywhere;
-    word-break: break-word;
+
     transition:
         color var(--transition-normal),
         text-shadow var(--transition-normal);
 }
 
-/* ==========================================================
-   12. CINEMA TITLE
-========================================================== */
-.cinema-card.cinema .cinema-card-title {
-    width: 100%;
-    min-width: 0;
-    margin: 0 0 var(--space-xs) 0;
-    color: var(--text-heading);
-    font-family: var(--font-primary);
-    font-size: var(--font-size-h4);
-    font-weight: var(--fw-bold);
-    line-height: 1.3;
-    text-align: left;
-    overflow-wrap: anywhere;
-    word-break: break-word;
-    transition:
-        color var(--transition-normal),
-        text-shadow var(--transition-normal);
-}
-
-.cinema-card:hover .cinema-card-title {
+.cinema-card:hover .cinema-card__title {
     color: var(--silver-light);
-    text-shadow: 0 0 24px rgba(245, 245, 246, 0.12);
+    text-shadow: 0 0 16px rgba(244, 246, 248, 0.06);
 }
 
+
 /* ==========================================================
-   13. CINEMA EXTRA INFO
+   7. TEXT DESCRIPTION
 ========================================================== */
-.cinema-card-address,
-.cinema-card-hotline {
+.cinema-card__text {
+    margin: 0;
+
+    color: var(--text-secondary);
+
+    font-family: var(--font-primary);
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-regular);
+    line-height: 1.6;
+
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    transition: color var(--transition-normal);
+}
+
+.cinema-card:hover .cinema-card__text {
+    color: var(--text-body);
+}
+
+
+/* ==========================================================
+   8. ADDRESS / HOTLINE
+========================================================== */
+.cinema-card__address,
+.cinema-card__hotline {
     display: flex;
     align-items: center;
     gap: var(--space-xs);
+
     color: var(--text-secondary);
-    font-size: var(--font-size-base);
-    line-height: 1.4;
+
+    font-family: var(--font-primary);
+    font-size: var(--font-size-h6);
+    line-height: 1.5;
+
+    transition: color var(--transition-normal);
 }
 
-.cinema-card-address svg,
-.cinema-card-hotline svg {
+.cinema-card__address svg,
+.cinema-card__hotline svg {
     color: var(--silver-primary);
     flex-shrink: 0;
 }
 
-.cinema-card-map {
+.cinema-card:hover .cinema-card__address,
+.cinema-card:hover .cinema-card__hotline {
+    color: var(--text-body);
+}
+
+
+/* ==========================================================
+   9. FOOTER — LINK + MAP
+========================================================== */
+.cinema-card__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+}
+
+/* Link "Xem chi tiết" */
+.cinema-card__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+
+    width: fit-content;
+    flex-shrink: 0;
+
+    color: var(--silver-primary);
+
+    font-family: var(--font-primary);
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+
+    text-decoration: none;
+    cursor: pointer;
+
+    transition: color var(--transition-normal);
+}
+
+.cinema-card:hover .cinema-card__link {
+    color: var(--silver-light);
+}
+
+.cinema-card__link:hover {
+    color: var(--silver-bright);
+}
+
+.cinema-card__link-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    transition: transform var(--transition-normal);
+}
+
+.cinema-card__link:hover .cinema-card__link-icon,
+.cinema-card:hover .cinema-card__link-icon {
+    transform: translate(3px, -3px);
+}
+
+/* Link Google Maps */
+.cinema-card__map {
     display: inline-flex;
     align-items: center;
     gap: var(--space-xs);
-    margin-top: var(--space-xs);
-    color: var(--text-body);
-    font-size: var(--font-size-base);
+
+    color: var(--text-muted);
+
+    font-family: var(--font-primary);
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-semibold);
+    letter-spacing: 0.05em;
+
     text-decoration: none;
-    transition: all var(--transition-normal);
-    width: fit-content;
+    cursor: pointer;
+
+    transition:
+        color var(--transition-normal),
+        transform var(--transition-normal);
 }
 
-.cinema-card-map svg {
+.cinema-card__map svg {
     color: var(--silver-primary);
+    flex-shrink: 0;
 }
 
-.cinema-card-map:hover {
+.cinema-card__map:hover {
     color: var(--silver-light);
-    transform: translateX(4px);
+    transform: translateX(3px);
 }
+
 
 /* ==========================================================
-   14. FIX WRAPPER SCROLLREVEAL
-   Để hover scale hoạt động, wrapper phải không chặn transform
+   10. GRID ITEM
 ========================================================== */
 .cinema-grid > * {
-    display: contents;
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+}
+
+.cinema-grid > * > * {
+    flex: 1;
+    width: 100%;
 }
 
 /* ==========================================================
-   15. REDUCED MOTION
-========================================================== */
-@media (prefers-reduced-motion: reduce) {
-    .cinema-card,
-    .cinema-card-image img,
-    .cinema-card-overlay,
-    .btn-card-action,
-    .cinema-card-badge,
-    .cinema-card-title {
-        transition: none !important;
-    }
-    .cinema-card:hover,
-    .cinema-card:hover .cinema-card-image img,
-    .cinema-card:hover .cinema-card-title {
-        transform: none !important;
-    }
-}
-
-/* ==========================================================
-   16. RESPONSIVE - 1200px
+   12. RESPONSIVE — 1200px
 ========================================================== */
 @media (max-width: 1200px) {
-    .cinema-card.cinema .cinema-card-title {
-        font-size: var(--font-size-h5);
+    .cinema-card__content {
+        padding: var(--space-lg);
     }
-    .cinema-card-address,
-    .cinema-card-hotline,
-    .cinema-card-map {
-        font-size: var(--font-size-base);
+
+    .cinema-card__title {
+        font-size: var(--font-size-h4);
+    }
+
+    .cinema-card__link {
+        letter-spacing: 0.15em;
     }
 }
 
+
 /* ==========================================================
-   17. RESPONSIVE - 992px
+   13. RESPONSIVE — 992px
 ========================================================== */
 @media (max-width: 992px) {
-    .cinema-card.cinema .cinema-card-image {
-        aspect-ratio: 16 / 9;
+    .cinema-card__content {
+        padding: var(--space-md) var(--space-lg);
+    }
+
+    .cinema-card__title {
+        font-size: var(--font-size-h4);
+    }
+
+    .cinema-card__address,
+    .cinema-card__hotline,
+    .cinema-card__map {
+        font-size: calc(var(--font-size-h6) * 0.95);
+    }
+
+    .cinema-card__footer {
+        gap: var(--space-sm);
     }
 }
 
+
 /* ==========================================================
-   18. RESPONSIVE - 768px
+   14. RESPONSIVE — 768px
 ========================================================== */
 @media (max-width: 768px) {
-    .cinema-card:hover {
-        transform: translate3d(0, -5px, 0) scale(1.015);
-    }
-    .cinema-card:hover .cinema-card-image img {
-        transform: scale(1.05);
-    }
-
-    .cinema-card.movie .cinema-card-title {
-        min-height: 50px;
-        max-height: 50px;
-        padding: 10px 10px 11px;
-        font-size: calc(var(--font-size-h5) * 0.875);
-        line-height: 1.4;
-        letter-spacing: -0.005em;
-    }
-    .cinema-card-badge {
-        top: 8px;
-        right: 8px;
-        padding: 3px 10px;
-        font-size: calc(var(--font-size-h6) * 0.75);
-    }
-    .btn-card-action {
-        padding: 8px 16px;
-        font-size: calc(var(--font-size-h6) * 0.86);
-    }
-    .cinema-card.cinema .cinema-card-title {
-        font-size: var(--font-size-h5);
-    }
-    .cinema-card-info {
-        padding: var(--space-md);
-    }
-    .cinema-card-address,
-    .cinema-card-hotline,
-    .cinema-card-map {
-        font-size: var(--font-size-base);
-    }
-}
-
-/* ==========================================================
-   19. RESPONSIVE - 480px
-========================================================== */
-@media (max-width: 480px) {
-    .cinema-card:hover {
-        transform: translate3d(0, -3px, 0) scale(1.01);
-    }
-    .cinema-card:hover .cinema-card-image img {
+    .cinema-card__image:hover img {
         transform: scale(1.03);
     }
 
-    .cinema-card.movie .cinema-card-title {
-        min-height: 46px;
-        max-height: 46px;
-        padding: 8px 6px 9px;
-        font-size: calc(var(--font-size-h5) * 0.78);
-        line-height: 1.4;
-        letter-spacing: 0;
+    .cinema-card__content {
+        padding: var(--space-md);
     }
-    .cinema-card-badge {
-        top: 7px;
-        right: 7px;
-        padding: 2px 8px;
-        font-size: calc(var(--font-size-h6) * 0.686);
+
+    .cinema-card__title {
+        font-size: var(--font-size-h5);
+        -webkit-line-clamp: 2;
     }
-    .btn-card-action {
-        padding: 7px 13px;
-        font-size: calc(var(--font-size-h6) * 0.777);
-        gap: 5px;
+
+    .cinema-card__link {
+        font-size: calc(var(--font-size-h6) * 0.95);
+        letter-spacing: 0.12em;
+        gap: var(--space-xs);
     }
-    .cinema-card.cinema .cinema-card-title {
-        font-size: var(--font-size-h6);
+
+    .cinema-card__link-icon {
+        width: 14px;
+        height: 14px;
     }
-    .cinema-card.cinema .cinema-card-image {
-        aspect-ratio: 16 / 9;
+
+    .cinema-card__address,
+    .cinema-card__hotline,
+    .cinema-card__map {
+        font-size: calc(var(--font-size-h6) * 0.9);
     }
-    .cinema-card-address,
-    .cinema-card-hotline,
-    .cinema-card-map {
-        font-size: var(--font-size-h6);
+
+    .cinema-card__map svg,
+    .cinema-card__address svg,
+    .cinema-card__hotline svg {
+        width: 12px;
+        height: 12px;
+    }
+
+    .cinema-card__footer {
+        gap: var(--space-xs);
     }
 }
 
+
 /* ==========================================================
-   20. RESPONSIVE - 360px
+   15. RESPONSIVE — 480px
 ========================================================== */
-@media (max-width: 360px) {
-    .cinema-card.movie .cinema-card-title {
-        min-height: 44px;
-        max-height: 44px;
-        padding: 7px 5px 8px;
-        font-size: calc(var(--font-size-h5) * 0.72);
-        line-height: 1.38;
+@media (max-width: 480px) {
+    .cinema-card__image:hover img {
+        transform: scale(1.02);
     }
-    .cinema-card-badge {
-        top: 6px;
-        right: 6px;
-        padding: 2px 7px;
-        font-size: calc(var(--font-size-h6) * 0.64);
+
+    .cinema-card__content {
+        padding: var(--space-md);
     }
-    .btn-card-action {
-        padding: 6px 11px;
-        font-size: calc(var(--font-size-h6) * 0.72);
+
+    .cinema-card__title {
+        font-size: var(--font-size-h6);
+        line-height: 1.35;
+        margin-bottom: var(--space-xs);
     }
-    .cinema-card.cinema .cinema-card-title {
+
+    .cinema-card__body {
+        gap: 6px;
+        margin-bottom: var(--space-sm);
+    }
+
+    .cinema-card__link {
         font-size: calc(var(--font-size-h6) * 0.9);
+        letter-spacing: 0.1em;
+        gap: 6px;
+    }
+
+    .cinema-card__link-icon {
+        width: 12px;
+        height: 12px;
+    }
+
+    .cinema-card__address,
+    .cinema-card__hotline,
+    .cinema-card__map {
+        font-size: calc(var(--font-size-h6) * 0.85);
+        line-height: 1.4;
+    }
+
+    .cinema-card__map svg,
+    .cinema-card__address svg,
+    .cinema-card__hotline svg {
+        width: 11px;
+        height: 11px;
+    }
+
+    .cinema-card__footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
     }
 }

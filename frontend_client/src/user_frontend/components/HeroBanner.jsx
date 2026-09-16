@@ -1,168 +1,171 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/HeroBanner.css";
 
 const HeroBanner = ({ videoSrc = "/vutru_video.mp4" }) => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+  const videoRef = useRef(null);
 
-    // ==========================================================
-    // GLOBAL MOUSE POSITION
-    // ==========================================================
-    useEffect(() => {
-        const handleGlobalMouseMove = (e) => {
-            document.documentElement.style.setProperty(
-                "--mouse-x",
-                `${e.clientX}px`
-            );
+  // ==========================================================
+  // SCROLL PARALLAX
+  // ==========================================================
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!videoRef.current) return;
 
-            document.documentElement.style.setProperty(
-                "--mouse-y",
-                `${e.clientY}px`
-            );
-        };
+      const scrollY = window.scrollY;
 
-        window.addEventListener("mousemove", handleGlobalMouseMove);
+      const progress = Math.min(
+        Math.max(scrollY / window.innerHeight, 0),
+        1
+      );
 
-        return () => {
-            window.removeEventListener("mousemove", handleGlobalMouseMove);
-        };
-    }, []);
+      const scale = 1.04 + progress * 0.08;
+      const translateY = progress * 25;
 
-    // ==========================================================
-    // LOCAL MOUSE POSITION
-    // ==========================================================
-    const handleLocalMouseMove = (e) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-
-        e.currentTarget.style.setProperty(
-            "--mouse-x",
-            `${e.clientX - rect.left}px`
-        );
-
-        e.currentTarget.style.setProperty(
-            "--mouse-y",
-            `${e.clientY - rect.top}px`
-        );
+      videoRef.current.style.transform = `scale(${scale}) translateY(${translateY}px)`;
     };
 
-    return (
-        <div className="nox-hero-wrapper">
+    handleScroll();
 
-            {/* ==================================================
-                HERO
-            ================================================== */}
-            <section className="nox-hero">
+    window.addEventListener("scroll", handleScroll, { passive: true });
 
-                {/* ==================================================
-                    VIDEO BACKGROUND
-                ================================================== */}
-                <div className="nox-hero-video">
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
-                    <video
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                        preload="auto"
-                    >
-                        <source
-                            src={videoSrc}
-                            type="video/mp4"
-                        />
-                    </video>
+  return (
+    <header className="hero-banner">
+      {/* ==================================================
+          BACKGROUND
+      ================================================== */}
+      <div className="hero-banner__bg">
+        <video
+          ref={videoRef}
+          className="hero-banner__video"
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+        >
+          <source src={videoSrc} type="video/mp4" />
+        </video>
 
-                    {/* Overlay toàn video - cực nhẹ */}
-                    <div className="nox-video-overlay" />
+        {/* Làm tối nhẹ toàn cảnh */}
+        <div className="hero-banner__overlay-base" />
 
-                    {/* Gradient bên trái hỗ trợ chữ */}
-                    <div className="nox-video-text-gradient" />
+        {/* Gradient từ trái sang phải */}
+        <div className="hero-banner__overlay-side" />
 
-                    {/* Glow theo chuột */}
-                    <div className="nox-video-glow" />
+        {/* Gradient phía dưới */}
+        <div className="hero-banner__overlay-bottom" />
 
-                </div>
+        {/* Soft cinematic vignette */}
+        <div className="hero-banner__vignette" />
+      </div>
 
+      {/* ==================================================
+          CONTENT
+      ================================================== */}
+      <div className="hero-banner__content">
+        {/* ==================================================
+            LEFT CONTENT
+        ================================================== */}
+        <div className="hero-banner__left">
+          {/* Eyebrow */}
+          <div className="hero-banner__eyebrow">
+            <span className="hero-banner__eyebrow-line" />
+            <span>TRẢI NGHIỆM ĐIỆN ẢNH ĐỈNH CAO</span>
+          </div>
 
-                {/* ==================================================
-                    FRAME
-                ================================================== */}
-                <div className="nox-hero-frame" />
+          {/* ==================================================
+              TITLE
+          ================================================== */}
+          <h1 className="hero-banner__title">
+            <span className="hero-banner__title-solid">CHẠM</span>
+            <span className="hero-banner__title-outline">ẢNH</span>
+          </h1>
 
+          {/* Decorative line */}
+          <div className="hero-banner__divider">
+            <span />
+          </div>
 
-                {/* ==================================================
-                    HERO CONTENT
-                ================================================== */}
-                <div className="nox-hero-content">
-                    {/* ==================================================
-                        LABEL
-                    ================================================== */}
-                    <span className="nox-hero-label">
-                        TRẢI NGHIỆM ĐIỆN ẢNH SỐNG ĐỘNG
-                    </span>
+          {/* ==================================================
+              DESCRIPTION
+          ================================================== */}
+          <p className="hero-banner__description">
+            Âm thanh vòm sống động, hình ảnh 4K sắc nét và những câu chuyện lay
+            động lòng người. Mỗi suất chiếu tại Quang Dũng Cinema là một hành
+            trình điện ảnh đáng nhớ.
+          </p>
 
+          {/* ==================================================
+              ACTIONS
+          ================================================== */}
+          <div className="hero-banner__actions">
+            <button
+              type="button"
+              className="hero-banner__btn hero-banner__btn--primary"
+              onClick={() => navigate("/booking")}
+            >
+              <span>Đặt vé ngay</span>
+              <span className="hero-banner__btn-arrow">→</span>
+            </button>
 
-                    {/* ==================================================
-                        TITLE
-                    ================================================== */}
-                    <h1 className="nox-hero-title">
-                        <span>Beyond</span>
-                        <span>Screen</span>
-                    </h1>
-
-
-                    {/* ==================================================
-                        DESCRIPTION
-                    ================================================== */}
-                    <p className="nox-hero-description">
-                        Âm thanh sống động, hình ảnh tuyệt đẹp và những
-                        câu chuyện đưa bạn bước vào một thế giới khác.
-                        Nơi nghệ thuật điện ảnh được trải nghiệm theo
-                        một cách hoàn toàn mới.
-                    </p>
-
-
-                    {/* ==================================================
-                        BUTTONS
-                    ================================================== */}
-                    <div className="nox-hero-actions">
-
-                        <button
-                            className="
-                                nox-liquid-btn
-                                nox-primary-btn
-                            "
-                            onMouseMove={handleLocalMouseMove}
-                            onClick={() => navigate("/booking")}
-                        >
-                            <span>Đặt vé ngay</span>
-                        </button>
-
-
-                        <button
-                            className="
-                                nox-liquid-btn
-                                nox-secondary-btn
-                            "
-                            onMouseMove={handleLocalMouseMove}
-                            onClick={() => navigate("/movies")}
-                        >
-                            <span>Khám phá phim</span>
-                        </button>
-
-                    </div>
-
-                </div>
-
-
-                {/* ==================================================
-                    BOTTOM GLASS LINE
-                ================================================== */}
-                <div className="nox-hero-bottom-glass" />
-
-            </section>
-
+            <button
+              type="button"
+              className="hero-banner__btn hero-banner__btn--secondary"
+              onClick={() => navigate("/movies")}
+            >
+              Khám phá phim
+            </button>
+          </div>
         </div>
-    );
+
+        {/* ==================================================
+            RIGHT — CINEMA FEATURES
+        ================================================== */}
+        <div className="hero-banner__right">
+          <div className="hero-banner__right-line" />
+
+          <div className="hero-banner__stats">
+            {/* ---------------- STAT 1 ---------------- */}
+            <div className="hero-banner__stat">
+              <span className="hero-banner__stat-number">01</span>
+              <div className="hero-banner__stat-content">
+                <span className="hero-banner__stat-label">Chất lượng</span>
+                <strong className="hero-banner__stat-value">4K HDR</strong>
+              </div>
+            </div>
+
+            {/* ---------------- STAT 2 ---------------- */}
+            <div className="hero-banner__stat">
+              <span className="hero-banner__stat-number">02</span>
+              <div className="hero-banner__stat-content">
+                <span className="hero-banner__stat-label">Âm thanh</span>
+                <strong className="hero-banner__stat-value">DOLBY ATMOS</strong>
+              </div>
+            </div>
+
+            {/* ---------------- STAT 3 ---------------- */}
+            <div className="hero-banner__stat">
+              <span className="hero-banner__stat-number">03</span>
+              <div className="hero-banner__stat-content">
+                <span className="hero-banner__stat-label">Trải nghiệm</span>
+                <strong className="hero-banner__stat-value">ĐỈNH CAO</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+     
+     
+    </header>
+  );
 };
 
 export default HeroBanner;

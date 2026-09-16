@@ -1,95 +1,194 @@
-// src/user_frontend/components/LazyErrorBoundary.jsx
 import React from "react";
+import {
+    FileWarning,
+    RefreshCw,
+} from "lucide-react";
+
 import "../styles/LazyErrorBoundary.css";
+
+// ============================================================
+// LAZY ERROR BOUNDARY
+// ============================================================
 
 class LazyErrorBoundary extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { 
-            hasError: false, 
+
+        this.state = {
+            hasError: false,
             error: null,
-            errorInfo: null
         };
     }
 
+    // ========================================================
+    // CATCH ERROR
+    // ========================================================
+
     static getDerivedStateFromError(error) {
-        return { hasError: true, error };
+        return {
+            hasError: true,
+            error,
+        };
     }
+
+    // ========================================================
+    // LOG ERROR
+    // ========================================================
 
     componentDidCatch(error, errorInfo) {
-        console.error("🔴 [APP] Lazy load error:", error, errorInfo);
-        this.setState({ errorInfo });
+        console.error(
+            "🔴 [APP] Page loading error:",
+            error,
+            errorInfo
+        );
     }
 
+    // ========================================================
+    // RETRY
+    // ========================================================
+
     handleRetry = () => {
-        sessionStorage.removeItem('lazyRetried');
-        sessionStorage.removeItem('lazyLoadFailed');
-        this.setState({ hasError: false, error: null, errorInfo: null });
+        /*
+         * Chỉ xoá các flag liên quan tới lazy loading.
+         *
+         * Không xoá:
+         * - localStorage
+         * - toàn bộ sessionStorage
+         *
+         * để tránh ảnh hưởng auth / booking / payment.
+         */
+
+        sessionStorage.removeItem(
+            "lazyRetried"
+        );
+
+        sessionStorage.removeItem(
+            "lazyLoadFailed"
+        );
+
+        /*
+         * Reload app để browser lấy lại
+         * deployment / chunk hiện tại.
+         */
+
         window.location.reload();
     };
 
-    handleGoHome = () => {
-        sessionStorage.removeItem('lazyRetried');
-        sessionStorage.removeItem('lazyLoadFailed');
-        window.location.href = '/';
-    };
-
-    handleClearCache = () => {
-        if ('caches' in window) {
-            caches.keys().then((names) => {
-                names.forEach((name) => {
-                    caches.delete(name);
-                });
-            });
-        }
-        localStorage.clear();
-        sessionStorage.clear();
-        window.location.reload();
-    };
+    // ========================================================
+    // RENDER
+    // ========================================================
 
     render() {
-        if (this.state.hasError) {
-            return (
-                <div className="lazy-error-boundary">
-                    <div className="lazy-error-icon">⚠️</div>
-                    <h2 className="lazy-error-title">Không thể tải trang</h2>
-                    <p className="lazy-error-message">
-                        Có lỗi xảy ra khi tải trang. Vui lòng thử lại hoặc quay lại trang chủ.
-                        {this.state.error?.message && (
-                            <span className="lazy-error-detail">
-                                Lỗi: {this.state.error.message}
-                            </span>
-                        )}
-                    </p>
-                    <div className="lazy-error-actions">
-                        <button 
-                            onClick={this.handleRetry} 
-                            className="lazy-btn-retry"
-                        >
-                            🔄 Tải lại trang
-                        </button>
-                        <button 
-                            onClick={this.handleGoHome} 
-                            className="lazy-btn-home"
-                        >
-                            🏠 Trang chủ
-                        </button>
-                    </div>
-                    <div className="lazy-error-tips">
-                        <p className="lazy-error-tips-text">
-                            💡 Thử <strong>Ctrl+F5</strong> (Windows) hoặc <strong>Cmd+Shift+R</strong> (Mac) để tải lại.
-                        </p>
-                        <button 
-                            onClick={this.handleClearCache}
-                            className="lazy-btn-clear-cache"
-                        >
-                            🗑️ Xóa cache & thử lại
-                        </button>
-                    </div>
-                </div>
-            );
+        // ----------------------------------------------------
+        // NORMAL
+        // ----------------------------------------------------
+
+        if (!this.state.hasError) {
+            return this.props.children;
         }
-        return this.props.children;
+
+        const currentUrl =
+            typeof window !== "undefined"
+                ? window.location.hostname
+                : "quangdungcinema.id.vn";
+
+        /*
+         * Không hiển thị error.message trực tiếp ra giao diện
+         * chính để tránh UI bị dài hoặc khó hiểu với khách.
+         */
+
+        return (
+            <main className="lazy-error-page">
+                <section className="lazy-error-page__content">
+
+                    {/* ==================================================
+                        ICON
+                    ================================================== */}
+
+                    <div
+                        className="lazy-error-page__icon"
+                        aria-hidden="true"
+                    >
+                        <FileWarning
+                            size={48}
+                            strokeWidth={1.25}
+                        />
+                    </div>
+
+                    {/* ==================================================
+                        TITLE
+                    ================================================== */}
+
+                    <h1 className="lazy-error-page__title">
+                        This site can’t be reached
+                    </h1>
+
+                    {/* ==================================================
+                        MESSAGE
+                    ================================================== */}
+
+                    <p className="lazy-error-page__message">
+                        <strong>
+                            {currentUrl}
+                        </strong>{" "}
+                        couldn’t load this page.
+                    </p>
+
+                    {/* ==================================================
+                        TRY
+                    ================================================== */}
+
+                    <div className="lazy-error-page__tips">
+                        <span>
+                            Try:
+                        </span>
+
+                        <ul>
+                            <li>
+                                Reloading the page
+                            </li>
+
+                            <li>
+                                Checking your
+                                internet connection
+                            </li>
+                        </ul>
+                    </div>
+
+                    {/* ==================================================
+                        ERROR CODE
+                    ================================================== */}
+
+                    <div
+                        className="lazy-error-page__code"
+                        role="status"
+                        aria-live="polite"
+                    >
+                        ERR_PAGE_LOAD_FAILED
+                    </div>
+
+                    {/* ==================================================
+                        ACTION
+                    ================================================== */}
+
+                    <button
+                        type="button"
+                        className="lazy-error-page__btn"
+                        onClick={
+                            this.handleRetry
+                        }
+                    >
+                        <RefreshCw
+                            size={16}
+                            strokeWidth={2}
+                        />
+
+                        Reload
+                    </button>
+
+                </section>
+            </main>
+        );
     }
 }
 

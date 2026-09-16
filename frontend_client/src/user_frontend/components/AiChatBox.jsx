@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, X, Send, Bot, User, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/api';
+import Modal from './Modal';
 import '../styles/AiChat.css';
 
 /* ==========================================================
@@ -105,6 +106,9 @@ const AiChatBox = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [hasNewMessage, setHasNewMessage] = useState(false);
 
+  /* 🆕 STATE CHO MODAL XÓA LỊCH SỬ */
+  const [showClearModal, setShowClearModal] = useState(false);
+
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -138,16 +142,27 @@ const AiChatBox = () => {
   }, [messages, isOpen]);
 
   /* =========================================================
-     XÓA LỊCH SỬ CHAT
+     🆕 MỞ MODAL XÓA LỊCH SỬ
   ========================================================= */
-  const handleClearHistory = () => {
-    if (!window.confirm('Bạn có chắc muốn xóa toàn bộ cuộc trò chuyện?')) {
-      return;
-    }
+  const handleOpenClearModal = () => {
+    setShowClearModal(true);
+  };
 
+  /* =========================================================
+     🆕 XÁC NHẬN XÓA LỊCH SỬ
+  ========================================================= */
+  const handleConfirmClear = () => {
     localStorage.removeItem(STORAGE_KEY);
     setMessages(DEFAULT_MESSAGES);
     setInput('');
+    setShowClearModal(false);
+  };
+
+  /* =========================================================
+     🆕 HỦY XÓA
+  ========================================================= */
+  const handleCancelClear = () => {
+    setShowClearModal(false);
   };
 
   /* =========================================================
@@ -294,9 +309,10 @@ const AiChatBox = () => {
               </div>
 
               <div className="ai-header-actions">
+                {/* 🆕 Đổi onClick từ handleClearHistory → handleOpenClearModal */}
                 <button
                   className="ai-close-btn"
-                  onClick={handleClearHistory}
+                  onClick={handleOpenClearModal}
                   title="Xóa cuộc trò chuyện"
                   aria-label="Xóa cuộc trò chuyện"
                 >
@@ -389,6 +405,18 @@ const AiChatBox = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* 🆕 MODAL XÁC NHẬN XÓA LỊCH SỬ */}
+      <Modal
+        show={showClearModal}
+        type="warning"
+        title="Xóa cuộc trò chuyện"
+        message="Bạn có chắc muốn xóa toàn bộ cuộc trò chuyện? Hành động này không thể hoàn tác."
+        confirmText="Xóa"
+        cancelText="Hủy"
+        onConfirm={handleConfirmClear}
+        onCancel={handleCancelClear}
+      />
     </>
   );
 };

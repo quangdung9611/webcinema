@@ -921,7 +921,7 @@ const MovieDetail = () => {
                     </div>
                 </div>
 
-                {/* ACTORS */}
+                {/* ACTORS — ✅ ĐÃ SỬA buttonText */}
                 <div className="cinema-section-block">
                     <div className="section-header-row">
                         <h2 className="section-title-label">DIỄN VIÊN</h2>
@@ -940,7 +940,7 @@ const MovieDetail = () => {
                                         image={actor.actor_avatar || null}
                                         title={actor.name}
                                         link={`/actor/detail/${actor.slug}`}
-                                        buttonText={null}
+                                        buttonText="Xem chi tiết"
                                     />
                                 </div>
                             ))
@@ -955,7 +955,7 @@ const MovieDetail = () => {
                                             image={null}
                                             title={actorName}
                                             link={null}
-                                            buttonText={null}
+                                            buttonText="Xem chi tiết"
                                         />
                                     </div>
                                 );
@@ -969,7 +969,7 @@ const MovieDetail = () => {
                     </div>
                 </div>
 
-                {/* OTHER TRAILERS */}
+                {/* OTHER TRAILERS — ✅ ĐÃ SỬA buttonText */}
                 <div className="cinema-section-block">
                     <div className="section-header-row">
                         <h2 className="section-title-label">TRAILER KHÁC</h2>
@@ -989,7 +989,7 @@ const MovieDetail = () => {
                                         image={item.movie_backdrop || null}
                                         title={item.title}
                                         link={null}
-                                        buttonText={null}
+                                        buttonText="Xem chi tiết"
                                     />
                                     <div className="trailer-play-overlay">
                                         <Play size={42} strokeWidth={2.5} />

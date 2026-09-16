@@ -314,6 +314,41 @@ class TicketRepository {
         );
         return rows[0] || null;
     }
+
+    // ==========================================================
+    // ✅ LỊCH SỬ SOÁT VÉ (MỚI THÊM)
+    // ==========================================================
+
+    async getCheckinHistory(connection, limit = 100) {
+        const [rows] = await connection.query(
+            `
+            SELECT
+                t.ticket_id,
+                t.ticket_code,
+                t.ticket_status,
+                t.updated_at AS checked_in_at,
+                s.seat_row,
+                s.seat_number,
+                u.full_name AS customer_name,
+                m.title AS movie_title,
+                c.cinema_name,
+                r.room_name
+            FROM tickets t
+            LEFT JOIN seats s ON t.seat_id = s.seat_id
+            LEFT JOIN bookings b ON t.booking_id = b.booking_id
+            LEFT JOIN users u ON b.user_id = u.user_id
+            LEFT JOIN showtimes sh ON t.showtime_id = sh.showtime_id
+            LEFT JOIN rooms r ON sh.room_id = r.room_id
+            LEFT JOIN cinemas c ON sh.cinema_id = c.cinema_id
+            LEFT JOIN movies m ON sh.movie_id = m.movie_id
+            WHERE t.ticket_status = 'Used'
+            ORDER BY t.updated_at DESC
+            LIMIT ?
+            `,
+            [limit]
+        );
+        return rows;
+    }
 }
 
 module.exports = new TicketRepository();
