@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import adminapi from '../../api/adminapi';
 import socketService from '../../api/socket';
+import { adminLogout } from '../../utils/adminAuthCleanup';  // ✅ ĐỔI IMPORT
 import {
     Menu,
     Search,
@@ -60,7 +61,7 @@ const AdminHeader = ({ toggleSidebar }) => {
     }, []);
 
     // ============================================================
-    // ✅ ADMIN LOGOUT — GỌI ĐÚNG ADMIN API
+    // LOGOUT
     // ============================================================
     const performLogout = useCallback(
         async (redirectToLogin = true) => {
@@ -70,68 +71,9 @@ const AdminHeader = ({ toggleSidebar }) => {
             console.log('🔴 [ADMIN HEADER] Đang thực hiện logout...');
 
             try {
-                // ✅ BƯỚC 1: GỌI ADMIN LOGOUT API (không báo lỗi dù fail)
-                try {
-                    await adminapi.post('/admin/api/auth/logout');
-                    console.log('✅ [ADMIN HEADER] Logout API success');
-                } catch (apiError) {
-                    console.warn(
-                        '⚠️ [ADMIN HEADER] Logout API failed (ignored):',
-                        apiError?.message
-                    );
-                }
+                // ✅ GỌI ADMIN LOGOUT — giống userLogout
+                await adminLogout();
 
-                // ✅ BƯỚC 2: DISCONNECT SOCKET
-                try {
-                    socketService.disconnect();
-                    console.log('🔌 [ADMIN HEADER] Socket disconnected');
-                } catch (err) {
-                    console.warn('Socket disconnect error:', err);
-                }
-
-                // ✅ BƯỚC 3: CLEAR LOCAL STORAGE
-                const adminKeys = [
-                    'admin_info',
-                    'admin_token',
-                    'adminLockedEmail',
-                    'admin_login_lock',
-                    'admin_remember_me',
-                ];
-
-                adminKeys.forEach((key) => {
-                    localStorage.removeItem(key);
-                    sessionStorage.removeItem(key);
-                });
-
-                // ✅ BƯỚC 4: CLEAR COOKIE ADMIN
-                document.cookie =
-                    'admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-
-                // ✅ BƯỚC 5: RESET ADMIN CACHE
-                try {
-                    if (typeof adminapi.resetAdminCache === 'function') {
-                        adminapi.resetAdminCache();
-                    }
-                    if (typeof adminapi.resetSessionExpiredLock === 'function') {
-                        adminapi.resetSessionExpiredLock();
-                    }
-                    delete adminapi.defaults.headers.common['Authorization'];
-                } catch (err) {
-                    console.warn('Reset cache error:', err);
-                }
-
-                // ✅ BƯỚC 6: DISPATCH EVENT
-                window.dispatchEvent(
-                    new CustomEvent('authCleanedUp', {
-                        detail: {
-                            reason: 'logout',
-                            message: 'Đăng xuất thành công',
-                            timestamp: new Date().toISOString(),
-                        },
-                    })
-                );
-
-                // ✅ BƯỚC 7: SHOW TOAST
                 if (redirectToLogin) {
                     showToast(
                         'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
@@ -144,13 +86,14 @@ const AdminHeader = ({ toggleSidebar }) => {
                     );
                 }
 
-                // ✅ BƯỚC 8: REDIRECT
                 if (redirectTimeoutRef.current) {
                     clearTimeout(redirectTimeoutRef.current);
                     redirectTimeoutRef.current = null;
                 }
 
                 redirectTimeoutRef.current = setTimeout(() => {
+                    localStorage.removeItem('admin_info');
+                    socketService.disconnect();
                     setAdmin(null);
                     setShowDropdown(false);
                     setIsLoggingOut(false);
@@ -183,7 +126,6 @@ const AdminHeader = ({ toggleSidebar }) => {
                     'error'
                 );
 
-                // ✅ FALLBACK: VẪN CLEAR + REDIRECT
                 if (redirectTimeoutRef.current) {
                     clearTimeout(redirectTimeoutRef.current);
                     redirectTimeoutRef.current = null;
@@ -191,14 +133,7 @@ const AdminHeader = ({ toggleSidebar }) => {
 
                 redirectTimeoutRef.current = setTimeout(() => {
                     localStorage.removeItem('admin_info');
-                    localStorage.removeItem('admin_token');
-
-                    try {
-                        socketService.disconnect();
-                    } catch (err) {
-                        console.warn('Socket disconnect error:', err);
-                    }
-
+                    socketService.disconnect();
                     setAdmin(null);
                     setShowDropdown(false);
                     setIsLoggingOut(false);
@@ -251,7 +186,7 @@ const AdminHeader = ({ toggleSidebar }) => {
     }, []);
 
     // ============================================================
-    // LẮNG NGHE SỰ KIỆN WINDOW
+    // LẮNG NGHE SỰ KIỆN
     // ============================================================
     useEffect(() => {
         const handleAuthCleanedUp = (event) => {
@@ -330,7 +265,7 @@ const AdminHeader = ({ toggleSidebar }) => {
     };
 
     // ============================================================
-    // TOGGLE USER DROPDOWN
+    // TOGGLE DROPDOWN
     // ============================================================
     const toggleDropdown = () => {
         setShowDropdown((prev) => !prev);

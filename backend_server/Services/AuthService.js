@@ -21,11 +21,19 @@ const setIO = (io) => {
 // CONSTANTS
 // ============================================================
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const FRONTEND_URL = 'https://quangdungcinema.id.vn';
+
+// ✅ URL RIÊNG CHO TỪNG PHÍA
+const USER_FRONTEND_URL  = process.env.USER_FRONTEND_URL  || 'https://quangdungcinema.id.vn';
+const ADMIN_FRONTEND_URL = process.env.ADMIN_FRONTEND_URL || 'https://admin.quangdungcinema.id.vn';
+
+// ✅ Helper chọn URL theo role
+const getFrontendUrlByRole = (role) => {
+    return role === 'admin' ? ADMIN_FRONTEND_URL : USER_FRONTEND_URL;
+};
 
 // ✅ SỐ THIẾT BỊ TỐI ĐA
-const MAX_DEVICES_ADMIN = 1;      // Admin: 1 thiết bị (máy tính + điện thoại)
-const MAX_DEVICES_CUSTOMER = 1;   // User: 1 thiết bị (single-session)
+const MAX_DEVICES_ADMIN = 1;
+const MAX_DEVICES_CUSTOMER = 1;
 
 // ============================================================
 // VALIDATE LOGIN
@@ -80,29 +88,31 @@ exports.checkLockStatus = async (email) => {
 };
 
 // ============================================================
-// LOGIN — ✅ ĐÃ SỬA: PHÂN BIỆT ADMIN / USER
+// LOGIN — ✅ HỖ TRỢ expectedRole ĐỂ CHẶN SAI CỔNG
 // ============================================================
-exports.login = async (email, password, rememberMe = false, req, res) => {
+/**
+ * @param {string} email
+ * @param {string} password
+ * @param {boolean} rememberMe
+ * @param {Request} req
+ * @param {Response} res
+ * @param {'admin'|'customer'|null} expectedRole - Nếu truyền vào, sẽ chặn login sai role
+ */
+exports.login = async (email, password, rememberMe = false, req, res, expectedRole = null) => {
     validateLogin(email, password);
     
-    // ========================================================
     // CHECK RATE LIMIT
-    // ========================================================
     const loginRateLimit = await CacheService.checkRateLimit(email, "login", 5, 60);
     if (!loginRateLimit.allowed) {
         throw {
             statusCode: 429,
             code: 'LOGIN_LIMIT',
             message: `Bạn đã đăng nhập sai quá nhiều lần. Vui lòng thử lại sau ${loginRateLimit.remainingSeconds || 60} giây.`,
-            data: {
-                remainingSeconds: loginRateLimit.remainingSeconds || 60
-            }
+            data: { remainingSeconds: loginRateLimit.remainingSeconds || 60 }
         };
     }
 
-    // ========================================================
     // CHECK LOCK
-    // ========================================================
     const lockInfo = await CacheService.getLockoutInfo(email);
     if (lockInfo && lockInfo.isLocked) {
         throw {
@@ -120,9 +130,7 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         };
     }
 
-    // ========================================================
     // FIND USER
-    // ========================================================
     const user = await UserRepository.findByEmail(email);
     if (!user) {
         const attempts = await CacheService.incrementLoginAttempts(email);
@@ -149,9 +157,7 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         };
     }
 
-    // ========================================================
     // CHECK PASSWORD
-    // ========================================================
     const matched = await Password.compare(password, user.password);
     if (!matched) {
         const attempts = await CacheService.incrementLoginAttempts(email);
@@ -178,9 +184,18 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         };
     }
 
-    // ========================================================
+    // ✅ CHECK ROLE NGAY SAU KHI XÁC THỰC PASSWORD — TRƯỚC KHI TẠO TOKEN
+    if (expectedRole && user.role !== expectedRole) {
+        throw {
+            statusCode: 403,
+            code: 'WRONG_PORTAL',
+            message: expectedRole === 'admin'
+                ? "Tài khoản này không có quyền truy cập trang quản trị."
+                : "Tài khoản quản trị vui lòng đăng nhập tại cổng admin."
+        };
+    }
+
     // CHECK EMAIL VERIFIED
-    // ========================================================
     await CacheService.resetLoginAttempts(email);
     if (!user.email_verified) {
         throw {
@@ -190,13 +205,7 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         };
     }
 
-    // ========================================================
-    // ✅ QUẢN LÝ THIẾT BỊ — PHÂN BIỆT ADMIN / USER
-    // ========================================================
-    // Admin: tối đa 2 thiết bị
-    // User:  tối đa 1 thiết bị (single-session)
-    // ========================================================
-
+    // QUẢN LÝ THIẾT BỊ
     const maxDevices = user.role === 'admin' 
         ? MAX_DEVICES_ADMIN 
         : MAX_DEVICES_CUSTOMER;
@@ -206,8 +215,7 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
     console.log(`📊 [LOGIN] Role: ${user.role} | Active devices: ${activeTokens.length}/${maxDevices}`);
 
     if (activeTokens.length >= maxDevices) {
-        // ✅ VƯỢT QUÁ GIỚI HẠN → Revoke token CŨ NHẤT
-        const oldestToken = activeTokens[activeTokens.length - 1]; // DESC order → lấy cuối
+        const oldestToken = activeTokens[activeTokens.length - 1];
 
         if (oldestToken) {
             const reason = user.role === 'admin'
@@ -218,7 +226,6 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
 
             console.log(`🔄 [REVOKE] Revoke token cũ nhất của ${user.role} ${user.user_id} | Lý do: ${reason}`);
 
-            // ✅ CHỈ emit socket khi VƯỢT QUÁ giới hạn
             if (ioInstance && user.user_id) {
                 ioInstance.to(`user_${user.user_id}`).emit('session_expired', {
                     code: 'SESSION_REPLACED',
@@ -238,9 +245,7 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         console.log(`✅ [LOGIN] ${user.role} login OK — device ${activeTokens.length + 1}/${maxDevices} (không revoke)`);
     }
 
-    // ========================================================
     // TẠO TOKEN MỚI
-    // ========================================================
     const accessToken = generateAndSetTokens(user, res, rememberMe);
     const accessTokenHash = Jwt.hashRefreshToken(accessToken);
 
@@ -280,7 +285,7 @@ exports.getMe = async (userId) => {
 };
 
 // ============================================================
-// ✅ LOGOUT — XÓA HẲN TOKEN KHỎI DB
+// LOGOUT
 // ============================================================
 exports.logout = async (req, res) => {
     let token = Cookie.getAdminAccessToken(req);
@@ -293,7 +298,6 @@ exports.logout = async (req, res) => {
     
     if (token) {
         const tokenHash = Jwt.hashRefreshToken(token);
-        // ✅ XÓA HẲN TOKEN KHỎI DB
         const deleted = await RefreshTokenRepository.deleteByTokenHash(tokenHash);
         console.log(`🗑️ [LOGOUT] Đã xóa ${deleted} token khỏi DB`);
     }
@@ -308,10 +312,9 @@ exports.logout = async (req, res) => {
 };
 
 // ============================================================
-// ✅ LOGOUT ALL DEVICES — XÓA HẲN TẤT CẢ TOKEN
+// LOGOUT ALL DEVICES
 // ============================================================
 exports.logoutAllDevices = async (userId, res) => {
-    // ✅ XÓA HẲN TẤT CẢ TOKEN KHỎI DB
     const deleted = await RefreshTokenRepository.deleteAllByUser(userId);
     console.log(`🗑️ [LOGOUT_ALL] Đã xóa ${deleted} token của user ${userId}`);
     
@@ -566,7 +569,7 @@ exports.verifyOtpAndReset = async (email, otp, newPassword) => {
 };
 
 // ============================================================
-// SEND VERIFICATION EMAIL
+// SEND VERIFICATION EMAIL — ✅ FIX URL THEO ROLE
 // ============================================================
 exports.sendVerificationEmail = async (email) => {
     if (!email?.trim()) throw { statusCode: 400, field: "email", message: "Email không được để trống" };
@@ -589,7 +592,11 @@ exports.sendVerificationEmail = async (email) => {
     }
 
     const verifyToken = Jwt.generateEmailVerifyToken({ user_id: user.user_id, email: user.email });
-    const verifyUrl = `${FRONTEND_URL}/verify-email?token=${verifyToken}`;
+
+    // ✅ FIX: chọn URL theo role
+    const frontendUrl = getFrontendUrlByRole(user.role);
+    const verifyUrl = `${frontendUrl}/verify-email?token=${verifyToken}`;
+
     await MailService.sendEmailVerification(email, verifyUrl, user.full_name);
 
     return { success: true, message: "Email xác thực đã được gửi. Vui lòng kiểm tra hộp thư." };
@@ -867,7 +874,7 @@ exports.registerStep1 = async (data) => {
 };
 
 // ============================================================
-// COMPLETE REGISTRATION
+// COMPLETE REGISTRATION — ✅ FIX URL (dùng role customer)
 // ============================================================
 exports.completeRegistration = async (data, req, res) => {
     const { temp_token, pin, username, full_name, email, phone, password, address } = data;
@@ -928,7 +935,11 @@ exports.completeRegistration = async (data, req, res) => {
     });
 
     const verifyToken = Jwt.generateEmailVerifyToken({ user_id: userId, email: email });
-    const verifyUrl = `${FRONTEND_URL}/verify-email?token=${verifyToken}`;
+
+    // ✅ FIX: dùng USER_FRONTEND_URL vì đây là đăng ký customer
+    const frontendUrl = getFrontendUrlByRole("customer");
+    const verifyUrl = `${frontendUrl}/verify-email?token=${verifyToken}`;
+
     await MailService.sendEmailVerification(email, verifyUrl, full_name);
 
     return {
@@ -942,7 +953,7 @@ exports.completeRegistration = async (data, req, res) => {
 };
 
 // ============================================================
-// RESEND VERIFICATION
+// RESEND VERIFICATION — ✅ FIX URL THEO ROLE
 // ============================================================
 exports.resendVerificationAfterLogin = async (userId) => {
     const user = await UserRepository.findById(userId);
@@ -962,7 +973,11 @@ exports.resendVerificationAfterLogin = async (userId) => {
     }
 
     const verifyToken = Jwt.generateEmailVerifyToken({ user_id: user.user_id, email: user.email });
-    const verifyUrl = `${FRONTEND_URL}/verify-email?token=${verifyToken}`;
+
+    // ✅ FIX: chọn URL theo role
+    const frontendUrl = getFrontendUrlByRole(user.role);
+    const verifyUrl = `${frontendUrl}/verify-email?token=${verifyToken}`;
+
     await MailService.sendEmailVerification(user.email, verifyUrl, user.full_name);
 
     return {
@@ -998,7 +1013,7 @@ exports.checkOtpTTL = async (email, purpose) => {
 };
 
 // ============================================================
-// RESEND OTP
+// RESEND OTP — ✅ FIX URL THEO ROLE
 // ============================================================
 exports.resendOtp = async (email, purpose) => {
     if (!email?.trim()) {
@@ -1036,7 +1051,11 @@ exports.resendOtp = async (email, purpose) => {
             .catch(err => console.error(`❌ Reset password email failed: ${err.message}`));
     } else if (purpose === OtpService.PURPOSE.REGISTER) {
         const verifyToken = Jwt.generateEmailVerifyToken({ user_id: user.user_id, email: email });
-        const verifyUrl = `${FRONTEND_URL}/verify-email?token=${verifyToken}`;
+
+        // ✅ FIX: chọn URL theo role
+        const frontendUrl = getFrontendUrlByRole(user.role);
+        const verifyUrl = `${frontendUrl}/verify-email?token=${verifyToken}`;
+
         await MailService.sendEmailVerification(email, verifyUrl, user.full_name)
             .then(() => console.log(`✅ Verify email sent to ${email}`))
             .catch(err => console.error(`❌ Verify email failed: ${err.message}`));
@@ -1084,6 +1103,7 @@ exports.loginAfterRegistration = async (user, req, res) => {
 };
 
 // ============================================================
-// EXPORT SOCKET
+// EXPORT SOCKET + HELPER
 // ============================================================
 exports.setIO = setIO;
+exports.getFrontendUrlByRole = getFrontendUrlByRole; // ✅ export để dùng nơi khác nếu cần

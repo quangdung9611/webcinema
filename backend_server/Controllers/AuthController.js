@@ -147,16 +147,20 @@ exports.login = async (req, res) => {
 };
 
 /*=========================================================
-    LOGIN ADMIN (RIÊNG)
+    LOGIN ADMIN (RIÊNG) — ✅ FIX: CHẶN SAI ROLE TỪ ĐẦU
 =========================================================*/
 exports.adminLogin = async (req, res) => {
     try {
         const { email, password, rememberMe } = req.body;
-        const result = await AuthService.login(email, password, rememberMe, req, res);
-        if (result.user.role !== 'admin') {
-            return res.status(403).json({ success: false, message: "Tài khoản không có quyền quản trị." });
-        }
-        return res.status(200).json({ success: true, message: "Đăng nhập admin thành công", user: result.user });
+
+        // ✅ Truyền expectedRole = 'admin' để Service tự chặn
+        const result = await AuthService.login(email, password, rememberMe, req, res, 'admin');
+
+        return res.status(200).json({
+            success: true,
+            message: "Đăng nhập admin thành công",
+            user: result.user
+        });
     } catch (error) {
         console.error("Admin Login Error:", error);
         return res.status(error.statusCode || 500).json({
@@ -168,7 +172,6 @@ exports.adminLogin = async (req, res) => {
         });
     }
 };
-
 /*=========================================================
     🔥 GET ME
 =========================================================*/

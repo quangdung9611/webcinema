@@ -14,7 +14,7 @@ import api from '../../api/api';
 import socketService from '../../api/socket';
 import { useAuth } from '../../context/AuthContext';
 
-import DeviceLoginModal from './DeviceLogicModal'; // 🔥 Thay Modal bằng DeviceLoginModal
+import DeviceLoginModal from './DeviceLogicModal';
 
 import '../styles/SessionGuard.css';
 
@@ -31,6 +31,7 @@ const SessionGuard = ({ children }) => {
     const isMountedRef = useRef(false);
     const isProcessingRef = useRef(false);
     const hasRedirectedRef = useRef(false);
+    const isLoggingOutRef = useRef(false);  // ✅ THÊM
 
     const [showModal, setShowModal] = useState(false);
     const [modalMessage, setModalMessage] = useState('');
@@ -151,6 +152,14 @@ const SessionGuard = ({ children }) => {
     const handleSessionExpired = useCallback(
         async (eventOrDetail = {}) => {
             if (!isMountedRef.current) return;
+
+            // ✅ THÊM: BỎ QUA NẾU ĐANG LOGOUT
+            if (isLoggingOutRef.current) {
+                console.log(
+                    '⏭️ [SESSION GUARD] Đang logout → bỏ qua session expired'
+                );
+                return;
+            }
             
             if (isProcessingRef.current) {
                 console.log('⚠️ [SESSION GUARD] Already processed, skip');
@@ -182,12 +191,28 @@ const SessionGuard = ({ children }) => {
         [clearBookingSession, openSessionModal]
     );
 
+    // ============================================================
+    // MOUNT + LẮNG NGHE authCleanedUp
+    // ============================================================
     useEffect(() => {
         isMountedRef.current = true;
         console.log('🛡️ [SESSION GUARD] Started');
 
+        // ✅ LẮNG NGHE authCleanedUp → set flag đang logout
+        const handleAuthCleanedUp = (event) => {
+            console.log('🧹 [SESSION GUARD] authCleanedUp:', event?.detail);
+            isLoggingOutRef.current = true;
+
+            setTimeout(() => {
+                isLoggingOutRef.current = false;
+            }, 3000);
+        };
+
+        window.addEventListener('authCleanedUp', handleAuthCleanedUp);
+
         return () => {
             isMountedRef.current = false;
+            window.removeEventListener('authCleanedUp', handleAuthCleanedUp);
         };
     }, []);
 
@@ -244,6 +269,8 @@ const SessionGuard = ({ children }) => {
         const handleUserLoggedIn = () => {
             console.log('🟢 [SESSION GUARD] User logged in → reset');
             isProcessingRef.current = false;
+            hasRedirectedRef.current = false;
+            isLoggingOutRef.current = false;  // ✅ Reset khi login
             setShowModal(false);
         };
 

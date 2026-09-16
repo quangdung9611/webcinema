@@ -27,6 +27,7 @@ const AdminSessionGuard = ({ children }) => {
     const isMountedRef = useRef(false);
     const isProcessingRef = useRef(false);
     const hasRedirectedRef = useRef(false);
+    const isLoggingOutRef = useRef(false);  // ✅ THÊM
 
     const [showModal, setShowModal] = useState(false);
     const [modalMessage, setModalMessage] = useState('');
@@ -41,8 +42,6 @@ const AdminSessionGuard = ({ children }) => {
         const path = location.pathname;
         const publicPaths = [
             '/login',
-            // '/forgot-password',
-            // '/reset-password',
         ];
         return publicPaths.some(
             (p) => path === p || path.startsWith(p + '/')
@@ -50,7 +49,7 @@ const AdminSessionGuard = ({ children }) => {
     }, [location.pathname]);
 
     // ============================================================
-    // XÓA SESSION ADMIN (CHỈ XÓA ADMIN, KHÔNG ĐỤNG USER)
+    // XÓA SESSION ADMIN
     // ============================================================
     const clearAdminSession = useCallback(() => {
         console.log('🧹 [ADMIN SESSION GUARD] Clearing admin session...');
@@ -68,7 +67,6 @@ const AdminSessionGuard = ({ children }) => {
             sessionStorage.removeItem(key);
         });
 
-        // 🔥 CHỈ XÓA admin_token, KHÔNG XÓA user_token
         document.cookie =
             'admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 
@@ -78,15 +76,13 @@ const AdminSessionGuard = ({ children }) => {
     }, []);
 
     // ============================================================
-    // HANDLE MODAL CONFIRM - ĐĂNG NHẬP LẠI
+    // HANDLE MODAL CONFIRM
     // ============================================================
     const handleModalConfirm = useCallback(() => {
         console.log('➡️ [ADMIN SESSION GUARD] Clicking "Đăng nhập lại"!');
 
         setShowModal(false);
         hasRedirectedRef.current = false;
-
-        // 🔥 Reset isProcessingRef ngay khi rời modal
         isProcessingRef.current = false;
 
         navigate('/login', {
@@ -128,11 +124,19 @@ const AdminSessionGuard = ({ children }) => {
     }, []);
 
     // ============================================================
-    // HANDLE SESSION EXPIRED - ĐỒNG BỘ VỚI SessionGuard
+    // HANDLE SESSION EXPIRED
     // ============================================================
     const handleSessionExpired = useCallback(
         async (eventOrDetail = {}) => {
             if (!isMountedRef.current) return;
+
+            // ✅ THÊM: BỎ QUA NẾU ĐANG LOGOUT
+            if (isLoggingOutRef.current) {
+                console.log(
+                    '⏭️ [ADMIN SESSION GUARD] Đang logout → bỏ qua session expired'
+                );
+                return;
+            }
 
             if (isProcessingRef.current) {
                 console.log(
@@ -141,7 +145,7 @@ const AdminSessionGuard = ({ children }) => {
                 return;
             }
 
-            // 🔥 QUAN TRỌNG: Kiểm tra public route TRƯỚC KHI set isProcessing
+            // 🔥 Kiểm tra public route TRƯỚC KHI set isProcessing
             if (isAdminPublicRoute()) {
                 console.log(
                     '⏭️ [ADMIN SESSION GUARD] Public route, skip session expired'
@@ -176,7 +180,6 @@ const AdminSessionGuard = ({ children }) => {
                 code,
             });
 
-            // 🔥 Reset isProcessingRef sau 500ms (giống User)
             setTimeout(() => {
                 isProcessingRef.current = false;
             }, 500);
@@ -185,14 +188,30 @@ const AdminSessionGuard = ({ children }) => {
     );
 
     // ============================================================
-    // MOUNT
+    // MOUNT + LẮNG NGHE authCleanedUp
     // ============================================================
     useEffect(() => {
         isMountedRef.current = true;
         console.log('🛡️ [ADMIN SESSION GUARD] Started');
 
+        // ✅ LẮNG NGHE authCleanedUp → set flag đang logout
+        const handleAuthCleanedUp = (event) => {
+            console.log(
+                '🧹 [ADMIN SESSION GUARD] authCleanedUp:',
+                event?.detail
+            );
+            isLoggingOutRef.current = true;
+
+            setTimeout(() => {
+                isLoggingOutRef.current = false;
+            }, 3000);
+        };
+
+        window.addEventListener('authCleanedUp', handleAuthCleanedUp);
+
         return () => {
             isMountedRef.current = false;
+            window.removeEventListener('authCleanedUp', handleAuthCleanedUp);
         };
     }, []);
 
@@ -270,6 +289,7 @@ const AdminSessionGuard = ({ children }) => {
             console.log('🟢 [ADMIN SESSION GUARD] Admin logged in → reset');
             isProcessingRef.current = false;
             hasRedirectedRef.current = false;
+            isLoggingOutRef.current = false;  // ✅ Reset
             setShowModal(false);
             setCountdown(COUNTDOWN_SECONDS);
         };
@@ -282,7 +302,7 @@ const AdminSessionGuard = ({ children }) => {
     }, []);
 
     // ============================================================
-    // RESET KHI RỜI KHỎI PUBLIC ROUTE (QUAN TRỌNG!)
+    // RESET KHI RỜI KHỎI PUBLIC ROUTE
     // ============================================================
     useEffect(() => {
         if (isAdminPublicRoute()) {
