@@ -27,7 +27,7 @@ const AdminSessionGuard = ({ children }) => {
     const isMountedRef = useRef(false);
     const isProcessingRef = useRef(false);
     const hasRedirectedRef = useRef(false);
-    const isLoggingOutRef = useRef(false);  // ✅ THÊM
+    const isLoggingOutRef = useRef(false);
 
     const [showModal, setShowModal] = useState(false);
     const [modalMessage, setModalMessage] = useState('');
@@ -50,13 +50,14 @@ const AdminSessionGuard = ({ children }) => {
 
     // ============================================================
     // XÓA SESSION ADMIN
+    // ✅ KHÔNG DÙNG document.cookie — HttpOnly cookie chỉ server xóa được
     // ============================================================
     const clearAdminSession = useCallback(() => {
-        console.log('🧹 [ADMIN SESSION GUARD] Clearing admin session...');
+        console.log('🧹 [ADMIN SESSION GUARD] Clearing admin session state...');
 
+        // ✅ CHỈ XÓA STATE LOCAL — KHÔNG ĐỤNG COOKIE
         const adminKeys = [
             'admin_info',
-            'admin_token',
             'adminLockedEmail',
             'admin_login_lock',
             'admin_remember_me',
@@ -67,12 +68,15 @@ const AdminSessionGuard = ({ children }) => {
             sessionStorage.removeItem(key);
         });
 
-        document.cookie =
-            'admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-
+        // ✅ XÓA Authorization HEADER (nếu có)
         delete adminapi.defaults.headers.common['Authorization'];
 
-        console.log('✅ [ADMIN SESSION GUARD] Admin session cleared');
+        // ✅ RESET ADMIN API CACHE
+        if (typeof adminapi.resetAdminCache === 'function') {
+            adminapi.resetAdminCache();
+        }
+
+        console.log('✅ [ADMIN SESSION GUARD] Admin session state cleared');
     }, []);
 
     // ============================================================
@@ -97,23 +101,32 @@ const AdminSessionGuard = ({ children }) => {
 
     // ============================================================
     // OPEN SESSION MODAL
+    // ✅ FIX: Check cả SESSION_REPLACED và SESSION_EXPIRED
     // ============================================================
     const openSessionModal = useCallback((detail = {}) => {
         if (!isMountedRef.current) return;
         if (hasRedirectedRef.current) return;
 
         const code = detail.code || 'TOKEN_EXPIRED';
+        
+        // ✅ FIX: Check cả 2 code
+        const isDeviceReplaced = 
+            code === 'SESSION_REPLACED' || 
+            code === 'SESSION_EXPIRED';
+
         const message =
             detail.message ||
-            (code === 'SESSION_REPLACED'
-                ? 'Tài khoản admin đã được đăng nhập trên thiết bị khác.'
+            (isDeviceReplaced
+                ? 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.'
                 : 'Phiên đăng nhập admin đã hết hạn. Vui lòng đăng nhập lại.');
+
         const newDevice = detail.newDevice || null;
 
         console.warn('🔐 [ADMIN SESSION GUARD] Opening modal:', {
             code,
             message,
             newDevice,
+            isDeviceReplaced,
         });
 
         setModalCode(code);
@@ -130,7 +143,6 @@ const AdminSessionGuard = ({ children }) => {
         async (eventOrDetail = {}) => {
             if (!isMountedRef.current) return;
 
-            // ✅ THÊM: BỎ QUA NẾU ĐANG LOGOUT
             if (isLoggingOutRef.current) {
                 console.log(
                     '⏭️ [ADMIN SESSION GUARD] Đang logout → bỏ qua session expired'
@@ -145,7 +157,6 @@ const AdminSessionGuard = ({ children }) => {
                 return;
             }
 
-            // 🔥 Kiểm tra public route TRƯỚC KHI set isProcessing
             if (isAdminPublicRoute()) {
                 console.log(
                     '⏭️ [ADMIN SESSION GUARD] Public route, skip session expired'
@@ -194,7 +205,6 @@ const AdminSessionGuard = ({ children }) => {
         isMountedRef.current = true;
         console.log('🛡️ [ADMIN SESSION GUARD] Started');
 
-        // ✅ LẮNG NGHE authCleanedUp → set flag đang logout
         const handleAuthCleanedUp = (event) => {
             console.log(
                 '🧹 [ADMIN SESSION GUARD] authCleanedUp:',
@@ -289,7 +299,7 @@ const AdminSessionGuard = ({ children }) => {
             console.log('🟢 [ADMIN SESSION GUARD] Admin logged in → reset');
             isProcessingRef.current = false;
             hasRedirectedRef.current = false;
-            isLoggingOutRef.current = false;  // ✅ Reset
+            isLoggingOutRef.current = false;
             setShowModal(false);
             setCountdown(COUNTDOWN_SECONDS);
         };
@@ -316,7 +326,11 @@ const AdminSessionGuard = ({ children }) => {
 
     // ============================================================
     // RENDER
+    // ✅ FIX: Check cả SESSION_REPLACED và SESSION_EXPIRED
     // ============================================================
+    const isDeviceReplacedCode =
+        modalCode === 'SESSION_REPLACED' || modalCode === 'SESSION_EXPIRED';
+
     return (
         <>
             {children}
@@ -325,7 +339,7 @@ const AdminSessionGuard = ({ children }) => {
                 show={showModal}
                 type="warning"
                 title={
-                    modalCode === 'SESSION_REPLACED'
+                    isDeviceReplacedCode
                         ? '🔐 Phát hiện đăng nhập trên thiết bị khác'
                         : '🔐 Phiên đăng nhập admin đã hết hạn'
                 }
@@ -338,7 +352,7 @@ const AdminSessionGuard = ({ children }) => {
                 }
                 className="admin-session-expired-modal-wrapper"
             >
-                {modalCode === 'SESSION_REPLACED' && modalNewDevice && (
+                {isDeviceReplacedCode && modalNewDevice && (
                     <div className="admin-session-expired-device-info">
                         <p>
                             <strong>📱 Thiết bị mới:</strong>{' '}
@@ -358,7 +372,7 @@ const AdminSessionGuard = ({ children }) => {
                     </div>
                 )}
 
-                {modalCode === 'SESSION_REPLACED' && (
+                {isDeviceReplacedCode && (
                     <div className="admin-session-expired-security">
                         🛡️ Nếu đây không phải là bạn, vui lòng đổi mật khẩu
                         ngay lập tức.

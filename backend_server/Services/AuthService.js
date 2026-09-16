@@ -204,8 +204,9 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
             message: "Vui lòng xác thực email trước khi đăng nhập. Kiểm tra hộp thư của bạn."
         };
     }
-
-    // QUẢN LÝ THIẾT BỊ
+        // ========================================================
+    // ✅ QUẢN LÝ THIẾT BỊ — PHÂN BIỆT ADMIN / USER
+    // ========================================================
     const maxDevices = user.role === 'admin' 
         ? MAX_DEVICES_ADMIN 
         : MAX_DEVICES_CUSTOMER;
@@ -215,7 +216,15 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
     console.log(`📊 [LOGIN] Role: ${user.role} | Active devices: ${activeTokens.length}/${maxDevices}`);
 
     if (activeTokens.length >= maxDevices) {
-        const oldestToken = activeTokens[activeTokens.length - 1];
+        // ✅ FIX: Sort ổn định — tránh bug trùng created_at
+        const sorted = [...activeTokens].sort((a, b) => {
+            const timeA = new Date(a.created_at).getTime();
+            const timeB = new Date(b.created_at).getTime();
+            if (timeA !== timeB) return timeA - timeB;
+            return a.token_id - b.token_id;
+        });
+
+        const oldestToken = sorted[0]; // ✅ Lấy cũ nhất (đầu mảng sau sort ASC)
 
         if (oldestToken) {
             const reason = user.role === 'admin'
@@ -224,14 +233,14 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
 
             await RefreshTokenRepository.revoke(oldestToken.token_hash, reason);
 
-            console.log(`🔄 [REVOKE] Revoke token cũ nhất của ${user.role} ${user.user_id} | Lý do: ${reason}`);
+            console.log(`🔄 [REVOKE] Revoke token cũ nhất | token_id=${oldestToken.token_id} | role=${user.role} | Lý do: ${reason}`);
 
+            // ✅ EMIT SOCKET CHO THIẾT BỊ CŨ
             if (ioInstance && user.user_id) {
                 ioInstance.to(`user_${user.user_id}`).emit('session_expired', {
                     code: 'SESSION_REPLACED',
-                    message: user.role === 'admin'
-                        ? `Tài khoản admin đã vượt quá ${maxDevices} thiết bị. Thiết bị cũ nhất đã bị đăng xuất.`
-                        : 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.',
+                    // ✅ FIX: Dùng CÙNG message cho cả admin + user
+                    message: 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.',
                     newDevice: {
                         ip: req.ip || req.connection?.remoteAddress || 'Unknown',
                         userAgent: req.headers?.['user-agent']?.substring(0, 100) || 'Unknown'

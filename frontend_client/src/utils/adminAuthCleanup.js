@@ -19,7 +19,7 @@ const dispatchAuthCleanedUp = ({ reason, message }) => {
             detail: {
                 reason,
                 message,
-                isAdmin: true,  // ✅ Đánh dấu là admin
+                isAdmin: true,
                 timestamp: new Date().toISOString()
             }
         })
@@ -27,7 +27,8 @@ const dispatchAuthCleanedUp = ({ reason, message }) => {
 };
 
 // ============================================================
-// CLEAR ADMIN AUTH (CHỈ XÓA ADMIN, KHÔNG ĐỤNG USER)
+// CLEAR ADMIN AUTH
+// ✅ FIX: BỎ document.cookie — HttpOnly cookie chỉ server xóa được
 // ============================================================
 const clearAdminAuth = () => {
     console.log('🧹 [ADMIN AUTH CLEANUP] Clearing admin auth state');
@@ -38,7 +39,6 @@ const clearAdminAuth = () => {
     // ✅ Xóa localStorage/sessionStorage của admin
     const adminKeys = [
         'admin_info',
-        'admin_token',
         'adminLockedEmail',
         'admin_login_lock',
         'admin_remember_me',
@@ -49,9 +49,8 @@ const clearAdminAuth = () => {
         sessionStorage.removeItem(key);
     });
 
-    // ✅ Xóa cookie admin_token
-    document.cookie =
-        'admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    // ❌ BỎ document.cookie — HttpOnly cookie không xóa được bằng JS
+    // Backend sẽ clear cookie qua API logout
 
     // ✅ Reset admin API cache
     try {
@@ -172,7 +171,7 @@ export const adminSessionExpired = async (
 // ADMIN DEVICE LOGGED OUT
 // ============================================================
 export const adminDeviceLoggedOut = async (
-    message = 'Tài khoản admin đã được đăng nhập trên thiết bị khác.'
+    message = 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.'
 ) => {
     return forceAdminLogout('SESSION_REPLACED', message);
 };

@@ -30,6 +30,7 @@ class RefreshTokenRepository {
 
     /*=========================================================
         LẤY TẤT CẢ TOKEN ACTIVE CỦA USER
+        ✅ FIX: Thêm token_id DESC để sort ổn định
     =========================================================*/
     async getActiveByUser(userId) {
         const [rows] = await db.query(
@@ -39,7 +40,7 @@ class RefreshTokenRepository {
             WHERE user_id = ?
               AND is_revoked = 0
               AND expires_at > NOW()
-            ORDER BY created_at DESC
+            ORDER BY created_at DESC, token_id DESC
             `,
             [userId]
         );

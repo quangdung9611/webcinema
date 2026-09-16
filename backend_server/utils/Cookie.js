@@ -11,6 +11,12 @@ const ADMIN_ACCESS_COOKIE_NAME =
     process.env.ADMIN_ACCESS_COOKIE_NAME || "admin_token";
 
 /*=========================================================
+    COOKIE DOMAIN (PRODUCTION)
+=========================================================*/
+
+const COOKIE_DOMAIN = ".quangdungcinema.id.vn";
+
+/*=========================================================
     COOKIE CLASS
 =========================================================*/
 
@@ -21,13 +27,22 @@ class Cookie {
     =====================================================*/
 
     getCookieOptions(maxAge = 24 * 60 * 60 * 1000) {
-        return {
+        const isProduction = process.env.NODE_ENV === "production";
+
+        const options = {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+            secure: isProduction,
+            sameSite: isProduction ? "None" : "Lax",
             path: "/",
             maxAge
         };
+
+        // ✅ FIX: Thêm domain cho production — chia sẻ giữa các subdomain
+        if (isProduction) {
+            options.domain = COOKIE_DOMAIN;
+        }
+
+        return options;
     }
 
     /*=====================================================
@@ -51,12 +66,21 @@ class Cookie {
     }
 
     clearUserCookies(res, io = null, userId = null, deviceInfo = null) {
-        res.clearCookie(USER_ACCESS_COOKIE_NAME, {
+        const isProduction = process.env.NODE_ENV === "production";
+
+        const clearOptions = {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+            secure: isProduction,
+            sameSite: isProduction ? "None" : "Lax",
             path: "/"
-        });
+        };
+
+        // ✅ FIX: Phải xóa với đúng domain đã set
+        if (isProduction) {
+            clearOptions.domain = COOKIE_DOMAIN;
+        }
+
+        res.clearCookie(USER_ACCESS_COOKIE_NAME, clearOptions);
 
         // 🔥 Gửi socket notification ngay lập tức
         if (io && userId) {
@@ -85,12 +109,21 @@ class Cookie {
     }
 
     clearAdminCookies(res, io = null, userId = null, deviceInfo = null) {
-        res.clearCookie(ADMIN_ACCESS_COOKIE_NAME, {
+        const isProduction = process.env.NODE_ENV === "production";
+
+        const clearOptions = {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+            secure: isProduction,
+            sameSite: isProduction ? "None" : "Lax",
             path: "/"
-        });
+        };
+
+        // ✅ FIX: Phải xóa với đúng domain đã set
+        if (isProduction) {
+            clearOptions.domain = COOKIE_DOMAIN;
+        }
+
+        res.clearCookie(ADMIN_ACCESS_COOKIE_NAME, clearOptions);
 
         // 🔥 Gửi socket notification ngay lập tức
         if (io && userId) {
@@ -119,21 +152,23 @@ class Cookie {
 
         console.log(`🔴 [COOKIE] Emitting session_expired for user: ${userId}`);
 
+        // ✅ FIX: Phân biệt code theo ngữ cảnh
+        const isDeviceReplaced = !!deviceInfo;
+
         const payload = {
-            code: 'SESSION_EXPIRED',
-            type: 'device',
-            message: 'Tài khoản đã được đăng nhập trên thiết bị khác.',
-            newDevice: deviceInfo || {
-                deviceName: 'Thiết bị khác',
-                timestamp: new Date().toISOString()
-            },
+            code: isDeviceReplaced ? 'SESSION_REPLACED' : 'SESSION_EXPIRED',
+            type: isDeviceReplaced ? 'device' : 'expired',
+            message: isDeviceReplaced
+                ? 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.'
+                : 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+            newDevice: deviceInfo || null,
             timestamp: new Date().toISOString()
         };
 
         // Gửi đến room của user
         io.to(`user_${userId}`).emit('session_expired', payload);
 
-        console.log(`✅ [COOKIE] session_expired sent to user_${userId}`);
+        console.log(`✅ [COOKIE] session_expired sent to user_${userId}`, payload);
     }
 
     /*=====================================================
@@ -142,10 +177,9 @@ class Cookie {
 
     forceLogout(res, io, userId, deviceInfo = null) {
         console.log(`🔴 [COOKIE] Force logout for user: ${userId}`);
-        
-        // Clear cookies
+
         this.clearAllCookies(res, io, userId, deviceInfo);
-        
+
         console.log(`✅ [COOKIE] Force logout completed for user: ${userId}`);
     }
 }
