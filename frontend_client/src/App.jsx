@@ -65,13 +65,6 @@ axios.defaults.withCredentials = true;
 // ============================================================
 // LAZY LOAD RETRY HELPER
 // ============================================================
-//
-// Giữ nguyên cơ chế lazy hiện tại.
-//
-// NetworkError không xử lý ở đây.
-// LazyErrorBoundary chỉ xử lý lỗi lazy/chunk/React.
-//
-// ============================================================
 
 const lazyRetry = (
     componentImport,
@@ -579,6 +572,18 @@ const PriceConfigPage = lazy(() =>
 );
 
 // ============================================================
+// ✅ LAZY LOAD - CHECK-IN PAGE (MỚI)
+// ============================================================
+
+const CheckIn = lazy(() =>
+    lazyRetry(() =>
+        import(
+            "./admin_frontend/pages/CheckIn"
+        )
+    )
+);
+
+// ============================================================
 // HELPER COMPONENTS
 // ============================================================
 
@@ -1027,14 +1032,47 @@ const ADMIN_ROUTES = [
 // ============================================================
 // ADMIN ROUTES COMPONENT
 // ============================================================
+//
+// ⚠️ LƯU Ý:
+// Route /check-in và /check-in/:ticketCode phải đặt
+// TRƯỚC route có <AdminLayout> để KHÔNG bị bọc sidebar.
+//
+// ============================================================
 
 const AdminRoutesComponent = () => (
     <Routes>
+        {/* ============================================ */}
+        {/* LOGIN - Không có layout */}
+        {/* ============================================ */}
         <Route
             path="/login"
             element={<AdminLogin />}
         />
 
+        {/* ============================================ */}
+        {/* ✅ CHECK-IN - TOÀN MÀN HÌNH (không có sidebar) */}
+        {/* ============================================ */}
+        <Route
+            path="/check-in"
+            element={
+                <AdminSessionGuard>
+                    <CheckIn />
+                </AdminSessionGuard>
+            }
+        />
+
+        <Route
+            path="/check-in/:ticketCode"
+            element={
+                <AdminSessionGuard>
+                    <CheckIn />
+                </AdminSessionGuard>
+            }
+        />
+
+        {/* ============================================ */}
+        {/* ADMIN LAYOUT - Có sidebar */}
+        {/* ============================================ */}
         <Route
             element={
                 <AdminSessionGuard>
@@ -1065,6 +1103,9 @@ const AdminRoutesComponent = () => (
             )}
         </Route>
 
+        {/* ============================================ */}
+        {/* 404 */}
+        {/* ============================================ */}
         <Route
             path="*"
             element={
@@ -1073,14 +1114,9 @@ const AdminRoutesComponent = () => (
         />
     </Routes>
 );
+
 // ============================================================
 // USER PAGE CONTAINER
-// ============================================================
-// Mỗi khi pathname thay đổi:
-// - page cũ bị unmount hoàn toàn
-// - page mới được mount lại
-//
-// UserLayout / Header / Footer vẫn giữ nguyên.
 // ============================================================
 
 const UserPageContainer = () => {
@@ -1159,38 +1195,15 @@ const UserRoutesComponent = () => (
         />
     </Routes>
 );
+
 // ============================================================
 // APP CONTENT
-// ============================================================
-//
-// NETWORK FLOW:
-//
-// 1. NetworkContext lắng nghe browser online/offline.
-//
-// 2. Offline:
-//        isOnline  = false
-//        isOffline = true
-//        App hiển thị NetworkErrorPage.
-//
-// 3. Online trở lại:
-//        NetworkContext gọi window.location.reload().
-//
-// 4. api.js / adminapi.js:
-//        có thể phát networkError khi API request thất bại.
-//
-// 5. LazyErrorBoundary:
-//        chỉ bắt lazy/chunk/React error.
-//
 // ============================================================
 
 const AppContent = () => {
     const {
         loading: routeLoading,
     } = useRouteLoading();
-
-    // ========================================================
-    // NETWORK
-    // ========================================================
 
     const {
         isOnline,
@@ -1201,26 +1214,14 @@ const AppContent = () => {
         retryConnection,
     } = useNetwork();
 
-    // ========================================================
-    // API NETWORK ERROR
-    // ========================================================
-
     const [
         axiosNetworkError,
         setAxiosNetworkError,
     ] = useState(null);
 
-    // ========================================================
-    // DOMAIN
-    // ========================================================
-
     const isAdminDomain =
         window.location.hostname ===
         "admin.quangdungcinema.id.vn";
-
-    // ========================================================
-    // LISTEN API NETWORK ERROR
-    // ========================================================
 
     useEffect(() => {
         const handleNetworkError =
@@ -1255,19 +1256,11 @@ const AppContent = () => {
         };
     }, []);
 
-    // ========================================================
-    // CLEAR API ERROR WHEN ONLINE
-    // ========================================================
-
     useEffect(() => {
         if (isOnline) {
             setAxiosNetworkError(null);
         }
     }, [isOnline]);
-
-    // ========================================================
-    // MANUAL RETRY
-    // ========================================================
 
     const handleRetryConnection =
         async () => {
@@ -1291,26 +1284,9 @@ const AppContent = () => {
             return connected;
         };
 
-    // ========================================================
-    // EFFECTIVE NETWORK ERROR
-    // ========================================================
-
     const effectiveNetworkError =
         contextNetworkError ||
         axiosNetworkError;
-
-    // ========================================================
-    // OFFLINE
-    // ========================================================
-    //
-    // NetworkContext đã xác nhận browser offline.
-    //
-    // Hiện NetworkErrorPage.
-    //
-    // Khi browser online lại:
-    // NetworkContext tự reload.
-    //
-    // ========================================================
 
     if (
         isOffline ||
@@ -1354,10 +1330,6 @@ const AppContent = () => {
         );
     }
 
-    // ========================================================
-    // API NETWORK ERROR
-    // ========================================================
-
     if (
         effectiveNetworkError &&
         isOnline &&
@@ -1390,10 +1362,6 @@ const AppContent = () => {
             />
         );
     }
-
-    // ========================================================
-    // NORMAL APP
-    // ========================================================
 
     return (
         <>

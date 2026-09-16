@@ -2,6 +2,7 @@
 const AuthService = require("../Services/AuthService");
 const CacheService = require("../Services/CacheService");
 const OtpRepository = require("../Repositories/OtpRepository");
+const Cookie = require("../utils/Cookie"); // ✅ THÊM IMPORT
 
 /*=========================================================
     🆕 ĐĂNG KÝ BƯỚC 1 (CHỈ VALIDATE, KHÔNG LƯU CSDL)
@@ -205,7 +206,11 @@ exports.refreshToken = async (req, res) => {
 };
 
 /*=========================================================
-    LOGOUT
+    ✅ LOGOUT — IDEMPOTENT (LUÔN THÀNH CÔNG)
+=========================================================
+    - Chạy không cần middleware
+    - Luôn clear cookie dù có lỗi
+    - Luôn return 200
 =========================================================*/
 exports.logout = async (req, res) => {
     try {
@@ -213,10 +218,19 @@ exports.logout = async (req, res) => {
         return res.status(200).json(result);
     } catch (error) {
         console.error("Logout Error:", error);
-        return res.status(error.statusCode || 500).json({
-            success: false,
-            message: error.message || "Lỗi máy chủ",
-            data: error.data || null
+
+        // ✅ LUÔN CLEAR COOKIE DÙ CÓ LỖI
+        try {
+            Cookie.clearAllCookies(res);
+            console.log('🧹 [LOGOUT] Cleared cookies despite error');
+        } catch (clearError) {
+            console.warn("Cannot clear cookies:", clearError);
+        }
+
+        // ✅ LUÔN RETURN 200 — logout idempotent
+        return res.status(200).json({
+            success: true,
+            message: "Đăng xuất thành công",
         });
     }
 };
@@ -266,7 +280,7 @@ exports.forgotPassword = async (req, res) => {
         return res.status(200).json(result);
     } catch (error) {
         console.error("Forgot Password Error:", error);
-        
+
         // 🔥 XỬ LÝ LỖI 404 (EMAIL CHƯA ĐĂNG KÝ)
         if (error.statusCode === 404) {
             return res.status(404).json({
@@ -275,7 +289,7 @@ exports.forgotPassword = async (req, res) => {
                 message: error.message || "Email này chưa được đăng ký trong hệ thống. Vui lòng kiểm tra lại."
             });
         }
-        
+
         if (error.statusCode === 429) {
             return res.status(429).json({
                 success: false,
@@ -480,7 +494,7 @@ exports.forgotPin = async (req, res) => {
         return res.status(200).json(result);
     } catch (error) {
         console.error("Forgot PIN Error:", error);
-        
+
         // 🔥 XỬ LÝ LỖI 404 (EMAIL CHƯA ĐĂNG KÝ)
         if (error.statusCode === 404) {
             return res.status(404).json({
@@ -489,7 +503,7 @@ exports.forgotPin = async (req, res) => {
                 message: error.message || "Email này chưa được đăng ký trong hệ thống. Vui lòng kiểm tra lại."
             });
         }
-        
+
         if (error.statusCode === 429) {
             return res.status(429).json({
                 success: false,
@@ -588,43 +602,41 @@ exports.resendOtp = async (req, res) => {
 exports.invalidateOtp = async (req, res) => {
     try {
         const { email, purpose } = req.body;
-        
+
         if (!email) {
             return res.status(400).json({
                 success: false,
                 message: "Thiếu email"
             });
         }
-        
+
         if (!purpose) {
             return res.status(400).json({
                 success: false,
                 message: "Thiếu purpose"
             });
         }
-        
+
         // 🔥 Đánh dấu OTP đã sử dụng trong otp_codes (is_used = 1)
-        // ✅ SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
         await CacheService.markOTPAsUsed(email, purpose);
-        
+
         // 🔥 Log vào otp_logs với status 'invalidated'
-        // ✅ SỬA: Thêm trường otp
         await OtpRepository.create({
             email,
             purpose,
-            otp: null,  // 👈 THÊM: Không cần lưu OTP khi invalidate
+            otp: null,
             status: 'invalidated',
             ip_address: req.ip || req.connection?.remoteAddress || null,
             user_agent: req.headers?.['user-agent'] || null
         });
-        
+
         console.log(`🔴 [OTP] Đã vô hiệu hóa OTP cho ${email}, purpose: ${purpose}`);
-        
+
         return res.status(200).json({
             success: true,
             message: "OTP đã được vô hiệu hóa"
         });
-        
+
     } catch (error) {
         console.error("Invalidate OTP Error:", error);
         return res.status(500).json({

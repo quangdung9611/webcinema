@@ -472,10 +472,11 @@ adminApi.interceptors.response.use(
                 }
             );
 
-            const excludedEndpoints = [
-                "/admin/api/auth/login",
-                "/admin/api/auth/refresh",
-            ];
+           const excludedEndpoints = [
+            "/admin/api/auth/login",
+            "/admin/api/auth/refresh",
+            "/admin/api/auth/logout",      // ✅ THÊM — tránh emit sessionExpired khi logout
+        ];
 
             const shouldHandleSession =
                 !excludedEndpoints.some(

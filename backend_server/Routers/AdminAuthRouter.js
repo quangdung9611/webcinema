@@ -22,6 +22,15 @@ router.post("/login", AuthController.adminLogin);
  */
 router.post("/refresh", AuthController.refreshToken);
 
+/**
+ * ✅ LOGOUT — BỎ MIDDLEWARE
+ * Vì:
+ * - Nếu token valid → logout OK
+ * - Nếu token invalid/revoked → vẫn clear cookie + return 200
+ * - Tránh user bị kẹt ở modal "Session expired"
+ */
+router.post("/logout", AuthController.logout);
+
 /*=========================================================
     PRIVATE ROUTES
 =========================================================*/
@@ -37,49 +46,23 @@ router.get("/me", authenticateAdmin, AuthController.getMe);
 router.patch("/change-password", authenticateAdmin, AuthController.changePassword);
 
 /**
- * Đăng xuất
- */
-router.post("/logout", authenticateAdmin, AuthController.logout);
-
-/**
- * Đăng xuất tất cả thiết bị
+ * Đăng xuất tất cả thiết bị (vẫn cần middleware vì cần userId)
  */
 router.post("/logout-all", authenticateAdmin, AuthController.logoutAllDevices);
 
 /*=========================================================
-    🟢 THÊM MỚI: QUẢN LÝ THIẾT BỊ CHO ADMIN
+    🟢 QUẢN LÝ THIẾT BỊ CHO ADMIN
 =========================================================*/
 
 /**
  * Lấy danh sách thiết bị đang đăng nhập của admin
  * GET /admin/api/auth/devices
- * 
- * Response:
- * {
- *   success: true,
- *   devices: [
- *     {
- *       device_id: 1,
- *       device_name: "Windows Chrome",
- *       ip_address: "192.168.1.1",
- *       last_used_at: "2026-08-21T10:00:00.000Z",
- *       created_at: "2026-08-21T09:00:00.000Z",
- *       expires_at: "2026-08-28T09:00:00.000Z"
- *     }
- *   ]
- * }
  */
 router.get("/devices", authenticateAdmin, AuthController.getDevices);
 
 /**
  * Đăng xuất 1 thiết bị admin cụ thể (khóa thiết bị từ xa)
  * DELETE /admin/api/auth/devices/:deviceId
- * 
- * Response:
- * {
- *   success: true,
- *   message: "Đã đăng xuất thiết bị thành công"
- * }
  */
 router.delete("/devices/:deviceId", authenticateAdmin, AuthController.revokeDevice);
 
