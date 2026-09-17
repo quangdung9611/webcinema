@@ -1,10 +1,12 @@
+// Controllers/TicketController.js
+
 const TicketService = require("../Services/TicketService");
 const TicketRepository = require("../Repositories/TicketRepository");
 const QRCode = require("qrcode");
 const PriceConfigService = require("../Services/PriceConfigService");
 
 // ==========================================================
-// PUBLIC - LẤY MÃ QR (CHỨA URL CHECK-IN)
+// PUBLIC - LẤY MÃ QR
 // ==========================================================
 
 exports.getTicketQR = async (req, res) => {
@@ -12,7 +14,6 @@ exports.getTicketQR = async (req, res) => {
     try {
         const { ticketCode } = req.params;
 
-        // ✅ BƯỚC 1: Verify vé tồn tại
         connection = await TicketRepository.getConnection();
         const ticket = await TicketService.getTicketByCode(connection, ticketCode);
         connection.release();
@@ -24,14 +25,12 @@ exports.getTicketQR = async (req, res) => {
             });
         }
 
-        // ✅ BƯỚC 2: Tạo URL check-in
         const frontendUrl =
             process.env.FRONTEND_URL ||
             "https://admin.quangdungcinema.id.vn";
 
         const checkinUrl = `${frontendUrl}/check-in/${ticketCode}`;
 
-        // ✅ BƯỚC 3: Tạo QR với config tối ưu
         const qrCodeUrl = await QRCode.toDataURL(checkinUrl, {
             width: 500,
             margin: 4,
@@ -60,7 +59,7 @@ exports.getTicketQR = async (req, res) => {
 };
 
 // ==========================================================
-// ADMIN - CHECK IN
+// ADMIN - CHECK IN (CÓ VALIDATE WINDOW 15 PHÚT)
 // ==========================================================
 
 exports.checkInTicket = async (req, res) => {
@@ -71,31 +70,19 @@ exports.checkInTicket = async (req, res) => {
         if (!ticketCode) {
             return res.status(400).json({
                 success: false,
+                code: "MISSING_TICKET_CODE",
                 message: "Thiếu mã vé",
             });
         }
 
         connection = await TicketRepository.getConnection();
-        const ticket = await TicketService.getTicketByCode(connection, ticketCode);
 
-        if (!ticket) {
-            connection.release();
-            return res.status(404).json({
-                success: false,
-                message: "Không tìm thấy mã vé này trong hệ thống!",
-            });
-        }
+        // ✅ Gọi service check-in (có validate window 15 phút)
+        const result = await TicketService.checkInTicket(connection, ticketCode);
 
-        if (ticket.ticket_status === "Used") {
-            connection.release();
-            return res.status(400).json({
-                success: false,
-                message: "Cảnh báo: Vé này đã được soát trước đó!",
-            });
-        }
-
-        await TicketService.markTicketUsed(connection, ticket.ticket_id);
         connection.release();
+
+        const ticket = result.ticket;
 
         return res.status(200).json({
             success: true,
@@ -109,13 +96,26 @@ exports.checkInTicket = async (req, res) => {
                 seat_label: `${ticket.seat_row || ''}${ticket.seat_number || ''}`,
                 customer_name: ticket.customer_name || '---'
             },
+            checked_in_at: result.checkedInAt,
+            window: {
+                open: result.windowOpen,
+                close: result.windowClose,
+                showtime_start: result.showtimeStart
+            }
         });
+
     } catch (error) {
         if (connection) connection.release();
-        console.error("checkInTicket error:", error);
-        return res.status(500).json({
+        console.error("❌ checkInTicket error:", error);
+
+        // ✅ Trả về error code chi tiết
+        const statusCode = error.code === "TICKET_NOT_FOUND" ? 404 : 400;
+
+        return res.status(statusCode).json({
             success: false,
+            code: error.code || "CHECKIN_FAILED",
             message: error.message,
+            data: error.data || null
         });
     }
 };
@@ -199,7 +199,7 @@ exports.getTicketSeatMap = async (req, res) => {
 };
 
 // ==========================================================
-// ADMIN - LỊCH SỬ SOÁT VÉ (MỚI THÊM)
+// ADMIN - LỊCH SỬ SOÁT VÉ
 // ==========================================================
 
 exports.getCheckinHistory = async (req, res) => {
@@ -224,7 +224,7 @@ exports.getCheckinHistory = async (req, res) => {
 };
 
 // ==========================================================
-// ADMIN - CẬP NHẬT LẠI GIÁ VÉ THEO SUẤT CHIẾU
+// ADMIN - CẬP NHẬT LẠI GIÁ VÉ
 // ==========================================================
 
 exports.recalculateTicketPrices = async (req, res) => {
@@ -259,7 +259,7 @@ exports.recalculateTicketPrices = async (req, res) => {
 };
 
 // ==========================================================
-// ADMIN - XEM GIÁ DỰ KIẾN CHO 1 GHẾ
+// ADMIN - XEM GIÁ DỰ KIẾN
 // ==========================================================
 
 exports.previewTicketPrice = async (req, res) => {

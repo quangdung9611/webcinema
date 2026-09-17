@@ -1,5 +1,6 @@
 /* ============================================================
-   QR SCAN PAGE — Giống app ngân hàng (VCB/TPBank/Momo)
+   QR SCAN PAGE — Soát vé Cinema Star
+   Style giống app ngân hàng (VCB/TPBank/Momo)
    ============================================================ */
 
 * {
@@ -215,23 +216,280 @@
 }
 
 /* ============================================================
-   KẾT QUẢ
+   ✅ MODAL OVERLAY (Dùng với AdminModal hoặc standalone)
    ============================================================ */
 
-.qr-result {
-    flex: 1;
+.qr-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 40px 24px;
-    animation: fadeIn 0.3s ease-out;
+    z-index: 9999;
+    padding: 20px;
+    animation: fadeIn 0.2s ease-out;
 }
 
 @keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.qr-modal-content {
+    background: #1a1a1a;
+    border-radius: 20px;
+    max-width: 480px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.3s ease-out;
+    border: 2px solid transparent;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.qr-modal-success {
+    border-color: #22c55e;
+    box-shadow: 0 20px 60px rgba(34, 197, 94, 0.3);
+}
+
+.qr-modal-fail {
+    border-color: #ef4444;
+    box-shadow: 0 20px 60px rgba(239, 68, 68, 0.3);
+}
+
+/* Header modal */
+.qr-modal-header {
+    padding: 30px 24px 20px;
+    text-align: center;
+    position: relative;
+}
+
+.qr-modal-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 44px;
+    font-weight: bold;
+    color: white;
+    margin: 0 auto 16px;
+    animation: pulse 1.5s infinite;
+}
+
+.qr-modal-success .qr-modal-icon {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+.qr-modal-fail .qr-modal-icon {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 15px rgba(255, 255, 255, 0);
+    }
+}
+
+.qr-modal-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 6px;
+    letter-spacing: 0.5px;
+}
+
+.qr-modal-success .qr-modal-title {
+    color: #4ade80;
+}
+
+.qr-modal-fail .qr-modal-title {
+    color: #f87171;
+}
+
+.qr-modal-subtitle {
+    font-size: 14px;
+    color: #94a3b8;
+    margin: 0;
+}
+
+/* Body modal */
+.qr-modal-body {
+    padding: 0 24px 20px;
+}
+
+.qr-modal-message {
+    font-size: 15px;
+    color: #cbd5e1;
+    text-align: center;
+    margin: 0 0 20px;
+    line-height: 1.5;
+}
+
+/* Ticket info (trong modal standalone) */
+.qr-modal-ticket,
+.qr-modal-window {
+    background: #0f0f0f;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    border: 1px solid #2a2a2a;
+}
+
+.qr-modal-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #1f1f1f;
+    gap: 12px;
+}
+
+.qr-modal-row:last-child {
+    border-bottom: none;
+}
+
+.qr-modal-row span {
+    font-size: 13px;
+    color: #94a3b8;
+    flex-shrink: 0;
+}
+
+.qr-modal-row b {
+    font-size: 14px;
+    color: #fff;
+    text-align: right;
+    font-weight: 600;
+}
+
+.qr-modal-seat b {
+    font-size: 18px;
+    color: #fbbf24;
+    font-weight: 800;
+}
+
+.qr-modal-code {
+    font-family: "Courier New", monospace;
+    color: #60a5fa !important;
+    letter-spacing: 1px;
+}
+
+/* Footer modal */
+.qr-modal-footer {
+    padding: 16px 24px 24px;
+    border-top: 1px solid #2a2a2a;
+}
+
+.qr-modal-countdown {
+    text-align: center;
+    font-size: 13px;
+    color: #94a3b8;
+    margin: 0 0 12px;
+}
+
+.qr-modal-countdown b {
+    color: #fff;
+    font-weight: 700;
+}
+
+.qr-modal-btn {
+    width: 100%;
+    padding: 14px 20px;
+    border-radius: 12px;
+    border: none;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: white;
+    letter-spacing: 0.5px;
+}
+
+.qr-modal-success .qr-modal-btn {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+}
+
+.qr-modal-success .qr-modal-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+}
+
+.qr-modal-fail .qr-modal-btn {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.qr-modal-fail .qr-modal-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+.qr-modal-btn:active {
+    transform: translateY(0);
+}
+
+/* ============================================================
+   ✅ NỘI DUNG MODAL CHECK-IN (BÊN TRONG AdminModal)
+   ============================================================ */
+
+.checkin-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 4px 0;
+}
+
+.checkin-modal-message {
+    font-size: 15px;
+    color: #cbd5e1;
+    text-align: center;
+    margin: 0;
+    line-height: 1.6;
+    font-weight: 500;
+}
+
+/* INFO BOX */
+.checkin-ticket-info,
+.checkin-window-info {
+    background: #0a0a0a;
+    border-radius: 14px;
+    padding: 18px 20px;
+    border: 1px solid #2a2a2a;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    animation: checkinFadeIn 0.3s ease-out;
+}
+
+@keyframes checkinFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
     }
     to {
         opacity: 1;
@@ -239,113 +497,171 @@
     }
 }
 
-.qr-result-ok {
-    background: linear-gradient(180deg, #000 0%, #064e3b 100%);
-}
-
-.qr-result-fail {
-    background: linear-gradient(180deg, #000 0%, #7f1d1d 100%);
-}
-
-.qr-result-icon {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 64px;
-    font-weight: 300;
-    color: #fff;
-    animation: pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-    margin-bottom: 24px;
-}
-
-.qr-result-ok .qr-result-icon {
-    background: #10b981;
-    box-shadow: 0 0 60px rgba(16, 185, 129, 0.5);
-}
-
-.qr-result-fail .qr-result-icon {
-    background: #ef4444;
-    box-shadow: 0 0 60px rgba(239, 68, 68, 0.5);
-}
-
-@keyframes pop {
-    0% {
-        transform: scale(0);
-    }
-    60% {
-        transform: scale(1.15);
-    }
-    100% {
-        transform: scale(1);
-    }
-}
-
-.qr-result-title {
-    font-size: 26px;
-    font-weight: 800;
-    letter-spacing: 2px;
-    margin: 0 0 8px;
-    text-align: center;
-}
-
-.qr-result-msg {
-    font-size: 15px;
-    opacity: 0.85;
-    text-align: center;
-    margin: 0 0 24px;
-    max-width: 400px;
-    line-height: 1.5;
-}
-
-/* ============================================================
-   TICKET INFO
-   ============================================================ */
-
-.qr-ticket {
-    width: 100%;
-    max-width: 400px;
-    background: rgba(0, 0, 0, 0.35);
-    border-radius: 16px;
-    padding: 16px 20px;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.qr-ticket-row {
+/* ROW */
+.checkin-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    gap: 16px;
+    padding: 11px 0;
+    border-bottom: 1px dashed #1f1f1f;
+    gap: 14px;
+    min-height: 44px;
 }
 
-.qr-ticket-row:last-child {
+.checkin-row:last-child {
     border-bottom: none;
+    padding-bottom: 0;
 }
 
-.qr-ticket-row span {
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.6);
+.checkin-row:first-child {
+    padding-top: 0;
+}
+
+/* LABEL */
+.checkin-row span {
+    font-size: 13px;
+    color: #94a3b8;
     flex-shrink: 0;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
-.qr-ticket-row b {
-    font-size: 15px;
+/* VALUE */
+.checkin-row b {
+    font-size: 14px;
     color: #fff;
-    font-weight: 600;
     text-align: right;
+    font-weight: 600;
     word-break: break-word;
+    line-height: 1.4;
+    flex: 1;
+    min-width: 0;
 }
 
-.qr-ticket-seat b {
-    font-size: 22px;
-    font-weight: 800;
+/* SEAT — NỔI BẬT */
+.checkin-seat {
+    background: rgba(251, 191, 36, 0.05);
+    border-radius: 8px;
+    padding: 12px 10px !important;
+    margin: 6px 0;
+    border: 1px solid rgba(251, 191, 36, 0.2) !important;
+    border-bottom: 1px solid rgba(251, 191, 36, 0.2) !important;
+}
+
+.checkin-seat b {
+    font-size: 22px !important;
+    color: #fbbf24 !important;
+    font-weight: 800 !important;
     letter-spacing: 2px;
-    color: #10b981;
+    text-shadow: 0 0 12px rgba(251, 191, 36, 0.4);
+}
+
+/* TICKET CODE */
+.checkin-code {
+    font-family: "Courier New", "Consolas", monospace !important;
+    color: #60a5fa !important;
+    letter-spacing: 1.5px;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    background: rgba(96, 165, 250, 0.1);
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(96, 165, 250, 0.2);
+}
+
+/* SUCCESS / FAIL VARIANTS */
+.qr-modal-success .checkin-ticket-info,
+.qr-modal-success .checkin-window-info {
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.qr-modal-fail .checkin-ticket-info,
+.qr-modal-fail .checkin-window-info {
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* WARNING VARIANT (quá sớm/muộn) */
+.checkin-window-info {
+    background: rgba(251, 146, 60, 0.05);
+    border-color: rgba(251, 146, 60, 0.3);
+}
+
+.checkin-window-info .checkin-row b {
+    color: #fb923c;
+}
+
+.checkin-window-info .checkin-row span {
+    color: #fbbf24;
+}
+
+/* ============================================================
+   ✅ NÚT "QUÉT LẠI" KHI SCANNER DỪNG
+   ============================================================ */
+
+.qr-restart-btn {
+    display: block;
+    width: 100%;
+    max-width: 320px;
+    margin: 40px auto;
+    padding: 16px 24px;
+    border-radius: 14px;
+    border: none;
+    background: linear-gradient(135deg, #f37021, #f5a623);
+    color: #0a0a14;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 6px 20px rgba(243, 112, 33, 0.35);
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.qr-restart-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(243, 112, 33, 0.5);
+    background: linear-gradient(135deg, #f5a623, #f37021);
+}
+
+.qr-restart-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 12px rgba(243, 112, 33, 0.3);
+}
+
+/* ============================================================
+   ✅ OVERRIDE AdminModal CHO CHECK-IN
+   ============================================================ */
+
+.admin-modal-container.checkin-modal {
+    max-width: 480px;
+    width: 92%;
+}
+
+/* ============================================================
+   SCROLLBAR (nếu modal có scroll)
+   ============================================================ */
+
+.admin-modal-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.admin-modal-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 3px;
+}
+
+.admin-modal-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+}
+
+.admin-modal-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
 }
 
 /* ============================================================
@@ -392,6 +708,7 @@
    ============================================================ */
 
 @media (max-width: 480px) {
+    /* Header */
     .qr-header {
         padding: 12px 16px;
     }
@@ -406,6 +723,7 @@
         font-size: 16px;
     }
 
+    /* Scanner */
     .qr-scanner-wrap {
         padding: 70px 16px 30px;
     }
@@ -435,6 +753,7 @@
         font-size: 14px;
     }
 
+    /* Result (standalone) */
     .qr-result-icon {
         width: 100px;
         height: 100px;
@@ -467,5 +786,144 @@
 
     .qr-ticket-seat b {
         font-size: 20px;
+    }
+
+    /* Modal */
+    .qr-modal-content {
+        max-width: 100%;
+        border-radius: 16px;
+    }
+
+    .qr-modal-icon {
+        width: 70px;
+        height: 70px;
+        font-size: 38px;
+    }
+
+    .qr-modal-title {
+        font-size: 19px;
+    }
+
+    /* Checkin content */
+    .checkin-modal-body {
+        gap: 12px;
+    }
+
+    .checkin-modal-message {
+        font-size: 14px;
+    }
+
+    .checkin-ticket-info,
+    .checkin-window-info {
+        padding: 14px 16px;
+        border-radius: 12px;
+    }
+
+    .checkin-row {
+        padding: 9px 0;
+        min-height: 40px;
+        gap: 10px;
+    }
+
+    .checkin-row span {
+        font-size: 12px;
+    }
+
+    .checkin-row b {
+        font-size: 13px;
+    }
+
+    .checkin-seat b {
+        font-size: 18px !important;
+        letter-spacing: 1.5px;
+    }
+
+    .checkin-code {
+        font-size: 13px !important;
+        letter-spacing: 1px;
+        padding: 3px 8px;
+    }
+
+    /* Buttons */
+    .qr-restart-btn {
+        font-size: 15px;
+        padding: 14px 20px;
+        border-radius: 12px;
+    }
+}
+
+/* ============================================================
+   ✅ ANIMATION COUNTDOWN AUTO CLOSE
+   ============================================================ */
+
+.qr-modal-countdown {
+    text-align: center;
+    font-size: 13px;
+    color: #94a3b8;
+    margin: 0 0 14px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.qr-modal-countdown b {
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    animation: countPulse 1s infinite;
+}
+
+@keyframes countPulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+/* ============================================================
+   ✅ MODAL ICON (nếu dùng standalone)
+   ============================================================ */
+
+.checkin-modal-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    font-weight: bold;
+    color: white;
+    margin: 0 auto 16px;
+    animation: checkinPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.checkin-modal-icon.success {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    box-shadow: 0 0 40px rgba(34, 197, 94, 0.4);
+}
+
+.checkin-modal-icon.error {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    box-shadow: 0 0 40px rgba(239, 68, 68, 0.4);
+}
+
+.checkin-modal-icon.warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    box-shadow: 0 0 40px rgba(245, 158, 11, 0.4);
+}
+
+@keyframes checkinPop {
+    0% {
+        transform: scale(0);
+    }
+    60% {
+        transform: scale(1.15);
+    }
+    100% {
+        transform: scale(1);
     }
 }
