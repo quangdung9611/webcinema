@@ -430,7 +430,8 @@ io.on("connection", async (socket) => {
     });
 
     // ============================================================
-    // ✅ DISCONNECT
+    // ✅ DISCONNECT — CHỈ XÓA SOCKET KHỎI user_sockets
+    // KHÔNG clear socket_token (INSERT-ONLY, không UPDATE)
     // ============================================================
     socket.on("disconnect", async () => {
         console.log(`🔴 [SOCKET] Disconnected: ${socketId} - User: ${userId}`);
@@ -443,14 +444,8 @@ io.on("connection", async (socket) => {
             console.error("❌ [SOCKET] Release seat locks error:", error.message);
         }
 
-        // ✅ 2. Clear socket_token khỏi refresh_tokens
-        try {
-            await RefreshTokenRepository.clearSocketToken(socketId);
-        } catch (error) {
-            console.error("❌ [SOCKET] Clear socket_token error:", error.message);
-        }
-
-        // ✅ 3. Xóa CHÍNH XÁC socket này khỏi user_sockets
+        // ✅ 2. Xóa CHÍNH XÁC socket này khỏi user_sockets
+        // KHÔNG cần clear socket_token trong refresh_tokens
         if (userId) {
             try {
                 await CacheService.deleteUserSocketByToken(userId, socketId);
@@ -572,4 +567,44 @@ server.listen(PORT, "0.0.0.0", async () => {
     }, 5 * 60 * 1000);
 });
 
+// ============================================================
+// ✅ AUTO CLEANUP — MỖI 7 NGÀY
+// ============================================================
+const CLEANUP_INTERVAL = 7 * 24 * 60 * 60 * 1000; // 7 ngày
+
+const runCleanup = async () => {
+    console.log('🧹 [CLEANUP] Bắt đầu dọn dẹp dữ liệu cũ...');
+    const startTime = Date.now();
+
+    try {
+        // 1. Cleanup refresh_tokens cũ (> 7 ngày, không active)
+        const refreshCount = await RefreshTokenRepository.cleanupOldRecords(7);
+        console.log(`🧹 [CLEANUP] refresh_tokens: ${refreshCount} records deleted`);
+
+        // 2. Cleanup user_sockets expired > 7 ngày
+        const socketCount = await CacheService.cleanupOldSockets(7);
+        console.log(`🧹 [CLEANUP] user_sockets: ${socketCount} records deleted`);
+
+        // 3. Cleanup các bảng khác
+        await CacheService.cleanupExpiredData();
+
+        const duration = Date.now() - startTime;
+        console.log(`✅ [CLEANUP] Hoàn tất trong ${duration}ms`);
+
+    } catch (error) {
+        console.error('❌ [CLEANUP] Error:', error.message);
+    }
+};
+
+// Chạy lần đầu sau 1 phút
+setTimeout(runCleanup, 60 * 1000);
+
+// Chạy định kỳ mỗi 7 ngày
+setInterval(runCleanup, CLEANUP_INTERVAL);
+
+console.log('🧹 [CLEANUP] Auto-cleanup scheduled every 7 days');
+
+// ============================================================
+// EXPORT
+// ============================================================
 module.exports = { app, server, io };

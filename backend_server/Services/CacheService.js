@@ -895,104 +895,42 @@ class CacheService {
 
 
     /*=======================================================
-        7. USER SOCKET
-        ✅ FIX: INSERT IGNORE — KHÔNG GHI ĐÈ SOCKET CŨ
+        7. USER SOCKET — INSERT-ONLY
+        ✅ MỖI LẦN CONNECT = 1 RECORD MỚI
+        ✅ KHÔNG CÓ UNIQUE(user_id, socket_token)
+        ✅ socket_id LUÔN AUTO-INCREMENT
     =======================================================*/
 
     /**
-     * ✅ LƯU SOCKET MỚI CHO USER
-     *
-     * ĐẶC ĐIỂM:
-     *   - Mỗi socket connection là 1 record RIÊNG
-     *   - KHÔNG ghi đè socket_token cũ
-     *   - Dùng INSERT IGNORE để tránh duplicate (user_id, socket_token)
-     *
-     * YÊU CẦU BẢNG user_sockets:
-     *   - KHÔNG có UNIQUE(user_id)
-     *   - CÓ UNIQUE(user_id, socket_token)
+     * LƯU SOCKET MỚI CHO USER
+     * Mỗi lần connect = 1 record MỚI (socket_id tăng)
      *
      * @param {Number} userId
-     * @param {String} socketToken - socket.id từ Socket.IO (VD: "XaVhhH8yJtKEMEo-AAAL")
+     * @param {String} socketToken - socket.id từ Socket.IO
      * @param {Number} ttl - Thời gian sống (giây)
-     * @returns {Boolean} true nếu INSERT thành công (record mới)
+     * @returns {Number} socket_id vừa insert
      */
-    // Services/CacheService.js — CHỈ SỬA PHẦN 7. USER SOCKET
-
-    /*=======================================================
-        7. USER SOCKET — INSERT IGNORE (KHÔNG GHI ĐÈ)
-    =======================================================*/
-
     async saveUserSocket(userId, socketToken, ttl = SOCKET_TTL) {
         const now = new Date();
         const expiresAt = new Date(now.getTime() + ttl * 1000);
 
+        // ✅ INSERT THUẦN — không IGNORE, không UPDATE
         const [result] = await db.query(
-            `INSERT IGNORE INTO user_sockets
+            `
+            INSERT INTO user_sockets
             (user_id, socket_token, expires_at, created_at)
-            VALUES (?, ?, ?, ?)`,
+            VALUES (?, ?, ?, ?)
+            `,
             [userId, socketToken, expiresAt, now]
         );
 
-        console.log(`💾 [CACHE] saveUserSocket: user=${userId}, socket=${socketToken}, inserted=${result.affectedRows > 0}`);
-        return result.affectedRows > 0;
+        console.log(`💾 [CACHE] saveUserSocket: user=${userId}, socket=${socketToken}, socket_id=${result.insertId}`);
+        return result.insertId;
     }
 
-    async getUserSocket(userId) {
-        const now = new Date();
-        const [rows] = await db.query(
-            `SELECT socket_token FROM user_sockets
-            WHERE user_id = ? AND expires_at > ?
-            ORDER BY socket_id DESC LIMIT 1`,
-            [userId, now]
-        );
-        return rows[0]?.socket_token || null;
-    }
-
-    async getAllUserSockets(userId) {
-        const now = new Date();
-        const [rows] = await db.query(
-            `SELECT socket_id, socket_token, expires_at, created_at
-            FROM user_sockets
-            WHERE user_id = ? AND expires_at > ?
-            ORDER BY socket_id DESC`,
-            [userId, now]
-        );
-        return rows.map(row => ({
-            socketId: row.socket_id,
-            socketToken: row.socket_token,
-            expiresAt: row.expires_at,
-            createdAt: row.created_at
-        }));
-    }
-
-    async deleteUserSocket(userId) {
-        const [result] = await db.query(`DELETE FROM user_sockets WHERE user_id = ?`, [userId]);
-        console.log(`🗑️ [CACHE] deleteUserSocket: user=${userId}, deleted=${result.affectedRows}`);
-        return result.affectedRows > 0;
-    }
-
-    async deleteUserSocketByToken(userId, socketToken) {
-        const [result] = await db.query(
-            `DELETE FROM user_sockets WHERE user_id = ? AND socket_token = ?`,
-            [userId, socketToken]
-        );
-        console.log(`🗑️ [CACHE] deleteUserSocketByToken: user=${userId}, socket=${socketToken}, deleted=${result.affectedRows}`);
-        return result.affectedRows > 0;
-    }
-
-
-    /*=======================================================
-        ✅ GET USER SOCKET — LẤY SOCKET MỚI NHẤT
-    =======================================================*/
 
     /**
      * LẤY SOCKET MỚI NHẤT CỦA USER
-     *
-     * Vì bảng có thể có NHIỀU record cho 1 user_id
-     * → Dùng ORDER BY socket_id DESC LIMIT 1 để lấy record MỚI NHẤT
-     *
-     * @param {Number} userId
-     * @returns {String|null} socket_token hoặc null
      */
     async getUserSocket(userId) {
         const now = new Date();
@@ -1017,19 +955,8 @@ class CacheService {
     }
 
 
-    /*=======================================================
-        ✅ MỚI: GET ALL USER SOCKETS
-    =======================================================*/
-
     /**
      * LẤY TẤT CẢ SOCKETS ĐANG ACTIVE CỦA USER
-     *
-     * Dùng khi:
-     *   - Muốn emit tới TẤT CẢ thiết bị của user
-     *   - Debug: xem user đang có bao nhiêu socket
-     *
-     * @param {Number} userId
-     * @returns {Array} Mảng các object { socketId, socketToken, ... }
      */
     async getAllUserSockets(userId) {
         const now = new Date();
@@ -1054,21 +981,8 @@ class CacheService {
     }
 
 
-    /*=======================================================
-        DELETE USER SOCKET — XÓA TẤT CẢ
-    =======================================================*/
-
     /**
      * XÓA TẤT CẢ SOCKETS CỦA USER
-     *
-     * Dùng khi:
-     *   - Logout
-     *   - Force logout
-     *   - Revoke all devices
-     *   - Đổi mật khẩu
-     *
-     * @param {Number} userId
-     * @returns {Boolean}
      */
     async deleteUserSocket(userId) {
         const [result] = await db.query(
@@ -1080,25 +994,12 @@ class CacheService {
         );
 
         console.log(`🗑️ [CACHE] deleteUserSocket: user=${userId}, deleted=${result.affectedRows}`);
-
         return result.affectedRows > 0;
     }
 
 
-    /*=======================================================
-        ✅ MỚI: DELETE USER SOCKET BY TOKEN
-    =======================================================*/
-
     /**
-     * XÓA 1 SOCKET CỤ THỂ CỦA USER (theo socket_token)
-     *
-     * Dùng khi:
-     *   - 1 socket disconnect → chỉ xóa socket đó
-     *   - Giữ các socket khác của user (nếu có nhiều thiết bị)
-     *
-     * @param {Number} userId
-     * @param {String} socketToken - socket.id cần xóa
-     * @returns {Boolean}
+     * XÓA 1 SOCKET CỤ THỂ CỦA USER
      */
     async deleteUserSocketByToken(userId, socketToken) {
         const [result] = await db.query(
@@ -1115,6 +1016,24 @@ class CacheService {
         );
 
         return result.affectedRows > 0;
+    }
+
+
+    /**
+     * ✅ CLEANUP — Xóa socket expired > N ngày
+     * Gọi định kỳ (VD: 7 ngày/lần)
+     */
+    async cleanupOldSockets(days = 7) {
+        const [result] = await db.query(
+            `
+            DELETE FROM user_sockets
+            WHERE expires_at < DATE_SUB(NOW(), INTERVAL ? DAY)
+            `,
+            [days]
+        );
+
+        console.log(`🧹 [CACHE] cleanupOldSockets: deleted ${result.affectedRows} old sockets`);
+        return result.affectedRows;
     }
 
 
@@ -1175,7 +1094,9 @@ class CacheService {
             await db.query(`DELETE FROM otp_codes WHERE expires_at < ? OR is_used = 1`, [now]);
             await db.query(`DELETE FROM temp_bookings WHERE expires_at < ?`, [now]);
             await db.query(`DELETE FROM seat_locks WHERE expires_at < ?`, [now]);
-            await db.query(`DELETE FROM user_sockets WHERE expires_at < ?`, [now]);
+
+            // ✅ Cleanup old sockets (> 7 ngày)
+            await this.cleanupOldSockets(7);
 
             console.log("🧹 [CACHE] Cleaned up expired data");
             return true;

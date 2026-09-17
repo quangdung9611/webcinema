@@ -60,11 +60,9 @@ const generateAndSetTokens = (user, res, rememberMe = false) => {
     const accessToken = Jwt.generateAccessToken(user);
 
     if (user.role === "admin") {
-        // ✅ Force clear user_token
         Cookie.clearUserCookies(res);
         Cookie.setAdminAccessToken(res, accessToken, rememberMe);
     } else {
-        // ✅ Force clear admin_token (nếu có từ trước)
         Cookie.clearAdminCookies(res);
         Cookie.setUserAccessToken(res, accessToken, rememberMe);
     }
@@ -205,7 +203,6 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
             message: "Vui lòng xác thực email trước khi đăng nhập. Kiểm tra hộp thư của bạn."
         };
     }
-// Services/AuthService.js — CHỈ SỬA ĐOẠN TRONG login()
 
     // ========================================================
     // ✅ QUẢN LÝ THIẾT BỊ
@@ -229,16 +226,14 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
             const tokenAge = Date.now() - new Date(oldestToken.created_at).getTime();
             console.log(`🔍 [CHECK] Token age: ${tokenAge}ms | token_id=${oldestToken.token_id}`);
 
-            const reason = user.role === 'admin'
-                ? `Vượt quá ${maxDevices} thiết bị admin`
-                : "Đăng nhập từ thiết bị khác";
-
-            // ✅ LẤY socket_token CỦA TOKEN CŨ
             const oldSocketToken = oldestToken.socket_token;
             console.log(`🔗 [SOCKET] Old token socket_token: ${oldSocketToken}`);
 
-            // Revoke token cũ
-            await RefreshTokenRepository.revoke(oldestToken.token_hash, reason);
+            // ✅ REVOKE token cũ với action='revoked_by_login'
+            await RefreshTokenRepository.revoke(
+                oldestToken.token_hash,
+                'revoked_by_login'
+            );
             console.log(`🔄 [REVOKE] Revoked token_id=${oldestToken.token_id}`);
 
             // ✅ CHỈ EMIT nếu token cũ > THRESHOLD VÀ có socket_token
@@ -318,6 +313,7 @@ exports.logout = async (req, res) => {
     if (token) {
         try {
             const tokenHash = Jwt.hashRefreshToken(token);
+            // ✅ Log logout + DELETE token gốc
             const deleted = await RefreshTokenRepository.deleteByTokenHash(tokenHash);
             console.log(`🗑️ [LOGOUT] Đã xóa ${deleted} token khỏi DB`);
         } catch (deleteError) {
@@ -338,6 +334,7 @@ exports.logout = async (req, res) => {
 // LOGOUT ALL DEVICES
 // ============================================================
 exports.logoutAllDevices = async (userId, res) => {
+    // ✅ Log logout + DELETE tất cả
     const deleted = await RefreshTokenRepository.deleteAllByUser(userId);
     console.log(`🗑️ [LOGOUT_ALL] Đã xóa ${deleted} token của user ${userId}`);
 
@@ -389,7 +386,9 @@ exports.changePassword = async (userId, passwordData) => {
 
     const hashedPassword = await Password.hash(newPassword);
     await UserRepository.updatePassword(userId, hashedPassword);
-    await RefreshTokenRepository.revokeByUser(userId, "Đổi mật khẩu");
+
+    // ✅ Revoke all với action='password_changed'
+    await RefreshTokenRepository.revokeByUser(userId, 'password_changed');
 
     try {
         await CacheService.deleteUserSocket(userId);
@@ -578,7 +577,9 @@ exports.verifyOtpAndReset = async (email, otp, newPassword) => {
 
     const hashedPassword = await Password.hash(newPassword);
     await UserRepository.updatePassword(user.user_id, hashedPassword);
-    await RefreshTokenRepository.revokeByUser(user.user_id, "Đặt lại mật khẩu");
+
+    // ✅ Revoke all với action='password_changed'
+    await RefreshTokenRepository.revokeByUser(user.user_id, 'password_changed');
 
     try {
         await CacheService.deleteUserSocket(user.user_id);
@@ -691,7 +692,8 @@ exports.revokeDeviceById = async (userId, tokenId) => {
         throw { statusCode: 404, message: "Không tìm thấy thiết bị hoặc thiết bị đã bị đăng xuất" };
     }
 
-    await RefreshTokenRepository.revoke(targetToken.token_hash, "Người dùng chủ động đăng xuất");
+    // ✅ Revoke với action='revoked_by_admin'
+    await RefreshTokenRepository.revoke(targetToken.token_hash, 'revoked_by_admin');
 
     return {
         success: true,
@@ -1111,7 +1113,7 @@ exports.loginAfterRegistration = async (user, req, res) => {
         ip_address: req.ip || req.connection?.remoteAddress || null,
         user_agent: req.headers?.["user-agent"] || null,
         device_name: req.headers?.["user-agent"]?.substring(0, 50) || "New Device",
-        socket_token: null  // ✅ ĐỔI TÊN
+        socket_token: null
     });
 
     return {
