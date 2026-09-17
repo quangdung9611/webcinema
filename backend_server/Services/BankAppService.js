@@ -13,7 +13,7 @@ class BankAppService {
 
     /*=========================================================
         ✅ GỬI EMAIL VÉ SAU KHI THANH TOÁN THÀNH CÔNG
-        🔥 FIX: Truyền 1 object thay vì 2 tham số
+        🔥 FIX: Truyền 1 object + posterPath
     =========================================================*/
 
     async sendTicketEmail(connection, bookingId) {
@@ -55,7 +55,7 @@ class BankAppService {
             // ✅ Lấy ticket_code đầu tiên để tạo QR
             const firstTicketCode = tickets?.[0]?.ticket_code || null;
 
-            // ✅ Build QR URL (dùng cho QR code)
+            // ✅ Build QR URL
             const qrUrl = firstTicketCode
                 ? `https://admin.quangdungcinema.id.vn/check-in/${firstTicketCode}`
                 : null;
@@ -66,6 +66,7 @@ class BankAppService {
                 customerName: order.full_name,
                 movieTitle: order.movie_name,
                 moviePoster: order.movie_poster,
+                posterPath: order.movie_poster,  // ✅ THÊM DÒNG NÀY
                 cinemaName: order.cinema_name,
                 roomName: order.room_name || "---",
                 startTime: order.start_time
@@ -87,10 +88,11 @@ class BankAppService {
                 customerName: order.full_name,
                 movieTitle: order.movie_name,
                 ticketCode: firstTicketCode,
+                posterPath: order.movie_poster,  // ✅ LOG để debug
                 qrUrl,
             });
 
-            // ✅ FIX: Truyền 1 OBJECT thay vì 2 tham số
+            // ✅ Truyền 1 object
             await MailService.sendTicketEmail({
                 email: order.email,
                 ...ticketData,

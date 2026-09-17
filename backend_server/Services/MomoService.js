@@ -1,3 +1,5 @@
+// Services/MomoService.js
+
 const crypto = require("crypto");
 const axios = require("axios");
 const CacheService = require("./CacheService");
@@ -209,7 +211,7 @@ class MomoService {
 
     /*=========================================================
         4. VERIFY OTP + COMMIT TO DATABASE
-        ✅ FIX: Gửi vé với signature đúng (1 object)
+        ✅ FIX: Truyền posterPath để gửi kèm hình poster
     =========================================================*/
     async verifyOTPAndCommit(email, otp, tempBookingId) {
         const verifyResult = await OtpService.verifyOTP(email, otp, PURPOSE.PAYMENT, true);
@@ -348,6 +350,7 @@ class MomoService {
                         customerName: order.full_name || customerName,
                         movieTitle: order.movie_name || movieTitle,
                         moviePoster: order.movie_poster,
+                        posterPath: order.movie_poster,  // ✅ THÊM DÒNG NÀY
                         cinemaName: order.cinema_name || cinemaName,
                         roomName: order.room_name || tempData.roomName || "---",
                         startTime: order.start_time
@@ -367,10 +370,11 @@ class MomoService {
                     console.log(`📧 [MoMo] Sending ticket email for booking ${bookingId}:`, {
                         email: customerEmail,
                         ticketCode: firstTicketCode,
+                        posterPath: order.movie_poster,  // ✅ LOG để debug
                         qrUrl,
                     });
 
-                    // ✅ FIX: Truyền 1 object
+                    // ✅ Truyền 1 object
                     await MailService.sendTicketEmail({
                         email: customerEmail,
                         ...ticketData,
