@@ -1,3 +1,5 @@
+// user_frontend/pages/UserLogin.jsx
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { AlertCircle, Eye, EyeOff, CheckCircle, MailCheck } from 'lucide-react';
@@ -39,9 +41,9 @@ const UserLogin = () => {
     // MODAL THÔNG BÁO KIỂM TRA EMAIL (từ RegisterPin)
     // =========================================================
     const [showVerifyEmailModal, setShowVerifyEmailModal] = useState(false);
-    const [verifyEmailData, setVerifyEmailData] = useState({ 
-        email: '', 
-        full_name: '' 
+    const [verifyEmailData, setVerifyEmailData] = useState({
+        email: '',
+        full_name: ''
     });
 
     // =========================================================
@@ -89,8 +91,7 @@ const UserLogin = () => {
             if (!stored) return null;
 
             const lockData = JSON.parse(stored);
-            
-            const elapsed = Math.floor((Date.now() - lockData.lockedAt) / 1000);
+
             const remaining = Math.max(0, Math.ceil((lockData.lockedUntil - Date.now()) / 1000));
 
             if (remaining > 0) {
@@ -159,7 +160,7 @@ const UserLogin = () => {
     useEffect(() => {
         // Ưu tiên khôi phục từ localStorage trước
         const restoredLock = restoreLockFromStorage();
-        
+
         if (restoredLock) {
             setLockInfo(restoredLock);
             setShowLockModal(true);
@@ -270,7 +271,7 @@ const UserLogin = () => {
             if (showVerifyEmailModal) {
                 setShowVerifyEmailModal(false);
             }
-            
+
             setSuccessMessage(location.state.message || '✅ Xác thực email thành công! Vui lòng đăng nhập.');
             window.history.replaceState({}, document.title);
             const timer = setTimeout(() => setSuccessMessage(''), 5000);
@@ -288,6 +289,18 @@ const UserLogin = () => {
             return () => clearTimeout(timer);
         }
     }, [location.state, showVerifyEmailModal]);
+
+    // =========================================================
+    // CHECK REDIRECT TỪ SESSION EXPIRED
+    // =========================================================
+    useEffect(() => {
+        if (!location.state?.expired) return;
+        const message =
+            location.state?.message ||
+            'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+        setServerError(message);
+        window.history.replaceState({}, document.title);
+    }, [location.state]);
 
     // =========================================================
     // REDIRECT IF ALREADY LOGIN
@@ -358,6 +371,12 @@ const UserLogin = () => {
     const handleLogin = async (event) => {
         event.preventDefault();
 
+        // ✅ FIX: Chặn double-submit — GIỐNG AdminLogin
+        if (loading) {
+            console.log('⚠️ [LOGIN] Already loading — skip');
+            return;
+        }
+
         if (lockInfo && lockInfo.lockedUntil > Date.now()) {
             setShowLockModal(true);
             return;
@@ -398,6 +417,9 @@ const UserLogin = () => {
             const errorCode = errorData?.code;
             const errorMessage = errorData?.message || 'Tài khoản hoặc mật khẩu không chính xác';
 
+            // ====================================================
+            // ACCOUNT LOCKED
+            // ====================================================
             if (error?.response?.status === 429 || errorCode === 'ACCOUNT_LOCKED') {
                 const lockData = errorData?.data || {};
                 const level = Number(lockData.level) || 1;
@@ -424,6 +446,9 @@ const UserLogin = () => {
                 return;
             }
 
+            // ====================================================
+            // FIELD ERRORS
+            // ====================================================
             if (errorData?.field === 'email') {
                 setErrors((prev) => ({ ...prev, email: errorMessage }));
                 return;
@@ -434,11 +459,50 @@ const UserLogin = () => {
                 return;
             }
 
+            // ====================================================
+            // ✅ THÊM: XỬ LÝ SESSION / TOKEN ERRORS
+            // GIỐNG AdminLogin
+            // ====================================================
+            if (errorCode === 'SESSION_EXPIRED') {
+                console.log('🔴 [LOGIN] Nhận lỗi SESSION_EXPIRED từ login API');
+                setServerError(
+                    errorMessage ||
+                        'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
+                );
+                return;
+            }
+
+            if (errorCode === 'SESSION_REPLACED') {
+                setServerError(
+                    errorMessage ||
+                        'Tài khoản đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.'
+                );
+                return;
+            }
+
+            if (errorCode === 'TOKEN_INVALID') {
+                setServerError(
+                    errorMessage ||
+                        'Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.'
+                );
+                socketService.disconnect();
+                return;
+            }
+
+            if (errorCode === 'UNAUTHORIZED') {
+                setServerError(errorMessage || 'Vui lòng đăng nhập để tiếp tục.');
+                socketService.disconnect();
+                return;
+            }
+
             if (errorCode === 'EMAIL_NOT_VERIFIED') {
                 setServerError(errorMessage || 'Vui lòng xác thực email trước khi đăng nhập.');
                 return;
             }
 
+            // ====================================================
+            // FALLBACK
+            // ====================================================
             setServerError(errorMessage);
         } finally {
             setLoading(false);

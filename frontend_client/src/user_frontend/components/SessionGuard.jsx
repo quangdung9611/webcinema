@@ -1,3 +1,5 @@
+// user_frontend/components/SessionGuard.jsx
+
 import React, {
     useCallback,
     useEffect,
@@ -31,7 +33,7 @@ const SessionGuard = ({ children }) => {
     const isMountedRef = useRef(false);
     const isProcessingRef = useRef(false);
     const hasRedirectedRef = useRef(false);
-    const isLoggingOutRef = useRef(false);  // ✅ THÊM
+    const isLoggingOutRef = useRef(false);
 
     const [showModal, setShowModal] = useState(false);
     const [modalMessage, setModalMessage] = useState('');
@@ -107,7 +109,7 @@ const SessionGuard = ({ children }) => {
 
     const handleModalConfirm = useCallback(() => {
         console.log('➡️ [SESSION GUARD] Clicking "Đăng nhập lại"!');
-        
+
         setShowModal(false);
 
         if (isBookingPage()) {
@@ -153,14 +155,13 @@ const SessionGuard = ({ children }) => {
         async (eventOrDetail = {}) => {
             if (!isMountedRef.current) return;
 
-            // ✅ THÊM: BỎ QUA NẾU ĐANG LOGOUT
             if (isLoggingOutRef.current) {
                 console.log(
                     '⏭️ [SESSION GUARD] Đang logout → bỏ qua session expired'
                 );
                 return;
             }
-            
+
             if (isProcessingRef.current) {
                 console.log('⚠️ [SESSION GUARD] Already processed, skip');
                 return;
@@ -198,7 +199,6 @@ const SessionGuard = ({ children }) => {
         isMountedRef.current = true;
         console.log('🛡️ [SESSION GUARD] Started');
 
-        // ✅ LẮNG NGHE authCleanedUp → set flag đang logout
         const handleAuthCleanedUp = (event) => {
             console.log('🧹 [SESSION GUARD] authCleanedUp:', event?.detail);
             isLoggingOutRef.current = true;
@@ -270,7 +270,7 @@ const SessionGuard = ({ children }) => {
             console.log('🟢 [SESSION GUARD] User logged in → reset');
             isProcessingRef.current = false;
             hasRedirectedRef.current = false;
-            isLoggingOutRef.current = false;  // ✅ Reset khi login
+            isLoggingOutRef.current = false;
             setShowModal(false);
         };
 
@@ -281,6 +281,13 @@ const SessionGuard = ({ children }) => {
         };
     }, []);
 
+    // ============================================================
+    // ✅ CHUẨN HÓA: Xác định code có phải "device replaced"
+    // GIỐNG AdminSessionGuard
+    // ============================================================
+    const isDeviceReplacedCode =
+        modalCode === 'SESSION_REPLACED' || modalCode === 'SESSION_EXPIRED';
+
     return (
         <>
             {children}
@@ -289,7 +296,7 @@ const SessionGuard = ({ children }) => {
                 show={showModal}
                 type="warning"
                 title={
-                    modalCode === 'SESSION_REPLACED'
+                    isDeviceReplacedCode
                         ? '🔐 Phát hiện đăng nhập trên thiết bị khác'
                         : '🔐 Phiên đăng nhập đã hết hạn'
                 }
@@ -300,7 +307,7 @@ const SessionGuard = ({ children }) => {
                 }
                 className="session-expired-modal-wrapper"
             >
-                {modalCode === 'SESSION_REPLACED' && modalNewDevice && (
+                {isDeviceReplacedCode && modalNewDevice && (
                     <div className="session-expired-device-info">
                         <p>
                             <strong>📱 Thiết bị mới:</strong>{' '}
@@ -320,7 +327,7 @@ const SessionGuard = ({ children }) => {
                     </div>
                 )}
 
-                {modalCode === 'SESSION_REPLACED' && (
+                {isDeviceReplacedCode && (
                     <div className="session-expired-security">
                         🛡️ Nếu đây không phải là bạn, vui lòng đổi mật khẩu ngay lập tức.
                     </div>

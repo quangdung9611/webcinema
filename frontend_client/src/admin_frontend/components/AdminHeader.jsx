@@ -1,5 +1,4 @@
 // admin_frontend/components/AdminHeader.jsx
-// ✅ Dùng adminSocketService (RIÊNG cho admin)
 
 import React, {
     useState,
@@ -14,7 +13,7 @@ import {
 } from 'react-router-dom';
 
 import adminapi from '../../api/adminapi';
-import adminSocketService from '../../api/adminsocket';   // ✅ ĐỔI
+import adminSocketService from '../../api/adminsocket';
 
 import { useAdminAuth } from '../../context/AdminAuthContext';
 
@@ -128,7 +127,7 @@ const AdminHeader = ({ toggleSidebar }) => {
             setShowDropdown(false);
 
             try {
-                adminSocketService.disconnect();   // ✅ ĐỔI
+                adminSocketService.disconnect();
             } catch (error) {
                 console.warn(
                     'Socket disconnect error:',
@@ -142,6 +141,7 @@ const AdminHeader = ({ toggleSidebar }) => {
                 '🟢 [ADMIN HEADER] Admin logged in - updating immediately'
             );
 
+            // ✅ FIX: BẬT LẠI refetch() — GIỐNG UserHeader
             refetch().catch(() => {});
         };
 
@@ -155,7 +155,7 @@ const AdminHeader = ({ toggleSidebar }) => {
             setShowDropdown(false);
 
             try {
-                adminSocketService.disconnect();   // ✅ ĐỔI
+                adminSocketService.disconnect();
             } catch (error) {
                 console.warn(
                     'Socket disconnect error:',
@@ -257,7 +257,7 @@ const AdminHeader = ({ toggleSidebar }) => {
             redirectTimeoutRef.current =
                 setTimeout(() => {
                     localStorage.removeItem('admin_info');
-                    adminSocketService.disconnect();   // ✅ ĐỔI
+                    adminSocketService.disconnect();
                     delete adminapi.defaults.headers.common['Authorization'];
 
                     navigate('/login', {
@@ -290,7 +290,7 @@ const AdminHeader = ({ toggleSidebar }) => {
             redirectTimeoutRef.current =
                 setTimeout(() => {
                     localStorage.removeItem('admin_info');
-                    adminSocketService.disconnect();   // ✅ ĐỔI
+                    adminSocketService.disconnect();
                     setAdmin(null);
                     setShowDropdown(false);
                     setIsLoggingOut(false);

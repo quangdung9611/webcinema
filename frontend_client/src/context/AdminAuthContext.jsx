@@ -1,16 +1,9 @@
 // src/context/AdminAuthContext.jsx
-// ✅ Dùng adminSocketService (RIÊNG cho admin)
-// ✅ Chặn fetch 2 lần
+// ✅ Y HỆT AuthContext.jsx của user
 
 import React, {
-    createContext,
-    useContext,
-    useState,
-    useEffect,
-    useRef,
-    useCallback,
+    createContext, useContext, useState, useEffect, useRef, useCallback,
 } from 'react';
-
 import { useLocation } from 'react-router-dom';
 import adminapi from '../api/adminapi';
 import adminSocketService from '../api/adminsocket'; // ✅ ĐỔI
@@ -19,9 +12,7 @@ const AdminAuthContext = createContext(null);
 
 export const useAdminAuth = () => {
     const context = useContext(AdminAuthContext);
-    if (!context) {
-        throw new Error('useAdminAuth must be used within AdminAuthProvider');
-    }
+    if (!context) throw new Error('useAdminAuth must be used within AdminAuthProvider');
     return context;
 };
 
@@ -38,22 +29,10 @@ export const AdminAuthProvider = ({ children }) => {
     const mountedRef = useRef(true);
     const isAuthCheckDoneRef = useRef(false);
 
-    // ✅ FIX: Chống fetch 2 lần
-    const lastFetchTimeRef = useRef(0);
-
-    // ========================================================
-    // PUBLIC ROUTES
-    // ========================================================
     const isPublicRoute = useCallback(() => {
         const pathname = location.pathname;
-
-        const publicPaths = [
-            '/login',
-        ];
-
-        return publicPaths.some(
-            (path) => pathname === path || pathname.startsWith(path + '/')
-        );
+        const publicPaths = ['/login'];
+        return publicPaths.some((path) => pathname === path || pathname.startsWith(path + '/'));
     }, [location.pathname]);
 
     useEffect(() => {
@@ -62,30 +41,20 @@ export const AdminAuthProvider = ({ children }) => {
 
     useEffect(() => {
         mountedRef.current = true;
-        return () => {
-            mountedRef.current = false;
-        };
+        return () => { mountedRef.current = false; };
     }, []);
 
-    // ========================================================
-    // CLEAR AUTH STATE
-    // ========================================================
     const clearAuthState = useCallback(() => {
         console.log('🧹 [ADMIN AUTH] Clearing auth state');
-
         adminRef.current = null;
         setAdmin(null);
         setIsAuthenticated(false);
         setIsLoading(false);
         fetchedRef.current = false;
         isFetchingRef.current = false;
-
         adminapi.resetAdminCache();
     }, []);
 
-    // ========================================================
-    // FETCH ADMIN
-    // ========================================================
     const fetchAdmin = useCallback(
         async (force = false) => {
             if (isPublicRoute()) {
@@ -94,41 +63,20 @@ export const AdminAuthProvider = ({ children }) => {
                 return null;
             }
 
-            if (fetchedRef.current && !force) {
-                console.log('⏭️ [ADMIN AUTH] Already fetched, skip');
-                return adminRef.current;
-            }
-
-            if (isFetchingRef.current) {
-                console.log('⏭️ [ADMIN AUTH] Already fetching, skip');
-                return adminRef.current;
-            }
-
-            // ✅ FIX: Chặn fetch 2 lần trong 2 giây
-            const now = Date.now();
-            if (now - lastFetchTimeRef.current < 2000 && !force) {
-                console.log('⏭️ [ADMIN AUTH] Fetch too recent, skip');
-                return adminRef.current;
-            }
-            lastFetchTimeRef.current = now;
+            if (fetchedRef.current && !force) return adminRef.current;
+            if (isFetchingRef.current) return adminRef.current;
 
             isFetchingRef.current = true;
-
-            if (mountedRef.current) {
-                setIsLoading(true);
-            }
+            if (mountedRef.current) setIsLoading(true);
 
             try {
-                console.log(force ? '🔄 [ADMIN AUTH] Force fetching admin...' : '🔄 [ADMIN AUTH] Fetching admin...');
-
+                console.log(force ? '🔄 [ADMIN AUTH] Force fetching...' : '🔄 [ADMIN AUTH] Fetching...');
                 const response = await adminapi.get('/admin/api/auth/me', { force });
-
                 const raw = response?.data;
                 const adminData = raw?.user || raw?.data?.user || null;
 
                 if (adminData) {
                     console.log('✅ [ADMIN AUTH] Admin loaded:', adminData.user_id);
-
                     adminRef.current = adminData;
                     fetchedRef.current = true;
                     isAuthCheckDoneRef.current = true;
@@ -148,26 +96,20 @@ export const AdminAuthProvider = ({ children }) => {
                 console.log('🔵 [ADMIN AUTH] No active admin');
                 clearAuthState();
                 adminSocketService.disconnect();
-
                 return null;
 
             } catch (error) {
-                console.warn(
-                    '🔵 [ADMIN AUTH] No active admin session:',
-                    error?.response?.status || error?.message
-                );
+                console.warn('🔵 [ADMIN AUTH] No active session:', error?.response?.status);
 
                 if (error?.response?.status === 401 && !isPublicRoute()) {
-                    window.dispatchEvent(
-                        new CustomEvent('sessionExpired', {
-                            detail: {
-                                code: error?.response?.data?.code || 'TOKEN_EXPIRED',
-                                message: error?.response?.data?.message || 'Phiên đăng nhập admin đã hết hạn. Vui lòng đăng nhập lại.',
-                                source: 'admin_auth_context',
-                                timestamp: new Date().toISOString()
-                            }
-                        })
-                    );
+                    window.dispatchEvent(new CustomEvent('sessionExpired', {
+                        detail: {
+                            code: error?.response?.data?.code || 'TOKEN_EXPIRED',
+                            message: error?.response?.data?.message || 'Phiên đăng nhập admin đã hết hạn.',
+                            source: 'admin_auth_context',
+                            timestamp: new Date().toISOString()
+                        }
+                    }));
                 }
 
                 clearAuthState();
@@ -176,17 +118,12 @@ export const AdminAuthProvider = ({ children }) => {
 
             } finally {
                 isFetchingRef.current = false;
-                if (mountedRef.current) {
-                    setIsLoading(false);
-                }
+                if (mountedRef.current) setIsLoading(false);
             }
         },
         [clearAuthState, isPublicRoute]
     );
 
-    // ========================================================
-    // AUTO FETCH KHI MOUNT
-    // ========================================================
     useEffect(() => {
         if (!isPublicRoute()) {
             fetchAdmin().catch(() => {});
@@ -195,81 +132,48 @@ export const AdminAuthProvider = ({ children }) => {
         }
     }, [fetchAdmin, isPublicRoute]);
 
-    // ========================================================
-    // LOGOUT
-    // ========================================================
     const logout = useCallback(async () => {
         console.log('🚪 [ADMIN AUTH] Logging out...');
-
         try {
             await adminapi.post('/admin/api/auth/logout');
         } catch (error) {
             console.warn('🟡 [ADMIN AUTH] Logout API error:', error?.message);
         } finally {
             clearAuthState();
-
             if (typeof adminapi.resetSessionExpiredLock === 'function') {
                 adminapi.resetSessionExpiredLock();
             }
-
             adminSocketService.disconnect();
-
-            window.dispatchEvent(
-                new CustomEvent('authCleanedUp', {
-                    detail: {
-                        reason: 'manual_logout',
-                        isAdmin: true,
-                        timestamp: new Date().toISOString(),
-                    },
-                })
-            );
-
+            window.dispatchEvent(new CustomEvent('authCleanedUp', {
+                detail: { reason: 'manual_logout', isAdmin: true, timestamp: new Date().toISOString() }
+            }));
             console.log('✅ [ADMIN AUTH] Logout completed');
         }
     }, [clearAuthState]);
 
-    // ========================================================
-    // LISTEN AUTH CLEANED UP
-    // ========================================================
     useEffect(() => {
         const handleAuthCleanedUp = () => {
             console.log('🧹 [ADMIN AUTH] authCleanedUp received');
             clearAuthState();
             adminSocketService.disconnect();
         };
-
         window.addEventListener('authCleanedUp', handleAuthCleanedUp);
-
-        return () => {
-            window.removeEventListener('authCleanedUp', handleAuthCleanedUp);
-        };
+        return () => window.removeEventListener('authCleanedUp', handleAuthCleanedUp);
     }, [clearAuthState]);
 
-    // ========================================================
-    // LISTEN SESSION EXPIRED
-    // ========================================================
     useEffect(() => {
         const handleSessionExpired = (event) => {
             console.warn('🔴 [ADMIN AUTH] Session expired:', event?.detail);
             clearAuthState();
             adminSocketService.disconnect();
         };
-
         window.addEventListener('sessionExpired', handleSessionExpired);
-
-        return () => {
-            window.removeEventListener('sessionExpired', handleSessionExpired);
-        };
+        return () => window.removeEventListener('sessionExpired', handleSessionExpired);
     }, [clearAuthState]);
 
-    // ========================================================
-    // LISTEN ADMIN LOGGED IN
-    // ✅ FIX: Chặn fetch 2 lần
-    // ========================================================
     useEffect(() => {
         const handleAdminLoggedIn = () => {
             console.log('🟢 [ADMIN AUTH] Admin logged in');
-
             fetchedRef.current = false;
             isFetchingRef.current = false;
             adminapi.resetAdminCache();
@@ -282,20 +186,11 @@ export const AdminAuthProvider = ({ children }) => {
                 console.warn('🟡 [ADMIN AUTH] Cannot fetch admin after login:', error?.message);
             });
         };
-
         window.addEventListener('adminLoggedIn', handleAdminLoggedIn);
-
-        return () => {
-            window.removeEventListener('adminLoggedIn', handleAdminLoggedIn);
-        };
+        return () => window.removeEventListener('adminLoggedIn', handleAdminLoggedIn);
     }, [fetchAdmin]);
 
-    // ========================================================
-    // HELPERS
-    // ========================================================
-    const refetch = useCallback(() => {
-        return fetchAdmin(true);
-    }, [fetchAdmin]);
+    const refetch = useCallback(() => fetchAdmin(true), [fetchAdmin]);
 
     const updateAdmin = useCallback((newAdmin) => {
         adminRef.current = newAdmin;
@@ -315,11 +210,7 @@ export const AdminAuthProvider = ({ children }) => {
         clearAuthState,
     };
 
-    return (
-        <AdminAuthContext.Provider value={value}>
-            {children}
-        </AdminAuthContext.Provider>
-    );
+    return <AdminAuthContext.Provider value={value}>{children}</AdminAuthContext.Provider>;
 };
 
 export default AdminAuthContext;

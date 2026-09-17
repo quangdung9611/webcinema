@@ -1,6 +1,4 @@
 // admin_frontend/pages/Auth/AdminLogin.jsx
-// ✅ Dùng adminSocketService
-// ✅ Chặn double-submit
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -16,7 +14,8 @@ import {
     Timer,
 } from 'lucide-react';
 import adminapi from '../../../api/adminapi';
-import adminSocketService from '../../../api/adminsocket'; // ✅ ĐỔI
+import adminSocketService from '../../../api/adminsocket';
+import { notifyAdminLogin } from '../../../utils/adminAuthCleanup';  // ✅ THÊM
 import Modal from '../../components/AdminModal';
 import LoadingButton from '../../../user_frontend/components/LoadingButton';
 import SuccessModal from '../../../user_frontend/components/SuccessModal';
@@ -267,7 +266,7 @@ const AdminLogin = () => {
     const handleAdminLogin = async (e) => {
         e.preventDefault();
 
-        // ✅ FIX: Chặn double-submit
+        // ✅ Chặn double-submit
         if (loading) {
             console.log('⚠️ [ADMIN LOGIN] Already loading — skip');
             return;
@@ -313,13 +312,10 @@ const AdminLogin = () => {
             adminapi.resetAdminCache();
             adminapi.resetSessionExpiredLock();
 
-            window.dispatchEvent(
-                new CustomEvent('adminLoggedIn', {
-                    detail: { user: adminUser },
-                })
-            );
+            // ✅ DÙNG HELPER notifyAdminLogin thay vì dispatch inline
+            notifyAdminLogin(adminUser);
             console.log(
-                '🟢 [ADMIN LOGIN] Đã phát tín hiệu adminLoggedIn & reset cache'
+                '🟢 [ADMIN LOGIN] Đã phát tín hiệu adminLoggedIn qua notifyAdminLogin()'
             );
 
             /* ================================================ LOGIN SUCCESS ================================================ */

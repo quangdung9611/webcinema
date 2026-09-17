@@ -14,6 +14,10 @@ const Jwt = require("./utils/Jwt");
 const RefreshTokenRepository = require("./Repositories/RefreshTokenRepository");
 const AuthService = require("./Services/AuthService");
 
+// ✅ IMPORT MIDDLEWARE ĐỂ SET SOCKET IO
+const { setSocketIO: setUserSocketIO } = require("./Middlewares/UserAuthMiddleware");
+const { setSocketIO: setAdminSocketIO } = require("./Middlewares/AdminAuthMiddleware");
+
 
 // ============================================================
 // MAILER
@@ -127,13 +131,34 @@ const io = new Server(server, {
 
 
 // ============================================================
-// AUTH SERVICE SOCKET
+// ✅ SET SOCKET.IO CHO CÁC SERVICE / MIDDLEWARE
+// ============================================================
+//
+// QUAN TRỌNG:
+//   - AuthService: emit session_expired khi login thiết bị mới
+//   - UserAuthMiddleware: emit session_expired khi token expired/revoked
+//   - AdminAuthMiddleware: emit session_expired khi token expired/revoked
+//
+// Nếu KHÔNG gọi setSocketIO() → middleware không emit được
 // ============================================================
 
+// 1. AuthService (dùng chung cho user + admin)
 AuthService.setIO(io);
+
+// 2. User middleware
+setUserSocketIO(io);
+
+// 3. Admin middleware
+setAdminSocketIO(io);
+
+// 4. Global (cho các chỗ khác cần dùng)
 global.io = io;
 
-console.log("✅ Socket.IO instance set to AuthService & global");
+console.log("✅ Socket.IO instance set to:");
+console.log("   - AuthService");
+console.log("   - UserAuthMiddleware");
+console.log("   - AdminAuthMiddleware");
+console.log("   - global.io");
 
 
 // ============================================================

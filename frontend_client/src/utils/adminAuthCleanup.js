@@ -1,10 +1,11 @@
 // utils/adminAuthCleanup.js
 // ============================================================
 // ADMIN AUTH CLEANUP — RIÊNG CHO ADMIN
+// ✅ Dùng adminSocketService
 // ============================================================
 
 import adminapi from '../api/adminapi';
-import socketService from '../api/socket';
+import adminSocketService from '../api/adminsocket';   // ✅ ĐỔI
 
 // ============================================================
 // DISPATCH EVENT
@@ -28,7 +29,6 @@ const dispatchAuthCleanedUp = ({ reason, message }) => {
 
 // ============================================================
 // CLEAR ADMIN AUTH
-// ✅ FIX: BỎ document.cookie — HttpOnly cookie chỉ server xóa được
 // ============================================================
 const clearAdminAuth = () => {
     console.log('🧹 [ADMIN AUTH CLEANUP] Clearing admin auth state');
@@ -49,9 +49,6 @@ const clearAdminAuth = () => {
         sessionStorage.removeItem(key);
     });
 
-    // ❌ BỎ document.cookie — HttpOnly cookie không xóa được bằng JS
-    // Backend sẽ clear cookie qua API logout
-
     // ✅ Reset admin API cache
     try {
         if (typeof adminapi.resetAdminCache === 'function') {
@@ -64,9 +61,9 @@ const clearAdminAuth = () => {
         console.warn('⚠️ [ADMIN AUTH CLEANUP] Reset cache failed:', error);
     }
 
-    // ✅ Disconnect socket
+    // ✅ Disconnect socket — DÙNG adminSocketService
     try {
-        socketService.disconnect();
+        adminSocketService.disconnect();   // ✅ ĐỔI
         console.log('🔌 [ADMIN AUTH CLEANUP] Socket disconnected');
     } catch (error) {
         console.warn('⚠️ [ADMIN AUTH CLEANUP] Socket disconnect failed:', error);
@@ -93,7 +90,6 @@ export const cleanupAdminAuth = async (options = {}) => {
             await adminapi.post('/admin/api/auth/logout');
             console.log('✅ [ADMIN AUTH CLEANUP] Logout API success');
         } catch (error) {
-            // ⚠️ KHÔNG BÁO LỖI — vì token có thể đã bị revoke
             console.warn(
                 '⚠️ [ADMIN AUTH CLEANUP] Logout API failed (ignored):',
                 error?.message
@@ -171,7 +167,7 @@ export const adminSessionExpired = async (
 // ADMIN DEVICE LOGGED OUT
 // ============================================================
 export const adminDeviceLoggedOut = async (
-    message = 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.'
+    message = 'Tài khoản admin của bạn đã được đăng nhập trên thiết bị khác.'
 ) => {
     return forceAdminLogout('SESSION_REPLACED', message);
 };
