@@ -1,11 +1,11 @@
-// routes/auth.js
+// Routers/UserAuthRouter.js
 const express = require("express");
 const router = express.Router();
 const AuthController = require("../Controllers/AuthController");
 const { authenticateUser } = require("../Middlewares/UserAuthMiddleware");
 
 // ============================================================
-// PUBLIC ROUTES
+// PUBLIC ROUTES — KHÔNG CẦN AUTH
 // ============================================================
 
 // 🆕 ROUTES CHO QUÊN PIN
@@ -41,17 +41,26 @@ router.get("/verify-email", AuthController.verifyEmail);
 router.get("/check-lock", AuthController.checkLockStatus);
 
 // ============================================================
-// PRIVATE ROUTES
+// ✅ LOGOUT — KHÔNG CẦN AUTH
+// ============================================================
+// Lý do:
+//   - Logout là idempotent — luôn clear cookie dù token valid/revoked/expired
+//   - Nếu có authenticateUser → token revoked → 401 → frontend KHÔNG clear được cookie
+//   - Frontend gọi logout khi session expired → cần route này hoạt động 100%
+// ============================================================
+router.post("/logout", AuthController.logout);
+
+// ============================================================
+// PRIVATE ROUTES — CẦN AUTH
 // ============================================================
 
 router.get("/me", authenticateUser, AuthController.getMe);
 router.patch("/change-password", authenticateUser, AuthController.changePassword);
-router.post("/logout", authenticateUser, AuthController.logout);
 router.post("/logout-all", authenticateUser, AuthController.logoutAllDevices);
 router.post("/resend-verification", authenticateUser, AuthController.resendVerification);
 
 // ============================================================
-// DEVICE MANAGEMENT
+// DEVICE MANAGEMENT — CẦN AUTH
 // ============================================================
 
 router.get("/devices", authenticateUser, AuthController.getDevices);

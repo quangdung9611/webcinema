@@ -35,7 +35,7 @@ const getFrontendUrlByRole = (role) => {
 const MAX_DEVICES_ADMIN = 1;
 const MAX_DEVICES_CUSTOMER = 1;
 
-// ✅ NGƯỠNG TOKEN MỚI (5 giây) — tránh double-submit
+// ✅ NGƯỠNG TOKEN MỚI (5 giây)
 const TOKEN_AGE_THRESHOLD = 5000;
 
 // ============================================================
@@ -55,16 +55,17 @@ const validateLogin = (email, password) => {
 
 // ============================================================
 // GENERATE ACCESS TOKEN
-// ✅ XÓA user_token khi login admin để tránh conflict socket
 // ============================================================
 const generateAndSetTokens = (user, res, rememberMe = false) => {
     const accessToken = Jwt.generateAccessToken(user);
 
     if (user.role === "admin") {
-        // ✅ Xóa user_token cũ nếu có → tránh socket đọc nhầm
+        // ✅ Force clear user_token
         Cookie.clearUserCookies(res);
         Cookie.setAdminAccessToken(res, accessToken, rememberMe);
     } else {
+        // ✅ Force clear admin_token (nếu có từ trước)
+        Cookie.clearAdminCookies(res);
         Cookie.setUserAccessToken(res, accessToken, rememberMe);
     }
 
@@ -228,7 +229,6 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
         const oldestToken = sorted[0];
 
         if (oldestToken) {
-            // ✅ Check token age — tránh double-submit
             const tokenAge = Date.now() - new Date(oldestToken.created_at).getTime();
             console.log(`🔍 [CHECK] Token age: ${tokenAge}ms | token_id=${oldestToken.token_id}`);
 
@@ -236,18 +236,18 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
                 ? `Vượt quá ${maxDevices} thiết bị admin`
                 : "Đăng nhập từ thiết bị khác";
 
-            // ✅ LẤY socket_id CỦA TOKEN CŨ (chính xác, không query cache)
-            const oldSocketId = oldestToken.socket_id;
-            console.log(`🔗 [SOCKET] Old token socket_id: ${oldSocketId}`);
+            // ✅ LẤY socket_token CỦA TOKEN CŨ (KHÔNG PHẢI socket_id)
+            const oldSocketToken = oldestToken.socket_token;
+            console.log(`🔗 [SOCKET] Old token socket_token: ${oldSocketToken}`);
 
-            // ✅ Revoke token cũ
+            // Revoke token cũ
             await RefreshTokenRepository.revoke(oldestToken.token_hash, reason);
             console.log(`🔄 [REVOKE] Revoked token_id=${oldestToken.token_id}`);
 
-            // ✅ CHỈ EMIT nếu token cũ > TOKEN_AGE_THRESHOLD VÀ có socket_id
+            // ✅ CHỈ EMIT nếu token cũ > TOKEN_AGE_THRESHOLD VÀ có socket_token
             if (tokenAge >= TOKEN_AGE_THRESHOLD) {
-                if (ioInstance && user.user_id && oldSocketId) {
-                    ioInstance.to(oldSocketId).emit('session_expired', {
+                if (ioInstance && user.user_id && oldSocketToken) {
+                    ioInstance.to(oldSocketToken).emit('session_expired', {
                         code: 'SESSION_REPLACED',
                         message: user.role === 'admin'
                             ? 'Tài khoản admin của bạn đã được đăng nhập trên thiết bị khác.'
@@ -259,16 +259,9 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
                         timestamp: new Date().toISOString()
                     });
 
-                    console.log(`📤 [SOCKET] session_expired sent to OLD socket: ${oldSocketId}`);
+                    console.log(`📤 [SOCKET] session_expired sent to OLD socket_token: ${oldSocketToken}`);
                 } else {
-                    console.warn(`⚠️ [SOCKET] Cannot emit: ioInstance=${!!ioInstance}, socketId=${oldSocketId}`);
-                }
-
-                // Xóa socket_id khỏi cache (cleanup)
-                try {
-                    await CacheService.deleteUserSocket(user.user_id);
-                } catch (cleanupError) {
-                    console.warn(`⚠️ [CLEANUP] Cannot delete user socket:`, cleanupError.message);
+                    console.warn(`⚠️ [SOCKET] Cannot emit: ioInstance=${!!ioInstance}, socketToken=${oldSocketToken}`);
                 }
             } else {
                 console.log(`⚠️ [SKIP EMIT] Token quá mới (${tokenAge}ms) — không emit session_expired`);
@@ -289,7 +282,7 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
         ip_address: req.ip || req.connection?.remoteAddress || null,
         user_agent: req.headers?.["user-agent"] || null,
         device_name: req.headers?.["user-agent"]?.substring(0, 50) || "Unknown Device",
-        socket_id: null  // ✅ MỚI: ban đầu null, update sau khi register_socket
+        socket_token: null  // ✅ ĐỔI TÊN
     });
 
     return {
@@ -331,9 +324,13 @@ exports.logout = async (req, res) => {
     }
 
     if (token) {
-        const tokenHash = Jwt.hashRefreshToken(token);
-        const deleted = await RefreshTokenRepository.deleteByTokenHash(tokenHash);
-        console.log(`🗑️ [LOGOUT] Đã xóa ${deleted} token khỏi DB`);
+        try {
+            const tokenHash = Jwt.hashRefreshToken(token);
+            const deleted = await RefreshTokenRepository.deleteByTokenHash(tokenHash);
+            console.log(`🗑️ [LOGOUT] Đã xóa ${deleted} token khỏi DB`);
+        } catch (deleteError) {
+            console.warn('⚠️ [LOGOUT] Cannot delete token:', deleteError.message);
+        }
     }
 
     try {
@@ -1122,7 +1119,7 @@ exports.loginAfterRegistration = async (user, req, res) => {
         ip_address: req.ip || req.connection?.remoteAddress || null,
         user_agent: req.headers?.["user-agent"] || null,
         device_name: req.headers?.["user-agent"]?.substring(0, 50) || "New Device",
-        socket_id: null  // ✅ MỚI
+        socket_token: null  // ✅ ĐỔI TÊN
     });
 
     return {

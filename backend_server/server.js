@@ -210,7 +210,7 @@ io.use(async (socket, next) => {
             socket.userEmail = null;
             socket.username = null;
             socket.fullName = null;
-            socket.accessToken = null;  // ✅ LƯU TOKEN
+            socket.accessToken = null;
             return next();
         }
 
@@ -244,7 +244,7 @@ io.use(async (socket, next) => {
                 socket.userEmail = payload.email;
                 socket.username = payload.username;
                 socket.fullName = payload.full_name;
-                socket.accessToken = token;  // ✅ LƯU TOKEN ĐỂ DÙNG SAU
+                socket.accessToken = token;
 
                 console.log(
                     `✅ [SOCKET] Authenticated: User ${payload.user_id} (${payload.email}) | Role: ${payload.role}`
@@ -302,24 +302,24 @@ io.on("connection", async (socket) => {
     }
 
     // ============================================================
-    // ✅ REGISTER SOCKET — LƯU socket_id VÀO TOKEN RECORD
+    // ✅ REGISTER SOCKET — LƯU socket_token VÀO CẢ 2 BẢNG
     // ============================================================
     socket.on("register_socket", async (data) => {
         const { userId: registerUserId } = data || {};
 
         if (registerUserId && Number(registerUserId) === Number(userId)) {
             try {
-                // 1. Lưu socket_id vào cache (như cũ)
+                // ✅ 1. Lưu socket_token vào user_sockets (INSERT IGNORE — không ghi đè)
                 await CacheService.saveUserSocket(registerUserId, socketId);
 
-                // ✅ 2. LƯU socket_id VÀO TOKEN RECORD TRONG DB
+                // ✅ 2. Lưu socket_token vào refresh_tokens
                 if (socket.accessToken) {
                     try {
                         const accessTokenHash = Jwt.hashRefreshToken(socket.accessToken);
-                        await RefreshTokenRepository.updateSocketId(accessTokenHash, socketId);
+                        await RefreshTokenRepository.updateSocketToken(accessTokenHash, socketId);
                         console.log(`🔗 [SOCKET] Token ↔ Socket linked: user=${registerUserId}, socket=${socketId}`);
                     } catch (tokenError) {
-                        console.error('⚠️ [SOCKET] Cannot update socket_id in token:', tokenError.message);
+                        console.error('⚠️ [SOCKET] Cannot update socket_token in token:', tokenError.message);
                     }
                 }
 
@@ -480,11 +480,12 @@ io.on("connection", async (socket) => {
     });
 
     // ============================================================
-    // ✅ DISCONNECT — CLEAR socket_id KHỎI TOKEN RECORD
+    // ✅ DISCONNECT — XÓA socket_token KHỎI 2 BẢNG
     // ============================================================
     socket.on("disconnect", async () => {
         console.log(`🔴 [SOCKET] Disconnected: ${socketId} - User: ${userId}`);
 
+        // 1. Release seat locks
         try {
             const releasedCount = await CacheService.releaseAllSeatLocksByOwner(ownerToken);
             console.log(`🔓 [CACHE SEAT LOCK] Released ${releasedCount} seats from socket ${socketId}`);
@@ -492,24 +493,20 @@ io.on("connection", async (socket) => {
             console.error("❌ [SOCKET] Failed to release Cache seat locks:", error.message);
         }
 
-        // ✅ CLEAR socket_id khỏi token record
+        // ✅ 2. Clear socket_token khỏi refresh_tokens
         try {
-            await RefreshTokenRepository.clearSocketId(socketId);
+            await RefreshTokenRepository.clearSocketToken(socketId);
         } catch (error) {
-            console.error("❌ [SOCKET] Failed to clear socket_id from token:", error.message);
+            console.error("❌ [SOCKET] Failed to clear socket_token from token:", error.message);
         }
 
+        // ✅ 3. Xóa CHÍNH XÁC socket này khỏi user_sockets (KHÔNG xóa hết)
         if (userId) {
             try {
-                const registeredSocket = await CacheService.getUserSocket(userId);
-                if (registeredSocket === socketId) {
-                    await CacheService.deleteUserSocket(userId);
-                    console.log(`🗑️ [SOCKET] Removed socket for user ${userId}`);
-                } else {
-                    console.log(`ℹ️ [SOCKET] Socket ${socketId} disconnected, but user ${userId} is using another socket`);
-                }
+                await CacheService.deleteUserSocketByToken(userId, socketId);
+                console.log(`🗑️ [SOCKET] Removed socket ${socketId} for user ${userId} from cache`);
             } catch (error) {
-                console.error("❌ [SOCKET] Failed to remove socket for user:", error.message);
+                console.error("❌ [SOCKET] Failed to remove socket from cache:", error.message);
             }
         }
     });

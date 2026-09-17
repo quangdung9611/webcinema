@@ -1,3 +1,5 @@
+// Services/CacheService.js
+
 const db = require("../Config/db");
 
 /*=========================================================
@@ -32,27 +34,11 @@ class CacheService {
 
     /*=======================================================
         1. RATE LIMIT
-        Dùng cho OTP / REGISTER / FORGOT PASSWORD...
-        KHÔNG dùng để khóa login.
     =======================================================*/
 
-    async checkRateLimit(
-        key,
-        action,
-        maxAttempts,
-        windowSeconds
-    ) {
-
+    async checkRateLimit(key, action, maxAttempts, windowSeconds) {
         const now = new Date();
-
-        const expiresAt = new Date(
-            now.getTime() + windowSeconds * 1000
-        );
-
-        // ---------------------------------------------------
-        // Tìm record
-        // mysql2/promise => [rows]
-        // ---------------------------------------------------
+        const expiresAt = new Date(now.getTime() + windowSeconds * 1000);
 
         const [rows] = await db.query(
             `
@@ -66,34 +52,16 @@ class CacheService {
         );
 
         // ---------------------------------------------------
-        // Chưa có record
+        // Chưa có record → INSERT
         // ---------------------------------------------------
-
         if (rows.length === 0) {
-
             await db.query(
                 `
                 INSERT INTO rate_limits
-                (
-                    rate_key,
-                    action,
-                    attempts,
-                    max_attempts,
-                    first_attempt_at,
-                    last_attempt_at,
-                    expires_at
-                )
+                (rate_key, action, attempts, max_attempts, first_attempt_at, last_attempt_at, expires_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 `,
-                [
-                    key,
-                    action,
-                    1,
-                    maxAttempts,
-                    now,
-                    now,
-                    expiresAt
-                ]
+                [key, action, 1, maxAttempts, now, now, expiresAt]
             );
 
             return {
@@ -107,33 +75,20 @@ class CacheService {
         const data = rows[0];
 
         // ---------------------------------------------------
-        // Record đã hết hạn
-        // Reset lại window
+        // Record đã hết hạn → reset
         // ---------------------------------------------------
-
-        if (
-            !data.expires_at ||
-            new Date(data.expires_at) <= now
-        ) {
-
+        if (!data.expires_at || new Date(data.expires_at) <= now) {
             await db.query(
                 `
                 UPDATE rate_limits
-                SET
-                    attempts = 1,
+                SET attempts = 1,
                     max_attempts = ?,
                     first_attempt_at = ?,
                     last_attempt_at = ?,
                     expires_at = ?
                 WHERE rate_limit_id = ?
                 `,
-                [
-                    maxAttempts,
-                    now,
-                    now,
-                    expiresAt,
-                    data.rate_limit_id
-                ]
+                [maxAttempts, now, now, expiresAt, data.rate_limit_id]
             );
 
             return {
@@ -147,16 +102,11 @@ class CacheService {
         // ---------------------------------------------------
         // Đã vượt giới hạn
         // ---------------------------------------------------
-
         const attempts = Number(data.attempts) || 0;
 
         if (attempts >= maxAttempts) {
-
             const remaining = Math.ceil(
-                (
-                    new Date(data.expires_at).getTime() -
-                    now.getTime()
-                ) / 1000
+                (new Date(data.expires_at).getTime() - now.getTime()) / 1000
             );
 
             return {
@@ -170,29 +120,20 @@ class CacheService {
         // ---------------------------------------------------
         // Tăng attempts
         // ---------------------------------------------------
-
         const newAttempts = attempts + 1;
 
         await db.query(
             `
             UPDATE rate_limits
-            SET
-                attempts = ?,
+            SET attempts = ?,
                 last_attempt_at = ?
             WHERE rate_limit_id = ?
             `,
-            [
-                newAttempts,
-                now,
-                data.rate_limit_id
-            ]
+            [newAttempts, now, data.rate_limit_id]
         );
 
         const remaining = Math.ceil(
-            (
-                new Date(data.expires_at).getTime() -
-                now.getTime()
-            ) / 1000
+            (new Date(data.expires_at).getTime() - now.getTime()) / 1000
         );
 
         return {
@@ -206,29 +147,11 @@ class CacheService {
 
     /*=======================================================
         2. LOGIN ATTEMPTS
-
-        Chỉ theo dõi:
-            1
-            2
-            3
-            4
-            5
-
-        Đủ 5 lần sai => AuthService tạo LOCK.
     =======================================================*/
 
     async incrementLoginAttempts(email) {
-
         const now = new Date();
-
-        const expiresAt = new Date(
-            now.getTime() +
-            LOGIN_ATTEMPT_WINDOW * 1000
-        );
-
-        // ---------------------------------------------------
-        // Tìm record hiện tại
-        // ---------------------------------------------------
+        const expiresAt = new Date(now.getTime() + LOGIN_ATTEMPT_WINDOW * 1000);
 
         const [rows] = await db.query(
             `
@@ -240,29 +163,14 @@ class CacheService {
             [email]
         );
 
-        // ---------------------------------------------------
-        // Chưa có record
-        // ---------------------------------------------------
-
         if (rows.length === 0) {
-
             await db.query(
                 `
                 INSERT INTO login_attempts
-                (
-                    email,
-                    attempt_count,
-                    last_attempt_at,
-                    expires_at
-                )
+                (email, attempt_count, last_attempt_at, expires_at)
                 VALUES (?, ?, ?, ?)
                 `,
-                [
-                    email,
-                    1,
-                    now,
-                    expiresAt
-                ]
+                [email, 1, now, expiresAt]
             );
 
             return 1;
@@ -270,55 +178,31 @@ class CacheService {
 
         const data = rows[0];
 
-        // ---------------------------------------------------
-        // Record đã hết hạn
-        // Reset về lần 1
-        // ---------------------------------------------------
-
-        if (
-            !data.expires_at ||
-            new Date(data.expires_at) <= now
-        ) {
-
+        if (!data.expires_at || new Date(data.expires_at) <= now) {
             await db.query(
                 `
                 UPDATE login_attempts
-                SET
-                    attempt_count = 1,
+                SET attempt_count = 1,
                     last_attempt_at = ?,
                     expires_at = ?
                 WHERE login_attempt_id = ?
                 `,
-                [
-                    now,
-                    expiresAt,
-                    data.login_attempt_id
-                ]
+                [now, expiresAt, data.login_attempt_id]
             );
 
             return 1;
         }
 
-        // ---------------------------------------------------
-        // Tăng số lần login sai
-        // ---------------------------------------------------
-
-        const newCount =
-            Number(data.attempt_count || 0) + 1;
+        const newCount = Number(data.attempt_count || 0) + 1;
 
         await db.query(
             `
             UPDATE login_attempts
-            SET
-                attempt_count = ?,
+            SET attempt_count = ?,
                 last_attempt_at = ?
             WHERE login_attempt_id = ?
             `,
-            [
-                newCount,
-                now,
-                data.login_attempt_id
-            ]
+            [newCount, now, data.login_attempt_id]
         );
 
         return newCount;
@@ -330,7 +214,6 @@ class CacheService {
     =======================================================*/
 
     async resetLoginAttempts(email) {
-
         await db.query(
             `
             DELETE FROM login_attempts
@@ -348,7 +231,6 @@ class CacheService {
     =======================================================*/
 
     async getLoginAttempts(email) {
-
         const now = new Date();
 
         const [rows] = await db.query(
@@ -362,34 +244,20 @@ class CacheService {
         );
 
         if (rows.length === 0) {
-            return {
-                attempts: 0,
-                remainingAttempts: LOGIN_MAX_ATTEMPTS
-            };
+            return { attempts: 0, remainingAttempts: LOGIN_MAX_ATTEMPTS };
         }
 
         const data = rows[0];
 
-        // Hết hạn
-        if (
-            !data.expires_at ||
-            new Date(data.expires_at) <= now
-        ) {
-            return {
-                attempts: 0,
-                remainingAttempts: LOGIN_MAX_ATTEMPTS
-            };
+        if (!data.expires_at || new Date(data.expires_at) <= now) {
+            return { attempts: 0, remainingAttempts: LOGIN_MAX_ATTEMPTS };
         }
 
-        const attempts =
-            Number(data.attempt_count) || 0;
+        const attempts = Number(data.attempt_count) || 0;
 
         return {
             attempts,
-            remainingAttempts: Math.max(
-                0,
-                LOGIN_MAX_ATTEMPTS - attempts
-            )
+            remainingAttempts: Math.max(0, LOGIN_MAX_ATTEMPTS - attempts)
         };
     }
 
@@ -399,7 +267,6 @@ class CacheService {
     =======================================================*/
 
     async getLockoutInfo(email) {
-
         const now = new Date();
 
         const [rows] = await db.query(
@@ -410,78 +277,39 @@ class CacheService {
               AND expires_at > ?
             LIMIT 1
             `,
-            [
-                email,
-                now
-            ]
+            [email, now]
         );
 
-        // Không có lock
         if (rows.length === 0) {
             return null;
         }
 
         const data = rows[0];
-
-        const expiresAt =
-            new Date(data.expires_at);
+        const expiresAt = new Date(data.expires_at);
 
         const remaining = Math.ceil(
-            (
-                expiresAt.getTime() -
-                now.getTime()
-            ) / 1000
+            (expiresAt.getTime() - now.getTime()) / 1000
         );
 
         return {
             isLocked: remaining > 0,
-
-            level:
-                Number(data.lock_level) || 1,
-
-            remainingSeconds:
-                Math.max(0, remaining),
-
-            lockDuration:
-                Math.max(0, remaining),
-
-            lockDurationText:
-                this._formatDuration(
-                    Math.max(0, remaining)
-                ),
-
+            level: Number(data.lock_level) || 1,
+            remainingSeconds: Math.max(0, remaining),
+            lockDuration: Math.max(0, remaining),
+            lockDurationText: this._formatDuration(Math.max(0, remaining)),
             maxAttempts: LOGIN_MAX_ATTEMPTS,
-
-            lockedUntil:
-                expiresAt.getTime()
+            lockedUntil: expiresAt.getTime()
         };
     }
 
 
     /*=======================================================
         INCREMENT LOCK LEVEL
-
-        Level:
-            1 = 1 phút
-            2 = 5 phút
-            3 = 15 phút
-            4 = 1 giờ
     =======================================================*/
 
     async incrementLockoutLevel(email) {
-
         const now = new Date();
-
-        const levels = [
-            60,     // 1 phút
-            300,    // 5 phút
-            900,    // 15 phút
-            3600    // 1 giờ
-        ];
-
-        // ---------------------------------------------------
-        // Lấy lock hiện tại
-        // ---------------------------------------------------
+        const levels = [60, 300, 900, 3600];
 
         const [rows] = await db.query(
             `
@@ -496,10 +324,7 @@ class CacheService {
         let newLevel = 1;
 
         if (rows.length > 0) {
-
-            const currentLevel =
-                Number(rows[0].lock_level) || 0;
-
+            const currentLevel = Number(rows[0].lock_level) || 0;
             newLevel = currentLevel + 1;
 
             if (newLevel > levels.length) {
@@ -507,27 +332,13 @@ class CacheService {
             }
         }
 
-        const duration =
-            levels[newLevel - 1];
-
-        const expiresAt = new Date(
-            now.getTime() +
-            duration * 1000
-        );
-
-        // ---------------------------------------------------
-        // INSERT / UPDATE
-        // ---------------------------------------------------
+        const duration = levels[newLevel - 1];
+        const expiresAt = new Date(now.getTime() + duration * 1000);
 
         await db.query(
             `
             INSERT INTO user_locks
-            (
-                email,
-                lock_level,
-                locked_at,
-                expires_at
-            )
+            (email, lock_level, locked_at, expires_at)
             VALUES (?, ?, ?, ?)
 
             ON DUPLICATE KEY UPDATE
@@ -535,12 +346,7 @@ class CacheService {
                 locked_at = VALUES(locked_at),
                 expires_at = VALUES(expires_at)
             `,
-            [
-                email,
-                newLevel,
-                now,
-                expiresAt
-            ]
+            [email, newLevel, now, expiresAt]
         );
 
         return newLevel;
@@ -552,23 +358,10 @@ class CacheService {
     =======================================================*/
 
     getLockDuration(level) {
+        const durations = [60, 300, 900, 3600];
+        const texts = ["1 phút", "5 phút", "15 phút", "1 giờ"];
 
-        const durations = [
-            60,
-            300,
-            900,
-            3600
-        ];
-
-        const texts = [
-            "1 phút",
-            "5 phút",
-            "15 phút",
-            "1 giờ"
-        ];
-
-        const normalizedLevel =
-            Number(level) || 1;
+        const normalizedLevel = Number(level) || 1;
 
         const index = Math.min(
             Math.max(normalizedLevel - 1, 0),
@@ -586,46 +379,17 @@ class CacheService {
         4. OTP
     =======================================================*/
 
-    /**
-     * LƯU OTP MỚI - CHỈ INSERT, KHÔNG UPDATE
-     * Mỗi OTP là 1 record riêng
-     */
-    async saveOTP(
-        email,
-        purpose,
-        otp,
-        ttl = OTP_EXPIRE_SECONDS
-    ) {
-
+    async saveOTP(email, purpose, otp, ttl = OTP_EXPIRE_SECONDS) {
         const now = new Date();
+        const expiresAt = new Date(now.getTime() + ttl * 1000);
 
-        const expiresAt = new Date(
-            now.getTime() +
-            ttl * 1000
-        );
-
-        // ✅ CHỈ INSERT, KHÔNG UPDATE
         const [result] = await db.query(
             `
             INSERT INTO otp_codes
-            (
-                email,
-                purpose,
-                otp,
-                created_at,
-                expires_at,
-                is_used,
-                attempts
-            )
+            (email, purpose, otp, created_at, expires_at, is_used, attempts)
             VALUES (?, ?, ?, ?, ?, 0, 0)
             `,
-            [
-                email,
-                purpose,
-                otp,
-                now,
-                expiresAt
-            ]
+            [email, purpose, otp, now, expiresAt]
         );
 
         console.log(`✅ [CACHE] Saved OTP for ${email}, purpose: ${purpose}, id: ${result.insertId}`);
@@ -633,18 +397,13 @@ class CacheService {
     }
 
 
-    /**
-     * ĐÁNH DẤU OTP ĐÃ SỬ DỤNG (is_used = 1)
-     * Dùng khi: verify thành công, resend, invalidate, lock do sai 5 lần
-     */
     async markOTPAsUsed(email, purpose) {
-
         const now = new Date();
 
         const [result] = await db.query(
             `
             UPDATE otp_codes
-            SET is_used = 1, 
+            SET is_used = 1,
                 updated_at = ?
             WHERE email = ?
               AND purpose = ?
@@ -659,11 +418,7 @@ class CacheService {
     }
 
 
-    /**
-     * LẤY OTP MỚI NHẤT CHƯA DÙNG
-     */
     async getOTP(email, purpose) {
-
         const now = new Date();
 
         const [rows] = await db.query(
@@ -677,11 +432,7 @@ class CacheService {
             ORDER BY otp_code_id DESC
             LIMIT 1
             `,
-            [
-                email,
-                purpose,
-                now
-            ]
+            [email, purpose, now]
         );
 
         if (rows.length === 0) {
@@ -692,11 +443,7 @@ class CacheService {
     }
 
 
-    /**
-     * LẤY FULL DATA OTP (OTP + ATTEMPTS + EXPIRES_AT)
-     */
     async getOTPData(email, purpose) {
-
         const now = new Date();
 
         const [rows] = await db.query(
@@ -710,11 +457,7 @@ class CacheService {
             ORDER BY otp_code_id DESC
             LIMIT 1
             `,
-            [
-                email,
-                purpose,
-                now
-            ]
+            [email, purpose, now]
         );
 
         if (rows.length === 0) {
@@ -730,35 +473,21 @@ class CacheService {
     }
 
 
-    /**
-     * XÓA OTP VĨNH VIỄN (chỉ dùng khi cần thiết)
-     */
     async deleteOTP(email, purpose) {
-
         await db.query(
             `
             DELETE FROM otp_codes
             WHERE email = ?
               AND purpose = ?
             `,
-            [
-                email,
-                purpose
-            ]
+            [email, purpose]
         );
 
         return true;
     }
 
 
-    /**
-     * TĂNG SỐ LẦN THỬ SAI CHO OTP MỚI NHẤT
-     */
-    async incrementOTPAttempts(
-        email,
-        purpose
-    ) {
-
+    async incrementOTPAttempts(email, purpose) {
         const now = new Date();
 
         const [rows] = await db.query(
@@ -772,11 +501,7 @@ class CacheService {
             ORDER BY otp_code_id DESC
             LIMIT 1
             `,
-            [
-                email,
-                purpose,
-                now
-            ]
+            [email, purpose, now]
         );
 
         if (rows.length === 0) {
@@ -784,9 +509,7 @@ class CacheService {
         }
 
         const data = rows[0];
-
-        const newAttempts =
-            Number(data.attempts || 0) + 1;
+        const newAttempts = Number(data.attempts || 0) + 1;
 
         await db.query(
             `
@@ -794,10 +517,7 @@ class CacheService {
             SET attempts = ?
             WHERE otp_code_id = ?
             `,
-            [
-                newAttempts,
-                data.otp_code_id
-            ]
+            [newAttempts, data.otp_code_id]
         );
 
         console.log(`📊 [CACHE] OTP attempts: ${newAttempts} for ${email}, purpose: ${purpose}`);
@@ -805,14 +525,7 @@ class CacheService {
     }
 
 
-    /**
-     * RESET SỐ LẦN THỬ SAI VỀ 0
-     */
-    async resetOTPAttempts(
-        email,
-        purpose
-    ) {
-
+    async resetOTPAttempts(email, purpose) {
         const now = new Date();
 
         await db.query(
@@ -824,26 +537,14 @@ class CacheService {
               AND is_used = 0
               AND expires_at > ?
             `,
-            [
-                email,
-                purpose,
-                now
-            ]
+            [email, purpose, now]
         );
 
         return true;
     }
 
 
-    /**
-     * KIỂM TRA OTP CÓ BỊ KHÓA DO NHẬP SAI QUÁ 5 LẦN KHÔNG
-     */
-    async isOTPLocked(
-        email,
-        purpose,
-        maxAttempts = 5
-    ) {
-
+    async isOTPLocked(email, purpose, maxAttempts = 5) {
         const now = new Date();
 
         const [rows] = await db.query(
@@ -857,21 +558,14 @@ class CacheService {
             ORDER BY otp_code_id DESC
             LIMIT 1
             `,
-            [
-                email,
-                purpose,
-                now
-            ]
+            [email, purpose, now]
         );
 
         if (rows.length === 0) {
             return false;
         }
 
-        return (
-            Number(rows[0].attempts || 0) >=
-            maxAttempts
-        );
+        return Number(rows[0].attempts || 0) >= maxAttempts;
     }
 
 
@@ -879,36 +573,17 @@ class CacheService {
         5. TEMP BOOKING
     =======================================================*/
 
-    async set(
-        key,
-        data,
-        ttl = TEMP_BOOKING_TTL
-    ) {
-
+    async set(key, data, ttl = TEMP_BOOKING_TTL) {
         const now = new Date();
+        const expiresAt = new Date(now.getTime() + ttl * 1000);
+        const bookingKey = key.replace("temp:", "");
 
-        const expiresAt = new Date(
-            now.getTime() +
-            ttl * 1000
-        );
-
-        const bookingKey =
-            key.replace("temp:", "");
-
-        const jsonData =
-            typeof data === "string"
-                ? data
-                : JSON.stringify(data);
+        const jsonData = typeof data === "string" ? data : JSON.stringify(data);
 
         await db.query(
             `
             INSERT INTO temp_bookings
-            (
-                booking_key,
-                data,
-                expires_at,
-                created_at
-            )
+            (booking_key, data, expires_at, created_at)
             VALUES (?, ?, ?, ?)
 
             ON DUPLICATE KEY UPDATE
@@ -916,27 +591,15 @@ class CacheService {
                 expires_at = VALUES(expires_at),
                 updated_at = NOW()
             `,
-            [
-                bookingKey,
-                jsonData,
-                expiresAt,
-                now
-            ]
+            [bookingKey, jsonData, expiresAt, now]
         );
 
         return true;
     }
 
 
-    /*=======================================================
-        GET TEMP BOOKING
-    =======================================================*/
-
     async get(key) {
-
-        const bookingKey =
-            key.replace("temp:", "");
-
+        const bookingKey = key.replace("temp:", "");
         const now = new Date();
 
         const [rows] = await db.query(
@@ -948,10 +611,7 @@ class CacheService {
             ORDER BY temp_booking_id DESC
             LIMIT 1
             `,
-            [
-                bookingKey,
-                now
-            ]
+            [bookingKey, now]
         );
 
         if (rows.length === 0) {
@@ -966,14 +626,8 @@ class CacheService {
     }
 
 
-    /*=======================================================
-        DELETE TEMP BOOKING
-    =======================================================*/
-
     async delete(key) {
-
-        const bookingKey =
-            key.replace("temp:", "");
+        const bookingKey = key.replace("temp:", "");
 
         const [result] = await db.query(
             `
@@ -987,22 +641,14 @@ class CacheService {
     }
 
 
-    /*=======================================================
-        GET TTL
-    =======================================================*/
-
     async getTTL(key) {
-
         const now = new Date();
 
         // ---------------------------------------------------
         // TEMP BOOKING
         // ---------------------------------------------------
-
         if (key.startsWith("temp:")) {
-
-            const bookingKey =
-                key.replace("temp:", "");
+            const bookingKey = key.replace("temp:", "");
 
             const [rows] = await db.query(
                 `
@@ -1012,21 +658,13 @@ class CacheService {
                   AND expires_at > ?
                 LIMIT 1
                 `,
-                [
-                    bookingKey,
-                    now
-                ]
+                [bookingKey, now]
             );
 
-            if (rows.length === 0) {
-                return 0;
-            }
+            if (rows.length === 0) return 0;
 
             const remaining = Math.ceil(
-                (
-                    new Date(rows[0].expires_at).getTime() -
-                    now.getTime()
-                ) / 1000
+                (new Date(rows[0].expires_at).getTime() - now.getTime()) / 1000
             );
 
             return Math.max(0, remaining);
@@ -1036,15 +674,9 @@ class CacheService {
         // ---------------------------------------------------
         // OTP
         // ---------------------------------------------------
-
         if (key.startsWith("otp:")) {
-
-            const parts =
-                key.split(":");
-
-            if (parts.length !== 3) {
-                return 0;
-            }
+            const parts = key.split(":");
+            if (parts.length !== 3) return 0;
 
             const email = parts[1];
             const purpose = parts[2];
@@ -1060,22 +692,13 @@ class CacheService {
                 ORDER BY otp_code_id DESC
                 LIMIT 1
                 `,
-                [
-                    email,
-                    purpose,
-                    now
-                ]
+                [email, purpose, now]
             );
 
-            if (rows.length === 0) {
-                return 0;
-            }
+            if (rows.length === 0) return 0;
 
             const remaining = Math.ceil(
-                (
-                    new Date(rows[0].expires_at).getTime() -
-                    now.getTime()
-                ) / 1000
+                (new Date(rows[0].expires_at).getTime() - now.getTime()) / 1000
             );
 
             return Math.max(0, remaining);
@@ -1089,185 +712,91 @@ class CacheService {
         6. SEAT LOCK
     =======================================================*/
 
-    async acquireSeatLock(
-        showtimeId,
-        seatId,
-        ownerToken,
-        ttl = SEAT_LOCK_TTL
-    ) {
-
-        const connection =
-            await db.getConnection();
+    async acquireSeatLock(showtimeId, seatId, ownerToken, ttl = SEAT_LOCK_TTL) {
+        const connection = await db.getConnection();
 
         try {
-
             await connection.beginTransaction();
 
             const now = new Date();
+            const expiresAt = new Date(now.getTime() + ttl * 1000);
 
-            const expiresAt = new Date(
-                now.getTime() +
-                ttl * 1000
+            const [rows] = await connection.query(
+                `
+                SELECT *
+                FROM seat_locks
+                WHERE showtime_id = ?
+                  AND seat_id = ?
+                  AND expires_at > ?
+                FOR UPDATE
+                `,
+                [showtimeId, seatId, now]
             );
 
-            // ------------------------------------------------
-            // Tìm lock hiện tại
-            // ------------------------------------------------
-
-            const [rows] =
-                await connection.query(
-                    `
-                    SELECT *
-                    FROM seat_locks
-                    WHERE showtime_id = ?
-                      AND seat_id = ?
-                      AND expires_at > ?
-                    FOR UPDATE
-                    `,
-                    [
-                        showtimeId,
-                        seatId,
-                        now
-                    ]
-                );
-
-            // ------------------------------------------------
             // Đang bị người khác giữ
-            // ------------------------------------------------
-
-            if (
-                rows.length > 0 &&
-                rows[0].owner_token !== ownerToken
-            ) {
-
+            if (rows.length > 0 && rows[0].owner_token !== ownerToken) {
                 await connection.rollback();
 
-                const existing =
-                    rows[0];
-
+                const existing = rows[0];
                 const remaining = Math.ceil(
-                    (
-                        new Date(
-                            existing.expires_at
-                        ).getTime() -
-                        now.getTime()
-                    ) / 1000
+                    (new Date(existing.expires_at).getTime() - now.getTime()) / 1000
                 );
 
                 return {
                     locked: false,
-                    ownerToken:
-                        existing.owner_token,
-                    ttl: Math.max(
-                        0,
-                        remaining
-                    )
+                    ownerToken: existing.owner_token,
+                    ttl: Math.max(0, remaining)
                 };
             }
 
-            // ------------------------------------------------
-            // Chính owner đang giữ
-            // => renew TTL
-            // ------------------------------------------------
-
-            if (
-                rows.length > 0 &&
-                rows[0].owner_token === ownerToken
-            ) {
-
+            // Chính owner đang giữ → renew TTL
+            if (rows.length > 0 && rows[0].owner_token === ownerToken) {
                 await connection.query(
                     `
                     UPDATE seat_locks
                     SET expires_at = ?
                     WHERE seat_lock_id = ?
                     `,
-                    [
-                        expiresAt,
-                        rows[0].seat_lock_id
-                    ]
+                    [expiresAt, rows[0].seat_lock_id]
                 );
 
                 await connection.commit();
 
-                return {
-                    locked: true,
-                    ownerToken,
-                    ttl
-                };
+                return { locked: true, ownerToken, ttl };
             }
 
-            // ------------------------------------------------
             // Tạo lock mới
-            // ------------------------------------------------
-
             await connection.query(
                 `
                 INSERT INTO seat_locks
-                (
-                    showtime_id,
-                    seat_id,
-                    owner_token,
-                    expires_at,
-                    created_at
-                )
+                (showtime_id, seat_id, owner_token, expires_at, created_at)
                 VALUES (?, ?, ?, ?, ?)
                 `,
-                [
-                    showtimeId,
-                    seatId,
-                    ownerToken,
-                    expiresAt,
-                    now
-                ]
+                [showtimeId, seatId, ownerToken, expiresAt, now]
             );
 
             await connection.commit();
 
-            return {
-                locked: true,
-                ownerToken,
-                ttl
-            };
+            return { locked: true, ownerToken, ttl };
 
         } catch (error) {
-
             try {
                 await connection.rollback();
             } catch (rollbackError) {
-                console.error(
-                    "❌ Seat lock rollback error:",
-                    rollbackError.message
-                );
+                console.error("❌ Seat lock rollback error:", rollbackError.message);
             }
 
-            console.error(
-                "❌ acquireSeatLock error:",
-                error.message
-            );
+            console.error("❌ acquireSeatLock error:", error.message);
 
-            return {
-                locked: false,
-                ownerToken: null,
-                ttl: 0
-            };
+            return { locked: false, ownerToken: null, ttl: 0 };
 
         } finally {
-
             connection.release();
         }
     }
 
 
-    /*=======================================================
-        RELEASE SEAT LOCK
-    =======================================================*/
-
-    async releaseSeatLock(
-        showtimeId,
-        seatId,
-        ownerToken
-    ) {
-
+    async releaseSeatLock(showtimeId, seatId, ownerToken) {
         const [result] = await db.query(
             `
             DELETE FROM seat_locks
@@ -1275,26 +804,14 @@ class CacheService {
               AND seat_id = ?
               AND owner_token = ?
             `,
-            [
-                showtimeId,
-                seatId,
-                ownerToken
-            ]
+            [showtimeId, seatId, ownerToken]
         );
 
         return result.affectedRows > 0;
     }
 
 
-    /*=======================================================
-        GET SEAT LOCK
-    =======================================================*/
-
-    async getSeatLock(
-        showtimeId,
-        seatId
-    ) {
-
+    async getSeatLock(showtimeId, seatId) {
         const now = new Date();
 
         const [rows] = await db.query(
@@ -1306,29 +823,16 @@ class CacheService {
               AND expires_at > ?
             LIMIT 1
             `,
-            [
-                showtimeId,
-                seatId,
-                now
-            ]
+            [showtimeId, seatId, now]
         );
 
         if (rows.length === 0) {
-
-            return {
-                locked: false,
-                ownerToken: null,
-                ttl: 0
-            };
+            return { locked: false, ownerToken: null, ttl: 0 };
         }
 
         const data = rows[0];
-
         const remaining = Math.ceil(
-            (
-                new Date(data.expires_at).getTime() -
-                now.getTime()
-            ) / 1000
+            (new Date(data.expires_at).getTime() - now.getTime()) / 1000
         );
 
         return {
@@ -1339,30 +843,17 @@ class CacheService {
     }
 
 
-    /*=======================================================
-        GET ALL LOCKED SEATS
-    =======================================================*/
-
-    async getLockedSeatsByShowtime(
-        showtimeId
-    ) {
-
+    async getLockedSeatsByShowtime(showtimeId) {
         const now = new Date();
 
         const [rows] = await db.query(
             `
-            SELECT
-                seat_id,
-                owner_token,
-                expires_at
+            SELECT seat_id, owner_token, expires_at
             FROM seat_locks
             WHERE showtime_id = ?
               AND expires_at > ?
             `,
-            [
-                showtimeId,
-                now
-            ]
+            [showtimeId, now]
         );
 
         return rows.map(row => ({
@@ -1370,27 +861,13 @@ class CacheService {
             ownerToken: row.owner_token,
             ttl: Math.max(
                 0,
-                Math.ceil(
-                    (
-                        new Date(
-                            row.expires_at
-                        ).getTime() -
-                        now.getTime()
-                    ) / 1000
-                )
+                Math.ceil((new Date(row.expires_at).getTime() - now.getTime()) / 1000)
             )
         }));
     }
 
 
-    /*=======================================================
-        RELEASE ALL LOCKS BY OWNER
-    =======================================================*/
-
-    async releaseAllSeatLocksByOwner(
-        ownerToken
-    ) {
-
+    async releaseAllSeatLocksByOwner(ownerToken) {
         const [result] = await db.query(
             `
             DELETE FROM seat_locks
@@ -1403,25 +880,14 @@ class CacheService {
     }
 
 
-    /*=======================================================
-        RELEASE SHOWTIME LOCKS BY OWNER
-    =======================================================*/
-
-    async releaseShowtimeSeatLocksByOwner(
-        showtimeId,
-        ownerToken
-    ) {
-
+    async releaseShowtimeSeatLocksByOwner(showtimeId, ownerToken) {
         const [result] = await db.query(
             `
             DELETE FROM seat_locks
             WHERE showtime_id = ?
               AND owner_token = ?
             `,
-            [
-                showtimeId,
-                ownerToken
-            ]
+            [showtimeId, ownerToken]
         );
 
         return result.affectedRows || 0;
@@ -1430,55 +896,67 @@ class CacheService {
 
     /*=======================================================
         7. USER SOCKET
+        ✅ FIX: INSERT IGNORE — KHÔNG GHI ĐÈ SOCKET CŨ
     =======================================================*/
 
-    async saveUserSocket(
-        userId,
-        socketToken,
-        ttl = SOCKET_TTL
-    ) {
-
+    /**
+     * ✅ LƯU SOCKET MỚI CHO USER
+     *
+     * ĐẶC ĐIỂM:
+     *   - Mỗi socket connection là 1 record RIÊNG
+     *   - KHÔNG ghi đè socket_token cũ
+     *   - Dùng INSERT IGNORE để tránh duplicate (user_id, socket_token)
+     *
+     * YÊU CẦU BẢNG user_sockets:
+     *   - KHÔNG có UNIQUE(user_id)
+     *   - CÓ UNIQUE(user_id, socket_token)
+     *
+     * @param {Number} userId
+     * @param {String} socketToken - socket.id từ Socket.IO (VD: "XaVhhH8yJtKEMEo-AAAL")
+     * @param {Number} ttl - Thời gian sống (giây)
+     * @returns {Boolean} true nếu INSERT thành công (record mới)
+     */
+    async saveUserSocket(userId, socketToken, ttl = SOCKET_TTL) {
         const now = new Date();
+        const expiresAt = new Date(now.getTime() + ttl * 1000);
 
-        const expiresAt = new Date(
-            now.getTime() +
-            ttl * 1000
-        );
-
-        await db.query(
+        // ✅ INSERT IGNORE:
+        //   - Nếu (user_id, socket_token) CHƯA tồn tại → INSERT record mới
+        //   - Nếu (user_id, socket_token) ĐÃ tồn tại → BỎ QUA (không update)
+        //   - Nếu user_id trùng nhưng socket_token khác → INSERT record MỚI
+        const [result] = await db.query(
             `
-            INSERT INTO user_sockets
-            (
-                user_id,
-                socket_token,
-                expires_at,
-                created_at
-            )
+            INSERT IGNORE INTO user_sockets
+            (user_id, socket_token, expires_at, created_at)
             VALUES (?, ?, ?, ?)
-
-            ON DUPLICATE KEY UPDATE
-                socket_token = VALUES(socket_token),
-                expires_at = VALUES(expires_at),
-                updated_at = NOW()
             `,
-            [
-                userId,
-                socketToken,
-                expiresAt,
-                now
-            ]
+            [userId, socketToken, expiresAt, now]
         );
 
-        return true;
+        const inserted = result.affectedRows > 0;
+
+        console.log(
+            `💾 [CACHE] saveUserSocket: user=${userId}, socket=${socketToken}, inserted=${inserted}`
+        );
+
+        return inserted;
     }
 
 
     /*=======================================================
-        GET USER SOCKET
+        ✅ GET USER SOCKET — LẤY SOCKET MỚI NHẤT
     =======================================================*/
 
+    /**
+     * LẤY SOCKET MỚI NHẤT CỦA USER
+     *
+     * Vì bảng có thể có NHIỀU record cho 1 user_id
+     * → Dùng ORDER BY socket_id DESC LIMIT 1 để lấy record MỚI NHẤT
+     *
+     * @param {Number} userId
+     * @returns {String|null} socket_token hoặc null
+     */
     async getUserSocket(userId) {
-
         const now = new Date();
 
         const [rows] = await db.query(
@@ -1490,10 +968,7 @@ class CacheService {
             ORDER BY socket_id DESC
             LIMIT 1
             `,
-            [
-                userId,
-                now
-            ]
+            [userId, now]
         );
 
         if (rows.length === 0) {
@@ -1505,12 +980,60 @@ class CacheService {
 
 
     /*=======================================================
-        DELETE USER SOCKET
+        ✅ MỚI: GET ALL USER SOCKETS
     =======================================================*/
 
-    async deleteUserSocket(userId) {
+    /**
+     * LẤY TẤT CẢ SOCKETS ĐANG ACTIVE CỦA USER
+     *
+     * Dùng khi:
+     *   - Muốn emit tới TẤT CẢ thiết bị của user
+     *   - Debug: xem user đang có bao nhiêu socket
+     *
+     * @param {Number} userId
+     * @returns {Array} Mảng các object { socketId, socketToken, ... }
+     */
+    async getAllUserSockets(userId) {
+        const now = new Date();
 
-        await db.query(
+        const [rows] = await db.query(
+            `
+            SELECT socket_id, socket_token, expires_at, created_at
+            FROM user_sockets
+            WHERE user_id = ?
+              AND expires_at > ?
+            ORDER BY socket_id DESC
+            `,
+            [userId, now]
+        );
+
+        return rows.map(row => ({
+            socketId: row.socket_id,
+            socketToken: row.socket_token,
+            expiresAt: row.expires_at,
+            createdAt: row.created_at
+        }));
+    }
+
+
+    /*=======================================================
+        DELETE USER SOCKET — XÓA TẤT CẢ
+    =======================================================*/
+
+    /**
+     * XÓA TẤT CẢ SOCKETS CỦA USER
+     *
+     * Dùng khi:
+     *   - Logout
+     *   - Force logout
+     *   - Revoke all devices
+     *   - Đổi mật khẩu
+     *
+     * @param {Number} userId
+     * @returns {Boolean}
+     */
+    async deleteUserSocket(userId) {
+        const [result] = await db.query(
             `
             DELETE FROM user_sockets
             WHERE user_id = ?
@@ -1518,7 +1041,42 @@ class CacheService {
             [userId]
         );
 
-        return true;
+        console.log(`🗑️ [CACHE] deleteUserSocket: user=${userId}, deleted=${result.affectedRows}`);
+
+        return result.affectedRows > 0;
+    }
+
+
+    /*=======================================================
+        ✅ MỚI: DELETE USER SOCKET BY TOKEN
+    =======================================================*/
+
+    /**
+     * XÓA 1 SOCKET CỤ THỂ CỦA USER (theo socket_token)
+     *
+     * Dùng khi:
+     *   - 1 socket disconnect → chỉ xóa socket đó
+     *   - Giữ các socket khác của user (nếu có nhiều thiết bị)
+     *
+     * @param {Number} userId
+     * @param {String} socketToken - socket.id cần xóa
+     * @returns {Boolean}
+     */
+    async deleteUserSocketByToken(userId, socketToken) {
+        const [result] = await db.query(
+            `
+            DELETE FROM user_sockets
+            WHERE user_id = ?
+              AND socket_token = ?
+            `,
+            [userId, socketToken]
+        );
+
+        console.log(
+            `🗑️ [CACHE] deleteUserSocketByToken: user=${userId}, socket=${socketToken}, deleted=${result.affectedRows}`
+        );
+
+        return result.affectedRows > 0;
     }
 
 
@@ -1527,22 +1085,11 @@ class CacheService {
     =======================================================*/
 
     async ping() {
-
         try {
-
-            await db.query(
-                "SELECT 1"
-            );
-
+            await db.query("SELECT 1");
             return true;
-
         } catch (error) {
-
-            console.error(
-                "❌ CacheService ping failed:",
-                error.message
-            );
-
+            console.error("❌ CacheService ping failed:", error.message);
             return false;
         }
     }
@@ -1553,33 +1100,20 @@ class CacheService {
     =======================================================*/
 
     _formatDuration(seconds) {
-
-        const totalSeconds =
-            Math.max(
-                0,
-                Number(seconds) || 0
-            );
+        const totalSeconds = Math.max(0, Number(seconds) || 0);
 
         if (totalSeconds < 60) {
             return `${totalSeconds} giây`;
         }
 
-        const minutes =
-            Math.floor(
-                totalSeconds / 60
-            );
+        const minutes = Math.floor(totalSeconds / 60);
 
         if (minutes < 60) {
             return `${minutes} phút`;
         }
 
-        const hours =
-            Math.floor(
-                minutes / 60
-            );
-
-        const remainingMinutes =
-            minutes % 60;
+        const hours = Math.floor(minutes / 60);
+        const remainingMinutes = minutes % 60;
 
         if (remainingMinutes === 0) {
             return `${hours} giờ`;
@@ -1594,116 +1128,21 @@ class CacheService {
     =======================================================*/
 
     async cleanupExpiredData() {
-
         const now = new Date();
 
         try {
+            await db.query(`DELETE FROM rate_limits WHERE expires_at < ?`, [now]);
+            await db.query(`DELETE FROM user_locks WHERE expires_at < ?`, [now]);
+            await db.query(`DELETE FROM login_attempts WHERE expires_at < ?`, [now]);
+            await db.query(`DELETE FROM otp_codes WHERE expires_at < ? OR is_used = 1`, [now]);
+            await db.query(`DELETE FROM temp_bookings WHERE expires_at < ?`, [now]);
+            await db.query(`DELETE FROM seat_locks WHERE expires_at < ?`, [now]);
+            await db.query(`DELETE FROM user_sockets WHERE expires_at < ?`, [now]);
 
-            // ------------------------------------------------
-            // RATE LIMIT
-            // ------------------------------------------------
-
-            await db.query(
-                `
-                DELETE FROM rate_limits
-                WHERE expires_at < ?
-                `,
-                [now]
-            );
-
-
-            // ------------------------------------------------
-            // USER LOCKS
-            // ------------------------------------------------
-
-            await db.query(
-                `
-                DELETE FROM user_locks
-                WHERE expires_at < ?
-                `,
-                [now]
-            );
-
-
-            // ------------------------------------------------
-            // LOGIN ATTEMPTS
-            // ------------------------------------------------
-
-            await db.query(
-                `
-                DELETE FROM login_attempts
-                WHERE expires_at < ?
-                `,
-                [now]
-            );
-
-
-            // ------------------------------------------------
-            // OTP - XÓA OTP ĐÃ HẾT HẠN HOẶC ĐÃ DÙNG (is_used = 1)
-            // ------------------------------------------------
-
-            await db.query(
-                `
-                DELETE FROM otp_codes
-                WHERE expires_at < ?
-                   OR is_used = 1
-                `,
-                [now]
-            );
-
-
-            // ------------------------------------------------
-            // TEMP BOOKING
-            // ------------------------------------------------
-
-            await db.query(
-                `
-                DELETE FROM temp_bookings
-                WHERE expires_at < ?
-                `,
-                [now]
-            );
-
-
-            // ------------------------------------------------
-            // SEAT LOCK
-            // ------------------------------------------------
-
-            await db.query(
-                `
-                DELETE FROM seat_locks
-                WHERE expires_at < ?
-                `,
-                [now]
-            );
-
-
-            // ------------------------------------------------
-            // USER SOCKET
-            // ------------------------------------------------
-
-            await db.query(
-                `
-                DELETE FROM user_sockets
-                WHERE expires_at < ?
-                `,
-                [now]
-            );
-
-
-            console.log(
-                "🧹 [CACHE] Cleaned up expired data"
-            );
-
+            console.log("🧹 [CACHE] Cleaned up expired data");
             return true;
-
         } catch (error) {
-
-            console.error(
-                "❌ [CACHE] Cleanup error:",
-                error.message
-            );
-
+            console.error("❌ [CACHE] Cleanup error:", error.message);
             return false;
         }
     }
@@ -1714,8 +1153,6 @@ class CacheService {
     EXPORT SINGLETON
 ===========================================================*/
 
-const cacheService =
-    new CacheService();
+const cacheService = new CacheService();
 
-module.exports =
-    cacheService;
+module.exports = cacheService;

@@ -1,16 +1,12 @@
-/*=========================================================
-    DEPENDENCIES
-=========================================================*/
-
+// Routers/AdminAuthRouter.js
 const express = require("express");
 const router = express.Router();
-
 const AuthController = require("../Controllers/AuthController");
 const { authenticateAdmin } = require("../Middlewares/AdminAuthMiddleware");
 
-/*=========================================================
-    PUBLIC ROUTES
-=========================================================*/
+// ============================================================
+// PUBLIC ROUTES — KHÔNG CẦN AUTH
+// ============================================================
 
 /**
  * Đăng nhập Admin
@@ -22,18 +18,19 @@ router.post("/login", AuthController.adminLogin);
  */
 router.post("/refresh", AuthController.refreshToken);
 
-/**
- * ✅ LOGOUT — BỎ MIDDLEWARE
- * Vì:
- * - Nếu token valid → logout OK
- * - Nếu token invalid/revoked → vẫn clear cookie + return 200
- * - Tránh user bị kẹt ở modal "Session expired"
- */
+// ============================================================
+// ✅ LOGOUT — KHÔNG CẦN AUTH
+// ============================================================
+// Lý do:
+//   - Logout là idempotent — luôn clear cookie dù token valid/revoked/expired
+//   - Nếu có authenticateAdmin → token revoked → 401 → frontend KHÔNG clear được cookie
+//   - Frontend gọi logout khi session expired → cần route này hoạt động 100%
+// ============================================================
 router.post("/logout", AuthController.logout);
 
-/*=========================================================
-    PRIVATE ROUTES
-=========================================================*/
+// ============================================================
+// PRIVATE ROUTES — CẦN AUTH
+// ============================================================
 
 /**
  * Thông tin Admin
@@ -46,13 +43,13 @@ router.get("/me", authenticateAdmin, AuthController.getMe);
 router.patch("/change-password", authenticateAdmin, AuthController.changePassword);
 
 /**
- * Đăng xuất tất cả thiết bị (vẫn cần middleware vì cần userId)
+ * Đăng xuất tất cả thiết bị
  */
 router.post("/logout-all", authenticateAdmin, AuthController.logoutAllDevices);
 
-/*=========================================================
-    🟢 QUẢN LÝ THIẾT BỊ CHO ADMIN
-=========================================================*/
+// ============================================================
+// 🟢 QUẢN LÝ THIẾT BỊ CHO ADMIN — CẦN AUTH
+// ============================================================
 
 /**
  * Lấy danh sách thiết bị đang đăng nhập của admin

@@ -5,7 +5,7 @@ class RefreshTokenRepository {
 
     /*=========================================================
         TẠO REFRESH TOKEN MỚI
-        ✅ THÊM socket_id (ban đầu null, update sau khi register_socket)
+        ✅ DÙNG socket_token (KHÔNG PHẢI socket_id)
     =========================================================*/
     async create(data) {
         const {
@@ -15,55 +15,55 @@ class RefreshTokenRepository {
             ip_address,
             user_agent,
             device_name,
-            socket_id = null  // ✅ MỚI
+            socket_token = null  // ✅ ĐỔI TÊN
         } = data;
 
         const [result] = await db.query(
             `
             INSERT INTO refresh_tokens
-            (user_id, token_hash, expires_at, ip_address, user_agent, device_name, socket_id, is_revoked)
+            (user_id, token_hash, expires_at, ip_address, user_agent, device_name, socket_token, is_revoked)
             VALUES (?, ?, ?, ?, ?, ?, ?, 0)
             `,
-            [user_id, token_hash, expires_at, ip_address, user_agent, device_name, socket_id]
+            [user_id, token_hash, expires_at, ip_address, user_agent, device_name, socket_token]
         );
 
         return result.insertId;
     }
 
     /*=========================================================
-        ✅ MỚI: CẬP NHẬT SOCKET_ID CHO TOKEN
+        ✅ CẬP NHẬT SOCKET_TOKEN CHO TOKEN
         Gọi khi frontend register_socket
     =========================================================*/
-    async updateSocketId(tokenHash, socketId) {
+    async updateSocketToken(tokenHash, socketToken) {
         const [result] = await db.query(
             `
             UPDATE refresh_tokens
-            SET socket_id = ?
+            SET socket_token = ?
             WHERE token_hash = ?
               AND is_revoked = 0
             `,
-            [socketId, tokenHash]
+            [socketToken, tokenHash]
         );
 
-        console.log(`🔗 [REFRESH TOKEN] Updated socket_id=${socketId} for token (affected: ${result.affectedRows})`);
+        console.log(`🔗 [REFRESH TOKEN] Updated socket_token=${socketToken} (affected: ${result.affectedRows})`);
         return result.affectedRows > 0;
     }
 
     /*=========================================================
-        ✅ MỚI: XÓA SOCKET_ID KHI SOCKET DISCONNECT
+        ✅ XÓA SOCKET_TOKEN KHI SOCKET DISCONNECT
     =========================================================*/
-    async clearSocketId(socketId) {
+    async clearSocketToken(socketToken) {
         const [result] = await db.query(
             `
             UPDATE refresh_tokens
-            SET socket_id = NULL
-            WHERE socket_id = ?
+            SET socket_token = NULL
+            WHERE socket_token = ?
               AND is_revoked = 0
             `,
-            [socketId]
+            [socketToken]
         );
 
-        console.log(`🔌 [REFRESH TOKEN] Cleared socket_id=${socketId} (affected: ${result.affectedRows})`);
+        console.log(`🔌 [REFRESH TOKEN] Cleared socket_token=${socketToken} (affected: ${result.affectedRows})`);
         return result.affectedRows;
     }
 
@@ -113,7 +113,7 @@ class RefreshTokenRepository {
             SET is_revoked = 1,
                 revoked_at = NOW(),
                 revoked_reason = ?,
-                socket_id = NULL
+                socket_token = NULL
             WHERE token_hash = ?
               AND is_revoked = 0
             `,
@@ -132,7 +132,7 @@ class RefreshTokenRepository {
             SET is_revoked = 1,
                 revoked_at = NOW(),
                 revoked_reason = ?,
-                socket_id = NULL
+                socket_token = NULL
             WHERE user_id = ?
               AND is_revoked = 0
             `,
