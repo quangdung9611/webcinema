@@ -1,3 +1,5 @@
+// Services/BankAppService.js
+
 const BookingService = require("./BookingService");
 const TicketService = require("./TicketService");
 const PointsService = require("./PointsService");
@@ -10,42 +12,55 @@ const CacheService = require("./CacheService");
 class BankAppService {
 
     /*=========================================================
-        GỬI EMAIL VÉ SAU KHI THANH TOÁN THÀNH CÔNG
+        ✅ GỬI EMAIL VÉ SAU KHI THANH TOÁN THÀNH CÔNG
+        🔥 FIX: Truyền 1 object thay vì 2 tham số
     =========================================================*/
 
     async sendTicketEmail(connection, bookingId) {
-
         try {
-
-            const order =
-                await BookingService.getBookingDetail(
-                    connection,
-                    bookingId
-                );
+            // 1. Lấy thông tin booking
+            const order = await BookingService.getBookingDetail(
+                connection,
+                bookingId
+            );
 
             if (!order) {
                 throw new Error("Không tìm thấy đơn hàng");
             }
 
-            const foods =
-                await BookingService.getFoodDetail(
-                    connection,
-                    bookingId
-                );
+            // 2. Lấy food detail
+            const foods = await BookingService.getFoodDetail(
+                connection,
+                bookingId
+            );
 
-            const foodString =
-                foods.length
-                    ? foods
-                        .map(f => `${f.item_name} (x${f.quantity})`)
-                        .join(", ")
-                    : "Không có";
+            const foodString = foods.length
+                ? foods
+                    .map(f => `${f.item_name} (x${f.quantity})`)
+                    .join(", ")
+                : "Không có";
 
-            const points =
-                await PointsService.calculateBookingPoints(
-                    connection,
-                    bookingId
-                );
+            // 3. Tính điểm
+            const points = await PointsService.calculateBookingPoints(
+                connection,
+                bookingId
+            );
 
+            // 4. Lấy danh sách tickets
+            const tickets = await TicketService.getTicketsByBooking(
+                connection,
+                bookingId
+            );
+
+            // ✅ Lấy ticket_code đầu tiên để tạo QR
+            const firstTicketCode = tickets?.[0]?.ticket_code || null;
+
+            // ✅ Build QR URL (dùng cho QR code)
+            const qrUrl = firstTicketCode
+                ? `https://admin.quangdungcinema.id.vn/check-in/${firstTicketCode}`
+                : null;
+
+            // 5. Build ticketData
             const ticketData = {
                 bookingId: order.booking_id,
                 customerName: order.full_name,
@@ -62,20 +77,31 @@ class BankAppService {
                 seatLabel: order.seat_label || "---",
                 selectedFoods: foodString,
                 earnedPoints: points || 0,
-                ticketPIN: order.pin || (order.memo ? order.memo.slice(-6) : "")
+                ticketPIN: firstTicketCode || order.pin || (order.memo ? order.memo.slice(-6) : ""),
+                ticketCode: firstTicketCode,
+                qrUrl: qrUrl,
             };
 
-            await MailService.sendTicketEmail(
-                order.email,
-                ticketData
-            );
+            console.log(`📧 [BankApp] Sending ticket email for booking ${bookingId}:`, {
+                email: order.email,
+                customerName: order.full_name,
+                movieTitle: order.movie_name,
+                ticketCode: firstTicketCode,
+                qrUrl,
+            });
 
-            console.log(`✅ Email ticket sent for booking ${bookingId}`);
+            // ✅ FIX: Truyền 1 OBJECT thay vì 2 tham số
+            await MailService.sendTicketEmail({
+                email: order.email,
+                ...ticketData,
+            });
+
+            console.log(`✅ [BankApp] Email ticket sent for booking ${bookingId}`);
 
         } catch (err) {
-            console.error(`❌ Failed to send ticket email:`, err.message);
+            console.error(`❌ [BankApp] Failed to send ticket email:`, err.message);
+            console.error(err.stack);
         }
-
     }
 
 
@@ -96,7 +122,7 @@ class BankAppService {
 
 
     /*=========================================================
-        🆕 CHECK TTL - GIỐNG AUTH SERVICE
+        CHECK TTL
     =========================================================*/
 
     async checkTTL(tempBookingId) {
@@ -120,9 +146,7 @@ class BankAppService {
 
 
     /*=========================================================
-        🆕 GỬI LẠI OTP PAYMENT
-        🔥 SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
-        ✅ THÊM: serverTime + CHỜ GỬI EMAIL (await)
+        GỬI LẠI OTP PAYMENT
     =========================================================*/
 
     async resendOtpPayment(email, tempBookingId) {
@@ -130,18 +154,16 @@ class BankAppService {
             throw { statusCode: 400, field: "email", message: "Email không được để trống" };
         }
 
-        // Kiểm tra temp booking còn tồn tại không
         const key = `temp:${tempBookingId}`;
         const tempData = await CacheService.get(key);
         if (!tempData) {
             throw { statusCode: 404, message: "Phiên đặt vé đã hết hạn. Vui lòng đặt lại." };
         }
 
-        // Rate limit cho resend: 3 lần / 5 phút (giống AuthService)
         const rateLimit = await CacheService.checkRateLimit(email, "payment-resend", 3, 300);
         if (!rateLimit.allowed) {
-            throw { 
-                statusCode: 429, 
+            throw {
+                statusCode: 429,
                 message: `Bạn chỉ được gửi tối đa 3 lần trong 5 phút. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 300} giây.`,
                 data: {
                     remainingSeconds: rateLimit.remainingSeconds || 300,
@@ -150,23 +172,16 @@ class BankAppService {
             };
         }
 
-        // 🔥 Đánh dấu OTP cũ đã sử dụng (is_used = 1)
         await CacheService.markOTPAsUsed(email, PURPOSE.PAYMENT);
-
-        // Tạo OTP mới
         const otpResult = await OtpService.createOTP(email, PURPOSE.PAYMENT);
-
-        // ✅ Lấy mốc thời gian hiện tại của server để đồng bộ timer
         const serverTime = Date.now();
 
-        // Cập nhật temp booking với OTP mới
         const updatedData = typeof tempData === 'string' ? JSON.parse(tempData) : tempData;
         updatedData.otp = otpResult.otp;
         updatedData.otpCreatedAt = Date.now();
 
         await CacheService.set(key, updatedData, 300);
 
-        // ✅ SỬA: CHỜ GỬI EMAIL XONG RỒI MỚI TRẢ VỀ (await thay setImmediate)
         await MailService.sendPaymentOTP(email, otpResult.otp, updatedData.customerName, updatedData.totalAmount)
             .then(() => console.log(`✅ Payment OTP email sent to ${email}`))
             .catch(err => console.error(`❌ Payment OTP email failed: ${err.message}`));
@@ -181,16 +196,14 @@ class BankAppService {
                 expiresIn: ttl > 0 ? ttl : 300,
                 maxAttempts: 3,
                 remainingAttempts: 3,
-                serverTime: serverTime // ✅ Gửi mốc thời gian tuyệt đối này về cho Frontend
+                serverTime: serverTime
             }
         };
     }
 
 
     /*=========================================================
-        🆕 GỬI OTP THANH TOÁN
-        🔥 SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
-        ✅ THÊM: serverTime + CHỜ GỬI EMAIL (await)
+        GỬI OTP THANH TOÁN
     =========================================================*/
 
     async sendPaymentOTP(email, tempBookingId) {
@@ -198,18 +211,16 @@ class BankAppService {
             throw { statusCode: 400, field: "email", message: "Email không được để trống" };
         }
 
-        // Kiểm tra temp booking còn tồn tại không
         const key = `temp:${tempBookingId}`;
         const tempData = await CacheService.get(key);
         if (!tempData) {
             throw { statusCode: 404, message: "Phiên đặt vé đã hết hạn. Vui lòng đặt lại." };
         }
 
-        // Rate limit cho send OTP: 1 lần / 60 giây
         const rateLimit = await CacheService.checkRateLimit(email, "payment-send", 1, 60);
         if (!rateLimit.allowed) {
-            throw { 
-                statusCode: 429, 
+            throw {
+                statusCode: 429,
                 message: `Bạn đã gửi OTP quá nhanh. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 60} giây.`,
                 data: {
                     remainingSeconds: rateLimit.remainingSeconds || 60
@@ -217,23 +228,16 @@ class BankAppService {
             };
         }
 
-        // 🔥 Đánh dấu OTP cũ đã sử dụng (is_used = 1)
         await CacheService.markOTPAsUsed(email, PURPOSE.PAYMENT);
-
-        // Tạo OTP mới
         const otpResult = await OtpService.createOTP(email, PURPOSE.PAYMENT);
-
-        // ✅ Lấy mốc thời gian hiện tại của server để đồng bộ timer
         const serverTime = Date.now();
 
-        // Cập nhật temp booking với OTP mới
         const updatedData = typeof tempData === 'string' ? JSON.parse(tempData) : tempData;
         updatedData.otp = otpResult.otp;
         updatedData.otpCreatedAt = Date.now();
 
         await CacheService.set(key, updatedData, 300);
 
-        // ✅ SỬA: CHỜ GỬI EMAIL XONG RỒI MỚI TRẢ VỀ (await thay setImmediate)
         await MailService.sendPaymentOTP(email, otpResult.otp, updatedData.customerName, updatedData.totalAmount)
             .then(() => console.log(`✅ Payment OTP email sent to ${email}`))
             .catch(err => console.error(`❌ Payment OTP email failed: ${err.message}`));
@@ -246,7 +250,7 @@ class BankAppService {
             message: "Mã OTP đã được gửi tới email.",
             data: {
                 expiresIn: ttl > 0 ? ttl : 300,
-                serverTime: serverTime // ✅ Gửi mốc thời gian tuyệt đối này về cho Frontend
+                serverTime: serverTime
             }
         };
     }

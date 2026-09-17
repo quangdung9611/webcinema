@@ -14,12 +14,12 @@ const VerifyEmailTemplate = require("../Templates/VerifyEmailTemplate");
 const ForgotPinTemplate = require("../Templates/ForgotPinTemplate");
 
 // =========================================================
-// HÀM LẤY THỜI GIAN VN (UTC+7) - ĐỂ HIỂN THỊ ĐÚNG GIỜ
+// HÀM LẤY THỜI GIAN VN (UTC+7)
 // =========================================================
 const getVNTime = (addMinutes = 0) => {
     const now = new Date(Date.now() + addMinutes * 60 * 1000);
     return {
-        timestamp: now.getTime(), // Mốc thời gian tuyệt đối (cho Frontend)
+        timestamp: now.getTime(),
         display: now.toLocaleTimeString("vi-VN", {
             hour: "2-digit",
             minute: "2-digit",
@@ -36,11 +36,170 @@ const getVNTime = (addMinutes = 0) => {
 const MailService = {
 
     // =====================================================
-    // ✅ SEND PAYMENT OTP - GỬI OTP THANH TOÁN
+    // ✅ SEND TICKET EMAIL — GỬI VÉ VỀ EMAIL (MỚI)
+    // =====================================================
+
+    /**
+     * Gửi email chứa vé + QR code cho user
+     *
+     * @param {Object} data - Object chứa:
+     *   - email (required): Email người nhận
+     *   - bookingId: Mã booking
+     *   - customerName: Tên khách hàng
+     *   - seatLabel: VD "A1, A2, A3"
+     *   - movieTitle: Tên phim
+     *   - cinemaName: Tên rạp
+     *   - roomName: Tên phòng
+     *   - startTime: Giờ chiếu "20:00"
+     *   - selectedDate: Ngày chiếu "17/09/2026"
+     *   - selectedFoods: Đồ ăn
+     *   - earnedPoints: Điểm tích lũy
+     *   - ticketPIN: Mã PIN hiển thị
+     *   - ticketCode: Mã vé để tạo QR
+     *   - qrUrl: URL check-in (nếu có)
+     *
+     * @returns {Promise<Object>} Info từ nodemailer
+     */
+    sendTicketEmail: async (data) => {
+        const {
+            email,
+            bookingId,
+            customerName,
+            seatLabel,
+            movieTitle,
+            cinemaName,
+            roomName,
+            startTime,
+            selectedDate,
+            selectedFoods,
+            earnedPoints = 0,
+            ticketPIN,
+            ticketCode,
+            qrUrl,
+            posterPath,
+        } = data || {};
+
+        console.log(`📨 [MAIL] SEND TICKET -> ${email} | Booking: ${bookingId}`);
+
+        if (!email) {
+            throw new Error("Email người nhận không hợp lệ");
+        }
+
+        try {
+            // =====================================================
+            // 1. CHUẨN BỊ ATTACHMENTS + CID
+            // =====================================================
+
+            const attachments = [];
+
+            // ----- QR CODE -----
+            const qrContent = qrUrl || ticketCode || ticketPIN;
+            let qrCid = null;
+
+            if (qrContent) {
+                try {
+                    const qrBuffer = await QRCode.toBuffer(qrContent, {
+                        width: 500,
+                        margin: 4,
+                        errorCorrectionLevel: "H",
+                        color: {
+                            dark: "#000000",
+                            light: "#FFFFFF",
+                        },
+                    });
+
+                    qrCid = "qr_img";
+
+                    attachments.push({
+                        filename: `qr-ticket-${bookingId}.png`,
+                        content: qrBuffer,
+                        cid: qrCid,
+                        contentType: "image/png",
+                    });
+
+                    console.log(`✅ [MAIL] QR code attached (cid: ${qrCid})`);
+                } catch (qrError) {
+                    console.error("❌ [MAIL] QR code generation error:", qrError.message);
+                }
+            } else {
+                console.warn("⚠️ [MAIL] No QR content — QR code skipped");
+            }
+
+            // ----- POSTER (OPTIONAL) -----
+            let fileExists = false;
+
+            if (posterPath && fs.existsSync(posterPath)) {
+                try {
+                    attachments.push({
+                        filename: path.basename(posterPath),
+                        path: posterPath,
+                        cid: "poster_img",
+                        contentType: "image/png",
+                    });
+
+                    fileExists = true;
+                    console.log(`✅ [MAIL] Poster attached (cid: poster_img)`);
+                } catch (posterError) {
+                    console.error("❌ [MAIL] Poster attach error:", posterError.message);
+                }
+            } else {
+                console.log("ℹ️ [MAIL] No poster — skipped");
+            }
+
+            // =====================================================
+            // 2. BUILD TEMPLATE DATA
+            // =====================================================
+
+            const templateData = {
+                bookingId,
+                customerName: customerName || "Quý khách",
+                seatLabel: seatLabel || "---",
+                movieTitle: movieTitle || "---",
+                cinemaName: cinemaName || "---",
+                roomName: roomName || "---",
+                startTime: startTime || "---",
+                selectedDate: selectedDate || "---",
+                selectedFoods: selectedFoods || "",
+                earnedPoints: earnedPoints || 0,
+                ticketPIN: ticketPIN || ticketCode || "",
+                qrCid: qrCid,
+            };
+
+            // =====================================================
+            // 3. RENDER HTML
+            // =====================================================
+
+            const html = TicketEmailTemplate(templateData, fileExists);
+
+            // =====================================================
+            // 4. SEND EMAIL
+            // =====================================================
+
+            const info = await transporter.sendMail({
+                from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
+                to: email,
+                subject: `🎬 Vé xem phim "${movieTitle}" — Booking #${bookingId}`,
+                html,
+                attachments,
+            });
+
+            console.log("✅ [MAIL] TICKET EMAIL SENT");
+            console.log(`📧 Message ID: ${info.messageId}`);
+
+            return info;
+
+        } catch (error) {
+            console.error("❌ [MAIL] SEND TICKET EMAIL ERROR");
+            console.error(error);
+            throw error;
+        }
+    },
+
+    // =====================================================
+    // SEND PAYMENT OTP
     // =====================================================
 
     sendPaymentOTP: async (email, otp, bookingId) => {
-
         console.log(`📨 SEND PAYMENT OTP -> ${email} | Booking: ${bookingId}`);
 
         if (!email) {
@@ -48,17 +207,13 @@ const MailService = {
         }
 
         try {
-
-            // ⏰ Thời gian hết hạn là 5 phút nữa tính từ bây giờ
             const expiresAt = getVNTime(5);
 
             const info = await transporter.sendMail({
-
                 from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
                 to: email,
                 subject: `[${otp}] Mã xác thực thanh toán Dũng Cinema`,
-                html: OtpEmailTemplate(otp, bookingId, expiresAt.display) // 👈 Truyền giờ hiển thị
-
+                html: OtpEmailTemplate(otp, bookingId, expiresAt.display)
             });
 
             console.log("✅ PAYMENT OTP MAIL SENT");
@@ -67,17 +222,14 @@ const MailService = {
             return info;
 
         } catch (error) {
-
             console.error("❌ PAYMENT OTP MAIL ERROR");
             console.error(error);
             throw error;
-
         }
-
     },
 
     // =====================================================
-    // ⚠️ ALIAS - GIỮ TÊN CŨ CHO TƯƠNG THÍCH NGƯỢC
+    // ALIAS
     // =====================================================
 
     sendOTP: async (email, otp, bookingId) => {
@@ -85,11 +237,10 @@ const MailService = {
     },
 
     // =====================================================
-    // SEND RESET PASSWORD OTP - DÙNG CHO FORGOT PASSWORD
+    // SEND RESET PASSWORD OTP
     // =====================================================
 
     sendResetPasswordOTP: async (email, otp, fullName = "") => {
-
         console.log(`📨 RESET PASSWORD OTP -> ${email}`);
 
         if (!email) {
@@ -97,38 +248,30 @@ const MailService = {
         }
 
         try {
-
-            // ⏰ Thời gian hết hạn là 5 phút nữa tính từ bây giờ
             const expiresAt = getVNTime(5);
 
             const info = await transporter.sendMail({
-
                 from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
                 to: email,
                 subject: `[${otp}] Mã OTP đặt lại mật khẩu`,
-                html: ForgotPasswordTemplate(otp, fullName, expiresAt.display) // 👈 Truyền giờ hiển thị
-
+                html: ForgotPasswordTemplate(otp, fullName, expiresAt.display)
             });
 
             console.log("✅ RESET PASSWORD OTP SENT");
             return info;
 
         } catch (error) {
-
             console.error("❌ RESET PASSWORD OTP ERROR");
             console.error(error);
             throw error;
-
         }
-
     },
 
     // =====================================================
-    // SEND FORGOT PIN OTP (GỬI OTP ĐẶT LẠI MÃ PIN)
+    // SEND FORGOT PIN OTP
     // =====================================================
 
     sendForgotPinOTP: async (email, otp, fullName = "") => {
-
         console.log(`📨 SEND FORGOT PIN OTP -> ${email}`);
 
         if (!email) {
@@ -136,17 +279,13 @@ const MailService = {
         }
 
         try {
-
-            // ⏰ Thời gian hết hạn là 5 phút nữa tính từ bây giờ
             const expiresAt = getVNTime(5);
 
             const info = await transporter.sendMail({
-
                 from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
                 to: email,
                 subject: `[${otp}] Mã xác thực đặt lại mã PIN`,
-                html: ForgotPinTemplate(otp, fullName, expiresAt.display) // 👈 Truyền giờ hiển thị
-
+                html: ForgotPinTemplate(otp, fullName, expiresAt.display)
             });
 
             console.log("✅ FORGOT PIN OTP SENT");
@@ -155,15 +294,40 @@ const MailService = {
             return info;
 
         } catch (error) {
-
             console.error("❌ FORGOT PIN OTP ERROR");
             console.error(error);
             throw error;
+        }
+    },
 
+    // =====================================================
+    // SEND VERIFY EMAIL
+    // =====================================================
+
+    sendEmailVerification: async (email, verifyUrl, fullName = "") => {
+        console.log(`📨 SEND VERIFY EMAIL -> ${email}`);
+
+        if (!email) {
+            throw new Error("Email người nhận không hợp lệ");
         }
 
-    }
+        try {
+            const info = await transporter.sendMail({
+                from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
+                to: email,
+                subject: `Xác thực email của bạn — Dũng Cinema`,
+                html: VerifyEmailTemplate(verifyUrl, fullName)
+            });
 
+            console.log("✅ VERIFY EMAIL SENT");
+            return info;
+
+        } catch (error) {
+            console.error("❌ VERIFY EMAIL ERROR");
+            console.error(error);
+            throw error;
+        }
+    }
 };
 
 // =========================================================

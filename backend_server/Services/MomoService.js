@@ -5,6 +5,7 @@ const OtpService = require("./OtpService");
 const { PURPOSE } = require("./OtpService");
 const MailService = require("./MailService");
 const BookingService = require("./BookingService");
+const TicketService = require("./TicketService");
 const PointsService = require("./PointsService");
 const db = require("../Config/db");
 
@@ -19,7 +20,7 @@ const MOMO_CONFIG = {
 };
 
 class MomoService {
-    
+
     /*=========================================================
         1. PROCESS ORDER - TẠO TEMP BOOKING + QR MOMO
     =========================================================*/
@@ -39,7 +40,6 @@ class MomoService {
             startTime
         } = data;
 
-        // Lấy room_id, cinema_id, room_name
         const [rows] = await db.execute(
             `SELECT sh.room_id, sh.cinema_id, r.room_name 
              FROM showtimes sh 
@@ -56,7 +56,6 @@ class MomoService {
         const cinema_id = rows[0].cinema_id;
         const roomName = rows[0].room_name;
 
-        // Kiểm tra ghế đã được đặt chưa
         for (const seat of selectedSeats) {
             const [existing] = await db.execute(
                 `SELECT t.ticket_id 
@@ -73,13 +72,9 @@ class MomoService {
             }
         }
 
-        // Tạo tempBookingId
         const tempBookingId = crypto.randomBytes(8).toString("hex").toUpperCase();
-
-        // Tạo QR MoMo
         const momoResult = await this.createMomoQR(totalAmount, tempBookingId);
 
-        // Lưu vào Cache
         const tempData = {
             tempBookingId,
             userId,
@@ -165,8 +160,6 @@ class MomoService {
 
     /*=========================================================
         3. SEND OTP PAYMENT
-        🔥 SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
-        ✅ THÊM: serverTime + CHỜ GỬI EMAIL (await)
     =========================================================*/
     async sendPaymentOTP(email, tempBookingId) {
         if (!email?.trim()) {
@@ -179,32 +172,24 @@ class MomoService {
             throw { statusCode: 404, message: "Phiên đặt vé đã hết hạn. Vui lòng đặt lại." };
         }
 
-        // Rate limit: 1 lần / 60 giây
         const rateLimit = await CacheService.checkRateLimit(email, "momo-send", 1, 60);
         if (!rateLimit.allowed) {
-            throw { 
-                statusCode: 429, 
+            throw {
+                statusCode: 429,
                 message: `Bạn đã gửi OTP quá nhanh. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 60} giây.`,
                 data: { remainingSeconds: rateLimit.remainingSeconds || 60 }
             };
         }
 
-        // 🔥 Đánh dấu OTP cũ đã sử dụng (is_used = 1)
         await CacheService.markOTPAsUsed(email, PURPOSE.PAYMENT);
-
-        // Tạo OTP
         const otpResult = await OtpService.createOTP(email, PURPOSE.PAYMENT);
-
-        // ✅ Lấy mốc thời gian hiện tại của server để đồng bộ timer
         const serverTime = Date.now();
 
-        // Cập nhật temp data với OTP
         const updatedData = typeof tempData === 'string' ? JSON.parse(tempData) : tempData;
         updatedData.otp = otpResult.otp;
         updatedData.otpCreatedAt = Date.now();
         await CacheService.set(key, updatedData, 300);
 
-        // ✅ SỬA: CHỜ GỬI EMAIL XONG RỒI MỚI TRẢ VỀ (await thay setImmediate)
         await MailService.sendPaymentOTP(email, otpResult.otp, updatedData.customerName, updatedData.totalAmount)
             .then(() => console.log(`✅ MoMo OTP email sent to ${email}`))
             .catch(err => console.error(`❌ MoMo OTP email failed: ${err.message}`));
@@ -215,16 +200,16 @@ class MomoService {
         return {
             success: true,
             message: "Mã OTP đã được gửi tới email.",
-            data: { 
+            data: {
                 expiresIn: ttl > 0 ? ttl : 300,
-                serverTime: serverTime // ✅ Gửi mốc thời gian tuyệt đối này về cho Frontend
+                serverTime: serverTime
             }
         };
     }
 
     /*=========================================================
         4. VERIFY OTP + COMMIT TO DATABASE
-        ✅ KHÔNG CẦN SỬA
+        ✅ FIX: Gửi vé với signature đúng (1 object)
     =========================================================*/
     async verifyOTPAndCommit(email, otp, tempBookingId) {
         const verifyResult = await OtpService.verifyOTP(email, otp, PURPOSE.PAYMENT, true);
@@ -289,6 +274,9 @@ class MomoService {
             );
             const bookingId = bookingResult.insertId;
 
+            // ✅ Lưu ticket codes để dùng cho QR
+            const insertedTicketCodes = [];
+
             for (const seat of selectedSeats) {
                 await connection.execute(
                     `INSERT INTO booking_details (booking_id, seat_id, price, item_name, quantity)
@@ -296,7 +284,9 @@ class MomoService {
                     [bookingId, seat.seat_id, seat.price, `Ghế ${seat.seat_row}${seat.seat_number}`]
                 );
 
-                const ticketCode = `TIC-${bookingId}-${seat.seat_id}-${Date.now()}`;
+                const ticketCode = `TIC-${bookingId}-${seat.seat_id}-${Date.now()}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
+                insertedTicketCodes.push(ticketCode);
+
                 await connection.execute(
                     `INSERT INTO tickets (booking_id, showtime_id, room_id, cinema_id, seat_id, ticket_code, price, seat_status, ticket_status, created_at)
                      VALUES (?, ?, ?, ?, ?, ?, ?, 'Booked', 'Valid', NOW())`,
@@ -330,27 +320,67 @@ class MomoService {
 
             await connection.commit();
 
-            const order = await BookingService.getBookingDetail(connection, bookingId);
-            const foods = await BookingService.getFoodDetail(connection, bookingId);
-            const foodString = foods.length 
-                ? foods.map(f => `${f.item_name} (x${f.quantity})`).join(", ")
-                : "Không có";
+            // =====================================================
+            // ✅ GỬI EMAIL VÉ (sau khi commit thành công)
+            // =====================================================
 
-            setImmediate(() => {
-                MailService.sendTicketEmail(customerEmail, {
-                    bookingId: bookingId,
-                    customerName: order.full_name,
-                    movieTitle: order.movie_name,
-                    moviePoster: order.movie_poster,
-                    cinemaName: order.cinema_name,
-                    roomName: order.room_name || "---",
-                    startTime: order.start_time ? order.start_time.split(" ")[1]?.substring(0, 5) : "---",
-                    selectedDate: order.start_time ? order.start_time.split(" ")[0].split("-").reverse().join("/") : "---",
-                    seatLabel: order.seat_label || "---",
-                    selectedFoods: foodString,
-                    earnedPoints: earnedPoints,
-                    ticketPIN: order.pin || (order.memo ? order.memo.slice(-6) : "")
-                }).catch(err => console.error(`❌ Send ticket email failed: ${err.message}`));
+            setImmediate(async () => {
+                try {
+                    // Lấy thông tin booking sau khi commit
+                    const order = await BookingService.getBookingDetail(connection, bookingId);
+                    const foods = await BookingService.getFoodDetail(connection, bookingId);
+
+                    const foodString = foods.length
+                        ? foods.map(f => `${f.item_name} (x${f.quantity})`).join(", ")
+                        : "Không có";
+
+                    // ✅ Lấy ticket_code đầu tiên
+                    const firstTicketCode = insertedTicketCodes[0] || null;
+
+                    // ✅ Build QR URL
+                    const qrUrl = firstTicketCode
+                        ? `https://admin.quangdungcinema.id.vn/check-in/${firstTicketCode}`
+                        : null;
+
+                    // ✅ Build ticketData
+                    const ticketData = {
+                        bookingId: bookingId,
+                        customerName: order.full_name || customerName,
+                        movieTitle: order.movie_name || movieTitle,
+                        moviePoster: order.movie_poster,
+                        cinemaName: order.cinema_name || cinemaName,
+                        roomName: order.room_name || tempData.roomName || "---",
+                        startTime: order.start_time
+                            ? order.start_time.split(" ")[1]?.substring(0, 5)
+                            : startTime || "---",
+                        selectedDate: order.start_time
+                            ? order.start_time.split(" ")[0].split("-").reverse().join("/")
+                            : "---",
+                        seatLabel: order.seat_label || selectedSeats.map(s => `${s.seat_row}${s.seat_number}`).join(", "),
+                        selectedFoods: foodString,
+                        earnedPoints: earnedPoints,
+                        ticketPIN: firstTicketCode || order.pin || (order.memo ? order.memo.slice(-6) : ""),
+                        ticketCode: firstTicketCode,
+                        qrUrl: qrUrl,
+                    };
+
+                    console.log(`📧 [MoMo] Sending ticket email for booking ${bookingId}:`, {
+                        email: customerEmail,
+                        ticketCode: firstTicketCode,
+                        qrUrl,
+                    });
+
+                    // ✅ FIX: Truyền 1 object
+                    await MailService.sendTicketEmail({
+                        email: customerEmail,
+                        ...ticketData,
+                    });
+
+                    console.log(`✅ [MoMo] Ticket email sent for booking ${bookingId}`);
+                } catch (err) {
+                    console.error(`❌ [MoMo] Send ticket email failed: ${err.message}`);
+                    console.error(err.stack);
+                }
             });
 
             return {
@@ -369,8 +399,6 @@ class MomoService {
 
     /*=========================================================
         5. RESEND OTP
-        🔥 SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
-        ✅ THÊM: serverTime + CHỜ GỬI EMAIL (await)
     =========================================================*/
     async resendOtpPayment(email, tempBookingId) {
         if (!email?.trim()) {
@@ -383,32 +411,24 @@ class MomoService {
             throw { statusCode: 404, message: "Phiên đặt vé đã hết hạn. Vui lòng đặt lại." };
         }
 
-        // Rate limit: 3 lần / 5 phút
         const rateLimit = await CacheService.checkRateLimit(email, "momo-resend", 3, 300);
         if (!rateLimit.allowed) {
-            throw { 
-                statusCode: 429, 
+            throw {
+                statusCode: 429,
                 message: `Bạn chỉ được gửi tối đa 3 lần trong 5 phút. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 300} giây.`,
                 data: { remainingSeconds: rateLimit.remainingSeconds || 300, maxAttempts: 3 }
             };
         }
 
-        // 🔥 Đánh dấu OTP cũ đã sử dụng (is_used = 1)
         await CacheService.markOTPAsUsed(email, PURPOSE.PAYMENT);
-
-        // Tạo OTP mới
         const otpResult = await OtpService.createOTP(email, PURPOSE.PAYMENT);
-
-        // ✅ Lấy mốc thời gian hiện tại của server để đồng bộ timer
         const serverTime = Date.now();
 
-        // Cập nhật temp data
         const updatedData = typeof tempData === 'string' ? JSON.parse(tempData) : tempData;
         updatedData.otp = otpResult.otp;
         updatedData.otpCreatedAt = Date.now();
         await CacheService.set(key, updatedData, 300);
 
-        // ✅ SỬA: CHỜ GỬI EMAIL XONG RỒI MỚI TRẢ VỀ (await thay setImmediate)
         await MailService.sendPaymentOTP(email, otpResult.otp, updatedData.customerName, updatedData.totalAmount)
             .then(() => console.log(`✅ MoMo OTP resent to ${email}`))
             .catch(err => console.error(`❌ MoMo OTP resend failed: ${err.message}`));
@@ -419,11 +439,11 @@ class MomoService {
         return {
             success: true,
             message: "Mã OTP đã được gửi lại tới email.",
-            data: { 
-                expiresIn: ttl > 0 ? ttl : 300, 
-                maxAttempts: 3, 
+            data: {
+                expiresIn: ttl > 0 ? ttl : 300,
+                maxAttempts: 3,
                 remainingAttempts: 3,
-                serverTime: serverTime // ✅ Gửi mốc thời gian tuyệt đối này về cho Frontend
+                serverTime: serverTime
             }
         };
     }
@@ -481,7 +501,7 @@ class MomoService {
         const tempBookingId = orderId.replace('TEMP-', '');
         const key = `temp:${tempBookingId}`;
         const tempData = await CacheService.get(key);
-        
+
         if (!tempData) {
             console.log(`❌ Temp booking ${tempBookingId} not found in Cache`);
             return false;
