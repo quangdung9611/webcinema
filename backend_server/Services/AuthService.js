@@ -1,3 +1,5 @@
+// Services/AuthService.js
+
 const Jwt = require("../utils/Jwt");
 const Cookie = require("../utils/Cookie");
 const Password = require("../utils/Password");
@@ -226,7 +228,7 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
         const oldestToken = sorted[0];
 
         if (oldestToken) {
-            // ✅ FIX: Check token age — tránh double-submit
+            // ✅ Check token age — tránh double-submit
             const tokenAge = Date.now() - new Date(oldestToken.created_at).getTime();
             console.log(`🔍 [CHECK] Token age: ${tokenAge}ms | token_id=${oldestToken.token_id}`);
 
@@ -234,15 +236,16 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
                 ? `Vượt quá ${maxDevices} thiết bị admin`
                 : "Đăng nhập từ thiết bị khác";
 
-            // ✅ Luôn revoke token cũ
+            // ✅ LẤY socket_id CỦA TOKEN CŨ (chính xác, không query cache)
+            const oldSocketId = oldestToken.socket_id;
+            console.log(`🔗 [SOCKET] Old token socket_id: ${oldSocketId}`);
+
+            // ✅ Revoke token cũ
             await RefreshTokenRepository.revoke(oldestToken.token_hash, reason);
             console.log(`🔄 [REVOKE] Revoked token_id=${oldestToken.token_id}`);
 
-            // ✅ CHỈ EMIT nếu token cũ > TOKEN_AGE_THRESHOLD
+            // ✅ CHỈ EMIT nếu token cũ > TOKEN_AGE_THRESHOLD VÀ có socket_id
             if (tokenAge >= TOKEN_AGE_THRESHOLD) {
-                const oldSocketId = await CacheService.getUserSocket(user.user_id);
-                console.log(`📌 [SOCKET] Old socket_id: ${oldSocketId}`);
-
                 if (ioInstance && user.user_id && oldSocketId) {
                     ioInstance.to(oldSocketId).emit('session_expired', {
                         code: 'SESSION_REPLACED',
@@ -256,10 +259,16 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
                         timestamp: new Date().toISOString()
                     });
 
-                    console.log(`📤 [SOCKET] session_expired sent to: ${oldSocketId}`);
-                    await CacheService.deleteUserSocket(user.user_id);
+                    console.log(`📤 [SOCKET] session_expired sent to OLD socket: ${oldSocketId}`);
                 } else {
-                    console.warn(`⚠️ [SOCKET] Không có oldSocketId để emit`);
+                    console.warn(`⚠️ [SOCKET] Cannot emit: ioInstance=${!!ioInstance}, socketId=${oldSocketId}`);
+                }
+
+                // Xóa socket_id khỏi cache (cleanup)
+                try {
+                    await CacheService.deleteUserSocket(user.user_id);
+                } catch (cleanupError) {
+                    console.warn(`⚠️ [CLEANUP] Cannot delete user socket:`, cleanupError.message);
                 }
             } else {
                 console.log(`⚠️ [SKIP EMIT] Token quá mới (${tokenAge}ms) — không emit session_expired`);
@@ -279,7 +288,8 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
         expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000),
         ip_address: req.ip || req.connection?.remoteAddress || null,
         user_agent: req.headers?.["user-agent"] || null,
-        device_name: req.headers?.["user-agent"]?.substring(0, 50) || "Unknown Device"
+        device_name: req.headers?.["user-agent"]?.substring(0, 50) || "Unknown Device",
+        socket_id: null  // ✅ MỚI: ban đầu null, update sau khi register_socket
     });
 
     return {
@@ -1111,7 +1121,8 @@ exports.loginAfterRegistration = async (user, req, res) => {
         expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000),
         ip_address: req.ip || req.connection?.remoteAddress || null,
         user_agent: req.headers?.["user-agent"] || null,
-        device_name: req.headers?.["user-agent"]?.substring(0, 50) || "New Device"
+        device_name: req.headers?.["user-agent"]?.substring(0, 50) || "New Device",
+        socket_id: null  // ✅ MỚI
     });
 
     return {

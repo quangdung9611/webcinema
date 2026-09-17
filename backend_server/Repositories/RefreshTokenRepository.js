@@ -5,6 +5,7 @@ class RefreshTokenRepository {
 
     /*=========================================================
         TẠO REFRESH TOKEN MỚI
+        ✅ THÊM socket_id (ban đầu null, update sau khi register_socket)
     =========================================================*/
     async create(data) {
         const {
@@ -13,24 +14,61 @@ class RefreshTokenRepository {
             expires_at,
             ip_address,
             user_agent,
-            device_name
+            device_name,
+            socket_id = null  // ✅ MỚI
         } = data;
 
         const [result] = await db.query(
             `
             INSERT INTO refresh_tokens
-            (user_id, token_hash, expires_at, ip_address, user_agent, device_name, is_revoked)
-            VALUES (?, ?, ?, ?, ?, ?, 0)
+            (user_id, token_hash, expires_at, ip_address, user_agent, device_name, socket_id, is_revoked)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 0)
             `,
-            [user_id, token_hash, expires_at, ip_address, user_agent, device_name]
+            [user_id, token_hash, expires_at, ip_address, user_agent, device_name, socket_id]
         );
 
         return result.insertId;
     }
 
     /*=========================================================
+        ✅ MỚI: CẬP NHẬT SOCKET_ID CHO TOKEN
+        Gọi khi frontend register_socket
+    =========================================================*/
+    async updateSocketId(tokenHash, socketId) {
+        const [result] = await db.query(
+            `
+            UPDATE refresh_tokens
+            SET socket_id = ?
+            WHERE token_hash = ?
+              AND is_revoked = 0
+            `,
+            [socketId, tokenHash]
+        );
+
+        console.log(`🔗 [REFRESH TOKEN] Updated socket_id=${socketId} for token (affected: ${result.affectedRows})`);
+        return result.affectedRows > 0;
+    }
+
+    /*=========================================================
+        ✅ MỚI: XÓA SOCKET_ID KHI SOCKET DISCONNECT
+    =========================================================*/
+    async clearSocketId(socketId) {
+        const [result] = await db.query(
+            `
+            UPDATE refresh_tokens
+            SET socket_id = NULL
+            WHERE socket_id = ?
+              AND is_revoked = 0
+            `,
+            [socketId]
+        );
+
+        console.log(`🔌 [REFRESH TOKEN] Cleared socket_id=${socketId} (affected: ${result.affectedRows})`);
+        return result.affectedRows;
+    }
+
+    /*=========================================================
         LẤY TẤT CẢ TOKEN ACTIVE CỦA USER
-        ✅ FIX: Thêm token_id DESC để sort ổn định
     =========================================================*/
     async getActiveByUser(userId) {
         const [rows] = await db.query(
@@ -74,7 +112,8 @@ class RefreshTokenRepository {
             UPDATE refresh_tokens
             SET is_revoked = 1,
                 revoked_at = NOW(),
-                revoked_reason = ?
+                revoked_reason = ?,
+                socket_id = NULL
             WHERE token_hash = ?
               AND is_revoked = 0
             `,
@@ -92,7 +131,8 @@ class RefreshTokenRepository {
             UPDATE refresh_tokens
             SET is_revoked = 1,
                 revoked_at = NOW(),
-                revoked_reason = ?
+                revoked_reason = ?,
+                socket_id = NULL
             WHERE user_id = ?
               AND is_revoked = 0
             `,
@@ -103,7 +143,7 @@ class RefreshTokenRepository {
     }
 
     /*=========================================================
-        ✅ XÓA HẲN TOKEN KHỎI DB (DÙNG CHO LOGOUT)
+        XÓA HẲN TOKEN KHỎI DB (DÙNG CHO LOGOUT)
     =========================================================*/
     async deleteByTokenHash(tokenHash) {
         const [result] = await db.query(
@@ -118,7 +158,7 @@ class RefreshTokenRepository {
     }
 
     /*=========================================================
-        ✅ XÓA TẤT CẢ TOKEN CỦA USER (DÙNG CHO LOGOUT ALL)
+        XÓA TẤT CẢ TOKEN CỦA USER (DÙNG CHO LOGOUT ALL)
     =========================================================*/
     async deleteAllByUser(userId) {
         const [result] = await db.query(
