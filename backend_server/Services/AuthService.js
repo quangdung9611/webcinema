@@ -205,20 +205,17 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
             message: "Vui lòng xác thực email trước khi đăng nhập. Kiểm tra hộp thư của bạn."
         };
     }
+// Services/AuthService.js — CHỈ SỬA ĐOẠN TRONG login()
 
     // ========================================================
     // ✅ QUẢN LÝ THIẾT BỊ
     // ========================================================
-    const maxDevices = user.role === 'admin'
-        ? MAX_DEVICES_ADMIN
-        : MAX_DEVICES_CUSTOMER;
-
+    const maxDevices = user.role === 'admin' ? MAX_DEVICES_ADMIN : MAX_DEVICES_CUSTOMER;
     const activeTokens = await RefreshTokenRepository.getActiveByUser(user.user_id);
 
     console.log(`📊 [LOGIN] Role: ${user.role} | Active devices: ${activeTokens.length}/${maxDevices}`);
 
     if (activeTokens.length >= maxDevices) {
-        // ✅ Sort ổn định
         const sorted = [...activeTokens].sort((a, b) => {
             const timeA = new Date(a.created_at).getTime();
             const timeB = new Date(b.created_at).getTime();
@@ -236,7 +233,7 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
                 ? `Vượt quá ${maxDevices} thiết bị admin`
                 : "Đăng nhập từ thiết bị khác";
 
-            // ✅ LẤY socket_token CỦA TOKEN CŨ (KHÔNG PHẢI socket_id)
+            // ✅ LẤY socket_token CỦA TOKEN CŨ
             const oldSocketToken = oldestToken.socket_token;
             console.log(`🔗 [SOCKET] Old token socket_token: ${oldSocketToken}`);
 
@@ -244,7 +241,7 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
             await RefreshTokenRepository.revoke(oldestToken.token_hash, reason);
             console.log(`🔄 [REVOKE] Revoked token_id=${oldestToken.token_id}`);
 
-            // ✅ CHỈ EMIT nếu token cũ > TOKEN_AGE_THRESHOLD VÀ có socket_token
+            // ✅ CHỈ EMIT nếu token cũ > THRESHOLD VÀ có socket_token
             if (tokenAge >= TOKEN_AGE_THRESHOLD) {
                 if (ioInstance && user.user_id && oldSocketToken) {
                     ioInstance.to(oldSocketToken).emit('session_expired', {
@@ -258,17 +255,12 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
                         },
                         timestamp: new Date().toISOString()
                     });
-
                     console.log(`📤 [SOCKET] session_expired sent to OLD socket_token: ${oldSocketToken}`);
                 } else {
-                    console.warn(`⚠️ [SOCKET] Cannot emit: ioInstance=${!!ioInstance}, socketToken=${oldSocketToken}`);
+                    console.warn(`⚠️ [SOCKET] Cannot emit: io=${!!ioInstance}, socketToken=${oldSocketToken}`);
                 }
-            } else {
-                console.log(`⚠️ [SKIP EMIT] Token quá mới (${tokenAge}ms) — không emit session_expired`);
             }
         }
-    } else {
-        console.log(`✅ [LOGIN] ${user.role} login OK — device ${activeTokens.length + 1}/${maxDevices}`);
     }
 
     // TẠO TOKEN MỚI
@@ -282,7 +274,7 @@ exports.login = async (email, password, rememberMe = false, req, res, expectedRo
         ip_address: req.ip || req.connection?.remoteAddress || null,
         user_agent: req.headers?.["user-agent"] || null,
         device_name: req.headers?.["user-agent"]?.substring(0, 50) || "Unknown Device",
-        socket_token: null  // ✅ ĐỔI TÊN
+        socket_token: null
     });
 
     return {

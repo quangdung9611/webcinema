@@ -1,3 +1,5 @@
+// src/context/AuthContext.jsx
+
 import React, {
     createContext,
     useContext,
@@ -33,13 +35,11 @@ export const AuthProvider = ({ children }) => {
     const isFetchingRef = useRef(false);
     const fetchedRef = useRef(false);
     const mountedRef = useRef(true);
-    const isAuthCheckDoneRef = useRef(false); // 🆕 Chỉ check 1 lần
+    const isAuthCheckDoneRef = useRef(false);
+    const socketConnectTimeoutRef = useRef(null);
 
-    // ✅ SỬA: Kiểm tra trang public chính xác hơn
     const isPublicRoute = useCallback(() => {
         const pathname = location.pathname;
-        
-        // Danh sách path public
         const publicPaths = [
             '/login',
             '/register',
@@ -50,8 +50,6 @@ export const AuthProvider = ({ children }) => {
             '/reset-password',
             '/forgot-pin',
         ];
-        
-        // Kiểm tra chính xác path
         return publicPaths.some(path => pathname === path || pathname.startsWith(path + '/'));
     }, [location.pathname]);
 
@@ -63,25 +61,25 @@ export const AuthProvider = ({ children }) => {
         mountedRef.current = true;
         return () => {
             mountedRef.current = false;
+            if (socketConnectTimeoutRef.current) {
+                clearTimeout(socketConnectTimeoutRef.current);
+            }
         };
     }, []);
 
     const clearAuthState = useCallback(() => {
         console.log('🧹 [AUTH] Clearing auth state');
-
         userRef.current = null;
         setUser(null);
         setIsAuthenticated(false);
         setIsLoading(false);
         fetchedRef.current = false;
         isFetchingRef.current = false;
-
         api.resetUserCache();
     }, []);
 
     const fetchUser = useCallback(
         async (force = false) => {
-            // ✅ Nếu là trang public → KHÔNG fetch user
             if (isPublicRoute()) {
                 console.log('⏭️ [AUTH] Public route, skip fetching user');
                 setIsLoading(false);
@@ -105,7 +103,7 @@ export const AuthProvider = ({ children }) => {
             }
 
             try {
-                console.log(force ? '🔄 [AUTH] Force fetching user...' : '🔄 [AUTH] Fetching user...');
+                console.log(force ? '🔄 [AUTH] Force fetching...' : '🔄 [AUTH] Fetching...');
 
                 const response = await api.get('/api/auth/me', { force });
 
@@ -124,9 +122,15 @@ export const AuthProvider = ({ children }) => {
                         setIsAuthenticated(true);
                     }
 
-                    // ✅ CHỈ kết nối socket nếu KHÔNG phải trang public
+                    // ✅ DELAY 1s TRƯỚC KHI CONNECT SOCKET — ĐỂ TOKEN KỊP VÀO DB
                     if (userData.user_id && !isPublicRoute()) {
-                        socketService.connect(userData.user_id);
+                        if (socketConnectTimeoutRef.current) {
+                            clearTimeout(socketConnectTimeoutRef.current);
+                        }
+                        socketConnectTimeoutRef.current = setTimeout(() => {
+                            console.log('🔌 [AUTH] Connecting socket after 1s delay...');
+                            socketService.connect(userData.user_id);
+                        }, 1000);
                     }
 
                     return userData;
@@ -135,19 +139,17 @@ export const AuthProvider = ({ children }) => {
                 console.log('🔵 [AUTH] No active user');
                 clearAuthState();
                 socketService.disconnect();
-
                 return null;
 
             } catch (error) {
                 console.warn('🔵 [AUTH] No active user session:', error?.response?.status || error?.message);
 
-                // ✅ Chỉ dispatch sessionExpired nếu không phải public route
                 if (error?.response?.status === 401 && !isPublicRoute()) {
                     window.dispatchEvent(
                         new CustomEvent('sessionExpired', {
                             detail: {
                                 code: error?.response?.data?.code || 'TOKEN_EXPIRED',
-                                message: error?.response?.data?.message || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+                                message: error?.response?.data?.message || 'Phiên đăng nhập đã hết hạn.',
                                 source: 'auth_context',
                                 timestamp: new Date().toISOString()
                             }
@@ -169,7 +171,6 @@ export const AuthProvider = ({ children }) => {
         [clearAuthState, isPublicRoute]
     );
 
-    // ✅ Chỉ fetch user khi không ở trang public và chưa check
     useEffect(() => {
         if (!isPublicRoute()) {
             fetchUser().catch(() => {});

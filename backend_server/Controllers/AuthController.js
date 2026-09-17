@@ -1,11 +1,12 @@
 // Controllers/AuthController.js
+
 const AuthService = require("../Services/AuthService");
 const CacheService = require("../Services/CacheService");
 const OtpRepository = require("../Repositories/OtpRepository");
-const Cookie = require("../utils/Cookie"); // ✅ THÊM IMPORT
+const Cookie = require("../utils/Cookie");
 
 /*=========================================================
-    🆕 ĐĂNG KÝ BƯỚC 1 (CHỈ VALIDATE, KHÔNG LƯU CSDL)
+    🆕 ĐĂNG KÝ BƯỚC 1
 =========================================================*/
 exports.registerStep1 = async (req, res) => {
     try {
@@ -16,7 +17,7 @@ exports.registerStep1 = async (req, res) => {
         if (error.statusCode === 429) {
             return res.status(429).json({
                 success: false,
-                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.',
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu.',
                 data: error.data || null
             });
         }
@@ -30,7 +31,7 @@ exports.registerStep1 = async (req, res) => {
 };
 
 /*=========================================================
-    🆕 HOÀN TẤT ĐĂNG KÝ (LƯU CSDL + GỬI EMAIL)
+    🆕 HOÀN TẤT ĐĂNG KÝ
 =========================================================*/
 exports.completeRegistration = async (req, res) => {
     try {
@@ -41,7 +42,7 @@ exports.completeRegistration = async (req, res) => {
         if (error.statusCode === 429) {
             return res.status(429).json({
                 success: false,
-                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.',
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu.',
                 data: error.data || null
             });
         }
@@ -66,7 +67,7 @@ exports.resendVerification = async (req, res) => {
         if (error.statusCode === 429) {
             return res.status(429).json({
                 success: false,
-                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.',
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu.',
                 data: error.data || null
             });
         }
@@ -91,7 +92,7 @@ exports.register = async (req, res) => {
         if (error.statusCode === 429) {
             return res.status(429).json({
                 success: false,
-                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.',
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu.',
                 data: error.data || null
             });
         }
@@ -105,7 +106,7 @@ exports.register = async (req, res) => {
 };
 
 /*=========================================================
-    🔥 CHECK LOCK STATUS (KIỂM TRA TRẠNG THÁI KHÓA KHI F5)
+    CHECK LOCK STATUS
 =========================================================*/
 exports.checkLockStatus = async (req, res) => {
     try {
@@ -123,12 +124,21 @@ exports.checkLockStatus = async (req, res) => {
 };
 
 /*=========================================================
-    LOGIN (CHUNG - DÙNG CHO CẢ CUSTOMER VÀ ADMIN)
+    ✅ LOGIN — CHỈ DÀNH CHO CUSTOMER
+=========================================================
+    ✅ FIX: Truyền expectedRole = 'customer' để CHẶN admin
+    → Admin login qua /api/auth/login → 403 WRONG_PORTAL
 =========================================================*/
 exports.login = async (req, res) => {
     try {
         const { email, password, rememberMe } = req.body;
-        const result = await AuthService.login(email, password, rememberMe, req, res);
+
+        // ✅ Truyền expectedRole = 'customer'
+        const result = await AuthService.login(
+            email, password, rememberMe, req, res,
+            'customer'  // ✅ CHẶN ADMIN
+        );
+
         return res.status(200).json({
             success: true,
             message: "Đăng nhập thành công",
@@ -147,14 +157,18 @@ exports.login = async (req, res) => {
 };
 
 /*=========================================================
-    LOGIN ADMIN (RIÊNG) — ✅ FIX: CHẶN SAI ROLE TỪ ĐẦU
+    ✅ LOGIN ADMIN — CHỈ DÀNH CHO ADMIN
+=========================================================
+    ✅ Truyền expectedRole = 'admin' để CHẶN customer
 =========================================================*/
 exports.adminLogin = async (req, res) => {
     try {
         const { email, password, rememberMe } = req.body;
 
-        // ✅ Truyền expectedRole = 'admin' để Service tự chặn
-        const result = await AuthService.login(email, password, rememberMe, req, res, 'admin');
+        const result = await AuthService.login(
+            email, password, rememberMe, req, res,
+            'admin'  // ✅ CHẶN CUSTOMER
+        );
 
         return res.status(200).json({
             success: true,
@@ -172,8 +186,9 @@ exports.adminLogin = async (req, res) => {
         });
     }
 };
+
 /*=========================================================
-    🔥 GET ME
+    GET ME
 =========================================================*/
 exports.getMe = async (req, res) => {
     try {
@@ -209,11 +224,7 @@ exports.refreshToken = async (req, res) => {
 };
 
 /*=========================================================
-    ✅ LOGOUT — IDEMPOTENT (LUÔN THÀNH CÔNG)
-=========================================================
-    - Chạy không cần middleware
-    - Luôn clear cookie dù có lỗi
-    - Luôn return 200
+    LOGOUT — IDEMPOTENT
 =========================================================*/
 exports.logout = async (req, res) => {
     try {
@@ -222,7 +233,6 @@ exports.logout = async (req, res) => {
     } catch (error) {
         console.error("Logout Error:", error);
 
-        // ✅ LUÔN CLEAR COOKIE DÙ CÓ LỖI
         try {
             Cookie.clearAllCookies(res);
             console.log('🧹 [LOGOUT] Cleared cookies despite error');
@@ -230,7 +240,6 @@ exports.logout = async (req, res) => {
             console.warn("Cannot clear cookies:", clearError);
         }
 
-        // ✅ LUÔN RETURN 200 — logout idempotent
         return res.status(200).json({
             success: true,
             message: "Đăng xuất thành công",
@@ -274,7 +283,7 @@ exports.changePassword = async (req, res) => {
 };
 
 /*=========================================================
-    FORGOT PASSWORD - CÓ KIỂM TRA EMAIL CHƯA ĐĂNG KÝ
+    FORGOT PASSWORD
 =========================================================*/
 exports.forgotPassword = async (req, res) => {
     try {
@@ -284,19 +293,18 @@ exports.forgotPassword = async (req, res) => {
     } catch (error) {
         console.error("Forgot Password Error:", error);
 
-        // 🔥 XỬ LÝ LỖI 404 (EMAIL CHƯA ĐĂNG KÝ)
         if (error.statusCode === 404) {
             return res.status(404).json({
                 success: false,
                 field: error.field || null,
-                message: error.message || "Email này chưa được đăng ký trong hệ thống. Vui lòng kiểm tra lại."
+                message: error.message || "Email này chưa được đăng ký trong hệ thống."
             });
         }
 
         if (error.statusCode === 429) {
             return res.status(429).json({
                 success: false,
-                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.',
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu.',
                 data: error.data || null
             });
         }
@@ -322,7 +330,7 @@ exports.submitNewPassword = async (req, res) => {
         if (error.statusCode === 429) {
             return res.status(429).json({
                 success: false,
-                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.',
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu.',
                 data: error.data || null
             });
         }
@@ -336,7 +344,7 @@ exports.submitNewPassword = async (req, res) => {
 };
 
 /*=========================================================
-    🆕 XÁC THỰC OTP VÀ ĐỔI MẬT KHẨU
+    XÁC THỰC OTP VÀ ĐỔI MẬT KHẨU
 =========================================================*/
 exports.verifyOtpAndReset = async (req, res) => {
     try {
@@ -348,7 +356,7 @@ exports.verifyOtpAndReset = async (req, res) => {
         if (error.statusCode === 429) {
             return res.status(429).json({
                 success: false,
-                message: error.message || 'Bạn đã thử OTP quá nhiều lần. Vui lòng thử lại sau.',
+                message: error.message || 'Bạn đã thử OTP quá nhiều lần.',
                 data: error.data || null
             });
         }
@@ -412,7 +420,7 @@ exports.sendVerificationEmail = async (req, res) => {
         if (error.statusCode === 429) {
             return res.status(429).json({
                 success: false,
-                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.',
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu.',
                 data: error.data || null
             });
         }
@@ -488,7 +496,7 @@ exports.revokeDevice = async (req, res) => {
 };
 
 /*=========================================================
-    🆕 QUÊN MÃ PIN - CÓ KIỂM TRA EMAIL CHƯA ĐĂNG KÝ
+    QUÊN MÃ PIN
 =========================================================*/
 exports.forgotPin = async (req, res) => {
     try {
@@ -498,19 +506,18 @@ exports.forgotPin = async (req, res) => {
     } catch (error) {
         console.error("Forgot PIN Error:", error);
 
-        // 🔥 XỬ LÝ LỖI 404 (EMAIL CHƯA ĐĂNG KÝ)
         if (error.statusCode === 404) {
             return res.status(404).json({
                 success: false,
                 field: error.field || null,
-                message: error.message || "Email này chưa được đăng ký trong hệ thống. Vui lòng kiểm tra lại."
+                message: error.message || "Email này chưa được đăng ký."
             });
         }
 
         if (error.statusCode === 429) {
             return res.status(429).json({
                 success: false,
-                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.',
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu.',
                 data: error.data || null
             });
         }
@@ -524,7 +531,7 @@ exports.forgotPin = async (req, res) => {
 };
 
 /*=========================================================
-    🆕 XÁC THỰC OTP VÀ ĐỔI MÃ PIN MỚI
+    XÁC THỰC OTP VÀ ĐỔI MÃ PIN MỚI
 =========================================================*/
 exports.verifyOtpAndChangePin = async (req, res) => {
     try {
@@ -543,22 +550,16 @@ exports.verifyOtpAndChangePin = async (req, res) => {
 };
 
 /*=========================================================
-    🆕 KIỂM TRA TTL OTP
+    KIỂM TRA TTL OTP
 =========================================================*/
 exports.checkOtpTTL = async (req, res) => {
     try {
         const { email, purpose } = req.query;
         if (!email) {
-            return res.status(400).json({
-                success: false,
-                message: "Thiếu email"
-            });
+            return res.status(400).json({ success: false, message: "Thiếu email" });
         }
         if (!purpose) {
-            return res.status(400).json({
-                success: false,
-                message: "Thiếu purpose"
-            });
+            return res.status(400).json({ success: false, message: "Thiếu purpose" });
         }
 
         const result = await AuthService.checkOtpTTL(email, purpose);
@@ -574,7 +575,7 @@ exports.checkOtpTTL = async (req, res) => {
 };
 
 /*=========================================================
-    🆕 GỬI LẠI OTP
+    GỬI LẠI OTP
 =========================================================*/
 exports.resendOtp = async (req, res) => {
     try {
@@ -586,7 +587,7 @@ exports.resendOtp = async (req, res) => {
         if (error.statusCode === 429) {
             return res.status(429).json({
                 success: false,
-                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.',
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu.',
                 data: error.data || null
             });
         }
@@ -600,30 +601,21 @@ exports.resendOtp = async (req, res) => {
 };
 
 /*=========================================================
-    🆕 VÔ HIỆU HÓA OTP (KHI NGƯỜI DÙNG RỜI TRANG)
+    VÔ HIỆU HÓA OTP
 =========================================================*/
 exports.invalidateOtp = async (req, res) => {
     try {
         const { email, purpose } = req.body;
 
         if (!email) {
-            return res.status(400).json({
-                success: false,
-                message: "Thiếu email"
-            });
+            return res.status(400).json({ success: false, message: "Thiếu email" });
         }
-
         if (!purpose) {
-            return res.status(400).json({
-                success: false,
-                message: "Thiếu purpose"
-            });
+            return res.status(400).json({ success: false, message: "Thiếu purpose" });
         }
 
-        // 🔥 Đánh dấu OTP đã sử dụng trong otp_codes (is_used = 1)
         await CacheService.markOTPAsUsed(email, purpose);
 
-        // 🔥 Log vào otp_logs với status 'invalidated'
         await OtpRepository.create({
             email,
             purpose,

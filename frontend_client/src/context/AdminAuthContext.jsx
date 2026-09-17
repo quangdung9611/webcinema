@@ -1,12 +1,17 @@
 // src/context/AdminAuthContext.jsx
-// ✅ Y HỆT AuthContext.jsx của user
 
 import React, {
-    createContext, useContext, useState, useEffect, useRef, useCallback,
+    createContext,
+    useContext,
+    useState,
+    useEffect,
+    useRef,
+    useCallback,
 } from 'react';
+
 import { useLocation } from 'react-router-dom';
 import adminapi from '../api/adminapi';
-import adminSocketService from '../api/adminsocket'; // ✅ ĐỔI
+import adminSocketService from '../api/adminsocket';
 
 const AdminAuthContext = createContext(null);
 
@@ -28,6 +33,7 @@ export const AdminAuthProvider = ({ children }) => {
     const fetchedRef = useRef(false);
     const mountedRef = useRef(true);
     const isAuthCheckDoneRef = useRef(false);
+    const socketConnectTimeoutRef = useRef(null);
 
     const isPublicRoute = useCallback(() => {
         const pathname = location.pathname;
@@ -41,7 +47,12 @@ export const AdminAuthProvider = ({ children }) => {
 
     useEffect(() => {
         mountedRef.current = true;
-        return () => { mountedRef.current = false; };
+        return () => {
+            mountedRef.current = false;
+            if (socketConnectTimeoutRef.current) {
+                clearTimeout(socketConnectTimeoutRef.current);
+            }
+        };
     }, []);
 
     const clearAuthState = useCallback(() => {
@@ -86,8 +97,15 @@ export const AdminAuthProvider = ({ children }) => {
                         setIsAuthenticated(true);
                     }
 
+                    // ✅ DELAY 1s TRƯỚC KHI CONNECT SOCKET
                     if (adminData.user_id && !isPublicRoute()) {
-                        adminSocketService.connect(adminData.user_id);
+                        if (socketConnectTimeoutRef.current) {
+                            clearTimeout(socketConnectTimeoutRef.current);
+                        }
+                        socketConnectTimeoutRef.current = setTimeout(() => {
+                            console.log('🔌 [ADMIN AUTH] Connecting socket after 1s delay...');
+                            adminSocketService.connect(adminData.user_id);
+                        }, 1000);
                     }
 
                     return adminData;

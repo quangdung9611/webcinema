@@ -14,15 +14,13 @@ const Jwt = require("./utils/Jwt");
 const RefreshTokenRepository = require("./Repositories/RefreshTokenRepository");
 const AuthService = require("./Services/AuthService");
 
-// ✅ IMPORT MIDDLEWARE ĐỂ SET SOCKET IO
+// ✅ IMPORT MIDDLEWARE
 const { setSocketIO: setUserSocketIO } = require("./Middlewares/UserAuthMiddleware");
 const { setSocketIO: setAdminSocketIO } = require("./Middlewares/AdminAuthMiddleware");
-
 
 // ============================================================
 // MAILER
 // ============================================================
-
 try {
     require("./Config/mailer");
     console.log("✅ Mailer module loaded successfully!");
@@ -30,11 +28,9 @@ try {
     console.error("❌ Failed to load mailer module:", error);
 }
 
-
 // ============================================================
 // ROUTES
 // ============================================================
-
 const userAuthRoutes = require("./Routers/UserAuthRouter");
 const adminAuthRoutes = require("./Routers/AdminAuthRouter");
 const userRoutes = require("./Routers/UserRouter");
@@ -66,35 +62,24 @@ const priceConfigRoutes = require("./Routers/PriceConfigRouter");
 const showtimeConfigRoutes = require('./Routers/ShowtimeConfigRouter');
 const aiRoutes = require('./Routers/AiRouter');
 
-
 // ============================================================
 // APP / SERVER
 // ============================================================
-
 const app = express();
 const server = http.createServer(app);
-
 app.set("trust proxy", 1);
-
 
 // ============================================================
 // BASIC MIDDLEWARE
 // ============================================================
-
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-app.use(
-    "/uploads",
-    express.static(path.join(__dirname, "uploads"))
-);
-
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ============================================================
 // CORS
 // ============================================================
-
 const corsOptions = {
     origin: [
         "https://quangdungcinema.id.vn",
@@ -107,25 +92,20 @@ const corsOptions = {
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
     allowedHeaders: ["Content-Type", "Authorization", "Accept", "X-Requested-With"]
 };
-
 app.use(cors(corsOptions));
-
 
 // ============================================================
 // SOCKET.IO
 // ============================================================
-
 const io = new Server(server, {
     cors: corsOptions,
     transports: ["websocket", "polling"],
     allowEIO3: true
 });
 
-
 // ============================================================
-// ✅ SET SOCKET.IO CHO CÁC SERVICE / MIDDLEWARE
+// ✅ SET SOCKET.IO
 // ============================================================
-
 AuthService.setIO(io);
 setUserSocketIO(io);
 setAdminSocketIO(io);
@@ -137,45 +117,9 @@ console.log("   - UserAuthMiddleware");
 console.log("   - AdminAuthMiddleware");
 console.log("   - global.io");
 
-
-// ============================================================
-// ✅ HELPER: LẤY ACCESS TOKEN TỪ SOCKET COOKIE
-// ============================================================
-
-const getAccessTokenFromSocket = (socket) => {
-    try {
-        const cookieHeader = socket.handshake.headers.cookie || "";
-        const cookies = {};
-
-        cookieHeader.split(";").forEach((cookie) => {
-            const trimmed = cookie.trim();
-            if (!trimmed) return;
-            const sep = trimmed.indexOf("=");
-            if (sep === -1) return;
-            const key = trimmed.substring(0, sep);
-            const value = trimmed.substring(sep + 1);
-            cookies[key] = decodeURIComponent(value);
-        });
-
-        const origin = socket.handshake.headers.origin || "";
-        const isAdminOrigin = origin.includes("admin.quangdungcinema.id.vn");
-
-        if (isAdminOrigin) {
-            return cookies["admin_token"] || cookies["user_token"] || null;
-        } else {
-            return cookies["user_token"] || cookies["admin_token"] || null;
-        }
-    } catch (error) {
-        console.warn("⚠️ [SOCKET] Cannot extract token from cookie:", error.message);
-        return null;
-    }
-};
-
-
 // ============================================================
 // SOCKET.IO AUTH MIDDLEWARE
 // ============================================================
-
 io.use(async (socket, next) => {
     try {
         const cookieHeader = socket.handshake.headers.cookie || "";
@@ -197,10 +141,10 @@ io.use(async (socket, next) => {
         let token;
         if (isAdminOrigin) {
             token = cookies["admin_token"] || cookies["user_token"];
-            console.log(`🔑 [SOCKET] Admin origin → using ${cookies["admin_token"] ? "admin_token" : "user_token (fallback)"}`);
+            console.log(`🔑 [SOCKET] Admin origin → ${cookies["admin_token"] ? "admin_token" : "user_token (fallback)"}`);
         } else {
             token = cookies["user_token"] || cookies["admin_token"];
-            console.log(`🔑 [SOCKET] User origin → using ${cookies["user_token"] ? "user_token" : "admin_token (fallback)"}`);
+            console.log(`🔑 [SOCKET] User origin → ${cookies["user_token"] ? "user_token" : "admin_token (fallback)"}`);
         }
 
         if (!token) {
@@ -246,9 +190,7 @@ io.use(async (socket, next) => {
                 socket.fullName = payload.full_name;
                 socket.accessToken = token;
 
-                console.log(
-                    `✅ [SOCKET] Authenticated: User ${payload.user_id} (${payload.email}) | Role: ${payload.role}`
-                );
+                console.log(`✅ [SOCKET] Authenticated: User ${payload.user_id} | Role: ${payload.role}`);
             } else {
                 console.warn("⚠️ [SOCKET] Token revoked, connecting as guest");
                 socket.userId = null;
@@ -282,19 +224,15 @@ io.use(async (socket, next) => {
     }
 });
 
-
 // ============================================================
 // SOCKET CONNECTION
 // ============================================================
-
 io.on("connection", async (socket) => {
     const userId = socket.userId;
     const socketId = socket.id;
     const ownerToken = socketId;
 
-    console.log(
-        `⚡ [SOCKET] Connected: ${socketId} - User: ${userId} (${socket.userEmail || "N/A"}) | Role: ${socket.userRole || "guest"}`
-    );
+    console.log(`⚡ [SOCKET] Connected: ${socketId} - User: ${userId} | Role: ${socket.userRole || "guest"}`);
 
     if (userId) {
         socket.join(`user_${userId}`);
@@ -302,45 +240,57 @@ io.on("connection", async (socket) => {
     }
 
     // ============================================================
-    // ✅ REGISTER SOCKET — LƯU socket_token VÀO CẢ 2 BẢNG
+    // ✅ REGISTER SOCKET — RETRY 3 LẦN
     // ============================================================
     socket.on("register_socket", async (data) => {
         const { userId: registerUserId } = data || {};
 
         if (registerUserId && Number(registerUserId) === Number(userId)) {
             try {
-                // ✅ 1. Lưu socket_token vào user_sockets (INSERT IGNORE — không ghi đè)
+                // 1. Lưu socket_token vào user_sockets
                 await CacheService.saveUserSocket(registerUserId, socketId);
 
-                // ✅ 2. Lưu socket_token vào refresh_tokens
+                // ✅ 2. Lưu socket_token vào refresh_tokens — RETRY 3 LẦN
                 if (socket.accessToken) {
-                    try {
-                        const accessTokenHash = Jwt.hashRefreshToken(socket.accessToken);
-                        await RefreshTokenRepository.updateSocketToken(accessTokenHash, socketId);
-                        console.log(`🔗 [SOCKET] Token ↔ Socket linked: user=${registerUserId}, socket=${socketId}`);
-                    } catch (tokenError) {
-                        console.error('⚠️ [SOCKET] Cannot update socket_token in token:', tokenError.message);
+                    const accessTokenHash = Jwt.hashRefreshToken(socket.accessToken);
+                    let success = false;
+
+                    for (let attempt = 1; attempt <= 3; attempt++) {
+                        try {
+                            const updated = await RefreshTokenRepository.updateSocketToken(
+                                accessTokenHash,
+                                socketId
+                            );
+
+                            if (updated) {
+                                success = true;
+                                console.log(`✅ [SOCKET] Token ↔ Socket linked (attempt ${attempt}): user=${registerUserId}, socket=${socketId}`);
+                                break;
+                            }
+                        } catch (err) {
+                            console.warn(`⚠️ [SOCKET] Retry ${attempt}/3 failed:`, err.message);
+                        }
+
+                        if (attempt < 3) {
+                            await new Promise(r => setTimeout(r, 500));
+                        }
                     }
+
+                    if (!success) {
+                        console.warn(`⚠️ [SOCKET] Cannot link token ↔ socket after 3 retries`);
+                    }
+                } else {
+                    console.warn(`⚠️ [SOCKET] No accessToken — cannot update socket_token`);
                 }
 
-                socket.emit("socket_registered", {
-                    success: true,
-                    message: "Socket registered successfully"
-                });
+                socket.emit("socket_registered", { success: true });
+                console.log(`✅ [SOCKET] Registered socket ${socketId} for user ${registerUserId}`);
 
-                console.log(
-                    `✅ [SOCKET] Registered socket ${socketId} for user ${registerUserId}`
-                );
             } catch (error) {
-                console.error(
-                    "❌ [SOCKET] Failed to register socket:",
-                    error.message
-                );
+                console.error("❌ [SOCKET] Failed to register socket:", error.message);
             }
         } else {
-            console.warn(
-                `⚠️ [SOCKET] User ${userId} attempted to register as ${registerUserId}. Blocked.`
-            );
+            console.warn(`⚠️ [SOCKET] User ${userId} attempted to register as ${registerUserId}. Blocked.`);
         }
     });
 
@@ -476,11 +426,11 @@ io.on("connection", async (socket) => {
     // SESSION EXPIRED ACK
     // ============================================================
     socket.on("session_expired_ack", (data) => {
-        console.log(`📨 [SOCKET] Received session_expired_ack from user ${userId}:`, data);
+        console.log(`📨 [SOCKET] session_expired_ack from user ${userId}:`, data);
     });
 
     // ============================================================
-    // ✅ DISCONNECT — XÓA socket_token KHỎI 2 BẢNG
+    // ✅ DISCONNECT
     // ============================================================
     socket.on("disconnect", async () => {
         console.log(`🔴 [SOCKET] Disconnected: ${socketId} - User: ${userId}`);
@@ -488,35 +438,33 @@ io.on("connection", async (socket) => {
         // 1. Release seat locks
         try {
             const releasedCount = await CacheService.releaseAllSeatLocksByOwner(ownerToken);
-            console.log(`🔓 [CACHE SEAT LOCK] Released ${releasedCount} seats from socket ${socketId}`);
+            console.log(`🔓 [CACHE SEAT LOCK] Released ${releasedCount} seats`);
         } catch (error) {
-            console.error("❌ [SOCKET] Failed to release Cache seat locks:", error.message);
+            console.error("❌ [SOCKET] Release seat locks error:", error.message);
         }
 
         // ✅ 2. Clear socket_token khỏi refresh_tokens
         try {
             await RefreshTokenRepository.clearSocketToken(socketId);
         } catch (error) {
-            console.error("❌ [SOCKET] Failed to clear socket_token from token:", error.message);
+            console.error("❌ [SOCKET] Clear socket_token error:", error.message);
         }
 
-        // ✅ 3. Xóa CHÍNH XÁC socket này khỏi user_sockets (KHÔNG xóa hết)
+        // ✅ 3. Xóa CHÍNH XÁC socket này khỏi user_sockets
         if (userId) {
             try {
                 await CacheService.deleteUserSocketByToken(userId, socketId);
-                console.log(`🗑️ [SOCKET] Removed socket ${socketId} for user ${userId} from cache`);
+                console.log(`🗑️ [SOCKET] Removed socket ${socketId} for user ${userId}`);
             } catch (error) {
-                console.error("❌ [SOCKET] Failed to remove socket from cache:", error.message);
+                console.error("❌ [SOCKET] Remove socket error:", error.message);
             }
         }
     });
 });
 
-
 // ============================================================
 // BASIC ROUTES + HEALTH CHECK + API ROUTES
 // ============================================================
-
 app.get("/", (req, res) => res.send("🚀 Cinema Backend is flying!"));
 app.get("/api", (req, res) => res.send("🚀 Cinema Backend is flying!"));
 
@@ -583,11 +531,9 @@ app.use((err, req, res, next) => {
     });
 });
 
-
 // ============================================================
 // SERVER START
 // ============================================================
-
 const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, "0.0.0.0", async () => {
@@ -604,7 +550,7 @@ server.listen(PORT, "0.0.0.0", async () => {
 
     try {
         const cacheHealthy = await CacheService.ping();
-        console.log(cacheHealthy ? "✅ Cache Service connected successfully!" : "⚠️ Cache Service connection failed!");
+        console.log(cacheHealthy ? "✅ Cache Service connected!" : "⚠️ Cache Service failed!");
     } catch (error) {
         console.error("❌ Cache Error:", error.message);
     }

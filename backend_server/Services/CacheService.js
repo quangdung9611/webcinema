@@ -916,30 +916,68 @@ class CacheService {
      * @param {Number} ttl - Thời gian sống (giây)
      * @returns {Boolean} true nếu INSERT thành công (record mới)
      */
+    // Services/CacheService.js — CHỈ SỬA PHẦN 7. USER SOCKET
+
+    /*=======================================================
+        7. USER SOCKET — INSERT IGNORE (KHÔNG GHI ĐÈ)
+    =======================================================*/
+
     async saveUserSocket(userId, socketToken, ttl = SOCKET_TTL) {
         const now = new Date();
         const expiresAt = new Date(now.getTime() + ttl * 1000);
 
-        // ✅ INSERT IGNORE:
-        //   - Nếu (user_id, socket_token) CHƯA tồn tại → INSERT record mới
-        //   - Nếu (user_id, socket_token) ĐÃ tồn tại → BỎ QUA (không update)
-        //   - Nếu user_id trùng nhưng socket_token khác → INSERT record MỚI
         const [result] = await db.query(
-            `
-            INSERT IGNORE INTO user_sockets
+            `INSERT IGNORE INTO user_sockets
             (user_id, socket_token, expires_at, created_at)
-            VALUES (?, ?, ?, ?)
-            `,
+            VALUES (?, ?, ?, ?)`,
             [userId, socketToken, expiresAt, now]
         );
 
-        const inserted = result.affectedRows > 0;
+        console.log(`💾 [CACHE] saveUserSocket: user=${userId}, socket=${socketToken}, inserted=${result.affectedRows > 0}`);
+        return result.affectedRows > 0;
+    }
 
-        console.log(
-            `💾 [CACHE] saveUserSocket: user=${userId}, socket=${socketToken}, inserted=${inserted}`
+    async getUserSocket(userId) {
+        const now = new Date();
+        const [rows] = await db.query(
+            `SELECT socket_token FROM user_sockets
+            WHERE user_id = ? AND expires_at > ?
+            ORDER BY socket_id DESC LIMIT 1`,
+            [userId, now]
         );
+        return rows[0]?.socket_token || null;
+    }
 
-        return inserted;
+    async getAllUserSockets(userId) {
+        const now = new Date();
+        const [rows] = await db.query(
+            `SELECT socket_id, socket_token, expires_at, created_at
+            FROM user_sockets
+            WHERE user_id = ? AND expires_at > ?
+            ORDER BY socket_id DESC`,
+            [userId, now]
+        );
+        return rows.map(row => ({
+            socketId: row.socket_id,
+            socketToken: row.socket_token,
+            expiresAt: row.expires_at,
+            createdAt: row.created_at
+        }));
+    }
+
+    async deleteUserSocket(userId) {
+        const [result] = await db.query(`DELETE FROM user_sockets WHERE user_id = ?`, [userId]);
+        console.log(`🗑️ [CACHE] deleteUserSocket: user=${userId}, deleted=${result.affectedRows}`);
+        return result.affectedRows > 0;
+    }
+
+    async deleteUserSocketByToken(userId, socketToken) {
+        const [result] = await db.query(
+            `DELETE FROM user_sockets WHERE user_id = ? AND socket_token = ?`,
+            [userId, socketToken]
+        );
+        console.log(`🗑️ [CACHE] deleteUserSocketByToken: user=${userId}, socket=${socketToken}, deleted=${result.affectedRows}`);
+        return result.affectedRows > 0;
     }
 
 

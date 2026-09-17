@@ -26,9 +26,7 @@ const SessionGuard = ({ children }) => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const {
-        clearAuthState,
-    } = useAuth();
+    const { clearAuthState } = useAuth();
 
     const isMountedRef = useRef(false);
     const isProcessingRef = useRef(false);
@@ -43,7 +41,6 @@ const SessionGuard = ({ children }) => {
 
     const isBookingPage = useCallback(() => {
         const path = location.pathname;
-
         return (
             path.includes('/booking/') ||
             path.includes('/foods') ||
@@ -58,27 +55,13 @@ const SessionGuard = ({ children }) => {
         console.log('🧹 [SESSION GUARD] Clearing booking session...');
 
         const bookingKeys = [
-            'selectedSeats',
-            'holdExpiresAt',
-            'currentShowtimeId',
-            'booking_seats',
-            'booking_showtime',
-            'booking_data',
-            'selected_foods',
-            'food_selection',
-            'booking_cinema',
-            'booking_date',
-            'booking_movie',
-            'paymentInitiated',
-            'paymentCompleted',
-            'tempBookingId',
-            'completedBookingId',
-            'lastSuccessTicket',
-            'bankHasSentOtp',
-            'bankHasVisited',
-            'bankOtpTimeLeft',
-            'bankOtpInput',
-            'bankLastOtpSentAt',
+            'selectedSeats', 'holdExpiresAt', 'currentShowtimeId',
+            'booking_seats', 'booking_showtime', 'booking_data',
+            'selected_foods', 'food_selection', 'booking_cinema',
+            'booking_date', 'booking_movie', 'paymentInitiated',
+            'paymentCompleted', 'tempBookingId', 'completedBookingId',
+            'lastSuccessTicket', 'bankHasSentOtp', 'bankHasVisited',
+            'bankOtpTimeLeft', 'bankOtpInput', 'bankLastOtpSentAt',
         ];
 
         bookingKeys.forEach((key) => {
@@ -109,7 +92,6 @@ const SessionGuard = ({ children }) => {
 
     const handleModalConfirm = useCallback(() => {
         console.log('➡️ [SESSION GUARD] Clicking "Đăng nhập lại"!');
-
         setShowModal(false);
 
         if (isBookingPage()) {
@@ -126,39 +108,30 @@ const SessionGuard = ({ children }) => {
         }
     }, [navigate, modalMessage, modalCode, isBookingPage]);
 
-    const openSessionModal = useCallback(
-        (detail = {}) => {
-            if (!isMountedRef.current) return;
+    const openSessionModal = useCallback((detail = {}) => {
+        if (!isMountedRef.current) return;
 
-            const code = detail.code || 'TOKEN_EXPIRED';
-            const message = detail.message || (code === 'SESSION_REPLACED'
-                ? 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.'
-                : 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-            const newDevice = detail.newDevice || null;
+        const code = detail.code || 'TOKEN_EXPIRED';
+        const message = detail.message || (code === 'SESSION_REPLACED'
+            ? 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.'
+            : 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        const newDevice = detail.newDevice || null;
 
-            console.warn('🔐 [SESSION GUARD] Opening modal:', {
-                code,
-                message,
-                newDevice,
-            });
+        console.warn('🔐 [SESSION GUARD] Opening modal:', { code, message, newDevice });
 
-            setModalCode(code);
-            setModalMessage(message);
-            setModalNewDevice(newDevice);
-            setShowModal(true);
-            setCountdown(COUNTDOWN_SECONDS);
-        },
-        []
-    );
+        setModalCode(code);
+        setModalMessage(message);
+        setModalNewDevice(newDevice);
+        setShowModal(true);
+        setCountdown(COUNTDOWN_SECONDS);
+    }, []);
 
     const handleSessionExpired = useCallback(
         async (eventOrDetail = {}) => {
             if (!isMountedRef.current) return;
 
             if (isLoggingOutRef.current) {
-                console.log(
-                    '⏭️ [SESSION GUARD] Đang logout → bỏ qua session expired'
-                );
+                console.log('⏭️ [SESSION GUARD] Đang logout → bỏ qua');
                 return;
             }
 
@@ -171,9 +144,27 @@ const SessionGuard = ({ children }) => {
             const detail = eventOrDetail?.detail || eventOrDetail || {};
             const code = detail.code || 'TOKEN_EXPIRED';
 
-            console.warn(`🔴 [SESSION GUARD] SESSION EXPIRED (${code})`, {
-                ...detail,
-            });
+            console.warn(`🔴 [SESSION GUARD] SESSION EXPIRED (${code})`, { ...detail });
+
+            // ====================================================
+            // ✅ FIX: GỌI API LOGOUT ĐỂ BACKEND CLEAR COOKIE
+            // ====================================================
+            // Lý do:
+            //   - Cookie httpOnly → JS KHÔNG THỂ xóa trực tiếp
+            //   - Chỉ backend mới clear được cookie qua res.clearCookie()
+            //   - Route /logout KHÔNG cần auth (đã sửa router) → luôn 200
+            // ====================================================
+            try {
+                console.log('🧹 [SESSION GUARD] Calling logout API to clear cookies...');
+                await api.post('/api/auth/logout');
+                console.log('✅ [SESSION GUARD] Logout API success — cookies cleared by backend');
+            } catch (logoutError) {
+                console.warn(
+                    '⚠️ [SESSION GUARD] Logout API failed (ignored):',
+                    logoutError?.message
+                );
+                // ✅ KHÔNG THROW — vẫn tiếp tục flow
+            }
 
             api.resetUserCache();
             clearBookingSession();
@@ -184,17 +175,11 @@ const SessionGuard = ({ children }) => {
                 console.warn('Socket disconnect error:', error);
             }
 
-            openSessionModal({
-                ...detail,
-                code,
-            });
+            openSessionModal({ ...detail, code });
         },
         [clearBookingSession, openSessionModal]
     );
 
-    // ============================================================
-    // MOUNT + LẮNG NGHE authCleanedUp
-    // ============================================================
     useEffect(() => {
         isMountedRef.current = true;
         console.log('🛡️ [SESSION GUARD] Started');
@@ -202,7 +187,6 @@ const SessionGuard = ({ children }) => {
         const handleAuthCleanedUp = (event) => {
             console.log('🧹 [SESSION GUARD] authCleanedUp:', event?.detail);
             isLoggingOutRef.current = true;
-
             setTimeout(() => {
                 isLoggingOutRef.current = false;
             }, 3000);
@@ -261,7 +245,6 @@ const SessionGuard = ({ children }) => {
 
     useEffect(() => {
         if (!showModal || countdown !== 0) return;
-
         handleModalConfirm();
     }, [countdown, showModal, handleModalConfirm]);
 
@@ -281,10 +264,6 @@ const SessionGuard = ({ children }) => {
         };
     }, []);
 
-    // ============================================================
-    // ✅ CHUẨN HÓA: Xác định code có phải "device replaced"
-    // GIỐNG AdminSessionGuard
-    // ============================================================
     const isDeviceReplacedCode =
         modalCode === 'SESSION_REPLACED' || modalCode === 'SESSION_EXPIRED';
 

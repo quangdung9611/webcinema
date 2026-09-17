@@ -64,6 +64,26 @@ const AdminSessionGuard = ({ children }) => {
         const code = detail.code || 'TOKEN_EXPIRED';
         console.warn(`🔴 [ADMIN SESSION GUARD] SESSION EXPIRED (${code})`);
 
+        // ====================================================
+        // ✅ FIX: GỌI API LOGOUT ĐỂ BACKEND CLEAR COOKIE
+        // ====================================================
+        // Lý do:
+        //   - Cookie httpOnly → JS KHÔNG THỂ xóa trực tiếp
+        //   - Chỉ backend mới clear được cookie qua res.clearCookie()
+        //   - Route /logout KHÔNG cần auth (đã sửa router) → luôn 200
+        // ====================================================
+        try {
+            console.log('🧹 [ADMIN SESSION GUARD] Calling logout API to clear cookies...');
+            await adminapi.post('/admin/api/auth/logout');
+            console.log('✅ [ADMIN SESSION GUARD] Logout API success — cookies cleared');
+        } catch (logoutError) {
+            console.warn(
+                '⚠️ [ADMIN SESSION GUARD] Logout API failed (ignored):',
+                logoutError?.message
+            );
+            // ✅ KHÔNG THROW — vẫn tiếp tục flow
+        }
+
         adminapi.resetAdminCache();
         clearAuthState();
 
@@ -136,11 +156,6 @@ const AdminSessionGuard = ({ children }) => {
         window.addEventListener('adminLoggedIn', handleAdminLoggedIn);
         return () => window.removeEventListener('adminLoggedIn', handleAdminLoggedIn);
     }, []);
-
-    // ============================================================
-    // ✅ ĐÃ XÓA useEffect reset state khi public route
-    // (User SessionGuard KHÔNG có → đồng bộ)
-    // ============================================================
 
     const isDeviceReplacedCode =
         modalCode === 'SESSION_REPLACED' || modalCode === 'SESSION_EXPIRED';
