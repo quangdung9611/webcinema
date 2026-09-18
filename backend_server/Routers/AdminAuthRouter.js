@@ -54,6 +54,15 @@ router.post("/resend-otp", AuthController.adminResendOtp);
  */
 router.get("/check-otp-ttl", AuthController.adminCheckOtpTTL);
 
+/**
+ * ✅ MỚI: Vô hiệu hóa OTP khi admin rời trang
+ * POST /admin/api/auth/invalidate-otp
+ * Body: { email, purpose }
+ * → Dùng chung AuthController.invalidateOtp với user
+ * → Không cần check role (chỉ xóa OTP khỏi cache)
+ */
+router.post("/invalidate-otp", AuthController.invalidateOtp);
+
 // ============================================================
 // ✅ LOGOUT — KHÔNG CẦN AUTH
 // ============================================================
