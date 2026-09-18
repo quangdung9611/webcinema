@@ -36,6 +36,8 @@ import {
     HelpCircle,
     Wrench,
     Lightbulb,
+    Globe,
+    Plus,
 } from 'lucide-react';
 
 const Profile = () => {
@@ -59,7 +61,9 @@ const Profile = () => {
         address: '',
         username: '',
         points: 0,
-        user_avatar: ''
+        user_avatar: '',
+        provider: '',
+        has_password: true,
     });
 
     // =========================================================
@@ -86,6 +90,18 @@ const Profile = () => {
     const [showOldPassword, setShowOldPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+    // =========================================================
+    // ✅ STATE: CREATE PASSWORD MODAL (CHO USER GOOGLE)
+    // =========================================================
+    const [showCreatePasswordModal, setShowCreatePasswordModal] = useState(false);
+    const [createPasswordData, setCreatePasswordData] = useState({
+        newPassword: '',
+        confirmPassword: ''
+    });
+    const [loadingCreatePassword, setLoadingCreatePassword] = useState(false);
+    const [showCreatePassword, setShowCreatePassword] = useState(false);
+    const [showCreateConfirmPassword, setShowCreateConfirmPassword] = useState(false);
 
     // =========================================================
     // STATE: CHANGE PIN MODAL
@@ -140,7 +156,9 @@ const Profile = () => {
                     address: userData.address || '',
                     username: userData.username || '',
                     points: userData.points || 0,
-                    user_avatar: userData.user_avatar || ''
+                    user_avatar: userData.user_avatar || '',
+                    provider: userData.provider || 'LOCAL',
+                    has_password: userData.has_password !== false,
                 });
                 setEditFormData({
                     full_name: userData.full_name || '',
@@ -297,14 +315,14 @@ const Profile = () => {
     const filteredBookings = getFilteredBookings();
 
     // =========================================================
-    // HANDLE FORGOT PASSWORD - CHUYỂN TRANG
+    // HANDLE FORGOT PASSWORD
     // =========================================================
     const handleForgotPassword = () => {
         navigate('/forgot-password');
     };
 
     // =========================================================
-    // HANDLE FORGOT PIN - CHUYỂN TRANG
+    // HANDLE FORGOT PIN
     // =========================================================
     const handleForgotPin = () => {
         navigate('/forgot-pin');
@@ -351,7 +369,7 @@ const Profile = () => {
     };
 
     // =========================================================
-    // SUBMIT CHANGE PASSWORD (MODAL)
+    // SUBMIT CHANGE PASSWORD
     // =========================================================
     const handleChangePassword = async (e) => {
         e.preventDefault();
@@ -402,7 +420,64 @@ const Profile = () => {
     };
 
     // =========================================================
-    // SUBMIT CHANGE PIN (MODAL)
+    // ✅ SUBMIT CREATE PASSWORD (CHO USER GOOGLE)
+    // =========================================================
+    const handleCreatePassword = async (e) => {
+        e.preventDefault();
+
+        const { newPassword, confirmPassword } = createPasswordData;
+
+        if (!newPassword) {
+            showModal('error', 'Lỗi', 'Vui lòng nhập mật khẩu!');
+            return;
+        }
+
+        if (newPassword.length < 8) {
+            showModal('error', 'Lỗi', 'Mật khẩu phải có ít nhất 8 ký tự!');
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            showModal('error', 'Lỗi', 'Mật khẩu xác nhận không khớp!');
+            return;
+        }
+
+        setLoadingCreatePassword(true);
+
+        try {
+            await api.post('/api/auth/set-password', {
+                newPassword: newPassword
+            });
+
+            setCreatePasswordData({
+                newPassword: '',
+                confirmPassword: ''
+            });
+            setShowCreatePasswordModal(false);
+
+            // Refresh user data để cập nhật has_password = true
+            await fetchUserProfile();
+
+            showModal(
+                'success',
+                'Tạo mật khẩu thành công!',
+                'Bây giờ bạn có thể đăng nhập bằng email và mật khẩu này. Vui lòng lưu lại cẩn thận!'
+            );
+
+        } catch (error) {
+            console.error('Create password error:', error);
+            showModal(
+                'error',
+                'Thất bại',
+                error.response?.data?.message || 'Có lỗi xảy ra khi tạo mật khẩu!'
+            );
+        } finally {
+            setLoadingCreatePassword(false);
+        }
+    };
+
+    // =========================================================
+    // SUBMIT CHANGE PIN
     // =========================================================
     const handleChangePin = async (e) => {
         e.preventDefault();
@@ -538,9 +613,7 @@ const Profile = () => {
             <div className="container">
                 <div className="profile-layout-grid">
 
-                    {/* =================================================
-                        SIDEBAR
-                    ================================================= */}
+                    {/* SIDEBAR */}
                     <aside className="galaxy-sidebar">
                         <div className="user-card-top">
                             <div
@@ -617,9 +690,7 @@ const Profile = () => {
                         </nav>
                     </aside>
 
-                    {/* =================================================
-                        MAIN CONTENT
-                    ================================================= */}
+                    {/* MAIN CONTENT */}
                     <main className="galaxy-content-area">
                         <div className="tabs-header">
                             <button
@@ -643,9 +714,7 @@ const Profile = () => {
                         </div>
 
                         <div className="tab-body">
-                            {/* =================================================
-                                TAB: ORDERS
-                            ================================================= */}
+                            {/* TAB: ORDERS */}
                             {activeTab === 'orders' && (
                                 <div className="history-tab-content">
                                     <div className="history-filter-bar">
@@ -745,9 +814,7 @@ const Profile = () => {
                                 </div>
                             )}
 
-                            {/* =================================================
-                                TAB: PROFILE - CHỈ HIỂN THỊ THÔNG TIN
-                            ================================================= */}
+                            {/* TAB: PROFILE */}
                             {activeTab === 'profile' && (
                                 <div className="profile-info-view">
                                     <div className="profile-info-item">
@@ -784,12 +851,22 @@ const Profile = () => {
                                             )}
                                         </span>
                                     </div>
+
+                                    {/* ✅ HIỂN THỊ PROVIDER */}
+                                    <div className="profile-info-item">
+                                        <span className="label"><Globe size={16} /> Phương thức đăng nhập</span>
+                                        <span className="value">
+                                            {formData.provider === 'GOOGLE' ? (
+                                                <>Google {formData.has_password ? '+ Mật khẩu' : '(chưa có mật khẩu)'}</>
+                                            ) : (
+                                                'Email + Mật khẩu'
+                                            )}
+                                        </span>
+                                    </div>
                                 </div>
                             )}
 
-                            {/* =================================================
-                                TAB: EDIT - CHỈNH SỬA HỒ SƠ
-                            ================================================= */}
+                            {/* TAB: EDIT */}
                             {activeTab === 'edit' && (
                                 <div className="profile-edit-view">
                                     <div className="edit-header">
@@ -804,9 +881,7 @@ const Profile = () => {
                                         </button>
                                     </div>
 
-                                    {/* =============================================
-                                        PHẦN 1: THÔNG TIN CƠ BẢN
-                                    ============================================= */}
+                                    {/* THÔNG TIN CƠ BẢN */}
                                     <div className="edit-section">
                                         <h4 className="section-title">
                                             <User size={18} /> Thông tin cơ bản
@@ -816,7 +891,6 @@ const Profile = () => {
                                                 <label>Họ và tên</label>
                                                 <input
                                                     type="text"
-                                                    name="full_name"
                                                     value={editFormData.full_name}
                                                     onChange={e => setEditFormData({ ...editFormData, full_name: e.target.value })}
                                                     required
@@ -828,7 +902,6 @@ const Profile = () => {
                                                 <label>Email</label>
                                                 <input
                                                     type="email"
-                                                    name="email"
                                                     value={editFormData.email}
                                                     onChange={e => setEditFormData({ ...editFormData, email: e.target.value })}
                                                     required
@@ -840,7 +913,6 @@ const Profile = () => {
                                                 <label>Số điện thoại</label>
                                                 <input
                                                     type="text"
-                                                    name="phone"
                                                     value={editFormData.phone}
                                                     onChange={e => setEditFormData({ ...editFormData, phone: e.target.value })}
                                                     className="auth-input"
@@ -851,7 +923,6 @@ const Profile = () => {
                                                 <label>Địa chỉ</label>
                                                 <input
                                                     type="text"
-                                                    name="address"
                                                     value={editFormData.address}
                                                     onChange={e => setEditFormData({ ...editFormData, address: e.target.value })}
                                                     className="auth-input"
@@ -868,13 +939,26 @@ const Profile = () => {
                                                     <Save size={16} />
                                                     {loadingEdit ? 'Đang lưu...' : 'Lưu thông tin'}
                                                 </button>
-                                                <button
-                                                    type="button"
-                                                    className="btn-change-password"
-                                                    onClick={() => setShowPasswordModal(true)}
-                                                >
-                                                    <Lock size={16} /> Đổi mật khẩu
-                                                </button>
+
+                                                {/* ✅ NÚT TẠO MẬT KHẨU / ĐỔI MẬT KHẨU */}
+                                                {formData.has_password ? (
+                                                    <button
+                                                        type="button"
+                                                        className="btn-change-password"
+                                                        onClick={() => setShowPasswordModal(true)}
+                                                    >
+                                                        <Lock size={16} /> Đổi mật khẩu
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        className="btn-create-password"
+                                                        onClick={() => setShowCreatePasswordModal(true)}
+                                                    >
+                                                        <Plus size={16} /> Tạo mật khẩu
+                                                    </button>
+                                                )}
+
                                                 <button
                                                     type="button"
                                                     className="btn-change-pin"
@@ -883,6 +967,20 @@ const Profile = () => {
                                                     <ShieldCheck size={16} /> Đổi mã PIN
                                                 </button>
                                             </div>
+
+                                            {/* ✅ THÔNG BÁO CHO USER GOOGLE CHƯA CÓ PASSWORD */}
+                                            {formData.provider === 'GOOGLE' && !formData.has_password && (
+                                                <div className="password-notice">
+                                                    <Lightbulb size={16} />
+                                                    <div>
+                                                        <strong>Bạn đang đăng nhập bằng Google</strong>
+                                                        <p>
+                                                            Tạo mật khẩu để có thể đăng nhập bằng email và mật khẩu
+                                                            (không cần bấm nút Google).
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </form>
                                     </div>
                                 </div>
@@ -892,9 +990,7 @@ const Profile = () => {
                 </div>
             </div>
 
-            {/* =================================================
-                HIDDEN FILE INPUT
-            ================================================= */}
+            {/* HIDDEN FILE INPUT */}
             <input
                 type="file"
                 ref={fileInputRef}
@@ -903,9 +999,7 @@ const Profile = () => {
                 onChange={handleAvatarChange}
             />
 
-            {/* =================================================
-                COMMON MODAL
-            ================================================= */}
+            {/* COMMON MODAL */}
             <Modal
                 show={modal.show}
                 type={modal.type}
@@ -914,9 +1008,7 @@ const Profile = () => {
                 onConfirm={modal.onConfirm || closeModal}
             />
 
-            {/* =================================================
-                MODAL: ĐỔI MẬT KHẨU
-            ================================================= */}
+            {/* MODAL: ĐỔI MẬT KHẨU */}
             {showPasswordModal && (
                 <div className="modal-overlay" onClick={() => setShowPasswordModal(false)}>
                     <div className="modal-container" onClick={e => e.stopPropagation()}>
@@ -955,7 +1047,7 @@ const Profile = () => {
                                     <div className="password-wrapper">
                                         <input
                                             type={showNewPassword ? 'text' : 'password'}
-                                            placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
+                                            placeholder="Nhập mật khẩu mới (tối thiểu 8 ký tự)"
                                             value={passwordData.newPassword}
                                             onChange={e => setPasswordData({ ...passwordData, newPassword: e.target.value })}
                                             className="auth-input"
@@ -970,7 +1062,7 @@ const Profile = () => {
                                         </button>
                                     </div>
                                     <small className="form-hint">
-                                        <Lightbulb size={12} /> Mật khẩu phải có ít nhất 6 ký tự
+                                        <Lightbulb size={12} /> Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt
                                     </small>
                                 </div>
                                 <div className="form-group">
@@ -1014,9 +1106,99 @@ const Profile = () => {
                 </div>
             )}
 
-            {/* =================================================
-                MODAL: ĐỔI MÃ PIN
-            ================================================= */}
+            {/* ✅ MODAL: TẠO MẬT KHẨU (CHO USER GOOGLE) */}
+            {showCreatePasswordModal && (
+                <div className="modal-overlay" onClick={() => setShowCreatePasswordModal(false)}>
+                    <div className="modal-container" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>
+                                <Plus size={20} /> Tạo mật khẩu
+                            </h2>
+                            <button className="modal-close-btn" onClick={() => setShowCreatePasswordModal(false)}>
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleCreatePassword}>
+                            <div className="modal-body">
+                                <div className="create-password-info">
+                                    <Globe size={20} />
+                                    <p>
+                                        Bạn đang đăng nhập bằng Google. Tạo mật khẩu để có thể đăng nhập
+                                        bằng <strong>email + mật khẩu</strong> mà không cần bấm nút Google.
+                                    </p>
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Mật khẩu mới</label>
+                                    <div className="password-wrapper">
+                                        <input
+                                            type={showCreatePassword ? 'text' : 'password'}
+                                            placeholder="Nhập mật khẩu (tối thiểu 8 ký tự)"
+                                            value={createPasswordData.newPassword}
+                                            onChange={e => setCreatePasswordData({ ...createPasswordData, newPassword: e.target.value })}
+                                            className="auth-input"
+                                        />
+                                        <button
+                                            type="button"
+                                            className="toggle-password"
+                                            onClick={() => setShowCreatePassword(!showCreatePassword)}
+                                            tabIndex="-1"
+                                        >
+                                            {showCreatePassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                                        </button>
+                                    </div>
+                                    <small className="form-hint">
+                                        <Lightbulb size={12} /> Phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt
+                                    </small>
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Xác nhận mật khẩu</label>
+                                    <div className="password-wrapper">
+                                        <input
+                                            type={showCreateConfirmPassword ? 'text' : 'password'}
+                                            placeholder="Nhập lại mật khẩu"
+                                            value={createPasswordData.confirmPassword}
+                                            onChange={e => setCreatePasswordData({ ...createPasswordData, confirmPassword: e.target.value })}
+                                            className="auth-input"
+                                        />
+                                        <button
+                                            type="button"
+                                            className="toggle-password"
+                                            onClick={() => setShowCreateConfirmPassword(!showCreateConfirmPassword)}
+                                            tabIndex="-1"
+                                        >
+                                            {showCreateConfirmPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="password-warning">
+                                    <ShieldCheck size={16} />
+                                    <span>Mật khẩu này KHÁC với mật khẩu Gmail của bạn. Vui lòng lưu lại cẩn thận.</span>
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn-cancel" onClick={() => setShowCreatePasswordModal(false)}>
+                                    Hủy
+                                </button>
+                                <LoadingButton
+                                    type="submit"
+                                    loading={loadingCreatePassword}
+                                    loadingText="Đang tạo..."
+                                    disabled={loadingCreatePassword}
+                                    className="btn-submit-galaxy"
+                                    spinnerColor="#ffffff"
+                                >
+                                    Tạo mật khẩu
+                                </LoadingButton>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL: ĐỔI MÃ PIN */}
             {showPinModal && (
                 <div className="modal-overlay" onClick={() => setShowPinModal(false)}>
                     <div className="modal-container" onClick={e => e.stopPropagation()}>

@@ -128,13 +128,14 @@ class UserRepository {
     }
 
     /*=========================================================
-        FIND USER PROFILE
+        ✅ FIND USER PROFILE - ĐÃ THÊM `password`
     =========================================================*/
     async findProfile(userId) {
         const [rows] = await db.query(
             `
             SELECT
                 user_id, username, full_name, email, user_avatar, phone, address,
+                password,
                 role, status, email_verified, email_verified_at,
                 points, last_login_at, last_login_ip, created_at, updated_at,
                 pin_hash, google_id, provider
@@ -191,7 +192,7 @@ class UserRepository {
     }
 
     /*=========================================================
-        ✅ MỚI: FIND USER BY GOOGLE ID
+        ✅ FIND USER BY GOOGLE ID
     =========================================================*/
     async findByGoogleId(googleId) {
         const [rows] = await db.query(
@@ -265,7 +266,7 @@ class UserRepository {
     }
 
     /*=========================================================
-        ✅ MỚI: CHECK GOOGLE ID EXISTS
+        ✅ CHECK GOOGLE ID EXISTS
     =========================================================*/
     async existsByGoogleId(googleId) {
         const [rows] = await db.query(
@@ -315,7 +316,7 @@ class UserRepository {
     }
 
     /*=========================================================
-        ✅ MỚI: CREATE USER FROM GOOGLE
+        ✅ CREATE USER FROM GOOGLE
         ✅ status = "ACTIVE", provider = "GOOGLE"
     =========================================================*/
     async createGoogleUser(data) {
@@ -353,7 +354,7 @@ class UserRepository {
     }
 
     /*=========================================================
-        ✅ MỚI: LINK GOOGLE ACCOUNT VÀO USER CŨ
+        ✅ LINK GOOGLE ACCOUNT VÀO USER CŨ
     =========================================================*/
     async linkGoogleAccount(userId, googleId, avatarUrl = null) {
         const [result] = await db.query(
@@ -374,7 +375,7 @@ class UserRepository {
     }
 
     /*=========================================================
-        ✅ MỚI: UPDATE PHONE
+        ✅ UPDATE PHONE
     =========================================================*/
     async updatePhone(userId, phone) {
         const [result] = await db.query(

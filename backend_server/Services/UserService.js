@@ -38,7 +38,7 @@ class UserService {
     }
 
     /*=========================================================
-        GET USER PROFILE
+        ✅ GET USER PROFILE - SỬA: Trả thêm provider + has_password
     =========================================================*/
     async getProfile(userId) {
         const user = await UserRepository.findProfile(userId);
@@ -50,11 +50,17 @@ class UserService {
             };
         }
 
-        return user;
+        // ✅ Thêm 2 field cho FE biết user thuộc loại nào
+        return {
+            ...user,
+            provider: user.provider || 'LOCAL',
+            has_password: !!user.password,
+        };
     }
 
     /*=========================================================
         CREATE USER
+        ✅ status = "ACTIVE" (HOA)
     =========================================================*/
     async createUser(data, file) {
         const {
@@ -99,8 +105,8 @@ class UserService {
             email,
             password: hashedPassword,
             user_avatar: avatarUrl,
-            role: role || "customer",
-            status: "active",
+            role: role || "customer",   // ✅ role THƯỜNG
+            status: "ACTIVE",            // ✅ SỬA: status HOA
             email_verified: 0,
             points: 0
         });
@@ -158,6 +164,7 @@ class UserService {
 
     /*=========================================================
         UPDATE USER STATUS
+        ✅ status = "ACTIVE" / "BANNED" (HOA)
     =========================================================*/
     async updateUserStatus(userId, status) {
         const user = await UserRepository.findById(userId);
@@ -166,11 +173,21 @@ class UserService {
             throw { statusCode: 404, message: "Không tìm thấy người dùng" };
         }
 
+        // ✅ Validate HOA
+        if (!["ACTIVE", "BANNED"].includes(status)) {
+            throw {
+                statusCode: 400,
+                field: "status",
+                message: "Status phải là 'ACTIVE' hoặc 'BANNED'"
+            };
+        }
+
         return await UserRepository.updateStatus(userId, status);
     }
 
     /*=========================================================
         UPDATE USER ROLE
+        ✅ role = "admin" / "customer" (THƯỜNG)
     =========================================================*/
     async updateUserRole(userId, role) {
         const user = await UserRepository.findById(userId);
@@ -397,18 +414,6 @@ class UserService {
     }
 
     /*=========================================================
-        🆕 COMPLETE REGISTRATION (HOÀN TẤT ĐĂNG KÝ BƯỚC 2)
-    =========================================================*/
-    async completeRegistration(userId) {
-        const user = await UserRepository.findById(userId);
-
-        if (!user) {
-            throw { statusCode: 404, message: "Không tìm thấy người dùng" };
-        }
-
-        return user; // Trả về user để AuthService login
-    }
-     /*=========================================================
         🆕 COMPLETE REGISTRATION (HOÀN TẤT ĐĂNG KÝ BƯỚC 2)
     =========================================================*/
     async completeRegistration(userId) {

@@ -593,16 +593,13 @@
     cursor: not-allowed;
 }
 
-/* 
-   FIX: Tách icon mắt ra xa các ô PIN tròn hơn
-*/
 .password-wrapper {
     position: relative;
 }
 
 .password-wrapper .pin-toggle {
     position: absolute;
-    right: calc(-12px - 24px - 12px); /* đẩy ra xa hơn */
+    right: calc(-12px - 24px - 12px);
     top: 50%;
     transform: translateY(-50%);
     background: transparent;
@@ -624,17 +621,10 @@
     background: rgba(255, 255, 255, 0.05);
 }
 
-/* 
-   Đảm bảo ô input có đủ padding phải 
-   để không bị đè lên icon
-*/
 .pin-input-circle {
     padding-right: 0;
 }
 
-/* 
-   Container chứa PIN + toggle để căn chỉnh
-*/
 .pin-wrapper {
     position: relative;
     display: flex;
@@ -793,9 +783,6 @@
     color: var(--text-secondary);
 }
 
-/*
-   FIX: Trong modal, tách icon mắt PIN ra xa hơn
-*/
 .modal-container .modal-body .password-wrapper .pin-toggle {
     position: absolute;
     right: calc(-12px - 24px - 12px);
@@ -1246,6 +1233,135 @@
 }
 
 /* =========================================================
+   ✅ FORM HINT (cho modal đổi mật khẩu / tạo mật khẩu)
+   ========================================================= */
+.form-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    margin-top: var(--space-xs);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    line-height: 1.4;
+}
+
+.form-hint svg {
+    flex-shrink: 0;
+    color: var(--dash-gold-light, #f0d79a);
+}
+
+/* =========================================================
+   ✅ NÚT TẠO MẬT KHẨU (CHO USER GOOGLE)
+   ========================================================= */
+.btn-create-password {
+    padding: var(--space-sm) var(--space-xl);
+    background: linear-gradient(135deg, rgba(94, 214, 160, 0.15), rgba(94, 214, 160, 0.08));
+    border: 1px solid rgba(94, 214, 160, 0.35);
+    border-radius: var(--radius-sm);
+    color: #7fe8b8;
+    font-weight: var(--fw-bold);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: var(--font-size-sm);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.btn-create-password:hover {
+    background: linear-gradient(135deg, rgba(94, 214, 160, 0.25), rgba(94, 214, 160, 0.15));
+    border-color: rgba(94, 214, 160, 0.6);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(94, 214, 160, 0.2);
+}
+
+/* =========================================================
+   ✅ THÔNG BÁO PASSWORD NOTICE (DƯỚI NÚT TRONG TAB EDIT)
+   ========================================================= */
+.password-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-md);
+    margin-top: var(--space-lg);
+    padding: var(--space-md) var(--space-lg);
+    background: rgba(108, 158, 255, 0.08);
+    border: 1px solid rgba(108, 158, 255, 0.2);
+    border-radius: var(--radius-md);
+    color: #9bb8ff;
+}
+
+.password-notice svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: #9bb8ff;
+}
+
+.password-notice strong {
+    display: block;
+    color: var(--text-heading);
+    margin-bottom: 4px;
+    font-size: var(--font-size-sm);
+}
+
+.password-notice p {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+/* =========================================================
+   ✅ CREATE PASSWORD MODAL - INFO + WARNING
+   ========================================================= */
+.create-password-info {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    margin-bottom: var(--space-lg);
+    background: rgba(108, 158, 255, 0.08);
+    border: 1px solid rgba(108, 158, 255, 0.2);
+    border-radius: var(--radius-md);
+    color: #9bb8ff;
+}
+
+.create-password-info svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.create-password-info p {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.create-password-info strong {
+    color: var(--text-heading);
+}
+
+.password-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    background: rgba(214, 179, 106, 0.08);
+    border: 1px solid rgba(214, 179, 106, 0.25);
+    border-radius: var(--radius-sm);
+    color: #f0d79a;
+    font-size: var(--font-size-xs);
+    line-height: 1.5;
+}
+
+.password-warning svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: #f0d79a;
+}
+
+/* =========================================================
    RESPONSIVE
    ========================================================= */
 
@@ -1319,7 +1435,8 @@
     }
     .btn-save-section,
     .btn-change-password,
-    .btn-change-pin {
+    .btn-change-pin,
+    .btn-create-password {
         width: 100%;
         justify-content: center;
     }
@@ -1358,7 +1475,6 @@
         justify-content: center;
     }
 
-    /* FIX: Responsive PIN input */
     .pin-input-circle {
         width: 40px;
         height: 40px;
