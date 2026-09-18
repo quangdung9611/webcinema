@@ -19,6 +19,42 @@ router.post("/login", AuthController.adminLogin);
 router.post("/refresh", AuthController.refreshToken);
 
 // ============================================================
+// 🆕 ADMIN FORGOT PASSWORD ROUTES — PUBLIC
+// ============================================================
+// ✅ Check role = 'admin' trong service
+// → Customer nhập email vào đây → "Email chưa đăng ký"
+// ============================================================
+
+/**
+ * Quên mật khẩu Admin — Gửi OTP về email
+ * POST /admin/api/auth/forgot-password
+ * Body: { email }
+ */
+router.post("/forgot-password", AuthController.adminForgotPassword);
+
+/**
+ * Xác thực OTP và đổi mật khẩu mới (Admin)
+ * POST /admin/api/auth/verify-otp-and-reset
+ * Body: { email, otp, newPassword }
+ * - newPassword = '' → chỉ verify OTP
+ * - newPassword có giá trị → verify + reset password
+ */
+router.post("/verify-otp-and-reset", AuthController.adminVerifyOtpAndReset);
+
+/**
+ * Gửi lại OTP (Admin)
+ * POST /admin/api/auth/resend-otp
+ * Body: { email, purpose }
+ */
+router.post("/resend-otp", AuthController.adminResendOtp);
+
+/**
+ * Kiểm tra TTL của OTP (Admin)
+ * GET /admin/api/auth/check-otp-ttl?email=...&purpose=...
+ */
+router.get("/check-otp-ttl", AuthController.adminCheckOtpTTL);
+
+// ============================================================
 // ✅ LOGOUT — KHÔNG CẦN AUTH
 // ============================================================
 // Lý do:

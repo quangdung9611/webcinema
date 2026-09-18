@@ -1,6 +1,7 @@
 /* ============================================================
    ADMIN DASHBOARD – QUANG DUNG CINEMA
    TÍCH HỢP VỚI INDEX.CSS (SILVER EDITION)
+   ✅ OPTION A: Nút Xuất Excel ở header
 ============================================================ */
 
 .dashboard-page {
@@ -76,11 +77,66 @@
     color: var(--text-secondary);
     font-size: var(--font-size-h6);
 }
+
+/* ✅ Dashboard actions - chứa 2 nút ở header */
 .dashboard-actions {
     display: flex;
     align-items: center;
+    gap: var(--space-sm);
     flex-shrink: 0;
 }
+
+/* ============================================================
+   ✅ EXPORT EXCEL BUTTON (Header)
+============================================================ */
+.export-excel-btn {
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    padding: 0 var(--space-md);
+    border: 1px solid rgba(94, 214, 160, 0.35);
+    border-radius: var(--radius-md);
+    background: linear-gradient(
+        135deg,
+        rgba(94, 214, 160, 0.14) 0%,
+        rgba(94, 214, 160, 0.06) 100%
+    );
+    color: var(--dash-green);
+    font-family: inherit;
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-semibold);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background var(--transition-fast),
+                border-color var(--transition-fast),
+                color var(--transition-fast),
+                transform var(--transition-fast);
+}
+.export-excel-btn:hover:not(:disabled) {
+    background: linear-gradient(
+        135deg,
+        rgba(94, 214, 160, 0.24) 0%,
+        rgba(94, 214, 160, 0.12) 100%
+    );
+    border-color: rgba(94, 214, 160, 0.6);
+    color: #7fe8b8;
+}
+.export-excel-btn:active:not(:disabled) {
+    transform: scale(0.97);
+}
+.export-excel-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-muted);
+    border-color: var(--border-subtle);
+}
+
+/* ============================================================
+   REFRESH BUTTON
+============================================================ */
 .refresh-button {
     height: 42px;
     display: flex;
@@ -641,6 +697,21 @@
 .revenue-products { display: flex; align-items: center; gap: 4px; color: var(--text-secondary); }
 .no-product { color: var(--text-muted); font-style: italic; }
 
+.revenue-location {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text-body);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.revenue-location svg {
+    flex-shrink: 0;
+    color: var(--text-secondary);
+}
+
 .revenue-total-cell {
     display: flex;
     flex-direction: column;
@@ -674,6 +745,18 @@
 .transaction-status-badge.cancelled {
     background: rgba(239, 106, 114, 0.12);
     color: var(--dash-red);
+}
+.transaction-status-badge.processing {
+    background: rgba(108, 158, 255, 0.12);
+    color: var(--dash-blue);
+}
+.transaction-status-badge.failed {
+    background: rgba(239, 106, 114, 0.12);
+    color: var(--dash-red);
+}
+.transaction-status-badge.refunded {
+    background: rgba(168, 134, 255, 0.12);
+    color: var(--dash-purple);
 }
 
 .ticket-badge, .room-badge, .seat-badge {
@@ -943,6 +1026,13 @@
 .status-dot.pending {
     background: var(--dash-gold);
 }
+.status-dot.processing {
+    background: var(--dash-blue);
+}
+.status-dot.failed,
+.status-dot.refunded {
+    background: var(--dash-red);
+}
 .status-row-top strong {
     font-size: var(--font-size-h6);
     color: var(--text-body);
@@ -966,7 +1056,7 @@
 }
 
 /* ============================================================
-   ✅ 15. TOP SHOWTIME LIST (MỚI)
+   15. TOP SHOWTIME LIST
 ============================================================ */
 .top-showtime-list {
     display: flex;
@@ -1734,6 +1824,7 @@
     }
     .dashboard-header {
         align-items: flex-start;
+        flex-wrap: wrap;
     }
     .dashboard-heading h1 {
         font-size: var(--font-size-h3);
@@ -1742,13 +1833,22 @@
         max-width: 400px;
         line-height: 1.5;
     }
-    .refresh-button span {
+    .dashboard-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    /* ✅ Ẩn text nút trên mobile */
+    .refresh-button span,
+    .export-excel-btn span {
         display: none;
     }
-    .refresh-button {
-        width: 40px;
+    .refresh-button,
+    .export-excel-btn {
+        width: 42px;
         padding: 0;
     }
+
     .filter-left {
         width: 100%;
         flex-direction: column;
@@ -1801,6 +1901,25 @@
     .chart-legend-compact {
         flex-direction: column;
         gap: var(--space-xs);
+    }
+
+    /* ✅ Toolbar giao dịch trên mobile */
+    .transaction-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .transaction-search {
+        width: 100%;
+    }
+    .transaction-search input {
+        width: 100%;
+        min-width: 0;
+    }
+    .transaction-status {
+        width: 100%;
+    }
+    .transaction-status select {
+        width: 100%;
     }
 }
 

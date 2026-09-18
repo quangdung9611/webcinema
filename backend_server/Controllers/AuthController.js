@@ -125,9 +125,6 @@ exports.checkLockStatus = async (req, res) => {
 
 /*=========================================================
     ✅ LOGIN — CHỈ DÀNH CHO CUSTOMER
-=========================================================
-    ✅ FIX: Truyền expectedRole = 'customer' để CHẶN admin
-    → Admin login qua /api/auth/login → 403 WRONG_PORTAL
 =========================================================*/
 exports.login = async (req, res) => {
     try {
@@ -158,8 +155,6 @@ exports.login = async (req, res) => {
 
 /*=========================================================
     ✅ LOGIN ADMIN — CHỈ DÀNH CHO ADMIN
-=========================================================
-    ✅ Truyền expectedRole = 'admin' để CHẶN customer
 =========================================================*/
 exports.adminLogin = async (req, res) => {
     try {
@@ -283,15 +278,58 @@ exports.changePassword = async (req, res) => {
 };
 
 /*=========================================================
-    FORGOT PASSWORD
+    ✅ FORGOT PASSWORD — USER PORTAL (CUSTOMER)
+=========================================================
+    ✅ SỬA: Truyền expectedRole = 'customer' để CHẶN admin
+    → Nếu user nhập email admin → báo "Email chưa đăng ký"
 =========================================================*/
 exports.forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
-        const result = await AuthService.forgotPassword(email, req);
+        // ✅ Truyền expectedRole = 'customer'
+        const result = await AuthService.forgotPassword(email, req, 'customer');
         return res.status(200).json(result);
     } catch (error) {
         console.error("Forgot Password Error:", error);
+
+        if (error.statusCode === 404) {
+            return res.status(404).json({
+                success: false,
+                field: error.field || null,
+                message: error.message || "Email này chưa được đăng ký trong hệ thống."
+            });
+        }
+
+        if (error.statusCode === 429) {
+            return res.status(429).json({
+                success: false,
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu.',
+                data: error.data || null
+            });
+        }
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            field: error.field || null,
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
+        });
+    }
+};
+
+/*=========================================================
+    ✅ FORGOT PASSWORD — ADMIN PORTAL (ADMIN)
+=========================================================
+    ✅ MỚI: Endpoint riêng cho admin
+    → Nếu nhập email customer → báo "Email chưa đăng ký"
+=========================================================*/
+exports.adminForgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        // ✅ Truyền expectedRole = 'admin'
+        const result = await AuthService.forgotPassword(email, req, 'admin');
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Admin Forgot Password Error:", error);
 
         if (error.statusCode === 404) {
             return res.status(404).json({
@@ -344,15 +382,47 @@ exports.submitNewPassword = async (req, res) => {
 };
 
 /*=========================================================
-    XÁC THỰC OTP VÀ ĐỔI MẬT KHẨU
+    ✅ XÁC THỰC OTP VÀ ĐỔI MẬT KHẨU — USER PORTAL
+=========================================================
+    ✅ SỬA: Truyền expectedRole = 'customer'
 =========================================================*/
 exports.verifyOtpAndReset = async (req, res) => {
     try {
         const { email, otp, newPassword } = req.body;
-        const result = await AuthService.verifyOtpAndReset(email, otp, newPassword);
+        // ✅ Truyền expectedRole = 'customer'
+        const result = await AuthService.verifyOtpAndReset(email, otp, newPassword, 'customer');
         return res.status(200).json(result);
     } catch (error) {
         console.error("Verify OTP And Reset Error:", error);
+        if (error.statusCode === 429) {
+            return res.status(429).json({
+                success: false,
+                message: error.message || 'Bạn đã thử OTP quá nhiều lần.',
+                data: error.data || null
+            });
+        }
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            field: error.field || null,
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
+        });
+    }
+};
+
+/*=========================================================
+    ✅ XÁC THỰC OTP VÀ ĐỔI MẬT KHẨU — ADMIN PORTAL
+=========================================================
+    ✅ MỚI: Endpoint riêng cho admin
+=========================================================*/
+exports.adminVerifyOtpAndReset = async (req, res) => {
+    try {
+        const { email, otp, newPassword } = req.body;
+        // ✅ Truyền expectedRole = 'admin'
+        const result = await AuthService.verifyOtpAndReset(email, otp, newPassword, 'admin');
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Admin Verify OTP And Reset Error:", error);
         if (error.statusCode === 429) {
             return res.status(429).json({
                 success: false,
@@ -575,12 +645,15 @@ exports.checkOtpTTL = async (req, res) => {
 };
 
 /*=========================================================
-    GỬI LẠI OTP
+    ✅ GỬI LẠI OTP — USER PORTAL
+=========================================================
+    ✅ SỬA: Truyền expectedRole = 'customer'
 =========================================================*/
 exports.resendOtp = async (req, res) => {
     try {
         const { email, purpose } = req.body;
-        const result = await AuthService.resendOtp(email, purpose);
+        // ✅ Truyền expectedRole = 'customer'
+        const result = await AuthService.resendOtp(email, purpose, 'customer');
         return res.status(200).json(result);
     } catch (error) {
         console.error("Resend OTP Error:", error);
@@ -594,6 +667,63 @@ exports.resendOtp = async (req, res) => {
         return res.status(error.statusCode || 500).json({
             success: false,
             field: error.field || null,
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
+        });
+    }
+};
+
+/*=========================================================
+    ✅ GỬI LẠI OTP — ADMIN PORTAL
+=========================================================
+    ✅ MỚI: Endpoint riêng cho admin
+=========================================================*/
+exports.adminResendOtp = async (req, res) => {
+    try {
+        const { email, purpose } = req.body;
+        // ✅ Truyền expectedRole = 'admin'
+        const result = await AuthService.resendOtp(email, purpose, 'admin');
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Admin Resend OTP Error:", error);
+        if (error.statusCode === 429) {
+            return res.status(429).json({
+                success: false,
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu.',
+                data: error.data || null
+            });
+        }
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            field: error.field || null,
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
+        });
+    }
+};
+
+/*=========================================================
+    ✅ CHECK OTP TTL — ADMIN PORTAL
+=========================================================
+    ✅ MỚI: Endpoint riêng cho admin (không cần check role)
+=========================================================*/
+exports.adminCheckOtpTTL = async (req, res) => {
+    try {
+        const { email, purpose } = req.query;
+        if (!email) {
+            return res.status(400).json({ success: false, message: "Thiếu email" });
+        }
+        if (!purpose) {
+            return res.status(400).json({ success: false, message: "Thiếu purpose" });
+        }
+
+        // Dùng chung checkOtpTTL — không cần check role (chỉ đọc TTL)
+        const result = await AuthService.checkOtpTTL(email, purpose);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Admin Check OTP TTL Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
             message: error.message || "Lỗi máy chủ",
             data: error.data || null
         });

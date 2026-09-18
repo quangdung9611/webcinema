@@ -407,6 +407,31 @@ const AdminLogin = lazy(() =>
     )
 );
 
+// ✅ MỚI: ADMIN FORGOT PASSWORD PAGES
+const AdminForgotPassword = lazy(() =>
+    lazyRetry(() =>
+        import(
+            "./admin_frontend/pages/Auth/AdminForgotPassword"
+        )
+    )
+);
+
+const AdminVerifyOtpPassword = lazy(() =>
+    lazyRetry(() =>
+        import(
+            "./admin_frontend/pages/Auth/AdminVerifyOtpPassword"
+        )
+    )
+);
+
+const AdminResetPassword = lazy(() =>
+    lazyRetry(() =>
+        import(
+            "./admin_frontend/pages/Auth/AdminResetPassword"
+        )
+    )
+);
+
 const AdminDashboard = lazy(() =>
     lazyRetry(() =>
         import(
@@ -746,7 +771,7 @@ const UserRouteGuard = ({
 };
 
 // ============================================================
-// AUTH ROUTES
+// AUTH ROUTES (USER)
 // ============================================================
 
 const AUTH_ROUTES = [
@@ -793,7 +818,7 @@ const AUTH_ROUTES = [
 ];
 
 // ============================================================
-// MAIN ROUTES
+// MAIN ROUTES (USER)
 // ============================================================
 
 const MAIN_ROUTES = [
@@ -936,7 +961,7 @@ const MAIN_ROUTES = [
 ];
 
 // ============================================================
-// ADMIN ROUTES
+// ADMIN ROUTES (có layout sidebar)
 // ============================================================
 
 const ADMIN_ROUTES = [
@@ -1041,6 +1066,7 @@ const ADMIN_ROUTES = [
 // Route /check-in và /check-in/:ticketCode phải đặt
 // TRƯỚC route có <AdminLayout> để KHÔNG bị bọc sidebar.
 //
+// ✅ MỚI: Thêm 3 route Forgot/Verify/Reset Password cho admin
 // ============================================================
 
 const AdminRoutesComponent = () => (
@@ -1051,6 +1077,24 @@ const AdminRoutesComponent = () => (
         <Route
             path="/login"
             element={<AdminLogin />}
+        />
+
+        {/* ============================================ */}
+        {/* ✅ MỚI: FORGOT PASSWORD FLOW - Không layout */}
+        {/* ============================================ */}
+        <Route
+            path="/forgot-password"
+            element={<AdminForgotPassword />}
+        />
+
+        <Route
+            path="/verify-otp-password"
+            element={<AdminVerifyOtpPassword />}
+        />
+
+        <Route
+            path="/reset-password"
+            element={<AdminResetPassword />}
         />
 
         {/* ============================================ */}

@@ -1,7 +1,11 @@
 /* =========================================================
-   ADMIN LOGIN – ĐỒNG BỘ VỚI INDEX.CSS (SILVER EDITION)
+   ADMIN AUTH — ĐỒNG BỘ VỚI INDEX.CSS (SILVER EDITION)
+   Bao gồm: AdminLogin + AdminForgotPassword + AdminVerifyOtp + AdminResetPassword
 ========================================================= */
 
+/* =========================================================
+   1. ADMIN LOGIN — LAYOUT CHÍNH
+========================================================= */
 .admin-login-wrapper {
     position: relative;
     width: 100%;
@@ -50,7 +54,6 @@
     background: linear-gradient(135deg, rgba(10, 10, 10, 0.95), rgba(5, 5, 5, 0.92));
 }
 
-/* Glow bạc nhẹ */
 .admin-login-left::before {
     content: '';
     position: absolute;
@@ -64,7 +67,6 @@
     z-index: 0;
 }
 
-/* Viền góc bạc */
 .admin-login-left::after {
     content: '';
     position: absolute;
@@ -109,10 +111,12 @@
     line-height: 1;
     color: var(--text-heading);
 }
+
 .admin-brand h1::after {
     content: ' STAR';
     color: var(--silver-primary);
 }
+
 .admin-brand span {
     letter-spacing: 10px;
     font-size: 17px;
@@ -120,7 +124,6 @@
     color: var(--text-secondary);
 }
 
-/* Left content */
 .admin-left-content {
     position: relative;
     z-index: 2;
@@ -128,6 +131,7 @@
     margin: 0 auto;
     text-align: center;
 }
+
 .admin-left-content h2 {
     font-size: var(--font-size-h1);
     font-weight: var(--fw-extrabold);
@@ -135,13 +139,13 @@
     margin-bottom: var(--space-lg);
     color: var(--text-heading);
 }
+
 .admin-left-content p {
     font-size: var(--font-size-h4);
     line-height: 1.8;
     color: var(--text-secondary);
 }
 
-/* Feature list */
 .admin-feature-list {
     position: relative;
     z-index: 2;
@@ -151,31 +155,36 @@
     gap: var(--space-lg);
     margin-top: var(--space-2xl);
 }
+
 .admin-feature-card {
     width: 220px;
     padding: var(--space-lg) var(--space-lg);
     border-radius: var(--radius-lg);
     text-align: center;
-    background: rgba(255,255,255,0.04);
+    background: rgba(255, 255, 255, 0.04);
     border: var(--border-premium);
     backdrop-filter: blur(12px);
     transition: all var(--transition-normal);
 }
+
 .admin-feature-card:hover {
     transform: translateY(-6px);
     border-color: rgba(232, 232, 232, 0.3);
     box-shadow: 0 0 30px rgba(232, 232, 232, 0.12);
 }
+
 .admin-feature-card svg {
     color: var(--silver-primary);
     margin-bottom: var(--space-md);
 }
+
 .admin-feature-card strong {
     display: block;
     margin-bottom: var(--space-sm);
     font-size: var(--font-size-h4);
     color: var(--text-body);
 }
+
 .admin-feature-card span {
     line-height: 1.7;
     color: var(--text-secondary);
@@ -190,14 +199,14 @@
     transform: rotate(-15deg);
 }
 
-/* ===== RIGHT PANEL (FORM) ===== */
+/* ===== RIGHT PANEL (FORM LOGIN) ===== */
 .admin-login-right {
     position: relative;
     display: flex;
     flex-direction: column;
     justify-content: center;
     padding: var(--space-3xl);
-    background: linear-gradient(135deg, rgba(20,20,20,0.82), rgba(10,10,10,0.92));
+    background: linear-gradient(135deg, rgba(20, 20, 20, 0.82), rgba(10, 10, 10, 0.92));
     border-left: var(--border-premium);
 }
 
@@ -205,6 +214,7 @@
     text-align: center;
     margin-bottom: var(--space-2xl);
 }
+
 .admin-login-icon {
     width: 88px;
     height: 88px;
@@ -218,12 +228,14 @@
     border: var(--border-premium);
     box-shadow: 0 0 40px rgba(232, 232, 232, 0.12);
 }
+
 .admin-login-header h2 {
     font-size: var(--font-size-h1);
     font-weight: var(--fw-extrabold);
     margin-bottom: var(--space-md);
     color: var(--text-heading);
 }
+
 .admin-login-header p {
     font-size: var(--font-size-h4);
     color: var(--text-secondary);
@@ -234,16 +246,19 @@
     flex-direction: column;
     gap: var(--space-xl);
 }
+
 .admin-input-group {
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
 }
+
 .admin-input-group label {
     font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
     color: var(--text-body);
 }
+
 .admin-input-box {
     height: 74px;
     display: flex;
@@ -252,20 +267,24 @@
     padding: 0 var(--space-lg);
     border-radius: var(--radius-lg);
     border: var(--border-premium);
-    background: rgba(255,255,255,0.04);
+    background: rgba(255, 255, 255, 0.04);
     transition: all var(--transition-normal);
 }
+
 .admin-input-box:focus-within {
     border-color: var(--silver-primary);
     box-shadow: 0 0 25px rgba(232, 232, 232, 0.08);
 }
+
 .admin-input-box.error {
     border-color: #ff4d6d;
 }
+
 .admin-input-box svg {
     color: var(--text-secondary);
     flex-shrink: 0;
 }
+
 .admin-input-box input {
     width: 100%;
     height: 100%;
@@ -275,9 +294,11 @@
     color: var(--text-body);
     font-size: var(--font-size-base);
 }
+
 .admin-input-box input::placeholder {
     color: var(--text-muted);
 }
+
 .toggle-password-btn {
     border: none;
     background: transparent;
@@ -287,13 +308,13 @@
     cursor: pointer;
     color: var(--text-secondary);
 }
+
 .admin-error-text {
     font-size: var(--font-size-h6);
     color: #ff4d6d;
     margin-left: 4px;
 }
 
-/* Button */
 .btn-admin-login {
     height: 74px;
     border: none;
@@ -311,11 +332,13 @@
     margin-top: var(--space-sm);
     box-shadow: var(--btn-silver-shadow);
 }
+
 .btn-admin-login:hover {
     transform: translateY(-3px);
     box-shadow: var(--card-shadow-hover);
     color: var(--bg-primary) !important;
 }
+
 .btn-admin-login:disabled {
     opacity: 0.7;
     cursor: not-allowed;
@@ -337,7 +360,557 @@
 }
 
 /* =========================================================
-   RESPONSIVE
+   2. NÚT QUÊN MẬT KHẨU (dưới input password — trong AdminLogin)
+========================================================= */
+.admin-form-options {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: calc(var(--space-xs) * -1);
+    margin-bottom: var(--space-md);
+}
+
+.admin-forgot-link {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--silver-primary);
+    font-family: inherit;
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-semibold);
+    cursor: pointer;
+    transition: color var(--transition-fast), opacity var(--transition-fast);
+}
+
+.admin-forgot-link:hover:not(:disabled) {
+    color: var(--silver-light);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.admin-forgot-link:active:not(:disabled) {
+    opacity: 0.7;
+}
+
+.admin-forgot-link:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* =========================================================
+   3. ADMIN FORGOT / VERIFY / RESET — LAYOUT CHUNG
+========================================================= */
+.admin-forgot-container {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 560px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.admin-forgot-card {
+    width: 100%;
+    padding: var(--space-3xl) var(--space-2xl);
+    border-radius: var(--radius-xl);
+    border: var(--border-premium);
+    background: linear-gradient(135deg, rgba(20, 20, 20, 0.92), rgba(10, 10, 10, 0.96));
+    backdrop-filter: blur(18px);
+    box-shadow: 0 0 60px rgba(0, 0, 0, 0.55),
+                0 0 100px rgba(232, 232, 232, 0.03);
+    text-align: center;
+}
+
+/* Icon tròn trên cùng */
+.admin-forgot-icon-wrapper {
+    width: 88px;
+    height: 88px;
+    margin: 0 auto var(--space-xl);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--silver-primary);
+    background: rgba(232, 232, 232, 0.12);
+    border: var(--border-premium);
+    box-shadow: 0 0 40px rgba(232, 232, 232, 0.12);
+}
+
+.admin-forgot-icon {
+    color: var(--silver-primary);
+}
+
+/* Tiêu đề */
+.admin-forgot-card h2 {
+    font-size: var(--font-size-h2);
+    font-weight: var(--fw-extrabold);
+    color: var(--text-heading);
+    margin-bottom: var(--space-md);
+    letter-spacing: -0.5px;
+}
+
+.admin-forgot-subtitle {
+    font-size: var(--font-size-h4);
+    line-height: 1.6;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-2xl);
+}
+
+.admin-text-highlight {
+    color: var(--silver-primary);
+    font-weight: var(--fw-bold);
+    word-break: break-all;
+}
+
+.admin-checking {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    color: var(--text-secondary);
+}
+
+/* =========================================================
+   4. MESSAGE (success / error)
+========================================================= */
+.admin-forgot-message {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-h6);
+    text-align: left;
+    margin-bottom: var(--space-lg);
+    line-height: 1.5;
+}
+
+.admin-forgot-message svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.admin-forgot-message.success {
+    background: rgba(94, 214, 160, 0.08);
+    border: 1px solid rgba(94, 214, 160, 0.25);
+    color: #7fe8b8;
+}
+
+.admin-forgot-message.error {
+    background: rgba(239, 106, 114, 0.08);
+    border: 1px solid rgba(239, 106, 114, 0.25);
+    color: #ff9ca2;
+}
+
+/* =========================================================
+   5. FORM GROUP (input + label)
+========================================================= */
+.admin-forgot-form-wrapper {
+    width: 100%;
+    text-align: left;
+}
+
+.admin-forgot-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+    text-align: left;
+}
+
+.admin-forgot-form-group label {
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-bold);
+    color: var(--text-body);
+}
+
+.admin-forgot-input {
+    width: 100%;
+    height: 62px;
+    padding: 0 var(--space-lg);
+    border-radius: var(--radius-lg);
+    border: var(--border-premium);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-body);
+    font-size: var(--font-size-base);
+    font-family: inherit;
+    outline: none;
+    transition: all var(--transition-normal);
+}
+
+.admin-forgot-input::placeholder {
+    color: var(--text-muted);
+}
+
+.admin-forgot-input:focus {
+    border-color: var(--silver-primary);
+    box-shadow: 0 0 25px rgba(232, 232, 232, 0.08);
+}
+
+.admin-forgot-input.input-error {
+    border-color: #ff4d6d;
+}
+
+.admin-forgot-input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* =========================================================
+   6. PASSWORD WRAPPER (có nút toggle eye)
+========================================================= */
+.admin-password-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.admin-password-wrapper .admin-forgot-input {
+    padding-right: 52px;
+}
+
+.admin-toggle-password {
+    position: absolute;
+    top: 50%;
+    right: var(--space-md);
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: var(--radius-sm);
+    transition: color var(--transition-fast);
+}
+
+.admin-toggle-password:hover:not(:disabled) {
+    color: var(--silver-primary);
+}
+
+.admin-toggle-password:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* =========================================================
+   7. BUTTON CHÍNH (Gửi OTP / Xác nhận / Đặt lại)
+========================================================= */
+.admin-forgot-button-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    margin-top: var(--space-lg);
+}
+
+.btn-admin-forgot {
+    height: 66px;
+    border: none;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    cursor: pointer;
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-extrabold);
+    color: var(--bg-primary);
+    background: var(--premium-gradient);
+    transition: all var(--transition-normal);
+    box-shadow: var(--btn-silver-shadow);
+    width: 100%;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.btn-admin-forgot:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: var(--card-shadow-hover);
+    color: var(--bg-primary) !important;
+}
+
+.btn-admin-forgot:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* =========================================================
+   8. OTP INPUT (6 ô)
+========================================================= */
+.admin-pin-input-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    margin: var(--space-lg) 0;
+}
+
+.admin-pin-box {
+    width: 56px;
+    height: 64px;
+    text-align: center;
+    font-size: var(--font-size-h3);
+    font-weight: var(--fw-bold);
+    color: var(--text-heading);
+    border-radius: var(--radius-md);
+    border: var(--border-premium);
+    background: rgba(255, 255, 255, 0.04);
+    outline: none;
+    transition: all var(--transition-normal);
+    font-family: var(--font-heading);
+}
+
+.admin-pin-box:focus {
+    border-color: var(--silver-primary);
+    box-shadow: 0 0 20px rgba(232, 232, 232, 0.15);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.admin-pin-box.input-error {
+    border-color: #ff4d6d;
+    background: rgba(239, 106, 114, 0.05);
+}
+
+.admin-pin-box:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* =========================================================
+   9. TIMER / HINT
+========================================================= */
+.admin-input-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    margin: var(--space-md) 0;
+    font-size: var(--font-size-h6);
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.admin-input-hint span {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.admin-input-hint .text-danger {
+    color: #ff6b7a;
+}
+
+.admin-input-hint .text-success {
+    color: #5ed6a0;
+}
+
+.admin-input-hint strong {
+    color: var(--silver-primary);
+    font-weight: var(--fw-bold);
+}
+
+.admin-loading-ttl {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    margin-bottom: var(--space-md);
+    border-radius: var(--radius-md);
+    background: rgba(108, 158, 255, 0.08);
+    border: 1px solid rgba(108, 158, 255, 0.2);
+    color: #9bb8ff;
+    font-size: var(--font-size-h6);
+}
+
+.spin-icon {
+    animation: admin-spin 0.8s linear infinite;
+}
+
+@keyframes admin-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* =========================================================
+   10. OTP ATTEMPT COUNTER
+========================================================= */
+.admin-otp-attempt-counter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    margin-bottom: var(--space-md);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-h6);
+    line-height: 1.5;
+    text-align: center;
+}
+
+.admin-otp-attempt-counter.warning {
+    background: rgba(214, 179, 106, 0.08);
+    border: 1px solid rgba(214, 179, 106, 0.25);
+    color: #f0d79a;
+}
+
+.admin-otp-attempt-counter.danger {
+    background: rgba(239, 106, 114, 0.08);
+    border: 1px solid rgba(239, 106, 114, 0.25);
+    color: #ff9ca2;
+}
+
+.admin-otp-attempt-counter strong {
+    color: var(--text-heading);
+    font-weight: var(--fw-bold);
+}
+
+.admin-otp-attempt-counter .text-danger {
+    color: #ff6b7a;
+}
+
+/* =========================================================
+   11. NÚT GỬI LẠI OTP
+========================================================= */
+.admin-btn-resend {
+    width: 100%;
+    height: 52px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    margin-top: var(--space-sm);
+    border-radius: var(--radius-lg);
+    border: var(--border-premium);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-body);
+    font-family: inherit;
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-semibold);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.admin-btn-resend:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--silver-primary);
+    color: var(--silver-light);
+}
+
+.admin-btn-resend:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.admin-loading-spinner {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+/* =========================================================
+   12. BUTTON GROUP (Quay lại + Xác nhận)
+========================================================= */
+.admin-button-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-top: var(--space-lg);
+}
+
+.admin-button-group .btn-admin-forgot {
+    flex: 1;
+}
+
+.admin-btn-back {
+    flex: 0 0 auto;
+    height: 66px;
+    padding: 0 var(--space-lg);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    border-radius: var(--radius-lg);
+    border: var(--border-premium);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-body);
+    font-family: inherit;
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-semibold);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    white-space: nowrap;
+}
+
+.admin-btn-back:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--silver-primary);
+    color: var(--silver-light);
+}
+
+.admin-btn-back:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* =========================================================
+   13. FOOTER LINK (Quay lại đăng nhập)
+========================================================= */
+.admin-forgot-footer {
+    margin-top: var(--space-2xl);
+    text-align: center;
+    font-size: var(--font-size-h6);
+    color: var(--text-muted);
+}
+
+.admin-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    border: 0;
+    background: transparent;
+    color: var(--silver-primary);
+    font-family: inherit;
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-semibold);
+    cursor: pointer;
+    transition: color var(--transition-fast), opacity var(--transition-fast);
+}
+
+.admin-back-link:hover:not(:disabled) {
+    color: var(--silver-light);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.admin-back-link:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* =========================================================
+   14. LOADING SPINNER LỚN (cho Reset Password khi check OTP)
+========================================================= */
+.admin-loading-spinner-large {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-2xl) 0;
+}
+
+.admin-spinner {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 3px solid rgba(232, 232, 232, 0.1);
+    border-top-color: var(--silver-primary);
+    animation: admin-spin 0.8s linear infinite;
+}
+
+/* =========================================================
+   15. RESPONSIVE
 ========================================================= */
 @media (max-width: 1200px) {
     .admin-login-container {
@@ -348,6 +921,7 @@
         display: none;
     }
 }
+
 @media (max-width: 768px) {
     .admin-login-wrapper {
         padding: var(--space-lg);
@@ -365,8 +939,49 @@
         height: 66px;
         font-size: var(--font-size-base);
     }
+
+    /* Forgot card mobile */
+    .admin-forgot-card {
+        padding: var(--space-2xl) var(--space-lg);
+    }
+    .admin-forgot-icon-wrapper {
+        width: 72px;
+        height: 72px;
+        margin-bottom: var(--space-lg);
+    }
+    .admin-forgot-card h2 {
+        font-size: var(--font-size-h3);
+    }
+    .admin-forgot-subtitle {
+        font-size: var(--font-size-h5);
+    }
+
+    /* OTP boxes nhỏ hơn */
+    .admin-pin-box {
+        width: 46px;
+        height: 56px;
+        font-size: var(--font-size-h4);
+    }
+    .admin-pin-input-container {
+        gap: var(--space-xs);
+    }
+
+    /* Button group xếp dọc */
+    .admin-button-group {
+        flex-direction: column-reverse;
+    }
+    .admin-btn-back {
+        width: 100%;
+    }
+    .admin-button-group .btn-admin-forgot {
+        width: 100%;
+    }
 }
+
 @media (max-width: 480px) {
+    .admin-login-wrapper {
+        padding: var(--space-md);
+    }
     .admin-login-right {
         padding: var(--space-xl) var(--space-md);
     }
@@ -378,5 +993,41 @@
     }
     .admin-input-group label {
         font-size: var(--font-size-h6);
+    }
+
+    /* Forgot card mobile nhỏ */
+    .admin-forgot-container {
+        max-width: 100%;
+    }
+    .admin-forgot-card {
+        padding: var(--space-xl) var(--space-md);
+        border-radius: var(--radius-lg);
+    }
+    .admin-forgot-icon-wrapper {
+        width: 64px;
+        height: 64px;
+    }
+    .admin-forgot-card h2 {
+        font-size: var(--font-size-h4);
+    }
+    .admin-forgot-subtitle {
+        font-size: var(--font-size-h6);
+    }
+    .admin-forgot-input {
+        height: 56px;
+    }
+    .btn-admin-forgot {
+        height: 58px;
+        font-size: var(--font-size-h6);
+    }
+
+    /* OTP boxes nhỏ hơn nữa */
+    .admin-pin-box {
+        width: 42px;
+        height: 50px;
+        font-size: var(--font-size-h5);
+    }
+    .admin-pin-input-container {
+        gap: 6px;
     }
 }

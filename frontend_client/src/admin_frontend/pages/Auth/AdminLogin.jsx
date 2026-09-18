@@ -577,6 +577,18 @@ const AdminLogin = () => {
                             )}
                         </div>
 
+                        {/* ✅ MỚI: Nút "Quên mật khẩu?" */}
+                        <div className="admin-form-options">
+                            <button
+                                type="button"
+                                className="admin-forgot-link"
+                                onClick={() => navigate('/forgot-password')}
+                                disabled={loading || isLockedActive}
+                            >
+                                Quên mật khẩu?
+                            </button>
+                        </div>
+
                         <LoadingButton
                             type="submit"
                             loading={loading}

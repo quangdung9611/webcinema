@@ -38,6 +38,9 @@ const MAX_DEVICES_CUSTOMER = 1;
 // ✅ NGƯỠNG TOKEN MỚI (5 giây)
 const TOKEN_AGE_THRESHOLD = 5000;
 
+// ✅ MESSAGE CHUNG — không tiết lộ email có tồn tại hay không
+const INVALID_EMAIL_MESSAGE = "Email này chưa được đăng ký trong hệ thống. Vui lòng kiểm tra lại.";
+
 // ============================================================
 // VALIDATE LOGIN
 // ============================================================
@@ -402,17 +405,30 @@ exports.changePassword = async (userId, passwordData) => {
 // ============================================================
 // FORGOT PASSWORD
 // ============================================================
-exports.forgotPassword = async (email, req) => {
+// ✅ SỬA: Thêm param expectedRole để check role
+// ============================================================
+exports.forgotPassword = async (email, req, expectedRole = null) => {
     if (!email?.trim()) throw { statusCode: 400, field: "email", message: "Email không được để trống" };
     if (!EMAIL_REGEX.test(email)) throw { statusCode: 400, field: "email", message: "Email không hợp lệ" };
 
     const user = await UserRepository.findByEmail(email);
 
+    // ✅ CHECK TỒN TẠI — dùng message chung
     if (!user) {
         throw {
             statusCode: 404,
             field: "email",
-            message: "Email này chưa được đăng ký trong hệ thống. Vui lòng kiểm tra lại."
+            message: INVALID_EMAIL_MESSAGE
+        };
+    }
+
+    // ✅ CHECK ROLE — dùng CÙNG message như "không tồn tại"
+    // → Không tiết lộ email có tồn tại hay không
+    if (expectedRole && user.role !== expectedRole) {
+        throw {
+            statusCode: 404,
+            field: "email",
+            message: INVALID_EMAIL_MESSAGE
         };
     }
 
@@ -520,7 +536,9 @@ exports.submitNewPassword = async (token, newPassword) => {
 // ============================================================
 // VERIFY OTP AND RESET
 // ============================================================
-exports.verifyOtpAndReset = async (email, otp, newPassword) => {
+// ✅ SỬA: Thêm param expectedRole để check role lần 2
+// ============================================================
+exports.verifyOtpAndReset = async (email, otp, newPassword, expectedRole = null) => {
     const rateLimit = await CacheService.checkRateLimit(email, "verify-otp-reset", 5, 300);
     if (!rateLimit.allowed) {
         throw {
@@ -557,7 +575,16 @@ exports.verifyOtpAndReset = async (email, otp, newPassword) => {
         };
     }
 
+    // Nếu chỉ verify OTP (không reset password)
     if (!newPassword || newPassword.length === 0) {
+        // ✅ Vẫn check role để chắc chắn
+        const userCheck = await UserRepository.findByEmail(email);
+        if (!userCheck) {
+            throw { statusCode: 404, message: "Không tìm thấy người dùng" };
+        }
+        if (expectedRole && userCheck.role !== expectedRole) {
+            throw { statusCode: 404, message: "Không tìm thấy người dùng" };
+        }
         return { success: true, message: "Xác thực OTP thành công" };
     }
 
@@ -567,6 +594,11 @@ exports.verifyOtpAndReset = async (email, otp, newPassword) => {
 
     const user = await UserRepository.findByEmail(email);
     if (!user) {
+        throw { statusCode: 404, message: "Không tìm thấy người dùng" };
+    }
+
+    // ✅ CHECK ROLE LẦN 2 — trước khi reset password
+    if (expectedRole && user.role !== expectedRole) {
         throw { statusCode: 404, message: "Không tìm thấy người dùng" };
     }
 
@@ -1044,13 +1076,20 @@ exports.checkOtpTTL = async (email, purpose) => {
 // ============================================================
 // RESEND OTP
 // ============================================================
-exports.resendOtp = async (email, purpose) => {
+// ✅ SỬA: Thêm param expectedRole để check role
+// ============================================================
+exports.resendOtp = async (email, purpose, expectedRole = null) => {
     if (!email?.trim()) {
         throw { statusCode: 400, field: "email", message: "Email không được để trống" };
     }
 
     const user = await UserRepository.findByEmail(email);
     if (!user) {
+        throw { statusCode: 404, message: "Không tìm thấy người dùng" };
+    }
+
+    // ✅ CHECK ROLE — ngăn chặn resend OTP cho sai role
+    if (expectedRole && user.role !== expectedRole) {
         throw { statusCode: 404, message: "Không tìm thấy người dùng" };
     }
 

@@ -511,7 +511,7 @@ function AdminDashboard() {
         setTransactionPage(1);
     };
 
-    // ✅ MỚI: Export Excel
+    // ✅ Export Excel
     const handleExportExcel = () => {
         if (!data.transactions || data.transactions.length === 0) {
             setError('Không có giao dịch để xuất Excel.');
@@ -643,6 +643,16 @@ function AdminDashboard() {
                     </div>
                 </div>
                 <div className="dashboard-actions">
+                    {/* ✅ Nút Xuất Excel chuyển lên header */}
+                    <button
+                        type="button"
+                        className="export-excel-btn"
+                        onClick={handleExportExcel}
+                        disabled={loading || exporting || data.transactions.length === 0}
+                    >
+                        <Download size={17} />
+                        <span>{exporting ? 'Đang xuất...' : 'Xuất giao dịch'}</span>
+                    </button>
                     <button
                         type="button"
                         className="refresh-button"
@@ -1087,6 +1097,7 @@ function AdminDashboard() {
                 <div className="dashboard-card revenue-card">
                     <CardHeader icon={<TrendingUp />} title="Chi tiết giao dịch" subtitle="Danh sách đơn đặt vé và doanh thu trong kỳ" />
 
+                    {/* ✅ Toolbar gọn hơn - chỉ còn search + status */}
                     <div className="transaction-toolbar">
                         <div className="transaction-search">
                             <input
@@ -1096,24 +1107,13 @@ function AdminDashboard() {
                                 placeholder="Tìm khách hàng, email, phim, ghi chú..."
                             />
                         </div>
-                        <div className="transaction-toolbar-right">
-                            <div className="transaction-status">
-                                <select value={transactionStatus} onChange={handleTransactionStatus}>
-                                    <option value="Completed">Hoàn thành</option>
-                                    <option value="Pending">Đang xử lý</option>
-                                    <option value="Cancelled">Đã hủy</option>
-                                    <option value="all">Tất cả</option>
-                                </select>
-                            </div>
-                            <button
-                                type="button"
-                                className="export-excel-btn"
-                                onClick={handleExportExcel}
-                                disabled={loading || exporting || data.transactions.length === 0}
-                            >
-                                <Download size={16} />
-                                <span>{exporting ? 'Đang xuất...' : 'Xuất Excel'}</span>
-                            </button>
+                        <div className="transaction-status">
+                            <select value={transactionStatus} onChange={handleTransactionStatus}>
+                                <option value="Completed">Hoàn thành</option>
+                                <option value="Pending">Đang xử lý</option>
+                                <option value="Cancelled">Đã hủy</option>
+                                <option value="all">Tất cả</option>
+                            </select>
                         </div>
                     </div>
 
