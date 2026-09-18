@@ -33,6 +33,8 @@ import {
     MessageSquare,
     ChevronRight,
     ChevronLeft,
+    ChevronUp,
+    ChevronDown,
     Popcorn,
     Coffee,
     UtensilsCrossed,
@@ -674,7 +676,9 @@ const MovieDetail = () => {
                                     {movie.description && movie.description.length > 150 && (
                                         <button className="desc-toggle-btn" onClick={() => setIsExpanded(!isExpanded)}>
                                             {isExpanded ? 'Thu gọn' : 'Xem thêm'}
-                                            <span className="toggle-icon">{isExpanded ? '▲' : '▼'}</span>
+                                            <span className="toggle-icon">
+                                                {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                                            </span>
                                         </button>
                                     )}
                                 </div>
@@ -753,7 +757,7 @@ const MovieDetail = () => {
                                     <CalendarDays size={16} /> CHỌN NGÀY
                                 </label>
                                 <div className="date-navigation-wrapper">
-                                    <button 
+                                    <button
                                         className="date-nav-btn"
                                         onClick={handlePrevDates}
                                         disabled={dateIndex === 0}
@@ -761,7 +765,7 @@ const MovieDetail = () => {
                                     >
                                         <ChevronLeft size={20} />
                                     </button>
-                                    
+
                                     <div className="date-slider-horizontal">
                                         {getVisibleDates().map(d => {
                                             const dateObj = new Date(d);
@@ -786,7 +790,7 @@ const MovieDetail = () => {
                                         })}
                                     </div>
 
-                                    <button 
+                                    <button
                                         className="date-nav-btn"
                                         onClick={handleNextDates}
                                         disabled={dateIndex >= availableDates.length - VISIBLE_DAYS}
@@ -820,11 +824,11 @@ const MovieDetail = () => {
                                         <MapPin size={14} /> {selectedCinema?.cinema_name}
                                     </span>
                                     <span className="info-badge">
-                                        <CalendarDays size={14} /> {new Date(selectedDate).toLocaleDateString('vi-VN', { 
-                                            weekday: 'long', 
-                                            day: 'numeric', 
-                                            month: 'long', 
-                                            year: 'numeric' 
+                                        <CalendarDays size={14} /> {new Date(selectedDate).toLocaleDateString('vi-VN', {
+                                            weekday: 'long',
+                                            day: 'numeric',
+                                            month: 'long',
+                                            year: 'numeric'
                                         })}
                                     </span>
                                 </div>
@@ -849,7 +853,7 @@ const MovieDetail = () => {
                                 const visibleItems = getVisibleShowtimes(roomType, items);
                                 const currentIndex = showtimeIndexes[roomType] || 0;
                                 const maxIndex = Math.max(0, items.length - VISIBLE_SHOWTIMES);
-                                
+
                                 return (
                                     <div key={roomType} className="room-type-block">
                                         <div className="room-type-header">
@@ -859,9 +863,9 @@ const MovieDetail = () => {
                                                 <span className="room-count">{items.length} suất</span>
                                             </div>
                                         </div>
-                                        
+
                                         <div className="showtimes-grid-wrapper">
-                                            <button 
+                                            <button
                                                 className="showtime-nav-btn prev-btn"
                                                 onClick={() => handlePrevShowtimes(roomType)}
                                                 disabled={currentIndex === 0}
@@ -869,7 +873,7 @@ const MovieDetail = () => {
                                             >
                                                 <ChevronLeft size={20} />
                                             </button>
-                                            
+
                                             <div className="showtimes-grid-items">
                                                 {visibleItems.map(st => (
                                                     <button
@@ -890,8 +894,8 @@ const MovieDetail = () => {
                                                     </button>
                                                 ))}
                                             </div>
-                                            
-                                            <button 
+
+                                            <button
                                                 className="showtime-nav-btn next-btn"
                                                 onClick={() => handleNextShowtimes(roomType, items.length)}
                                                 disabled={currentIndex >= maxIndex}
@@ -921,7 +925,7 @@ const MovieDetail = () => {
                     </div>
                 </div>
 
-                {/* ACTORS — ✅ ĐÃ SỬA buttonText */}
+                {/* ACTORS */}
                 <div className="cinema-section-block">
                     <div className="section-header-row">
                         <h2 className="section-title-label">DIỄN VIÊN</h2>
@@ -969,7 +973,7 @@ const MovieDetail = () => {
                     </div>
                 </div>
 
-                {/* OTHER TRAILERS — ✅ ĐÃ SỬA buttonText */}
+                {/* OTHER TRAILERS */}
                 <div className="cinema-section-block">
                     <div className="section-header-row">
                         <h2 className="section-title-label">TRAILER KHÁC</h2>
@@ -1030,7 +1034,9 @@ const MovieDetail = () => {
                             <div className="dashboard-progress-bars-right">
                                 {[5, 4, 3, 2, 1].map(stars => (
                                     <div className="progress-bar-line-row" key={stars}>
-                                        <span className="star-line-label">{stars} ★</span>
+                                        <span className="star-line-label">
+                                            {stars} <Star size={12} fill="#f5b50a" color="#f5b50a" style={{ display: 'inline-block', verticalAlign: 'middle' }} />
+                                        </span>
                                         <div className="progress-track-bg">
                                             <div
                                                 className="progress-fill-active"
@@ -1071,8 +1077,8 @@ const MovieDetail = () => {
                                                     </div>
                                                 </div>
                                                 <span className="comment-time-ago">
-                                                    {rev.formatted_date 
-                                                        ? rev.formatted_date.replace(' ', ' | ') 
+                                                    {rev.formatted_date
+                                                        ? rev.formatted_date.replace(' ', ' | ')
                                                         : "Mới đây"
                                                     }
                                                 </span>

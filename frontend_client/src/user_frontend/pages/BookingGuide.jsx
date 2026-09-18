@@ -1,6 +1,19 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Ticket, CreditCard, Smartphone, MapPin, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import {
+  ChevronRight,
+  Ticket,
+  CreditCard,
+  Smartphone,
+  MapPin,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Sparkles,
+  Lightbulb,
+  Phone,
+  Mail,
+} from 'lucide-react';
 import '../styles/BookingGuide.css';
 
 const BookingGuide = () => {
@@ -35,7 +48,9 @@ const BookingGuide = () => {
               Chào mừng bạn đến với hướng dẫn đặt vé trực tuyến của CineStar! Chúng tôi hướng dẫn bạn từng bước chi tiết để bạn có thể đặt vé xem phim một cách nhanh chóng, thuận tiện và an toàn nhất.
             </p>
             <div className="guide-highlight">
-              <span className="guide-highlight-icon">✨</span>
+              <span className="guide-highlight-icon">
+                <Sparkles size={18} />
+              </span>
               <span>Thời gian đặt vé trung bình: chỉ <strong>2 phút</strong></span>
             </div>
           </section>
@@ -52,7 +67,10 @@ const BookingGuide = () => {
                 <li>Chọn phim yêu thích và nhấn nút <strong>"Đặt vé"</strong>.</li>
               </ul>
               <div className="guide-tip">
-                <span>💡 Mẹo:</span> Bạn có thể đặt vé trước tối đa <strong>7 ngày</strong> để có nhiều lựa chọn ghế ngồi.
+                <span className="guide-tip-label">
+                  <Lightbulb size={16} /> Mẹo:
+                </span>{' '}
+                Bạn có thể đặt vé trước tối đa <strong>7 ngày</strong> để có nhiều lựa chọn ghế ngồi.
               </div>
             </div>
           </section>
@@ -70,7 +88,10 @@ const BookingGuide = () => {
                 <li><strong>Chọn giờ chiếu:</strong> Xem các suất chiếu trong ngày và chọn thời gian phù hợp.</li>
               </ul>
               <div className="guide-tip">
-                <span>💡 Mẹo:</span> Sử dụng bộ lọc <strong>"Rạp gần tôi"</strong> để tìm rạp gần vị trí của bạn.
+                <span className="guide-tip-label">
+                  <Lightbulb size={16} /> Mẹo:
+                </span>{' '}
+                Sử dụng bộ lọc <strong>"Rạp gần tôi"</strong> để tìm rạp gần vị trí của bạn.
               </div>
             </div>
           </section>
@@ -88,7 +109,10 @@ const BookingGuide = () => {
                 <li>Khi đã chọn xong, nhấn nút <strong>"Xác nhận ghế"</strong> để tiếp tục.</li>
               </ul>
               <div className="guide-tip">
-                <span>💡 Mẹo:</span> Chọn ghế ở trung tâm hoặc hàng giữa để có trải nghiệm xem tốt nhất.
+                <span className="guide-tip-label">
+                  <Lightbulb size={16} /> Mẹo:
+                </span>{' '}
+                Chọn ghế ở trung tâm hoặc hàng giữa để có trải nghiệm xem tốt nhất.
               </div>
             </div>
           </section>
@@ -106,7 +130,10 @@ const BookingGuide = () => {
                 <li><strong>Xác nhận thanh toán:</strong> Nhấn nút <strong>"Thanh toán"</strong> và hoàn tất giao dịch.</li>
               </ul>
               <div className="guide-tip">
-                <span>💡 Mẹo:</span> Nếu bạn là thành viên VIP, bạn sẽ được giảm giá lên đến <strong>20%</strong>.
+                <span className="guide-tip-label">
+                  <Lightbulb size={16} /> Mẹo:
+                </span>{' '}
+                Nếu bạn là thành viên VIP, bạn sẽ được giảm giá lên đến <strong>20%</strong>.
               </div>
             </div>
           </section>
@@ -124,7 +151,10 @@ const BookingGuide = () => {
                 <li><strong>Thời gian:</strong> Nên đến rạp trước giờ chiếu ít nhất <strong>15 phút</strong> để nhận vé và chuẩn bị.</li>
               </ul>
               <div className="guide-tip">
-                <span>💡 Mẹo:</span> Lưu mã vé vào điện thoại để tránh mất kết nối Internet khi đến rạp.
+                <span className="guide-tip-label">
+                  <Lightbulb size={16} /> Mẹo:
+                </span>{' '}
+                Lưu mã vé vào điện thoại để tránh mất kết nối Internet khi đến rạp.
               </div>
             </div>
           </section>
@@ -146,10 +176,10 @@ const BookingGuide = () => {
             </p>
             <div className="guide-support-links">
               <Link to="/contact" className="guide-support-btn">
-                <span>📞</span> Gọi ngay 1900 1234
+                <Phone size={18} /> Gọi ngay 1900 1234
               </Link>
               <Link to="/contact" className="guide-support-btn outline">
-                <span>✉️</span> Gửi email hỗ trợ
+                <Mail size={18} /> Gửi email hỗ trợ
               </Link>
             </div>
           </section>

@@ -2,10 +2,20 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../../api/api';
-import { LockKeyhole, AlertCircle, CheckCircle, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import {
+    LockKeyhole,
+    AlertCircle,
+    AlertTriangle,
+    XCircle,
+    CheckCircle,
+    ArrowLeft,
+    Eye,
+    EyeOff,
+    Loader2,
+} from 'lucide-react';
 import LoadingButton from '../components/LoadingButton';
 import ResetPasswordSuccessModal from '../components/ResetPasswordSuccessModal';
-import useOTPGuard from '../../hooks/useOTPGuard'; // 🔥 IMPORT
+import useOTPGuard from '../../hooks/useOTPGuard';
 import '../styles/UserAuth.css';
 
 const ResetPassword = () => {
@@ -19,14 +29,14 @@ const ResetPassword = () => {
     // 🔥 SỬ DỤNG useOTPGuard
     const { safeNavigate } = useOTPGuard(email, purpose, {
         onInvalidate: () => {
-            console.log('🔴 [RESET PASSWORD] OTP đã bị vô hiệu do rời trang');
+            console.log('[RESET PASSWORD] OTP đã bị vô hiệu do rời trang');
         }
     });
 
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState('');
+    const [message, setMessage] = useState(null);       // { icon, text }
     const [messageType, setMessageType] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -37,6 +47,12 @@ const ResetPassword = () => {
 
     const [isRateLimited, setIsRateLimited] = useState(false);
     const [rateLimitTimeLeft, setRateLimitTimeLeft] = useState(0);
+
+    // Helper tạo message object
+    const makeMessage = (IconComponent, text) => ({
+        icon: <IconComponent size={18} />,
+        text,
+    });
 
     // ============================================================
     // 🔥 KIỂM TRA OTP CÒN HIỆU LỰC KHI VÀO TRANG
@@ -59,7 +75,10 @@ const ResetPassword = () => {
                     setIsOtpValid(true);
                 } else {
                     // OTP đã hết hạn hoặc không tồn tại
-                    setMessage('❌ Mã OTP đã hết hạn hoặc không tồn tại. Vui lòng yêu cầu mã mới.');
+                    setMessage(makeMessage(
+                        XCircle,
+                        'Mã OTP đã hết hạn hoặc không tồn tại. Vui lòng yêu cầu mã mới.'
+                    ));
                     setMessageType('error');
                     // Sau 3 giây chuyển về forgot-password
                     setTimeout(() => {
@@ -69,8 +88,11 @@ const ResetPassword = () => {
                     }, 3000);
                 }
             } catch (error) {
-                console.error('❌ [RESET PASSWORD] Check OTP error:', error);
-                setMessage('❌ Không thể kiểm tra OTP. Vui lòng thử lại.');
+                console.error('[RESET PASSWORD] Check OTP error:', error);
+                setMessage(makeMessage(
+                    XCircle,
+                    'Không thể kiểm tra OTP. Vui lòng thử lại.'
+                ));
                 setMessageType('error');
                 setTimeout(() => {
                     safeNavigate('/forgot-password');
@@ -90,7 +112,7 @@ const ResetPassword = () => {
             setRateLimitTimeLeft(prev => {
                 if (prev <= 1) {
                     setIsRateLimited(false);
-                    setMessage('');
+                    setMessage(null);
                     return 0;
                 }
                 return prev - 1;
@@ -112,17 +134,20 @@ const ResetPassword = () => {
                 setFieldErrors(prev => ({ ...prev, confirmPassword: '' }));
             }
         }
-        if (message) setMessage('');
+        if (message) setMessage(null);
         if (messageType) setMessageType('');
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setMessage('');
+        setMessage(null);
         setFieldErrors({});
 
         if (isRateLimited) {
-            setMessage(`⚠️ Vui lòng đợi ${rateLimitTimeLeft} giây trước khi thử lại.`);
+            setMessage(makeMessage(
+                AlertTriangle,
+                `Vui lòng đợi ${rateLimitTimeLeft} giây trước khi thử lại.`
+            ));
             setMessageType('error');
             return;
         }
@@ -160,7 +185,10 @@ const ResetPassword = () => {
                 newPassword
             });
 
-            setMessage(res.data.message || 'Đặt lại mật khẩu thành công!');
+            setMessage(makeMessage(
+                CheckCircle,
+                res.data.message || 'Đặt lại mật khẩu thành công!'
+            ));
             setMessageType('success');
             setShowSuccessModal(true);
 
@@ -169,27 +197,35 @@ const ResetPassword = () => {
             const field = err.response?.data?.field;
             const errorData = err.response?.data || {};
             const errorMessage = errorData.message || 'Không thể đặt lại mật khẩu';
-            const errorCode = errorData.code;
 
             if (field === 'newPassword') {
                 setFieldErrors({ newPassword: errorMessage });
             } else if (field === 'confirmPassword') {
                 setFieldErrors({ confirmPassword: errorMessage });
             } else if (status === 404) {
-                setMessage('❌ Email này chưa được đăng ký trong hệ thống.');
+                setMessage(makeMessage(
+                    XCircle,
+                    'Email này chưa được đăng ký trong hệ thống.'
+                ));
                 setMessageType('error');
             } else if (status === 429) {
                 const remainingSeconds = errorData.data?.remainingSeconds || 60;
                 const maxAttempts = errorData.data?.maxAttempts || 3;
-                setMessage(`⚠️ Bạn chỉ được gửi tối đa ${maxAttempts} lần. Vui lòng thử lại sau ${remainingSeconds} giây.`);
+                setMessage(makeMessage(
+                    AlertTriangle,
+                    `Bạn chỉ được gửi tối đa ${maxAttempts} lần. Vui lòng thử lại sau ${remainingSeconds} giây.`
+                ));
                 setMessageType('error');
                 setIsRateLimited(true);
                 setRateLimitTimeLeft(remainingSeconds);
             } else if (status === 400 && errorMessage?.toLowerCase().includes('otp')) {
-                setMessage('❌ Mã OTP không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu mã mới.');
+                setMessage(makeMessage(
+                    XCircle,
+                    'Mã OTP không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu mã mới.'
+                ));
                 setMessageType('error');
             } else {
-                setMessage(errorMessage);
+                setMessage(makeMessage(AlertCircle, errorMessage));
                 setMessageType('error');
             }
         } finally {
@@ -223,8 +259,11 @@ const ResetPassword = () => {
                         <LockKeyhole size={42} className="forgot-icon" />
                     </div>
                     <h2>ĐẶT LẠI MẬT KHẨU</h2>
-                    <p className="auth-subtitle">⏳ Đang kiểm tra mã OTP...</p>
-                    <div className="loading-spinner" style={{ textAlign: 'center', padding: '20px' }}>
+                    <p className="auth-subtitle auth-checking">
+                        <Loader2 size={16} className="spin-icon" />
+                        Đang kiểm tra mã OTP...
+                    </p>
+                    <div className="loading-spinner">
                         <div className="spinner"></div>
                     </div>
                 </div>
@@ -251,12 +290,8 @@ const ResetPassword = () => {
 
                 {message && (
                     <div className={`forgot-message ${messageType}`}>
-                        {messageType === 'success' ? (
-                            <CheckCircle size={18} />
-                        ) : (
-                            <AlertCircle size={18} />
-                        )}
-                        <span>{message}</span>
+                        {message.icon}
+                        <span>{message.text}</span>
                     </div>
                 )}
 

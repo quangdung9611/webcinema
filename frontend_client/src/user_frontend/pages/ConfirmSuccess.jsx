@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { QRCodeCanvas } from 'qrcode.react';
-import api from '../../api/api'; // ✅ Import api
+import api from '../../api/api';
 import {
   CheckCircle2,
   MapPin,
@@ -103,7 +103,7 @@ const ConfirmSuccess = () => {
           console.error('API không trả về success');
         }
       } catch (err) {
-        console.error('❌ Lỗi lấy thông tin vé:', err.message);
+        console.error('Lỗi lấy thông tin vé:', err.message);
         // Nếu lỗi, thử dùng dữ liệu từ sessionStorage
         const saved = sessionStorage.getItem('lastSuccessTicket');
         if (saved) {
@@ -127,9 +127,9 @@ const ConfirmSuccess = () => {
   if (loading) {
     return (
       <div className="confirm-success-page">
-        <div className="success-container" style={{ justifyContent: 'center', alignItems: 'center', display: 'flex', flexDirection: 'column', height: '60vh' }}>
+        <div className="success-loading">
           <Loader2 size={48} className="spinner" />
-          <p style={{ marginTop: '16px', color: '#666' }}>Đang tải thông tin vé...</p>
+          <p className="loading-text">Đang tải thông tin vé...</p>
         </div>
       </div>
     );

@@ -1,5 +1,13 @@
 // src/user_frontend/components/LockModal.jsx
 import React, { useState, useEffect, useRef } from 'react';
+import {
+    Mail,
+    CheckCircle2,
+    Lock,
+    Hourglass,
+    Timer,
+    Lightbulb,
+} from 'lucide-react';
 import Modal from './Modal';
 import '../styles/LockModal.css';
 
@@ -12,7 +20,7 @@ const LockModal = ({
     email = '',
     onClose = () => {},
     onResend = () => {},
-    autoClose = false, // Thêm prop để kiểm soát tự đóng
+    autoClose = false,
 }) => {
     const [timeLeft, setTimeLeft] = useState(0);
     const [remainingPercent, setRemainingPercent] = useState(100);
@@ -39,7 +47,6 @@ const LockModal = ({
                     isExpiredRef.current = true;
                     setIsExpired(true);
 
-                    // Chỉ tự đóng nếu autoClose = true
                     if (autoClose) {
                         closeTimeout = setTimeout(() => {
                             onClose?.();
@@ -77,7 +84,11 @@ const LockModal = ({
             return (
                 <div className="otp-lock-modal-body">
                     <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-                        <span className="lock-icon" style={{ fontSize: '48px' }}>✅</span>
+                        <CheckCircle2
+                            size={48}
+                            color="#4ade80"
+                            style={{ display: 'inline-block' }}
+                        />
                     </div>
                     <p style={{ textAlign: 'center', lineHeight: 1.6, color: '#4ade80' }}>
                         OTP đã được mở khóa. Vui lòng thử lại.
@@ -92,27 +103,42 @@ const LockModal = ({
         return (
             <div className="otp-lock-modal-body">
                 {email && (
-                    <p className="lock-email" style={{ textAlign: 'center', marginBottom: '12px' }}>
-                        📧 <strong>{email}</strong>
+                    <p
+                        className="lock-email"
+                        style={{
+                            textAlign: 'center',
+                            marginBottom: '12px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            justifyContent: 'center',
+                            width: '100%',
+                        }}
+                    >
+                        <Mail size={16} /> <strong>{email}</strong>
                     </p>
                 )}
 
                 <div className="lock-icon-wrapper" style={{ textAlign: 'center', marginBottom: '16px' }}>
-                    <span className="lock-icon" style={{ fontSize: '48px' }}>🔒</span>
+                    <Lock
+                        size={48}
+                        color="#fbbf24"
+                        style={{ display: 'inline-block' }}
+                    />
                 </div>
 
                 <p className="lock-message" style={{ textAlign: 'center', marginBottom: '16px', lineHeight: 1.6 }}>
                     {message}
                 </p>
 
-                <div className="lock-timer" style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
+                <div className="lock-timer" style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     gap: '10px',
                     marginBottom: '12px'
                 }}>
-                    <span className="timer-icon">⏳</span>
+                    <Hourglass size={18} color="#fbbf24" />
                     <span className="timer-text">
                         Vui lòng thử lại sau{' '}
                         <strong style={{ color: '#fbbf24' }}>
@@ -141,27 +167,37 @@ const LockModal = ({
                     />
                 </div>
 
-                <p className="lock-time-remaining" style={{ 
-                    textAlign: 'center', 
-                    fontSize: '14px', 
+                <p className="lock-time-remaining" style={{
+                    textAlign: 'center',
+                    fontSize: '14px',
                     color: '#94a3b8',
-                    marginBottom: '16px'
+                    marginBottom: '16px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    justifyContent: 'center',
+                    width: '100%',
                 }}>
-                    ⏱️ Còn lại {minutes} phút {seconds} giây
+                    <Timer size={16} /> Còn lại {minutes} phút {seconds} giây
                 </p>
 
-                <p className="lock-sub-message" style={{ 
-                    textAlign: 'center', 
-                    fontSize: '13px', 
+                <p className="lock-sub-message" style={{
+                    textAlign: 'center',
+                    fontSize: '13px',
                     color: '#94a3b8',
-                    marginBottom: '12px'
+                    marginBottom: '12px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    justifyContent: 'center',
+                    width: '100%',
                 }}>
-                    💡 Bạn có thể đóng modal này, timer vẫn chạy ở phía sau.
+                    <Lightbulb size={14} /> Bạn có thể đóng modal này, timer vẫn chạy ở phía sau.
                 </p>
 
-                <p className="lock-sub-message" style={{ 
-                    textAlign: 'center', 
-                    fontSize: '13px', 
+                <p className="lock-sub-message" style={{
+                    textAlign: 'center',
+                    fontSize: '13px',
                     color: '#94a3b8'
                 }}>
                     Vui lòng bấm <strong>"Gửi lại OTP"</strong> sau khi hết thời gian khóa.
@@ -170,7 +206,6 @@ const LockModal = ({
         );
     };
 
-    // Kiểm tra xem còn thời gian lock không
     const isStillLocked = lockedUntil && lockedUntil > Date.now();
 
     return (
@@ -178,9 +213,27 @@ const LockModal = ({
             show={show}
             onClose={onClose}
             type={isExpired ? 'success' : 'warning'}
-            title={isExpired ? '✅ Đã mở khóa OTP' : '🔒 OTP đã bị khóa'}
-            confirmText={isStillLocked ? `⏳ Gửi lại OTP (${minutes}:${seconds.toString().padStart(2, '0')})` : 'Gửi lại OTP'}
-            cancelText={isStillLocked ? `Đóng (${minutes}:${seconds.toString().padStart(2, '0')})` : 'Đóng'}
+            title={
+                isExpired ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                        <CheckCircle2 size={20} /> Đã mở khóa OTP
+                    </span>
+                ) : (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                        <Lock size={20} /> OTP đã bị khóa
+                    </span>
+                )
+            }
+            confirmText={
+                isStillLocked
+                    ? `Gửi lại OTP (${minutes}:${seconds.toString().padStart(2, '0')})`
+                    : 'Gửi lại OTP'
+            }
+            cancelText={
+                isStillLocked
+                    ? `Đóng (${minutes}:${seconds.toString().padStart(2, '0')})`
+                    : 'Đóng'
+            }
             onConfirm={() => {
                 if (!isStillLocked) {
                     onResend?.();

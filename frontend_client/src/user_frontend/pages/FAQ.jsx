@@ -18,7 +18,8 @@ import {
   FileText,
   Headphones,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  MessageCircle,
 } from 'lucide-react';
 import '../styles/FAQ.css';
 
@@ -347,7 +348,7 @@ const FAQ = () => {
           </div>
         </div>
 
-        {/* CATEGORY FILTER (đơn giản hóa) */}
+        {/* CATEGORY FILTER */}
         <div className="faq-categories">
           <span className="faq-category active">Tất cả</span>
           <span className="faq-category">Đặt vé</span>
@@ -404,7 +405,9 @@ const FAQ = () => {
 
         {/* SUPPORT CTA */}
         <div className="faq-support">
-          <h3>💬 Vẫn còn thắc mắc?</h3>
+          <h3>
+            <MessageCircle size={22} /> Vẫn còn thắc mắc?
+          </h3>
           <p>
             Nếu bạn không tìm thấy câu trả lời trong danh sách trên, đội ngũ hỗ trợ của CineStar luôn sẵn sàng giúp đỡ bạn 24/7.
           </p>

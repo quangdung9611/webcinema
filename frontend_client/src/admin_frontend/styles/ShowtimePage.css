@@ -45,6 +45,14 @@
     font-style: normal;
 }
 
+/* ✅ Icon trong strong của info box */
+.showtime-create-body strong svg {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 4px;
+    color: var(--accent-ice);
+}
+
 /* ==========================================================
    FORM
    ========================================================== */
@@ -244,6 +252,8 @@
     letter-spacing: 0.04em;
     margin-top: var(--space-sm);
     width: 100%;
+    border: none;
+    cursor: pointer;
 }
 
 .showtime-submit-btn:hover:not(:disabled) {
@@ -264,6 +274,11 @@
 
 .showtime-submit-btn.loading {
     opacity: 0.8;
+}
+
+/* ✅ Icon trong nút submit */
+.showtime-submit-btn svg {
+    flex-shrink: 0;
 }
 
 /* ==========================================================
@@ -342,6 +357,115 @@
 }
 
 /* ==========================================================
+   ✅ ADMIN TABLE - VIỀN BẠC SÁNG NỔI TRÊN NỀN ĐEN
+   ========================================================== */
+
+/* Wrapper bao ngoài bảng */
+.admin-table-wrapper {
+    overflow: auto;
+    max-height: 700px;
+    border-radius: var(--radius-md);
+    /* ✅ Viền bạc sáng */
+    border: 1.5px solid var(--silver-primary);
+    /* ✅ Glow nhẹ để bảng nổi bật trên nền đen */
+    box-shadow:
+        0 0 0 1px rgba(221, 226, 232, 0.1),
+        0 0 24px rgba(221, 226, 232, 0.12),
+        0 8px 32px rgba(0, 0, 0, 0.4);
+    background: var(--bg-primary);
+}
+
+/* Bảng chính */
+.admin-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.9rem;
+    min-width: 800px;
+    /* ✅ Viền ngoài cùng cho table */
+    border: 1px solid rgba(221, 226, 232, 0.15);
+}
+
+.admin-table thead {
+    background: var(--bg-elevated);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.admin-table th {
+    padding: 12px 14px;
+    text-align: left;
+    font-weight: var(--fw-bold);
+    color: var(--text-heading);
+    /* ✅ Viền dưới bạc sáng */
+    border-bottom: 2px solid var(--silver-primary);
+    /* ✅ Viền phải mờ giữa các cột */
+    border-right: 1px solid rgba(221, 226, 232, 0.08);
+    font-size: 0.85rem;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    background: var(--bg-elevated);
+}
+
+.admin-table th:last-child {
+    border-right: none;
+}
+
+.admin-table td {
+    padding: 10px 14px;
+    text-align: left;
+    /* ✅ Viền dưới mờ phân tách row */
+    border-bottom: 1px solid rgba(221, 226, 232, 0.06);
+    /* ✅ Viền phải mờ giữa các cột */
+    border-right: 1px solid rgba(221, 226, 232, 0.04);
+    vertical-align: middle;
+    background: var(--bg-primary);
+    color: var(--text-body);
+    transition: background var(--transition-fast);
+}
+
+.admin-table td:last-child {
+    border-right: none;
+}
+
+.admin-table tbody tr:hover td {
+    background: var(--bg-elevated);
+}
+
+.admin-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Scrollbar cho admin-table-wrapper */
+.admin-table-wrapper::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.admin-table-wrapper::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+    border-radius: var(--radius-sm);
+}
+
+.admin-table-wrapper::-webkit-scrollbar-thumb {
+    background: var(--silver-dark);
+    border-radius: var(--radius-round);
+    border: 2px solid var(--bg-primary);
+}
+
+.admin-table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: var(--silver-primary);
+}
+
+/* Firefox */
+.admin-table-wrapper {
+    scrollbar-width: thin;
+    scrollbar-color: var(--silver-dark) var(--bg-primary);
+}
+
+/* ==========================================================
    ADMIN TABLE ACTIONS
    ========================================================== */
 .admin-table-actions {
@@ -359,6 +483,9 @@
     border-radius: var(--radius-sm);
     transition: all var(--transition-fast);
     color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    cursor: pointer;
 }
 
 .admin-action-btn:hover {
@@ -425,7 +552,7 @@
 }
 
 /* ==========================================================
-   ALERT MODAL CONTENT
+   ✅ ALERT MODAL CONTENT (có hỗ trợ icon)
    ========================================================== */
 .admin-alert-content {
     padding: var(--space-sm) 0;
@@ -437,11 +564,99 @@
     color: var(--text-body);
 }
 
-/* ==========================================================
-   RESPONSIVE
-   ========================================================== */
+/* ✅ Message trong alert giữ format xuống dòng */
+.admin-alert-message {
+    white-space: pre-wrap;
+    line-height: 1.6;
+    color: var(--text-body);
+}
 
-/* Tablet */
+/* ==========================================================
+   RESPONSIVE - 1200px
+   ========================================================== */
+@media (max-width: 1200px) {
+    .admin-table {
+        font-size: 0.85rem;
+    }
+
+    .admin-table th,
+    .admin-table td {
+        padding: 10px 12px;
+    }
+
+    .admin-table-wrapper {
+        max-height: 600px;
+    }
+
+    .showtime-submit-btn {
+        padding: 12px 28px;
+    }
+
+    .showtime-movie-icon {
+        width: 28px;
+        height: 28px;
+    }
+
+    .showtime-movie-title {
+        font-size: 0.9rem;
+    }
+}
+
+/* ==========================================================
+   RESPONSIVE - 992px
+   ========================================================== */
+@media (max-width: 992px) {
+    .admin-table {
+        font-size: 0.85rem;
+        min-width: 700px;
+    }
+
+    .admin-table th,
+    .admin-table td {
+        padding: 8px 10px;
+    }
+
+    .admin-table-wrapper {
+        max-height: 550px;
+    }
+
+    .showtime-form-row {
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-sm);
+    }
+
+    .showtime-create-header {
+        font-size: 1rem;
+    }
+
+    .showtime-create-body {
+        font-size: 0.9rem;
+    }
+
+    .showtime-submit-btn {
+        padding: 11px 24px;
+        font-size: 0.9rem;
+    }
+
+    .showtime-movie-checkbox-list,
+    .showtime-room-checkbox-list {
+        max-height: 200px;
+    }
+
+    .showtime-time-badge {
+        font-size: 0.75rem;
+        padding: 3px 10px;
+    }
+
+    .showtime-room-badge {
+        font-size: 0.65rem;
+        padding: 2px 8px;
+    }
+}
+
+/* ==========================================================
+   RESPONSIVE - 768px (Tablet)
+   ========================================================== */
 @media (max-width: 768px) {
     .showtime-form-row {
         grid-template-columns: 1fr;
@@ -461,9 +676,25 @@
     .showtime-create-body {
         font-size: 0.85rem;
     }
+
+    .admin-table {
+        font-size: 0.85rem;
+        min-width: 600px;
+    }
+
+    .admin-table th,
+    .admin-table td {
+        padding: 8px 10px;
+    }
+
+    .admin-table-wrapper {
+        max-height: 500px;
+    }
 }
 
-/* Mobile */
+/* ==========================================================
+   RESPONSIVE - 480px (Mobile)
+   ========================================================== */
 @media (max-width: 480px) {
     .showtime-movie-checkbox,
     .showtime-room-checkbox {
@@ -493,6 +724,20 @@
     .admin-action-btn svg {
         width: 14px;
         height: 14px;
+    }
+
+    .admin-table {
+        font-size: 0.8rem;
+        min-width: 500px;
+    }
+
+    .admin-table th,
+    .admin-table td {
+        padding: 6px 8px;
+    }
+
+    .admin-table-wrapper {
+        max-height: 400px;
     }
 }
 

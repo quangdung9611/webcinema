@@ -12,7 +12,10 @@ import {
   AlertCircle,
   CheckCircle,
   Ticket,
-  Shield
+  Shield,
+  Pin,
+  FileText,
+  BookOpen,
 } from 'lucide-react';
 import '../styles/ContactSupport.css';
 
@@ -110,7 +113,9 @@ const ContactSupport = () => {
               <form onSubmit={handleSubmit} className="contact-form">
                 <div className="contact-form-row">
                   <div className="contact-form-group">
-                    <label htmlFor="name"><User size={18} /> Họ tên</label>
+                    <label htmlFor="name">
+                      <User size={18} /> Họ tên
+                    </label>
                     <input
                       type="text"
                       id="name"
@@ -122,7 +127,9 @@ const ContactSupport = () => {
                     />
                   </div>
                   <div className="contact-form-group">
-                    <label htmlFor="email"><Mail size={18} /> Email</label>
+                    <label htmlFor="email">
+                      <Mail size={18} /> Email
+                    </label>
                     <input
                       type="email"
                       id="email"
@@ -136,7 +143,9 @@ const ContactSupport = () => {
                 </div>
 
                 <div className="contact-form-group">
-                  <label htmlFor="subject">📌 Chủ đề</label>
+                  <label htmlFor="subject">
+                    <Pin size={18} /> Chủ đề
+                  </label>
                   <input
                     type="text"
                     id="subject"
@@ -149,7 +158,9 @@ const ContactSupport = () => {
                 </div>
 
                 <div className="contact-form-group">
-                  <label htmlFor="message">📝 Nội dung</label>
+                  <label htmlFor="message">
+                    <FileText size={18} /> Nội dung
+                  </label>
                   <textarea
                     id="message"
                     name="message"
@@ -171,7 +182,9 @@ const ContactSupport = () => {
 
           {/* FAQ nhanh */}
           <div className="contact-quick-faq">
-            <h3>📖 Bạn có thể tìm thấy câu trả lời tại</h3>
+            <h3>
+              <BookOpen size={22} /> Bạn có thể tìm thấy câu trả lời tại
+            </h3>
             <div className="contact-quick-links">
               <Link to="/faq" className="contact-quick-link">
                 <AlertCircle size={20} />

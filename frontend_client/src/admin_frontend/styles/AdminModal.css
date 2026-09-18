@@ -105,13 +105,28 @@
     min-width: 0;
 }
 
+/* ✅ Wrapper icon – hỗ trợ SVG từ lucide-react */
 .admin-modal-icon {
     display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
     flex-shrink: 0;
-    font-size: 40px;
     line-height: 1;
-    filter: drop-shadow(0 0 12px rgba(232, 232, 232, 0.08));
 }
+
+.admin-modal-icon svg {
+    width: 100%;
+    height: 100%;
+    stroke-width: 2;
+}
+
+/* ✅ Màu icon theo type – SVG dùng currentColor */
+.admin-modal-icon.success-icon { color: #8bc34a; }
+.admin-modal-icon.error-icon   { color: #ef5350; }
+.admin-modal-icon.warning-icon { color: #ffb74d; }
+.admin-modal-icon.info-icon    { color: #64b5f6; }
 
 .admin-modal-title {
     margin: 0;
@@ -219,6 +234,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 6px;
     border: var(--border-premium);
     border-radius: var(--radius-round);
     background: rgba(255,255,255,0.06);
@@ -251,6 +267,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 6px;
     border: none;
     border-radius: var(--radius-round);
     background: var(--premium-gradient);
@@ -325,7 +342,8 @@
         font-size: var(--font-size-h4);
     }
     .admin-modal-icon {
-        font-size: 34px;
+        width: 34px;
+        height: 34px;
     }
     .admin-modal-body {
         padding: var(--space-lg) var(--space-lg) var(--space-md) var(--space-lg);
@@ -363,7 +381,8 @@
         font-size: var(--font-size-h5);
     }
     .admin-modal-icon {
-        font-size: 28px;
+        width: 28px;
+        height: 28px;
     }
     .admin-modal-close-btn {
         width: 32px;

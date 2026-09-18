@@ -1,5 +1,6 @@
 // src/user_frontend/components/ResetPasswordSuccessModal.jsx
 import React from 'react';
+import { PartyPopper, CheckCircle2 } from 'lucide-react';
 import Modal from './Modal';
 
 const ResetPasswordSuccessModal = ({
@@ -13,7 +14,11 @@ const ResetPasswordSuccessModal = ({
         <Modal
             show={show}
             type="success"
-            title="🎉 Đặt lại mật khẩu thành công!"
+            title={
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                    <PartyPopper size={22} /> Đặt lại mật khẩu thành công!
+                </span>
+            }
             confirmText="Đăng nhập ngay"
             cancelText="Đóng"
             onConfirm={onConfirm}
@@ -31,7 +36,7 @@ const ResetPasswordSuccessModal = ({
                     justifyContent: "center",
                     margin: "0 auto 15px"
                 }}>
-                    <span style={{ fontSize: "36px" }}>✅</span>
+                    <CheckCircle2 size={36} color="#4ade80" />
                 </div>
 
                 <p style={{

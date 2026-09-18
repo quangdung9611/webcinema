@@ -15,7 +15,19 @@ import {
     Film,
     MapPin,
     Clock,
-    Sparkles
+    Sparkles,
+    Rocket,
+    BarChart3,
+    CheckCircle2,
+    AlertTriangle,
+    XCircle,
+    SkipForward,
+    Search,
+    Home,
+    Settings,
+    Calendar,
+    Info,
+    Lightbulb,
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -503,64 +515,64 @@ const ShowTimePage = () => {
 
         let message = 'Tạo lịch chiếu đã hoàn tất.';
 
-        message += `\n\n📊 TỔNG QUAN:`;
-        message += `\n✅ Đã tạo: ${createdCount} suất`;
+        message += `\n\nTỔNG QUAN:`;
+        message += `\n- Đã tạo: ${createdCount} suất`;
 
         if (conflictsCount > 0) {
-            message += `\n⚠️ Bỏ qua: ${conflictsCount} suất bị trùng`;
+            message += `\n- Bỏ qua: ${conflictsCount} suất bị trùng`;
         }
 
         if (skippedPastCount > 0) {
-            message += `\n⏭️ Bỏ qua: ${skippedPastCount} suất trong quá khứ`;
+            message += `\n- Bỏ qua: ${skippedPastCount} suất trong quá khứ`;
         }
 
         if (summary?.byMovie && typeof summary.byMovie === 'object') {
-            message += `\n\n🎬 PHÂN BỔ THEO PHIM:`;
+            message += `\n\nPHÂN BỔ THEO PHIM:`;
             for (const [movieId, stats] of Object.entries(summary.byMovie)) {
                 const title = stats?.title || `Movie #${movieId}`;
                 const count = Number(stats?.count) || 0;
-                message += `\n  🎥 ${title}: ${count} suất`;
+                message += `\n  - ${title}: ${count} suất`;
             }
         }
 
         if (summary?.byRoomType && typeof summary.byRoomType === 'object') {
-            message += `\n\n🏠 PHÂN BỔ THEO HẠNG PHÒNG:`;
+            message += `\n\nPHÂN BỔ THEO HẠNG PHÒNG:`;
             for (const [type, count] of Object.entries(summary.byRoomType)) {
-                message += `\n  • ${type}: ${Number(count) || 0} suất`;
+                message += `\n  - ${type}: ${Number(count) || 0} suất`;
             }
         }
 
         if (summary?.byTimeSlot && typeof summary.byTimeSlot === 'object') {
-            message += `\n\n🕐 PHÂN BỔ THEO KHUNG GIỜ:`;
-            message += `\n  🌅 Sáng: ${Number(summary.byTimeSlot.MORNING) || 0} suất`;
-            message += `\n  ☀️ Trưa: ${Number(summary.byTimeSlot.AFTERNOON) || 0} suất`;
-            message += `\n  🌆 Chiều: ${Number(summary.byTimeSlot.EVENING) || 0} suất`;
-            message += `\n  🌙 Đêm: ${Number(summary.byTimeSlot.NIGHT) || 0} suất`;
+            message += `\n\nPHÂN BỔ THEO KHUNG GIỜ:`;
+            message += `\n  - Sáng: ${Number(summary.byTimeSlot.MORNING) || 0} suất`;
+            message += `\n  - Trưa: ${Number(summary.byTimeSlot.AFTERNOON) || 0} suất`;
+            message += `\n  - Chiều: ${Number(summary.byTimeSlot.EVENING) || 0} suất`;
+            message += `\n  - Đêm: ${Number(summary.byTimeSlot.NIGHT) || 0} suất`;
         }
 
         if (summary?.byDayType && typeof summary.byDayType === 'object') {
-            message += `\n\n📅 PHÂN BỔ THEO LOẠI NGÀY:`;
+            message += `\n\nPHÂN BỔ THEO LOẠI NGÀY:`;
             if (summary.byDayType.ALL !== undefined) {
-                message += `\n  • ALL: ${Number(summary.byDayType.ALL) || 0} suất`;
+                message += `\n  - ALL: ${Number(summary.byDayType.ALL) || 0} suất`;
             }
             if (summary.byDayType.WEEKDAY !== undefined) {
-                message += `\n  • WEEKDAY: ${Number(summary.byDayType.WEEKDAY) || 0} suất`;
+                message += `\n  - WEEKDAY: ${Number(summary.byDayType.WEEKDAY) || 0} suất`;
             }
             if (summary.byDayType.WEEKEND !== undefined) {
-                message += `\n  • WEEKEND: ${Number(summary.byDayType.WEEKEND) || 0} suất`;
+                message += `\n  - WEEKEND: ${Number(summary.byDayType.WEEKEND) || 0} suất`;
             }
         }
 
         if (createdCount === 0) {
-            message += `\n\n⚠️ KHÔNG TẠO ĐƯỢC SUẤT NÀO!`;
-            message += `\n\n🔍 Hệ thống đã kiểm tra:`;
-            message += `\n  • 🎬 Phim được chọn`;
-            message += `\n  • 🏠 Phòng chiếu`;
-            message += `\n  • ⚙️ Cấu hình movie_showtime_config`;
-            message += `\n  • 📅 Loại ngày WEEKDAY/WEEKEND`;
-            message += `\n  • ⏰ Giờ hoạt động của rạp`;
-            message += `\n  • 🚫 Trùng suất chiếu`;
-            message += `\n  • ⏭️ Suất trong quá khứ`;
+            message += `\n\nKHÔNG TẠO ĐƯỢC SUẤT NÀO!`;
+            message += `\n\nHệ thống đã kiểm tra:`;
+            message += `\n  - Phim được chọn`;
+            message += `\n  - Phòng chiếu`;
+            message += `\n  - Cấu hình movie_showtime_config`;
+            message += `\n  - Loại ngày WEEKDAY/WEEKEND`;
+            message += `\n  - Giờ hoạt động của rạp`;
+            message += `\n  - Trùng suất chiếu`;
+            message += `\n  - Suất trong quá khứ`;
         }
 
         return message;
@@ -609,11 +621,11 @@ const ShowTimePage = () => {
             setSubmitLoading(true);
             setFormErrors({});
 
-            const movieIds = Array.isArray(scheduleData.movie_ids) 
-                ? scheduleData.movie_ids 
+            const movieIds = Array.isArray(scheduleData.movie_ids)
+                ? scheduleData.movie_ids
                 : [];
 
-            console.log('📤 movieIds:', movieIds);
+            console.log('movieIds:', movieIds);
 
             if (movieIds.length === 0) {
                 showAlert('Lỗi', 'Vui lòng chọn ít nhất 1 phim', 'error');
@@ -628,14 +640,14 @@ const ShowTimePage = () => {
                 end_date: scheduleData.end_date
             };
 
-            console.log('📤 AUTO SCHEDULE PAYLOAD:', payload);
+            console.log('AUTO SCHEDULE PAYLOAD:', payload);
 
             const res = await api.post('/api/showtimes/schedule', payload);
 
-            console.log('📥 RAW RESPONSE:', res.data);
+            console.log('RAW RESPONSE:', res.data);
 
             const result = normalizeScheduleResult(res);
-            console.log('📊 NORMALIZED RESULT:', result);
+            console.log('NORMALIZED RESULT:', result);
 
             await fetchShowtimes(pagination.page, search);
 
@@ -645,19 +657,19 @@ const ShowTimePage = () => {
 
             if (result.success === false || result.data.length === 0) {
                 let errorMessage = result.message || 'Không tạo được suất chiếu.';
-                
+
                 if (result.skippedInvalidConfig && result.skippedInvalidConfig.length > 0) {
                     const firstError = result.skippedInvalidConfig[0];
-                    errorMessage = `❌ ${firstError.reason || 'Cấu hình không phù hợp'}`;
+                    errorMessage = firstError.reason || 'Cấu hình không phù hợp';
                 } else if (result.skippedNoRoom && result.skippedNoRoom.length > 0) {
-                    errorMessage = `❌ Không có phòng ${result.skippedNoRoom[0].room_type} cho phim này.`;
+                    errorMessage = `Không có phòng ${result.skippedNoRoom[0].room_type} cho phim này.`;
                 } else if (result.conflicts && result.conflicts.length > 0) {
-                    errorMessage = `❌ Phòng bị trùng lịch.`;
+                    errorMessage = `Phòng bị trùng lịch.`;
                 }
-                
-                showAlert('⚠️ Không tạo được lịch', errorMessage, 'warning');
+
+                showAlert('Không tạo được lịch', errorMessage, 'warning');
             } else {
-                showAlert('✅ Tạo lịch chiếu thành công', message, 'success');
+                showAlert('Tạo lịch chiếu thành công', message, 'success');
             }
 
         } catch (error) {
@@ -678,13 +690,13 @@ const ShowTimePage = () => {
                     configs: 'Cấu hình'
                 };
                 const fieldLabel = fieldLabels[backendField] || backendField;
-                errorDetail = `❌ ${fieldLabel}: ${backendMessage}`;
+                errorDetail = `${fieldLabel}: ${backendMessage}`;
             }
 
             if (backendField) {
                 setFormErrors({ [backendField]: backendMessage });
             } else {
-                showAlert('❌ Không thể tạo lịch', errorDetail, 'error');
+                showAlert('Không thể tạo lịch', errorDetail, 'error');
             }
 
         } finally {
@@ -837,16 +849,16 @@ const ShowTimePage = () => {
                         <div className="showtime-create-body">
                             <strong>Hệ thống sẽ:</strong>
                             <br />
-                            1. 🎬 Lấy cấu hình suất chiếu từ database (<strong>movie_showtime_config</strong>)
+                            1. Lấy cấu hình suất chiếu từ database (<strong>movie_showtime_config</strong>)
                             <br />
-                            2. 🏠 Tự tìm phòng đúng loại và tránh trùng
+                            2. Tự tìm phòng đúng loại và tránh trùng
                             <br />
-                            3. 📅 Tự xử lý WEEKDAY / WEEKEND
+                            3. Tự xử lý WEEKDAY / WEEKEND
                             <br />
-                            4. ⏰ Tự tính giờ hoạt động của rạp
+                            4. Tự tính giờ hoạt động của rạp
                             <br /><br />
                             <strong>
-                                💡 Cấu hình được quản lý tại trang <em>"Cấu hình lịch chiếu"</em>
+                                <Lightbulb size={14} /> Cấu hình được quản lý tại trang <em>"Cấu hình lịch chiếu"</em>
                             </strong>
                         </div>
                     </div>
@@ -1005,7 +1017,13 @@ const ShowTimePage = () => {
                                 Đang xử lý...
                             </>
                         ) : (
-                            editingShowtime ? 'Lưu thay đổi' : '🚀 Tạo lịch chiếu'
+                            editingShowtime ? (
+                                'Lưu thay đổi'
+                            ) : (
+                                <>
+                                    <Rocket size={18} /> Tạo lịch chiếu
+                                </>
+                            )
                         )}
                     </button>
                 </div>
@@ -1024,7 +1042,7 @@ const ShowTimePage = () => {
                 cancelText="Hủy"
             >
                 <div className="admin-alert-content">
-                    <p style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+                    <p className="admin-alert-message">
                         {alertModal.message}
                     </p>
                 </div>

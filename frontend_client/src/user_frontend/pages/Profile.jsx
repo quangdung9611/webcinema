@@ -15,6 +15,7 @@ import {
     Star,
     Info,
     ChevronRight,
+    ChevronLeft,
     Camera,
     Calendar,
     Clock,
@@ -32,7 +33,9 @@ import {
     Home,
     ShieldCheck,
     Save,
-    HelpCircle
+    HelpCircle,
+    Wrench,
+    Lightbulb,
 } from 'lucide-react';
 
 const Profile = () => {
@@ -541,9 +544,8 @@ const Profile = () => {
                     <aside className="galaxy-sidebar">
                         <div className="user-card-top">
                             <div
-                                className="avatar-wrapper"
+                                className="avatar-wrapper avatar-clickable"
                                 onClick={openFileSelector}
-                                style={{ cursor: 'pointer' }}
                             >
                                 {avatarUrl ? (
                                     <img src={avatarUrl} alt="avatar" className="avatar-img" />
@@ -606,10 +608,10 @@ const Profile = () => {
                             <div className="nav-link">
                                 Email: hotro@galaxystudio.vn <ChevronRight size={16} />
                             </div>
-                            <div className="nav-link" onClick={handleForgotPassword} style={{ cursor: 'pointer' }}>
+                            <div className="nav-link nav-link-clickable" onClick={handleForgotPassword}>
                                 <HelpCircle size={16} /> Quên mật khẩu <ChevronRight size={16} />
                             </div>
-                            <div className="nav-link" onClick={handleForgotPin} style={{ cursor: 'pointer' }}>
+                            <div className="nav-link nav-link-clickable" onClick={handleForgotPin}>
                                 <KeyRound size={16} /> Quên mã PIN <ChevronRight size={16} />
                             </div>
                         </nav>
@@ -706,7 +708,7 @@ const Profile = () => {
                                                         <div className="info-row highlight">
                                                             <Calendar size={14} />
                                                             <span>{item.selectedDate}</span>
-                                                            <Clock size={14} style={{ marginLeft: '15px' }} />
+                                                            <Clock size={14} className="info-icon-gap" />
                                                             <span>{item.startTime}</span>
                                                         </div>
                                                         <div className="seat-text">
@@ -731,7 +733,7 @@ const Profile = () => {
                                         </div>
                                     ) : (
                                         <div className="empty-history">
-                                            <ClipboardList size={48} color="#444" />
+                                            <ClipboardList size={48} className="empty-icon" />
                                             <p>
                                                 {bookingHistory.length === 0
                                                     ? 'Bạn chưa có giao dịch nào trong năm 2026.'
@@ -775,7 +777,11 @@ const Profile = () => {
                                     <div className="profile-info-item">
                                         <span className="label"><Star size={16} /> Hạng thành viên</span>
                                         <span className="value">
-                                            {formData.points >= 4000000 ? '⭐ VIP' : '🌟 Thường'}
+                                            {formData.points >= 4000000 ? (
+                                                <><Star size={14} fill="#f37021" color="#f37021" /> VIP</>
+                                            ) : (
+                                                <><Star size={14} fill="#f5b50a" color="#f5b50a" /> Thường</>
+                                            )}
                                         </span>
                                     </div>
                                 </div>
@@ -787,12 +793,14 @@ const Profile = () => {
                             {activeTab === 'edit' && (
                                 <div className="profile-edit-view">
                                     <div className="edit-header">
-                                        <h3>🔧 Chỉnh sửa hồ sơ</h3>
-                                        <button 
-                                            className="btn-back-profile" 
+                                        <h3>
+                                            <Wrench size={20} /> Chỉnh sửa hồ sơ
+                                        </h3>
+                                        <button
+                                            className="btn-back-profile"
                                             onClick={() => setActiveTab('profile')}
                                         >
-                                            ← Quay lại
+                                            <ChevronLeft size={16} /> Quay lại
                                         </button>
                                     </div>
 
@@ -850,24 +858,25 @@ const Profile = () => {
                                                     placeholder="Nhập địa chỉ"
                                                 />
                                             </div>
-                                            
+
                                             <div className="edit-actions-row">
-                                                <button 
-                                                    type="submit" 
+                                                <button
+                                                    type="submit"
                                                     className="btn-save-section"
                                                     disabled={loadingEdit}
                                                 >
-                                                    {loadingEdit ? 'Đang lưu...' : '💾 Lưu thông tin'}
+                                                    <Save size={16} />
+                                                    {loadingEdit ? 'Đang lưu...' : 'Lưu thông tin'}
                                                 </button>
-                                                <button 
-                                                    type="button" 
+                                                <button
+                                                    type="button"
                                                     className="btn-change-password"
                                                     onClick={() => setShowPasswordModal(true)}
                                                 >
                                                     <Lock size={16} /> Đổi mật khẩu
                                                 </button>
-                                                <button 
-                                                    type="button" 
+                                                <button
+                                                    type="button"
                                                     className="btn-change-pin"
                                                     onClick={() => setShowPinModal(true)}
                                                 >
@@ -890,7 +899,7 @@ const Profile = () => {
                 type="file"
                 ref={fileInputRef}
                 accept="image/*"
-                style={{ display: 'none' }}
+                className="hidden-file-input"
                 onChange={handleAvatarChange}
             />
 
@@ -912,7 +921,9 @@ const Profile = () => {
                 <div className="modal-overlay" onClick={() => setShowPasswordModal(false)}>
                     <div className="modal-container" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h2>🔑 Đổi mật khẩu</h2>
+                            <h2>
+                                <KeyRound size={20} /> Đổi mật khẩu
+                            </h2>
                             <button className="modal-close-btn" onClick={() => setShowPasswordModal(false)}>
                                 <X size={24} />
                             </button>
@@ -958,8 +969,8 @@ const Profile = () => {
                                             {showNewPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                                         </button>
                                     </div>
-                                    <small style={{ color: '#64748b', fontSize: '12px', display: 'block', marginTop: '4px' }}>
-                                        💡 Mật khẩu phải có ít nhất 6 ký tự
+                                    <small className="form-hint">
+                                        <Lightbulb size={12} /> Mật khẩu phải có ít nhất 6 ký tự
                                     </small>
                                 </div>
                                 <div className="form-group">
@@ -1010,7 +1021,9 @@ const Profile = () => {
                 <div className="modal-overlay" onClick={() => setShowPinModal(false)}>
                     <div className="modal-container" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h2>🔐 Đổi mã PIN</h2>
+                            <h2>
+                                <ShieldCheck size={20} /> Đổi mã PIN
+                            </h2>
                             <button className="modal-close-btn" onClick={() => setShowPinModal(false)}>
                                 <X size={24} />
                             </button>
@@ -1020,8 +1033,8 @@ const Profile = () => {
                                 <div className="form-group">
                                     <label>Mã PIN hiện tại</label>
                                     {renderPinInputs('oldPin', pinData.oldPin, 'Nhập mã PIN hiện tại', showOldPin, setShowOldPin)}
-                                    <small style={{ color: '#64748b', fontSize: '12px', display: 'block', marginTop: '4px' }}>
-                                        💡 Mã PIN gồm 6 chữ số
+                                    <small className="form-hint">
+                                        <Lightbulb size={12} /> Mã PIN gồm 6 chữ số
                                     </small>
                                 </div>
                                 <div className="form-group">

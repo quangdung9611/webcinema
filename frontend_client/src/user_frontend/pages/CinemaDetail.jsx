@@ -11,9 +11,7 @@ import {
   ExternalLink,
   Loader2,
   Film,
-  CalendarDays,
-  Clock3,
-  Clock
+  Clock,
 } from 'lucide-react';
 
 // 👇 Import MovieCard
@@ -169,6 +167,34 @@ const CinemaDetail = () => {
   };
 
   // ============================================================
+  //  HELPER: Trích xuất src từ iframe để mở tab mới
+  // ============================================================
+  const extractIframeSrc = (link) => {
+    if (!link) return '';
+    const match = link.match(/src=["']([^"']+)["']/i);
+    return match ? match[1] : '';
+  };
+
+  // ============================================================
+  //  HANDLE OPEN MAP - MỞ TAB MỚI TRỰC TIẾP
+  // ============================================================
+  const handleOpenMap = (e) => {
+    e.preventDefault();
+    if (!cinema.map_link) return;
+
+    if (isIframeLink(cinema.map_link)) {
+      // Nếu là iframe, trích xuất src và mở tab mới
+      const src = extractIframeSrc(cinema.map_link);
+      if (src) {
+        window.open(src, '_blank');
+      }
+    } else {
+      // Nếu là link thường, mở trực tiếp
+      window.open(cinema.map_link, '_blank');
+    }
+  };
+
+  // ============================================================
   //  RENDER
   // ============================================================
   return (
@@ -201,7 +227,7 @@ const CinemaDetail = () => {
             <span className="cinema-label">HỆ THỐNG RẠP</span>
             <h1 className="cinema-name">{cinema.cinema_name || 'Rạp chiếu phim'}</h1>
             <div className="cinema-divider"></div>
-            
+
             <div className="cinema-info-grid">
               <div className="info-item">
                 <MapPin size={18} />
@@ -218,111 +244,8 @@ const CinemaDetail = () => {
               {cinema.map_link && (
                 <a
                   href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    // Nếu là iframe, mở popup hiển thị
-                    if (isIframeLink(cinema.map_link)) {
-                      const win = window.open('', '_blank', 'width=900,height=650,scrollbars=yes');
-                      if (win) {
-                        win.document.write(`
-                          <html>
-                            <head>
-                              <title>Google Map - ${cinema.cinema_name}</title>
-                              <style>
-                                * { margin: 0; padding: 0; box-sizing: border-box; }
-                                body { 
-                                  display: flex; 
-                                  justify-content: center; 
-                                  align-items: center; 
-                                  min-height: 100vh; 
-                                  background: #0f0f1a; 
-                                  font-family: Arial, sans-serif;
-                                  padding: 12px;
-                                }
-                                .map-container {
-                                  width: 100%;
-                                  max-width: 100%;
-                                  height: 100vh;
-                                  max-height: 600px;
-                                  border-radius: 12px;
-                                  overflow: hidden;
-                                  box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-                                }
-                                .map-container iframe {
-                                  width: 100%;
-                                  height: 100%;
-                                  border: none;
-                                  display: block;
-                                }
-                                .close-btn {
-                                  position: fixed;
-                                  top: 20px;
-                                  right: 20px;
-                                  background: rgba(255,255,255,0.15);
-                                  backdrop-filter: blur(10px);
-                                  color: white;
-                                  border: 1px solid rgba(255,255,255,0.2);
-                                  border-radius: 50%;
-                                  width: 44px;
-                                  height: 44px;
-                                  font-size: 24px;
-                                  cursor: pointer;
-                                  display: flex;
-                                  align-items: center;
-                                  justify-content: center;
-                                  transition: all 0.3s ease;
-                                  z-index: 100;
-                                  font-weight: 300;
-                                }
-                                .close-btn:hover {
-                                  background: rgba(255,255,255,0.3);
-                                  transform: rotate(90deg);
-                                }
-                                .title-bar {
-                                  position: fixed;
-                                  top: 0;
-                                  left: 0;
-                                  right: 0;
-                                  padding: 16px 80px 16px 24px;
-                                  background: rgba(15,15,26,0.92);
-                                  backdrop-filter: blur(12px);
-                                  border-bottom: 1px solid rgba(255,255,255,0.08);
-                                  z-index: 99;
-                                  color: white;
-                                  font-size: 16px;
-                                  font-weight: 600;
-                                  letter-spacing: 0.5px;
-                                }
-                                .title-bar span {
-                                  color: #c9a84c;
-                                }
-                                @media (max-width: 640px) {
-                                  .title-bar { font-size: 13px; padding: 12px 70px 12px 16px; }
-                                  .close-btn { width: 36px; height: 36px; font-size: 20px; top: 10px; right: 10px; }
-                                  .map-container { max-height: 80vh; }
-                                }
-                              </style>
-                            </head>
-                            <body>
-                              <div class="title-bar">
-                                📍 <span>${cinema.cinema_name}</span> - Google Maps
-                              </div>
-                              <button class="close-btn" onclick="window.close()">✕</button>
-                              <div class="map-container">
-                                ${cinema.map_link}
-                              </div>
-                            </body>
-                          </html>
-                        `);
-                        win.document.close();
-                      }
-                    } else {
-                      // Nếu là link thường, mở trực tiếp
-                      window.open(cinema.map_link, '_blank');
-                    }
-                  }}
+                  onClick={handleOpenMap}
                   className="cinema-map-link"
-                  style={{ cursor: 'pointer' }}
                 >
                   <ExternalLink size={18} />
                   Xem Google Maps
@@ -371,20 +294,15 @@ const CinemaDetail = () => {
         {/* MOVIE GRID */}
         {filteredMovies.length > 0 ? (
           <div className="movie-grid">
-            {filteredMovies.map((movie, index) => {
-              const movieShowtimes = movie.showtimes.filter(st =>
-                st.start_time.startsWith(selectedDate)
-              );
-              return (
-                <div key={movie.movie_id} className="movie-card-wrapper">
-                  <MovieCard
-                    movie={movie}
-                    onClick={() => handleMovieClick(movie)}
-                    index={index}
-                  />
-                </div>
-              );
-            })}
+            {filteredMovies.map((movie, index) => (
+              <div key={movie.movie_id} className="movie-card-wrapper">
+                <MovieCard
+                  movie={movie}
+                  onClick={() => handleMovieClick(movie)}
+                  index={index}
+                />
+              </div>
+            ))}
           </div>
         ) : (
           <div className="empty-box">
@@ -404,7 +322,7 @@ const CinemaDetail = () => {
               <h2>VỊ TRÍ RẠP</h2>
             </div>
             <div className="map-wrapper">
-              <div 
+              <div
                 className="cinema-iframe-container"
                 dangerouslySetInnerHTML={{ __html: cinema.map_link }}
               />

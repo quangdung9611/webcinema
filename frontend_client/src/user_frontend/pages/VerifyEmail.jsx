@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { CheckCircle, XCircle, Loader, MailCheck, Sparkles, PartyPopper } from 'lucide-react';
+import {
+    CheckCircle,
+    XCircle,
+    Loader,
+    MailCheck,
+    Sparkles,
+    PartyPopper,
+    Lightbulb,
+} from 'lucide-react';
 import api from '../../api/api';
 import socketService from '../../api/socket';
 import '../styles/VerifyEmail.css';
@@ -30,16 +38,16 @@ const VerifyEmail = () => {
                     setStatus('success');
                     setMessage(response.data.message || 'Xác thực email thành công!');
                     setUserData(response.data.data || null);
-                    
+
                     localStorage.setItem('email_verified', 'true');
 
                     const email = response.data.data?.email;
                     const fullName = response.data.data?.full_name;
 
-                    console.log('📨 [VERIFY] Email verified:', email);
+                    console.log('[VERIFY] Email verified:', email);
 
                     // =========================================================
-                    // ✅ LƯU SESSIONSTORAGE ĐỂ REGISTERPIN BIẾT (NẾU VẪN CÒN MỞ)
+                    // LƯU SESSIONSTORAGE ĐỂ REGISTERPIN BIẾT (NẾU VẪN CÒN MỞ)
                     // =========================================================
                     sessionStorage.setItem('email_verified_success', 'true');
                     sessionStorage.setItem('email_verified_data', JSON.stringify({
@@ -47,15 +55,15 @@ const VerifyEmail = () => {
                         full_name: fullName,
                         timestamp: Date.now()
                     }));
-                    console.log('📨 [STORAGE] Đã lưu vào sessionStorage');
+                    console.log('[STORAGE] Đã lưu vào sessionStorage');
 
                     // =========================================================
-                    // 🆕 CỐ GẮNG GỬI QUA SOCKET (NẾU CÓ THỂ)
+                    // CỐ GẮNG GỬI QUA SOCKET (NẾU CÓ THỂ)
                     // =========================================================
                     try {
                         let socket = socketService.getSocket();
                         if (!socket || !socket.connected) {
-                            console.log('🔄 [VERIFY] Đang kết nối socket...');
+                            console.log('[VERIFY] Đang kết nối socket...');
                             socketService.connect(email);
                             await new Promise(resolve => setTimeout(resolve, 1500));
                             socket = socketService.getSocket();
@@ -68,24 +76,23 @@ const VerifyEmail = () => {
                                 full_name: fullName,
                                 success: true
                             });
-                            console.log('📨 [SOCKET] Đã emit email_verified cho:', email);
+                            console.log('[SOCKET] Đã emit email_verified cho:', email);
                         }
                     } catch (socketError) {
-                        console.warn('⚠️ [SOCKET] Lỗi emit:', socketError.message);
+                        console.warn('[SOCKET] Lỗi emit:', socketError.message);
                     }
 
                     // =========================================================
-                    // ✅ COUNTDOWN VÀ CHUYỂN VỀ LOGIN
+                    // COUNTDOWN VÀ CHUYỂN VỀ LOGIN
                     // =========================================================
                     const timer = setInterval(() => {
                         setCountdown(prev => {
                             if (prev <= 1) {
                                 clearInterval(timer);
-                                // 🆕 CHUYỂN VỀ LOGIN VỚI STATE VERIFIED
                                 navigate('/login', {
                                     state: {
                                         verified: true,
-                                        message: '✅ Xác thực email thành công! Vui lòng đăng nhập.'
+                                        message: 'Xác thực email thành công! Vui lòng đăng nhập.'
                                     }
                                 });
                                 return 0;
@@ -100,7 +107,7 @@ const VerifyEmail = () => {
                 }
 
             } catch (error) {
-                console.error('❌ [VERIFY] Lỗi:', error);
+                console.error('[VERIFY] Lỗi:', error);
                 setStatus('error');
                 setMessage(error.response?.data?.message || error.message || 'Xác thực email thất bại');
             }
@@ -115,7 +122,7 @@ const VerifyEmail = () => {
     useEffect(() => {
         const socket = socketService.getSocket();
         if (!socket || !socket.connected) {
-            console.log('🔄 [VERIFY] Kết nối socket từ tab VerifyEmail');
+            console.log('[VERIFY] Kết nối socket từ tab VerifyEmail');
             socketService.connect('verify-tab');
         }
     }, []);
@@ -168,8 +175,11 @@ const VerifyEmail = () => {
                         </div>
                     </div>
 
-                    <h2 className="verify-title success">Xác thực thành công! 🎉</h2>
-                    
+                    <h2 className="verify-title success">
+                        Xác thực thành công!
+                        <PartyPopper size={28} color="#4ade80" className="verify-title-icon" />
+                    </h2>
+
                     {userData && (
                         <div className="verify-user-info">
                             <div className="verify-user-avatar">
@@ -231,7 +241,7 @@ const VerifyEmail = () => {
                                 navigate('/login', {
                                     state: {
                                         verified: true,
-                                        message: '✅ Xác thực email thành công! Vui lòng đăng nhập.'
+                                        message: 'Xác thực email thành công! Vui lòng đăng nhập.'
                                     }
                                 });
                             }}
@@ -241,7 +251,8 @@ const VerifyEmail = () => {
                     </div>
 
                     <p className="verify-hint">
-                        💡 Bạn sẽ được chuyển đến trang đăng nhập sau {countdown}s
+                        <Lightbulb size={14} className="verify-hint-icon" />
+                        <span>Bạn sẽ được chuyển đến trang đăng nhập sau {countdown}s</span>
                     </p>
                 </div>
             </div>

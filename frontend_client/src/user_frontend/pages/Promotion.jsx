@@ -4,7 +4,7 @@ import api from '../../api/api';
 import {
     ChevronRight,
     Gift,
-    AlertCircle
+    AlertCircle,
 } from 'lucide-react';
 
 import {
@@ -242,21 +242,9 @@ const Promotion = () => {
 
                         <SwiperSlide>
 
-                            <div
-                                style={{
-                                    width: '100%',
-                                    height: '100%',
-                                    background:
-                                        'linear-gradient(135deg, #1a1a1a, #0a0a0a)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: '#888',
-                                    fontSize: '1.5rem',
-                                    fontWeight: 'bold'
-                                }}
-                            >
-                                🎁 Khuyến Mãi
+                            <div className="promotion-banner-fallback">
+                                <Gift size={48} />
+                                <span>Khuyến Mãi</span>
                             </div>
 
                         </SwiperSlide>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../api/api';
 import { Link } from 'react-router-dom';
-import { Eye } from 'lucide-react';
+import { Eye, Film } from 'lucide-react';
 
 // 👇 Import CinemaCard
 import CinemaCard from '../components/CinemaCard';
@@ -107,7 +107,8 @@ const Actor = () => {
                     ) : (
                         <SwiperSlide>
                             <div className="hero-banner-fallback">
-                                <span>🎬 Diễn Viên</span>
+                                <Film size={32} />
+                                <span>Diễn Viên</span>
                             </div>
                         </SwiperSlide>
                     )}

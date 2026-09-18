@@ -2,6 +2,12 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import {
+    Lock,
+    Smartphone,
+    Hourglass,
+    ShieldCheck,
+} from 'lucide-react';
 import adminapi from '../../api/adminapi';
 import adminSocketService from '../../api/adminsocket';
 import { useAdminAuth } from '../../context/AdminAuthContext';
@@ -28,7 +34,7 @@ const AdminSessionGuard = ({ children }) => {
     const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
 
     const handleModalConfirm = useCallback(() => {
-        console.log('➡️ [ADMIN SESSION GUARD] Clicking "Đăng nhập lại"!');
+        console.log('[ADMIN SESSION GUARD] Clicking "Đăng nhập lại"!');
         setShowModal(false);
         hasRedirectedRef.current = false;
         isProcessingRef.current = false;
@@ -46,7 +52,7 @@ const AdminSessionGuard = ({ children }) => {
             : 'Phiên đăng nhập admin đã hết hạn. Vui lòng đăng nhập lại.');
         const newDevice = detail.newDevice || null;
 
-        console.warn('🔐 [ADMIN SESSION GUARD] Opening modal:', { code, message });
+        console.warn('[ADMIN SESSION GUARD] Opening modal:', { code, message });
         setModalCode(code);
         setModalMessage(message);
         setModalNewDevice(newDevice);
@@ -62,23 +68,18 @@ const AdminSessionGuard = ({ children }) => {
 
         const detail = eventOrDetail?.detail || eventOrDetail || {};
         const code = detail.code || 'TOKEN_EXPIRED';
-        console.warn(`🔴 [ADMIN SESSION GUARD] SESSION EXPIRED (${code})`);
+        console.warn(`[ADMIN SESSION GUARD] SESSION EXPIRED (${code})`);
 
         // ====================================================
         // ✅ FIX: GỌI API LOGOUT ĐỂ BACKEND CLEAR COOKIE
         // ====================================================
-        // Lý do:
-        //   - Cookie httpOnly → JS KHÔNG THỂ xóa trực tiếp
-        //   - Chỉ backend mới clear được cookie qua res.clearCookie()
-        //   - Route /logout KHÔNG cần auth (đã sửa router) → luôn 200
-        // ====================================================
         try {
-            console.log('🧹 [ADMIN SESSION GUARD] Calling logout API to clear cookies...');
+            console.log('[ADMIN SESSION GUARD] Calling logout API to clear cookies...');
             await adminapi.post('/admin/api/auth/logout');
-            console.log('✅ [ADMIN SESSION GUARD] Logout API success — cookies cleared');
+            console.log('[ADMIN SESSION GUARD] Logout API success — cookies cleared');
         } catch (logoutError) {
             console.warn(
-                '⚠️ [ADMIN SESSION GUARD] Logout API failed (ignored):',
+                '[ADMIN SESSION GUARD] Logout API failed (ignored):',
                 logoutError?.message
             );
             // ✅ KHÔNG THROW — vẫn tiếp tục flow
@@ -98,10 +99,10 @@ const AdminSessionGuard = ({ children }) => {
 
     useEffect(() => {
         isMountedRef.current = true;
-        console.log('🛡️ [ADMIN SESSION GUARD] Started');
+        console.log('[ADMIN SESSION GUARD] Started');
 
         const handleAuthCleanedUp = () => {
-            console.log('🧹 [ADMIN SESSION GUARD] authCleanedUp');
+            console.log('[ADMIN SESSION GUARD] authCleanedUp');
             isLoggingOutRef.current = true;
             setTimeout(() => { isLoggingOutRef.current = false; }, 3000);
         };
@@ -116,7 +117,7 @@ const AdminSessionGuard = ({ children }) => {
 
     useEffect(() => {
         const handleSessionEvent = (event) => {
-            console.log('📨 [ADMIN SESSION GUARD] sessionExpired event:', event?.detail);
+            console.log('[ADMIN SESSION GUARD] sessionExpired event:', event?.detail);
             handleSessionExpired(event);
         };
         window.addEventListener('sessionExpired', handleSessionEvent);
@@ -125,7 +126,7 @@ const AdminSessionGuard = ({ children }) => {
 
     useEffect(() => {
         const handleSocketSessionExpired = (detail = {}) => {
-            console.log('📨 [ADMIN SESSION GUARD] Socket callback:', detail);
+            console.log('[ADMIN SESSION GUARD] Socket callback:', detail);
             handleSessionExpired({ ...detail, source: 'socket', fromSocket: true });
         };
         adminSocketService.setOnSessionExpired(handleSocketSessionExpired);
@@ -147,7 +148,7 @@ const AdminSessionGuard = ({ children }) => {
 
     useEffect(() => {
         const handleAdminLoggedIn = () => {
-            console.log('🟢 [ADMIN SESSION GUARD] Admin logged in → reset');
+            console.log('[ADMIN SESSION GUARD] Admin logged in → reset');
             isProcessingRef.current = false;
             hasRedirectedRef.current = false;
             isLoggingOutRef.current = false;
@@ -166,9 +167,14 @@ const AdminSessionGuard = ({ children }) => {
             <DeviceLoginModal
                 show={showModal}
                 type="warning"
-                title={isDeviceReplacedCode
-                    ? '🔐 Phát hiện đăng nhập trên thiết bị khác'
-                    : '🔐 Phiên đăng nhập admin đã hết hạn'}
+                title={
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                        <Lock size={22} />
+                        {isDeviceReplacedCode
+                            ? 'Phát hiện đăng nhập trên thiết bị khác'
+                            : 'Phiên đăng nhập admin đã hết hạn'}
+                    </span>
+                }
                 message={modalMessage}
                 onConfirm={handleModalConfirm}
                 confirmText={countdown > 0 ? `Đăng nhập lại (${countdown}s)` : 'Đăng nhập lại'}
@@ -176,8 +182,14 @@ const AdminSessionGuard = ({ children }) => {
             >
                 {isDeviceReplacedCode && modalNewDevice && (
                     <div className="session-expired-device-info">
-                        <p>
-                            <strong>📱 Thiết bị mới:</strong>{' '}
+                        <p style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            flexWrap: 'wrap'
+                        }}>
+                            <Smartphone size={16} />
+                            <strong>Thiết bị mới:</strong>{' '}
                             {typeof modalNewDevice === 'string'
                                 ? modalNewDevice
                                 : modalNewDevice?.deviceName ||
@@ -188,14 +200,30 @@ const AdminSessionGuard = ({ children }) => {
                 )}
 
                 {countdown > 0 && (
-                    <div className="session-expired-countdown">
-                        ⏳ Tự động chuyển đến trang đăng nhập sau <strong>{countdown}</strong> giây...
+                    <div className="session-expired-countdown" style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        justifyContent: 'center',
+                        width: '100%',
+                        flexWrap: 'wrap'
+                    }}>
+                        <Hourglass size={16} />
+                        <span>
+                            Tự động chuyển đến trang đăng nhập sau <strong>{countdown}</strong> giây...
+                        </span>
                     </div>
                 )}
 
                 {isDeviceReplacedCode && (
-                    <div className="session-expired-security">
-                        🛡️ Nếu đây không phải là bạn, vui lòng đổi mật khẩu ngay lập tức.
+                    <div className="session-expired-security" style={{
+                        display: 'inline-flex',
+                        alignItems: 'flex-start',
+                        gap: '8px',
+                        width: '100%'
+                    }}>
+                        <ShieldCheck size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+                        <span>Nếu đây không phải là bạn, vui lòng đổi mật khẩu ngay lập tức.</span>
                     </div>
                 )}
             </DeviceLoginModal>

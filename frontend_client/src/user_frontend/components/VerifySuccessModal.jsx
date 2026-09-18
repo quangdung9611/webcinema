@@ -1,6 +1,6 @@
 // src/user_frontend/components/VerifySuccessModal.js
 import React, { useEffect } from 'react';
-import { CheckCircle } from 'lucide-react';
+import { PartyPopper, CheckCircle, Hourglass } from 'lucide-react';
 import Modal from './Modal';
 
 const VerifySuccessModal = ({
@@ -15,7 +15,11 @@ const VerifySuccessModal = ({
         <Modal
             show={show}
             type="success"
-            title="🎉 Xác thực thành công!"
+            title={
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                    <PartyPopper size={22} /> Xác thực thành công!
+                </span>
+            }
             confirmText={`Đăng nhập (${countdown}s)`}
             onConfirm={onClose}
             onCancel={onClose}
@@ -33,11 +37,35 @@ const VerifySuccessModal = ({
                 <p style={{ color: "var(--text-heading)", fontSize: "18px", fontWeight: "bold", marginBottom: "8px" }}>
                     Chúc mừng {full_name || "bạn"}!
                 </p>
-                <p style={{ color: "var(--text-secondary)", lineHeight: 1.6 }}>
-                    Tài khoản của bạn đã được xác thực thành công! 🎊
+                <p style={{
+                    color: "var(--text-secondary)",
+                    lineHeight: 1.6,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    justifyContent: "center",
+                    flexWrap: "wrap",
+                    width: "100%"
+                }}>
+                    Tài khoản của bạn đã được xác thực thành công!
+                    <PartyPopper size={18} color="#4ade80" />
                 </p>
-                <p style={{ color: "var(--text-muted)", fontSize: "14px", marginTop: "10px" }}>
-                    ⏳ Tự động chuyển đến trang đăng nhập sau <strong style={{ color: "#4ade80" }}>{countdown}</strong> giây...
+                <p style={{
+                    color: "var(--text-muted)",
+                    fontSize: "14px",
+                    marginTop: "10px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    justifyContent: "center",
+                    flexWrap: "wrap",
+                    width: "100%"
+                }}>
+                    <Hourglass size={14} />
+                    <span>
+                        Tự động chuyển đến trang đăng nhập sau{' '}
+                        <strong style={{ color: "#4ade80" }}>{countdown}</strong> giây...
+                    </span>
                 </p>
             </div>
         </Modal>

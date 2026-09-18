@@ -12,6 +12,13 @@ import {
     useLocation,
 } from 'react-router-dom';
 
+import {
+    Lock,
+    Smartphone,
+    Hourglass,
+    ShieldCheck,
+} from 'lucide-react';
+
 import api from '../../api/api';
 import socketService from '../../api/socket';
 import { useAuth } from '../../context/AuthContext';
@@ -52,7 +59,7 @@ const SessionGuard = ({ children }) => {
     }, [location.pathname]);
 
     const clearBookingSession = useCallback(() => {
-        console.log('🧹 [SESSION GUARD] Clearing booking session...');
+        console.log('[SESSION GUARD] Clearing booking session...');
 
         const bookingKeys = [
             'selectedSeats', 'holdExpiresAt', 'currentShowtimeId',
@@ -87,11 +94,11 @@ const SessionGuard = ({ children }) => {
             });
         }
 
-        console.log('✅ [SESSION GUARD] Booking session cleared');
+        console.log('[SESSION GUARD] Booking session cleared');
     }, []);
 
     const handleModalConfirm = useCallback(() => {
-        console.log('➡️ [SESSION GUARD] Clicking "Đăng nhập lại"!');
+        console.log('[SESSION GUARD] Clicking "Đăng nhập lại"!');
         setShowModal(false);
 
         if (isBookingPage()) {
@@ -117,7 +124,7 @@ const SessionGuard = ({ children }) => {
             : 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
         const newDevice = detail.newDevice || null;
 
-        console.warn('🔐 [SESSION GUARD] Opening modal:', { code, message, newDevice });
+        console.warn('[SESSION GUARD] Opening modal:', { code, message, newDevice });
 
         setModalCode(code);
         setModalMessage(message);
@@ -131,12 +138,12 @@ const SessionGuard = ({ children }) => {
             if (!isMountedRef.current) return;
 
             if (isLoggingOutRef.current) {
-                console.log('⏭️ [SESSION GUARD] Đang logout → bỏ qua');
+                console.log('[SESSION GUARD] Đang logout → bỏ qua');
                 return;
             }
 
             if (isProcessingRef.current) {
-                console.log('⚠️ [SESSION GUARD] Already processed, skip');
+                console.log('[SESSION GUARD] Already processed, skip');
                 return;
             }
             isProcessingRef.current = true;
@@ -144,23 +151,18 @@ const SessionGuard = ({ children }) => {
             const detail = eventOrDetail?.detail || eventOrDetail || {};
             const code = detail.code || 'TOKEN_EXPIRED';
 
-            console.warn(`🔴 [SESSION GUARD] SESSION EXPIRED (${code})`, { ...detail });
+            console.warn(`[SESSION GUARD] SESSION EXPIRED (${code})`, { ...detail });
 
             // ====================================================
             // ✅ FIX: GỌI API LOGOUT ĐỂ BACKEND CLEAR COOKIE
             // ====================================================
-            // Lý do:
-            //   - Cookie httpOnly → JS KHÔNG THỂ xóa trực tiếp
-            //   - Chỉ backend mới clear được cookie qua res.clearCookie()
-            //   - Route /logout KHÔNG cần auth (đã sửa router) → luôn 200
-            // ====================================================
             try {
-                console.log('🧹 [SESSION GUARD] Calling logout API to clear cookies...');
+                console.log('[SESSION GUARD] Calling logout API to clear cookies...');
                 await api.post('/api/auth/logout');
-                console.log('✅ [SESSION GUARD] Logout API success — cookies cleared by backend');
+                console.log('[SESSION GUARD] Logout API success — cookies cleared by backend');
             } catch (logoutError) {
                 console.warn(
-                    '⚠️ [SESSION GUARD] Logout API failed (ignored):',
+                    '[SESSION GUARD] Logout API failed (ignored):',
                     logoutError?.message
                 );
                 // ✅ KHÔNG THROW — vẫn tiếp tục flow
@@ -182,10 +184,10 @@ const SessionGuard = ({ children }) => {
 
     useEffect(() => {
         isMountedRef.current = true;
-        console.log('🛡️ [SESSION GUARD] Started');
+        console.log('[SESSION GUARD] Started');
 
         const handleAuthCleanedUp = (event) => {
-            console.log('🧹 [SESSION GUARD] authCleanedUp:', event?.detail);
+            console.log('[SESSION GUARD] authCleanedUp:', event?.detail);
             isLoggingOutRef.current = true;
             setTimeout(() => {
                 isLoggingOutRef.current = false;
@@ -202,7 +204,7 @@ const SessionGuard = ({ children }) => {
 
     useEffect(() => {
         const handleSessionEvent = (event) => {
-            console.log('📨 [SESSION GUARD] sessionExpired event:', event?.detail);
+            console.log('[SESSION GUARD] sessionExpired event:', event?.detail);
             handleSessionExpired(event);
         };
 
@@ -215,7 +217,7 @@ const SessionGuard = ({ children }) => {
 
     useEffect(() => {
         const handleSocketSessionExpired = (detail = {}) => {
-            console.log('📨 [SESSION GUARD] Socket callback:', detail);
+            console.log('[SESSION GUARD] Socket callback:', detail);
             handleSessionExpired({
                 ...detail,
                 source: 'socket',
@@ -250,7 +252,7 @@ const SessionGuard = ({ children }) => {
 
     useEffect(() => {
         const handleUserLoggedIn = () => {
-            console.log('🟢 [SESSION GUARD] User logged in → reset');
+            console.log('[SESSION GUARD] User logged in → reset');
             isProcessingRef.current = false;
             hasRedirectedRef.current = false;
             isLoggingOutRef.current = false;
@@ -275,9 +277,12 @@ const SessionGuard = ({ children }) => {
                 show={showModal}
                 type="warning"
                 title={
-                    isDeviceReplacedCode
-                        ? '🔐 Phát hiện đăng nhập trên thiết bị khác'
-                        : '🔐 Phiên đăng nhập đã hết hạn'
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                        <Lock size={22} />
+                        {isDeviceReplacedCode
+                            ? 'Phát hiện đăng nhập trên thiết bị khác'
+                            : 'Phiên đăng nhập đã hết hạn'}
+                    </span>
                 }
                 message={modalMessage}
                 onConfirm={handleModalConfirm}
@@ -288,8 +293,14 @@ const SessionGuard = ({ children }) => {
             >
                 {isDeviceReplacedCode && modalNewDevice && (
                     <div className="session-expired-device-info">
-                        <p>
-                            <strong>📱 Thiết bị mới:</strong>{' '}
+                        <p style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            flexWrap: 'wrap'
+                        }}>
+                            <Smartphone size={16} />
+                            <strong>Thiết bị mới:</strong>{' '}
                             {typeof modalNewDevice === 'string'
                                 ? modalNewDevice
                                 : modalNewDevice?.deviceName ||
@@ -300,15 +311,31 @@ const SessionGuard = ({ children }) => {
                 )}
 
                 {countdown > 0 && (
-                    <div className="session-expired-countdown">
-                        ⏳ Tự động chuyển đến trang đăng nhập sau{' '}
-                        <strong>{countdown}</strong> giây...
+                    <div className="session-expired-countdown" style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        justifyContent: 'center',
+                        width: '100%',
+                        flexWrap: 'wrap'
+                    }}>
+                        <Hourglass size={16} />
+                        <span>
+                            Tự động chuyển đến trang đăng nhập sau{' '}
+                            <strong>{countdown}</strong> giây...
+                        </span>
                     </div>
                 )}
 
                 {isDeviceReplacedCode && (
-                    <div className="session-expired-security">
-                        🛡️ Nếu đây không phải là bạn, vui lòng đổi mật khẩu ngay lập tức.
+                    <div className="session-expired-security" style={{
+                        display: 'inline-flex',
+                        alignItems: 'flex-start',
+                        gap: '8px',
+                        width: '100%'
+                    }}>
+                        <ShieldCheck size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+                        <span>Nếu đây không phải là bạn, vui lòng đổi mật khẩu ngay lập tức.</span>
                     </div>
                 )}
             </DeviceLoginModal>

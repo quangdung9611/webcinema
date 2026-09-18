@@ -1,7 +1,17 @@
 // VerifyOtpPin.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ShieldCheck, ArrowLeft, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
+import {
+    ShieldCheck,
+    ArrowLeft,
+    RefreshCw,
+    AlertCircle,
+    CheckCircle,
+    AlertTriangle,
+    XCircle,
+    Clock,
+    Loader2,
+} from 'lucide-react';
 import api from '../../api/api';
 import LoadingButton from '../components/LoadingButton';
 import LockModal from '../components/LockModal';
@@ -28,15 +38,15 @@ const VerifyOtpPin = () => {
 
     const { safeNavigate, invalidateOTP } = useOTPGuard(email, purpose, {
         onInvalidate: () => {
-            console.log('🔴 [VERIFY OTP PIN] OTP đã bị vô hiệu do rời trang');
+            console.log('[VERIFY OTP PIN] OTP đã bị vô hiệu do rời trang');
             localStorage.removeItem('verify_otp_pin_lock');
             sessionStorage.removeItem('verify_otp_pin_email');
         }
     });
 
     const [otp, setOtp] = useState('');
-    const [error, setError] = useState('');
-    const [successMessage, setSuccessMessage] = useState('');
+    const [error, setError] = useState(null);          // { icon, text }
+    const [successMessage, setSuccessMessage] = useState(null); // { icon, text }
     const [loading, setLoading] = useState(false);
 
     const [countdown, setCountdown] = useState(0);
@@ -63,6 +73,17 @@ const VerifyOtpPin = () => {
 
     const OTP_LOCK_STORAGE_KEY = 'verify_otp_pin_lock';
     const EMAIL_STORAGE_KEY = 'verify_otp_pin_email';
+
+    // Helper tạo message object
+    const makeError = (IconComponent, text) => ({
+        icon: <IconComponent size={18} />,
+        text,
+    });
+
+    const makeSuccess = (IconComponent, text) => ({
+        icon: <IconComponent size={20} />,
+        text,
+    });
 
     useEffect(() => {
         if (email) {
@@ -94,7 +115,6 @@ const VerifyOtpPin = () => {
                 return null;
             }
 
-            const elapsed = Math.floor((Date.now() - data.lockedAt) / 1000);
             const remaining = Math.max(0, Math.ceil((data.lockedUntil - Date.now()) / 1000));
 
             if (remaining > 0) {
@@ -116,7 +136,7 @@ const VerifyOtpPin = () => {
         localStorage.removeItem(OTP_LOCK_STORAGE_KEY);
         sessionStorage.removeItem(EMAIL_STORAGE_KEY);
         safeNavigate('/forgot-pin', {
-            message: '⏳ OTP đã hết hạn. Vui lòng gửi lại OTP mới.'
+            message: 'OTP đã hết hạn. Vui lòng gửi lại OTP mới.'
         });
     };
 
@@ -136,8 +156,8 @@ const VerifyOtpPin = () => {
         }
 
         setOtp('');
-        setError('');
-        setSuccessMessage('');
+        setError(null);
+        setSuccessMessage(null);
         setCountdown(0);
         setIsOtpExpired(false);
         setOtpAttempts(0);
@@ -244,7 +264,7 @@ const VerifyOtpPin = () => {
                     setCountdown(0);
                 }
             } catch (error) {
-                console.error('❌ [VERIFY OTP PIN] Failed to fetch TTL:', error);
+                console.error('[VERIFY OTP PIN] Failed to fetch TTL:', error);
                 setIsOtpExpired(true);
                 setCountdown(0);
             } finally {
@@ -322,8 +342,8 @@ const VerifyOtpPin = () => {
         newOtp[index] = clean;
         setOtp(newOtp.join(''));
         if (clean && index < 5) otpRefs.current[index + 1]?.focus();
-        if (error) setError('');
-        if (successMessage) setSuccessMessage('');
+        if (error) setError(null);
+        if (successMessage) setSuccessMessage(null);
     };
 
     const handleOtpKeyDown = (index, e) => {
@@ -332,26 +352,35 @@ const VerifyOtpPin = () => {
         }
     };
 
-    // ✅ SỬA: HANDLE RESEND OTP - CHỜ EMAIL GỬI XONG MỚI RESET TIMER
+    // HANDLE RESEND OTP
     const handleResendOtp = async () => {
         if (isLocked) {
-            setError(`⚠️ Bạn đã bị khóa. Vui lòng đợi ${formatLockTime(lockTimeLeft)} để thử lại.`);
+            setError(makeError(
+                AlertTriangle,
+                `Bạn đã bị khóa. Vui lòng đợi ${formatLockTime(lockTimeLeft)} để thử lại.`
+            ));
             return;
         }
 
         if (isRateLimited) {
-            setError(`⚠️ Vui lòng đợi ${formatLockTime(rateLimitTimeLeft)} trước khi thử lại.`);
+            setError(makeError(
+                AlertTriangle,
+                `Vui lòng đợi ${formatLockTime(rateLimitTimeLeft)} trước khi thử lại.`
+            ));
             return;
         }
 
         if (countdown > 0 && !isOtpExpired) {
-            setError(`⚠️ Vui lòng đợi ${formatTime(countdown)} trước khi gửi lại.`);
+            setError(makeError(
+                AlertTriangle,
+                `Vui lòng đợi ${formatTime(countdown)} trước khi gửi lại.`
+            ));
             return;
         }
 
         setLoading(true);
-        setError('');
-        setSuccessMessage('');
+        setError(null);
+        setSuccessMessage(null);
 
         try {
             const response = await api.post('/api/auth/resend-otp', {
@@ -360,22 +389,21 @@ const VerifyOtpPin = () => {
             });
 
             if (response.data.success) {
-                // ✅ CHỜ TỐI THIỂU 1.5 GIÂY ĐỂ EMAIL THỰC SỰ ĐƯỢC GỬI
+                // Chờ tối thiểu 1.5 giây để email thực sự được gửi
                 await new Promise(resolve => setTimeout(resolve, 1500));
 
-                // ✅ Hiển thị thông báo thành công sau khi email đã được gửi
-                setSuccessMessage('✅ Đã gửi lại mã OTP mới vào email. Vui lòng kiểm tra hộp thư.');
+                setSuccessMessage(makeSuccess(
+                    CheckCircle,
+                    'Đã gửi lại mã OTP mới vào email. Vui lòng kiểm tra hộp thư.'
+                ));
 
-                // Xóa timeout thông báo cũ nếu có
                 if (successTimeoutRef.current) {
                     clearTimeout(successTimeoutRef.current);
                 }
-                successTimeoutRef.current = setTimeout(() => setSuccessMessage(''), 6000);
+                successTimeoutRef.current = setTimeout(() => setSuccessMessage(null), 6000);
 
-                // ✅ Reset ô nhập OTP về trống
                 resetOtpInput();
 
-                // ✅ Lấy serverTime từ Backend để đồng bộ timer tuyệt đối
                 const ttl = response.data?.data?.expiresIn || 300;
                 const serverTime = response.data?.data?.serverTime || Date.now();
                 const expiresAt = serverTime + (ttl * 1000);
@@ -384,7 +412,6 @@ const VerifyOtpPin = () => {
                 setCountdown(ttl);
                 startCountdown(expiresAt);
 
-                // Xóa lock cũ nếu có
                 if (isLocked) {
                     localStorage.removeItem(OTP_LOCK_STORAGE_KEY);
                     setLockUntil(null);
@@ -402,9 +429,12 @@ const VerifyOtpPin = () => {
                 const remainingSeconds = errorData.data?.remainingSeconds || 300;
                 setIsRateLimited(true);
                 setRateLimitTimeLeft(remainingSeconds);
-                setError(`⚠️ Vui lòng thử lại sau ${formatLockTime(remainingSeconds)}.`);
+                setError(makeError(
+                    AlertTriangle,
+                    `Vui lòng thử lại sau ${formatLockTime(remainingSeconds)}.`
+                ));
             } else {
-                setError(errorMessage);
+                setError(makeError(AlertCircle, errorMessage));
             }
         } finally {
             setLoading(false);
@@ -414,28 +444,37 @@ const VerifyOtpPin = () => {
     // HANDLE VERIFY OTP
     const handleVerifyOtp = async () => {
         if (isOtpExpired) {
-            setError('⚠️ OTP đã hết hạn. Vui lòng gửi lại.');
+            setError(makeError(
+                AlertTriangle,
+                'OTP đã hết hạn. Vui lòng gửi lại.'
+            ));
             return;
         }
 
         if (!/^\d{6}$/.test(otp)) {
-            setError('Vui lòng nhập đủ 6 số OTP');
+            setError(makeError(AlertCircle, 'Vui lòng nhập đủ 6 số OTP'));
             return;
         }
 
         if (isRateLimited) {
-            setError(`⚠️ Vui lòng đợi ${formatLockTime(rateLimitTimeLeft)} trước khi thử lại.`);
+            setError(makeError(
+                AlertTriangle,
+                `Vui lòng đợi ${formatLockTime(rateLimitTimeLeft)} trước khi thử lại.`
+            ));
             return;
         }
 
         if (isLocked) {
-            setError(`⚠️ Bạn đã bị khóa. Vui lòng đợi ${formatLockTime(lockTimeLeft)} để thử lại.`);
+            setError(makeError(
+                AlertTriangle,
+                `Bạn đã bị khóa. Vui lòng đợi ${formatLockTime(lockTimeLeft)} để thử lại.`
+            ));
             return;
         }
 
         setLoading(true);
-        setError('');
-        setSuccessMessage('');
+        setError(null);
+        setSuccessMessage(null);
 
         try {
             const response = await api.post('/api/auth/verify-otp-and-change-pin', {
@@ -472,7 +511,7 @@ const VerifyOtpPin = () => {
                 setRemainingOtpAttempts(remaining);
 
                 if (status !== 429 && remaining > 0) {
-                    errorMessage = `❌ OTP không đúng. Bạn đã nhập sai ${attempts}/${maxAttempts} lần. Còn ${remaining} lần thử.`;
+                    errorMessage = `OTP không đúng. Bạn đã nhập sai ${attempts}/${maxAttempts} lần. Còn ${remaining} lần thử.`;
                 }
             }
 
@@ -505,28 +544,31 @@ const VerifyOtpPin = () => {
                     errorMessage.toLowerCase().includes('lock');
 
                 if (isOtpLock) {
-                    setLockMessage(backendData.message || '🔒 Bạn đã nhập sai OTP quá 5 lần. OTP đã bị khóa. Vui lòng gửi lại OTP mới.');
+                    setLockMessage(backendData.message || 'Bạn đã nhập sai OTP quá 5 lần. OTP đã bị khóa. Vui lòng gửi lại OTP mới.');
                     setShowLockModal(true);
                     setOtpAttempts(0);
                     setRemainingOtpAttempts(maxOtpAttempts);
-                    setError('');
+                    setError(null);
                     setLoading(false);
                     return;
                 }
 
-                errorMessage = backendData.message || `⚠️ Bạn đã thử quá nhiều lần. Vui lòng thử lại sau ${formatLockTime(remainingSeconds)}.`;
+                errorMessage = backendData.message || `Bạn đã thử quá nhiều lần. Vui lòng thử lại sau ${formatLockTime(remainingSeconds)}.`;
             }
 
-            if (errorMessage.toLowerCase().includes('hết hạn') || 
+            if (errorMessage.toLowerCase().includes('hết hạn') ||
                 errorMessage.toLowerCase().includes('expired')) {
                 setIsOtpExpired(true);
                 setCountdown(0);
-                errorMessage = '⚠️ OTP đã hết hạn. Vui lòng gửi lại mã mới.';
+                setError(makeError(
+                    AlertTriangle,
+                    'OTP đã hết hạn. Vui lòng gửi lại mã mới.'
+                ));
+            } else {
+                setError(makeError(XCircle, errorMessage));
             }
 
             resetOtpInput();
-
-            setError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -554,7 +596,7 @@ const VerifyOtpPin = () => {
 
     const getResendButtonText = () => {
         if (isLocked) {
-            return `⏳ Đang khóa (${formatLockTime(lockTimeLeft)})`;
+            return `Đang khóa (${formatLockTime(lockTimeLeft)})`;
         }
         if (isRateLimited) {
             return `Đang chờ (${formatLockTime(rateLimitTimeLeft)})`;
@@ -564,7 +606,7 @@ const VerifyOtpPin = () => {
 
     const getVerifyButtonText = () => {
         if (isLocked) {
-            return `⏳ Đang khóa (${formatLockTime(lockTimeLeft)})`;
+            return `Đang khóa (${formatLockTime(lockTimeLeft)})`;
         }
         if (isRateLimited) {
             return `Đang chờ (${formatLockTime(rateLimitTimeLeft)})`;
@@ -586,30 +628,36 @@ const VerifyOtpPin = () => {
 
                 {successMessage && (
                     <div className="success-message">
-                        <CheckCircle size={20} />
-                        <span>{successMessage}</span>
+                        {successMessage.icon}
+                        <span>{successMessage.text}</span>
                     </div>
                 )}
 
                 {error && !showLockModal && (
                     <div className="error-message">
-                        <AlertCircle size={18} />
-                        <span>{error}</span>
+                        {error.icon}
+                        <span>{error.text}</span>
                     </div>
                 )}
 
                 {isLoadingTTL && (
-                    <div className="loading-ttl-text">⏳ Đang đồng bộ thời gian...</div>
+                    <div className="loading-ttl-text loading-ttl-flex">
+                        <Loader2 size={16} className="spin-icon" />
+                        Đang đồng bộ thời gian...
+                    </div>
                 )}
 
                 {otpAttempts > 0 && !isLocked && !showLockModal && (
-                    <div className={`otp-attempt-counter ${otpAttempts >= 3 ? 'danger' : 'warning'}`}>
-                        ⚠️ Bạn đã nhập sai <strong>{otpAttempts}/{maxOtpAttempts}</strong> lần.
-                        {remainingOtpAttempts > 0 ? (
-                            <> Còn <strong>{remainingOtpAttempts}</strong> lần thử.</>
-                        ) : (
-                            <> <strong className="text-danger">OTP đã bị khóa!</strong></>
-                        )}
+                    <div className={`otp-attempt-counter ${otpAttempts >= 3 ? 'danger' : 'warning'} otp-attempt-flex`}>
+                        <AlertTriangle size={16} />
+                        <span>
+                            Bạn đã nhập sai <strong>{otpAttempts}/{maxOtpAttempts}</strong> lần.
+                            {remainingOtpAttempts > 0 ? (
+                                <> Còn <strong>{remainingOtpAttempts}</strong> lần thử.</>
+                            ) : (
+                                <> <strong className="text-danger">OTP đã bị khóa!</strong></>
+                            )}
+                        </span>
                     </div>
                 )}
 
@@ -625,7 +673,7 @@ const VerifyOtpPin = () => {
                             value={otp[index] || ''}
                             onChange={(e) => handleOtpChange(index, e.target.value)}
                             onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                            className={`pin-box ${isOtpExpired ? 'input-error' : ''} ${error && error.toLowerCase().includes('otp') ? 'input-error' : ''}`}
+                            className={`pin-box ${isOtpExpired ? 'input-error' : ''} ${error && error.text.toLowerCase().includes('otp') ? 'input-error' : ''}`}
                             disabled={isDisabled}
                         />
                     ))}
@@ -635,27 +683,34 @@ const VerifyOtpPin = () => {
                 {!isLocked && !showLockModal && !isLoadingTTL && (
                     <div className="input-hint center-text">
                         {isOtpExpired ? (
-                            <span className="text-danger">
-                                ⚠️ OTP đã hết hạn. Vui lòng <strong>gửi lại</strong> mã mới.
+                            <span className="text-danger hint-flex">
+                                <AlertTriangle size={14} />
+                                <span>OTP đã hết hạn. Vui lòng <strong>gửi lại</strong> mã mới.</span>
                             </span>
                         ) : (
-                            <span>
-                                ⏳ OTP hết hạn sau: <strong className={countdown <= 60 ? 'text-danger' : 'text-success'}>
-                                    {formatTime(countdown)}
-                                </strong> (5 phút)
+                            <span className="hint-flex">
+                                <Clock size={14} />
+                                <span>
+                                    OTP hết hạn sau: <strong className={countdown <= 60 ? 'text-danger' : 'text-success'}>
+                                        {formatTime(countdown)}
+                                    </strong> (5 phút)
+                                </span>
                             </span>
                         )}
                     </div>
                 )}
 
-                {/* RESEND BUTTON - hiển thị loading khi chờ gửi */}
+                {/* RESEND BUTTON */}
                 <button
                     className="btn-user btn-outline-secondary"
                     onClick={handleResendOtp}
                     disabled={isDisabled || (countdown > 0 && !isOtpExpired) || isLocked || loading}
                 >
                     {loading ? (
-                        <span className="loading-spinner-small">⏳ Đang gửi lại...</span>
+                        <span className="loading-spinner-small loading-spinner-flex">
+                            <Loader2 size={16} className="spin-icon" />
+                            Đang gửi lại...
+                        </span>
                     ) : (
                         <>
                             <RefreshCw size={16} />
@@ -666,7 +721,7 @@ const VerifyOtpPin = () => {
 
                 {/* BUTTON GROUP */}
                 <div className="button-group">
-                    <button 
+                    <button
                         className="btn-user btn-back"
                         onClick={() => {
                             localStorage.removeItem(OTP_LOCK_STORAGE_KEY);
@@ -692,7 +747,7 @@ const VerifyOtpPin = () => {
                 </div>
             </div>
 
-            {/* LOCK MODAL - đóng nhưng timer vẫn chạy */}
+            {/* LOCK MODAL */}
             <LockModal
                 show={showLockModal}
                 message={lockInfo?.message || lockMessage || 'Bạn đã nhập sai OTP quá 5 lần. OTP đã bị khóa. Vui lòng gửi lại OTP mới.'}

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Mail } from 'lucide-react';
 import api from '../../api/api';
 import '../styles/ResendVerification.css';
 
@@ -11,14 +12,14 @@ const ResendVerification = ({ onClose = () => {} }) => {
     const [error, setError] = useState('');
     const [isSuccess, setIsSuccess] = useState(false);
 
-    // ✅ Validate email real-time
+    // Validate email real-time
     const [emailError, setEmailError] = useState('');
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     const handleEmailChange = (e) => {
         const value = e.target.value;
         setEmail(value);
-        
+
         if (!value.trim()) {
             setEmailError('Vui lòng nhập email');
         } else if (!emailRegex.test(value)) {
@@ -30,7 +31,7 @@ const ResendVerification = ({ onClose = () => {} }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (!email.trim() || !emailRegex.test(email)) {
             setEmailError('Vui lòng nhập email hợp lệ');
             return;
@@ -44,7 +45,7 @@ const ResendVerification = ({ onClose = () => {} }) => {
             const response = await api.post('/api/auth/resend-verification', { email });
             setMessage(response.data.message || 'Email xác thực đã được gửi lại!');
             setIsSuccess(true);
-            
+
             // Tự động đóng sau 3 giây
             setTimeout(() => {
                 onClose();
@@ -60,7 +61,9 @@ const ResendVerification = ({ onClose = () => {} }) => {
 
     return (
         <div className="resend-content">
-            <div className="resend-icon">📧</div>
+            <div className="resend-icon">
+                <Mail size={48} />
+            </div>
             <p className="resend-subtitle">Nhập email của bạn để nhận lại link xác thực</p>
 
             {message && <div className="resend-success">{message}</div>}
@@ -79,9 +82,9 @@ const ResendVerification = ({ onClose = () => {} }) => {
                     />
                     {emailError && <span className="error-text-resend">{emailError}</span>}
                 </div>
-                <button 
-                    type="submit" 
-                    className="btn-send-resend" 
+                <button
+                    type="submit"
+                    className="btn-send-resend"
                     disabled={loading || isSuccess || !!emailError}
                 >
                     {loading ? 'Đang gửi...' : 'Gửi lại email xác thực'}

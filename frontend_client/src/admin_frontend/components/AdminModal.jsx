@@ -1,5 +1,11 @@
 import React from 'react';
-import { X } from 'lucide-react';
+import { 
+    X, 
+    CheckCircle2, 
+    XCircle, 
+    AlertTriangle, 
+    Info 
+} from 'lucide-react';
 import '../styles/AdminModal.css';
 
 const AdminModal = ({
@@ -16,11 +22,32 @@ const AdminModal = ({
 
     const renderHeaderIcon = () => {
         switch (type) {
-            case 'success': return <span className="admin-modal-icon success-icon">✅</span>;
-            case 'error': return <span className="admin-modal-icon error-icon">❌</span>;
-            case 'warning': return <span className="admin-modal-icon warning-icon">⚠️</span>;
-            case 'info': return <span className="admin-modal-icon info-icon">ℹ️</span>;
-            default: return null;
+            case 'success':
+                return (
+                    <span className="admin-modal-icon success-icon">
+                        <CheckCircle2 size={24} />
+                    </span>
+                );
+            case 'error':
+                return (
+                    <span className="admin-modal-icon error-icon">
+                        <XCircle size={24} />
+                    </span>
+                );
+            case 'warning':
+                return (
+                    <span className="admin-modal-icon warning-icon">
+                        <AlertTriangle size={24} />
+                    </span>
+                );
+            case 'info':
+                return (
+                    <span className="admin-modal-icon info-icon">
+                        <Info size={24} />
+                    </span>
+                );
+            default:
+                return null;
         }
     };
 

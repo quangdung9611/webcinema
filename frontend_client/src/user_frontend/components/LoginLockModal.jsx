@@ -1,4 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
+import {
+    AlertTriangle,
+    Lock,
+    CheckCircle2,
+    Mail,
+    Hourglass,
+    Timer,
+    Lightbulb,
+} from 'lucide-react';
 import Modal from './Modal';
 import '../styles/LoginLockModal.css';
 
@@ -25,9 +34,6 @@ const LoginLockModal = ({
         const calculateTimeLeft = () => {
             const now = Date.now();
 
-            // ========================================================
-            // DÙNG CEIL ĐỂ KHÔNG BỊ MẤT GIÂY NGAY KHI MODAL MỞ
-            // ========================================================
             const secondsLeft = Math.max(
                 0,
                 Math.ceil((lockedUntil - now) / 1000)
@@ -35,9 +41,6 @@ const LoginLockModal = ({
 
             setTimeLeft(secondsLeft);
 
-            // ========================================================
-            // THỜI GIAN TỔNG CỘNG THEO LEVEL
-            // ========================================================
             let totalSeconds = 60;
 
             if (lockLevel >= 2) {
@@ -89,10 +92,12 @@ const LoginLockModal = ({
     const minutes = Math.floor(timeLeft / 60);
     const seconds = timeLeft % 60;
 
-    const getLevelEmoji = () => {
-        if (lockLevel >= 2) return '⚠️';
-
-        return '🔒';
+    // ✅ Trả về ReactNode thay vì emoji
+    const getLevelIcon = () => {
+        if (lockLevel >= 2) {
+            return <AlertTriangle size={16} />;
+        }
+        return <Lock size={16} />;
     };
 
     const getLevelColor = () => {
@@ -119,9 +124,11 @@ const LoginLockModal = ({
                             marginBottom: '16px'
                         }}
                     >
-                        <span className="login-lock-modal-icon">
-                            ✅
-                        </span>
+                        <CheckCircle2
+                            size={48}
+                            color="#4ade80"
+                            style={{ display: 'inline-block' }}
+                        />
                     </div>
 
                     <p
@@ -143,19 +150,32 @@ const LoginLockModal = ({
                 <div
                     className="lock-level-badge"
                     style={{
-                        backgroundColor: getLevelColor()
+                        backgroundColor: getLevelColor(),
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
                     }}
                 >
-                    {getLevelEmoji()}
-                    {' '}
-                    Cấp độ {Math.min(lockLevel, 2)}/2
-                    {' - '}
-                    {getLevelText()}
+                    {getLevelIcon()}
+                    <span>
+                        Cấp độ {Math.min(lockLevel, 2)}/2
+                        {' - '}
+                        {getLevelText()}
+                    </span>
                 </div>
 
                 {email && (
-                    <p className="lock-email-info">
-                        📧 <strong>{email}</strong>
+                    <p
+                        className="lock-email-info"
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            justifyContent: 'center',
+                            width: '100%',
+                        }}
+                    >
+                        <Mail size={16} /> <strong>{email}</strong>
                     </p>
                 )}
 
@@ -164,9 +184,7 @@ const LoginLockModal = ({
                 </p>
 
                 <div className="login-lock-timer">
-                    <span className="timer-icon">
-                        ⏳
-                    </span>
+                    <Hourglass size={18} color={getLevelColor()} />
 
                     <span className="timer-text">
                         Vui lòng thử lại sau{' '}
@@ -190,13 +208,32 @@ const LoginLockModal = ({
                     />
                 </div>
 
-                <p className="lock-time-remaining">
-                    ⏱️ Còn lại{' '}
+                <p
+                    className="lock-time-remaining"
+                    style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        justifyContent: 'center',
+                        width: '100%',
+                    }}
+                >
+                    <Timer size={16} /> Còn lại{' '}
                     {minutes} phút {seconds} giây
                 </p>
 
-                <p className="login-lock-hint">
-                    💡 Mẹo: Bạn có thể dùng
+                <p
+                    className="login-lock-hint"
+                    style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        justifyContent: 'center',
+                        width: '100%',
+                        flexWrap: 'wrap',
+                    }}
+                >
+                    <Lightbulb size={14} /> Mẹo: Bạn có thể dùng
                     {' '}
                     "Quên mật khẩu?"
                     {' '}

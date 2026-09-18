@@ -96,7 +96,7 @@
   overflow-y: auto;
 }
 
-/* ----- TIÊU ĐỀ + ICON (EMOJI) ----- */
+/* ----- TIÊU ĐỀ + ICON (LUCIDE SVG) ----- */
 .modal-title-group {
   display: flex;
   align-items: center;
@@ -104,20 +104,39 @@
   margin-bottom: 8px;
 }
 
-/* Icon emoji – chỉ emoji, không có nền tròn hay bóng */
+/* Wrapper icon – hỗ trợ SVG từ lucide-react */
 .modal-icon {
-  font-size: 52px;
-  line-height: 1;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
   flex-shrink: 0;
+  line-height: 1;
 }
 
-/* Không có màu nền hay hiệu ứng cho từng loại, chỉ giữ emoji */
-.success-icon,
-.error-icon,
-.warning-icon,
-.info-icon {
-  /* không thêm gì, chỉ dùng để phân biệt nếu cần nhưng không style */
+/* Icon SVG kế thừa màu từ parent */
+.modal-icon svg {
+  width: 100%;
+  height: 100%;
+  stroke-width: 2;
+}
+
+/* Màu icon theo từng loại */
+.modal-icon.success-icon {
+  color: #22c55e;
+}
+
+.modal-icon.error-icon {
+  color: #ef4444;
+}
+
+.modal-icon.warning-icon {
+  color: #f59e0b;
+}
+
+.modal-icon.info-icon {
+  color: var(--silver-primary, #DDE2E8);
 }
 
 /* Tiêu đề */
@@ -182,7 +201,7 @@
   background: var(--silver-primary, #DDE2E8);
 }
 
-/* ----- FOOTER NÚT (ĐÃ SỬA THEO YÊU CẦU) ----- */
+/* ----- FOOTER NÚT ----- */
 .modal-footer {
   display: flex;
   justify-content: space-between;
@@ -207,6 +226,7 @@
   display: inline-flex;
   justify-content: center;
   align-items: center;
+  gap: 6px;
 }
 
 .modal-footer button:active {
@@ -263,7 +283,8 @@
     padding: 28px 24px 24px 24px;
   }
   .modal-icon {
-    font-size: 46px;
+    width: 46px;
+    height: 46px;
   }
   .modal-title {
     font-size: 22px;
@@ -283,7 +304,8 @@
     padding: 24px 20px 20px 20px;
   }
   .modal-icon {
-    font-size: 40px;
+    width: 40px;
+    height: 40px;
   }
   .modal-title {
     font-size: 20px;
@@ -329,7 +351,8 @@
     gap: 12px;
   }
   .modal-icon {
-    font-size: 36px;
+    width: 36px;
+    height: 36px;
   }
   .modal-title {
     font-size: 18px;

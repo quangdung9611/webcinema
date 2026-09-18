@@ -1,14 +1,16 @@
 // ============================================================
 // BANK APP
 // Bước 5: THANH TOÁN QUA NGÂN HÀNG / VIETQR
-// ✅ ĐÃ SỬA: Không gửi OTP lại khi Payment đã gửi
-// ✅ ĐÃ SỬA: Bỏ hết inline style → CSS
-// ✅ ĐÃ SỬA: OTP hết hạn hiện modal thay vì chữ to
-// ✅ ĐÃ SỬA: Dùng MỐC TUYỆT ĐỐI cho TẤT CẢ timer (đồng bộ 100%)
 // ============================================================
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate, useBlocker } from 'react-router-dom';
+import {
+    Lock,
+    Clock,
+    RotateCw,
+    Loader2,
+} from 'lucide-react';
 import api from '../../api/api';
 import Modal from '../components/Modal';
 import BookingSidebar from '../components/BookingSidebar';
@@ -103,35 +105,30 @@ const BankApp = () => {
   // ✅ TIME STATE - CHỈ LƯU MỐC TUYỆT ĐỐI
   // ========================================================
 
-  // Mốc hết hạn OTP (tuyệt đối)
   const [otpExpiresAt, setOtpExpiresAt] = useState(() => {
     const saved = parseInt(localStorage.getItem('bankOtpExpiresAt') || '0', 10);
     return saved > 0 ? saved : 0;
   });
 
-  // Mốc hết cooldown gửi lại (tuyệt đối)
   const [resendCooldownExpiresAt, setResendCooldownExpiresAt] = useState(() => {
     const saved = parseInt(localStorage.getItem('bankResendCooldownExpiresAt') || '0', 10);
     return saved > 0 ? saved : 0;
   });
 
-  // Mốc hết khóa (tuyệt đối)
   const [lockExpiresAt, setLockExpiresAt] = useState(() => {
     const saved = parseInt(localStorage.getItem('bankLockTime') || '0', 10);
     return saved > 0 ? saved : 0;
   });
 
-  // ✅ TIME LEFT - Cập nhật mỗi giây từ mốc tuyệt đối
   const [timeLeft, setTimeLeft] = useState(OTP_TTL);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [lockTimeLeft, setLockTimeLeft] = useState(0);
 
-  // ✅ UNIFIED TIMER - 1 interval duy nhất cập nhật TẤT CẢ timer
+  // ✅ UNIFIED TIMER
   useEffect(() => {
     const tick = () => {
       const now = Date.now();
 
-      // OTP timer
       if (otpExpiresAt > 0) {
         const otpRemaining = Math.max(0, Math.ceil((otpExpiresAt - now) / 1000));
         setTimeLeft(otpRemaining);
@@ -140,7 +137,6 @@ const BankApp = () => {
         }
       }
 
-      // Resend cooldown
       if (resendCooldownExpiresAt > 0) {
         const cooldownRemaining = Math.max(0, Math.ceil((resendCooldownExpiresAt - now) / 1000));
         setResendCooldown(cooldownRemaining);
@@ -152,12 +148,10 @@ const BankApp = () => {
         setResendCooldown(0);
       }
 
-      // Lock timer
       if (lockExpiresAt > 0) {
         const lockRemaining = Math.max(0, Math.ceil((lockExpiresAt - now) / 1000));
         setLockTimeLeft(lockRemaining);
         if (lockRemaining <= 0) {
-          // Mở khóa
           setLockExpiresAt(0);
           localStorage.removeItem('bankIsLocked');
           localStorage.removeItem('bankLockTime');
@@ -169,7 +163,7 @@ const BankApp = () => {
       }
     };
 
-    tick(); // Chạy ngay
+    tick();
     timerIntervalRef.current = setInterval(tick, 1000);
 
     return () => {
@@ -321,7 +315,6 @@ const BankApp = () => {
         }
         return;
       }
-      // Fallback: đọc từ localStorage
       const saved = parseInt(localStorage.getItem('bankOtpExpiresAt') || '0', 10);
       if (saved > 0) {
         setOtpExpiresAt(saved);
@@ -504,14 +497,12 @@ const BankApp = () => {
       setOtp('');
       localStorage.setItem('bankOtpInput', '');
 
-      // ✅ TÍNH MỐC TUYỆT ĐỐI
       const responseTTL = Number(response.data?.data?.expiresIn || 0);
       const serverTime = Number(response.data?.data?.serverTime || Date.now());
       const expiresAt = serverTime + (responseTTL * 1000);
       localStorage.setItem('bankOtpExpiresAt', String(expiresAt));
       setOtpExpiresAt(expiresAt);
 
-      // ✅ RESEND COOLDOWN - MỐC TUYỆT ĐỐI
       const cooldownExpiresAt = Date.now() + RESEND_COOLDOWN * 1000;
       setResendCooldownExpiresAt(cooldownExpiresAt);
       localStorage.setItem('bankResendCooldownExpiresAt', String(cooldownExpiresAt));
@@ -575,14 +566,12 @@ const BankApp = () => {
 
       resetOtpInput();
 
-      // ✅ TÍNH MỐC TUYỆT ĐỐI
       const responseTTL = Number(response.data?.data?.expiresIn || 0);
       const serverTime = Number(response.data?.data?.serverTime || Date.now());
       const expiresAt = serverTime + (responseTTL * 1000);
       localStorage.setItem('bankOtpExpiresAt', String(expiresAt));
       setOtpExpiresAt(expiresAt);
 
-      // ✅ RESEND COOLDOWN - MỐC TUYỆT ĐỐI
       const cooldownExpiresAt = Date.now() + RESEND_COOLDOWN * 1000;
       setResendCooldownExpiresAt(cooldownExpiresAt);
       localStorage.setItem('bankResendCooldownExpiresAt', String(cooldownExpiresAt));
@@ -639,7 +628,6 @@ const BankApp = () => {
         localStorage.setItem('bankHasSentOtp', 'true');
         localStorage.setItem('bankHasVisited', 'true');
 
-        // ✅ Resend cooldown - set mốc tuyệt đối
         if (!localStorage.getItem('bankResendCooldownExpiresAt')) {
           const cooldownExpiresAt = Date.now() + RESEND_COOLDOWN * 1000;
           setResendCooldownExpiresAt(cooldownExpiresAt);
@@ -686,8 +674,8 @@ const BankApp = () => {
       hasShownExpiredModalRef.current = true;
       openModal(
         'warning',
-        '⏰ OTP ĐÃ HẾT HẠN',
-        'Mã OTP đã hết hạn. Vui lòng bấm "🔄 GỬI LẠI OTP" để nhận mã mới.',
+        'OTP ĐÃ HẾT HẠN',
+        'Mã OTP đã hết hạn. Vui lòng bấm "GỬI LẠI OTP" để nhận mã mới.',
         closeModal
       );
     }
@@ -707,7 +695,6 @@ const BankApp = () => {
         otpExpiredRef.current = true;
         return;
       }
-      // Cập nhật lại mốc tuyệt đối từ Redis
       const newExpiresAt = Date.now() + redisTime * 1000;
       setOtpExpiresAt(newExpiresAt);
       localStorage.setItem('bankOtpExpiresAt', String(newExpiresAt));
@@ -1034,9 +1021,23 @@ const BankApp = () => {
 
             <div className={getTimerBoxClass()}>
               {isLocked ? (
-                <span className="timer-text">🔒 Tài khoản bị khóa: {formatTime(lockTimeLeft)}</span>
+                <span className="timer-text" style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  justifyContent: 'center'
+                }}>
+                  <Lock size={16} /> Tài khoản bị khóa: {formatTime(lockTimeLeft)}
+                </span>
               ) : otpExpiredRef.current || timeLeft <= 0 ? (
-                <span className="timer-text">⏰ OTP đã hết hạn</span>
+                <span className="timer-text" style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  justifyContent: 'center'
+                }}>
+                  <Clock size={16} /> OTP đã hết hạn
+                </span>
               ) : (
                 <>
                   <span className="timer-label">OTP hết hạn sau:</span>
@@ -1051,11 +1052,34 @@ const BankApp = () => {
                 className="btn-resend-otp"
                 onClick={handleResendOtp}
                 disabled={loadingSendOtp || loadingVerify || paymentCompletedRef.current || resendCooldown > 0 || isLocked}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
               >
-                {loadingSendOtp ? 'Đang gửi...' :
-                 isLocked ? `🔒 Đã khóa (${formatTime(lockTimeLeft)})` :
-                 resendCooldown > 0 ? `⏳ Gửi lại sau ${formatTime(resendCooldown)}` :
-                 '🔄 GỬI LẠI OTP'}
+                {loadingSendOtp ? (
+                  <>
+                    <Loader2 size={16} className="spin-icon" />
+                    Đang gửi...
+                  </>
+                ) : isLocked ? (
+                  <>
+                    <Lock size={16} />
+                    Đã khóa ({formatTime(lockTimeLeft)})
+                  </>
+                ) : resendCooldown > 0 ? (
+                  <>
+                    <Clock size={16} />
+                    Gửi lại sau {formatTime(resendCooldown)}
+                  </>
+                ) : (
+                  <>
+                    <RotateCw size={16} />
+                    GỬI LẠI OTP
+                  </>
+                )}
               </button>
             </div>
 

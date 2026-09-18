@@ -1,13 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import api from '../../../api/api';
+import * as XLSX from 'xlsx';
 import {
     Activity,
     AlertCircle,
+    Armchair,
     BarChart3,
     CalendarDays,
     CircleDollarSign,
     Clapperboard,
     Clock3,
+    Download,
     Film,
     LayoutDashboard,
     MapPin,
@@ -59,6 +62,12 @@ const API = {
     otp: '/admin/api/dashboard/otp-stats',
     reviews: '/admin/api/dashboard/review-stats',
     seats: '/admin/api/dashboard/seat-performance',
+    // ✅ MỚI
+    revenueByHour: '/admin/api/dashboard/revenue-by-hour',
+    revenueBySeatType: '/admin/api/dashboard/revenue-by-seat-type',
+    revenueByWeekday: '/admin/api/dashboard/revenue-by-weekday',
+    revenueByRoomType: '/admin/api/dashboard/revenue-by-room-type',
+    topShowtimes: '/admin/api/dashboard/top-showtimes',
 };
 
 // =============================================================
@@ -75,6 +84,14 @@ const PERIODS = [
 ];
 
 const CHART_COLORS = ['#d6b36a', '#6c9eff', '#a886ff', '#5ed6a0', '#ef6a72'];
+
+const SEAT_TYPE_COLORS = {
+    STANDARD: '#9297a3',
+    VIP: '#d6b36a',
+    DELUXE: '#a886ff',
+    RECLINER: '#6c9eff',
+    COUPLE: '#ef6a72',
+};
 
 const EMPTY_STATE = {
     stats: null,
@@ -97,6 +114,12 @@ const EMPTY_STATE = {
     otp: [],
     reviews: [],
     seats: null,
+    // ✅ MỚI
+    revenueByHour: [],
+    revenueBySeatType: [],
+    revenueByWeekday: [],
+    revenueByRoomType: [],
+    topShowtimes: [],
 };
 
 // =============================================================
@@ -109,6 +132,14 @@ const money = (value) =>
         currency: 'VND',
         maximumFractionDigits: 0,
     }).format(Number(value) || 0);
+
+const moneyShort = (value) => {
+    const n = Number(value) || 0;
+    if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+    if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
+    return `${n}`;
+};
 
 const number = (value) =>
     new Intl.NumberFormat('vi-VN').format(Number(value) || 0);
@@ -219,6 +250,9 @@ function AdminDashboard() {
     const [transactionPage, setTransactionPage] = useState(1);
     const [transactionStatus, setTransactionStatus] = useState('Completed');
 
+    // ✅ Export Excel state
+    const [exporting, setExporting] = useState(false);
+
     // ---- Computed ----
     const queryParams = useMemo(() => {
         const params = { period };
@@ -257,6 +291,24 @@ function AdminDashboard() {
         0
     );
 
+    // ✅ Filter data để ẩn giờ không có doanh thu
+    const activeHourData = useMemo(() => {
+        return (data.revenueByHour || []).filter(
+            (item) => item.revenue > 0 || item.orders > 0
+        );
+    }, [data.revenueByHour]);
+
+    const maxHourRevenue = useMemo(() => {
+        return Math.max(...activeHourData.map((h) => h.revenue), 1);
+    }, [activeHourData]);
+
+    const maxWeekdayRevenue = useMemo(() => {
+        return Math.max(
+            ...(data.revenueByWeekday || []).map((w) => w.revenue),
+            1
+        );
+    }, [data.revenueByWeekday]);
+
     // ---- Fetch ----
     const fetchDashboard = async (isRefresh = false) => {
         try {
@@ -289,6 +341,12 @@ function AdminDashboard() {
                 ['otp', API.otp],
                 ['reviews', API.reviews],
                 ['seats', API.seats],
+                // ✅ MỚI
+                ['revenueByHour', API.revenueByHour],
+                ['revenueBySeatType', API.revenueBySeatType],
+                ['revenueByWeekday', API.revenueByWeekday],
+                ['revenueByRoomType', API.revenueByRoomType],
+                ['topShowtimes', API.topShowtimes],
             ];
 
             const responses = await Promise.allSettled(
@@ -311,6 +369,7 @@ function AdminDashboard() {
                             ...(key === 'topMovies' && { limit: 10 }),
                             ...(key === 'topCustomers' && { limit: 10 }),
                             ...(key === 'showtimes' && { limit: 10 }),
+                            ...(key === 'topShowtimes' && { limit: 10 }),
                         },
                     });
                 })
@@ -383,6 +442,22 @@ function AdminDashboard() {
                     case 'seats':
                         nextData.seats = response.data || null;
                         break;
+                    // ✅ MỚI
+                    case 'revenueByHour':
+                        nextData.revenueByHour = response.data || [];
+                        break;
+                    case 'revenueBySeatType':
+                        nextData.revenueBySeatType = response.data || [];
+                        break;
+                    case 'revenueByWeekday':
+                        nextData.revenueByWeekday = response.data || [];
+                        break;
+                    case 'revenueByRoomType':
+                        nextData.revenueByRoomType = response.data || [];
+                        break;
+                    case 'topShowtimes':
+                        nextData.topShowtimes = response.data || [];
+                        break;
                     default:
                         break;
                 }
@@ -434,6 +509,79 @@ function AdminDashboard() {
     const handleTransactionStatus = (e) => {
         setTransactionStatus(e.target.value);
         setTransactionPage(1);
+    };
+
+    // ✅ MỚI: Export Excel
+    const handleExportExcel = () => {
+        if (!data.transactions || data.transactions.length === 0) {
+            setError('Không có giao dịch để xuất Excel.');
+            return;
+        }
+
+        try {
+            setExporting(true);
+
+            // Chuẩn bị data cho Excel
+            const excelData = data.transactions.map((item, index) => ({
+                'STT': index + 1,
+                'Mã đơn': item.booking_id,
+                'Ngày đặt': formatDate(item.booking_date),
+                'Giờ đặt': formatTime(item.booking_date),
+                'Khách hàng': item.customer_name || 'Khách lẻ',
+                'Email': item.email || '',
+                'Phim': item.movie_title || '',
+                'Suất chiếu': formatShowtime(item.start_time),
+                'Rạp': item.cinema_name || '',
+                'Phòng': item.room_name || '',
+                'Số vé': item.ticket_count || 0,
+                'Bắp nước': item.product_count || 0,
+                'Tổng tiền (VNĐ)': Number(item.total_amount) || 0,
+                'Trạng thái': item.status === 'Completed' ? 'Hoàn thành' :
+                              item.status === 'Pending' ? 'Đang xử lý' :
+                              item.status === 'Cancelled' ? 'Đã hủy' : item.status,
+            }));
+
+            // Tạo worksheet
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+            // Set độ rộng cột
+            worksheet['!cols'] = [
+                { wch: 5 },   // STT
+                { wch: 10 },  // Mã đơn
+                { wch: 12 },  // Ngày đặt
+                { wch: 10 },  // Giờ đặt
+                { wch: 22 },  // Khách hàng
+                { wch: 28 },  // Email
+                { wch: 30 },  // Phim
+                { wch: 10 },  // Suất chiếu
+                { wch: 25 },  // Rạp
+                { wch: 12 },  // Phòng
+                { wch: 8 },   // Số vé
+                { wch: 10 },  // Bắp nước
+                { wch: 16 },  // Tổng tiền
+                { wch: 14 },  // Trạng thái
+            ];
+
+            // Tạo workbook
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Giao dịch');
+
+            // Tên file có timestamp
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+            const timeStr = `${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+            const fileName = `giao-dich-${dateStr}-${timeStr}.xlsx`;
+
+            // Xuất file
+            XLSX.writeFile(workbook, fileName);
+
+            console.log(`✅ Đã xuất file Excel: ${fileName}`);
+        } catch (err) {
+            console.error('❌ Lỗi xuất Excel:', err);
+            setError('Không thể xuất file Excel. Vui lòng thử lại.');
+        } finally {
+            setExporting(false);
+        }
     };
 
     // ---- Render helpers ----
@@ -587,7 +735,7 @@ function AdminDashboard() {
                                 <BarChart data={periodComparisonData}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                                     <XAxis dataKey="label" tick={{ fill: '#9297a3', fontSize: 11 }} />
-                                    <YAxis tick={{ fill: '#9297a3', fontSize: 11 }} tickFormatter={(v) => money(v)} />
+                                    <YAxis tick={{ fill: '#9297a3', fontSize: 11 }} tickFormatter={(v) => moneyShort(v)} />
                                     <Tooltip
                                         contentStyle={{ background: '#16181d', border: '1px solid rgba(214,179,106,0.18)', borderRadius: 8 }}
                                         formatter={(value) => [money(value), 'Doanh thu']}
@@ -631,7 +779,7 @@ function AdminDashboard() {
                                         tickFormatter={(v) => formatDateShort(v)}
                                         interval={Math.max(0, Math.floor(revenueTrendData.length / 20))}
                                     />
-                                    <YAxis tick={{ fill: '#9297a3', fontSize: 11 }} tickFormatter={(v) => money(v)} />
+                                    <YAxis tick={{ fill: '#9297a3', fontSize: 11 }} tickFormatter={(v) => moneyShort(v)} />
                                     <Tooltip
                                         contentStyle={{ background: '#16181d', border: '1px solid rgba(214,179,106,0.18)', borderRadius: 8 }}
                                         formatter={(value) => [money(value), 'Doanh thu']}
@@ -655,6 +803,285 @@ function AdminDashboard() {
                 </div>
             </section>
 
+            {/* ✅ MỚI: DOANH THU THEO GIỜ + THEO NGÀY TRONG TUẦN */}
+            <section className="dashboard-grid grid-charts">
+                <div className="dashboard-card chart-card">
+                    <CardHeader
+                        icon={<Clock3 />}
+                        title="Doanh thu theo giờ"
+                        subtitle="Khung giờ nào bán chạy nhất trong ngày"
+                    />
+                    <div className="chart-container">
+                        {activeHourData.length === 0 ? (
+                            <EmptyChart />
+                        ) : (
+                            <ResponsiveContainer width="100%" height={280}>
+                                <BarChart data={activeHourData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                                    <XAxis
+                                        dataKey="label"
+                                        tick={{ fill: '#9297a3', fontSize: 10 }}
+                                    />
+                                    <YAxis
+                                        tick={{ fill: '#9297a3', fontSize: 11 }}
+                                        tickFormatter={(v) => moneyShort(v)}
+                                    />
+                                    <Tooltip
+                                        contentStyle={{
+                                            background: '#16181d',
+                                            border: '1px solid rgba(214,179,106,0.18)',
+                                            borderRadius: 8,
+                                        }}
+                                        formatter={(value, name) => {
+                                            if (name === 'Doanh thu') return [money(value), name];
+                                            return [number(value), name];
+                                        }}
+                                        labelStyle={{ color: '#f4f4f5' }}
+                                    />
+                                    <Bar
+                                        dataKey="revenue"
+                                        name="Doanh thu"
+                                        fill="#6c9eff"
+                                        radius={[4, 4, 0, 0]}
+                                    />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        )}
+                    </div>
+                    <div className="chart-legend-compact">
+                        {activeHourData.map((item) => (
+                            <div className="legend-item" key={item.hour}>
+                                <span
+                                    className="legend-dot"
+                                    style={{
+                                        background:
+                                            item.revenue === maxHourRevenue
+                                                ? '#d6b36a'
+                                                : '#6c9eff',
+                                    }}
+                                />
+                                <span>{item.label}</span>
+                                <strong>{moneyShort(item.revenue)}</strong>
+                                <span className="legend-meta">
+                                    {number(item.tickets)} vé
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="dashboard-card chart-card">
+                    <CardHeader
+                        icon={<CalendarDays />}
+                        title="Doanh thu theo ngày trong tuần"
+                        subtitle="Ngày nào đông khách nhất"
+                    />
+                    <div className="chart-container">
+                        {(data.revenueByWeekday || []).length === 0 ? (
+                            <EmptyChart />
+                        ) : (
+                            <ResponsiveContainer width="100%" height={280}>
+                                <BarChart data={data.revenueByWeekday}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                                    <XAxis
+                                        dataKey="label"
+                                        tick={{ fill: '#9297a3', fontSize: 11 }}
+                                    />
+                                    <YAxis
+                                        tick={{ fill: '#9297a3', fontSize: 11 }}
+                                        tickFormatter={(v) => moneyShort(v)}
+                                    />
+                                    <Tooltip
+                                        contentStyle={{
+                                            background: '#16181d',
+                                            border: '1px solid rgba(214,179,106,0.18)',
+                                            borderRadius: 8,
+                                        }}
+                                        formatter={(value) => [money(value), 'Doanh thu']}
+                                        labelStyle={{ color: '#f4f4f5' }}
+                                    />
+                                    <Bar
+                                        dataKey="revenue"
+                                        name="Doanh thu"
+                                        radius={[4, 4, 0, 0]}
+                                    >
+                                        {(data.revenueByWeekday || []).map((entry, index) => (
+                                            <Cell
+                                                key={`weekday-${index}`}
+                                                fill={
+                                                    entry.revenue === maxWeekdayRevenue
+                                                        ? '#d6b36a'
+                                                        : '#a886ff'
+                                                }
+                                            />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        )}
+                    </div>
+                    <div className="chart-legend-compact">
+                        {(data.revenueByWeekday || []).map((item) => (
+                            <div className="legend-item" key={item.weekday}>
+                                <span
+                                    className="legend-dot"
+                                    style={{
+                                        background:
+                                            item.revenue === maxWeekdayRevenue
+                                                ? '#d6b36a'
+                                                : '#a886ff',
+                                    }}
+                                />
+                                <span>{item.label}</span>
+                                <strong>{moneyShort(item.revenue)}</strong>
+                                <span className="legend-meta">
+                                    {number(item.orders)} đơn
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* ✅ MỚI: DOANH THU THEO LOẠI GHẾ + LOẠI PHÒNG */}
+            <section className="dashboard-grid grid-charts">
+                <div className="dashboard-card chart-card">
+                    <CardHeader
+                        icon={<Armchair />}
+                        title="Doanh thu theo loại ghế"
+                        subtitle="Loại ghế nào mang lại doanh thu cao nhất"
+                    />
+                    <div className="chart-container">
+                        {(data.revenueBySeatType || []).length === 0 ? (
+                            <EmptyChart />
+                        ) : (
+                            <ResponsiveContainer width="100%" height={280}>
+                                <BarChart data={data.revenueBySeatType} layout="vertical">
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                                    <XAxis
+                                        type="number"
+                                        tick={{ fill: '#9297a3', fontSize: 11 }}
+                                        tickFormatter={(v) => moneyShort(v)}
+                                    />
+                                    <YAxis
+                                        type="category"
+                                        dataKey="label"
+                                        tick={{ fill: '#9297a3', fontSize: 11 }}
+                                        width={80}
+                                    />
+                                    <Tooltip
+                                        contentStyle={{
+                                            background: '#16181d',
+                                            border: '1px solid rgba(214,179,106,0.18)',
+                                            borderRadius: 8,
+                                        }}
+                                        formatter={(value) => [money(value), 'Doanh thu']}
+                                        labelStyle={{ color: '#f4f4f5' }}
+                                    />
+                                    <Bar
+                                        dataKey="revenue"
+                                        name="Doanh thu"
+                                        radius={[0, 4, 4, 0]}
+                                    >
+                                        {(data.revenueBySeatType || []).map((entry, index) => (
+                                            <Cell
+                                                key={`seat-${index}`}
+                                                fill={
+                                                    SEAT_TYPE_COLORS[entry.seat_type] ||
+                                                    CHART_COLORS[index % CHART_COLORS.length]
+                                                }
+                                            />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        )}
+                    </div>
+                    <div className="chart-legend-compact">
+                        {(data.revenueBySeatType || []).map((item, index) => (
+                            <div className="legend-item" key={item.seat_type || index}>
+                                <span
+                                    className="legend-dot"
+                                    style={{
+                                        background:
+                                            SEAT_TYPE_COLORS[item.seat_type] ||
+                                            CHART_COLORS[index % CHART_COLORS.length],
+                                    }}
+                                />
+                                <span>{item.label}</span>
+                                <strong>{money(item.revenue)}</strong>
+                                <span className="legend-meta">
+                                    {number(item.tickets)} vé ({item.percent}%)
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="dashboard-card chart-card">
+                    <CardHeader
+                        icon={<Film />}
+                        title="Doanh thu theo loại phòng"
+                        subtitle="2D / 3D / VIP / IMAX - loại nào lời nhất"
+                    />
+                    <div className="chart-container">
+                        {(data.revenueByRoomType || []).length === 0 ? (
+                            <EmptyChart />
+                        ) : (
+                            <ResponsiveContainer width="100%" height={280}>
+                                <BarChart data={data.revenueByRoomType}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                                    <XAxis
+                                        dataKey="room_type"
+                                        tick={{ fill: '#9297a3', fontSize: 11 }}
+                                    />
+                                    <YAxis
+                                        tick={{ fill: '#9297a3', fontSize: 11 }}
+                                        tickFormatter={(v) => moneyShort(v)}
+                                    />
+                                    <Tooltip
+                                        contentStyle={{
+                                            background: '#16181d',
+                                            border: '1px solid rgba(214,179,106,0.18)',
+                                            borderRadius: 8,
+                                        }}
+                                        formatter={(value) => [money(value), 'Doanh thu']}
+                                        labelStyle={{ color: '#f4f4f5' }}
+                                    />
+                                    <Bar
+                                        dataKey="revenue"
+                                        name="Doanh thu"
+                                        radius={[4, 4, 0, 0]}
+                                    >
+                                        {(data.revenueByRoomType || []).map((entry, index) => (
+                                            <Cell
+                                                key={`room-${index}`}
+                                                fill={CHART_COLORS[index % CHART_COLORS.length]}
+                                            />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        )}
+                    </div>
+                    <div className="chart-legend-compact">
+                        {(data.revenueByRoomType || []).map((item, index) => (
+                            <div className="legend-item" key={item.room_type || index}>
+                                <span
+                                    className="legend-dot"
+                                    style={{ background: CHART_COLORS[index % CHART_COLORS.length] }}
+                                />
+                                <span>{item.room_type}</span>
+                                <strong>{money(item.revenue)}</strong>
+                                <span className="legend-meta">
+                                    {number(item.showtimes)} suất • TB {moneyShort(item.avgRevenuePerShowtime)}/suất
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
             {/* TRANSACTIONS TABLE (FULL WIDTH) */}
             <div className="full-card">
                 <div className="dashboard-card revenue-card">
@@ -669,13 +1096,24 @@ function AdminDashboard() {
                                 placeholder="Tìm khách hàng, email, phim, ghi chú..."
                             />
                         </div>
-                        <div className="transaction-status">
-                            <select value={transactionStatus} onChange={handleTransactionStatus}>
-                                <option value="Completed">Hoàn thành</option>
-                                <option value="Pending">Đang xử lý</option>
-                                <option value="Cancelled">Đã hủy</option>
-                                <option value="all">Tất cả</option>
-                            </select>
+                        <div className="transaction-toolbar-right">
+                            <div className="transaction-status">
+                                <select value={transactionStatus} onChange={handleTransactionStatus}>
+                                    <option value="Completed">Hoàn thành</option>
+                                    <option value="Pending">Đang xử lý</option>
+                                    <option value="Cancelled">Đã hủy</option>
+                                    <option value="all">Tất cả</option>
+                                </select>
+                            </div>
+                            <button
+                                type="button"
+                                className="export-excel-btn"
+                                onClick={handleExportExcel}
+                                disabled={loading || exporting || data.transactions.length === 0}
+                            >
+                                <Download size={16} />
+                                <span>{exporting ? 'Đang xuất...' : 'Xuất Excel'}</span>
+                            </button>
                         </div>
                     </div>
 
@@ -831,6 +1269,67 @@ function AdminDashboard() {
                         )}
                     </div>
                 </div>
+            </section>
+
+            {/* ✅ MỚI: TOP SUẤT CHIẾU THEO DOANH THU */}
+            <section className="dashboard-card full-card">
+                <CardHeader
+                    icon={<Clapperboard />}
+                    title="Top suất chiếu doanh thu cao nhất"
+                    subtitle="Những suất chiếu bán chạy nhất trong kỳ"
+                />
+                {(data.topShowtimes || []).length === 0 ? (
+                    <EmptyList />
+                ) : (
+                    <div className="top-showtime-list">
+                        <div className="top-showtime-head">
+                            <span>#</span>
+                            <span>Suất chiếu</span>
+                            <span>Phim</span>
+                            <span>Rạp / Phòng</span>
+                            <span>Vé</span>
+                            <span>Lấp đầy</span>
+                            <span>Doanh thu</span>
+                        </div>
+                        {data.topShowtimes.map((st, index) => (
+                            <div className="top-showtime-row" key={st.showtime_id || index}>
+                                <span className="rank">{String(index + 1).padStart(2, '0')}</span>
+                                <span className="showtime-time">
+                                    {formatShowtime(st.start_time)}
+                                </span>
+                                <span className="showtime-movie" title={st.movie_title}>
+                                    {st.movie_title || '--'}
+                                </span>
+                                <span className="showtime-location">
+                                    {st.cinema_name || '--'}
+                                    {st.room_name ? ` • ${st.room_name}` : ''}
+                                    {st.room_type ? ` (${st.room_type})` : ''}
+                                </span>
+                                <span className="showtime-tickets">
+                                    {number(st.tickets)} / {number(st.total_seats)}
+                                </span>
+                                <span className="showtime-occupancy-cell">
+                                    <span
+                                        className="occupancy-bar"
+                                        style={{
+                                            width: `${Math.min(st.occupancy, 100)}%`,
+                                            background:
+                                                st.occupancy >= 80
+                                                    ? '#5ed6a0'
+                                                    : st.occupancy >= 50
+                                                    ? '#d6b36a'
+                                                    : '#ef6a72',
+                                        }}
+                                    />
+                                    <span className="occupancy-text">
+                                        {st.occupancy}%
+                                    </span>
+                                </span>
+                                <span className="showtime-revenue">{money(st.revenue)}</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </section>
 
             {/* CINEMA PERFORMANCE */}
@@ -1201,7 +1700,6 @@ function ContentItem({ icon, label, value, meta }) {
 function TransactionTable({ transactions }) {
     return (
         <table className="revenue-table">
-            {/* Định nghĩa độ rộng cột cứng */}
             <colgroup>
                 <col className="col-date" />
                 <col className="col-cust" />
@@ -1283,7 +1781,6 @@ function TransactionTable({ transactions }) {
                                 </div>
                             </td>
                             <td>
-                                {/* Căn lề phải cho cột Tổng tiền */}
                                 <div className="revenue-total-cell">
                                     <strong>{money(item.total_amount)}</strong>
                                     <span className={`transaction-status-badge ${statusClass}`}>
@@ -1298,6 +1795,7 @@ function TransactionTable({ transactions }) {
         </table>
     );
 }
+
 function EmptyChart() {
     return (
         <div className="empty-chart">

@@ -1,5 +1,6 @@
 /* ============================================================
    QR SCAN PAGE — Soát vé Cinema Star
+   ĐỒNG BỘ VỚI INDEX.CSS
    ============================================================ */
 
 * {
@@ -8,12 +9,11 @@
 
 .qr-scan-page {
     min-height: 100vh;
-    background: #000;
-    color: #fff;
+    background: var(--bg-primary);
+    color: var(--text-body);
     display: flex;
     flex-direction: column;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-        Arial, sans-serif;
+    font-family: var(--font-primary);
     position: relative;
     overflow: hidden;
 }
@@ -30,12 +30,12 @@
     z-index: 100;
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 16px 20px;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
     background: linear-gradient(
         to bottom,
-        rgba(0, 0, 0, 0.8),
-        rgba(0, 0, 0, 0)
+        rgba(7, 8, 10, 0.8),
+        rgba(7, 8, 10, 0)
     );
 }
 
@@ -44,25 +44,29 @@
     height: 40px;
     border: none;
     background: rgba(255, 255, 255, 0.15);
-    color: #fff;
+    color: var(--text-heading);
     border-radius: 50%;
     cursor: pointer;
     font-size: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
+    transition: all var(--transition-fast);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .qr-back-btn:hover {
     background: rgba(255, 255, 255, 0.25);
+    color: var(--silver-light);
 }
 
 .qr-header-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: #fff;
+    font-family: var(--font-heading);
+    font-size: var(--font-size-h5);
+    font-weight: var(--fw-semibold);
+    color: var(--text-heading);
+    letter-spacing: 0.5px;
 }
 
 /* ============================================================
@@ -75,7 +79,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 80px 20px 40px;
+    padding: 80px var(--space-lg) var(--space-xl);
 }
 
 .qr-frame {
@@ -83,10 +87,11 @@
     width: 100%;
     max-width: 400px;
     aspect-ratio: 1 / 1;
-    border-radius: 24px;
+    border-radius: var(--radius-2xl);
     overflow: hidden;
-    background: #1a1a1a;
-    box-shadow: 0 0 60px rgba(255, 255, 255, 0.05);
+    background: var(--bg-secondary);
+    border: var(--border-subtle);
+    box-shadow: 0 0 60px rgba(232, 232, 232, 0.05);
 }
 
 .qr-reader {
@@ -101,10 +106,10 @@
     position: absolute;
     width: 40px;
     height: 40px;
-    border: 4px solid #fff;
+    border: 4px solid var(--silver-light);
     pointer-events: none;
     z-index: 10;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
 }
 
 .qr-frame::before {
@@ -122,7 +127,7 @@
 }
 
 /* ============================================================
-   ✅ TORCH BUTTON
+   TORCH BUTTON
    ============================================================ */
 
 .qr-torch-btn {
@@ -132,9 +137,9 @@
     transform: translateX(-50%);
     width: 52px;
     height: 52px;
-    background: rgba(0, 0, 0, 0.6);
-    color: #fff;
-    border: 2px solid rgba(255, 255, 255, 0.4);
+    background: rgba(7, 8, 10, 0.6);
+    color: var(--text-heading);
+    border: 2px solid rgba(244, 246, 248, 0.4);
     border-radius: 50%;
     cursor: pointer;
     font-size: 22px;
@@ -144,11 +149,12 @@
     z-index: 20;
     transition: all 0.25s ease;
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .qr-torch-btn:hover {
-    background: rgba(0, 0, 0, 0.8);
-    border-color: #fff;
+    background: rgba(7, 8, 10, 0.8);
+    border-color: var(--silver-light);
     transform: translateX(-50%) scale(1.1);
 }
 
@@ -156,7 +162,7 @@
     transform: translateX(-50%) scale(0.95);
 }
 
-/* ✅ Active state — khi đèn đang bật */
+/* Active state — khi đèn đang bật */
 .qr-torch-btn.active {
     background: linear-gradient(135deg, #fbbf24, #f59e0b);
     border-color: #fbbf24;
@@ -174,7 +180,7 @@
 }
 
 /* ============================================================
-   ✅ BADGE KHI DÙNG FALLBACK BRIGHTNESS
+   BADGE KHI DÙNG FALLBACK BRIGHTNESS
    ============================================================ */
 
 .qr-torch-badge {
@@ -182,16 +188,17 @@
     top: 20px;
     left: 20px;
     background: rgba(251, 191, 36, 0.95);
-    color: #0a0a14;
+    color: var(--bg-primary);
     font-size: 11px;
-    font-weight: 700;
+    font-weight: var(--fw-bold);
     padding: 6px 12px;
-    border-radius: 20px;
+    border-radius: var(--radius-round);
     z-index: 15;
     letter-spacing: 0.3px;
     animation: badgeFadeIn 0.3s ease-out;
     box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 @keyframes badgeFadeIn {
@@ -206,13 +213,13 @@
 }
 
 /* ============================================================
-   ✅ HINT KHI DEVICE KHÔNG HỖ TRỢ FLASH
+   HINT KHI DEVICE KHÔNG HỖ TRỢ FLASH
    ============================================================ */
 
 .qr-torch-hint {
     font-size: 12px;
     color: #f59e0b;
-    margin-top: 8px;
+    margin-top: var(--space-sm);
     text-align: center;
     max-width: 320px;
     line-height: 1.4;
@@ -224,9 +231,9 @@
    ============================================================ */
 
 .qr-hint {
-    margin-top: 28px;
-    font-size: 15px;
-    color: rgba(255, 255, 255, 0.7);
+    margin-top: var(--space-xl);
+    font-size: var(--font-size-base);
+    color: var(--text-secondary);
     text-align: center;
     letter-spacing: 0.3px;
 }
@@ -236,13 +243,13 @@
    ============================================================ */
 
 .qr-error {
-    margin-top: 20px;
+    margin-top: var(--space-lg);
     padding: 14px 18px;
     background: rgba(220, 38, 38, 0.15);
     border: 1px solid rgba(220, 38, 38, 0.4);
     color: #fca5a5;
-    border-radius: 12px;
-    font-size: 14px;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-base);
     text-align: center;
     max-width: 400px;
     line-height: 1.6;
@@ -258,14 +265,14 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 20px;
+    gap: var(--space-lg);
 }
 
 .qr-loading-spinner {
     width: 60px;
     height: 60px;
     border: 4px solid rgba(255, 255, 255, 0.1);
-    border-top-color: #fff;
+    border-top-color: var(--silver-light);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }
@@ -277,34 +284,34 @@
 }
 
 .qr-loading p {
-    font-size: 16px;
-    color: rgba(255, 255, 255, 0.8);
+    font-size: var(--font-size-base);
+    color: var(--text-body);
 }
 
 /* ============================================================
-   ✅ NÚT "QUÉT LẠI" KHI SCANNER DỪNG
+   NÚT "QUÉT LẠI" KHI SCANNER DỪNG
    ============================================================ */
 
 .qr-restart-btn {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
     width: 100%;
     max-width: 320px;
-    margin: 40px auto;
-    padding: 16px 24px;
-    border-radius: 14px;
+    margin: var(--space-2xl) auto;
+    padding: var(--space-md) var(--space-lg);
+    border-radius: var(--radius-lg);
     border: none;
     background: linear-gradient(135deg, #f37021, #f5a623);
-    color: #0a0a14;
-    font-size: 16px;
-    font-weight: 700;
+    color: var(--bg-primary);
+    font-family: var(--font-primary);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-bold);
     cursor: pointer;
     transition: all 0.25s ease;
     box-shadow: 0 6px 20px rgba(243, 112, 33, 0.35);
     letter-spacing: 0.5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
 }
 
 .qr-restart-btn:hover {
@@ -319,32 +326,32 @@
 }
 
 /* ============================================================
-   ✅ NỘI DUNG MODAL CHECK-IN (BÊN TRONG AdminModal)
+   NỘI DUNG MODAL CHECK-IN (BÊN TRONG AdminModal)
    ============================================================ */
 
 .checkin-modal-body {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    padding: 4px 0;
+    gap: var(--space-md);
+    padding: var(--space-xs) 0;
 }
 
 .checkin-modal-message {
-    font-size: 15px;
-    color: #cbd5e1;
+    font-size: var(--font-size-base);
+    color: var(--text-body);
     text-align: center;
     margin: 0;
     line-height: 1.6;
-    font-weight: 500;
+    font-weight: var(--fw-medium);
 }
 
 /* INFO BOX */
 .checkin-ticket-info,
 .checkin-window-info {
-    background: #0a0a0a;
-    border-radius: 14px;
-    padding: 18px 20px;
-    border: 1px solid #2a2a2a;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md) var(--space-lg);
+    border: var(--border-subtle);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
     animation: checkinFadeIn 0.3s ease-out;
 }
@@ -366,7 +373,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 11px 0;
-    border-bottom: 1px dashed #1f1f1f;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
     gap: 14px;
     min-height: 44px;
 }
@@ -382,21 +389,21 @@
 
 /* LABEL */
 .checkin-row span {
-    font-size: 13px;
-    color: #94a3b8;
+    font-size: var(--font-size-h6);
+    color: var(--text-secondary);
     flex-shrink: 0;
-    font-weight: 500;
+    font-weight: var(--fw-medium);
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-xs);
 }
 
 /* VALUE */
 .checkin-row b {
-    font-size: 14px;
-    color: #fff;
+    font-size: var(--font-size-base);
+    color: var(--text-heading);
     text-align: right;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     word-break: break-word;
     line-height: 1.4;
     flex: 1;
@@ -406,9 +413,9 @@
 /* SEAT — NỔI BẬT */
 .checkin-seat {
     background: rgba(251, 191, 36, 0.05);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     padding: 12px 10px !important;
-    margin: 6px 0;
+    margin: var(--space-xs) 0;
     border: 1px solid rgba(251, 191, 36, 0.2) !important;
     border-bottom: 1px solid rgba(251, 191, 36, 0.2) !important;
 }
@@ -416,7 +423,7 @@
 .checkin-seat b {
     font-size: 22px !important;
     color: #fbbf24 !important;
-    font-weight: 800 !important;
+    font-weight: var(--fw-extrabold) !important;
     letter-spacing: 2px;
     text-shadow: 0 0 12px rgba(251, 191, 36, 0.4);
 }
@@ -426,11 +433,11 @@
     font-family: "Courier New", "Consolas", monospace !important;
     color: #60a5fa !important;
     letter-spacing: 1.5px;
-    font-size: 15px !important;
-    font-weight: 700 !important;
+    font-size: var(--font-size-h6) !important;
+    font-weight: var(--fw-bold) !important;
     background: rgba(96, 165, 250, 0.1);
-    padding: 4px 10px;
-    border-radius: 6px;
+    padding: var(--space-xs) 10px;
+    border-radius: var(--radius-sm);
     border: 1px solid rgba(96, 165, 250, 0.2);
 }
 
@@ -460,7 +467,7 @@
 }
 
 /* ============================================================
-   ✅ OVERRIDE AdminModal CHO CHECK-IN
+   OVERRIDE AdminModal CHO CHECK-IN
    ============================================================ */
 
 .admin-modal-container.checkin-modal {
@@ -478,12 +485,12 @@
 
 .admin-modal-container::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.02);
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
 }
 
 .admin-modal-container::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.15);
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
 }
 
 .admin-modal-container::-webkit-scrollbar-thumb:hover {
@@ -536,7 +543,7 @@
 @media (max-width: 480px) {
     /* Header */
     .qr-header {
-        padding: 12px 16px;
+        padding: 12px var(--space-md);
     }
 
     .qr-back-btn {
@@ -546,17 +553,17 @@
     }
 
     .qr-header-title {
-        font-size: 16px;
+        font-size: var(--font-size-h6);
     }
 
     /* Scanner */
     .qr-scanner-wrap {
-        padding: 70px 16px 30px;
+        padding: 70px var(--space-md) 30px;
     }
 
     .qr-frame {
         max-width: 320px;
-        border-radius: 20px;
+        border-radius: var(--radius-xl);
     }
 
     .qr-frame::before,
@@ -564,7 +571,7 @@
         width: 32px;
         height: 32px;
         border-width: 3px;
-        border-radius: 10px;
+        border-radius: var(--radius-sm);
     }
 
     .qr-torch-btn {
@@ -582,8 +589,8 @@
     }
 
     .qr-hint {
-        margin-top: 20px;
-        font-size: 14px;
+        margin-top: var(--space-lg);
+        font-size: var(--font-size-h6);
     }
 
     .qr-torch-hint {
@@ -592,17 +599,17 @@
 
     /* Modal */
     .checkin-modal-body {
-        gap: 12px;
+        gap: var(--space-sm);
     }
 
     .checkin-modal-message {
-        font-size: 14px;
+        font-size: var(--font-size-h6);
     }
 
     .checkin-ticket-info,
     .checkin-window-info {
-        padding: 14px 16px;
-        border-radius: 12px;
+        padding: 14px var(--space-md);
+        border-radius: var(--radius-md);
     }
 
     .checkin-row {
@@ -616,7 +623,7 @@
     }
 
     .checkin-row b {
-        font-size: 13px;
+        font-size: var(--font-size-h6);
     }
 
     .checkin-seat b {
@@ -632,31 +639,31 @@
 
     /* Buttons */
     .qr-restart-btn {
-        font-size: 15px;
-        padding: 14px 20px;
-        border-radius: 12px;
+        font-size: var(--font-size-h6);
+        padding: 14px var(--space-lg);
+        border-radius: var(--radius-md);
     }
 }
 
 /* ============================================================
-   ✅ ANIMATION COUNTDOWN AUTO CLOSE
+   ANIMATION COUNTDOWN AUTO CLOSE
    ============================================================ */
 
 .qr-modal-countdown {
     text-align: center;
-    font-size: 13px;
-    color: #94a3b8;
+    font-size: var(--font-size-h6);
+    color: var(--text-secondary);
     margin: 0 0 14px;
-    padding: 8px 12px;
+    padding: var(--space-sm) var(--space-md);
     background: rgba(255, 255, 255, 0.03);
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-sm);
+    border: var(--border-subtle);
 }
 
 .qr-modal-countdown b {
-    color: #fff;
-    font-weight: 700;
-    font-size: 14px;
+    color: var(--text-heading);
+    font-weight: var(--fw-bold);
+    font-size: var(--font-size-base);
     animation: countPulse 1s infinite;
 }
 

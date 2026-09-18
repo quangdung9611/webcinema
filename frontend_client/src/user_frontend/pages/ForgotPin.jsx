@@ -1,7 +1,15 @@
 // ForgotPin.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MailCheck, AlertCircle, CheckCircle } from 'lucide-react';
+import {
+    MailCheck,
+    AlertCircle,
+    CheckCircle,
+    ArrowLeft,
+    AlertTriangle,
+    XCircle,
+    Lock,
+} from 'lucide-react';
 import api from '../../api/api';
 import LoadingButton from '../components/LoadingButton';
 import '../styles/UserAuth.css';
@@ -10,8 +18,8 @@ const ForgotPin = () => {
     const navigate = useNavigate();
 
     const [email, setEmail] = useState('');
-    const [error, setError] = useState('');
-    const [successMessage, setSuccessMessage] = useState('');
+    const [error, setError] = useState(null);          // { icon, text }
+    const [successMessage, setSuccessMessage] = useState(null); // { icon, text }
     const [loading, setLoading] = useState(false);
 
     const [isRateLimited, setIsRateLimited] = useState(false);
@@ -81,7 +89,7 @@ const ForgotPin = () => {
                 const newTime = prev - 1;
                 if (newTime <= 1) {
                     setIsRateLimited(false);
-                    setError('');
+                    setError(null);
                     localStorage.removeItem(RATE_LIMIT_STORAGE_KEY);
                     return 0;
                 }
@@ -102,20 +110,29 @@ const ForgotPin = () => {
         return `${m}:${s.toString().padStart(2, '0')}`;
     };
 
+    // Helper tạo error object
+    const makeError = (IconComponent, text) => ({
+        icon: <IconComponent size={18} />,
+        text,
+    });
+
     const handleSendOtp = async () => {
         if (!email.trim()) {
-            setError('Vui lòng nhập email');
+            setError(makeError(AlertCircle, 'Vui lòng nhập email'));
             return;
         }
 
         if (isRateLimited) {
-            setError(`⚠️ Vui lòng đợi ${formatLockTime(rateLimitTimeLeft)} trước khi thử lại.`);
+            setError(makeError(
+                AlertTriangle,
+                `Vui lòng đợi ${formatLockTime(rateLimitTimeLeft)} trước khi thử lại.`
+            ));
             return;
         }
 
         setLoading(true);
-        setError('');
-        setSuccessMessage('');
+        setError(null);
+        setSuccessMessage(null);
 
         try {
             const response = await api.post('/api/auth/forgot-pin', { email });
@@ -125,7 +142,10 @@ const ForgotPin = () => {
                 await new Promise(resolve => setTimeout(resolve, 1000));
 
                 // 👇 Sau khi loading xong, hiển thị thông báo thành công
-                setSuccessMessage('✅ Mã OTP đã được gửi tới email của bạn. Vui lòng kiểm tra hộp thư.');
+                setSuccessMessage({
+                    icon: <CheckCircle size={20} />,
+                    text: 'Mã OTP đã được gửi tới email của bạn. Vui lòng kiểm tra hộp thư.',
+                });
 
                 // Lấy dữ liệu cần thiết để truyền sang Verify
                 const { expiresIn = 300, serverTime = Date.now() } = response.data?.data || {};
@@ -150,7 +170,6 @@ const ForgotPin = () => {
             const status = err.response?.status;
             const errorData = err.response?.data || {};
             const errorMessage = errorData.message || 'Không thể gửi OTP';
-            const errorCode = errorData.code;
 
             // 🔥 XỬ LÝ CÁC TRƯỜNG HỢP LỖI
             if (status === 429) {
@@ -158,15 +177,27 @@ const ForgotPin = () => {
                 setIsRateLimited(true);
                 setRateLimitTimeLeft(remainingSeconds);
                 saveRateLimitToStorage(remainingSeconds);
-                setError(`⚠️ Bạn đã gửi quá nhiều lần. Vui lòng thử lại sau ${formatLockTime(remainingSeconds)}.`);
+                setError(makeError(
+                    AlertTriangle,
+                    `Bạn đã gửi quá nhiều lần. Vui lòng thử lại sau ${formatLockTime(remainingSeconds)}.`
+                ));
             } else if (status === 404) {
-                setError('❌ Email này chưa được đăng ký trong hệ thống. Vui lòng kiểm tra lại.');
+                setError(makeError(
+                    XCircle,
+                    'Email này chưa được đăng ký trong hệ thống. Vui lòng kiểm tra lại.'
+                ));
             } else if (status === 400 && errorMessage?.toLowerCase().includes('verified')) {
-                setError('⚠️ Tài khoản chưa được xác thực email. Vui lòng kiểm tra hộp thư để xác thực.');
+                setError(makeError(
+                    AlertTriangle,
+                    'Tài khoản chưa được xác thực email. Vui lòng kiểm tra hộp thư để xác thực.'
+                ));
             } else if (status === 403) {
-                setError('🔒 Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ để được giúp đỡ.');
+                setError(makeError(
+                    Lock,
+                    'Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ để được giúp đỡ.'
+                ));
             } else {
-                setError(errorMessage);
+                setError(makeError(AlertCircle, errorMessage));
             }
         } finally {
             setLoading(false);
@@ -185,15 +216,15 @@ const ForgotPin = () => {
 
                 {successMessage && (
                     <div className="success-message">
-                        <CheckCircle size={20} />
-                        <span>{successMessage}</span>
+                        {successMessage.icon}
+                        <span>{successMessage.text}</span>
                     </div>
                 )}
 
                 {error && (
                     <div className="error-message">
-                        <AlertCircle size={18} />
-                        <span>{error}</span>
+                        {error.icon}
+                        <span>{error.text}</span>
                     </div>
                 )}
 
@@ -206,7 +237,7 @@ const ForgotPin = () => {
                         value={email}
                         onChange={(e) => {
                             setEmail(e.target.value);
-                            if (error) setError('');
+                            if (error) setError(null);
                         }}
                         disabled={loading || isRateLimited}
                         autoComplete="email"
@@ -241,8 +272,13 @@ const ForgotPin = () => {
                         className="btn-link back-btn"
                         onClick={() => navigate('/login')}
                         disabled={loading}
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                        }}
                     >
-                        ← Quay lại đăng nhập
+                        <ArrowLeft size={16} /> Quay lại đăng nhập
                     </button>
                 </div>
             </div>

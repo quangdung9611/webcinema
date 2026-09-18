@@ -2,6 +2,11 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import {
+    Info,
+    ChevronLeft,
+    ChevronRight,
+} from 'lucide-react';
 import api from '../../api/api';
 import socketService from '../../api/socket';
 import Modal from '../components/Modal';
@@ -174,7 +179,7 @@ const Booking = () => {
 
     const clearBookingSession = useCallback(() => {
         if (isSessionClearedRef.current) return;
-        console.log('🧹 [BOOKING] Clearing booking session...');
+        console.log('[BOOKING] Clearing booking session...');
         const currentSocket = socketService.getSocket();
         const currentShowtimeId = currentShowtimeIdRef.current;
         if (currentSocket?.connected && currentShowtimeId) {
@@ -197,7 +202,7 @@ const Booking = () => {
         setSeats(prev => prev.map(seat => ({ ...seat, is_locked_by_user: false, held_by_other: false })));
         clearOwnerToken();
         isSessionClearedRef.current = true;
-        console.log('✅ [BOOKING] Booking session cleared');
+        console.log('[BOOKING] Booking session cleared');
     }, [clearBookingLocalStorage, clearOwnerToken, releaseSeat]);
 
     // =========================================================
@@ -206,7 +211,7 @@ const Booking = () => {
 
     useEffect(() => {
         const handleClearBooking = event => {
-            console.log('📨 [BOOKING] Received clear booking session:', event?.detail);
+            console.log('[BOOKING] Received clear booking session:', event?.detail);
             isSessionClearedRef.current = false;
             clearBookingSession();
             setModalConfig({
@@ -837,7 +842,9 @@ const Booking = () => {
                                 <div className={`nav-col date-slider ${!selectedCinema ? 'disabled-step' : ''}`}>
                                     <label><span>2.</span> CHỌN NGÀY</label>
                                     <div className="slider-controls">
-                                        <button type="button" className="slide-btn" onClick={() => scrollDate(-1)} disabled={!selectedCinema} aria-label="Ngày trước">‹</button>
+                                        <button type="button" className="slide-btn" onClick={() => scrollDate(-1)} disabled={!selectedCinema} aria-label="Ngày trước">
+                                            <ChevronLeft size={18} />
+                                        </button>
                                         <div className="scroll-list" ref={dateRef}>
                                             {availableDates.map(date => (
                                                 <div
@@ -858,13 +865,17 @@ const Booking = () => {
                                                 </div>
                                             ))}
                                         </div>
-                                        <button type="button" className="slide-btn" onClick={() => scrollDate(1)} disabled={!selectedCinema} aria-label="Ngày sau">›</button>
+                                        <button type="button" className="slide-btn" onClick={() => scrollDate(1)} disabled={!selectedCinema} aria-label="Ngày sau">
+                                            <ChevronRight size={18} />
+                                        </button>
                                     </div>
                                 </div>
                                 <div className={`nav-col time-slider ${!selectedDate ? 'disabled-step' : ''}`}>
                                     <label><span>3.</span> SUẤT CHIẾU</label>
                                     <div className="slider-controls">
-                                        <button type="button" className="slide-btn" onClick={() => scrollTime(-1)} disabled={!selectedDate} aria-label="Suất trước">‹</button>
+                                        <button type="button" className="slide-btn" onClick={() => scrollTime(-1)} disabled={!selectedDate} aria-label="Suất trước">
+                                            <ChevronLeft size={18} />
+                                        </button>
                                         <div className="scroll-list" ref={timeRef}>
                                             {availableShowtimes.length > 0 ? (
                                                 availableShowtimes.map(st => {
@@ -891,7 +902,9 @@ const Booking = () => {
                                                 selectedDate && <span className="no-showtimes">Hết suất</span>
                                             )}
                                         </div>
-                                        <button type="button" className="slide-btn" onClick={() => scrollTime(1)} disabled={!selectedDate} aria-label="Suất sau">›</button>
+                                        <button type="button" className="slide-btn" onClick={() => scrollTime(1)} disabled={!selectedDate} aria-label="Suất sau">
+                                            <ChevronRight size={18} />
+                                        </button>
                                     </div>
                                 </div>
                             </nav>
@@ -974,7 +987,7 @@ const Booking = () => {
                                     </div>
                                 ) : (
                                     <div className="placeholder-msg">
-                                        <i className="fas fa-info-circle" />
+                                        <Info size={20} />
                                         <p>Vui lòng chọn đầy đủ <strong>rạp</strong>, <strong>ngày</strong> và <strong>suất chiếu</strong> để hiển thị sơ đồ ghế.</p>
                                     </div>
                                 )}

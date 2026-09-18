@@ -1,7 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/api';
-import { Shield, ArrowLeft, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import {
+    Shield,
+    ArrowLeft,
+    CheckCircle,
+    AlertCircle,
+    Eye,
+    EyeOff,
+    Lock,
+    PartyPopper,
+    Hourglass,
+    Lightbulb,
+} from 'lucide-react';
 
 import LoadingButton from '../components/LoadingButton';
 import Modal from '../components/Modal';
@@ -20,7 +31,6 @@ const UserRegisterPin = () => {
     const inputRefs = useRef([]);
     const confirmInputRefs = useRef([]);
 
-    // 🆕 State cho hiển thị PIN
     const [showPin, setShowPin] = useState(false);
     const [showConfirmPin, setShowConfirmPin] = useState(false);
 
@@ -28,16 +38,12 @@ const UserRegisterPin = () => {
     const [errors, setErrors] = useState({});
     const [errorMessage, setErrorMessage] = useState('');
 
-    // Modal states
     const [showVerifyModal, setShowVerifyModal] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [countdown, setCountdown] = useState(3);
 
-    // Socket listener ref
     const isListeningRef = useRef(false);
     const socketListenerRef = useRef(null);
-
-    // Polling interval ref
     const pollingIntervalRef = useRef(null);
 
     // =========================================================
@@ -84,25 +90,25 @@ const UserRegisterPin = () => {
             if (verified === 'true') {
                 try {
                     const data = JSON.parse(sessionStorage.getItem('email_verified_data') || '{}');
-                    
+
                     if (data.email === email) {
-                        console.log('✅ [POLLING] Phát hiện email đã verified từ sessionStorage!');
-                        
+                        console.log('[POLLING] Phát hiện email đã verified từ sessionStorage!');
+
                         if (pollingIntervalRef.current) {
                             clearInterval(pollingIntervalRef.current);
                             pollingIntervalRef.current = null;
                         }
-                        
+
                         setShowVerifyModal(false);
                         setShowSuccessModal(true);
                         setCountdown(3);
                         startCountdown();
-                        
+
                         sessionStorage.removeItem('email_verified_success');
                         sessionStorage.removeItem('email_verified_data');
                     }
                 } catch (error) {
-                    console.error('❌ [POLLING] Lỗi parse data:', error);
+                    console.error('[POLLING] Lỗi parse data:', error);
                 }
             }
         }, 2000);
@@ -114,7 +120,7 @@ const UserRegisterPin = () => {
     const setupSocketListener = () => {
         const socket = socketService.getSocket();
         if (!socket) {
-            console.warn('⚠️ [SOCKET] Socket chưa sẵn sàng');
+            console.warn('[SOCKET] Socket chưa sẵn sàng');
             return false;
         }
 
@@ -123,7 +129,7 @@ const UserRegisterPin = () => {
         }
 
         const handleEmailVerified = (data) => {
-            console.log('✅ [SOCKET] Nhận được sự kiện email_verified:', data);
+            console.log('[SOCKET] Nhận được sự kiện email_verified:', data);
 
             if (data.success && data.email === email) {
                 if (pollingIntervalRef.current) {
@@ -135,7 +141,7 @@ const UserRegisterPin = () => {
                 setShowSuccessModal(true);
                 setCountdown(3);
                 startCountdown();
-                
+
                 if (socketListenerRef.current) {
                     socket.off('email_verified', socketListenerRef.current);
                     socketListenerRef.current = null;
@@ -147,12 +153,12 @@ const UserRegisterPin = () => {
         socketListenerRef.current = handleEmailVerified;
         socket.on('email_verified', handleEmailVerified);
         isListeningRef.current = true;
-        
+
         if (socketService.registerEmailWatcher) {
             socketService.registerEmailWatcher(email);
         }
-        
-        console.log(`📡 [SOCKET] Đã setup listener cho email: ${email}`);
+
+        console.log(`[SOCKET] Đã setup listener cho email: ${email}`);
         return true;
     };
 
@@ -161,18 +167,18 @@ const UserRegisterPin = () => {
     // =========================================================
     const listenForEmailVerification = () => {
         startPollingSessionStorage();
-        
+
         const socket = socketService.getSocket();
-        
+
         if (!socket || !socket.connected) {
-            console.warn('⚠️ [SOCKET] Chưa kết nối, thử kết nối...');
+            console.warn('[SOCKET] Chưa kết nối, thử kết nối...');
             socketService.connect(email);
             setTimeout(() => {
                 const newSocket = socketService.getSocket();
                 if (newSocket && newSocket.connected) {
                     setupSocketListener();
                 } else {
-                    console.warn('⚠️ [SOCKET] Vẫn chưa kết nối, chỉ dùng polling fallback');
+                    console.warn('[SOCKET] Vẫn chưa kết nối, chỉ dùng polling fallback');
                 }
             }, 1500);
         } else {
@@ -202,17 +208,16 @@ const UserRegisterPin = () => {
     };
 
     // =========================================================
-    // 🆕 HANDLE PIN INPUT
+    // HANDLE PIN INPUT
     // =========================================================
     const handlePinChange = (index, value, isConfirm = false) => {
         const cleanValue = value.replace(/\D/g, '').slice(-1);
-        
+
         if (isConfirm) {
             const newValues = [...confirmPinValues];
             newValues[index] = cleanValue;
             setConfirmPinValues(newValues);
-            
-            // Xóa lỗi confirm khi nhập
+
             if (errors.confirmPin) {
                 setErrors(prev => ({ ...prev, confirmPin: '' }));
             }
@@ -223,8 +228,7 @@ const UserRegisterPin = () => {
             const newValues = [...pinValues];
             newValues[index] = cleanValue;
             setPinValues(newValues);
-            
-            // Xóa lỗi pin khi nhập
+
             if (errors.pin) {
                 setErrors(prev => ({ ...prev, pin: '' }));
             }
@@ -234,10 +238,9 @@ const UserRegisterPin = () => {
             }
         }
 
-        // 🆕 REAL-TIME CHECK: Kiểm tra khớp PIN ngay khi nhập
         const currentPin = isConfirm ? pinValues.join('') : (cleanValue ? newValues.join('') : pinValues.join(''));
         const currentConfirm = isConfirm ? newValues.join('') : confirmPinValues.join('');
-        
+
         if (currentPin.length === 6 && currentConfirm.length === 6) {
             if (currentPin !== currentConfirm) {
                 setErrors(prev => ({ ...prev, confirmPin: 'Mã PIN xác nhận không khớp' }));
@@ -248,7 +251,7 @@ const UserRegisterPin = () => {
     };
 
     // =========================================================
-    // 🆕 HANDLE CONFIRM PIN KEYDOWN
+    // HANDLE CONFIRM PIN KEYDOWN
     // =========================================================
     const handleConfirmKeyDown = (index, e) => {
         if (e.key === 'Backspace' && !confirmPinValues[index] && index > 0) {
@@ -263,7 +266,6 @@ const UserRegisterPin = () => {
         if (e.key === 'Backspace' && !pinValues[index] && index > 0) {
             inputRefs.current[index - 1]?.focus();
         }
-        // Khi nhập xong 6 số, tự động focus vào ô đầu của confirm PIN
         if (index === 5 && e.key !== 'Backspace') {
             setTimeout(() => {
                 if (!confirmInputRefs.current[0]) return;
@@ -315,7 +317,7 @@ const UserRegisterPin = () => {
     // =========================================================
     const handleSetupPin = async (e) => {
         e.preventDefault();
-        
+
         if (!temp_token) {
             setErrorMessage('Phiên đăng ký đã hết hạn. Vui lòng đăng ký lại!');
             return;
@@ -348,18 +350,17 @@ const UserRegisterPin = () => {
             }
 
         } catch (err) {
-            console.error('❌ Setup PIN Error:', err);
-            
+            console.error('Setup PIN Error:', err);
+
             const status = err.response?.status;
-            
+
             if (status === 401) {
                 setErrorMessage('Phiên đăng ký đã hết hạn. Vui lòng đăng ký lại!');
                 return;
             }
 
-            // 🆕 Xử lý rate limit 429
             if (status === 429) {
-                setErrorMessage(`⚠️ ${err.response?.data?.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.'}`);
+                setErrorMessage(err.response?.data?.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.');
                 return;
             }
 
@@ -386,17 +387,17 @@ const UserRegisterPin = () => {
     // =========================================================
     const handleVerifyModalClose = () => {
         setShowVerifyModal(false);
-        
+
         if (isListeningRef.current && socketListenerRef.current) {
             const socket = socketService.getSocket();
             if (socket) {
                 socket.off('email_verified', socketListenerRef.current);
                 socketListenerRef.current = null;
                 isListeningRef.current = false;
-                console.log('🔴 [SOCKET] Đã hủy listener do người dùng đóng modal');
+                console.log('[SOCKET] Đã hủy listener do người dùng đóng modal');
             }
         }
-        
+
         if (pollingIntervalRef.current) {
             clearInterval(pollingIntervalRef.current);
             pollingIntervalRef.current = null;
@@ -410,12 +411,16 @@ const UserRegisterPin = () => {
         <div className="auth-container">
             <div className="auth-card">
                 <div className="step-indicator">
-                    <span className="step-done">✓</span>
+                    <span className="step-done">
+                        <CheckCircle size={16} />
+                    </span>
                     <span className="step-line"></span>
                     <span className="step-active">2</span>
                 </div>
 
-                <h2>🔐 THIẾT LẬP MÃ PIN</h2>
+                <h2 className="auth-title-with-icon">
+                    <Lock size={22} /> THIẾT LẬP MÃ PIN
+                </h2>
                 <p className="auth-subtitle">Bước 2: Tạo mã PIN bảo mật cho giao dịch</p>
 
                 <div className="user-info-box">
@@ -427,33 +432,13 @@ const UserRegisterPin = () => {
                 </div>
 
                 {errorMessage && (
-                    <div className="error-message" style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        padding: '12px 16px',
-                        backgroundColor: 'rgba(255, 59, 92, 0.12)',
-                        border: '1px solid rgba(255, 59, 92, 0.3)',
-                        borderRadius: '8px',
-                        color: '#ff6b8a',
-                        marginBottom: '16px'
-                    }}>
+                    <div className="error-message error-message-box">
                         <AlertCircle size={18} />
                         <span>{errorMessage}</span>
                         {errorMessage.includes('hết hạn') && (
                             <button
                                 onClick={handleGoBackToRegister}
-                                style={{
-                                    marginLeft: 'auto',
-                                    padding: '4px 12px',
-                                    background: 'rgba(255, 59, 92, 0.15)',
-                                    border: '1px solid rgba(255, 59, 92, 0.2)',
-                                    borderRadius: '4px',
-                                    color: '#ff6b8a',
-                                    cursor: 'pointer',
-                                    fontSize: '12px',
-                                    fontWeight: '600'
-                                }}
+                                className="btn-register-again"
                             >
                                 Đăng ký lại
                             </button>
@@ -463,19 +448,18 @@ const UserRegisterPin = () => {
 
                 <div className="auth-form-wrapper">
                     <form onSubmit={handleSetupPin} noValidate>
-                        {/* 🆕 MÃ PIN - CÓ EYE/EYEOFF */}
+                        {/* MÃ PIN - CÓ EYE/EYEOFF */}
                         <div className="form-group">
                             <label>Mã PIN</label>
                             <div className="password-wrapper">
                                 <input
                                     type={showPin ? 'text' : 'password'}
-                                    className={`auth-input ${errors.pin ? 'input-error' : ''}`}
+                                    className={`auth-input auth-input-pin ${errors.pin ? 'input-error' : ''}`}
                                     placeholder="Nhập 6 chữ số"
                                     value={pinValues.join('')}
                                     onChange={(e) => {
                                         const value = e.target.value.replace(/\D/g, '').slice(0, 6);
                                         const newValues = value.split('');
-                                        // Cập nhật từng ô
                                         for (let i = 0; i < 6; i++) {
                                             if (i < newValues.length) {
                                                 pinValues[i] = newValues[i];
@@ -484,14 +468,12 @@ const UserRegisterPin = () => {
                                             }
                                         }
                                         setPinValues([...pinValues]);
-                                        
-                                        // Xóa lỗi
+
                                         if (errors.pin) {
                                             setErrors(prev => ({ ...prev, pin: '' }));
                                         }
                                         setErrorMessage('');
-                                        
-                                        // Focus vào confirm nếu đủ 6 số
+
                                         if (newValues.length === 6) {
                                             setTimeout(() => {
                                                 if (confirmInputRefs.current[0]) {
@@ -500,14 +482,8 @@ const UserRegisterPin = () => {
                                             }, 50);
                                         }
                                     }}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Backspace' && !pinValues.join('')) {
-                                            // Xử lý backspace
-                                        }
-                                    }}
                                     disabled={loading}
                                     autoComplete="one-time-code"
-                                    style={{ letterSpacing: '8px', fontSize: 'var(--font-size-xl)', fontWeight: 'var(--fw-bold)' }}
                                 />
                                 <button
                                     type="button"
@@ -522,13 +498,13 @@ const UserRegisterPin = () => {
                             {errors.pin && <span className="error-text pin-error">{errors.pin}</span>}
                         </div>
 
-                        {/* 🆕 NHẬP LẠI MÃ PIN - CÓ EYE/EYEOFF */}
-                        <div className="form-group" style={{ marginTop: '8px' }}>
+                        {/* NHẬP LẠI MÃ PIN - CÓ EYE/EYEOFF */}
+                        <div className="form-group form-group-tight">
                             <label>Nhập lại mã PIN</label>
                             <div className="password-wrapper">
                                 <input
                                     type={showConfirmPin ? 'text' : 'password'}
-                                    className={`auth-input ${errors.confirmPin ? 'input-error' : ''}`}
+                                    className={`auth-input auth-input-pin ${errors.confirmPin ? 'input-error' : ''}`}
                                     placeholder="Nhập lại 6 chữ số"
                                     value={confirmPinValues.join('')}
                                     onChange={(e) => {
@@ -542,13 +518,11 @@ const UserRegisterPin = () => {
                                             }
                                         }
                                         setConfirmPinValues([...confirmPinValues]);
-                                        
-                                        // Xóa lỗi confirm
+
                                         if (errors.confirmPin) {
                                             setErrors(prev => ({ ...prev, confirmPin: '' }));
                                         }
-                                        
-                                        // 🆕 REAL-TIME CHECK: Kiểm tra khớp ngay lập tức
+
                                         const pin = pinValues.join('');
                                         const confirm = confirmPinValues.join('');
                                         if (pin.length === 6 && confirm.length === 6) {
@@ -561,7 +535,6 @@ const UserRegisterPin = () => {
                                     }}
                                     disabled={loading}
                                     autoComplete="one-time-code"
-                                    style={{ letterSpacing: '8px', fontSize: 'var(--font-size-xl)', fontWeight: 'var(--fw-bold)' }}
                                 />
                                 <button
                                     type="button"
@@ -576,11 +549,11 @@ const UserRegisterPin = () => {
                             {errors.confirmPin && <span className="error-text pin-error">{errors.confirmPin}</span>}
                         </div>
 
-                        <div className="input-hint center-text" style={{ marginTop: '10px' }}>
-                            🔐 Mã PIN dùng để xác thực giao dịch thanh toán (6 chữ số)
+                        <div className="input-hint center-text input-hint-pin">
+                            <Lock size={14} /> Mã PIN dùng để xác thực giao dịch thanh toán (6 chữ số)
                         </div>
 
-                        <div className="button-group" style={{ marginTop: '20px' }}>
+                        <div className="button-group button-group-mt">
                             <LoadingButton
                                 type="submit"
                                 loading={loading}
@@ -622,7 +595,11 @@ const UserRegisterPin = () => {
             <Modal
                 show={showSuccessModal}
                 type="success"
-                title="🎉 Xác thực thành công!"
+                title={
+                    <span className="modal-title-with-icon">
+                        <PartyPopper size={22} /> Xác thực thành công!
+                    </span>
+                }
                 confirmText={`Đăng nhập (${countdown}s)`}
                 onConfirm={() => {
                     navigate('/login', {
@@ -641,24 +618,24 @@ const UserRegisterPin = () => {
                     });
                 }}
             >
-                <div style={{ textAlign: "center", padding: "10px 0" }}>
-                    <div style={{
-                        width: "70px", height: "70px", borderRadius: "50%",
-                        background: "rgba(34, 197, 94, 0.15)",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        margin: "0 auto 15px"
-                    }}>
+                <div className="verify-success-content">
+                    <div className="verify-success-icon-wrapper">
                         <CheckCircle size={40} color="#4ade80" />
                     </div>
 
-                    <p style={{ color: "var(--text-heading)", fontSize: "18px", fontWeight: "bold", marginBottom: "8px" }}>
+                    <p className="verify-success-title">
                         Chúc mừng {full_name || "bạn"}!
                     </p>
-                    <p style={{ color: "var(--text-secondary)", lineHeight: 1.6 }}>
-                        Tài khoản của bạn đã được xác thực thành công! 🎊
+                    <p className="verify-success-text">
+                        Tài khoản của bạn đã được xác thực thành công!
+                        <PartyPopper size={18} color="#4ade80" className="verify-success-emoji" />
                     </p>
-                    <p style={{ color: "var(--text-muted)", fontSize: "14px", marginTop: "10px" }}>
-                        ⏳ Tự động chuyển đến trang đăng nhập sau <strong style={{ color: "#4ade80" }}>{countdown}</strong> giây...
+                    <p className="verify-success-countdown">
+                        <Hourglass size={14} />
+                        <span>
+                            Tự động chuyển đến trang đăng nhập sau{' '}
+                            <strong className="verify-countdown-number">{countdown}</strong> giây...
+                        </span>
                     </p>
                 </div>
             </Modal>
