@@ -74,17 +74,25 @@ exports.updateUser = async (req, res) => {
 
 /*=========================================================
     ADMIN - UPDATE USER STATUS
+    ✅ SỬA: status dùng "ACTIVE" / "BANNED" (HOA)
 =========================================================*/
 exports.updateUserStatus = async (req, res) => {
     try {
         const { status } = req.body;
 
-        if (!status || !["active", "banned"].includes(status)) {
-            return res.status(400).json({ success: false, message: 'Status phải là "active" hoặc "banned"' });
+        // ✅ SỬA: HOA
+        if (!status || !["ACTIVE", "BANNED"].includes(status)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Status phải là "ACTIVE" hoặc "BANNED"' 
+            });
         }
 
         await UserService.updateUserStatus(req.params.user_id, status);
-        return res.status(200).json({ success: true, message: `Cập nhật trạng thái thành công: ${status}` });
+        return res.status(200).json({ 
+            success: true, 
+            message: `Cập nhật trạng thái thành công: ${status}` 
+        });
     } catch (err) {
         console.error("Update User Status Error:", err);
         return res.status(err.statusCode || 500).json({ success: false, message: err.message || "Lỗi máy chủ" });
@@ -93,17 +101,25 @@ exports.updateUserStatus = async (req, res) => {
 
 /*=========================================================
     ADMIN - UPDATE USER ROLE
+    ✅ role giữ nguyên: "admin" / "customer" (THƯỜNG)
 =========================================================*/
 exports.updateUserRole = async (req, res) => {
     try {
         const { role } = req.body;
 
+        // ✅ KHÔNG ĐỔI: role vẫn THƯỜNG
         if (!role || !["admin", "customer"].includes(role)) {
-            return res.status(400).json({ success: false, message: 'Role phải là "admin" hoặc "customer"' });
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Role phải là "admin" hoặc "customer"' 
+            });
         }
 
         await UserService.updateUserRole(req.params.user_id, role);
-        return res.status(200).json({ success: true, message: `Cập nhật role thành công: ${role}` });
+        return res.status(200).json({ 
+            success: true, 
+            message: `Cập nhật role thành công: ${role}` 
+        });
     } catch (err) {
         console.error("Update User Role Error:", err);
         return res.status(err.statusCode || 500).json({ success: false, message: err.message || "Lỗi máy chủ" });
@@ -205,6 +221,7 @@ exports.resetMyPoints = async (req, res) => {
         return res.status(err.statusCode || 500).json({ success: false, message: err.message || "Lỗi máy chủ" });
     }
 };
+
 /*=========================================================
     🔐 USER - PIN MANAGEMENT
 =========================================================*/

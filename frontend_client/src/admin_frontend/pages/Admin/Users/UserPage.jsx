@@ -338,12 +338,13 @@ const UserPage = () => {
                 </span>
             )
         },
+        // ✅ SỬA: status HOA + class lowercase
         {
             title: 'Trạng thái',
             key: 'status',
             render: (row) => (
-                <span className={`user-status-badge ${row.status}`}>
-                    {row.status === 'active' ? 'Hoạt động' : 'Bị khóa'}
+                <span className={`user-status-badge ${row.status?.toLowerCase()}`}>
+                    {row.status === 'ACTIVE' ? 'Hoạt động' : 'Bị khóa'}
                 </span>
             )
         },
@@ -397,12 +398,13 @@ const UserPage = () => {
                     </span>
                 )
             },
+            // ✅ SỬA: status HOA + class lowercase
             {
                 label: 'Trạng thái',
                 value: viewingUser.status,
                 render: (val) => (
-                    <span className={`user-status-badge ${val}`}>
-                        {val === 'active' ? 'Hoạt động' : 'Bị khóa'}
+                    <span className={`user-status-badge ${val?.toLowerCase()}`}>
+                        {val === 'ACTIVE' ? 'Hoạt động' : 'Bị khóa'}
                     </span>
                 )
             },

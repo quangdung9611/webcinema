@@ -1,6 +1,7 @@
 /* =========================================================
    ADMIN AUTH — ĐỒNG BỘ VỚI INDEX.CSS (SILVER EDITION)
    Bao gồm: AdminLogin + AdminForgotPassword + AdminVerifyOtp + AdminResetPassword
+   ✅ OTP input: 6 ô VUÔNG + NÚT EYE
 ========================================================= */
 
 /* =========================================================
@@ -422,7 +423,6 @@
     text-align: center;
 }
 
-/* Icon tròn trên cùng */
 .admin-forgot-icon-wrapper {
     width: 88px;
     height: 88px;
@@ -441,7 +441,6 @@
     color: var(--silver-primary);
 }
 
-/* Tiêu đề */
 .admin-forgot-card h2 {
     font-size: var(--font-size-h2);
     font-weight: var(--fw-extrabold);
@@ -677,6 +676,62 @@
 .admin-pin-box:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+/* =========================================================
+   ✅ 8b. ADMIN OTP WRAPPER + NÚT EYE
+========================================================= */
+.admin-pin-input-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    margin: var(--space-lg) 0;
+}
+
+.admin-pin-input-wrapper .admin-pin-input-container {
+    margin: 0;
+    flex: 1;
+}
+
+.admin-pin-input-wrapper .toggle-pin-visibility {
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: var(--border-premium);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.admin-pin-input-wrapper .toggle-pin-visibility:hover:not(:disabled) {
+    color: var(--silver-primary);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(232, 232, 232, 0.35);
+    transform: translateY(-1px);
+}
+
+.admin-pin-input-wrapper .toggle-pin-visibility:active:not(:disabled) {
+    transform: translateY(0) scale(0.95);
+}
+
+.admin-pin-input-wrapper .toggle-pin-visibility:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Khi type=password */
+.admin-pin-box[type="password"] {
+    font-family: var(--font-primary);
+    font-size: var(--font-size-h2);
+    color: var(--silver-primary);
 }
 
 /* =========================================================
@@ -966,6 +1021,12 @@
         gap: var(--space-xs);
     }
 
+    /* ✅ Nút eye mobile */
+    .admin-pin-input-wrapper .toggle-pin-visibility {
+        width: 34px;
+        height: 34px;
+    }
+
     /* Button group xếp dọc */
     .admin-button-group {
         flex-direction: column-reverse;
@@ -1029,5 +1090,14 @@
     }
     .admin-pin-input-container {
         gap: 6px;
+    }
+
+    /* ✅ Nút eye mobile nhỏ */
+    .admin-pin-input-wrapper {
+        gap: var(--space-sm);
+    }
+    .admin-pin-input-wrapper .toggle-pin-visibility {
+        width: 32px;
+        height: 32px;
     }
 }

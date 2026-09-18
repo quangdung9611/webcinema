@@ -404,8 +404,7 @@ exports.changePassword = async (userId, passwordData) => {
 
 // ============================================================
 // FORGOT PASSWORD
-// ============================================================
-// ✅ SỬA: Thêm param expectedRole để check role
+// ✅ SỬA: status === 'BANNED' (HOA)
 // ============================================================
 exports.forgotPassword = async (email, req, expectedRole = null) => {
     if (!email?.trim()) throw { statusCode: 400, field: "email", message: "Email không được để trống" };
@@ -423,7 +422,6 @@ exports.forgotPassword = async (email, req, expectedRole = null) => {
     }
 
     // ✅ CHECK ROLE — dùng CÙNG message như "không tồn tại"
-    // → Không tiết lộ email có tồn tại hay không
     if (expectedRole && user.role !== expectedRole) {
         throw {
             statusCode: 404,
@@ -440,7 +438,8 @@ exports.forgotPassword = async (email, req, expectedRole = null) => {
         };
     }
 
-    if (user.status === 'banned') {
+    // ✅ SỬA: BANNED (HOA)
+    if (user.status === 'BANNED') {
         throw {
             statusCode: 403,
             message: "Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ để được giúp đỡ."
@@ -536,8 +535,6 @@ exports.submitNewPassword = async (token, newPassword) => {
 // ============================================================
 // VERIFY OTP AND RESET
 // ============================================================
-// ✅ SỬA: Thêm param expectedRole để check role lần 2
-// ============================================================
 exports.verifyOtpAndReset = async (email, otp, newPassword, expectedRole = null) => {
     const rateLimit = await CacheService.checkRateLimit(email, "verify-otp-reset", 5, 300);
     if (!rateLimit.allowed) {
@@ -577,7 +574,6 @@ exports.verifyOtpAndReset = async (email, otp, newPassword, expectedRole = null)
 
     // Nếu chỉ verify OTP (không reset password)
     if (!newPassword || newPassword.length === 0) {
-        // ✅ Vẫn check role để chắc chắn
         const userCheck = await UserRepository.findByEmail(email);
         if (!userCheck) {
             throw { statusCode: 404, message: "Không tìm thấy người dùng" };
@@ -739,6 +735,7 @@ exports.revokeDeviceById = async (userId, tokenId) => {
 
 // ============================================================
 // FORGOT PIN
+// ✅ SỬA: status === 'BANNED' (HOA)
 // ============================================================
 exports.forgotPin = async (email) => {
     if (!email?.trim()) {
@@ -763,7 +760,8 @@ exports.forgotPin = async (email) => {
         };
     }
 
-    if (user.status === 'banned') {
+    // ✅ SỬA: BANNED (HOA)
+    if (user.status === 'BANNED') {
         throw {
             statusCode: 403,
             message: "Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ để được giúp đỡ."
@@ -938,6 +936,7 @@ exports.registerStep1 = async (data) => {
 
 // ============================================================
 // COMPLETE REGISTRATION
+// ✅ SỬA: status: "ACTIVE" (HOA)
 // ============================================================
 exports.completeRegistration = async (data, req, res) => {
     const { temp_token, pin, username, full_name, email, phone, password, address } = data;
@@ -990,8 +989,8 @@ exports.completeRegistration = async (data, req, res) => {
         address: address || "",
         email,
         password: hashedPassword,
-        role: "customer",
-        status: "active",
+        role: "customer",      // ✅ role THƯỜNG
+        status: "ACTIVE",       // ✅ SỬA: status HOA
         email_verified: 0,
         points: 0,
         pin_hash: hashedPin
@@ -1075,8 +1074,6 @@ exports.checkOtpTTL = async (email, purpose) => {
 
 // ============================================================
 // RESEND OTP
-// ============================================================
-// ✅ SỬA: Thêm param expectedRole để check role
 // ============================================================
 exports.resendOtp = async (email, purpose, expectedRole = null) => {
     if (!email?.trim()) {
@@ -1169,7 +1166,196 @@ exports.loginAfterRegistration = async (user, req, res) => {
         }
     };
 };
+// ============================================================
+// ✅ GOOGLE LOGIN
+// ============================================================
+exports.loginWithGoogle = async (credential, req, res) => {
+    // 1. Verify Google token
+    const GoogleService = require("./GoogleService");
+    const googleData = await GoogleService.verifyGoogleToken(credential);
 
+    const { email, name, picture, sub: googleId } = googleData;
+
+    // 2. Check user tồn tại
+    let user = await UserRepository.findByEmail(email);
+    let isNewUser = false;
+    let needPhone = false;
+
+    if (!user) {
+        // ✅ CASE 1: User mới → tạo account
+        const username = GoogleService.generateUsernameFromEmail(email);
+
+        // Check username trùng → thêm số
+        let finalUsername = username;
+        let counter = 1;
+        while (await UserRepository.existsByUsername(finalUsername)) {
+            finalUsername = `${username}_${counter}`;
+            counter++;
+        }
+
+        const userId = await UserRepository.createGoogleUser({
+            username: finalUsername,
+            full_name: name,
+            email,
+            user_avatar: picture,
+            google_id: googleId,
+        });
+
+        user = await UserRepository.findById(userId);
+        isNewUser = true;
+        needPhone = true;
+
+        console.log(`✅ [GOOGLE] Created new user: ${email}`);
+
+    } else {
+        // ✅ CASE 2: User tồn tại
+        if (user.provider === "GOOGLE") {
+            // Login Google lần 2+
+            console.log(`✅ [GOOGLE] Existing Google user login: ${email}`);
+        } else {
+            // User cũ (email/password) → link account
+            await UserRepository.linkGoogleAccount(user.user_id, googleId, picture);
+            user = await UserRepository.findById(user.user_id);
+            console.log(`✅ [GOOGLE] Linked Google to existing account: ${email}`);
+        }
+
+        // Check cần nhập SĐT
+        needPhone = !user.phone;
+    }
+
+    // 3. Check status BANNED
+    if (user.status === "BANNED") {
+        throw {
+            statusCode: 403,
+            message: "Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ.",
+        };
+    }
+
+    // 4. Tạo token + set cookie
+    const accessToken = generateAndSetTokens(user, res, false);
+    const accessTokenHash = Jwt.hashRefreshToken(accessToken);
+
+    // 5. Xử lý device management (giống login)
+    const maxDevices = user.role === "admin" ? MAX_DEVICES_ADMIN : MAX_DEVICES_CUSTOMER;
+    const activeTokens = await RefreshTokenRepository.getActiveByUser(user.user_id);
+
+    if (activeTokens.length >= maxDevices) {
+        const sorted = [...activeTokens].sort((a, b) => {
+            return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        });
+        const oldestToken = sorted[0];
+
+        if (oldestToken) {
+            await RefreshTokenRepository.revoke(oldestToken.token_hash, "revoked_by_login");
+        }
+    }
+
+    // 6. Lưu refresh token
+    await RefreshTokenRepository.create({
+        user_id: user.user_id,
+        token_hash: accessTokenHash,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        ip_address: req.ip || req.connection?.remoteAddress || null,
+        user_agent: req.headers?.["user-agent"] || null,
+        device_name: req.headers?.["user-agent"]?.substring(0, 50) || "Google Login",
+        socket_token: null,
+    });
+
+    // 7. Update last login
+    await UserRepository.updateLastLogin(user.user_id, req.ip);
+
+    return {
+        success: true,
+        message: isNewUser ? "Đăng ký Google thành công!" : "Đăng nhập Google thành công!",
+        isNewUser,
+        needPhone,
+        user: {
+            user_id: user.user_id,
+            username: user.username,
+            full_name: user.full_name,
+            email: user.email,
+            phone: user.phone,
+            user_avatar: user.user_avatar,
+            role: user.role,
+            points: user.points,
+            email_verified: user.email_verified,
+            provider: user.provider,
+            has_password: !!user.password,
+        },
+    };
+};
+
+// ============================================================
+// ✅ UPDATE PHONE (sau Google login lần đầu)
+// ============================================================
+exports.updatePhone = async (userId, phone) => {
+    if (!phone?.trim()) {
+        throw { statusCode: 400, field: "phone", message: "Vui lòng nhập số điện thoại" };
+    }
+
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!phoneRegex.test(phone.trim())) {
+        throw { statusCode: 400, field: "phone", message: "Số điện thoại phải đúng 10 chữ số" };
+    }
+
+    const user = await UserRepository.findById(userId);
+    if (!user) {
+        throw { statusCode: 404, message: "Không tìm thấy người dùng" };
+    }
+
+    // Check SĐT trùng
+    if (user.phone !== phone.trim()) {
+        const exists = await UserRepository.existsByPhone(phone.trim());
+        if (exists) {
+            throw { statusCode: 400, field: "phone", message: "Số điện thoại đã được sử dụng" };
+        }
+    }
+
+    await UserRepository.updatePhone(userId, phone.trim());
+
+    return {
+        success: true,
+        message: "Cập nhật số điện thoại thành công!",
+    };
+};
+
+// ============================================================
+// ✅ SET PASSWORD (cho user Google login)
+// ============================================================
+exports.setPassword = async (userId, newPassword) => {
+    if (!newPassword?.trim()) {
+        throw { statusCode: 400, field: "newPassword", message: "Vui lòng nhập mật khẩu" };
+    }
+
+    if (!Password.isStrong(newPassword)) {
+        throw {
+            statusCode: 400,
+            field: "newPassword",
+            message: "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt",
+        };
+    }
+
+    const user = await UserRepository.findById(userId);
+    if (!user) {
+        throw { statusCode: 404, message: "Không tìm thấy người dùng" };
+    }
+
+    // Nếu đã có password → không cho set qua API này (phải dùng changePassword)
+    if (user.password) {
+        throw {
+            statusCode: 400,
+            message: "Tài khoản đã có mật khẩu. Vui lòng dùng chức năng đổi mật khẩu.",
+        };
+    }
+
+    const hashedPassword = await Password.hash(newPassword);
+    await UserRepository.updatePassword(userId, hashedPassword);
+
+    return {
+        success: true,
+        message: "Tạo mật khẩu thành công! Bây giờ bạn có thể đăng nhập bằng email/mật khẩu.",
+    };
+};
 // ============================================================
 // EXPORT SOCKET + HELPER
 // ============================================================

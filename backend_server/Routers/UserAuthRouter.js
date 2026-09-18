@@ -26,6 +26,13 @@ router.post("/register", AuthController.register);
 router.post("/login", AuthController.login);
 router.post("/refresh", AuthController.refreshToken);
 
+// ============================================================
+// 🆕 GOOGLE LOGIN — PUBLIC
+// ============================================================
+// Body: { credential }
+// → Verify Google token → Tạo/login user → Trả JWT
+router.post("/google", AuthController.googleLogin);
+
 // PASSWORD RESET
 router.post("/forgot-password", AuthController.forgotPassword);
 router.post("/submit-new-password", AuthController.submitNewPassword);
@@ -58,6 +65,17 @@ router.get("/me", authenticateUser, AuthController.getMe);
 router.patch("/change-password", authenticateUser, AuthController.changePassword);
 router.post("/logout-all", authenticateUser, AuthController.logoutAllDevices);
 router.post("/resend-verification", authenticateUser, AuthController.resendVerification);
+
+// ============================================================
+// 🆕 GOOGLE LOGIN — CẦN AUTH (SAU KHI LOGIN GOOGLE)
+// ============================================================
+// Body: { phone }
+// → Cập nhật SĐT sau khi Google login lần đầu
+router.post("/update-phone", authenticateUser, AuthController.updatePhone);
+
+// Body: { newPassword }
+// → Tạo password cho user Google (để login email/password)
+router.post("/set-password", authenticateUser, AuthController.setPassword);
 
 // ============================================================
 // DEVICE MANAGEMENT — CẦN AUTH

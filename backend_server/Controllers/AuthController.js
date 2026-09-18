@@ -770,3 +770,68 @@ exports.invalidateOtp = async (req, res) => {
         });
     }
 };
+/*=========================================================
+    ✅ GOOGLE LOGIN
+=========================================================*/
+exports.googleLogin = async (req, res) => {
+    try {
+        const { credential } = req.body;
+
+        if (!credential) {
+            return res.status(400).json({
+                success: false,
+                message: "Thiếu Google credential",
+            });
+        }
+
+        const result = await AuthService.loginWithGoogle(credential, req, res);
+        return res.status(200).json(result);
+
+    } catch (error) {
+        console.error("Google Login Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            field: error.field || null,
+            message: error.message || "Lỗi đăng nhập Google",
+            data: error.data || null,
+        });
+    }
+};
+
+/*=========================================================
+    ✅ UPDATE PHONE
+=========================================================*/
+exports.updatePhone = async (req, res) => {
+    try {
+        const { phone } = req.body;
+        const result = await AuthService.updatePhone(req.user.user_id, phone);
+        return res.status(200).json(result);
+
+    } catch (error) {
+        console.error("Update Phone Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            field: error.field || null,
+            message: error.message || "Lỗi cập nhật số điện thoại",
+        });
+    }
+};
+
+/*=========================================================
+    ✅ SET PASSWORD (cho user Google)
+=========================================================*/
+exports.setPassword = async (req, res) => {
+    try {
+        const { newPassword } = req.body;
+        const result = await AuthService.setPassword(req.user.user_id, newPassword);
+        return res.status(200).json(result);
+
+    } catch (error) {
+        console.error("Set Password Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            field: error.field || null,
+            message: error.message || "Lỗi tạo mật khẩu",
+        });
+    }
+};

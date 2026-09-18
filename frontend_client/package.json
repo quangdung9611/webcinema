@@ -11,6 +11,7 @@
     "start": "serve -s dist -l 5173"
   },
   "dependencies": {
+    "@react-oauth/google": "^0.13.5",
     "axios": "^1.13.2",
     "framer-motion": "^12.40.0",
     "html5-qrcode": "^2.3.8",

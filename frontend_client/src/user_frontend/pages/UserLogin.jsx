@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { AlertCircle, Eye, EyeOff, CheckCircle, MailCheck } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 import api from '../../api/api';
 import { useAuth } from '../../context/AuthContext';
 import { notifyLogin } from '../../utils/authCleanup';
@@ -10,6 +11,7 @@ import LoadingButton from '../components/LoadingButton';
 import SuccessModal from '../components/SuccessModal';
 import LoginLockModal from '../components/LoginLockModal';
 import Modal from '../components/Modal';
+import UpdatePhoneModal from '../components/UpdatePhoneModal';   // ✅ MỚI
 import socketService from '../../api/socket';
 import '../styles/UserAuth.css';
 
@@ -36,6 +38,12 @@ const UserLogin = () => {
     const [showLoginSuccessModal, setShowLoginSuccessModal] = useState(false);
     const [loginSuccessMessage, setLoginSuccessMessage] = useState('');
     const [loggedInUser, setLoggedInUser] = useState(null);
+
+    // =========================================================
+    // ✅ GOOGLE LOGIN STATE
+    // =========================================================
+    const [googleLoading, setGoogleLoading] = useState(false);
+    const [showUpdatePhone, setShowUpdatePhone] = useState(false);
 
     // =========================================================
     // MODAL THÔNG BÁO KIỂM TRA EMAIL (từ RegisterPin)
@@ -158,7 +166,6 @@ const UserLogin = () => {
     // LOAD LOCK STATUS KHI REFRESH TRANG - KHÔI PHỤC TỪ LOCALSTORAGE
     // =========================================================
     useEffect(() => {
-        // Ưu tiên khôi phục từ localStorage trước
         const restoredLock = restoreLockFromStorage();
 
         if (restoredLock) {
@@ -168,7 +175,6 @@ const UserLogin = () => {
             return;
         }
 
-        // Nếu không có trong localStorage, kiểm tra từ server
         const storedEmail = localStorage.getItem('lockedEmail');
         if (!storedEmail) return;
 
@@ -207,7 +213,7 @@ const UserLogin = () => {
     }, []);
 
     // =========================================================
-    // COUNTDOWN LOGIN LOCK - CẬP NHẬT LIÊN TỤC
+    // COUNTDOWN LOGIN LOCK
     // =========================================================
     useEffect(() => {
         if (lockIntervalRef.current) {
@@ -240,7 +246,6 @@ const UserLogin = () => {
                 setSuccessMessage('✅ Tài khoản đã được mở khóa. Vui lòng thử đăng nhập lại.');
                 setTimeout(() => setSuccessMessage(''), 5000);
             } else {
-                // Cập nhật localStorage mỗi 5 giây
                 if (left % 5 === 0 || left <= 10) {
                     const updatedLockInfo = {
                         ...lockInfo,
@@ -264,7 +269,7 @@ const UserLogin = () => {
     }, [lockInfo?.lockedUntil]);
 
     // =========================================================
-    // EMAIL VERIFIED MESSAGE (Từ RegisterPin / VerifyEmail)
+    // EMAIL VERIFIED MESSAGE
     // =========================================================
     useEffect(() => {
         if (location.state?.verified) {
@@ -306,10 +311,17 @@ const UserLogin = () => {
     // REDIRECT IF ALREADY LOGIN
     // =========================================================
     useEffect(() => {
-        if (user && !isLoading && !showLoginSuccessModal && !isExpired && user.email_verified === 1) {
+        if (
+            user &&
+            !isLoading &&
+            !showLoginSuccessModal &&
+            !showUpdatePhone &&         // ✅ Không redirect khi đang mở modal SĐT
+            !isExpired &&
+            user.email_verified === 1
+        ) {
             navigate('/', { replace: true });
         }
-    }, [user, isLoading, showLoginSuccessModal, navigate, isExpired]);
+    }, [user, isLoading, showLoginSuccessModal, showUpdatePhone, navigate, isExpired]);
 
     // =========================================================
     // VALIDATE
@@ -366,12 +378,68 @@ const UserLogin = () => {
     };
 
     // =========================================================
+    // ✅ HANDLE GOOGLE SUCCESS
+    // =========================================================
+    const handleGoogleSuccess = async (credentialResponse) => {
+        if (googleLoading) return;
+
+        try {
+            setGoogleLoading(true);
+            setServerError('');
+            setSuccessMessage('');
+
+            const res = await api.post('/api/auth/google', {
+                credential: credentialResponse.credential,
+            });
+
+            const responseUser = res.data?.user;
+
+            if (!responseUser) {
+                setServerError('Không nhận được thông tin người dùng từ Google.');
+                return;
+            }
+
+            // Reset cache + thông báo login
+            api.resetUserCache();
+            notifyLogin(responseUser);
+
+            setLoggedInUser(responseUser);
+
+            // ✅ Nếu cần nhập SĐT → mở modal
+            if (res.data?.needPhone) {
+                setShowUpdatePhone(true);
+            } else {
+                setLoginSuccessMessage(
+                    `Chào mừng ${responseUser?.full_name || responseUser?.username || 'bạn'} quay trở lại!`
+                );
+                setShowLoginSuccessModal(true);
+            }
+
+        } catch (err) {
+            console.error('🔴 [GOOGLE LOGIN] Error:', err);
+
+            const errorData = err?.response?.data || {};
+            const errorMessage = errorData?.message || 'Đăng nhập Google thất bại. Vui lòng thử lại.';
+
+            setServerError(errorMessage);
+        } finally {
+            setGoogleLoading(false);
+        }
+    };
+
+    // =========================================================
+    // ✅ HANDLE GOOGLE ERROR
+    // =========================================================
+    const handleGoogleError = () => {
+        setServerError('Không thể kết nối với Google. Vui lòng thử lại sau.');
+    };
+
+    // =========================================================
     // HANDLE LOGIN
     // =========================================================
     const handleLogin = async (event) => {
         event.preventDefault();
 
-        // ✅ FIX: Chặn double-submit — GIỐNG AdminLogin
         if (loading) {
             console.log('⚠️ [LOGIN] Already loading — skip');
             return;
@@ -417,9 +485,6 @@ const UserLogin = () => {
             const errorCode = errorData?.code;
             const errorMessage = errorData?.message || 'Tài khoản hoặc mật khẩu không chính xác';
 
-            // ====================================================
-            // ACCOUNT LOCKED
-            // ====================================================
             if (error?.response?.status === 429 || errorCode === 'ACCOUNT_LOCKED') {
                 const lockData = errorData?.data || {};
                 const level = Number(lockData.level) || 1;
@@ -446,9 +511,6 @@ const UserLogin = () => {
                 return;
             }
 
-            // ====================================================
-            // FIELD ERRORS
-            // ====================================================
             if (errorData?.field === 'email') {
                 setErrors((prev) => ({ ...prev, email: errorMessage }));
                 return;
@@ -459,32 +521,18 @@ const UserLogin = () => {
                 return;
             }
 
-            // ====================================================
-            // ✅ THÊM: XỬ LÝ SESSION / TOKEN ERRORS
-            // GIỐNG AdminLogin
-            // ====================================================
             if (errorCode === 'SESSION_EXPIRED') {
-                console.log('🔴 [LOGIN] Nhận lỗi SESSION_EXPIRED từ login API');
-                setServerError(
-                    errorMessage ||
-                        'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
-                );
+                setServerError(errorMessage || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
                 return;
             }
 
             if (errorCode === 'SESSION_REPLACED') {
-                setServerError(
-                    errorMessage ||
-                        'Tài khoản đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.'
-                );
+                setServerError(errorMessage || 'Tài khoản đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.');
                 return;
             }
 
             if (errorCode === 'TOKEN_INVALID') {
-                setServerError(
-                    errorMessage ||
-                        'Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.'
-                );
+                setServerError(errorMessage || 'Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
                 socketService.disconnect();
                 return;
             }
@@ -500,9 +548,6 @@ const UserLogin = () => {
                 return;
             }
 
-            // ====================================================
-            // FALLBACK
-            // ====================================================
             setServerError(errorMessage);
         } finally {
             setLoading(false);
@@ -519,19 +564,28 @@ const UserLogin = () => {
     };
 
     // =========================================================
-    // CLOSE LOCK MODAL
+    // ✅ HANDLE UPDATE PHONE SUCCESS
     // =========================================================
-    const handleCloseLockModal = () => {
-        setShowLockModal(false);
-        // Không xóa lockInfo, timer vẫn chạy background
+    const handleUpdatePhoneSuccess = () => {
+        setShowUpdatePhone(false);
+        setLoginSuccessMessage(
+            `Chào mừng ${loggedInUser?.full_name || loggedInUser?.username || 'bạn'} quay trở lại!`
+        );
+        setShowLoginSuccessModal(true);
     };
 
     // =========================================================
-    // CLOSE VERIFY EMAIL MODAL
+    // ✅ HANDLE UPDATE PHONE CLOSE (bỏ qua)
     // =========================================================
-    const handleVerifyEmailModalClose = () => {
-        setShowVerifyEmailModal(false);
+    const handleUpdatePhoneClose = () => {
+        setShowUpdatePhone(false);
+        // Không cho bỏ qua — vẫn vào trang chủ nhưng user chưa có SĐT
+        // Có thể điều hướng vào profile để nhập sau
+        navigate('/', { replace: true });
     };
+
+    const handleCloseLockModal = () => setShowLockModal(false);
+    const handleVerifyEmailModalClose = () => setShowVerifyEmailModal(false);
 
     // =========================================================
     // FORMAT TIME
@@ -583,7 +637,7 @@ const UserLogin = () => {
                             value={formData.email}
                             onChange={handleChange}
                             autoComplete="off"
-                            disabled={loading || isLockedActive}
+                            disabled={loading || isLockedActive || googleLoading}
                         />
                         {errors.email && <span className="error-text">{errors.email}</span>}
                     </div>
@@ -599,14 +653,14 @@ const UserLogin = () => {
                                 value={formData.password}
                                 onChange={handleChange}
                                 autoComplete="new-password"
-                                disabled={loading || isLockedActive}
+                                disabled={loading || isLockedActive || googleLoading}
                             />
                             <button
                                 type="button"
                                 className="toggle-password"
                                 onClick={() => setShowPassword((prev) => !prev)}
                                 tabIndex="-1"
-                                disabled={loading || isLockedActive}
+                                disabled={loading || isLockedActive || googleLoading}
                             >
                                 {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                             </button>
@@ -621,7 +675,7 @@ const UserLogin = () => {
                                 name="rememberMe"
                                 checked={formData.rememberMe}
                                 onChange={handleChange}
-                                disabled={loading || isLockedActive}
+                                disabled={loading || isLockedActive || googleLoading}
                             />
                             Remember me
                         </label>
@@ -630,7 +684,7 @@ const UserLogin = () => {
                             type="button"
                             className="forgot-link"
                             onClick={() => navigate('/forgot-password')}
-                            disabled={loading || isLockedActive}
+                            disabled={loading || isLockedActive || googleLoading}
                         >
                             Forgot password?
                         </button>
@@ -640,7 +694,7 @@ const UserLogin = () => {
                         type="submit"
                         loading={loading}
                         loadingText="Đang đăng nhập..."
-                        disabled={loading || isLockedActive}
+                        disabled={loading || isLockedActive || googleLoading}
                         className="btn-user btn-user-silver"
                         spinnerColor="#000000"
                     >
@@ -652,13 +706,35 @@ const UserLogin = () => {
                     </LoadingButton>
                 </form>
 
+                {/* ============================================
+                    ✅ GOOGLE LOGIN
+                ============================================ */}
+                <div className="google-login-wrapper">
+                    <div className="divider">
+                        <span>Hoặc</span>
+                    </div>
+
+                    <div className="google-login-btn">
+                        <GoogleLogin
+                            onSuccess={handleGoogleSuccess}
+                            onError={handleGoogleError}
+                            theme="outline"
+                            size="large"
+                            text="signin_with"
+                            shape="rectangular"
+                            logo_alignment="left"
+                            width="100%"
+                        />
+                    </div>
+                </div>
+
                 <div className="auth-footer">
                     <span>Chưa có tài khoản?</span>
                     <Link to="/register" className="btn-link">Đăng ký ngay</Link>
                 </div>
             </div>
 
-            {/* MODAL: Thông báo kiểm tra email (từ RegisterPin) */}
+            {/* MODAL: Thông báo kiểm tra email */}
             <Modal
                 show={showVerifyEmailModal}
                 type="success"
@@ -705,6 +781,13 @@ const UserLogin = () => {
                 lockDurationText={lockInfo?.lockDurationText || '1 phút'}
                 email={lockInfo?.email || formData.email}
                 onClose={handleCloseLockModal}
+            />
+
+            {/* ✅ MODAL: Bổ sung SĐT sau Google Login */}
+            <UpdatePhoneModal
+                show={showUpdatePhone}
+                onSuccess={handleUpdatePhoneSuccess}
+                onClose={handleUpdatePhoneClose}
             />
         </div>
     );

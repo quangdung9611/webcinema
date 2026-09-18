@@ -116,7 +116,7 @@ class UserRepository {
                 user_id, username, full_name, email, user_avatar, phone, address,
                 password, role, status, email_verified, email_verified_at,
                 points, last_login_at, last_login_ip, created_at, updated_at,
-                pin_hash
+                pin_hash, google_id, provider
             FROM users
             WHERE user_id = ?
             LIMIT 1
@@ -137,7 +137,7 @@ class UserRepository {
                 user_id, username, full_name, email, user_avatar, phone, address,
                 role, status, email_verified, email_verified_at,
                 points, last_login_at, last_login_ip, created_at, updated_at,
-                pin_hash
+                pin_hash, google_id, provider
             FROM users
             WHERE user_id = ?
             LIMIT 1
@@ -157,7 +157,8 @@ class UserRepository {
             SELECT
                 user_id, username, full_name, email, user_avatar, password,
                 phone, address, role, status, email_verified,
-                email_verified_at, points, last_login_at, last_login_ip
+                email_verified_at, points, last_login_at, last_login_ip,
+                google_id, provider
             FROM users
             WHERE email = ?
             LIMIT 1
@@ -177,12 +178,34 @@ class UserRepository {
             SELECT
                 user_id, username, full_name, email, user_avatar, password,
                 phone, address, role, status, email_verified,
-                email_verified_at, points, last_login_at, last_login_ip
+                email_verified_at, points, last_login_at, last_login_ip,
+                google_id, provider
             FROM users
             WHERE username = ?
             LIMIT 1
             `,
             [username]
+        );
+
+        return rows[0] || null;
+    }
+
+    /*=========================================================
+        ✅ MỚI: FIND USER BY GOOGLE ID
+    =========================================================*/
+    async findByGoogleId(googleId) {
+        const [rows] = await db.query(
+            `
+            SELECT
+                user_id, username, full_name, email, user_avatar, password,
+                phone, address, role, status, email_verified,
+                email_verified_at, points, last_login_at, last_login_ip,
+                google_id, provider
+            FROM users
+            WHERE google_id = ?
+            LIMIT 1
+            `,
+            [googleId]
         );
 
         return rows[0] || null;
@@ -241,8 +264,21 @@ class UserRepository {
         return rows.length > 0;
     }
 
-      /*=========================================================
-        CREATE USER (Chỉ thêm pin_hash vào câu INSERT)
+    /*=========================================================
+        ✅ MỚI: CHECK GOOGLE ID EXISTS
+    =========================================================*/
+    async existsByGoogleId(googleId) {
+        const [rows] = await db.query(
+            `SELECT 1 FROM users WHERE google_id = ? LIMIT 1`,
+            [googleId]
+        );
+
+        return rows.length > 0;
+    }
+
+    /*=========================================================
+        CREATE USER
+        ✅ status = "ACTIVE", provider = "LOCAL"
     =========================================================*/
     async create(user) {
         const [result] = await db.query(
@@ -251,29 +287,108 @@ class UserRepository {
             (
                 username, full_name, phone, address, email, password,
                 user_avatar, role, status, email_verified,
-                email_verified_at, points, pin_hash
+                email_verified_at, points, pin_hash,
+                google_id, provider
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `,
             [
                 user.username,
                 user.full_name,
-                user.phone,
+                user.phone || null,
                 user.address || "",
                 user.email,
-                user.password,
+                user.password || null,
                 user.user_avatar || null,
-                user.role || "customer",
-                user.status || "active",
+                user.role || "customer",       // ✅ role THƯỜNG
+                user.status || "ACTIVE",       // ✅ status HOA
                 user.email_verified || 0,
                 user.email_verified_at || null,
                 user.points || 0,
-                user.pin_hash || null
+                user.pin_hash || null,
+                user.google_id || null,
+                user.provider || "LOCAL"       // ✅ provider HOA
             ]
         );
 
         return result.insertId;
     }
+
+    /*=========================================================
+        ✅ MỚI: CREATE USER FROM GOOGLE
+        ✅ status = "ACTIVE", provider = "GOOGLE"
+    =========================================================*/
+    async createGoogleUser(data) {
+        const [result] = await db.query(
+            `
+            INSERT INTO users
+            (
+                username, full_name, phone, address, email, password,
+                user_avatar, role, status, email_verified,
+                email_verified_at, points, pin_hash,
+                google_id, provider
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `,
+            [
+                data.username,
+                data.full_name,
+                null,                       // phone NULL
+                "",                         // address empty
+                data.email,
+                null,                       // password NULL
+                data.user_avatar || null,
+                "customer",                 // ✅ role THƯỜNG
+                "ACTIVE",                   // ✅ status HOA
+                1,                          // email_verified = 1
+                new Date(),                 // email_verified_at
+                0,                          // points
+                null,                       // pin_hash NULL
+                data.google_id,
+                "GOOGLE"                    // ✅ provider HOA
+            ]
+        );
+
+        return result.insertId;
+    }
+
+    /*=========================================================
+        ✅ MỚI: LINK GOOGLE ACCOUNT VÀO USER CŨ
+    =========================================================*/
+    async linkGoogleAccount(userId, googleId, avatarUrl = null) {
+        const [result] = await db.query(
+            `
+            UPDATE users
+            SET 
+                google_id = ?,
+                user_avatar = COALESCE(user_avatar, ?),
+                email_verified = 1,
+                email_verified_at = COALESCE(email_verified_at, NOW()),
+                updated_at = NOW()
+            WHERE user_id = ?
+            `,
+            [googleId, avatarUrl, userId]
+        );
+
+        return result.affectedRows;
+    }
+
+    /*=========================================================
+        ✅ MỚI: UPDATE PHONE
+    =========================================================*/
+    async updatePhone(userId, phone) {
+        const [result] = await db.query(
+            `
+            UPDATE users
+            SET phone = ?, updated_at = NOW()
+            WHERE user_id = ?
+            `,
+            [phone, userId]
+        );
+
+        return result.affectedRows;
+    }
+
     /*=========================================================
         UPDATE PROFILE
     =========================================================*/

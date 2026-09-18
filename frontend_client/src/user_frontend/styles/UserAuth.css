@@ -5,6 +5,7 @@
    ✅ Dùng 100% biến var() từ index.css
    ✅ Card có viền bạc mặc định (--card-border-base)
    ✅ Font: --font-heading (Oswald) + --font-primary (Inter)
+   ✅ OTP input: 6 ô VUÔNG + NÚT EYE (giống Admin)
    ========================================================= */
 
 /* =========================================================
@@ -36,7 +37,7 @@
 }
 
 /* =========================================================
-   2. CARD GLASSMORPHISM — ✅ THÊM VIỀN BẠC MẶC ĐỊNH
+   2. CARD GLASSMORPHISM — ✅ VIỀN BẠC MẶC ĐỊNH
    ========================================================= */
 .auth-card {
     position: relative;
@@ -49,7 +50,6 @@
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
 
-    /* ✅ VIỀN BẠC MẶC ĐỊNH */
     border: var(--card-border-base);
 
     box-shadow: var(--glass-shadow);
@@ -57,7 +57,6 @@
     overflow: hidden;
 }
 
-/* Animated gradient border glow */
 .auth-card::before {
     content: '';
     position: absolute;
@@ -84,14 +83,11 @@
 }
 
 .auth-card:hover {
-    /* ✅ HOVER — VIỀN BẠC SÁNG HƠN */
     border: var(--card-border-hover);
-
     box-shadow: var(--card-shadow-hover);
     transform: translateY(-4px);
 }
 
-/* Decorative subtle glow orb */
 .auth-card::after {
     content: '';
     position: absolute;
@@ -544,26 +540,24 @@
 }
 
 /* =========================================================
-   14. PIN INPUT – 6 Ô TRÒN
+   14. PIN INPUT – 6 Ô VUÔNG (GIỐNG ADMIN)
    ========================================================= */
 .pin-input-container {
     display: flex;
     justify-content: center;
-    gap: 12px;
+    gap: var(--space-sm);
     margin: var(--space-md) 0 var(--space-sm);
 }
 
 .pin-box {
-    flex: 1;
-    aspect-ratio: 1 / 1;
-    max-width: 56px;
-    min-width: 44px;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
+    width: 56px;
+    height: 64px;
     text-align: center;
-    font-size: var(--font-size-h2);
+    font-size: var(--font-size-h3);
     font-weight: var(--fw-bold);
     color: var(--text-heading);
+    border-radius: var(--radius-md);
+    border: 2px solid rgba(255, 255, 255, 0.1);
     background: rgba(255, 255, 255, 0.04);
     outline: none;
     transition: all var(--transition-fast);
@@ -571,6 +565,7 @@
     -webkit-backdrop-filter: blur(2px);
     padding: 0;
     line-height: 1;
+    font-family: var(--font-heading);
 }
 
 .pin-box:hover {
@@ -608,6 +603,65 @@
     font-size: var(--font-size-h6);
     font-weight: var(--fw-medium);
     margin-top: var(--space-xs);
+}
+
+/* =========================================================
+   ✅ 14b. OTP INPUT WRAPPER + NÚT EYE
+   ========================================================= */
+.pin-input-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    margin: var(--space-md) 0 var(--space-sm);
+}
+
+.pin-input-wrapper .pin-input-container {
+    margin: 0;
+    flex: 1;
+}
+
+.toggle-pin-visibility {
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+
+.toggle-pin-visibility:hover:not(:disabled) {
+    color: var(--silver-primary);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+.toggle-pin-visibility:active:not(:disabled) {
+    transform: translateY(0) scale(0.95);
+}
+
+.toggle-pin-visibility:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Khi type=password, ô OTP hiện ký tự • */
+.pin-box[type="password"] {
+    font-family: var(--font-primary);
+    letter-spacing: 0;
+    font-size: var(--font-size-h2);
+    color: var(--silver-primary);
 }
 
 /* =========================================================
@@ -963,7 +1017,7 @@
 }
 
 /* =========================================================
-   23. MODAL OVERLAY & BOX — ✅ THÊM VIỀN BẠC
+   23. MODAL OVERLAY & BOX
    ========================================================= */
 .modal-overlay {
     position: fixed;
@@ -989,7 +1043,6 @@
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
 
-    /* ✅ VIỀN BẠC MẶC ĐỊNH */
     border: var(--card-border-base);
 
     box-shadow: var(--glass-shadow);
@@ -999,7 +1052,6 @@
 }
 
 .modal-box:hover {
-    /* ✅ HOVER — VIỀN BẠC SÁNG HƠN */
     border: var(--card-border-hover);
     box-shadow: var(--card-shadow-hover);
 }
@@ -1091,7 +1143,7 @@
 }
 
 /* =========================================================
-   24. SESSION EXPIRED MODAL — ✅ THÊM VIỀN BẠC
+   24. SESSION EXPIRED MODAL
    ========================================================= */
 .session-expired-overlay {
     position: fixed;
@@ -1114,7 +1166,6 @@
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
 
-    /* ✅ VIỀN BẠC MẶC ĐỊNH */
     border: var(--card-border-base);
 
     border-radius: var(--radius-xl);
@@ -1126,7 +1177,6 @@
 }
 
 .session-expired-modal:hover {
-    /* ✅ HOVER — VIỀN BẠC SÁNG HƠN */
     border: var(--card-border-hover);
     box-shadow: var(--card-shadow-hover);
 }
@@ -1224,7 +1274,74 @@
 .dot-pulse {
     animation: pulse 1.5s ease-in-out infinite;
 }
+/* =========================================================
+   ✅ GOOGLE LOGIN BUTTON
+   ========================================================= */
+.google-login-wrapper {
+    margin-top: var(--space-lg);
+}
 
+.google-login-wrapper .divider {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin: var(--space-lg) 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-h6);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.google-login-wrapper .divider::before,
+.google-login-wrapper .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-subtle);
+}
+
+.google-login-btn {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.google-login-btn > div {
+    width: 100% !important;
+}
+
+.google-login-btn iframe {
+    width: 100% !important;
+}
+
+/* Update Phone Modal */
+.update-phone-content {
+    text-align: center;
+    padding: var(--space-md) 0;
+}
+
+.update-phone-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto var(--space-lg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(214, 179, 106, 0.12);
+    border: 1px solid rgba(214, 179, 106, 0.25);
+}
+
+.update-phone-text {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-lg);
+    font-size: var(--font-size-h6);
+}
+
+.update-phone-text strong {
+    color: var(--silver-primary);
+}
 /* =========================================================
    26. RESPONSIVE – 768px
    ========================================================= */
@@ -1251,15 +1368,22 @@
         max-height: 320px;
     }
 
+    /* ✅ OTP boxes mobile */
     .pin-input-container {
-        gap: 8px;
+        gap: var(--space-xs);
     }
 
     .pin-box {
-        min-width: 38px;
-        max-width: 48px;
-        font-size: var(--font-size-h2);
+        width: 46px;
+        height: 56px;
+        font-size: var(--font-size-h4);
         border-width: 2px;
+    }
+
+    /* ✅ Nút eye mobile */
+    .toggle-pin-visibility {
+        width: 34px;
+        height: 34px;
     }
 
     .btn-user {
@@ -1353,15 +1477,26 @@
         width: 28px;
     }
 
+    /* ✅ OTP boxes mobile nhỏ */
     .pin-input-container {
         gap: 6px;
     }
 
     .pin-box {
-        min-width: 32px;
-        max-width: 42px;
-        font-size: var(--font-size-h3);
+        width: 42px;
+        height: 50px;
+        font-size: var(--font-size-h5);
         border-width: 2px;
+    }
+
+    /* ✅ Nút eye mobile nhỏ */
+    .pin-input-wrapper {
+        gap: var(--space-sm);
+    }
+
+    .toggle-pin-visibility {
+        width: 32px;
+        height: 32px;
     }
 
     .auth-input {
@@ -1491,4 +1626,5 @@
 
 /* =========================================================
    END – USER AUTH SILVER PREMIUM EDITION
+   OTP INPUT: 6 Ô VUÔNG + NÚT EYE (ĐỒNG BỘ ADMIN)
    ========================================================= */

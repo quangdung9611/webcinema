@@ -12,6 +12,8 @@ import {
     Clock,
     Lock,
     Loader2,
+    Eye,
+    EyeOff,
 } from 'lucide-react';
 import api from '../../api/api';
 import LoadingButton from '../components/LoadingButton';
@@ -45,6 +47,7 @@ const VerifyOtpPassword = () => {
     });
 
     const [otp, setOtp] = useState('');
+    const [showOtp, setShowOtp] = useState(false);   // ✅ MỚI: toggle hiện/ẩn OTP
     const [error, setError] = useState(null);          // { icon, text }
     const [successMessage, setSuccessMessage] = useState(null); // { icon, text }
     const [loading, setLoading] = useState(false);
@@ -661,22 +664,35 @@ const VerifyOtpPassword = () => {
                     </div>
                 )}
 
-                {/* OTP INPUT */}
-                <div className="pin-input-container">
-                    {Array.from({ length: 6 }).map((_, index) => (
-                        <input
-                            key={index}
-                            ref={(el) => (otpRefs.current[index] = el)}
-                            type="text"
-                            inputMode="numeric"
-                            maxLength={1}
-                            value={otp[index] || ''}
-                            onChange={(e) => handleOtpChange(index, e.target.value)}
-                            onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                            className={`pin-box ${isOtpExpired ? 'input-error' : ''} ${error && error.text.toLowerCase().includes('otp') ? 'input-error' : ''}`}
-                            disabled={isDisabled}
-                        />
-                    ))}
+                {/* ✅ OTP INPUT + NÚT EYE */}
+                <div className="pin-input-wrapper">
+                    <div className="pin-input-container">
+                        {Array.from({ length: 6 }).map((_, index) => (
+                            <input
+                                key={index}
+                                ref={(el) => (otpRefs.current[index] = el)}
+                                type={showOtp ? 'text' : 'password'}
+                                inputMode="numeric"
+                                maxLength={1}
+                                value={otp[index] || ''}
+                                onChange={(e) => handleOtpChange(index, e.target.value)}
+                                onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                                className={`pin-box ${isOtpExpired ? 'input-error' : ''} ${error && error.text.toLowerCase().includes('otp') ? 'input-error' : ''}`}
+                                disabled={isDisabled}
+                            />
+                        ))}
+                    </div>
+
+                    <button
+                        type="button"
+                        className="toggle-pin-visibility"
+                        onClick={() => setShowOtp((prev) => !prev)}
+                        disabled={isDisabled}
+                        tabIndex="-1"
+                        title={showOtp ? 'Ẩn OTP' : 'Hiện OTP'}
+                    >
+                        {showOtp ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
                 </div>
 
                 {/* OTP TIMER */}
