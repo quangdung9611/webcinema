@@ -4,7 +4,7 @@ const express = require("express");
 const router = express.Router();
 const AuthController = require("../Controllers/AuthController");
 const { authenticateUser } = require("../Middlewares/UserAuthMiddleware");
-const verifyCaptcha = require("../Middlewares/VerifyCaptcha");   // ✅ THÊM DÒNG NÀY
+const verifyCaptcha = require("../Middlewares/VerifyCapcha");   // ✅ THÊM DÒNG NÀY
 
 // ============================================================
 // PUBLIC ROUTES — KHÔNG CẦN AUTH
