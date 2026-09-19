@@ -6,7 +6,7 @@ const RecaptchaService = require("../Services/RecaptchaService");
  * Middleware verify CAPTCHA
  * Client gửi kèm: { recaptchaToken: "..." }
  */
-const VerifyCaptcha = async (req, res, next) => {
+const VerifyCapcha = async (req, res, next) => {
     try {
         const token = req.body.recaptchaToken;
 
@@ -43,4 +43,4 @@ const VerifyCaptcha = async (req, res, next) => {
     }
 };
 
-module.exports = VerifyCaptcha;
+module.exports = VerifyCapcha;
