@@ -1,17 +1,18 @@
 /* =========================================================
    PROFILE LAYOUT - SILVER EDITION
+   ✅ 100% DÙNG BIẾN VAR() TỪ INDEX.CSS
    ========================================================= */
 
 .galaxy-profile-wrapper {
     min-height: 100vh;
-    padding: 60px 0;
+    padding: var(--space-3xl) 0;
     background: var(--bg-primary);
 }
 
 .galaxy-profile-wrapper .container {
-    max-width: var(--container-width);
-    margin: 0 auto;
-    padding: 0 var(--container-padding);
+    width: min(100%, var(--container-width));
+    margin-inline: auto;
+    padding-inline: var(--container-padding);
 }
 
 .profile-layout-grid {
@@ -32,10 +33,15 @@
     padding: var(--space-xl);
     overflow: hidden;
     background: var(--glass-bg);
-    border: var(--border-premium);
+    border: var(--card-border-base);
     box-shadow: var(--glass-shadow);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
+    transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.galaxy-sidebar:hover {
+    border: var(--card-border-hover);
 }
 
 .galaxy-sidebar::before {
@@ -78,12 +84,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, var(--silver-dark), var(--silver-primary));
+    background: var(--premium-gradient);
     color: var(--bg-primary);
-    font-size: 28px;
+    font-family: var(--font-heading);
+    font-size: var(--font-size-h3);
     font-weight: var(--fw-bold);
     border-radius: 50%;
-    box-shadow: 0 4px 16px rgba(159, 183, 210, 0.3);
+    box-shadow: var(--btn-silver-shadow);
 }
 
 .avatar-wrapper .avatar-img {
@@ -107,7 +114,13 @@
     background: var(--silver-primary);
     color: var(--bg-primary);
     border: 2px solid var(--bg-primary);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-h6);
+    transition: all var(--transition-fast);
+}
+
+.avatar-wrapper:hover .camera-icon {
+    background: var(--silver-light);
+    transform: scale(1.1);
 }
 
 .user-titles {
@@ -118,9 +131,11 @@
 .user-titles h3 {
     margin: 0 0 var(--space-sm);
     color: var(--text-heading);
+    font-family: var(--font-heading);
     font-size: var(--font-size-h4);
     font-weight: var(--fw-bold);
-    line-height: 1.4;
+    line-height: 1.3;
+    letter-spacing: 0.01em;
     word-break: break-word;
 }
 
@@ -133,7 +148,8 @@
     background: rgba(255, 255, 255, 0.06);
     border: var(--border-subtle);
     color: var(--text-body);
-    font-size: var(--font-size-sm);
+    font-family: var(--font-primary);
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-semibold);
 }
 
@@ -155,13 +171,15 @@
     align-items: center;
     margin-bottom: var(--space-xs);
     color: var(--text-secondary);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-h6);
 }
 
 .spending-value {
-    font-size: var(--font-size-xl);
+    font-family: var(--font-heading);
+    font-size: var(--font-size-h3);
     font-weight: var(--fw-extrabold);
     color: var(--text-heading);
+    letter-spacing: -0.02em;
     text-shadow: 0 0 20px rgba(232, 232, 232, 0.08);
 }
 
@@ -214,7 +232,7 @@
     justify-content: space-between;
     margin-top: var(--space-sm);
     color: var(--text-muted);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-h6);
 }
 
 /* =========================================================
@@ -236,7 +254,7 @@
     background: rgba(255, 255, 255, 0.02);
     border: var(--border-subtle);
     color: var(--text-secondary);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-medium);
     transition: all var(--transition-fast);
     cursor: pointer;
@@ -257,10 +275,15 @@
     overflow: hidden;
     border-radius: var(--radius-lg);
     background: var(--glass-bg);
-    border: var(--border-premium);
+    border: var(--card-border-base);
     box-shadow: var(--glass-shadow);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
+    transition: border-color var(--transition-normal);
+}
+
+.galaxy-content-area:hover {
+    border: var(--card-border-hover);
 }
 
 /* =========================================================
@@ -282,7 +305,8 @@
     padding: var(--space-md) var(--space-lg);
     background: transparent;
     color: var(--text-muted);
-    font-size: var(--font-size-sm);
+    font-family: var(--font-primary);
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
     white-space: nowrap;
     cursor: pointer;
@@ -342,13 +366,13 @@
     align-items: center;
     gap: var(--space-sm);
     color: var(--text-secondary);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-medium);
 }
 
 .profile-info-item .value {
     color: var(--text-heading);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-semibold);
     word-break: break-word;
     text-align: right;
@@ -371,22 +395,33 @@
 }
 
 .edit-header h3 {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
     color: var(--text-heading);
+    font-family: var(--font-heading);
     font-size: var(--font-size-h4);
+    font-weight: var(--fw-bold);
     margin: 0;
+    letter-spacing: 0.01em;
 }
 
 .btn-back-profile {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
     background: transparent;
     border: none;
     color: var(--text-secondary);
     cursor: pointer;
-    font-size: var(--font-size-sm);
+    font-family: var(--font-primary);
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-medium);
     transition: color var(--transition-fast);
 }
 
 .btn-back-profile:hover {
-    color: var(--text-heading);
+    color: var(--silver-light);
 }
 
 /* =========================================================
@@ -406,8 +441,10 @@
     align-items: center;
     gap: var(--space-sm);
     color: var(--text-heading);
+    font-family: var(--font-heading);
     font-size: var(--font-size-h4);
     font-weight: var(--fw-bold);
+    letter-spacing: 0.01em;
     margin-bottom: var(--space-md);
     padding-bottom: var(--space-md);
     border-bottom: var(--border-subtle);
@@ -420,7 +457,8 @@
 .edit-section .form-group label {
     display: block;
     color: var(--text-secondary);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-medium);
     margin-bottom: var(--space-xs);
 }
 
@@ -431,8 +469,9 @@
     border: var(--border-subtle);
     border-radius: var(--radius-sm);
     color: var(--text-heading);
-    font-size: var(--font-size-sm);
-    transition: border-color var(--transition-fast);
+    font-family: var(--font-primary);
+    font-size: var(--font-size-h6);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
     box-sizing: border-box;
 }
 
@@ -487,19 +526,21 @@
     border: none;
     border-radius: var(--radius-sm);
     color: var(--bg-primary);
+    font-family: var(--font-primary);
     font-weight: var(--fw-bold);
     cursor: pointer;
     transition: all var(--transition-fast);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-h6);
     display: inline-flex;
     align-items: center;
     gap: var(--space-xs);
     box-shadow: var(--btn-silver-shadow);
+    letter-spacing: 0.03em;
 }
 
 .btn-save-section:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(159, 183, 210, 0.3);
+    box-shadow: var(--card-shadow-hover);
 }
 
 .btn-save-section:disabled {
@@ -514,10 +555,11 @@
     border: var(--border-premium);
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
+    font-family: var(--font-primary);
     font-weight: var(--fw-semibold);
     cursor: pointer;
     transition: all var(--transition-fast);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-h6);
     display: inline-flex;
     align-items: center;
     gap: var(--space-xs);
@@ -525,8 +567,8 @@
 
 .btn-change-password:hover {
     background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.3);
-    color: var(--text-heading);
+    border-color: var(--silver-primary);
+    color: var(--silver-light);
     transform: translateY(-2px);
 }
 
@@ -536,10 +578,11 @@
     border: var(--border-premium);
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
+    font-family: var(--font-primary);
     font-weight: var(--fw-semibold);
     cursor: pointer;
     transition: all var(--transition-fast);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-h6);
     display: inline-flex;
     align-items: center;
     gap: var(--space-xs);
@@ -547,9 +590,36 @@
 
 .btn-change-pin:hover {
     background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.3);
-    color: var(--text-heading);
+    border-color: var(--silver-primary);
+    color: var(--silver-light);
     transform: translateY(-2px);
+}
+
+/* =========================================================
+   ✅ NÚT TẠO MẬT KHẨU (CHO USER GOOGLE)
+   ========================================================= */
+
+.btn-create-password {
+    padding: var(--space-sm) var(--space-xl);
+    background: linear-gradient(135deg, rgba(94, 214, 160, 0.15), rgba(94, 214, 160, 0.08));
+    border: 1px solid rgba(94, 214, 160, 0.35);
+    border-radius: var(--radius-sm);
+    color: #7fe8b8;
+    font-family: var(--font-primary);
+    font-weight: var(--fw-bold);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: var(--font-size-h6);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.btn-create-password:hover {
+    background: linear-gradient(135deg, rgba(94, 214, 160, 0.25), rgba(94, 214, 160, 0.15));
+    border-color: rgba(94, 214, 160, 0.6);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(94, 214, 160, 0.2);
 }
 
 /* =========================================================
@@ -567,8 +637,9 @@
     width: 48px;
     height: 48px;
     text-align: center;
-    font-size: 22px;
+    font-size: var(--font-size-h3);
     font-weight: var(--fw-bold);
+    font-family: var(--font-heading);
     background: rgba(255, 255, 255, 0.05);
     border: 2px solid rgba(255, 255, 255, 0.1);
     border-radius: 50%;
@@ -621,10 +692,6 @@
     background: rgba(255, 255, 255, 0.05);
 }
 
-.pin-input-circle {
-    padding-right: 0;
-}
-
 .pin-wrapper {
     position: relative;
     display: flex;
@@ -648,6 +715,8 @@
     width: 100vw;
     height: 100vh;
     background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px) saturate(1.2);
+    -webkit-backdrop-filter: blur(8px) saturate(1.2);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -675,13 +744,15 @@
 .modal-container {
     max-width: 480px;
     width: 100%;
-    background: var(--bg-secondary);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
     border-radius: var(--radius-lg);
-    box-shadow: 0 16px 64px rgba(0, 0, 0, 0.5);
+    box-shadow: var(--glass-shadow);
     position: relative;
     animation: slideUp 0.3s ease-out;
     overflow: hidden;
-    border: var(--border-premium);
+    border: var(--card-border-base);
 }
 
 .modal-container .modal-header {
@@ -693,10 +764,15 @@
 }
 
 .modal-container .modal-header h2 {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
     color: var(--text-heading);
+    font-family: var(--font-heading);
     font-size: var(--font-size-h4);
     margin: 0;
     font-weight: var(--fw-bold);
+    letter-spacing: 0.01em;
 }
 
 .modal-container .modal-close-btn {
@@ -732,7 +808,7 @@
 .modal-container .modal-body .form-group label {
     display: block;
     color: var(--text-secondary);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-medium);
     margin-bottom: var(--space-xs);
 }
@@ -744,7 +820,8 @@
     border: var(--border-subtle);
     border-radius: var(--radius-sm);
     color: var(--text-heading);
-    font-size: var(--font-size-sm);
+    font-family: var(--font-primary);
+    font-size: var(--font-size-h6);
     transition: border-color var(--transition-fast);
     box-sizing: border-box;
 }
@@ -824,13 +901,14 @@
     color: var(--text-secondary);
     cursor: pointer;
     transition: all var(--transition-fast);
-    font-size: var(--font-size-sm);
+    font-family: var(--font-primary);
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-semibold);
 }
 
 .modal-container .modal-footer .btn-cancel:hover {
     background: rgba(255, 255, 255, 0.05);
-    color: var(--text-heading);
+    color: var(--silver-light);
 }
 
 .modal-container .modal-footer .btn-submit-galaxy {
@@ -839,10 +917,11 @@
     border: none;
     border-radius: var(--radius-sm);
     color: var(--bg-primary);
+    font-family: var(--font-primary);
     font-weight: var(--fw-bold);
     cursor: pointer;
     transition: all var(--transition-fast);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-h6);
     display: inline-flex;
     align-items: center;
     gap: var(--space-xs);
@@ -851,13 +930,123 @@
 
 .modal-container .modal-footer .btn-submit-galaxy:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(159, 183, 210, 0.3);
+    box-shadow: var(--card-shadow-hover);
 }
 
 .modal-container .modal-footer .btn-submit-galaxy:disabled {
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
+}
+
+/* =========================================================
+   FORM HINT
+   ========================================================= */
+
+.form-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    margin-top: var(--space-xs);
+    color: var(--text-muted);
+    font-size: var(--font-size-h6);
+    line-height: 1.4;
+}
+
+.form-hint svg {
+    flex-shrink: 0;
+    color: var(--dash-gold-light, #f0d79a);
+}
+
+/* =========================================================
+   ✅ THÔNG BÁO PASSWORD NOTICE
+   ========================================================= */
+
+.password-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-md);
+    margin-top: var(--space-lg);
+    padding: var(--space-md) var(--space-lg);
+    background: rgba(108, 158, 255, 0.08);
+    border: 1px solid rgba(108, 158, 255, 0.2);
+    border-radius: var(--radius-md);
+    color: #9bb8ff;
+}
+
+.password-notice svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: #9bb8ff;
+}
+
+.password-notice strong {
+    display: block;
+    color: var(--text-heading);
+    font-family: var(--font-heading);
+    margin-bottom: 4px;
+    font-size: var(--font-size-h6);
+    letter-spacing: 0.01em;
+}
+
+.password-notice p {
+    margin: 0;
+    font-size: var(--font-size-h6);
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+/* =========================================================
+   ✅ CREATE PASSWORD MODAL - INFO + WARNING
+   ========================================================= */
+
+.create-password-info {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    margin-bottom: var(--space-lg);
+    background: rgba(108, 158, 255, 0.08);
+    border: 1px solid rgba(108, 158, 255, 0.2);
+    border-radius: var(--radius-md);
+    color: #9bb8ff;
+}
+
+.create-password-info svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.create-password-info p {
+    margin: 0;
+    font-size: var(--font-size-h6);
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.create-password-info strong {
+    color: var(--text-heading);
+    font-weight: var(--fw-bold);
+}
+
+.password-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    background: rgba(214, 179, 106, 0.08);
+    border: 1px solid rgba(214, 179, 106, 0.25);
+    border-radius: var(--radius-sm);
+    color: #f0d79a;
+    font-size: var(--font-size-h6);
+    line-height: 1.5;
+}
+
+.password-warning svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: #f0d79a;
 }
 
 /* =========================================================
@@ -871,6 +1060,8 @@
     max-height: 600px;
     overflow-y: auto;
     padding-right: var(--space-xs);
+    scrollbar-width: thin;
+    scrollbar-color: var(--silver-dark) rgba(255, 255, 255, 0.02);
 }
 
 .history-tab-content::-webkit-scrollbar {
@@ -889,11 +1080,6 @@
 
 .history-tab-content::-webkit-scrollbar-thumb:hover {
     background: var(--silver-primary);
-}
-
-.history-tab-content {
-    scrollbar-width: thin;
-    scrollbar-color: var(--silver-dark) rgba(255, 255, 255, 0.02);
 }
 
 /* =========================================================
@@ -920,7 +1106,7 @@
 
 .filter-group label {
     color: var(--text-secondary);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-medium);
     white-space: nowrap;
 }
@@ -931,7 +1117,8 @@
     border: var(--border-subtle);
     background: rgba(255, 255, 255, 0.04);
     color: var(--text-heading);
-    font-size: var(--font-size-sm);
+    font-family: var(--font-primary);
+    font-size: var(--font-size-h6);
     transition: all var(--transition-fast);
     min-width: 150px;
 }
@@ -947,7 +1134,8 @@
     padding: var(--space-xs) var(--space-md);
     border-radius: var(--radius-round);
     border: none;
-    font-size: var(--font-size-sm);
+    font-family: var(--font-primary);
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
     cursor: pointer;
     transition: all var(--transition-fast);
@@ -999,6 +1187,7 @@
 .history-ticket-item:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    border-color: rgba(232, 232, 232, 0.1);
 }
 
 /* =========================================================
@@ -1040,9 +1229,11 @@
 .movie-title-history {
     margin: 0 0 var(--space-xs);
     color: var(--text-heading);
+    font-family: var(--font-heading);
     font-size: var(--font-size-h4);
     font-weight: var(--fw-extrabold);
     text-transform: uppercase;
+    letter-spacing: 0.02em;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1053,7 +1244,7 @@
     align-items: center;
     gap: var(--space-xs);
     color: var(--text-secondary);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-h6);
 }
 
 .info-row svg {
@@ -1077,19 +1268,19 @@
     background: rgba(255, 255, 255, 0.04);
     border: var(--border-subtle);
     color: var(--text-body);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-semibold);
 }
 
 .price-text {
     margin: var(--space-xs) 0 0;
     color: var(--text-secondary);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-h6);
 }
 
 .price-text span {
     color: var(--silver-primary);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-extrabold);
 }
 
@@ -1132,21 +1323,22 @@
 .status-label {
     padding: var(--space-xs) var(--space-md);
     border-radius: var(--radius-round);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
     text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .status-label.paid {
-    background: rgba(0, 255, 120, 0.1);
-    border: 1px solid rgba(0, 255, 120, 0.15);
-    color: #63ff9d;
+    background: rgba(94, 214, 160, 0.1);
+    border: 1px solid rgba(94, 214, 160, 0.25);
+    color: #7fe8b8;
 }
 
 .status-label.pending {
-    background: rgba(255, 180, 0, 0.1);
-    border: 1px solid rgba(255, 180, 0, 0.15);
-    color: #ffc95a;
+    background: rgba(214, 179, 106, 0.1);
+    border: 1px solid rgba(214, 179, 106, 0.25);
+    color: var(--dash-gold-light, #f0d79a);
 }
 
 .qr-container-mini {
@@ -1161,7 +1353,8 @@
     background: rgba(255, 255, 255, 0.04);
     border: 1px dashed rgba(255, 255, 255, 0.06);
     color: var(--text-heading);
-    font-size: var(--font-size-xs);
+    font-family: var(--font-heading);
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
     letter-spacing: 1px;
 }
@@ -1178,7 +1371,7 @@
 
 .empty-history p {
     margin: var(--space-md) 0;
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-h6);
 }
 
 .btn-book-now {
@@ -1191,7 +1384,8 @@
     border-radius: var(--radius-sm);
     background: var(--btn-silver-bg);
     color: var(--bg-primary);
-    font-size: var(--font-size-sm);
+    font-family: var(--font-primary);
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -1203,7 +1397,7 @@
 
 .btn-book-now:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 32px rgba(159, 183, 210, 0.3);
+    box-shadow: var(--card-shadow-hover);
 }
 
 /* =========================================================
@@ -1215,7 +1409,7 @@
     text-align: center;
     color: var(--text-secondary);
     padding: 40px 0;
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-h6);
 }
 
 .spinner-small {
@@ -1230,135 +1424,6 @@
 
 @keyframes spin {
     to { transform: rotate(360deg); }
-}
-
-/* =========================================================
-   ✅ FORM HINT (cho modal đổi mật khẩu / tạo mật khẩu)
-   ========================================================= */
-.form-hint {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-xs);
-    margin-top: var(--space-xs);
-    color: var(--text-muted);
-    font-size: var(--font-size-xs);
-    line-height: 1.4;
-}
-
-.form-hint svg {
-    flex-shrink: 0;
-    color: var(--dash-gold-light, #f0d79a);
-}
-
-/* =========================================================
-   ✅ NÚT TẠO MẬT KHẨU (CHO USER GOOGLE)
-   ========================================================= */
-.btn-create-password {
-    padding: var(--space-sm) var(--space-xl);
-    background: linear-gradient(135deg, rgba(94, 214, 160, 0.15), rgba(94, 214, 160, 0.08));
-    border: 1px solid rgba(94, 214, 160, 0.35);
-    border-radius: var(--radius-sm);
-    color: #7fe8b8;
-    font-weight: var(--fw-bold);
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    font-size: var(--font-size-sm);
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-xs);
-}
-
-.btn-create-password:hover {
-    background: linear-gradient(135deg, rgba(94, 214, 160, 0.25), rgba(94, 214, 160, 0.15));
-    border-color: rgba(94, 214, 160, 0.6);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(94, 214, 160, 0.2);
-}
-
-/* =========================================================
-   ✅ THÔNG BÁO PASSWORD NOTICE (DƯỚI NÚT TRONG TAB EDIT)
-   ========================================================= */
-.password-notice {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--space-md);
-    margin-top: var(--space-lg);
-    padding: var(--space-md) var(--space-lg);
-    background: rgba(108, 158, 255, 0.08);
-    border: 1px solid rgba(108, 158, 255, 0.2);
-    border-radius: var(--radius-md);
-    color: #9bb8ff;
-}
-
-.password-notice svg {
-    flex-shrink: 0;
-    margin-top: 2px;
-    color: #9bb8ff;
-}
-
-.password-notice strong {
-    display: block;
-    color: var(--text-heading);
-    margin-bottom: 4px;
-    font-size: var(--font-size-sm);
-}
-
-.password-notice p {
-    margin: 0;
-    font-size: var(--font-size-sm);
-    line-height: 1.5;
-    color: var(--text-secondary);
-}
-
-/* =========================================================
-   ✅ CREATE PASSWORD MODAL - INFO + WARNING
-   ========================================================= */
-.create-password-info {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--space-md);
-    padding: var(--space-md) var(--space-lg);
-    margin-bottom: var(--space-lg);
-    background: rgba(108, 158, 255, 0.08);
-    border: 1px solid rgba(108, 158, 255, 0.2);
-    border-radius: var(--radius-md);
-    color: #9bb8ff;
-}
-
-.create-password-info svg {
-    flex-shrink: 0;
-    margin-top: 2px;
-}
-
-.create-password-info p {
-    margin: 0;
-    font-size: var(--font-size-sm);
-    line-height: 1.5;
-    color: var(--text-secondary);
-}
-
-.create-password-info strong {
-    color: var(--text-heading);
-}
-
-.password-warning {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--space-sm);
-    margin-top: var(--space-md);
-    padding: var(--space-sm) var(--space-md);
-    background: rgba(214, 179, 106, 0.08);
-    border: 1px solid rgba(214, 179, 106, 0.25);
-    border-radius: var(--radius-sm);
-    color: #f0d79a;
-    font-size: var(--font-size-xs);
-    line-height: 1.5;
-}
-
-.password-warning svg {
-    flex-shrink: 0;
-    margin-top: 2px;
-    color: #f0d79a;
 }
 
 /* =========================================================
@@ -1406,17 +1471,17 @@
         padding: var(--space-lg) 0;
     }
     .galaxy-profile-wrapper .container {
-        padding: 0 var(--space-md);
+        padding-inline: var(--space-md);
     }
     .tabs-header button {
         padding: var(--space-md) var(--space-md);
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-h6);
     }
     .tab-body {
         padding: var(--space-md);
     }
     .movie-title-history {
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-h6);
     }
     .profile-info-item {
         flex-direction: column;
@@ -1478,7 +1543,7 @@
     .pin-input-circle {
         width: 40px;
         height: 40px;
-        font-size: 18px;
+        font-size: var(--font-size-h4);
     }
     .pin-input-group {
         gap: var(--space-sm);
@@ -1517,7 +1582,7 @@
     .pin-input-circle {
         width: 36px;
         height: 36px;
-        font-size: 16px;
+        font-size: var(--font-size-h5);
     }
     .pin-input-group {
         gap: var(--space-xs);

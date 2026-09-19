@@ -1168,11 +1168,13 @@ exports.loginAfterRegistration = async (user, req, res) => {
 };
 // ============================================================
 // ✅ GOOGLE LOGIN
+// Hỗ trợ cả ID token (từ component) và access_token (từ hook)
 // ============================================================
-exports.loginWithGoogle = async (credential, req, res) => {
+exports.loginWithGoogle = async (credential, req, res, isAccessToken = false) => {
+    
     // 1. Verify Google token
     const GoogleService = require("./GoogleService");
-    const googleData = await GoogleService.verifyGoogleToken(credential);
+    const googleData = await GoogleService.verifyGoogleToken(credential, isAccessToken);
 
     const { email, name, picture, sub: googleId } = googleData;
 
@@ -1284,7 +1286,6 @@ exports.loginWithGoogle = async (credential, req, res) => {
         },
     };
 };
-
 // ============================================================
 // ✅ UPDATE PHONE (sau Google login lần đầu)
 // ============================================================

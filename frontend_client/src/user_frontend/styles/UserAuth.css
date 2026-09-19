@@ -6,6 +6,7 @@
    ✅ Card có viền bạc mặc định (--card-border-base)
    ✅ Font: --font-heading (Oswald) + --font-primary (Inter)
    ✅ OTP input: 6 ô VUÔNG + NÚT EYE (giống Admin)
+   ✅ Google Login button căn giữa hoàn hảo
    ========================================================= */
 
 /* =========================================================
@@ -656,7 +657,6 @@
     cursor: not-allowed;
 }
 
-/* Khi type=password, ô OTP hiện ký tự • */
 .pin-box[type="password"] {
     font-family: var(--font-primary);
     letter-spacing: 0;
@@ -1274,11 +1274,16 @@
 .dot-pulse {
     animation: pulse 1.5s ease-in-out infinite;
 }
+
 /* =========================================================
-   ✅ GOOGLE LOGIN BUTTON
+   ✅ 25b. GOOGLE LOGIN BUTTON - CĂN GIỮA HOÀN HẢO
    ========================================================= */
 .google-login-wrapper {
     margin-top: var(--space-lg);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .google-login-wrapper .divider {
@@ -1286,6 +1291,7 @@
     align-items: center;
     gap: var(--space-md);
     margin: var(--space-lg) 0;
+    width: 100%;
     color: var(--text-muted);
     font-size: var(--font-size-h6);
     text-transform: uppercase;
@@ -1303,18 +1309,43 @@
 .google-login-btn {
     display: flex;
     justify-content: center;
+    align-items: center;
     width: 100%;
+    min-height: 48px;
 }
 
+/* ✅ Google render div wrapper + iframe bên trong */
 .google-login-btn > div {
     width: 100% !important;
+    max-width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+.google-login-btn > div > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    margin: 0 auto !important;
+}
+
+.google-login-btn > div > div > div {
+    margin: 0 auto !important;
 }
 
 .google-login-btn iframe {
     width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    display: block !important;
+    border-radius: var(--radius-md) !important;
 }
 
-/* Update Phone Modal */
+/* =========================================================
+   ✅ 25c. UPDATE PHONE MODAL (SAU GOOGLE LOGIN)
+   ========================================================= */
 .update-phone-content {
     text-align: center;
     padding: var(--space-md) 0;
@@ -1342,6 +1373,7 @@
 .update-phone-text strong {
     color: var(--silver-primary);
 }
+
 /* =========================================================
    26. RESPONSIVE – 768px
    ========================================================= */
@@ -1447,6 +1479,16 @@
     }
     .verify-email-hint p {
         font-size: var(--font-size-h6);
+    }
+
+    /* ✅ Google button mobile */
+    .google-login-wrapper {
+        margin-top: var(--space-md);
+    }
+
+    .google-login-btn iframe {
+        width: 100% !important;
+        max-width: 100% !important;
     }
 }
 
@@ -1627,4 +1669,5 @@
 /* =========================================================
    END – USER AUTH SILVER PREMIUM EDITION
    OTP INPUT: 6 Ô VUÔNG + NÚT EYE (ĐỒNG BỘ ADMIN)
+   GOOGLE LOGIN: CĂN GIỮA HOÀN HẢO
    ========================================================= */

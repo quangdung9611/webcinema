@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { AlertCircle, Eye, EyeOff, CheckCircle, MailCheck } from 'lucide-react';
-import { GoogleLogin } from '@react-oauth/google';
+import { useGoogleLogin } from '@react-oauth/google';   // ✅ ĐỔI: dùng hook thay vì component
 import api from '../../api/api';
 import { useAuth } from '../../context/AuthContext';
 import { notifyLogin } from '../../utils/authCleanup';
@@ -11,7 +11,7 @@ import LoadingButton from '../components/LoadingButton';
 import SuccessModal from '../components/SuccessModal';
 import LoginLockModal from '../components/LoginLockModal';
 import Modal from '../components/Modal';
-import UpdatePhoneModal from '../components/UpdatePhoneModal';   // ✅ MỚI
+import UpdatePhoneModal from '../components/UpdatePhoneModal';
 import socketService from '../../api/socket';
 import '../styles/UserAuth.css';
 
@@ -46,7 +46,7 @@ const UserLogin = () => {
     const [showUpdatePhone, setShowUpdatePhone] = useState(false);
 
     // =========================================================
-    // MODAL THÔNG BÁO KIỂM TRA EMAIL (từ RegisterPin)
+    // MODAL THÔNG BÁO KIỂM TRA EMAIL
     // =========================================================
     const [showVerifyEmailModal, setShowVerifyEmailModal] = useState(false);
     const [verifyEmailData, setVerifyEmailData] = useState({
@@ -70,8 +70,60 @@ const UserLogin = () => {
 
     const isExpired = Boolean(location.state?.expired);
 
-    // Key lưu localStorage
     const LOCK_STORAGE_KEY = 'user_login_lock';
+
+    // =========================================================
+    // ✅ GOOGLE LOGIN HOOK (KHÔNG DÙNG COMPONENT)
+    // =========================================================
+    const googleLogin = useGoogleLogin({
+        onSuccess: async (tokenResponse) => {
+            if (googleLoading) return;
+
+            try {
+                setGoogleLoading(true);
+                setServerError('');
+                setSuccessMessage('');
+
+                // ✅ Gửi access_token (từ hook) thay vì credential (từ component)
+                const res = await api.post('/api/auth/google', {
+                    credential: tokenResponse.access_token,     // ← token từ hook
+                    isAccessToken: true,                         // ← flag để BE phân biệt
+                });
+
+                const responseUser = res.data?.user;
+
+                if (!responseUser) {
+                    setServerError('Không nhận được thông tin người dùng từ Google.');
+                    return;
+                }
+
+                api.resetUserCache();
+                notifyLogin(responseUser);
+
+                setLoggedInUser(responseUser);
+
+                if (res.data?.needPhone) {
+                    setShowUpdatePhone(true);
+                } else {
+                    setLoginSuccessMessage(
+                        `Chào mừng ${responseUser?.full_name || responseUser?.username || 'bạn'} quay trở lại!`
+                    );
+                    setShowLoginSuccessModal(true);
+                }
+            } catch (err) {
+                console.error('🔴 [GOOGLE LOGIN] Error:', err);
+                const errorData = err?.response?.data || {};
+                const errorMessage = errorData?.message || 'Đăng nhập Google thất bại. Vui lòng thử lại.';
+                setServerError(errorMessage);
+            } finally {
+                setGoogleLoading(false);
+            }
+        },
+        onError: () => {
+            setServerError('Không thể kết nối với Google. Vui lòng thử lại sau.');
+        },
+        flow: 'implicit',   // ✅ Dùng implicit flow để lấy access_token
+    });
 
     // =========================================================
     // LƯU LOCK VÀO LOCALSTORAGE
@@ -90,25 +142,20 @@ const UserLogin = () => {
         }
     };
 
-    // =========================================================
-    // KHÔI PHỤC LOCK TỪ LOCALSTORAGE
-    // =========================================================
     const restoreLockFromStorage = () => {
         try {
             const stored = localStorage.getItem(LOCK_STORAGE_KEY);
             if (!stored) return null;
 
             const lockData = JSON.parse(stored);
-
             const remaining = Math.max(0, Math.ceil((lockData.lockedUntil - Date.now()) / 1000));
 
             if (remaining > 0) {
-                const restoredData = {
+                return {
                     ...lockData,
                     remainingSeconds: remaining,
                     lockedUntil: lockData.lockedUntil
                 };
-                return restoredData;
             } else {
                 localStorage.removeItem(LOCK_STORAGE_KEY);
                 localStorage.removeItem('lockedEmail');
@@ -121,9 +168,6 @@ const UserLogin = () => {
         }
     };
 
-    // =========================================================
-    // CLEANUP INTERVAL
-    // =========================================================
     useEffect(() => {
         return () => {
             if (lockIntervalRef.current) {
@@ -133,9 +177,6 @@ const UserLogin = () => {
         };
     }, []);
 
-    // =========================================================
-    // CLEAR FORM KHI COMPONENT MOUNT
-    // =========================================================
     useEffect(() => {
         if (formRef.current) {
             formRef.current.reset();
@@ -148,9 +189,6 @@ const UserLogin = () => {
         console.log('🔄 [LOGIN] Form đã được reset');
     }, []);
 
-    // =========================================================
-    // KIỂM TRA STATE TỪ REGISTERPIN (Modal kiểm tra email)
-    // =========================================================
     useEffect(() => {
         if (location.state?.showVerifyEmailModal) {
             setVerifyEmailData({
@@ -162,9 +200,6 @@ const UserLogin = () => {
         }
     }, [location.state]);
 
-    // =========================================================
-    // LOAD LOCK STATUS KHI REFRESH TRANG - KHÔI PHỤC TỪ LOCALSTORAGE
-    // =========================================================
     useEffect(() => {
         const restoredLock = restoreLockFromStorage();
 
@@ -212,9 +247,6 @@ const UserLogin = () => {
             });
     }, []);
 
-    // =========================================================
-    // COUNTDOWN LOGIN LOCK
-    // =========================================================
     useEffect(() => {
         if (lockIntervalRef.current) {
             clearInterval(lockIntervalRef.current);
@@ -268,9 +300,6 @@ const UserLogin = () => {
         };
     }, [lockInfo?.lockedUntil]);
 
-    // =========================================================
-    // EMAIL VERIFIED MESSAGE
-    // =========================================================
     useEffect(() => {
         if (location.state?.verified) {
             if (showVerifyEmailModal) {
@@ -295,9 +324,6 @@ const UserLogin = () => {
         }
     }, [location.state, showVerifyEmailModal]);
 
-    // =========================================================
-    // CHECK REDIRECT TỪ SESSION EXPIRED
-    // =========================================================
     useEffect(() => {
         if (!location.state?.expired) return;
         const message =
@@ -307,15 +333,12 @@ const UserLogin = () => {
         window.history.replaceState({}, document.title);
     }, [location.state]);
 
-    // =========================================================
-    // REDIRECT IF ALREADY LOGIN
-    // =========================================================
     useEffect(() => {
         if (
             user &&
             !isLoading &&
             !showLoginSuccessModal &&
-            !showUpdatePhone &&         // ✅ Không redirect khi đang mở modal SĐT
+            !showUpdatePhone &&
             !isExpired &&
             user.email_verified === 1
         ) {
@@ -323,9 +346,6 @@ const UserLogin = () => {
         }
     }, [user, isLoading, showLoginSuccessModal, showUpdatePhone, navigate, isExpired]);
 
-    // =========================================================
-    // VALIDATE
-    // =========================================================
     const validate = () => {
         const tempErrors = {};
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -346,9 +366,6 @@ const UserLogin = () => {
         return Object.keys(tempErrors).length === 0;
     };
 
-    // =========================================================
-    // HANDLE CHANGE
-    // =========================================================
     const handleChange = (event) => {
         const { name, value, type, checked } = event.target;
 
@@ -377,66 +394,6 @@ const UserLogin = () => {
         }
     };
 
-    // =========================================================
-    // ✅ HANDLE GOOGLE SUCCESS
-    // =========================================================
-    const handleGoogleSuccess = async (credentialResponse) => {
-        if (googleLoading) return;
-
-        try {
-            setGoogleLoading(true);
-            setServerError('');
-            setSuccessMessage('');
-
-            const res = await api.post('/api/auth/google', {
-                credential: credentialResponse.credential,
-            });
-
-            const responseUser = res.data?.user;
-
-            if (!responseUser) {
-                setServerError('Không nhận được thông tin người dùng từ Google.');
-                return;
-            }
-
-            // Reset cache + thông báo login
-            api.resetUserCache();
-            notifyLogin(responseUser);
-
-            setLoggedInUser(responseUser);
-
-            // ✅ Nếu cần nhập SĐT → mở modal
-            if (res.data?.needPhone) {
-                setShowUpdatePhone(true);
-            } else {
-                setLoginSuccessMessage(
-                    `Chào mừng ${responseUser?.full_name || responseUser?.username || 'bạn'} quay trở lại!`
-                );
-                setShowLoginSuccessModal(true);
-            }
-
-        } catch (err) {
-            console.error('🔴 [GOOGLE LOGIN] Error:', err);
-
-            const errorData = err?.response?.data || {};
-            const errorMessage = errorData?.message || 'Đăng nhập Google thất bại. Vui lòng thử lại.';
-
-            setServerError(errorMessage);
-        } finally {
-            setGoogleLoading(false);
-        }
-    };
-
-    // =========================================================
-    // ✅ HANDLE GOOGLE ERROR
-    // =========================================================
-    const handleGoogleError = () => {
-        setServerError('Không thể kết nối với Google. Vui lòng thử lại sau.');
-    };
-
-    // =========================================================
-    // HANDLE LOGIN
-    // =========================================================
     const handleLogin = async (event) => {
         event.preventDefault();
 
@@ -554,18 +511,12 @@ const UserLogin = () => {
         }
     };
 
-    // =========================================================
-    // LOGIN SUCCESS
-    // =========================================================
     const handleLoginSuccessConfirm = () => {
         setShowLoginSuccessModal(false);
         setLoggedInUser(null);
         navigate('/', { replace: true });
     };
 
-    // =========================================================
-    // ✅ HANDLE UPDATE PHONE SUCCESS
-    // =========================================================
     const handleUpdatePhoneSuccess = () => {
         setShowUpdatePhone(false);
         setLoginSuccessMessage(
@@ -574,22 +525,14 @@ const UserLogin = () => {
         setShowLoginSuccessModal(true);
     };
 
-    // =========================================================
-    // ✅ HANDLE UPDATE PHONE CLOSE (bỏ qua)
-    // =========================================================
     const handleUpdatePhoneClose = () => {
         setShowUpdatePhone(false);
-        // Không cho bỏ qua — vẫn vào trang chủ nhưng user chưa có SĐT
-        // Có thể điều hướng vào profile để nhập sau
         navigate('/', { replace: true });
     };
 
     const handleCloseLockModal = () => setShowLockModal(false);
     const handleVerifyEmailModalClose = () => setShowVerifyEmailModal(false);
 
-    // =========================================================
-    // FORMAT TIME
-    // =========================================================
     const formatLockTime = (totalSeconds) => {
         if (totalSeconds <= 0) return '0:00';
         const m = Math.floor(totalSeconds / 60);
@@ -599,9 +542,6 @@ const UserLogin = () => {
 
     const isLockedActive = lockInfo && lockInfo.lockedUntil > Date.now();
 
-    // =========================================================
-    // RENDER
-    // =========================================================
     return (
         <div className="auth-container">
             <div className="auth-card">
@@ -707,25 +647,27 @@ const UserLogin = () => {
                 </form>
 
                 {/* ============================================
-                    ✅ GOOGLE LOGIN
+                    ✅ GOOGLE LOGIN - CUSTOM BUTTON
                 ============================================ */}
                 <div className="google-login-wrapper">
                     <div className="divider">
                         <span>Hoặc</span>
                     </div>
 
-                    <div className="google-login-btn">
-                        <GoogleLogin
-                            onSuccess={handleGoogleSuccess}
-                            onError={handleGoogleError}
-                            theme="outline"
-                            size="large"
-                            text="signin_with"
-                            shape="rectangular"
-                            logo_alignment="left"
-                            width="100%"
-                        />
-                    </div>
+                    <button
+                        type="button"
+                        className="google-custom-btn"
+                        onClick={() => googleLogin()}
+                        disabled={loading || isLockedActive || googleLoading}
+                    >
+                        <svg className="google-icon" viewBox="0 0 24 24" width="20" height="20">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        <span>{googleLoading ? 'Đang đăng nhập...' : 'Đăng nhập bằng Google'}</span>
+                    </button>
                 </div>
 
                 <div className="auth-footer">
