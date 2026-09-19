@@ -1,5 +1,5 @@
 // ForgotPin.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     MailCheck,
@@ -12,28 +12,29 @@ import {
 } from 'lucide-react';
 import api from '../../api/api';
 import LoadingButton from '../components/LoadingButton';
+import Recaptcha from '../components/Recaptcha';
 import '../styles/UserAuth.css';
 
 const ForgotPin = () => {
     const navigate = useNavigate();
 
     const [email, setEmail] = useState('');
-    const [error, setError] = useState(null);          // { icon, text }
-    const [successMessage, setSuccessMessage] = useState(null); // { icon, text }
+    const [error, setError] = useState(null);
+    const [successMessage, setSuccessMessage] = useState(null);
     const [loading, setLoading] = useState(false);
 
     const [isRateLimited, setIsRateLimited] = useState(false);
     const [rateLimitTimeLeft, setRateLimitTimeLeft] = useState(0);
 
+    // ✅ CAPTCHA STATE
+    const [recaptchaToken, setRecaptchaToken] = useState('');
+    const recaptchaRef = useRef(null);
+
     const RATE_LIMIT_STORAGE_KEY = 'forgot_pin_rate_limit';
 
     const saveRateLimitToStorage = (timeLeft) => {
         if (timeLeft > 0 && email) {
-            const data = {
-                timeLeft: timeLeft,
-                startedAt: Date.now(),
-                email: email
-            };
+            const data = { timeLeft, startedAt: Date.now(), email };
             localStorage.setItem(RATE_LIMIT_STORAGE_KEY, JSON.stringify(data));
         } else {
             localStorage.removeItem(RATE_LIMIT_STORAGE_KEY);
@@ -54,12 +55,9 @@ const ForgotPin = () => {
             const elapsed = Math.floor((Date.now() - data.startedAt) / 1000);
             const remaining = Math.max(0, data.timeLeft - elapsed);
 
-            if (remaining > 0) {
-                return remaining;
-            } else {
-                localStorage.removeItem(RATE_LIMIT_STORAGE_KEY);
-                return null;
-            }
+            if (remaining > 0) return remaining;
+            localStorage.removeItem(RATE_LIMIT_STORAGE_KEY);
+            return null;
         } catch (error) {
             localStorage.removeItem(RATE_LIMIT_STORAGE_KEY);
             return null;
@@ -110,7 +108,6 @@ const ForgotPin = () => {
         return `${m}:${s.toString().padStart(2, '0')}`;
     };
 
-    // Helper tạo error object
     const makeError = (IconComponent, text) => ({
         icon: <IconComponent size={18} />,
         text,
@@ -119,6 +116,15 @@ const ForgotPin = () => {
     const handleSendOtp = async () => {
         if (!email.trim()) {
             setError(makeError(AlertCircle, 'Vui lòng nhập email'));
+            return;
+        }
+
+        // ✅ CHECK CAPTCHA
+        if (!recaptchaToken) {
+            setError(makeError(
+                AlertTriangle,
+                'Vui lòng tick vào ô "Tôi không phải là robot" để tiếp tục.'
+            ));
             return;
         }
 
@@ -135,33 +141,31 @@ const ForgotPin = () => {
         setSuccessMessage(null);
 
         try {
-            const response = await api.post('/api/auth/forgot-pin', { email });
+            const response = await api.post('/api/auth/forgot-pin', {
+                email,
+                recaptchaToken,   // ✅ GỬI KÈM
+            });
 
             if (response.data.success) {
-                // ✅ CHỜ TỐI THIỂU 1 GIÂY ĐỂ EMAIL THỰC SỰ ĐƯỢC GỬI
                 await new Promise(resolve => setTimeout(resolve, 1000));
 
-                // 👇 Sau khi loading xong, hiển thị thông báo thành công
                 setSuccessMessage({
                     icon: <CheckCircle size={20} />,
                     text: 'Mã OTP đã được gửi tới email của bạn. Vui lòng kiểm tra hộp thư.',
                 });
 
-                // Lấy dữ liệu cần thiết để truyền sang Verify
                 const { expiresIn = 300, serverTime = Date.now() } = response.data?.data || {};
 
-                // Lưu vào sessionStorage để Verify lấy được
                 sessionStorage.setItem('verify_otp_pin_serverTime', String(serverTime));
                 sessionStorage.setItem('verify_otp_pin_expiresIn', String(expiresIn));
 
-                // Chuyển trang sau khi loading xong
                 setTimeout(() => {
                     navigate('/verify-otp-pin', {
                         state: {
-                            email: email,
+                            email,
                             purpose: 'FORGOT_PIN',
-                            serverTime: serverTime,
-                            expiresIn: expiresIn
+                            serverTime,
+                            expiresIn
                         }
                     });
                 }, 100);
@@ -170,8 +174,14 @@ const ForgotPin = () => {
             const status = err.response?.status;
             const errorData = err.response?.data || {};
             const errorMessage = errorData.message || 'Không thể gửi OTP';
+            const field = errorData.field;
 
-            // 🔥 XỬ LÝ CÁC TRƯỜNG HỢP LỖI
+            // ✅ NẾU CAPTCHA SAI → RESET
+            if (field === 'recaptcha') {
+                recaptchaRef.current?.reset();
+                setRecaptchaToken('');
+            }
+
             if (status === 429) {
                 const remainingSeconds = errorData.data?.remainingSeconds || 300;
                 setIsRateLimited(true);
@@ -247,6 +257,13 @@ const ForgotPin = () => {
                 <p className="auth-subtitle-sm">
                     Vui lòng bấm nút <strong>"GỬI OTP"</strong> để nhận mã xác thực.
                 </p>
+
+                {/* ✅ CAPTCHA */}
+                <Recaptcha
+                    ref={recaptchaRef}
+                    onChange={(token) => setRecaptchaToken(token)}
+                    onExpired={() => setRecaptchaToken('')}
+                />
 
                 <div className="button-group">
                     <LoadingButton

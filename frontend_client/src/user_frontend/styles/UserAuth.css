@@ -7,6 +7,7 @@
    ✅ Font: --font-heading (Oswald) + --font-primary (Inter)
    ✅ OTP input: 6 ô VUÔNG + NÚT EYE (giống Admin)
    ✅ Google Login button: CUSTOM BUTTON (dùng useGoogleLogin hook)
+   ✅ RECAPTCHA v2 Checkbox
    ========================================================= */
 
 /* =========================================================
@@ -1444,6 +1445,38 @@
 }
 
 /* =========================================================
+   ✅ 25d. RECAPTCHA WRAPPER
+   ========================================================= */
+.recaptcha-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: var(--space-md) 0;
+    padding: var(--space-sm);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.02);
+    border: var(--border-subtle);
+    min-height: 78px;
+    overflow: hidden;
+}
+
+.recaptcha-wrapper > div {
+    transform-origin: center;
+    margin: 0 auto;
+}
+
+/* Error state (nếu thiếu Site Key) */
+.recaptcha-wrapper.recaptcha-error {
+    background: rgba(255, 59, 92, 0.08);
+    border: 1px solid rgba(255, 59, 92, 0.25);
+    color: #ff6b8a;
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-medium);
+    padding: var(--space-md);
+    text-align: center;
+}
+
+/* =========================================================
    26. RESPONSIVE – 768px
    ========================================================= */
 @media (max-width: 768px) {
@@ -1727,6 +1760,20 @@
         letter-spacing: 1px;
         margin: var(--space-sm) 0 var(--space-md);
     }
+
+    /* ✅ CAPTCHA mobile */
+    .recaptcha-wrapper > div {
+        transform: scale(0.85);
+    }
+}
+
+/* =========================================================
+   28. RESPONSIVE – 360px (CAPTCHA scale nhỏ hơn)
+   ========================================================= */
+@media (max-width: 360px) {
+    .recaptcha-wrapper > div {
+        transform: scale(0.75);
+    }
 }
 
 /* =========================================================
@@ -1764,4 +1811,5 @@
    END – USER AUTH SILVER PREMIUM EDITION
    OTP INPUT: 6 Ô VUÔNG + NÚT EYE (ĐỒNG BỘ ADMIN)
    GOOGLE LOGIN: CUSTOM BUTTON (useGoogleLogin hook)
+   RECAPTCHA: v2 Checkbox
    ========================================================= */

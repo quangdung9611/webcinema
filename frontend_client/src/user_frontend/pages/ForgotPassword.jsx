@@ -1,5 +1,5 @@
 // ForgotPassword.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     MailCheck,
@@ -12,28 +12,29 @@ import {
 } from 'lucide-react';
 import api from '../../api/api';
 import LoadingButton from '../components/LoadingButton';
+import Recaptcha from '../components/Recaptcha';
 import '../styles/UserAuth.css';
 
 const ForgotPassword = () => {
     const navigate = useNavigate();
 
     const [email, setEmail] = useState('');
-    const [error, setError] = useState(null);          // { icon, text }
-    const [successMessage, setSuccessMessage] = useState(null); // { icon, text }
+    const [error, setError] = useState(null);
+    const [successMessage, setSuccessMessage] = useState(null);
     const [loading, setLoading] = useState(false);
 
     const [isRateLimited, setIsRateLimited] = useState(false);
     const [rateLimitTimeLeft, setRateLimitTimeLeft] = useState(0);
 
+    // ✅ CAPTCHA STATE
+    const [recaptchaToken, setRecaptchaToken] = useState('');
+    const recaptchaRef = useRef(null);
+
     const RATE_LIMIT_STORAGE_KEY = 'forgot_password_rate_limit';
 
     const saveRateLimitToStorage = (timeLeft) => {
         if (timeLeft > 0 && email) {
-            const data = {
-                timeLeft: timeLeft,
-                startedAt: Date.now(),
-                email: email
-            };
+            const data = { timeLeft, startedAt: Date.now(), email };
             localStorage.setItem(RATE_LIMIT_STORAGE_KEY, JSON.stringify(data));
         } else {
             localStorage.removeItem(RATE_LIMIT_STORAGE_KEY);
@@ -54,12 +55,9 @@ const ForgotPassword = () => {
             const elapsed = Math.floor((Date.now() - data.startedAt) / 1000);
             const remaining = Math.max(0, data.timeLeft - elapsed);
 
-            if (remaining > 0) {
-                return remaining;
-            } else {
-                localStorage.removeItem(RATE_LIMIT_STORAGE_KEY);
-                return null;
-            }
+            if (remaining > 0) return remaining;
+            localStorage.removeItem(RATE_LIMIT_STORAGE_KEY);
+            return null;
         } catch (error) {
             localStorage.removeItem(RATE_LIMIT_STORAGE_KEY);
             return null;
@@ -110,7 +108,6 @@ const ForgotPassword = () => {
         return `${m}:${s.toString().padStart(2, '0')}`;
     };
 
-    // Helper tạo error object
     const makeError = (IconComponent, text) => ({
         icon: <IconComponent size={18} />,
         text,
@@ -119,6 +116,15 @@ const ForgotPassword = () => {
     const handleSendOtp = async () => {
         if (!email.trim()) {
             setError(makeError(AlertCircle, 'Vui lòng nhập email'));
+            return;
+        }
+
+        // ✅ CHECK CAPTCHA
+        if (!recaptchaToken) {
+            setError(makeError(
+                AlertTriangle,
+                'Vui lòng tick vào ô "Tôi không phải là robot" để tiếp tục.'
+            ));
             return;
         }
 
@@ -135,33 +141,31 @@ const ForgotPassword = () => {
         setSuccessMessage(null);
 
         try {
-            const response = await api.post('/api/auth/forgot-password', { email });
+            const response = await api.post('/api/auth/forgot-password', {
+                email,
+                recaptchaToken,   // ✅ GỬI KÈM
+            });
 
             if (response.data.success) {
-                // ✅ CHỜ THÊM 1 GIÂY ĐỂ EMAIL THỰC SỰ ĐƯỢC GỬI VÀ HIỂN THỊ
                 await new Promise(resolve => setTimeout(resolve, 1000));
 
-                // 👇 Sau khi loading xong, hiển thị thông báo thành công
                 setSuccessMessage({
                     icon: <CheckCircle size={20} />,
                     text: 'Mã OTP đã được gửi tới email của bạn. Vui lòng kiểm tra hộp thư.',
                 });
 
-                // Lấy dữ liệu cần thiết để truyền sang Verify
                 const { expiresIn = 300, serverTime = Date.now() } = response.data?.data || {};
 
-                // Lưu serverTime và expiresIn vào sessionStorage để Verify lấy được
                 sessionStorage.setItem('verify_otp_password_serverTime', String(serverTime));
                 sessionStorage.setItem('verify_otp_password_expiresIn', String(expiresIn));
 
-                // Chuyển trang sau khi loading xong
                 setTimeout(() => {
                     navigate('/verify-otp-password', {
                         state: {
-                            email: email,
+                            email,
                             purpose: 'RESET_PASSWORD',
-                            serverTime: serverTime,
-                            expiresIn: expiresIn
+                            serverTime,
+                            expiresIn
                         }
                     });
                 }, 100);
@@ -170,10 +174,15 @@ const ForgotPassword = () => {
             const status = err.response?.status;
             const errorData = err.response?.data || {};
             const errorMessage = errorData.message || 'Không thể gửi OTP';
+            const field = errorData.field;
 
-            // 🔥 XỬ LÝ CÁC TRƯỜNG HỢP LỖI
+            // ✅ NẾU CAPTCHA SAI → RESET
+            if (field === 'recaptcha') {
+                recaptchaRef.current?.reset();
+                setRecaptchaToken('');
+            }
+
             if (status === 429) {
-                // Rate limit
                 const remainingSeconds = errorData.data?.remainingSeconds || 300;
                 setIsRateLimited(true);
                 setRateLimitTimeLeft(remainingSeconds);
@@ -183,19 +192,16 @@ const ForgotPassword = () => {
                     `Bạn đã gửi quá nhiều lần. Vui lòng thử lại sau ${formatLockTime(remainingSeconds)}.`
                 ));
             } else if (status === 404) {
-                // 🔥 EMAIL CHƯA ĐĂNG KÝ
                 setError(makeError(
                     XCircle,
                     'Email này chưa được đăng ký trong hệ thống. Vui lòng kiểm tra lại.'
                 ));
             } else if (status === 400 && errorMessage?.toLowerCase().includes('verified')) {
-                // Email chưa xác thực
                 setError(makeError(
                     AlertTriangle,
                     'Tài khoản chưa được xác thực email. Vui lòng kiểm tra hộp thư để xác thực.'
                 ));
             } else if (status === 403) {
-                // Tài khoản bị khóa
                 setError(makeError(
                     Lock,
                     'Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ để được giúp đỡ.'
@@ -247,6 +253,13 @@ const ForgotPassword = () => {
                         autoComplete="email"
                     />
                 </div>
+
+                {/* ✅ CAPTCHA */}
+                <Recaptcha
+                    ref={recaptchaRef}
+                    onChange={(token) => setRecaptchaToken(token)}
+                    onExpired={() => setRecaptchaToken('')}
+                />
 
                 <div className="button-group">
                     <LoadingButton

@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+// UserRegister.jsx
+import React, { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../../api/api';
 import { Eye, EyeOff } from 'lucide-react';
 
 import Modal from '../components/Modal';
 import LoadingButton from '../components/LoadingButton';
+import Recaptcha from '../components/Recaptcha';
 import '../styles/UserAuth.css';
 
 const UserRegister = () => {
@@ -23,6 +25,10 @@ const UserRegister = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+    // ✅ CAPTCHA STATE
+    const [recaptchaToken, setRecaptchaToken] = useState('');
+    const recaptchaRef = useRef(null);
+
     const [modalConfig, setModalConfig] = useState({
         show: false,
         type: 'error',
@@ -35,7 +41,6 @@ const UserRegister = () => {
     // ==========================================
     // VALIDATE FIELD
     // ==========================================
-
     const validateField = (name, value, password = formData.password, confirmPassword = formData.confirmPassword) => {
         let error = '';
 
@@ -102,7 +107,6 @@ const UserRegister = () => {
     // ==========================================
     // HANDLE INPUT
     // ==========================================
-
     const handleChange = (e) => {
         const { name, value } = e.target;
 
@@ -123,11 +127,10 @@ const UserRegister = () => {
     // ==========================================
     // VALIDATE ALL
     // ==========================================
-
     const validate = () => {
         const tempErrors = {};
         const fields = ['username', 'full_name', 'email', 'phone', 'password', 'confirmPassword'];
-        
+
         fields.forEach(field => {
             const error = validateField(field, formData[field]);
             if (error) {
@@ -142,9 +145,20 @@ const UserRegister = () => {
     // ==========================================
     // BƯỚC 1: ĐĂNG KÝ THÔNG TIN CƠ BẢN
     // ==========================================
-
     const handleRegister = async (e) => {
         e.preventDefault();
+
+        // ✅ CHECK CAPTCHA TRƯỚC
+        if (!recaptchaToken) {
+            setModalConfig({
+                show: true,
+                type: 'error',
+                title: 'Chưa xác thực CAPTCHA',
+                message: 'Vui lòng tick vào ô "Tôi không phải là robot" để tiếp tục.'
+            });
+            return;
+        }
+
         if (!validate()) return;
 
         setLoading(true);
@@ -156,14 +170,13 @@ const UserRegister = () => {
                 email: formData.email,
                 password: formData.password,
                 phone: formData.phone,
-                address: formData.address || ''
+                address: formData.address || '',
+                recaptchaToken,   // ✅ GỬI KÈM
             });
 
             if (response.data.success) {
-                // Nhận temp_token từ server
                 const { temp_token, email, full_name } = response.data.data;
-                
-                // Lưu toàn bộ thông tin (bao gồm temp_token) để dùng ở Bước 2
+
                 sessionStorage.setItem('register_temp', JSON.stringify({
                     temp_token: temp_token,
                     username: formData.username,
@@ -174,7 +187,6 @@ const UserRegister = () => {
                     address: formData.address || ''
                 }));
 
-                // Chuyển sang bước 2: Thiết lập PIN
                 navigate('/register-pin');
             }
 
@@ -183,6 +195,12 @@ const UserRegister = () => {
 
             const serverMsg = err.response?.data?.message;
             const field = err.response?.data?.field;
+
+            // ✅ NẾU CAPTCHA SAI → RESET
+            if (field === 'recaptcha') {
+                recaptchaRef.current?.reset();
+                setRecaptchaToken('');
+            }
 
             if (field) {
                 setErrors(prev => ({ ...prev, [field]: serverMsg }));
@@ -202,7 +220,6 @@ const UserRegister = () => {
     // ==========================================
     // HANDLE MODAL CLOSE
     // ==========================================
-
     const handleModalClose = () => {
         setModalConfig({ ...modalConfig, show: false });
     };
@@ -210,7 +227,6 @@ const UserRegister = () => {
     // ==========================================
     // RENDER
     // ==========================================
-
     return (
         <div className="auth-container">
             <div className="auth-card">
@@ -357,6 +373,14 @@ const UserRegister = () => {
                                 disabled={loading}
                             />
                         </div>
+
+                        {/* ✅ CAPTCHA */}
+                        <Recaptcha
+                            ref={recaptchaRef}
+                            onChange={(token) => setRecaptchaToken(token)}
+                            onExpired={() => setRecaptchaToken('')}
+                        />
+                        {errors.recaptcha && <span className="error-text">{errors.recaptcha}</span>}
 
                         <LoadingButton
                             type="submit"
