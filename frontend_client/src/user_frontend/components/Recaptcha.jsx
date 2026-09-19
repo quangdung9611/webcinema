@@ -20,7 +20,7 @@ const Recaptcha = forwardRef(
         // RECAPTCHA SITE KEY
         // ========================================================
 
-        const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+        const siteKey = import.meta.env.VITE_RECAPTCHA_ID;
 
         // ========================================================
         // DEBUG
@@ -57,7 +57,7 @@ const Recaptcha = forwardRef(
 
         if (!siteKey) {
             console.error(
-                '❌ [RECAPTCHA] Thiếu VITE_RECAPTCHA_SITE_KEY trong Environment Variables!'
+                '❌ [RECAPTCHA] Thiếu VITE_RECAPTCHA_ID trong Environment Variables!'
             );
 
             return (

@@ -31,7 +31,7 @@ if (!GOOGLE_CLIENT_ID) {
 // ============================================================
 // ✅ DEBUG RECAPTCHA SITE KEY
 // ============================================================
-const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_ID;
 
 console.log('🔑 [MAIN] RECAPTCHA Site Key:', RECAPTCHA_SITE_KEY);
 console.log('🔑 [MAIN] Độ dài key:', RECAPTCHA_SITE_KEY?.length);
@@ -39,9 +39,8 @@ console.log('🔑 [MAIN] Domain:', window.location.hostname);
 console.log('🔑 [MAIN] Env mode:', import.meta.env.MODE);
 
 if (!RECAPTCHA_SITE_KEY) {
-    console.error('❌ [MAIN] VITE_RECAPTCHA_SITE_KEY chưa được cấu hình!');
+    console.error('❌ [MAIN] VITE_RECAPTCHA_ID chưa được cấu hình!');
 }
-
 // ============================================================
 // ROUTER
 // ============================================================
