@@ -1,6 +1,6 @@
-// Middlewares/VerifyCaptcha.js
+// Middlewares/VerifyCapcha.js
 
-const RecaptchaService = require("../Services/RecaptchaService");
+const RecaptchaService = require("../Services/RecapchaService");
 
 /**
  * Middleware verify CAPTCHA
