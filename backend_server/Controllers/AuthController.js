@@ -770,12 +770,10 @@ exports.invalidateOtp = async (req, res) => {
         });
     }
 };
-/*=========================================================
-    ✅ GOOGLE LOGIN
-=========================================================*/
 exports.googleLogin = async (req, res) => {
     try {
-        const { credential } = req.body;
+        // ✅ THÊM isAccessToken vào destructuring
+        const { credential, isAccessToken = false } = req.body;
 
         if (!credential) {
             return res.status(400).json({
@@ -784,7 +782,13 @@ exports.googleLogin = async (req, res) => {
             });
         }
 
-        const result = await AuthService.loginWithGoogle(credential, req, res);
+        // ✅ TRUYỀN isAccessToken xuống Service
+        const result = await AuthService.loginWithGoogle(
+            credential,
+            req,
+            res,
+            isAccessToken        // ← THÊM DÒNG NÀY
+        );
         return res.status(200).json(result);
 
     } catch (error) {
@@ -797,7 +801,6 @@ exports.googleLogin = async (req, res) => {
         });
     }
 };
-
 /*=========================================================
     ✅ UPDATE PHONE
 =========================================================*/

@@ -6,7 +6,7 @@
    ✅ Card có viền bạc mặc định (--card-border-base)
    ✅ Font: --font-heading (Oswald) + --font-primary (Inter)
    ✅ OTP input: 6 ô VUÔNG + NÚT EYE (giống Admin)
-   ✅ Google Login button căn giữa hoàn hảo
+   ✅ Google Login button: CUSTOM BUTTON (dùng useGoogleLogin hook)
    ========================================================= */
 
 /* =========================================================
@@ -1276,7 +1276,8 @@
 }
 
 /* =========================================================
-   ✅ 25b. GOOGLE LOGIN BUTTON - CĂN GIỮA HOÀN HẢO
+   ✅ 25b. GOOGLE LOGIN WRAPPER + CUSTOM BUTTON
+   (Dùng useGoogleLogin hook – KHÔNG dùng iframe)
    ========================================================= */
 .google-login-wrapper {
     margin-top: var(--space-lg);
@@ -1286,16 +1287,19 @@
     align-items: center;
 }
 
+/* ---- Divider "Hoặc" ---- */
 .google-login-wrapper .divider {
     display: flex;
     align-items: center;
     gap: var(--space-md);
-    margin: var(--space-lg) 0;
+    margin: var(--space-md) 0 var(--space-lg);
     width: 100%;
     color: var(--text-muted);
+    font-family: var(--font-primary);
     font-size: var(--font-size-h6);
+    font-weight: var(--fw-medium);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
 }
 
 .google-login-wrapper .divider::before,
@@ -1303,44 +1307,109 @@
     content: '';
     flex: 1;
     height: 1px;
-    background: var(--border-subtle);
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.10) 50%,
+        transparent 100%
+    );
 }
 
-.google-login-btn {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.google-login-wrapper .divider span {
+    padding: 0 var(--space-xs);
+    white-space: nowrap;
+}
+
+/* ---- Custom Google Button ---- */
+.google-custom-btn {
+    position: relative;
     width: 100%;
-    min-height: 48px;
+    min-height: 52px;
+    padding: var(--space-md) var(--space-lg);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+
+    border-radius: var(--radius-md);
+    border: 1.5px solid rgba(244, 246, 248, 0.18);
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+
+    color: var(--text-heading);
+    font-family: var(--font-primary);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-semibold);
+    letter-spacing: 0.3px;
+
+    cursor: pointer;
+    overflow: hidden;
+    transition: all var(--transition-normal);
+    box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-/* ✅ Google render div wrapper + iframe bên trong */
-.google-login-btn > div {
-    width: 100% !important;
-    max-width: 100% !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
+/* Hiệu ứng shimmer khi hover */
+.google-custom-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.06) 0%,
+        transparent 40%,
+        transparent 60%,
+        rgba(255, 255, 255, 0.06) 100%
+    );
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+    pointer-events: none;
 }
 
-.google-login-btn > div > div {
-    width: 100% !important;
-    max-width: 100% !important;
-    display: flex !important;
-    justify-content: center !important;
-    margin: 0 auto !important;
+.google-custom-btn:hover:not(:disabled) {
+    border-color: rgba(244, 246, 248, 0.40);
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-2px);
+    box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.35),
+        0 0 0 1px rgba(244, 246, 248, 0.10),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
-.google-login-btn > div > div > div {
-    margin: 0 auto !important;
+.google-custom-btn:hover:not(:disabled)::before {
+    opacity: 1;
 }
 
-.google-login-btn iframe {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 auto !important;
-    display: block !important;
-    border-radius: var(--radius-md) !important;
+.google-custom-btn:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+    background: rgba(255, 255, 255, 0.06);
+    transition-duration: 0.15s;
+}
+
+.google-custom-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* ---- Google Icon ---- */
+.google-custom-btn .google-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    transition: transform var(--transition-normal);
+}
+
+.google-custom-btn:hover:not(:disabled) .google-icon {
+    transform: scale(1.1) rotate(-3deg);
+}
+
+/* ---- Text ---- */
+.google-custom-btn span {
+    white-space: nowrap;
+    line-height: 1;
 }
 
 /* =========================================================
@@ -1486,9 +1555,15 @@
         margin-top: var(--space-md);
     }
 
-    .google-login-btn iframe {
-        width: 100% !important;
-        max-width: 100% !important;
+    .google-custom-btn {
+        min-height: 48px;
+        font-size: var(--font-size-h6);
+        padding: var(--space-sm) var(--space-md);
+    }
+
+    .google-custom-btn .google-icon {
+        width: 18px;
+        height: 18px;
     }
 }
 
@@ -1633,6 +1708,25 @@
     .verify-email-hint p {
         font-size: var(--font-size-h6);
     }
+
+    /* ✅ Google button mobile nhỏ */
+    .google-custom-btn {
+        min-height: 46px;
+        font-size: var(--font-size-h6);
+        gap: var(--space-xs);
+        padding: var(--space-sm) var(--space-md);
+    }
+
+    .google-custom-btn .google-icon {
+        width: 16px;
+        height: 16px;
+    }
+
+    .google-login-wrapper .divider {
+        font-size: 0.75rem;
+        letter-spacing: 1px;
+        margin: var(--space-sm) 0 var(--space-md);
+    }
 }
 
 /* =========================================================
@@ -1669,5 +1763,5 @@
 /* =========================================================
    END – USER AUTH SILVER PREMIUM EDITION
    OTP INPUT: 6 Ô VUÔNG + NÚT EYE (ĐỒNG BỘ ADMIN)
-   GOOGLE LOGIN: CĂN GIỮA HOÀN HẢO
+   GOOGLE LOGIN: CUSTOM BUTTON (useGoogleLogin hook)
    ========================================================= */
