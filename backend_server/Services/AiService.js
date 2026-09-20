@@ -140,7 +140,7 @@ class AiService {
     /* -------------------------------------------------------
        BUILD SYSTEM PROMPT
     ------------------------------------------------------- */
-    buildSystemPrompt(context, intent) {
+    buildSystemPrompt(context, intent, userName = null) {
         const {
             movies, showtimes, cinemas,
             priceSummary, priceStandard,
@@ -237,9 +237,14 @@ class AiService {
             `- ${p.product_name} (${p.category}): ${Number(p.price).toLocaleString('vi-VN')}đ`
         ).join('\n');
 
+        /* ---------- Thông tin user ---------- */
+        const userInfo = userName
+            ? `\n👤 KHÁCH HÀNG ĐANG CHAT: "${userName}"\n→ Thỉnh thoảng gọi tên khách trong câu trả lời (VD: "${userName} ơi", "Dạ ${userName}"). CHỈ gọi 1 lần trong 1 câu trả lời, đừng lạm dụng.\n`
+            : '';
+
         /* ---------- Full Prompt ---------- */
         return `Bạn là "Cinema Assistant" — trợ lý tư vấn khách hàng của Quang Dũng Cinema.
-
+${userInfo}
 ═══════════════════════════════════════════
 🎯 PHONG CÁCH TRẢ LỜI (QUAN TRỌNG NHẤT)
 ═══════════════════════════════════════════
@@ -263,7 +268,7 @@ Bạn là một NHÂN VIÊN TƯ VẤN THẬT, đang nói chuyện với khách h
    ❌ SAI: "Galaxy Nguyễn Du, Galaxy Tân Bình"
    ✅ ĐÚNG: "Quang Dũng Cinema hiện có 4 chi nhánh ạ: Galaxy Nguyễn Du, Galaxy Tân Bình..."
 
-3. Xưng hô: Bạn gọi mình là "mình" hoặc "em", gọi khách là "bạn".
+3. Xưng hô: Bạn gọi mình là "mình" hoặc "em", gọi khách là "bạn" hoặc tên riêng.
 
 4. Kết thúc câu nên có từ ngữ lịch sự: "ạ", "nhé", "bạn nhé".
 
@@ -362,7 +367,7 @@ Nếu không gợi ý phim, để movie_ids = [].`;
     /* -------------------------------------------------------
        MAIN: CHAT WITH GEMINI
     ------------------------------------------------------- */
-    async chat({ message, history = [] }) {
+    async chat({ message, history = [], userName = null }) {
         const context = await MovieRepository.getFullContextForAI();
 
         if (!context.movies || context.movies.length === 0) {
@@ -373,9 +378,9 @@ Nếu không gợi ý phim, để movie_ids = [].`;
         }
 
         const intent = this.detectIntent(message);
-        console.log(`🎯 [AI] Intent: ${intent} | Message: "${message.slice(0, 50)}"`);
+        console.log(`🎯 [AI] Intent: ${intent} | User: ${userName || 'guest'} | Message: "${message.slice(0, 50)}"`);
 
-        const systemPrompt = this.buildSystemPrompt(context, intent);
+        const systemPrompt = this.buildSystemPrompt(context, intent, userName);
         console.log(`📏 [AI] Prompt length: ${systemPrompt.length} chars`);
 
         /* ---------- Khởi tạo model ---------- */
@@ -390,12 +395,17 @@ Nếu không gợi ý phim, để movie_ids = [].`;
         });
 
         /* ---------- Build history ---------- */
-        const geminiHistory = history
+        let geminiHistory = history
             .slice(-10)
             .map(h => ({
                 role: h.role === 'user' ? 'user' : 'model',
                 parts: [{ text: h.content }]
             }));
+
+        /* ✅ QUAN TRỌNG: Gemini yêu cầu tin đầu tiên phải là 'user' */
+        while (geminiHistory.length > 0 && geminiHistory[0].role === 'model') {
+            geminiHistory.shift();
+        }
 
         /* ---------- Bắt đầu chat session ---------- */
         const chat = model.startChat({

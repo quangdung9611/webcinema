@@ -1,38 +1,49 @@
 /* ==========================================================
-   AI CHATBOX — SILVER PREMIUM
+   AI CHATBOX — SILVER PREMIUM + GEMINI ICON
 ========================================================== */
 
-/* ---------- FLOATING BUTTON ---------- */
+/* ---------- FLOATING BUTTON (NỀN TỐI CHO GEMINI) ---------- */
 .ai-chat-fab {
   position: fixed;
   bottom: 24px;
   right: 24px;
   z-index: 9998;
 
-  width: 56px;
-  height: 56px;
+  width: 58px;
+  height: 58px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  border: none;
+  border: 1px solid rgba(244, 246, 248, 0.15);
   border-radius: 50%;
 
-  background: var(--premium-gradient);
-  color: var(--bg-primary);
+  /* ✅ Nền tối để icon Gemini (gradient) nổi bật */
+  background: linear-gradient(
+    145deg,
+    rgba(24, 28, 33, 0.98) 0%,
+    rgba(12, 15, 18, 0.98) 100%
+  );
+  color: var(--silver-light);
 
   cursor: pointer;
 
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.03);
 
-  transition: box-shadow var(--transition-normal);
+  transition:
+    box-shadow var(--transition-normal),
+    transform var(--transition-normal),
+    border-color var(--transition-normal);
 }
 
 .ai-chat-fab:hover {
+  border-color: rgba(244, 246, 248, 0.30);
   box-shadow:
-    0 0 24px rgba(159, 183, 210, 0.5),
-    0 8px 32px rgba(0, 0, 0, 0.4);
+    0 0 28px rgba(159, 183, 210, 0.35),
+    0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
 .ai-badge {
@@ -104,8 +115,8 @@
 }
 
 .ai-avatar {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
 
   display: flex;
   align-items: center;
@@ -113,8 +124,14 @@
 
   border-radius: 50%;
 
-  background: var(--premium-gradient);
-  color: var(--bg-primary);
+  /* ✅ Nền tối cho icon Gemini nổi bật */
+  background: linear-gradient(
+    145deg,
+    rgba(24, 28, 33, 0.98) 0%,
+    rgba(12, 15, 18, 0.98) 100%
+  );
+
+  border: 1px solid rgba(244, 246, 248, 0.15);
 }
 
 .ai-header-left h4 {
@@ -173,7 +190,6 @@
   color: var(--text-heading);
 }
 
-/* ---------- HEADER ACTIONS ---------- */
 .ai-header-actions {
   display: flex;
   align-items: center;
@@ -281,7 +297,7 @@
 }
 
 /* ==========================================================
-   MESSAGE BUBBLE WRAPPER — Hỗ trợ nút COPY
+   MESSAGE BUBBLE WRAPPER — Nút COPY
 ========================================================== */
 
 .ai-msg-bubble-wrapper {
@@ -293,7 +309,6 @@
   max-width: 100%;
 }
 
-/* Nút Copy nằm cạnh bubble */
 .ai-msg-copy {
   flex-shrink: 0;
 
@@ -322,7 +337,6 @@
     transform 0.2s ease;
 }
 
-/* Hiện nút copy khi hover tin nhắn */
 .ai-msg:hover .ai-msg-copy {
   opacity: 1;
 }
@@ -337,7 +351,6 @@
   transform: scale(0.95);
 }
 
-/* Trên mobile, luôn hiện nút copy */
 @media (hover: none) {
   .ai-msg-copy {
     opacity: 0.5;
@@ -345,7 +358,7 @@
 }
 
 /* ==========================================================
-   QUICK SUGGESTIONS — Gợi ý câu hỏi nhanh
+   QUICK SUGGESTIONS
 ========================================================== */
 
 .ai-quick-suggestions {
@@ -599,7 +612,6 @@
    RESPONSIVE
 ========================================================== */
 
-/* Tablet */
 @media (max-width: 768px) {
   .ai-chat-panel {
     width: calc(100vw - 40px);
@@ -610,24 +622,14 @@
   .ai-msg-content {
     max-width: 82%;
   }
-
-  .ai-quick-suggestions {
-    gap: 7px;
-  }
-
-  .ai-suggestion-btn {
-    padding: 9px 13px;
-    font-size: 12.5px;
-  }
 }
 
-/* Mobile */
 @media (max-width: 480px) {
   .ai-chat-fab {
     bottom: 16px;
     right: 16px;
-    width: 52px;
-    height: 52px;
+    width: 54px;
+    height: 54px;
   }
 
   .ai-chat-panel {
@@ -645,16 +647,12 @@
   }
 
   .ai-avatar {
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
   }
 
   .ai-header-left h4 {
     font-size: 13px;
-  }
-
-  .ai-status {
-    font-size: 10px;
   }
 
   .ai-chat-body {
@@ -671,7 +669,6 @@
     max-width: 85%;
   }
 
-  /* Bubble wrapper trên mobile: đẩy nút copy xuống dưới */
   .ai-msg-bubble-wrapper {
     flex-direction: column;
     align-items: flex-start;
@@ -687,11 +684,6 @@
     width: 24px;
     height: 24px;
     margin-top: 0;
-  }
-
-  .ai-quick-suggestions {
-    gap: 6px;
-    padding: 2px 0 6px;
   }
 
   .ai-suggestion-btn {
@@ -722,28 +714,5 @@
   .ai-send-btn {
     width: 38px;
     height: 38px;
-  }
-}
-
-/* Mobile rất nhỏ */
-@media (max-width: 380px) {
-  .ai-chat-panel {
-    bottom: 76px;
-    right: 8px;
-    left: 8px;
-    height: calc(100vh - 100px);
-  }
-
-  .ai-msg-bubble {
-    font-size: 12.5px;
-  }
-
-  .ai-suggestion-btn {
-    font-size: 11.5px;
-    padding: 8px 11px;
-  }
-
-  .ai-chat-input input {
-    font-size: 12.5px;
   }
 }

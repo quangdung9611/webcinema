@@ -6,7 +6,7 @@ class AiController {
        POST /api/ai/chat
     ========================================================= */
     async chat(req, res) {
-        const { message, history = [] } = req.body;
+        const { message, history = [], userName = null } = req.body;
         const ip = req.ip || req.connection.remoteAddress;
 
         /* ---------- Validate message ---------- */
@@ -30,6 +30,11 @@ class AiController {
             });
         }
 
+        /* ---------- Validate userName ---------- */
+        const safeUserName = userName && typeof userName === 'string'
+            ? userName.trim().slice(0, 50)
+            : null;
+
         /* ---------- Validate history ---------- */
         const safeHistory = Array.isArray(history)
             ? history
@@ -51,8 +56,7 @@ class AiController {
         }
 
         /* ---------- Cache ---------- */
-        // Thêm history.length vào key để phân biệt context
-        const cacheKey = `${cleanMessage.toLowerCase()}__${safeHistory.length}`;
+        const cacheKey = `${cleanMessage.toLowerCase()}__${safeHistory.length}__${safeUserName || 'guest'}`;
         const cached = AiService.getCache(cacheKey);
 
         if (cached) {
@@ -67,7 +71,8 @@ class AiController {
         try {
             const result = await AiService.chat({
                 message: cleanMessage,
-                history: safeHistory
+                history: safeHistory,
+                userName: safeUserName
             });
 
             /* ---------- Lưu cache ---------- */
@@ -78,7 +83,7 @@ class AiController {
             return res.json(result);
 
         } catch (error) {
-            console.error('[AI Controller] Groq API error:', error?.message);
+            console.error('[AI Controller] Gemini API error:', error?.message);
 
             if (error?.status === 429) {
                 return res.status(429).json({

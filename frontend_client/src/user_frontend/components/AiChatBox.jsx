@@ -1,10 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Sparkles,
     X,
     Send,
-    Bot,
     User,
     Trash2,
     Copy,
@@ -13,6 +11,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/api';
 import Modal from './Modal';
+import GeminiIcon from './GeminiIcon';
+import { useAuth } from '../../context/AuthContext';
 import '../styles/AiChat.css';
 
 /* ==========================================================
@@ -45,14 +45,22 @@ const saveMessagesToStorage = (msgs) => {
     }
 };
 
-const DEFAULT_MESSAGES = [
-    {
-        role: 'assistant',
-        content:
-            'Xin chào! Mình là trợ lý AI của Quang Dũng Cinema. Bạn muốn xem phim gì hôm nay? 🎬',
-        movies: []
-    }
-];
+/* ==========================================================
+   DEFAULT MESSAGES — Có tên user
+========================================================== */
+const buildDefaultMessages = (userName = null) => {
+    const greeting = userName
+        ? `Xin chào ${userName}! 😊`
+        : 'Xin chào bạn! 😊';
+
+    return [
+        {
+            role: 'assistant',
+            content: `${greeting} Mình là trợ lý AI của Quang Dũng Cinema. Bạn muốn hỏi mình về phim, giá vé hay rạp chiếu hôm nay ạ?`,
+            movies: []
+        }
+    ];
+};
 
 /* ==========================================================
    QUICK SUGGESTIONS
@@ -106,7 +114,7 @@ const MovieSuggestCard = ({ movie, onClick }) => {
 };
 
 /* ==========================================================
-   MESSAGE BUBBLE — Có nút copy
+   MESSAGE BUBBLE
 ========================================================== */
 const MessageBubble = ({ msg }) => {
     const [copied, setCopied] = useState(false);
@@ -145,14 +153,22 @@ const MessageBubble = ({ msg }) => {
 ========================================================== */
 const AiChatBox = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
+
     const [isOpen, setIsOpen] = useState(false);
+
+    /* ✅ Lấy tên user (ưu tiên full_name > username) */
+    const userName =
+        user?.full_name ||
+        user?.username ||
+        null;
 
     const [messages, setMessages] = useState(() => {
         const saved = loadMessagesFromStorage();
         if (saved && saved.length > 0) {
             return saved;
         }
-        return DEFAULT_MESSAGES;
+        return buildDefaultMessages(userName);
     });
 
     const [input, setInput] = useState('');
@@ -165,7 +181,7 @@ const AiChatBox = () => {
     const abortControllerRef = useRef(null);
 
     /* =========================================================
-       AUTO SAVE VÀO LOCALSTORAGE
+       AUTO SAVE
     ========================================================= */
     useEffect(() => {
         if (messages.length > 0) {
@@ -173,12 +189,23 @@ const AiChatBox = () => {
         }
     }, [messages]);
 
-    /* Auto scroll xuống cuối */
+    /* =========================================================
+       UPDATE GREETING KHI USER ĐĂNG NHẬP/ĐĂNG XUẤT
+    ========================================================= */
+    useEffect(() => {
+        // Chỉ cập nhật nếu messages chỉ có 1 tin nhắn chào (chưa chat gì)
+        if (messages.length === 1 && messages[0].role === 'assistant') {
+            setMessages(buildDefaultMessages(userName));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userName]);
+
+    /* Auto scroll */
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, isTyping]);
 
-    /* Focus input khi mở */
+    /* Focus input */
     useEffect(() => {
         if (isOpen) {
             setTimeout(() => inputRef.current?.focus(), 300);
@@ -186,14 +213,14 @@ const AiChatBox = () => {
         }
     }, [isOpen]);
 
-    /* Hiệu ứng "có tin nhắn mới" khi chatbox đóng */
+    /* Badge tin nhắn mới */
     useEffect(() => {
         if (!isOpen && messages.length > 1) {
             setHasNewMessage(true);
         }
     }, [messages, isOpen]);
 
-    /* Cleanup abort khi unmount */
+    /* Cleanup */
     useEffect(() => {
         return () => {
             abortControllerRef.current?.abort();
@@ -201,38 +228,30 @@ const AiChatBox = () => {
     }, []);
 
     /* =========================================================
-       MỞ MODAL XÓA LỊCH SỬ
+       XÓA LỊCH SỬ
     ========================================================= */
     const handleOpenClearModal = () => {
         setShowClearModal(true);
     };
 
-    /* =========================================================
-       XÁC NHẬN XÓA LỊCH SỬ
-    ========================================================= */
     const handleConfirmClear = () => {
-        // Hủy request đang chạy
         abortControllerRef.current?.abort();
 
         localStorage.removeItem(STORAGE_KEY);
-        setMessages(DEFAULT_MESSAGES);
+        setMessages(buildDefaultMessages(userName));
         setInput('');
         setIsTyping(false);
         setShowClearModal(false);
     };
 
-    /* =========================================================
-       HỦY XÓA
-    ========================================================= */
     const handleCancelClear = () => {
         setShowClearModal(false);
     };
 
     /* =========================================================
-       CORE: GỬI TIN NHẮN
+       GỬI TIN NHẮN
     ========================================================= */
     const sendChatRequest = async (text) => {
-        // Hủy request cũ nếu có
         abortControllerRef.current?.abort();
         abortControllerRef.current = new AbortController();
 
@@ -243,7 +262,11 @@ const AiChatBox = () => {
 
             const res = await api.post(
                 '/api/ai/chat',
-                { message: text, history },
+                {
+                    message: text,
+                    history,
+                    userName
+                },
                 { signal: abortControllerRef.current.signal }
             );
 
@@ -256,7 +279,6 @@ const AiChatBox = () => {
                 }
             ]);
         } catch (error) {
-            // Bỏ qua lỗi do user hủy
             if (
                 error.name === 'CanceledError' ||
                 error.code === 'ERR_CANCELED'
@@ -282,9 +304,6 @@ const AiChatBox = () => {
         }
     };
 
-    /* =========================================================
-       GỬI TIN NHẮN TỪ INPUT
-    ========================================================= */
     const sendMessage = async () => {
         const text = input.trim();
         if (!text || isTyping) return;
@@ -298,9 +317,6 @@ const AiChatBox = () => {
         await sendChatRequest(text);
     };
 
-    /* =========================================================
-       GỬI TIN NHẮN TỪ SUGGESTION
-    ========================================================= */
     const sendSuggestion = async (text) => {
         if (isTyping) return;
 
@@ -313,9 +329,6 @@ const AiChatBox = () => {
         await sendChatRequest(text);
     };
 
-    /* =========================================================
-       ENTER ĐỂ GỬI
-    ========================================================= */
     const handleKeyDown = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -323,9 +336,6 @@ const AiChatBox = () => {
         }
     };
 
-    /* =========================================================
-       CLICK PHIM
-    ========================================================= */
     const handleMovieClick = (slug) => {
         if (!slug) return;
         setIsOpen(false);
@@ -338,7 +348,7 @@ const AiChatBox = () => {
     ========================================================= */
     return (
         <>
-            {/* FLOATING BUTTON */}
+            {/* FAB */}
             <motion.button
                 className="ai-chat-fab"
                 onClick={() => setIsOpen(v => !v)}
@@ -379,7 +389,7 @@ const AiChatBox = () => {
                             exit={{ rotate: -90, opacity: 0 }}
                             transition={{ duration: 0.2 }}
                         >
-                            <Sparkles size={22} />
+                            <GeminiIcon size={26} />
                         </motion.span>
                     )}
                 </AnimatePresence>
@@ -387,7 +397,7 @@ const AiChatBox = () => {
                 {hasNewMessage && !isOpen && <span className="ai-badge" />}
             </motion.button>
 
-            {/* CHAT PANEL */}
+            {/* PANEL */}
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
@@ -404,11 +414,11 @@ const AiChatBox = () => {
                         <div className="ai-chat-header">
                             <div className="ai-header-left">
                                 <div className="ai-avatar">
-                                    <Bot size={18} />
+                                    <GeminiIcon size={20} />
                                 </div>
 
                                 <div>
-                                    <h4>Cinema Assistant</h4>
+                                    <h4>Gemini Assistant</h4>
                                     <span className="ai-status">
                                         <span className="ai-dot" />
                                         Đang hoạt động
@@ -449,7 +459,7 @@ const AiChatBox = () => {
                                         {msg.role === 'user' ? (
                                             <User size={14} />
                                         ) : (
-                                            <Bot size={14} />
+                                            <GeminiIcon size={14} />
                                         )}
                                     </div>
 
@@ -473,7 +483,7 @@ const AiChatBox = () => {
                                 </div>
                             ))}
 
-                            {/* QUICK SUGGESTIONS — chỉ hiện khi mới mở */}
+                            {/* QUICK SUGGESTIONS */}
                             {messages.length <= 1 && !isTyping && (
                                 <div className="ai-quick-suggestions">
                                     {QUICK_SUGGESTIONS.map((s, i) => (
@@ -493,7 +503,7 @@ const AiChatBox = () => {
                             {isTyping && (
                                 <div className="ai-msg bot">
                                     <div className="ai-msg-avatar">
-                                        <Bot size={14} />
+                                        <GeminiIcon size={14} />
                                     </div>
                                     <div className="ai-msg-content">
                                         <div className="ai-msg-bubble">
@@ -514,7 +524,7 @@ const AiChatBox = () => {
                                 value={input}
                                 onChange={e => setInput(e.target.value)}
                                 onKeyDown={handleKeyDown}
-                                placeholder="Hỏi mình về phim..."
+                                placeholder="Hỏi Gemini về phim..."
                                 maxLength={500}
                                 disabled={isTyping}
                             />
@@ -532,7 +542,7 @@ const AiChatBox = () => {
                 )}
             </AnimatePresence>
 
-            {/* MODAL XÁC NHẬN XÓA */}
+            {/* MODAL */}
             <Modal
                 show={showClearModal}
                 type="warning"
