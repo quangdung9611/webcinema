@@ -77,17 +77,6 @@ const QUICK_SUGGESTIONS = [
 ];
 
 /* ==========================================================
-   TYPING INDICATOR
-========================================================== */
-const TypingIndicator = () => (
-    <div className="ai-typing">
-        <span></span>
-        <span></span>
-        <span></span>
-    </div>
-);
-
-/* ==========================================================
    STREAMING CURSOR
 ========================================================== */
 const StreamingCursor = () => (
@@ -180,7 +169,6 @@ const AiChatBox = () => {
     });
 
     const [input, setInput] = useState('');
-    const [isTyping, setIsTyping] = useState(false);
     const [hasNewMessage, setHasNewMessage] = useState(false);
     const [showClearModal, setShowClearModal] = useState(false);
 
@@ -210,7 +198,7 @@ const AiChatBox = () => {
     /* Auto scroll */
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages, isTyping]);
+    }, [messages]);
 
     /* Focus input */
     useEffect(() => {
@@ -244,7 +232,6 @@ const AiChatBox = () => {
         localStorage.removeItem(STORAGE_KEY);
         setMessages(buildDefaultMessages(userName));
         setInput('');
-        setIsTyping(false);
         setShowClearModal(false);
     };
 
@@ -257,7 +244,7 @@ const AiChatBox = () => {
         abortControllerRef.current?.abort();
         abortControllerRef.current = new AbortController();
 
-        /* Thêm tin nhắn rỗng để stream vào */
+        /* ✅ Thêm tin nhắn rỗng NGAY LẬP TỨC để stream vào */
         setMessages(prev => [
             ...prev,
             {
@@ -377,32 +364,31 @@ const AiChatBox = () => {
                 }
                 return updated;
             });
-        } finally {
-            setIsTyping(false);
         }
     };
 
+    /* =========================================================
+       ✅ SEND MESSAGE — Không dùng isTyping nữa
+    ========================================================= */
     const sendMessage = async () => {
         const text = input.trim();
-        if (!text || isTyping) return;
+        if (!text || messages.some(m => m.isStreaming)) return;
 
         const userMsg = { role: 'user', content: text };
 
         setMessages(prev => [...prev, userMsg]);
         setInput('');
-        setIsTyping(true);
 
         await sendChatRequest(text);
     };
 
     const sendSuggestion = async (text) => {
-        if (isTyping) return;
+        if (messages.some(m => m.isStreaming)) return;
 
         const userMsg = { role: 'user', content: text };
 
         setMessages(prev => [...prev, userMsg]);
         setInput('');
-        setIsTyping(true);
 
         await sendChatRequest(text);
     };
@@ -420,6 +406,11 @@ const AiChatBox = () => {
         navigate(`/movie/${slug}`);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
+
+    /* =========================================================
+       ✅ COMPUTED: Kiểm tra có tin nhắn đang stream không
+    ========================================================= */
+    const isStreaming = messages.some(m => m.isStreaming);
 
     /* =========================================================
        RENDER
@@ -562,7 +553,7 @@ const AiChatBox = () => {
                             ))}
 
                             {/* QUICK SUGGESTIONS */}
-                            {messages.length <= 1 && !isTyping && (
+                            {messages.length <= 1 && !isStreaming && (
                                 <div className="ai-quick-suggestions">
                                     {QUICK_SUGGESTIONS.map((s, i) => (
                                         <button
@@ -574,20 +565,6 @@ const AiChatBox = () => {
                                             {s}
                                         </button>
                                     ))}
-                                </div>
-                            )}
-
-                            {/* TYPING */}
-                            {isTyping && !messages.some(m => m.isStreaming) && (
-                                <div className="ai-msg bot">
-                                    <div className="ai-msg-avatar">
-                                        <GeminiIcon size={14} />
-                                    </div>
-                                    <div className="ai-msg-content">
-                                        <div className="ai-msg-bubble">
-                                            <TypingIndicator />
-                                        </div>
-                                    </div>
                                 </div>
                             )}
 
@@ -604,12 +581,12 @@ const AiChatBox = () => {
                                 onKeyDown={handleKeyDown}
                                 placeholder="Hỏi Gemini về phim..."
                                 maxLength={500}
-                                disabled={isTyping}
+                                disabled={isStreaming}
                             />
 
                             <button
                                 onClick={sendMessage}
-                                disabled={!input.trim() || isTyping}
+                                disabled={!input.trim() || isStreaming}
                                 className="ai-send-btn"
                                 aria-label="Gửi"
                             >
