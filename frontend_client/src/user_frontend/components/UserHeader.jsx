@@ -893,9 +893,9 @@ const UserHeader = () => {
                             closeMobileMenu
                         }
                     >
-                        <img
-                            src="https://api.quangdungcinema.id.vn/uploads/logo/logocinema.png"
-                            alt="Cinema Star Logo"
+                      <img
+                            src="./logocinema1.png"
+                            alt="QD Cinema"
                         />
                     </Link>
 

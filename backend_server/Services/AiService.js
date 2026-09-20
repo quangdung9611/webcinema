@@ -10,11 +10,31 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
    CACHE + RATE LIMIT
 ========================================================== */
 const cache = new Map();
-const CACHE_TTL = 1000 * 60 * 30;
+const CACHE_TTL = 1000 * 60 * 30;         // 30 phút
+const CACHE_MAX_SIZE = 500;
 
 const rateLimit = new Map();
-const RATE_LIMIT = 10;
-const RATE_WINDOW = 1000 * 60;
+const RATE_LIMIT = 10;                    // 10 tin nhắn
+const RATE_WINDOW = 1000 * 60;            // mỗi 1 phút
+
+/* =========================================================
+   AUTO CLEANUP CACHE — Mỗi 10 phút
+========================================================== */
+setInterval(() => {
+    const now = Date.now();
+    let cleaned = 0;
+
+    for (const [key, value] of cache.entries()) {
+        if (now - value.ts > CACHE_TTL) {
+            cache.delete(key);
+            cleaned++;
+        }
+    }
+
+    if (cleaned > 0) {
+        console.log(`🧹 [AI Cache] Cleaned ${cleaned} expired entries`);
+    }
+}, 1000 * 60 * 10);
 
 /* =========================================================
    AI SERVICE
@@ -26,7 +46,10 @@ class AiService {
     ------------------------------------------------------- */
     checkRateLimit(ip) {
         const now = Date.now();
-        const rl = rateLimit.get(ip) || { count: 0, resetAt: now + RATE_WINDOW };
+        const rl = rateLimit.get(ip) || {
+            count: 0,
+            resetAt: now + RATE_WINDOW
+        };
 
         if (now > rl.resetAt) {
             rl.count = 0;
@@ -42,6 +65,7 @@ class AiService {
 
         rl.count++;
         rateLimit.set(ip, rl);
+
         return { allowed: true };
     }
 
@@ -66,10 +90,14 @@ class AiService {
     setCache(key, value) {
         cache.set(key, { ...value, ts: Date.now() });
 
-        if (cache.size > 500) {
+        // Nếu cache vượt max size → xóa entry cũ nhất
+        if (cache.size > CACHE_MAX_SIZE) {
             const oldest = [...cache.entries()]
                 .sort((a, b) => a[1].ts - b[1].ts)[0];
-            cache.delete(oldest[0]);
+
+            if (oldest) {
+                cache.delete(oldest[0]);
+            }
         }
     }
 
@@ -96,6 +124,7 @@ class AiService {
 
         /* ---------- Showtimes (gom theo phim) ---------- */
         const showtimeByMovie = {};
+
         showtimes.forEach(s => {
             if (!showtimeByMovie[s.movie_id]) {
                 showtimeByMovie[s.movie_id] = {
@@ -121,24 +150,41 @@ class AiService {
 
         /* ---------- PRICE SUMMARY (theo hạng ghế) ---------- */
         const summaryGroups = {};
+
         priceSummary.forEach(p => {
-            if (!summaryGroups[p.room_type]) summaryGroups[p.room_type] = [];
+            if (!summaryGroups[p.room_type]) {
+                summaryGroups[p.room_type] = [];
+            }
+
             const min = Number(p.min_price).toLocaleString('vi-VN');
             const max = Number(p.max_price).toLocaleString('vi-VN');
-            const range = p.min_price === p.max_price ? `${min}đ` : `${min}đ - ${max}đ`;
-            summaryGroups[p.room_type].push(`${p.seat_type}: ${range}`);
+
+            const range = p.min_price === p.max_price
+                ? `${min}đ`
+                : `${min}đ - ${max}đ`;
+
+            summaryGroups[p.room_type].push(
+                `${p.seat_type}: ${range}`
+            );
         });
 
         const priceSummaryList = Object.entries(summaryGroups)
             .map(([room, list]) => `- ${room} → ${list.join(' | ')}`)
             .join('\n');
 
-        /* ---------- PRICE STANDARD (theo phòng + ngày + giờ) ---------- */
+        /* ---------- PRICE STANDARD ---------- */
         const standardGroups = {};
+
         priceStandard.forEach(p => {
             const key = `${p.room_type} | ${p.day_type}`;
-            if (!standardGroups[key]) standardGroups[key] = [];
-            standardGroups[key].push(`${p.time_slot}: ${Number(p.price).toLocaleString('vi-VN')}đ`);
+
+            if (!standardGroups[key]) {
+                standardGroups[key] = [];
+            }
+
+            standardGroups[key].push(
+                `${p.time_slot}: ${Number(p.price).toLocaleString('vi-VN')}đ`
+            );
         });
 
         const priceStandardList = Object.entries(standardGroups)
@@ -152,6 +198,7 @@ class AiService {
                 .replace(/&nbsp;/g, ' ')
                 .trim()
                 .slice(0, 80);
+
             return `- ${p.title}: ${desc}`;
         }).join('\n') || 'Hiện chưa có khuyến mãi.';
 
@@ -255,7 +302,7 @@ Nếu không gợi ý phim cụ thể, để movie_ids = [].`;
         const chatCompletion = await groq.chat.completions.create({
             messages: [
                 { role: 'system', content: systemPrompt },
-                ...history.slice(-6),
+                ...history.slice(-10),
                 { role: 'user', content: message }
             ],
             model: 'openai/gpt-oss-20b',
@@ -264,20 +311,32 @@ Nếu không gợi ý phim cụ thể, để movie_ids = [].`;
             response_format: { type: 'json_object' }
         });
 
+        /* ---------- Parse JSON an toàn ---------- */
         let aiResponse;
+
         try {
-            aiResponse = JSON.parse(chatCompletion.choices[0].message.content);
-        } catch {
+            const raw = chatCompletion.choices[0].message.content;
+            aiResponse = JSON.parse(raw);
+        } catch (err) {
+            console.warn('[AI Service] Parse JSON failed:', err?.message);
+
             aiResponse = {
-                reply: chatCompletion.choices[0].message.content,
+                reply: chatCompletion.choices[0].message.content || 'Xin lỗi, mình chưa hiểu câu hỏi.',
                 movie_ids: []
             };
         }
 
-        const validIds = (aiResponse.movie_ids || [])
+        /* ---------- Validate movie_ids ---------- */
+        const rawIds = Array.isArray(aiResponse.movie_ids)
+            ? aiResponse.movie_ids
+            : [];
+
+        const validIds = rawIds
             .map(Number)
+            .filter(id => Number.isInteger(id) && id > 0)
             .filter(id => context.movies.some(m => m.movie_id === id));
 
+        /* ---------- Map ra danh sách phim gợi ý ---------- */
         const suggestedMovies = context.movies
             .filter(m => validIds.includes(m.movie_id))
             .slice(0, 3)
@@ -292,7 +351,7 @@ Nếu không gợi ý phim cụ thể, để movie_ids = [].`;
             }));
 
         return {
-            reply: aiResponse.reply,
+            reply: aiResponse.reply || 'Xin lỗi, mình chưa có câu trả lời.',
             movies: suggestedMovies
         };
     }

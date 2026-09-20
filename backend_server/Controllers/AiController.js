@@ -9,18 +9,37 @@ class AiController {
         const { message, history = [] } = req.body;
         const ip = req.ip || req.connection.remoteAddress;
 
-        /* ---------- Validate ---------- */
+        /* ---------- Validate message ---------- */
         if (!message || typeof message !== 'string') {
             return res.status(400).json({
                 error: 'Tin nhắn không hợp lệ.'
             });
         }
 
-        if (message.length > 500) {
+        const cleanMessage = message.trim();
+
+        if (cleanMessage.length === 0) {
+            return res.status(400).json({
+                error: 'Tin nhắn không được để trống.'
+            });
+        }
+
+        if (cleanMessage.length > 500) {
             return res.status(400).json({
                 error: 'Tin nhắn quá dài (tối đa 500 ký tự).'
             });
         }
+
+        /* ---------- Validate history ---------- */
+        const safeHistory = Array.isArray(history)
+            ? history
+                .filter(h => h && typeof h.content === 'string')
+                .map(h => ({
+                    role: h.role === 'user' ? 'user' : 'assistant',
+                    content: String(h.content).slice(0, 1000)
+                }))
+                .slice(-10)
+            : [];
 
         /* ---------- Rate limit ---------- */
         const rateCheck = AiService.checkRateLimit(ip);
@@ -32,7 +51,8 @@ class AiController {
         }
 
         /* ---------- Cache ---------- */
-        const cacheKey = message.trim().toLowerCase();
+        // Thêm history.length vào key để phân biệt context
+        const cacheKey = `${cleanMessage.toLowerCase()}__${safeHistory.length}`;
         const cached = AiService.getCache(cacheKey);
 
         if (cached) {
@@ -45,21 +65,34 @@ class AiController {
 
         /* ---------- Gọi AI Service ---------- */
         try {
-            const result = await AiService.chat({ message, history });
+            const result = await AiService.chat({
+                message: cleanMessage,
+                history: safeHistory
+            });
 
             /* ---------- Lưu cache ---------- */
-            if (result.movies.length > 0 || result.reply) {
+            if (result && result.reply) {
                 AiService.setCache(cacheKey, result);
             }
 
             return res.json(result);
 
         } catch (error) {
-            console.error('Groq API error:', error);
+            console.error('[AI Controller] Groq API error:', error?.message);
 
             if (error?.status === 429) {
                 return res.status(429).json({
                     error: 'AI đang bận, vui lòng thử lại sau vài giây.'
+                });
+            }
+
+            if (
+                error?.code === 'ETIMEDOUT' ||
+                error?.code === 'ECONNABORTED' ||
+                error?.code === 'UND_ERR_CONNECT_TIMEOUT'
+            ) {
+                return res.status(504).json({
+                    error: 'AI phản hồi quá lâu. Vui lòng thử lại.'
                 });
             }
 

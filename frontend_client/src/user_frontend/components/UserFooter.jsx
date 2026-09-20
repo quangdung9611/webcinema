@@ -77,7 +77,6 @@ const UserFooter = () => {
                 ================================================= */}
 
                 <div className="mystic-footer-brand">
-
                     <button
                         type="button"
                         className="mystic-footer-brand-logo"
@@ -85,11 +84,10 @@ const UserFooter = () => {
                         aria-label="Về trang chủ QD Cinema"
                     >
                         <img
-                            src="https://api.quangdungcinema.id.vn/uploads/logo/logocinema.png"
+                            src="./logocinema1.png"
                             alt="QD Cinema"
                         />
                     </button>
-
                     <div className="mystic-footer-brand-line" />
 
                     <p className="mystic-footer-description">
