@@ -1,23 +1,23 @@
-const Groq = require('groq-sdk');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const MovieRepository = require('../Repositories/MovieRepository');
 
 /* =========================================================
-   GROQ CLIENT
+   GEMINI CLIENT
 ========================================================== */
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 /* =========================================================
    CONFIG
 ========================================================== */
-const MODEL = 'openai/gpt-oss-120b';
-const TEMPERATURE = 1;
+const MODEL_NAME = 'gemini-1.5-flash';
+const TEMPERATURE = 0.7;
 const MAX_TOKENS = 2048;
 
-const CACHE_TTL = 1000 * 60 * 30;         // 30 phút
+const CACHE_TTL = 1000 * 60 * 60 * 4;      // 4 giờ
 const CACHE_MAX_SIZE = 500;
 
-const RATE_LIMIT = 10;                    // 10 tin nhắn
-const RATE_WINDOW = 1000 * 60;            // mỗi 1 phút
+const RATE_LIMIT = 10;                      // 10 tin/phút
+const RATE_WINDOW = 1000 * 60;
 
 /* =========================================================
    CACHE + RATE LIMIT
@@ -109,9 +109,38 @@ class AiService {
     }
 
     /* -------------------------------------------------------
-       BUILD SYSTEM PROMPT — TỰ NHIÊN NHƯ NGƯỜI THẬT
+       DETECT INTENT
     ------------------------------------------------------- */
-    buildSystemPrompt(context) {
+    detectIntent(message) {
+        const lower = message.toLowerCase();
+
+        if (/(giá|bao nhiêu|price|vé|tiền|đồng|vnd)/.test(lower)) {
+            return 'price';
+        }
+
+        if (/(suất|giờ|mấy giờ|khi nào|chiếu lúc|showtime|time)/.test(lower)) {
+            return 'showtime';
+        }
+
+        if (/(rạp|địa chỉ|ở đâu|hotline|đường|quận|thành phố|address)/.test(lower)) {
+            return 'cinema';
+        }
+
+        if (/(khuyến mãi|giảm giá|ưu đãi|combo|bắp|nước|promo|voucher)/.test(lower)) {
+            return 'promotion';
+        }
+
+        if (/(phim|đang chiếu|sắp chiếu|hay|gợi ý|đề xuất|thể loại|movie)/.test(lower)) {
+            return 'movie';
+        }
+
+        return 'general';
+    }
+
+    /* -------------------------------------------------------
+       BUILD SYSTEM PROMPT
+    ------------------------------------------------------- */
+    buildSystemPrompt(context, intent) {
         const {
             movies, showtimes, cinemas,
             priceSummary, priceStandard,
@@ -123,7 +152,7 @@ class AiService {
             return `- ID ${m.movie_id}: "${m.title}" [${m.status}] | ${m.genres || 'N/A'} | ${m.duration}p | T${m.age_rating} | ĐD: ${m.director}`;
         }).join('\n');
 
-        /* ---------- Showtimes (gom theo phim) ---------- */
+        /* ---------- Showtimes ---------- */
         const showtimeByMovie = {};
 
         showtimes.forEach(s => {
@@ -228,24 +257,17 @@ Bạn là một NHÂN VIÊN TƯ VẤN THẬT, đang nói chuyện với khách h
 
 1. Mọi câu PHẢI có CHỦ NGỮ + VỊ NGỮ đầy đủ.
    ❌ SAI: "75.000đ"
-   ❌ SAI: "Phòng 2D, ghế VIP, 75k"
    ✅ ĐÚNG: "Ghế VIP ở phòng 2D có giá là 75.000đ ạ."
 
 2. Khi liệt kê nhiều mục, phải có CÂU DẪN + ĐỘNG TỪ.
-   ❌ SAI: "Galaxy Nguyễn Du, Galaxy Tân Bình, Galaxy Quang Trung"
-   ✅ ĐÚNG: "Quang Dũng Cinema hiện có 4 chi nhánh ạ: Galaxy Nguyễn Du, Galaxy Tân Bình, Galaxy Quang Trung, và Galaxy Kinh Dương Vương."
+   ❌ SAI: "Galaxy Nguyễn Du, Galaxy Tân Bình"
+   ✅ ĐÚNG: "Quang Dũng Cinema hiện có 4 chi nhánh ạ: Galaxy Nguyễn Du, Galaxy Tân Bình..."
 
 3. Xưng hô: Bạn gọi mình là "mình" hoặc "em", gọi khách là "bạn".
-   ❌ SAI: "Có 4 rạp"
-   ✅ ĐÚNG: "Mình xin thông tin, hiện rạp có 4 chi nhánh ạ."
 
 4. Kết thúc câu nên có từ ngữ lịch sự: "ạ", "nhé", "bạn nhé".
-   ❌ SAI: "Ghế VIP 75.000đ."
-   ✅ ĐÚNG: "Ghế VIP có giá 75.000đ ạ. Bạn có muốn mình tư vấn thêm không?"
 
 5. Khi không có thông tin → xin lỗi lịch sự + gợi ý câu hỏi khác.
-   ❌ SAI: "Chưa có"
-   ✅ ĐÚNG: "Mình xin lỗi, hiện mình chưa có thông tin về vấn đề này ạ. Bạn có muốn hỏi mình vấn đề khác không?"
 
 ═══════════════════════════════════════════
 🚫 RÀNG BUỘC
@@ -255,7 +277,7 @@ Bạn là một NHÂN VIÊN TƯ VẤN THẬT, đang nói chuyện với khách h
 - KHÔNG bịa tên phim, giá, suất chiếu, địa chỉ.
 - KHÔNG tiết lộ thông tin khách hàng, booking, tài khoản.
 - Nếu user hỏi ngoài chủ đề rạp phim → từ chối lịch sự.
-- Độ dài: 2-5 câu (không quá ngắn, không quá dài).
+- Độ dài: 2-5 câu.
 
 ═══════════════════════════════════════════
 🎬 QUY TẮC CHUNG
@@ -270,8 +292,8 @@ Bạn là một NHÂN VIÊN TƯ VẤN THẬT, đang nói chuyện với khách h
 💰 QUY TẮC TRẢ LỜI GIÁ VÉ
 ═══════════════════════════════════════════
 
-1. Nếu user hỏi CHUNG ("Ghế VIP bao nhiêu?") → trả lời RANGE giá + hỏi lại phòng/giờ cụ thể.
-2. Nếu user hỏi CỤ THỂ ("2D tối T7 ghế VIP") → trả lời CHÍNH XÁC 1 con số.
+1. Nếu user hỏi CHUNG → trả lời RANGE giá + hỏi lại phòng/giờ cụ thể.
+2. Nếu user hỏi CỤ THỂ → trả lời CHÍNH XÁC 1 con số.
 3. Luôn nêu rõ: hạng ghế + loại phòng + khung giờ + ngày.
 
 ═══════════════════════════════════════════
@@ -300,7 +322,7 @@ ${promoList}
 ${productList}
 
 ═══════════════════════════════════════════
-📌 VÍ DỤ TRẢ LỜI ĐÚNG (HỌC THEO)
+📌 VÍ DỤ TRẢ LỜI ĐÚNG
 ═══════════════════════════════════════════
 
 User: "Xin chào"
@@ -312,13 +334,6 @@ Bot: "Dạ, ghế VIP có giá từ 75.000đ (phòng 2D suất sáng ngày thư�
 User: "2D tối thứ 7 ghế đôi bao nhiêu?"
 Bot: "Dạ, ghế COUPLE ở phòng 2D suất EVENING vào cuối tuần có giá là 270.000đ ạ. Bạn có muốn mình hướng dẫn cách đặt vé luôn không?"
 
-User: "Phim Thỏ Ơi chiếu mấy giờ?"
-Bot: "Dạ, phim **Thỏ Ơi** hiện đang chiếu với các suất sau ạ:
-- 14:00 tại Galaxy Nguyễn Du (phòng 2D 01)
-- 16:30 tại Galaxy Tân Bình (phòng 2D 03)
-- 19:00 tại Galaxy Quang Trung (phòng 2D 02)
-Bạn muốn xem suất nào để mình hỗ trợ thêm nhé?"
-
 User: "Rạp ở đâu?"
 Bot: "Dạ, Quang Dũng Cinema hiện có 4 chi nhánh tại TP.HCM ạ:
 - Galaxy Nguyễn Du: 116 Nguyễn Du, Bến Thành, Q.1
@@ -327,39 +342,25 @@ Bot: "Dạ, Quang Dũng Cinema hiện có 4 chi nhánh tại TP.HCM ạ:
 - Galaxy Kinh Dương Vương: 718bis Kinh Dương Vương, Q.6
 Bạn muốn đến chi nhánh nào để mình hướng dẫn đường đi nhé?"
 
-User: "Rạp có phòng 4DMAX không?"
-Bot: "Dạ, hiện rạp mình chỉ có 4 loại phòng là 2D, 3D, VIP và IMAX thôi ạ. Rạp chưa có phòng 4DMAX bạn nhé. Bạn có muốn mình tư vấn thêm về các loại phòng hiện có không ạ?"
-
-User: "Phim hay không?"
-Bot: "Dạ, hiện rạp đang chiếu 4 phim ạ: TÀI (hành động, 192 phút), THIÊN ĐƯỜNG MÁU (kinh dị, 105 phút), THỎ ƠI (gia đình - lãng mạn, 127 phút), và QUỶ BẮT HỒN (kinh dị, 110 phút). Bạn thích thể loại nào để mình gợi ý phim phù hợp nhé?"
-
 User: "Có khuyến mãi gì không?"
-Bot: "Dạ, hiện rạp có 4 chương trình khuyến mãi đang áp dụng ạ:
-- COMBO BẮP NƯỚC giảm đến 35%
-- THỨ 4 VUI VẺ - đồng giá vé 45K
-- NÂNG HẠNG GHẾ VIP chỉ từ +40K
-- TÍCH ĐIỂM cho khán giả thân thiết
-Bạn muốn mình tư vấn chi tiết chương trình nào ạ?"
+Bot: "Dạ, hiện rạp có 4 chương trình khuyến mãi đang áp dụng ạ: COMBO BẮP NƯỚC giảm 35%, THỨ 4 VUI VẺ giá 45K, NÂNG HẠNG GHẾ VIP chỉ từ +40K, và TÍCH ĐIỂM cho khán giả thân thiết. Bạn muốn mình tư vấn chi tiết chương trình nào ạ?"
 
 ═══════════════════════════════════════════
-⚠️ QUAN TRỌNG — ĐỊNH DẠNG TRẢ VỀ
+⚠️ ĐỊNH DẠNG TRẢ VỀ (BẮT BUỘC)
 ═══════════════════════════════════════════
 
-BẮT BUỘC trả về CHỈ MỘT OBJECT JSON, KHÔNG có text nào khác bên ngoài.
-KHÔNG bọc trong markdown \`\`\`json.
-
-Format chính xác:
+BẮT BUỘC trả về CHỈ MỘT OBJECT JSON, KHÔNG có text nào khác.
+Format:
 {
-  "reply": "câu trả lời tự nhiên có chủ ngữ vị ngữ đầy đủ",
+  "reply": "câu trả lời tự nhiên",
   "movie_ids": [1, 2]
 }
 
-Nếu không gợi ý phim cụ thể, để movie_ids = [].
-`;
+Nếu không gợi ý phim, để movie_ids = [].`;
     }
 
     /* -------------------------------------------------------
-       MAIN: CHAT WITH AI
+       MAIN: CHAT WITH GEMINI
     ------------------------------------------------------- */
     async chat({ message, history = [] }) {
         const context = await MovieRepository.getFullContextForAI();
@@ -371,34 +372,46 @@ Nếu không gợi ý phim cụ thể, để movie_ids = [].
             };
         }
 
-        const systemPrompt = this.buildSystemPrompt(context);
+        const intent = this.detectIntent(message);
+        console.log(`🎯 [AI] Intent: ${intent} | Message: "${message.slice(0, 50)}"`);
 
+        const systemPrompt = this.buildSystemPrompt(context, intent);
         console.log(`📏 [AI] Prompt length: ${systemPrompt.length} chars`);
 
-        /* ---------- Call Groq (theo format mới) ---------- */
-        const chatCompletion = await groq.chat.completions.create({
-            messages: [
-                { role: 'system', content: systemPrompt },
-                ...history.slice(-10),
-                { role: 'user', content: message }
-            ],
-            model: MODEL,
-            temperature: TEMPERATURE,
-            max_completion_tokens: MAX_TOKENS,
-            top_p: 1,
-            reasoning_effort: 'medium',
-            stream: false
+        /* ---------- Khởi tạo model ---------- */
+        const model = genAI.getGenerativeModel({
+            model: MODEL_NAME,
+            systemInstruction: systemPrompt,
+            generationConfig: {
+                temperature: TEMPERATURE,
+                maxOutputTokens: MAX_TOKENS,
+                responseMimeType: 'application/json'
+            }
         });
 
-        const rawContent = chatCompletion.choices[0].message.content;
+        /* ---------- Build history ---------- */
+        const geminiHistory = history
+            .slice(-10)
+            .map(h => ({
+                role: h.role === 'user' ? 'user' : 'model',
+                parts: [{ text: h.content }]
+            }));
+
+        /* ---------- Bắt đầu chat session ---------- */
+        const chat = model.startChat({
+            history: geminiHistory
+        });
+
+        /* ---------- Gửi tin nhắn ---------- */
+        const result = await chat.sendMessage(message);
+        const rawContent = result.response.text();
 
         console.log(`📥 [AI] Raw response (first 200): ${rawContent?.slice(0, 200)}`);
 
-        /* ---------- Parse JSON an toàn ---------- */
+        /* ---------- Parse JSON ---------- */
         let aiResponse;
 
         try {
-            // Bỏ markdown code block nếu có
             let cleaned = rawContent.trim();
 
             if (cleaned.startsWith('```json')) {
@@ -417,7 +430,6 @@ Nếu không gợi ý phim cụ thể, để movie_ids = [].
         } catch (err) {
             console.warn('[AI Service] Parse JSON failed:', err?.message);
 
-            // Fallback: trả về text thuần
             aiResponse = {
                 reply: rawContent || 'Xin lỗi, mình chưa hiểu câu hỏi.',
                 movie_ids: []
@@ -434,7 +446,7 @@ Nếu không gợi ý phim cụ thể, để movie_ids = [].
             .filter(id => Number.isInteger(id) && id > 0)
             .filter(id => context.movies.some(m => m.movie_id === id));
 
-        /* ---------- Map ra danh sách phim gợi ý ---------- */
+        /* ---------- Map suggested movies ---------- */
         const suggestedMovies = context.movies
             .filter(m => validIds.includes(m.movie_id))
             .slice(0, 3)
