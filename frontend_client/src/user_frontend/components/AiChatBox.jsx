@@ -9,11 +9,15 @@ import {
     Check
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import api from '../../api/api';
 import Modal from './Modal';
 import GeminiIcon from './GeminiIcon';
 import { useAuth } from '../../context/AuthContext';
 import '../styles/AiChat.css';
+
+/* ==========================================================
+   API BASE URL
+========================================================== */
+const API_BASE_URL = 'https://api.quangdungcinema.id.vn';
 
 /* ==========================================================
    LOCALSTORAGE
@@ -46,7 +50,7 @@ const saveMessagesToStorage = (msgs) => {
 };
 
 /* ==========================================================
-   DEFAULT MESSAGES — Có tên user
+   DEFAULT MESSAGES
 ========================================================== */
 const buildDefaultMessages = (userName = null) => {
     const greeting = userName
@@ -81,6 +85,13 @@ const TypingIndicator = () => (
         <span></span>
         <span></span>
     </div>
+);
+
+/* ==========================================================
+   STREAMING CURSOR
+========================================================== */
+const StreamingCursor = () => (
+    <span className="ai-streaming-cursor">▍</span>
 );
 
 /* ==========================================================
@@ -131,9 +142,12 @@ const MessageBubble = ({ msg }) => {
 
     return (
         <div className="ai-msg-bubble-wrapper">
-            <div className="ai-msg-bubble">{msg.content}</div>
+            <div className="ai-msg-bubble">
+                {msg.content}
+                {msg.isStreaming && <StreamingCursor />}
+            </div>
 
-            {msg.role === 'assistant' && !msg.isError && (
+            {msg.role === 'assistant' && !msg.isError && !msg.isStreaming && (
                 <button
                     type="button"
                     className="ai-msg-copy"
@@ -157,17 +171,11 @@ const AiChatBox = () => {
 
     const [isOpen, setIsOpen] = useState(false);
 
-    /* ✅ Lấy tên user (ưu tiên full_name > username) */
-    const userName =
-        user?.full_name ||
-        user?.username ||
-        null;
+    const userName = user?.full_name || user?.username || null;
 
     const [messages, setMessages] = useState(() => {
         const saved = loadMessagesFromStorage();
-        if (saved && saved.length > 0) {
-            return saved;
-        }
+        if (saved && saved.length > 0) return saved;
         return buildDefaultMessages(userName);
     });
 
@@ -190,10 +198,9 @@ const AiChatBox = () => {
     }, [messages]);
 
     /* =========================================================
-       UPDATE GREETING KHI USER ĐĂNG NHẬP/ĐĂNG XUẤT
+       UPDATE GREETING
     ========================================================= */
     useEffect(() => {
-        // Chỉ cập nhật nếu messages chỉ có 1 tin nhắn chào (chưa chat gì)
         if (messages.length === 1 && messages[0].role === 'assistant') {
             setMessages(buildDefaultMessages(userName));
         }
@@ -213,7 +220,7 @@ const AiChatBox = () => {
         }
     }, [isOpen]);
 
-    /* Badge tin nhắn mới */
+    /* Badge */
     useEffect(() => {
         if (!isOpen && messages.length > 1) {
             setHasNewMessage(true);
@@ -230,13 +237,10 @@ const AiChatBox = () => {
     /* =========================================================
        XÓA LỊCH SỬ
     ========================================================= */
-    const handleOpenClearModal = () => {
-        setShowClearModal(true);
-    };
+    const handleOpenClearModal = () => setShowClearModal(true);
 
     const handleConfirmClear = () => {
         abortControllerRef.current?.abort();
-
         localStorage.removeItem(STORAGE_KEY);
         setMessages(buildDefaultMessages(userName));
         setInput('');
@@ -244,43 +248,115 @@ const AiChatBox = () => {
         setShowClearModal(false);
     };
 
-    const handleCancelClear = () => {
-        setShowClearModal(false);
-    };
+    const handleCancelClear = () => setShowClearModal(false);
 
     /* =========================================================
-       GỬI TIN NHẮN
+       SEND CHAT REQUEST — STREAMING
     ========================================================= */
     const sendChatRequest = async (text) => {
         abortControllerRef.current?.abort();
         abortControllerRef.current = new AbortController();
+
+        /* Thêm tin nhắn rỗng để stream vào */
+        setMessages(prev => [
+            ...prev,
+            {
+                role: 'assistant',
+                content: '',
+                movies: [],
+                isStreaming: true
+            }
+        ]);
 
         try {
             const history = messages
                 .slice(-10)
                 .map(m => ({ role: m.role, content: m.content }));
 
-            const res = await api.post(
-                '/api/ai/chat',
-                {
+            const response = await fetch(`${API_BASE_URL}/api/ai/chat/stream`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
                     message: text,
                     history,
                     userName
-                },
-                { signal: abortControllerRef.current.signal }
-            );
+                }),
+                signal: abortControllerRef.current.signal
+            });
 
-            setMessages(prev => [
-                ...prev,
-                {
-                    role: 'assistant',
-                    content: res.data.reply,
-                    movies: res.data.movies || []
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let buffer = '';
+            let fullContent = '';
+            let finalMovies = [];
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+
+                const lines = buffer.split('\n\n');
+                buffer = lines.pop() || '';
+
+                for (const line of lines) {
+                    if (!line.startsWith('data: ')) continue;
+
+                    const jsonStr = line.slice(6).trim();
+                    if (!jsonStr) continue;
+
+                    try {
+                        const data = JSON.parse(jsonStr);
+
+                        if (data.type === 'text') {
+                            fullContent += data.content;
+
+                            setMessages(prev => {
+                                const updated = [...prev];
+                                const lastIdx = updated.length - 1;
+                                if (updated[lastIdx]?.isStreaming) {
+                                    updated[lastIdx] = {
+                                        ...updated[lastIdx],
+                                        content: fullContent
+                                    };
+                                }
+                                return updated;
+                            });
+                        } else if (data.type === 'done') {
+                            finalMovies = data.movies || [];
+                        } else if (data.type === 'error') {
+                            throw new Error(data.message);
+                        }
+                    } catch (parseErr) {
+                        console.warn('[Stream] Parse error:', parseErr);
+                    }
                 }
-            ]);
+            }
+
+            /* Kết thúc stream */
+            setMessages(prev => {
+                const updated = [...prev];
+                const lastIdx = updated.length - 1;
+                if (updated[lastIdx]?.isStreaming) {
+                    updated[lastIdx] = {
+                        ...updated[lastIdx],
+                        content: fullContent,
+                        movies: finalMovies,
+                        isStreaming: false
+                    };
+                }
+                return updated;
+            });
+
         } catch (error) {
             if (
-                error.name === 'CanceledError' ||
+                error.name === 'AbortError' ||
                 error.code === 'ERR_CANCELED'
             ) {
                 return;
@@ -288,17 +364,19 @@ const AiChatBox = () => {
 
             console.error('AI chat error:', error);
 
-            setMessages(prev => [
-                ...prev,
-                {
-                    role: 'assistant',
-                    content:
-                        error.response?.data?.error ||
-                        'Xin lỗi, mình đang bận. Bạn thử lại sau nhé!',
-                    movies: [],
-                    isError: true
+            setMessages(prev => {
+                const updated = [...prev];
+                const lastIdx = updated.length - 1;
+                if (updated[lastIdx]?.isStreaming) {
+                    updated[lastIdx] = {
+                        ...updated[lastIdx],
+                        content: 'Xin lỗi, mình đang bận. Bạn thử lại sau nhé!',
+                        isStreaming: false,
+                        isError: true
+                    };
                 }
-            ]);
+                return updated;
+            });
         } finally {
             setIsTyping(false);
         }
@@ -500,7 +578,7 @@ const AiChatBox = () => {
                             )}
 
                             {/* TYPING */}
-                            {isTyping && (
+                            {isTyping && !messages.some(m => m.isStreaming) && (
                                 <div className="ai-msg bot">
                                     <div className="ai-msg-avatar">
                                         <GeminiIcon size={14} />
