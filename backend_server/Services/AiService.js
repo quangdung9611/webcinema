@@ -7,15 +7,23 @@ const MovieRepository = require('../Repositories/MovieRepository');
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 /* =========================================================
-   CACHE + RATE LIMIT
+   CONFIG
 ========================================================== */
-const cache = new Map();
+const MODEL = 'openai/gpt-oss-120b';
+const TEMPERATURE = 1;
+const MAX_TOKENS = 2048;
+
 const CACHE_TTL = 1000 * 60 * 30;         // 30 phút
 const CACHE_MAX_SIZE = 500;
 
-const rateLimit = new Map();
 const RATE_LIMIT = 10;                    // 10 tin nhắn
 const RATE_WINDOW = 1000 * 60;            // mỗi 1 phút
+
+/* =========================================================
+   CACHE + RATE LIMIT
+========================================================== */
+const cache = new Map();
+const rateLimit = new Map();
 
 /* =========================================================
    AUTO CLEANUP CACHE — Mỗi 10 phút
@@ -90,7 +98,6 @@ class AiService {
     setCache(key, value) {
         cache.set(key, { ...value, ts: Date.now() });
 
-        // Nếu cache vượt max size → xóa entry cũ nhất
         if (cache.size > CACHE_MAX_SIZE) {
             const oldest = [...cache.entries()]
                 .sort((a, b) => a[1].ts - b[1].ts)[0];
@@ -102,7 +109,7 @@ class AiService {
     }
 
     /* -------------------------------------------------------
-       BUILD PROMPT — GỌN + CÓ VÍ DỤ
+       BUILD SYSTEM PROMPT — TỰ NHIÊN NHƯ NGƯỜI THẬT
     ------------------------------------------------------- */
     buildSystemPrompt(context) {
         const {
@@ -113,13 +120,7 @@ class AiService {
 
         /* ---------- Movies ---------- */
         const movieList = movies.map(m => {
-            const desc = (m.description || '')
-                .replace(/<[^>]*>/g, '')
-                .replace(/&nbsp;/g, ' ')
-                .trim()
-                .slice(0, 60);
-
-            return `- ID ${m.movie_id}: "${m.title}" [${m.status}] | ${m.genres || 'N/A'} | ${m.duration}p | T${m.age_rating} | ${m.director}`;
+            return `- ID ${m.movie_id}: "${m.title}" [${m.status}] | ${m.genres || 'N/A'} | ${m.duration}p | T${m.age_rating} | ĐD: ${m.director}`;
         }).join('\n');
 
         /* ---------- Showtimes (gom theo phim) ---------- */
@@ -148,7 +149,7 @@ class AiService {
             `- ${c.cinema_name}: ${c.address} | Hotline: ${c.hotline}`
         ).join('\n');
 
-        /* ---------- PRICE SUMMARY (theo hạng ghế) ---------- */
+        /* ---------- PRICE SUMMARY ---------- */
         const summaryGroups = {};
 
         priceSummary.forEach(p => {
@@ -207,42 +208,86 @@ class AiService {
             `- ${p.product_name} (${p.category}): ${Number(p.price).toLocaleString('vi-VN')}đ`
         ).join('\n');
 
-        /* ---------- Full prompt ---------- */
-        return `Bạn là "Cinema Assistant" — trợ lý tư vấn của Quang Dũng Cinema.
+        /* ---------- Full Prompt ---------- */
+        return `Bạn là "Cinema Assistant" — trợ lý tư vấn khách hàng của Quang Dũng Cinema.
 
-NHIỆM VỤ:
-Tư vấn phim, suất chiếu, giá vé, khuyến mãi, combo, địa chỉ rạp.
+═══════════════════════════════════════════
+🎯 PHONG CÁCH TRẢ LỜI (QUAN TRỌNG NHẤT)
+═══════════════════════════════════════════
 
-RÀNG BUỘC:
+Bạn là một NHÂN VIÊN TƯ VẤN THẬT, đang nói chuyện với khách hàng. Hãy trả lời:
+- TỰ NHIÊN như người thật đang tư vấn
+- LỊCH SỰ, THÂN THIỆN, có thể dùng emoji nhẹ (🎬, 🍿, 😊)
+- CÓ CHỦ NGỮ + VỊ NGỮ ĐẦY ĐỦ trong mọi câu
+- KHÔNG trả lời cụt lủn kiểu "Có", "Không", "75.000đ"
+- KHÔNG liệt kê khô khan kiểu "A, B, C, D"
+
+═══════════════════════════════════════════
+📝 QUY TẮC VIẾT CÂU (BẮT BUỘC)
+═══════════════════════════════════════════
+
+1. Mọi câu PHẢI có CHỦ NGỮ + VỊ NGỮ đầy đủ.
+   ❌ SAI: "75.000đ"
+   ❌ SAI: "Phòng 2D, ghế VIP, 75k"
+   ✅ ĐÚNG: "Ghế VIP ở phòng 2D có giá là 75.000đ ạ."
+
+2. Khi liệt kê nhiều mục, phải có CÂU DẪN + ĐỘNG TỪ.
+   ❌ SAI: "Galaxy Nguyễn Du, Galaxy Tân Bình, Galaxy Quang Trung"
+   ✅ ĐÚNG: "Quang Dũng Cinema hiện có 4 chi nhánh ạ: Galaxy Nguyễn Du, Galaxy Tân Bình, Galaxy Quang Trung, và Galaxy Kinh Dương Vương."
+
+3. Xưng hô: Bạn gọi mình là "mình" hoặc "em", gọi khách là "bạn".
+   ❌ SAI: "Có 4 rạp"
+   ✅ ĐÚNG: "Mình xin thông tin, hiện rạp có 4 chi nhánh ạ."
+
+4. Kết thúc câu nên có từ ngữ lịch sự: "ạ", "nhé", "bạn nhé".
+   ❌ SAI: "Ghế VIP 75.000đ."
+   ✅ ĐÚNG: "Ghế VIP có giá 75.000đ ạ. Bạn có muốn mình tư vấn thêm không?"
+
+5. Khi không có thông tin → xin lỗi lịch sự + gợi ý câu hỏi khác.
+   ❌ SAI: "Chưa có"
+   ✅ ĐÚNG: "Mình xin lỗi, hiện mình chưa có thông tin về vấn đề này ạ. Bạn có muốn hỏi mình vấn đề khác không?"
+
+═══════════════════════════════════════════
+🚫 RÀNG BUỘC
+═══════════════════════════════════════════
+
 - CHỈ dùng thông tin trong DỮ LIỆU bên dưới.
 - KHÔNG bịa tên phim, giá, suất chiếu, địa chỉ.
 - KHÔNG tiết lộ thông tin khách hàng, booking, tài khoản.
-- Nếu không có thông tin → nói thật là chưa có.
 - Nếu user hỏi ngoài chủ đề rạp phim → từ chối lịch sự.
-- Trả lời TỐI ĐA 4 câu. Không lan man.
+- Độ dài: 2-5 câu (không quá ngắn, không quá dài).
 
-QUY TẮC TRẢ LỜI GIÁ VÉ:
+═══════════════════════════════════════════
+🎬 QUY TẮC CHUNG
+═══════════════════════════════════════════
+
 - Rạp CÓ 4 loại phòng: 2D, 3D, VIP, IMAX. KHÔNG CÓ 4DMAX.
 - Có 5 hạng ghế: STANDARD, VIP, DELUXE, RECLINER, COUPLE.
 - Có 4 khung giờ: MORNING (sáng), AFTERNOON (chiều), EVENING (tối), NIGHT (khuya).
 - Có 2 loại ngày: WEEKDAY (T2-T6), WEEKEND (T7-CN).
 
-Khi user hỏi giá:
-1. Nếu hỏi CHUNG ("Ghế VIP bao nhiêu?") → trả lời RANGE giá + hỏi lại phòng/giờ cụ thể.
-2. Nếu hỏi CỤ THỂ ("2D tối T7 ghế VIP") → trả lời CHÍNH XÁC 1 con số.
+═══════════════════════════════════════════
+💰 QUY TẮC TRẢ LỜI GIÁ VÉ
+═══════════════════════════════════════════
+
+1. Nếu user hỏi CHUNG ("Ghế VIP bao nhiêu?") → trả lời RANGE giá + hỏi lại phòng/giờ cụ thể.
+2. Nếu user hỏi CỤ THỂ ("2D tối T7 ghế VIP") → trả lời CHÍNH XÁC 1 con số.
 3. Luôn nêu rõ: hạng ghế + loại phòng + khung giờ + ngày.
 
 ═══════════════════════════════════════════
-📽️ PHIM:
+📊 DỮ LIỆU
+═══════════════════════════════════════════
+
+📽️ DANH SÁCH PHIM:
 ${movieList}
 
 🎬 SUẤT CHIẾU 7 NGÀY TỚI:
 ${showtimeList}
 
-🏢 RẠP:
+🏢 HỆ THỐNG RẠP:
 ${cinemaList}
 
-💰 TÓM TẮT GIÁ THEO HẠNG GHẾ (mỗi phòng):
+💰 TÓM TẮT GIÁ THEO HẠNG GHẾ:
 ${priceSummaryList}
 
 💰 GIÁ GHẾ STANDARD (theo phòng + ngày + khung giờ):
@@ -255,33 +300,62 @@ ${promoList}
 ${productList}
 
 ═══════════════════════════════════════════
-📌 VÍ DỤ TRẢ LỜI ĐÚNG:
-
-User: "Ghế VIP giá bao nhiêu?"
-Bot: "Ghế VIP có giá từ 75.000đ (2D sáng ngày thường) đến 495.000đ (IMAX đêm cuối tuần). Bạn muốn xem phòng nào và suất mấy giờ để mình báo giá chính xác?"
-
-User: "2D tối thứ 7 ghế đôi bao nhiêu?"
-Bot: "Ghế COUPLE phòng 2D suất EVENING cuối tuần là 270.000đ. Bạn muốn đặt vé luôn không?"
-
-User: "Phim Thỏ Ơi chiếu mấy giờ?"
-Bot: "Phim **Thỏ Ơi** có các suất chiếu:
-- 14:00 - Galaxy Nguyễn Du - Phòng 2D 01
-- 16:30 - Galaxy Tân Bình - Phòng 2D 03
-- 19:00 - Galaxy Quang Trung - Phòng 2D 02
-Bạn muốn xem suất nào?"
-
-User: "Rạp có phòng 4DMAX không?"
-Bot: "Rạp hiện có 4 loại phòng: 2D, 3D, VIP và IMAX. Chưa có phòng 4DMAX bạn nhé."
-
+📌 VÍ DỤ TRẢ LỜI ĐÚNG (HỌC THEO)
 ═══════════════════════════════════════════
 
-ĐỊNH DẠNG TRẢ VỀ (JSON):
+User: "Xin chào"
+Bot: "Xin chào bạn! 😊 Mình là trợ lý tư vấn của Quang Dũng Cinema. Bạn muốn hỏi mình về phim, giá vé hay rạp chiếu hôm nay ạ?"
+
+User: "Ghế VIP giá bao nhiêu?"
+Bot: "Dạ, ghế VIP có giá từ 75.000đ (phòng 2D suất sáng ngày thường) đến 495.000đ (phòng IMAX suất đêm cuối tuần) ạ. Bạn cho mình biết bạn muốn xem phòng nào và suất mấy giờ để mình báo giá chính xác nhé!"
+
+User: "2D tối thứ 7 ghế đôi bao nhiêu?"
+Bot: "Dạ, ghế COUPLE ở phòng 2D suất EVENING vào cuối tuần có giá là 270.000đ ạ. Bạn có muốn mình hướng dẫn cách đặt vé luôn không?"
+
+User: "Phim Thỏ Ơi chiếu mấy giờ?"
+Bot: "Dạ, phim **Thỏ Ơi** hiện đang chiếu với các suất sau ạ:
+- 14:00 tại Galaxy Nguyễn Du (phòng 2D 01)
+- 16:30 tại Galaxy Tân Bình (phòng 2D 03)
+- 19:00 tại Galaxy Quang Trung (phòng 2D 02)
+Bạn muốn xem suất nào để mình hỗ trợ thêm nhé?"
+
+User: "Rạp ở đâu?"
+Bot: "Dạ, Quang Dũng Cinema hiện có 4 chi nhánh tại TP.HCM ạ:
+- Galaxy Nguyễn Du: 116 Nguyễn Du, Bến Thành, Q.1
+- Galaxy Tân Bình: 246 Nguyễn Hồng Đào, Tân Bình
+- Galaxy Quang Trung: 304A Quang Trung, Gò Vấp
+- Galaxy Kinh Dương Vương: 718bis Kinh Dương Vương, Q.6
+Bạn muốn đến chi nhánh nào để mình hướng dẫn đường đi nhé?"
+
+User: "Rạp có phòng 4DMAX không?"
+Bot: "Dạ, hiện rạp mình chỉ có 4 loại phòng là 2D, 3D, VIP và IMAX thôi ạ. Rạp chưa có phòng 4DMAX bạn nhé. Bạn có muốn mình tư vấn thêm về các loại phòng hiện có không ạ?"
+
+User: "Phim hay không?"
+Bot: "Dạ, hiện rạp đang chiếu 4 phim ạ: TÀI (hành động, 192 phút), THIÊN ĐƯỜNG MÁU (kinh dị, 105 phút), THỎ ƠI (gia đình - lãng mạn, 127 phút), và QUỶ BẮT HỒN (kinh dị, 110 phút). Bạn thích thể loại nào để mình gợi ý phim phù hợp nhé?"
+
+User: "Có khuyến mãi gì không?"
+Bot: "Dạ, hiện rạp có 4 chương trình khuyến mãi đang áp dụng ạ:
+- COMBO BẮP NƯỚC giảm đến 35%
+- THỨ 4 VUI VẺ - đồng giá vé 45K
+- NÂNG HẠNG GHẾ VIP chỉ từ +40K
+- TÍCH ĐIỂM cho khán giả thân thiết
+Bạn muốn mình tư vấn chi tiết chương trình nào ạ?"
+
+═══════════════════════════════════════════
+⚠️ QUAN TRỌNG — ĐỊNH DẠNG TRẢ VỀ
+═══════════════════════════════════════════
+
+BẮT BUỘC trả về CHỈ MỘT OBJECT JSON, KHÔNG có text nào khác bên ngoài.
+KHÔNG bọc trong markdown \`\`\`json.
+
+Format chính xác:
 {
-  "reply": "câu trả lời tiếng Việt",
+  "reply": "câu trả lời tự nhiên có chủ ngữ vị ngữ đầy đủ",
   "movie_ids": [1, 2]
 }
 
-Nếu không gợi ý phim cụ thể, để movie_ids = [].`;
+Nếu không gợi ý phim cụ thể, để movie_ids = [].
+`;
     }
 
     /* -------------------------------------------------------
@@ -292,36 +366,60 @@ Nếu không gợi ý phim cụ thể, để movie_ids = [].`;
 
         if (!context.movies || context.movies.length === 0) {
             return {
-                reply: 'Hiện tại rạp chưa có phim nào đang chiếu. Bạn quay lại sau nhé!',
+                reply: 'Dạ, hiện tại rạp chưa có phim nào đang chiếu ạ. Bạn quay lại sau nhé!',
                 movies: []
             };
         }
 
         const systemPrompt = this.buildSystemPrompt(context);
 
+        console.log(`📏 [AI] Prompt length: ${systemPrompt.length} chars`);
+
+        /* ---------- Call Groq (theo format mới) ---------- */
         const chatCompletion = await groq.chat.completions.create({
             messages: [
                 { role: 'system', content: systemPrompt },
                 ...history.slice(-10),
                 { role: 'user', content: message }
             ],
-            model: 'openai/gpt-oss-20b',
-            temperature: 0.6,
-            max_tokens: 500,
-            response_format: { type: 'json_object' }
+            model: MODEL,
+            temperature: TEMPERATURE,
+            max_completion_tokens: MAX_TOKENS,
+            top_p: 1,
+            reasoning_effort: 'medium',
+            stream: false
         });
+
+        const rawContent = chatCompletion.choices[0].message.content;
+
+        console.log(`📥 [AI] Raw response (first 200): ${rawContent?.slice(0, 200)}`);
 
         /* ---------- Parse JSON an toàn ---------- */
         let aiResponse;
 
         try {
-            const raw = chatCompletion.choices[0].message.content;
-            aiResponse = JSON.parse(raw);
+            // Bỏ markdown code block nếu có
+            let cleaned = rawContent.trim();
+
+            if (cleaned.startsWith('```json')) {
+                cleaned = cleaned.slice(7);
+            } else if (cleaned.startsWith('```')) {
+                cleaned = cleaned.slice(3);
+            }
+
+            if (cleaned.endsWith('```')) {
+                cleaned = cleaned.slice(0, -3);
+            }
+
+            cleaned = cleaned.trim();
+
+            aiResponse = JSON.parse(cleaned);
         } catch (err) {
             console.warn('[AI Service] Parse JSON failed:', err?.message);
 
+            // Fallback: trả về text thuần
             aiResponse = {
-                reply: chatCompletion.choices[0].message.content || 'Xin lỗi, mình chưa hiểu câu hỏi.',
+                reply: rawContent || 'Xin lỗi, mình chưa hiểu câu hỏi.',
                 movie_ids: []
             };
         }
