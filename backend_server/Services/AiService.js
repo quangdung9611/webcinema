@@ -1,23 +1,31 @@
 // ============================================================
 // SERVICES / AiService.js
-// QUANG DŨNG CINEMA — AI CINEMA ASSISTANT v4
+// QUANG DŨNG CINEMA — AI CINEMA ASSISTANT v5
 // ============================================================
+//
 // NÂNG CẤP:
 //
 // - Gemini Streaming
 // - Stream chunk ổn định
-// - Frontend có thể render từng chữ
-// - Thinking state được xử lý ở frontend
-// - Cache response
-// - Cache cinema context
-// - Cache system prompt
+// - Frontend render từng chữ
+// - Thinking state xử lý ở frontend
+// - Response cache
+// - Cinema context cache
+// - System prompt cache
 // - Rate limit
 // - Movie suggestion
 // - History
+// - Retry Gemini API
+// - Exponential backoff
+// - Jitter chống retry đồng loạt
+// - Retry riêng cho 503 / 429 / 5xx
+// - Không retry stream nếu đã gửi text
 // - Không dùng responseMimeType khi streaming
+//
 // ============================================================
 
 const { GoogleGenAI } = require('@google/genai');
+
 const MovieRepository = require('../Repositories/MovieRepository');
 
 /* ============================================================
@@ -40,48 +48,80 @@ const genAI = new GoogleGenAI({
    CONFIG
 ============================================================ */
 
+// Model chính
 const MODEL_NAME = 'gemini-3.6-flash';
 
-/*
- * Temperature vừa phải để AI:
- * - tự nhiên
- * - không quá lan man
- * - trả lời ổn định
- */
+// Temperature
 const TEMPERATURE = 0.5;
 
-/*
- * Giới hạn output.
- */
+// Output token
 const MAX_TOKENS = 768;
 
-/*
- * Response cache.
- */
+/* ============================================================
+   RESPONSE CACHE
+============================================================ */
+
 const CACHE_TTL = 1000 * 60 * 60 * 4;
 const CACHE_MAX_SIZE = 500;
 
-/*
- * Cinema context cache.
- */
+/* ============================================================
+   CINEMA CONTEXT CACHE
+============================================================ */
+
 const CONTEXT_CACHE_TTL = 1000 * 60 * 3;
 
-/*
- * Prompt cache.
- */
+/* ============================================================
+   PROMPT CACHE
+============================================================ */
+
 const PROMPT_CACHE_TTL = 1000 * 60 * 3;
 const PROMPT_CACHE_MAX_SIZE = 100;
 
-/*
- * Rate limit.
- */
+/* ============================================================
+   RATE LIMIT
+============================================================ */
+
 const RATE_LIMIT = 10;
 const RATE_WINDOW = 1000 * 60;
 
-/*
- * History gửi Gemini.
- */
+/* ============================================================
+   HISTORY
+============================================================ */
+
 const MAX_HISTORY = 6;
+
+/* ============================================================
+   GEMINI RETRY
+============================================================ */
+
+// Số lần retry sau lần gọi đầu tiên.
+//
+// Tổng số lần request tối đa:
+// 1 request đầu
+// + 3 retry
+// = 4 lần
+const MAX_RETRIES = 3;
+
+// Delay cơ bản:
+//
+// Lần 1 -> ~1s
+// Lần 2 -> ~2s
+// Lần 3 -> ~4s
+const RETRY_DELAYS = [
+    1000,
+    2000,
+    4000
+];
+
+// Các status có thể retry
+const RETRYABLE_STATUS_CODES = new Set([
+    408,
+    429,
+    500,
+    502,
+    503,
+    504
+]);
 
 /* ============================================================
    MEMORY CACHE
@@ -165,36 +205,470 @@ setInterval(() => {
 class AiService {
 
     /* ========================================================
+       SLEEP
+    ======================================================== */
+
+    sleep(ms) {
+        return new Promise((resolve) => {
+            setTimeout(resolve, ms);
+        });
+    }
+
+    /* ========================================================
+       CHECK RETRYABLE ERROR
+    ======================================================== */
+
+    isRetryableError(error) {
+        if (!error) {
+            return false;
+        }
+
+        const status = Number(
+            error?.status ??
+            error?.statusCode ??
+            error?.code ??
+            error?.error?.code
+        );
+
+        if (
+            Number.isFinite(status) &&
+            RETRYABLE_STATUS_CODES.has(status)
+        ) {
+            return true;
+        }
+
+        const message = String(
+            error?.message ||
+            error?.error?.message ||
+            ''
+        ).toLowerCase();
+
+        return (
+            message.includes('unavailable') ||
+            message.includes('service unavailable') ||
+            message.includes('temporarily unavailable') ||
+            message.includes('high demand') ||
+            message.includes('overloaded') ||
+            message.includes('rate limit') ||
+            message.includes('too many requests') ||
+            message.includes('internal server error') ||
+            message.includes('bad gateway') ||
+            message.includes('gateway timeout')
+        );
+    }
+
+    /* ========================================================
+       GET RETRY DELAY
+    ======================================================== */
+
+    getRetryDelay(attempt) {
+        const baseDelay =
+            RETRY_DELAYS[attempt] ??
+            RETRY_DELAYS[RETRY_DELAYS.length - 1];
+
+        /*
+         * Jitter 0 - 400ms.
+         *
+         * Tránh nhiều request cùng retry
+         * chính xác tại cùng một thời điểm.
+         */
+
+        const jitter =
+            Math.floor(Math.random() * 400);
+
+        return baseDelay + jitter;
+    }
+
+    /* ========================================================
+       NORMALIZE GEMINI ERROR
+    ======================================================== */
+
+    normalizeGeminiError(error) {
+
+        /*
+         * Google SDK đôi khi trả status trực tiếp.
+         */
+
+        let status =
+            error?.status ??
+            error?.statusCode ??
+            error?.error?.status ??
+            null;
+
+        /*
+         * Một số trường hợp status nằm trong code.
+         */
+
+        if (
+            status == null &&
+            Number.isFinite(Number(error?.code))
+        ) {
+            status = Number(error.code);
+        }
+
+        /*
+         * Một số lỗi có dạng:
+         *
+         * {
+         *   status: 503,
+         *   message: "..."
+         * }
+         */
+
+        let message =
+            error?.message ||
+            error?.error?.message ||
+            'Unknown Gemini API error';
+
+        /*
+         * SDK có thể trả message là JSON string.
+         *
+         * Cố gắng lấy message bên trong.
+         */
+
+        try {
+            if (
+                typeof message === 'string' &&
+                message.trim().startsWith('{')
+            ) {
+                const parsed =
+                    JSON.parse(message);
+
+                const nested =
+                    parsed?.error;
+
+                if (nested) {
+
+                    if (
+                        nested.code != null &&
+                        status == null
+                    ) {
+                        status = nested.code;
+                    }
+
+                    if (nested.message) {
+                        message =
+                            nested.message;
+                    }
+                }
+            }
+        } catch {
+            // Giữ nguyên message
+        }
+
+        console.error(
+            '❌ [Gemini API Error]',
+            JSON.stringify(
+                {
+                    status,
+                    message
+                },
+                null,
+                2
+            )
+        );
+
+        const normalized =
+            new Error(message);
+
+        normalized.status =
+            Number.isFinite(Number(status))
+                ? Number(status)
+                : status;
+
+        normalized.code =
+            error?.code;
+
+        normalized.originalError =
+            error;
+
+        return normalized;
+    }
+
+    /* ========================================================
+       RETRY NORMAL CHAT REQUEST
+    ======================================================== */
+
+    async sendMessageWithRetry(
+        chat,
+        message
+    ) {
+
+        let lastError = null;
+
+        for (
+            let attempt = 0;
+            attempt <= MAX_RETRIES;
+            attempt++
+        ) {
+
+            try {
+
+                /*
+                 * Request Gemini
+                 */
+
+                return await chat.sendMessage({
+                    message
+                });
+
+            } catch (error) {
+
+                const normalized =
+                    this.normalizeGeminiError(
+                        error
+                    );
+
+                lastError =
+                    normalized;
+
+                /*
+                 * Không retry nếu lỗi
+                 * không thuộc nhóm tạm thời.
+                 */
+
+                if (
+                    !this.isRetryableError(
+                        normalized
+                    )
+                ) {
+                    throw normalized;
+                }
+
+                /*
+                 * Đã hết số lần retry.
+                 */
+
+                if (
+                    attempt >= MAX_RETRIES
+                ) {
+                    console.error(
+                        `❌ [AI] Gemini retry exhausted ` +
+                        `after ${MAX_RETRIES} retries.`
+                    );
+
+                    throw normalized;
+                }
+
+                const delay =
+                    this.getRetryDelay(
+                        attempt
+                    );
+
+                console.warn(
+                    `⚠️ [AI] Gemini ${normalized.status || 'ERROR'} ` +
+                    `→ retry ${attempt + 1}/${MAX_RETRIES} ` +
+                    `after ${delay}ms`
+                );
+
+                await this.sleep(
+                    delay
+                );
+            }
+        }
+
+        throw (
+            lastError ||
+            new Error(
+                'Gemini request failed.'
+            )
+        );
+    }
+
+    /* ========================================================
+       RETRY STREAM REQUEST
+    ======================================================== */
+
+    async *streamWithRetry(
+        chat,
+        message
+    ) {
+
+        let lastError = null;
+
+        /*
+         * Quan trọng:
+         *
+         * Nếu stream đã trả text:
+         *
+         * → KHÔNG retry.
+         *
+         * Vì retry lúc đó sẽ tạo câu trả lời
+         * mới và frontend có thể nhận nội dung
+         * bị lặp.
+         */
+
+        for (
+            let attempt = 0;
+            attempt <= MAX_RETRIES;
+            attempt++
+        ) {
+
+            let receivedText = false;
+
+            try {
+
+                const stream =
+                    await chat.sendMessageStream({
+                        message
+                    });
+
+                for await (
+                    const chunk of stream
+                ) {
+
+                    const text =
+                        chunk?.text || '';
+
+                    if (!text) {
+                        continue;
+                    }
+
+                    receivedText = true;
+
+                    yield text;
+                }
+
+                /*
+                 * Stream hoàn tất bình thường.
+                 */
+
+                return;
+
+            } catch (error) {
+
+                const normalized =
+                    this.normalizeGeminiError(
+                        error
+                    );
+
+                lastError =
+                    normalized;
+
+                /*
+                 * Nếu đã có text:
+                 *
+                 * Không retry.
+                 *
+                 * Tránh duplicate response.
+                 */
+
+                if (receivedText) {
+
+                    console.error(
+                        '❌ [AI Stream] Stream lỗi sau khi ' +
+                        'đã nhận text. Không retry để tránh duplicate.'
+                    );
+
+                    throw normalized;
+                }
+
+                /*
+                 * Lỗi không retryable.
+                 */
+
+                if (
+                    !this.isRetryableError(
+                        normalized
+                    )
+                ) {
+                    throw normalized;
+                }
+
+                /*
+                 * Hết retry.
+                 */
+
+                if (
+                    attempt >= MAX_RETRIES
+                ) {
+
+                    console.error(
+                        `❌ [AI Stream] Retry exhausted ` +
+                        `after ${MAX_RETRIES} retries.`
+                    );
+
+                    throw normalized;
+                }
+
+                const delay =
+                    this.getRetryDelay(
+                        attempt
+                    );
+
+                console.warn(
+                    `⚠️ [AI Stream] Gemini ` +
+                    `${normalized.status || 'ERROR'} ` +
+                    `→ retry ${attempt + 1}/${MAX_RETRIES} ` +
+                    `after ${delay}ms`
+                );
+
+                await this.sleep(
+                    delay
+                );
+            }
+        }
+
+        throw (
+            lastError ||
+            new Error(
+                'Gemini stream failed.'
+            )
+        );
+    }
+
+    /* ========================================================
        RATE LIMIT
     ======================================================== */
 
     checkRateLimit(ip) {
-        const now = Date.now();
-        const key = ip || 'unknown';
 
-        const rl = rateLimit.get(key) || {
-            count: 0,
-            resetAt: now + RATE_WINDOW
-        };
+        const now =
+            Date.now();
 
-        if (now > rl.resetAt) {
+        const key =
+            ip || 'unknown';
+
+        const rl =
+            rateLimit.get(key) || {
+                count: 0,
+                resetAt:
+                    now + RATE_WINDOW
+            };
+
+        if (
+            now > rl.resetAt
+        ) {
+
             rl.count = 0;
-            rl.resetAt = now + RATE_WINDOW;
+
+            rl.resetAt =
+                now + RATE_WINDOW;
         }
 
-        if (rl.count >= RATE_LIMIT) {
+        if (
+            rl.count >= RATE_LIMIT
+        ) {
+
             return {
                 allowed: false,
-                retryAfter: Math.max(
-                    1,
-                    Math.ceil((rl.resetAt - now) / 1000)
-                )
+                retryAfter:
+                    Math.max(
+                        1,
+                        Math.ceil(
+                            (rl.resetAt - now) /
+                            1000
+                        )
+                    )
             };
         }
 
         rl.count++;
 
-        rateLimit.set(key, rl);
+        rateLimit.set(
+            key,
+            rl
+        );
 
         return {
             allowed: true
@@ -206,32 +680,57 @@ class AiService {
     ======================================================== */
 
     getCache(key) {
-        const cached = cache.get(key);
+
+        const cached =
+            cache.get(key);
 
         if (!cached) {
             return null;
         }
 
-        if (Date.now() - cached.ts > CACHE_TTL) {
+        if (
+            Date.now() - cached.ts >
+            CACHE_TTL
+        ) {
+
             cache.delete(key);
+
             return null;
         }
 
         return cached;
     }
 
-    setCache(key, value) {
-        cache.set(key, {
-            ...value,
-            ts: Date.now()
-        });
+    setCache(
+        key,
+        value
+    ) {
 
-        if (cache.size > CACHE_MAX_SIZE) {
-            const oldest = [...cache.entries()]
-                .sort((a, b) => a[1].ts - b[1].ts)[0];
+        cache.set(
+            key,
+            {
+                ...value,
+                ts: Date.now()
+            }
+        );
+
+        if (
+            cache.size >
+            CACHE_MAX_SIZE
+        ) {
+
+            const oldest =
+                [...cache.entries()]
+                    .sort(
+                        (a, b) =>
+                            a[1].ts -
+                            b[1].ts
+                    )[0];
 
             if (oldest) {
-                cache.delete(oldest[0]);
+                cache.delete(
+                    oldest[0]
+                );
             }
         }
     }
@@ -241,27 +740,39 @@ class AiService {
     ======================================================== */
 
     async getCinemaContext() {
-        const now = Date.now();
+
+        const now =
+            Date.now();
 
         /*
-         * Context còn hạn.
+         * Cache còn hạn.
          */
+
         if (
             contextCache.data &&
-            now - contextCache.timestamp < CONTEXT_CACHE_TTL
+            now -
+                contextCache.timestamp <
+                CONTEXT_CACHE_TTL
         ) {
+
             return {
-                context: contextCache.data,
+                context:
+                    contextCache.data,
                 cached: true
             };
         }
 
         /*
          * Nếu request khác đang load DB
-         * thì dùng chung Promise.
+         * dùng chung Promise.
          */
-        if (contextCache.loadingPromise) {
-            const context = await contextCache.loadingPromise;
+
+        if (
+            contextCache.loadingPromise
+        ) {
+
+            const context =
+                await contextCache.loadingPromise;
 
             return {
                 context,
@@ -269,25 +780,37 @@ class AiService {
             };
         }
 
-        const startedAt = Date.now();
+        const startedAt =
+            Date.now();
 
-        contextCache.loadingPromise = MovieRepository
-            .getFullContextForAI()
-            .then((context) => {
-                contextCache.data = context;
-                contextCache.timestamp = Date.now();
+        contextCache.loadingPromise =
+            MovieRepository
+                .getFullContextForAI()
+                .then((context) => {
 
-                console.log(
-                    `⚡ [AI] Context refreshed in ${Date.now() - startedAt}ms`
-                );
+                    contextCache.data =
+                        context;
 
-                return context;
-            })
-            .finally(() => {
-                contextCache.loadingPromise = null;
-            });
+                    contextCache.timestamp =
+                        Date.now();
 
-        const context = await contextCache.loadingPromise;
+                    console.log(
+                        `⚡ [AI] Context refreshed in ` +
+                        `${Date.now() - startedAt}ms`
+                    );
+
+                    return context;
+
+                })
+                .finally(() => {
+
+                    contextCache.loadingPromise =
+                        null;
+
+                });
+
+        const context =
+            await contextCache.loadingPromise;
 
         return {
             context,
@@ -300,11 +823,22 @@ class AiService {
     ======================================================== */
 
     clearContextCache() {
-        contextCache.data = null;
-        contextCache.timestamp = 0;
+
+        contextCache.data =
+            null;
+
+        contextCache.timestamp =
+            0;
+
+        /*
+         * Xóa prompt cache luôn vì prompt
+         * phụ thuộc cinema context.
+         */
+
+        promptCache.clear();
 
         console.log(
-            '♻️ [AI] Cinema context cache cleared'
+            '♻️ [AI] Cinema context + prompt cache cleared'
         );
     }
 
@@ -313,7 +847,10 @@ class AiService {
     ======================================================== */
 
     detectIntent(message) {
-        const lower = String(message || '').toLowerCase();
+
+        const lower =
+            String(message || '')
+                .toLowerCase();
 
         if (
             /(giá|bao nhiêu|price|vé|tiền|đồng|vnd)/
@@ -362,6 +899,7 @@ class AiService {
         intent,
         userName = null
     ) {
+
         const {
             movies = [],
             showtimes = [],
@@ -376,14 +914,15 @@ class AiService {
            MOVIES
         ---------------------------------------------------- */
 
-        const movieList = movies
-            .map((m) =>
-                `- ID ${m.movie_id}: "${m.title}" ` +
-                `[${m.status}] | ${m.genres || 'N/A'} | ` +
-                `${m.duration}p | T${m.age_rating} | ` +
-                `ĐD: ${m.director}`
-            )
-            .join('\n');
+        const movieList =
+            movies
+                .map((m) =>
+                    `- ID ${m.movie_id}: "${m.title}" ` +
+                    `[${m.status}] | ${m.genres || 'N/A'} | ` +
+                    `${m.duration}p | T${m.age_rating} | ` +
+                    `ĐD: ${m.director}`
+                )
+                .join('\n');
 
         /* ----------------------------------------------------
            SHOWTIMES
@@ -392,42 +931,64 @@ class AiService {
         const showtimeByMovie = {};
 
         showtimes.forEach((s) => {
-            if (!showtimeByMovie[s.movie_id]) {
+
+            if (
+                !showtimeByMovie[s.movie_id]
+            ) {
+
                 showtimeByMovie[s.movie_id] = {
-                    title: s.movie_title,
+                    title:
+                        s.movie_title,
                     slots: []
                 };
             }
 
-            showtimeByMovie[s.movie_id].slots.push(
-                `${s.start_time} | ${s.cinema_name} | ${s.room_name}`
+            showtimeByMovie[
+                s.movie_id
+            ].slots.push(
+                `${s.start_time} | ` +
+                `${s.cinema_name} | ` +
+                `${s.room_name}`
             );
         });
 
-        const showtimeList = Object.entries(showtimeByMovie)
-            .map(([movieId, data]) => {
-                const slots = data.slots
-                    .slice(0, 4)
-                    .join('\n   ');
+        const showtimeList =
+            Object.entries(
+                showtimeByMovie
+            )
+                .map(
+                    ([movieId, data]) => {
 
-                return (
-                    `📽️ ${data.title} (ID ${movieId}):\n` +
-                    `   ${slots}`
-                );
-            })
-            .join('\n\n')
-            || 'Chưa có suất chiếu nào trong 7 ngày tới.';
+                        const slots =
+                            data.slots
+                                .slice(0, 4)
+                                .join(
+                                    '\n   '
+                                );
+
+                        return (
+                            `📽️ ${data.title} ` +
+                            `(ID ${movieId}):\n` +
+                            `   ${slots}`
+                        );
+                    }
+                )
+                .join('\n\n')
+            ||
+            'Chưa có suất chiếu nào trong 7 ngày tới.';
 
         /* ----------------------------------------------------
            CINEMAS
         ---------------------------------------------------- */
 
-        const cinemaList = cinemas
-            .map((c) =>
-                `- ${c.cinema_name}: ${c.address} | ` +
-                `Hotline: ${c.hotline}`
-            )
-            .join('\n');
+        const cinemaList =
+            cinemas
+                .map((c) =>
+                    `- ${c.cinema_name}: ` +
+                    `${c.address} | ` +
+                    `Hotline: ${c.hotline}`
+                )
+                .join('\n');
 
         /* ----------------------------------------------------
            PRICE SUMMARY
@@ -436,32 +997,54 @@ class AiService {
         const summaryGroups = {};
 
         priceSummary.forEach((p) => {
-            if (!summaryGroups[p.room_type]) {
+
+            if (
+                !summaryGroups[p.room_type]
+            ) {
                 summaryGroups[p.room_type] = [];
             }
 
-            const min = Number(p.min_price)
-                .toLocaleString('vi-VN');
+            const min =
+                Number(
+                    p.min_price
+                ).toLocaleString(
+                    'vi-VN'
+                );
 
-            const max = Number(p.max_price)
-                .toLocaleString('vi-VN');
+            const max =
+                Number(
+                    p.max_price
+                ).toLocaleString(
+                    'vi-VN'
+                );
 
             const range =
-                Number(p.min_price) === Number(p.max_price)
+                Number(
+                    p.min_price
+                ) ===
+                Number(
+                    p.max_price
+                )
                     ? `${min}đ`
                     : `${min}đ - ${max}đ`;
 
-            summaryGroups[p.room_type].push(
+            summaryGroups[
+                p.room_type
+            ].push(
                 `${p.seat_type}: ${range}`
             );
         });
 
-        const priceSummaryList = Object.entries(summaryGroups)
-            .map(
-                ([room, list]) =>
-                    `- ${room} → ${list.join(' | ')}`
+        const priceSummaryList =
+            Object.entries(
+                summaryGroups
             )
-            .join('\n');
+                .map(
+                    ([room, list]) =>
+                        `- ${room} → ` +
+                        `${list.join(' | ')}`
+                )
+                .join('\n');
 
         /* ----------------------------------------------------
            STANDARD PRICE
@@ -470,70 +1053,107 @@ class AiService {
         const standardGroups = {};
 
         priceStandard.forEach((p) => {
-            const key = `${p.room_type} | ${p.day_type}`;
 
-            if (!standardGroups[key]) {
+            const key =
+                `${p.room_type} | ${p.day_type}`;
+
+            if (
+                !standardGroups[key]
+            ) {
                 standardGroups[key] = [];
             }
 
             standardGroups[key].push(
                 `${p.time_slot}: ` +
-                `${Number(p.price).toLocaleString('vi-VN')}đ`
+                `${Number(
+                    p.price
+                ).toLocaleString(
+                    'vi-VN'
+                )}đ`
             );
         });
 
-        const priceStandardList = Object.entries(
-            standardGroups
-        )
-            .map(
-                ([key, values]) =>
-                    `- ${key} → ${values.join(' | ')}`
+        const priceStandardList =
+            Object.entries(
+                standardGroups
             )
-            .join('\n');
+                .map(
+                    ([key, values]) =>
+                        `- ${key} → ` +
+                        `${values.join(' | ')}`
+                )
+                .join('\n');
 
         /* ----------------------------------------------------
            PROMOTIONS
         ---------------------------------------------------- */
 
-        const promoList = promotions
-            .map((p) => {
-                const desc = (p.description || '')
-                    .replace(/<[^>]*>/g, '')
-                    .replace(/&nbsp;/g, ' ')
-                    .trim()
-                    .slice(0, 120);
+        const promoList =
+            promotions
+                .map((p) => {
 
-                return `- ${p.title}: ${desc}`;
-            })
-            .join('\n')
-            || 'Hiện chưa có khuyến mãi.';
+                    const desc =
+                        (
+                            p.description ||
+                            ''
+                        )
+                            .replace(
+                                /<[^>]*>/g,
+                                ''
+                            )
+                            .replace(
+                                /&nbsp;/g,
+                                ' '
+                            )
+                            .trim()
+                            .slice(
+                                0,
+                                120
+                            );
+
+                    return (
+                        `- ${p.title}: ` +
+                        `${desc}`
+                    );
+                })
+                .join('\n')
+            ||
+            'Hiện chưa có khuyến mãi.';
 
         /* ----------------------------------------------------
            PRODUCTS
         ---------------------------------------------------- */
 
-        const productList = products
-            .map(
-                (p) =>
-                    `- ${p.product_name} (${p.category}): ` +
-                    `${Number(p.price).toLocaleString('vi-VN')}đ`
-            )
-            .join('\n');
+        const productList =
+            products
+                .map(
+                    (p) =>
+                        `- ${p.product_name} ` +
+                        `(${p.category}): ` +
+                        `${Number(
+                            p.price
+                        ).toLocaleString(
+                            'vi-VN'
+                        )}đ`
+                )
+                .join('\n');
 
         /* ----------------------------------------------------
            USER
         ---------------------------------------------------- */
 
-        const userInfo = userName
-            ? `
+        const userInfo =
+            userName
+                ? `
 👤 KHÁCH HÀNG: "${userName}"
+
 → Thỉnh thoảng gọi tên khách.
 → Không cần gọi tên ở mọi câu.
 `
-            : '';
+                : '';
 
         /* ----------------------------------------------------
-           PROMPT
+           SYSTEM PROMPT
         ---------------------------------------------------- */
 
         return `
@@ -558,10 +1178,13 @@ Hãy trả lời như một nhân viên tư vấn thật:
 - Không lặp lại câu hỏi của khách nếu không cần thiết.
 
 Xưng "mình"/"em".
+
 Gọi khách là "bạn".
+
 Có thể dùng "ạ", "nhé", "nha" một cách tự nhiên.
 
 Có thể dùng emoji nhẹ:
+
 🎬 🍿 🎟️ 📍 😊 🎥
 
 ════════════════════════════════════════════
@@ -569,12 +1192,15 @@ Có thể dùng emoji nhẹ:
 ════════════════════════════════════════════
 
 Nếu trả lời ngắn:
+
 → 2-3 câu.
 
 Nếu có nhiều thông tin:
+
 → dùng bullet.
 
 Nếu gợi ý phim:
+
 → chỉ gợi ý phim thực sự có trong dữ liệu.
 
 Không viết quá dài nếu khách chỉ hỏi một câu đơn giản.
@@ -632,12 +1258,15 @@ Loại ngày:
 ════════════════════════════════════════════
 
 Nếu khách hỏi giá chung:
+
 → đưa khoảng giá.
 
 Nếu khách hỏi giá cụ thể:
+
 → đưa đúng mức giá trong dữ liệu.
 
 Nếu cần:
+
 → nêu rõ hạng ghế + phòng + khung giờ + ngày.
 
 ════════════════════════════════════════════
@@ -655,38 +1284,38 @@ ${intent}
 ${movieList || 'Chưa có dữ liệu phim.'}
 
 ════════════════════════════════════════════
-
-🎬 SUẤT CHIẾU:
+🎬 SUẤT CHIẾU
+════════════════════════════════════════════
 
 ${showtimeList}
 
 ════════════════════════════════════════════
-
-🏢 RẠP:
+🏢 RẠP
+════════════════════════════════════════════
 
 ${cinemaList || 'Chưa có dữ liệu rạp.'}
 
 ════════════════════════════════════════════
-
-💰 GIÁ THEO HẠNG GHẾ:
+💰 GIÁ THEO HẠNG GHẾ
+════════════════════════════════════════════
 
 ${priceSummaryList || 'Chưa có dữ liệu giá.'}
 
 ════════════════════════════════════════════
-
-💰 GIÁ GHẾ STANDARD:
+💰 GIÁ GHẾ STANDARD
+════════════════════════════════════════════
 
 ${priceStandardList || 'Chưa có dữ liệu giá.'}
 
 ════════════════════════════════════════════
-
-🎁 KHUYẾN MÃI:
+🎁 KHUYẾN MÃI
+════════════════════════════════════════════
 
 ${promoList}
 
 ════════════════════════════════════════════
-
-🍿 COMBO:
+🍿 COMBO
+════════════════════════════════════════════
 
 ${productList || 'Chưa có dữ liệu combo.'}
 
@@ -707,6 +1336,7 @@ Nếu nhiều phim:
 [ID: 5] [ID: 4]
 
 Nếu không gợi ý phim:
+
 → KHÔNG thêm tag.
 
 ════════════════════════════════════════════
@@ -722,6 +1352,7 @@ Không sử dụng markdown code block.
 Không giải thích cách bạn suy luận.
 
 Không nói "theo dữ liệu được cung cấp" trừ khi thật sự cần thiết.
+
 `;
     }
 
@@ -734,14 +1365,18 @@ Không nói "theo dữ liệu được cung cấp" trừ khi thật sự cần t
         intent,
         userName
     ) {
-        const contextVersion = contextCache.timestamp;
+
+        const contextVersion =
+            contextCache.timestamp;
 
         const key =
             `${contextVersion}|${intent}|${userName || 'guest'}`;
 
-        const cached = promptCache.get(key);
+        const cached =
+            promptCache.get(key);
 
         if (cached) {
+
             if (
                 Date.now() - cached.ts <
                 PROMPT_CACHE_TTL
@@ -749,32 +1384,43 @@ Không nói "theo dữ liệu được cung cấp" trừ khi thật sự cần t
                 return cached.prompt;
             }
 
-            promptCache.delete(key);
+            promptCache.delete(
+                key
+            );
         }
 
-        const prompt = this.buildSystemPrompt(
-            context,
-            intent,
-            userName
-        );
+        const prompt =
+            this.buildSystemPrompt(
+                context,
+                intent,
+                userName
+            );
 
-        promptCache.set(key, {
-            prompt,
-            ts: Date.now()
-        });
+        promptCache.set(
+            key,
+            {
+                prompt,
+                ts: Date.now()
+            }
+        );
 
         if (
             promptCache.size >
             PROMPT_CACHE_MAX_SIZE
         ) {
-            const oldest = [...promptCache.entries()]
-                .sort(
-                    (a, b) =>
-                        a[1].ts - b[1].ts
-                )[0];
+
+            const oldest =
+                [...promptCache.entries()]
+                    .sort(
+                        (a, b) =>
+                            a[1].ts -
+                            b[1].ts
+                    )[0];
 
             if (oldest) {
-                promptCache.delete(oldest[0]);
+                promptCache.delete(
+                    oldest[0]
+                );
             }
         }
 
@@ -782,52 +1428,15 @@ Không nói "theo dữ liệu được cung cấp" trừ khi thật sự cần t
     }
 
     /* ========================================================
-       NORMALIZE GEMINI ERROR
-    ======================================================== */
-
-    normalizeGeminiError(error) {
-        const status =
-            error?.status ??
-            error?.statusCode ??
-            error?.error?.status ??
-            null;
-
-        const message =
-            error?.message ||
-            error?.error?.message ||
-            'Unknown Gemini API error';
-
-        console.error(
-            '❌ [Gemini API Error]',
-            JSON.stringify(
-                {
-                    status,
-                    message
-                },
-                null,
-                2
-            )
-        );
-
-        const normalized = new Error(message);
-
-        normalized.status =
-            Number.isFinite(Number(status))
-                ? Number(status)
-                : status;
-
-        normalized.code = error?.code;
-        normalized.originalError = error;
-
-        return normalized;
-    }
-
-    /* ========================================================
        PARSE AI RESPONSE
     ======================================================== */
 
-    parseAIResponse(rawContent) {
+    parseAIResponse(
+        rawContent
+    ) {
+
         if (!rawContent) {
+
             return {
                 reply:
                     'Xin lỗi, mình chưa nhận được câu trả lời từ hệ thống.',
@@ -836,46 +1445,65 @@ Không nói "theo dữ liệu được cung cấp" trừ khi thật sự cần t
         }
 
         try {
+
             let cleaned =
-                String(rawContent).trim();
+                String(
+                    rawContent
+                ).trim();
 
             if (
-                cleaned.startsWith('```json')
+                cleaned.startsWith(
+                    '```json'
+                )
             ) {
                 cleaned =
                     cleaned.slice(7);
             } else if (
-                cleaned.startsWith('```')
+                cleaned.startsWith(
+                    '```'
+                )
             ) {
                 cleaned =
                     cleaned.slice(3);
             }
 
             if (
-                cleaned.endsWith('```')
+                cleaned.endsWith(
+                    '```'
+                )
             ) {
                 cleaned =
-                    cleaned.slice(0, -3);
+                    cleaned.slice(
+                        0,
+                        -3
+                    );
             }
 
-            cleaned = cleaned.trim();
+            cleaned =
+                cleaned.trim();
 
             const parsed =
-                JSON.parse(cleaned);
+                JSON.parse(
+                    cleaned
+                );
 
             return {
                 reply:
-                    typeof parsed.reply === 'string'
+                    typeof parsed.reply ===
+                    'string'
                         ? parsed.reply.trim()
                         : 'Xin lỗi, mình chưa có câu trả lời phù hợp.',
 
                 movie_ids:
-                    Array.isArray(parsed.movie_ids)
+                    Array.isArray(
+                        parsed.movie_ids
+                    )
                         ? parsed.movie_ids
                         : []
             };
 
         } catch (error) {
+
             console.warn(
                 '⚠️ [AI] Parse JSON failed:',
                 error?.message
@@ -883,7 +1511,9 @@ Không nói "theo dữ liệu được cung cấp" trừ khi thật sự cần t
 
             return {
                 reply:
-                    String(rawContent).trim() ||
+                    String(
+                        rawContent
+                    ).trim() ||
                     'Xin lỗi, mình chưa hiểu câu hỏi.',
 
                 movie_ids: []
@@ -895,8 +1525,12 @@ Không nói "theo dữ liệu được cung cấp" trừ khi thật sự cần t
        PARSE STREAM RESPONSE
     ======================================================== */
 
-    parseStreamResponse(text) {
+    parseStreamResponse(
+        text
+    ) {
+
         if (!text) {
+
             return {
                 reply: '',
                 movie_ids: []
@@ -904,43 +1538,63 @@ Không nói "theo dữ liệu được cung cấp" trừ khi thật sự cần t
         }
 
         let cleaned =
-            String(text).trim();
+            String(
+                text
+            ).trim();
 
         /* ----------------------------------------------------
-           Try JSON
+           TRY JSON
         ---------------------------------------------------- */
 
         try {
-            let jsonClean = cleaned;
+
+            let jsonClean =
+                cleaned;
 
             if (
-                jsonClean.startsWith('```json')
+                jsonClean.startsWith(
+                    '```json'
+                )
             ) {
                 jsonClean =
                     jsonClean.slice(7);
             } else if (
-                jsonClean.startsWith('```')
+                jsonClean.startsWith(
+                    '```'
+                )
             ) {
                 jsonClean =
                     jsonClean.slice(3);
             }
 
             if (
-                jsonClean.endsWith('```')
+                jsonClean.endsWith(
+                    '```'
+                )
             ) {
                 jsonClean =
-                    jsonClean.slice(0, -3);
+                    jsonClean.slice(
+                        0,
+                        -3
+                    );
             }
 
             jsonClean =
                 jsonClean.trim();
 
             const parsed =
-                JSON.parse(jsonClean);
+                JSON.parse(
+                    jsonClean
+                );
 
-            if (parsed.reply) {
+            if (
+                parsed.reply
+            ) {
+
                 return {
-                    reply: parsed.reply,
+                    reply:
+                        parsed.reply,
+
                     movie_ids:
                         Array.isArray(
                             parsed.movie_ids
@@ -958,7 +1612,7 @@ Không nói "theo dữ liệu được cung cấp" trừ khi thật sự cần t
         }
 
         /* ----------------------------------------------------
-           Extract movie IDs
+           EXTRACT MOVIE IDS
         ---------------------------------------------------- */
 
         const movieIds = [];
@@ -968,14 +1622,19 @@ Không nói "theo dữ liệu được cung cấp" trừ khi thật sự cần t
                 /\[ID:\s*(\d+)\]/g
             );
 
-        for (const match of matches) {
+        for (
+            const match of matches
+        ) {
+
             movieIds.push(
-                Number(match[1])
+                Number(
+                    match[1]
+                )
             );
         }
 
         /* ----------------------------------------------------
-           Remove movie ID tags
+           REMOVE MOVIE ID TAGS
         ---------------------------------------------------- */
 
         const cleanReply =
@@ -987,8 +1646,11 @@ Không nói "theo dữ liệu được cung cấp" trừ khi thật sự cần t
                 .trim();
 
         return {
-            reply: cleanReply,
-            movie_ids: movieIds
+            reply:
+                cleanReply,
+
+            movie_ids:
+                movieIds
         };
     }
 
@@ -1000,13 +1662,18 @@ Không nói "theo dữ liệu được cung cấp" trừ khi thật sự cần t
         movieIds,
         movies
     ) {
+
         const validIds =
-            Array.isArray(movieIds)
+            Array.isArray(
+                movieIds
+            )
                 ? movieIds
                     .map(Number)
                     .filter(
                         (id) =>
-                            Number.isInteger(id) &&
+                            Number.isInteger(
+                                id
+                            ) &&
                             id > 0
                     )
                     .filter(
@@ -1021,13 +1688,17 @@ Không nói "theo dữ liệu được cung cấp" trừ khi thật sự cần t
                 : [];
 
         return movies
-            .filter((m) =>
-                validIds.includes(
-                    Number(m.movie_id)
-                )
+            .filter(
+                (m) =>
+                    validIds.includes(
+                        Number(
+                            m.movie_id
+                        )
+                    )
             )
             .slice(0, 3)
             .map((m) => ({
+
                 movie_id:
                     m.movie_id,
 
@@ -1063,56 +1734,74 @@ Không nói "theo dữ liệu được cung cấp" trừ khi thật sự cần t
        BUILD GEMINI HISTORY
     ======================================================== */
 
-    buildGeminiHistory(history) {
-        let geminiHistory =
-            Array.isArray(history)
-                ? history
-                    .slice(-MAX_HISTORY)
-                    .map((h) => ({
-                        role:
-                            h.role === 'user'
-                                ? 'user'
-                                : 'model',
+    buildGeminiHistory(
+        history
+    ) {
 
-                        parts: [
-                            {
-                                text:
-                                    String(
-                                        h.content ||
-                                        ''
-                                    )
-                            }
-                        ]
-                    }))
+        let geminiHistory =
+            Array.isArray(
+                history
+            )
+                ? history
+                    .slice(
+                        -MAX_HISTORY
+                    )
+                    .map(
+                        (h) => ({
+
+                            role:
+                                h.role ===
+                                'user'
+                                    ? 'user'
+                                    : 'model',
+
+                            parts: [
+                                {
+                                    text:
+                                        String(
+                                            h.content ||
+                                            ''
+                                        )
+                                }
+                            ]
+                        })
+                    )
                     .filter(
                         (h) =>
-                            h.parts[0].text
+                            h.parts[0]
+                                .text
                                 .trim()
-                                .length > 0
+                                .length >
+                            0
                     )
                 : [];
 
         /*
-         * Gemini yêu cầu history bắt đầu
+         * Gemini history phải bắt đầu
          * bằng user.
          */
+
         while (
             geminiHistory.length > 0 &&
-            geminiHistory[0].role === 'model'
+            geminiHistory[0].role ===
+                'model'
         ) {
+
             geminiHistory.shift();
         }
 
         /*
-         * Đảm bảo history không kết thúc
+         * History không nên kết thúc
          * bằng model.
          */
+
         while (
             geminiHistory.length > 0 &&
             geminiHistory[
                 geminiHistory.length - 1
             ].role === 'model'
         ) {
+
             geminiHistory.pop();
         }
 
@@ -1127,12 +1816,16 @@ Không nói "theo dữ liệu được cung cấp" trừ khi thật sự cần t
         systemPrompt,
         history
     }) {
+
         return genAI.chats.create({
-            model: MODEL_NAME,
+
+            model:
+                MODEL_NAME,
 
             history,
 
             config: {
+
                 systemInstruction:
                     systemPrompt,
 
@@ -1154,136 +1847,20 @@ Không nói "theo dữ liệu được cung cấp" trừ khi thật sự cần t
         history = [],
         userName = null
     }) {
+
         const totalStartedAt =
             Date.now();
 
         if (!GEMINI_API_KEY) {
+
             const error =
                 new Error(
                     'GEMINI_API_KEY chưa được cấu hình.'
                 );
 
-            error.status = 500;
-            error.code =
-                'GEMINI_API_KEY_MISSING';
+            error.status =
+                500;
 
-            throw error;
-        }
-
-        const {
-            context,
-            cached: contextCached
-        } = await this.getCinemaContext();
-
-        console.log(
-            `⚡ [AI] Context: ` +
-            `${Date.now() - totalStartedAt}ms | ` +
-            `${contextCached ? 'CACHE' : 'DB'}`
-        );
-
-        if (
-            !context ||
-            !Array.isArray(context.movies) ||
-            context.movies.length === 0
-        ) {
-            return {
-                reply:
-                    'Dạ, hiện tại rạp chưa có phim nào đang chiếu ạ. Bạn quay lại sau nhé!',
-
-                movies: []
-            };
-        }
-
-        const intent =
-            this.detectIntent(message);
-
-        const systemPrompt =
-            this.getCachedPrompt(
-                context,
-                intent,
-                userName
-            );
-
-        const geminiHistory =
-            this.buildGeminiHistory(
-                history
-            );
-
-        const chat =
-            this.createChat({
-                systemPrompt,
-                history: geminiHistory
-            });
-
-        const geminiStartedAt =
-            Date.now();
-
-        let response;
-
-        try {
-            response =
-                await chat.sendMessage({
-                    message
-                });
-        } catch (error) {
-            throw this.normalizeGeminiError(
-                error
-            );
-        }
-
-        console.log(
-            `⚡ [AI] Gemini: ` +
-            `${Date.now() - geminiStartedAt}ms`
-        );
-
-        const rawContent =
-            response?.text || '';
-
-        const aiResponse =
-            this.parseAIResponse(
-                rawContent
-            );
-
-        const suggestedMovies =
-            this.buildSuggestedMovies(
-                aiResponse.movie_ids,
-                context.movies
-            );
-
-        console.log(
-            `🚀 [AI] TOTAL: ` +
-            `${Date.now() - totalStartedAt}ms`
-        );
-
-        return {
-            reply:
-                aiResponse.reply ||
-                'Xin lỗi, mình chưa có câu trả lời.',
-
-            movies:
-                suggestedMovies
-        };
-    }
-
-    /* ========================================================
-       STREAM CHAT
-    ======================================================== */
-
-    async *chatStream({
-        message,
-        history = [],
-        userName = null
-    }) {
-        const totalStartedAt =
-            Date.now();
-
-        if (!GEMINI_API_KEY) {
-            const error =
-                new Error(
-                    'GEMINI_API_KEY chưa được cấu hình.'
-                );
-
-            error.status = 500;
             error.code =
                 'GEMINI_API_KEY_MISSING';
 
@@ -1297,32 +1874,30 @@ Không nói "theo dữ liệu được cung cấp" trừ khi thật sự cần t
         const {
             context,
             cached: contextCached
-        } = await this.getCinemaContext();
+        } =
+            await this.getCinemaContext();
 
         console.log(
-            `⚡ [AI Stream] Context: ` +
+            `⚡ [AI] Context: ` +
             `${Date.now() - totalStartedAt}ms | ` +
             `${contextCached ? 'CACHE' : 'DB'}`
         );
 
         if (
             !context ||
-            !Array.isArray(context.movies) ||
+            !Array.isArray(
+                context.movies
+            ) ||
             context.movies.length === 0
         ) {
-            yield {
-                type: 'text',
 
-                content:
-                    'Dạ, hiện tại rạp chưa có phim nào đang chiếu ạ. Bạn quay lại sau nhé!'
-            };
+            return {
 
-            yield {
-                type: 'done',
+                reply:
+                    'Dạ, hiện tại rạp chưa có phim nào đang chiếu ạ. Bạn quay lại sau nhé!',
+
                 movies: []
             };
-
-            return;
         }
 
         /* ----------------------------------------------------
@@ -1330,7 +1905,9 @@ Không nói "theo dữ liệu được cung cấp" trừ khi thật sự cần t
         ---------------------------------------------------- */
 
         const intent =
-            this.detectIntent(message);
+            this.detectIntent(
+                message
+            );
 
         /* ----------------------------------------------------
            PROMPT
@@ -1359,27 +1936,219 @@ Không nói "theo dữ liệu được cung cấp" trừ khi thật sự cần t
         const chat =
             this.createChat({
                 systemPrompt,
-                history: geminiHistory
+                history:
+                    geminiHistory
             });
 
-        let fullText = '';
+        const geminiStartedAt =
+            Date.now();
 
-        let chunkCount = 0;
+        let response;
+
+        try {
+
+            response =
+                await this.sendMessageWithRetry(
+                    chat,
+                    message
+                );
+
+        } catch (error) {
+
+            /*
+             * sendMessageWithRetry đã normalize.
+             * Chỉ normalize lại nếu cần.
+             */
+
+            if (
+                error?.originalError
+            ) {
+                throw error;
+            }
+
+            throw this.normalizeGeminiError(
+                error
+            );
+        }
+
+        console.log(
+            `⚡ [AI] Gemini: ` +
+            `${Date.now() - geminiStartedAt}ms`
+        );
+
+        /* ----------------------------------------------------
+           PARSE
+        ---------------------------------------------------- */
+
+        const rawContent =
+            response?.text || '';
+
+        const aiResponse =
+            this.parseAIResponse(
+                rawContent
+            );
+
+        const suggestedMovies =
+            this.buildSuggestedMovies(
+                aiResponse.movie_ids,
+                context.movies
+            );
+
+        console.log(
+            `🚀 [AI] TOTAL: ` +
+            `${Date.now() - totalStartedAt}ms`
+        );
+
+        return {
+
+            reply:
+                aiResponse.reply ||
+                'Xin lỗi, mình chưa có câu trả lời.',
+
+            movies:
+                suggestedMovies
+        };
+    }
+
+    /* ========================================================
+       STREAM CHAT
+    ======================================================== */
+
+    async *chatStream({
+        message,
+        history = [],
+        userName = null
+    }) {
+
+        const totalStartedAt =
+            Date.now();
+
+        if (!GEMINI_API_KEY) {
+
+            const error =
+                new Error(
+                    'GEMINI_API_KEY chưa được cấu hình.'
+                );
+
+            error.status =
+                500;
+
+            error.code =
+                'GEMINI_API_KEY_MISSING';
+
+            throw error;
+        }
+
+        /* ----------------------------------------------------
+           LOAD CONTEXT
+        ---------------------------------------------------- */
+
+        const {
+            context,
+            cached: contextCached
+        } =
+            await this.getCinemaContext();
+
+        console.log(
+            `⚡ [AI Stream] Context: ` +
+            `${Date.now() - totalStartedAt}ms | ` +
+            `${contextCached ? 'CACHE' : 'DB'}`
+        );
+
+        if (
+            !context ||
+            !Array.isArray(
+                context.movies
+            ) ||
+            context.movies.length === 0
+        ) {
+
+            yield {
+
+                type:
+                    'text',
+
+                content:
+                    'Dạ, hiện tại rạp chưa có phim nào đang chiếu ạ. Bạn quay lại sau nhé!'
+            };
+
+            yield {
+
+                type:
+                    'done',
+
+                movies:
+                    []
+            };
+
+            return;
+        }
+
+        /* ----------------------------------------------------
+           INTENT
+        ---------------------------------------------------- */
+
+        const intent =
+            this.detectIntent(
+                message
+            );
+
+        /* ----------------------------------------------------
+           PROMPT
+        ---------------------------------------------------- */
+
+        const systemPrompt =
+            this.getCachedPrompt(
+                context,
+                intent,
+                userName
+            );
+
+        /* ----------------------------------------------------
+           HISTORY
+        ---------------------------------------------------- */
+
+        const geminiHistory =
+            this.buildGeminiHistory(
+                history
+            );
+
+        /* ----------------------------------------------------
+           CREATE CHAT
+        ---------------------------------------------------- */
+
+        const chat =
+            this.createChat({
+                systemPrompt,
+                history:
+                    geminiHistory
+            });
+
+        let fullText =
+            '';
+
+        let chunkCount =
+            0;
 
         const geminiStartedAt =
             Date.now();
 
         try {
-            const stream =
-                await chat.sendMessageStream({
-                    message
-                });
+
+            /*
+             * Retry stream.
+             *
+             * Chỉ retry khi Gemini lỗi trước
+             * khi trả về bất kỳ text nào.
+             */
 
             for await (
-                const chunk of stream
+                const text of
+                this.streamWithRetry(
+                    chat,
+                    message
+                )
             ) {
-                const text =
-                    chunk?.text || '';
 
                 if (!text) {
                     continue;
@@ -1387,17 +2156,23 @@ Không nói "theo dữ liệu được cung cấp" trừ khi thật sự cần t
 
                 chunkCount++;
 
-                fullText += text;
+                fullText +=
+                    text;
 
                 /*
-                 * Gửi chunk NGAY LẬP TỨC.
+                 * Gửi chunk NGAY.
                  *
-                 * Frontend sẽ tự tạo hiệu ứng
+                 * Frontend tự tạo hiệu ứng
                  * từng chữ.
                  */
+
                 yield {
-                    type: 'text',
-                    content: text
+
+                    type:
+                        'text',
+
+                    content:
+                        text
                 };
             }
 
@@ -1408,6 +2183,18 @@ Không nói "theo dữ liệu được cung cấp" trừ khi thật sự cần t
             );
 
         } catch (error) {
+
+            /*
+             * Không để lỗi bị biến thành
+             * message khó đọc từ SDK.
+             */
+
+            if (
+                error?.originalError
+            ) {
+                throw error;
+            }
+
             throw this.normalizeGeminiError(
                 error
             );
@@ -1438,7 +2225,9 @@ Không nói "theo dữ liệu được cung cấp" trừ khi thật sự cần t
         ---------------------------------------------------- */
 
         yield {
-            type: 'done',
+
+            type:
+                'done',
 
             movies:
                 suggestedMovies
@@ -1450,4 +2239,5 @@ Không nói "theo dữ liệu được cung cấp" trừ khi thật sự cần t
    EXPORT
 ============================================================ */
 
-module.exports = new AiService();
+module.exports =
+    new AiService();
