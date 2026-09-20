@@ -1,11 +1,11 @@
 // ============================================================
 // SERVICES / AiService.js
-// QUANG DŨNG CINEMA — AI CINEMA ASSISTANT v4
+// QUANG DŨNG CINEMA — AI CINEMA ASSISTANT v3
 //
 // NÂNG CẤP:
-// - Model lite: nhanh hơn 2-3s (không thinking)
-// - Prompt: AI trả lời ĐẦY ĐỦ (4-8 câu)
-// - Streaming: giữ nguyên
+// - Giữ model gemini-3.6-flash
+// - Thêm streaming
+// - Prompt tối ưu
 // ============================================================
 
 const { GoogleGenAI } = require('@google/genai');
@@ -29,11 +29,9 @@ const genAI = new GoogleGenAI({
    CONFIG
 ========================================================== */
 
-// ✅ Đổi sang lite - không thinking - nhanh hơn
-const MODEL_NAME = 'gemini-2.5-flash-lite';
-
+const MODEL_NAME = 'gemini-3.6-flash';
 const TEMPERATURE = 0.5;
-const MAX_TOKENS = 1024;   // Tăng để AI trả lời dài hơn
+const MAX_TOKENS = 768;
 
 const CACHE_TTL = 1000 * 60 * 60 * 4;
 const CACHE_MAX_SIZE = 500;
@@ -64,7 +62,7 @@ const contextCache = {
 const promptCache = new Map();
 
 /* =========================================================
-   CACHE CLEANUP
+   CACHE CLEANUP — Mỗi 10 phút
 ========================================================== */
 
 setInterval(() => {
@@ -105,6 +103,10 @@ setInterval(() => {
 
 class AiService {
 
+    /* =======================================================
+       RATE LIMIT
+    ======================================================== */
+
     checkRateLimit(ip) {
         const now = Date.now();
         const key = ip || 'unknown';
@@ -132,6 +134,10 @@ class AiService {
         return { allowed: true };
     }
 
+    /* =======================================================
+       RESPONSE CACHE
+    ======================================================== */
+
     getCache(key) {
         const cached = cache.get(key);
         if (!cached) return null;
@@ -154,6 +160,10 @@ class AiService {
             if (oldest) cache.delete(oldest[0]);
         }
     }
+
+    /* =======================================================
+       GET CINEMA CONTEXT
+    ======================================================== */
 
     async getCinemaContext() {
         const now = Date.now();
@@ -194,6 +204,10 @@ class AiService {
         console.log('♻️ [AI] Cinema context cache cleared');
     }
 
+    /* =======================================================
+       DETECT INTENT
+    ======================================================== */
+
     detectIntent(message) {
         const lower = String(message || '').toLowerCase();
 
@@ -207,7 +221,7 @@ class AiService {
     }
 
     /* =======================================================
-       BUILD SYSTEM PROMPT — FIX TRẢ LỜI ĐẦY ĐỦ
+       BUILD SYSTEM PROMPT
     ======================================================== */
 
     buildSystemPrompt(context, intent, userName = null) {
@@ -298,100 +312,32 @@ class AiService {
         return `Bạn là "Cinema Assistant" — trợ lý tư vấn của Quang Dũng Cinema.
 ${userInfo}
 ═══════════════════════════════════════════
-🎯 NHIỆM VỤ CHÍNH
+🎯 PHONG CÁCH TRẢ LỜI
 ═══════════════════════════════════════════
 
-Bạn là NHÂN VIÊN TƯ VẤN THẬT đang nói chuyện với khách hàng.
-
-QUAN TRỌNG NHẤT: 
-→ TRẢ LỜI ĐẦY ĐỦ THÔNG TIN, KHÔNG ĐƯỢC NGẮN GỌN QUÁ MỨC.
-→ User hỏi gì thì LIỆT KÊ HẾT những gì có trong dữ liệu.
-→ KHÔNG bỏ sót chi tiết (địa chỉ, hotline, giá, giờ...).
-
-═══════════════════════════════════════════
-📝 PHONG CÁCH TRẢ LỜI
-═══════════════════════════════════════════
+Bạn là NHÂN VIÊN TƯ VẤN THẬT đang nói chuyện với khách.
 
 - TỰ NHIÊN, LỊCH SỰ, THÂN THIỆN.
-- Dùng emoji nhẹ: 🎬 🍿 😊 📍
+- Có thể dùng emoji nhẹ: 🎬 🍿 😊 📍
 - CÓ CHỦ NGỮ + VỊ NGỮ đầy đủ.
 - Xưng "mình"/"em", gọi khách "bạn".
 - Kết thúc câu có "ạ", "nhé".
-- ĐỘ DÀI: 4-8 câu (không ngắn hơn, không dài hơn).
 
 ═══════════════════════════════════════════
-📌 VÍ DỤ CỤ THỂ (HỌC THEO)
+📝 FORMAT CÂU TRẢ LỜI
 ═══════════════════════════════════════════
 
-User: "Rạp ở đâu?"
+⭐ Liệt kê nhiều mục → DÙNG BULLET + EMOJI:
 
-Trả lời ĐÚNG ✅:
-"Dạ, Quang Dũng Cinema hiện có 4 chi nhánh tại TP.HCM ạ:
+Ví dụ ĐÚNG:
+"Dạ, Quang Dũng Cinema có 4 chi nhánh ạ:
+📍 Galaxy Nguyễn Du — Q.1
+📍 Galaxy Tân Bình — Tân Bình
+📍 Galaxy Quang Trung — Gò Vấp
+📍 Galaxy Kinh Dương Vương — Q.6
+Bạn muốn đến chi nhánh nào ạ?"
 
-📍 **Galaxy Nguyễn Du** — 116 Nguyễn Du, Bến Thành, Q.1
-   Hotline: 0964363654
-
-📍 **Galaxy Tân Bình** — 246 Nguyễn Hồng Đào, Tân Bình
-   Hotline: 0354532452
-
-📍 **Galaxy Quang Trung** — 304A Quang Trung, Gò Vấp
-   Hotline: 0351657575
-
-📍 **Galaxy Kinh Dương Vương** — 718bis Kinh Dương Vương, Q.6
-   Hotline: 0425643218
-
-Bạn muốn đến chi nhánh nào để mình hướng dẫn thêm ạ? 😊"
-
-Trả lời SAI ❌ (quá ngắn):
-"Dạ có 4 rạp ạ."
-
-═══════════════════════════════════════════
-
-User: "Giá vé VIP bao nhiêu?"
-
-Trả lời ĐÚNG ✅:
-"Dạ, ghế VIP có giá tùy theo phòng và khung giờ ạ:
-
-💰 **Phòng 2D:**
-• Sáng ngày thường: 75.000đ
-• Tối cuối tuần: 135.000đ
-
-💰 **Phòng 3D:**
-• Sáng ngày thường: 120.000đ
-• Tối cuối tuần: 198.000đ
-
-💰 **Phòng IMAX:**
-• Sáng ngày thường: 180.000đ
-• Tối cuối tuần: 288.000đ
-
-Bạn muốn xem phòng nào và suất mấy giờ để mình báo giá chính xác ạ? 😊"
-
-Trả lời SAI ❌:
-"75.000đ - 495.000đ ạ."
-
-═══════════════════════════════════════════
-
-User: "Có khuyến mãi gì không?"
-
-Trả lời ĐÚNG ✅:
-"Dạ, hiện rạp có 4 chương trình khuyến mãi hấp dẫn ạ:
-
-🎁 **Combo Bắp Nước Siêu Tiết Kiệm**
-→ Giảm đến 35% khi mua combo bắp + nước.
-
-🎁 **Thứ 4 Vui Vẻ**
-→ Đồng giá vé 45.000đ cho phim 2D vào thứ 4 hàng tuần.
-
-🎁 **Nâng Hạng Ghế VIP**
-→ Chỉ từ +40.000đ để nâng lên ghế VIP.
-
-🎁 **Tích Điểm Thành Viên**
-→ Tích điểm đổi quà cho khách hàng thân thiết.
-
-Bạn muốn mình tư vấn chi tiết chương trình nào ạ? 😊"
-
-Trả lời SAI ❌:
-"Có 4 chương trình ạ."
+⭐ Trả lời ngắn → 2-3 câu, KHÔNG cần bullet.
 
 ═══════════════════════════════════════════
 🚫 RÀNG BUỘC
@@ -401,7 +347,7 @@ Trả lời SAI ❌:
 - KHÔNG bịa tên phim, giá, suất chiếu, địa chỉ.
 - KHÔNG tiết lộ thông tin khách hàng.
 - Nếu hỏi ngoài chủ đề → từ chối lịch sự.
-- BẮT BUỘC LIỆT KÊ ĐẦY ĐỦ - KHÔNG CẮT NGẮN.
+- Độ dài: 2-5 câu.
 
 ═══════════════════════════════════════════
 🎬 QUY TẮC CHUNG
@@ -416,7 +362,7 @@ Trả lời SAI ❌:
 💰 QUY TẮC GIÁ VÉ
 ═══════════════════════════════════════════
 
-1. Hỏi chung → LIỆT KÊ TẤT CẢ RANGE giá.
+1. Hỏi chung → RANGE giá + hỏi lại phòng/giờ.
 2. Hỏi cụ thể → CHÍNH XÁC 1 con số.
 3. Nêu rõ: hạng ghế + phòng + giờ + ngày.
 
@@ -461,6 +407,10 @@ Nếu nhiều phim: "... [ID: 5] [ID: 4]"
 Nếu không gợi ý phim → KHÔNG thêm tag.`;
     }
 
+    /* =======================================================
+       GET CACHED PROMPT
+    ======================================================== */
+
     getCachedPrompt(context, intent, userName) {
         const contextVersion = contextCache.timestamp;
         const key = `${contextVersion}|${intent}|${userName || 'guest'}`;
@@ -488,6 +438,10 @@ Nếu không gợi ý phim → KHÔNG thêm tag.`;
         return prompt;
     }
 
+    /* =======================================================
+       NORMALIZE GEMINI ERROR
+    ======================================================== */
+
     normalizeGeminiError(error) {
         const status = error?.status ?? error?.statusCode ?? error?.error?.status ?? null;
         const message = error?.message || error?.error?.message || 'Unknown Gemini API error';
@@ -501,6 +455,10 @@ Nếu không gợi ý phim → KHÔNG thêm tag.`;
 
         return normalized;
     }
+
+    /* =======================================================
+       PARSE AI RESPONSE (non-stream)
+    ======================================================== */
 
     parseAIResponse(rawContent) {
         if (!rawContent) {
@@ -536,11 +494,16 @@ Nếu không gợi ý phim → KHÔNG thêm tag.`;
         }
     }
 
+    /* =======================================================
+       PARSE STREAM RESPONSE — Extract [ID: x]
+    ======================================================== */
+
     parseStreamResponse(text) {
         if (!text) return { reply: '', movie_ids: [] };
 
         let cleaned = String(text).trim();
 
+        // Thử parse JSON nếu AI trả JSON
         try {
             let jsonClean = cleaned;
             if (jsonClean.startsWith('```json')) jsonClean = jsonClean.slice(7);
@@ -559,16 +522,22 @@ Nếu không gợi ý phim → KHÔNG thêm tag.`;
             // Không phải JSON → text thuần
         }
 
+        // Extract [ID: x]
         const movieIds = [];
         const matches = cleaned.matchAll(/\[ID:\s*(\d+)\]/g);
         for (const match of matches) {
             movieIds.push(Number(match[1]));
         }
 
+        // Xóa tag khỏi reply
         const cleanReply = cleaned.replace(/\[ID:\s*\d+\]/g, '').trim();
 
         return { reply: cleanReply, movie_ids: movieIds };
     }
+
+    /* =======================================================
+       BUILD SUGGESTED MOVIES
+    ======================================================== */
 
     buildSuggestedMovies(movieIds, movies) {
         const validIds = Array.isArray(movieIds)
@@ -593,6 +562,10 @@ Nếu không gợi ý phim → KHÔNG thêm tag.`;
                     : []
             }));
     }
+
+    /* =======================================================
+       MAIN CHAT — Non-streaming
+    ======================================================== */
 
     async chat({ message, history = [], userName = null }) {
         const totalStartedAt = Date.now();
@@ -643,6 +616,7 @@ Nếu không gợi ý phim → KHÔNG thêm tag.`;
             }
         });
 
+        const geminiStartedAt = Date.now();
         let response;
 
         try {
@@ -651,15 +625,23 @@ Nếu không gợi ý phim → KHÔNG thêm tag.`;
             throw this.normalizeGeminiError(error);
         }
 
+        console.log(`⚡ [AI] Gemini: ${Date.now() - geminiStartedAt}ms`);
+
         const rawContent = response?.text || '';
         const aiResponse = this.parseAIResponse(rawContent);
         const suggestedMovies = this.buildSuggestedMovies(aiResponse.movie_ids, context.movies);
+
+        console.log(`🚀 [AI] TOTAL: ${Date.now() - totalStartedAt}ms`);
 
         return {
             reply: aiResponse.reply || 'Xin lỗi, mình chưa có câu trả lời.',
             movies: suggestedMovies
         };
     }
+
+    /* =======================================================
+       STREAM CHAT — Giữ model cũ, thêm streaming
+    ======================================================== */
 
     async *chatStream({ message, history = [], userName = null }) {
         if (!GEMINI_API_KEY) {
@@ -701,6 +683,7 @@ Nếu không gợi ý phim → KHÔNG thêm tag.`;
                 systemInstruction: systemPrompt,
                 temperature: TEMPERATURE,
                 maxOutputTokens: MAX_TOKENS
+                // ⚠️ KHÔNG dùng responseMimeType → stream được
             }
         });
 
