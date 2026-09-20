@@ -16,281 +16,692 @@ import {
     CircleHelp,
     BadgePercent,
     Gift,
-    FileText
+    FileText,
+    CalendarDays,
+    Star,
+    Clapperboard,
+    ArrowUp,
+    Sparkles
 } from 'lucide-react';
 
 import '../styles/Footer.css';
 
 const UserFooter = () => {
-
     const navigate = useNavigate();
 
-    // Hàm xử lý click chung: cuộn lên đầu
+    // ============================================================
+    // SCROLL TO TOP
+    // ============================================================
+
     const scrollToTop = () => {
         window.scrollTo({
             top: 0,
-            behavior: 'smooth' // cuộn mượt
+            behavior: 'smooth'
         });
+    };
+
+    // ============================================================
+    // VỀ TRANG CHỦ
+    // ============================================================
+
+    const handleLogoClick = () => {
+        navigate('/');
+        scrollToTop();
     };
 
     return (
         <footer className="mystic-footer">
 
-            {/* ========= MAIN ========= */}
+            {/* =====================================================
+                CINEMATIC DECORATION
+            ===================================================== */}
+
+            <div
+                className="mystic-footer-glow mystic-footer-glow-left"
+                aria-hidden="true"
+            />
+
+            <div
+                className="mystic-footer-glow mystic-footer-glow-right"
+                aria-hidden="true"
+            />
+
+            {/* =====================================================
+                MAIN FOOTER
+            ===================================================== */}
+
             <div className="mystic-footer-container">
 
-                {/* =====================================================
-                    GIỚI THIỆU
-                ===================================================== */}
+                {/* =================================================
+                    BRAND / GIỚI THIỆU
+                ================================================= */}
+
                 <div className="mystic-footer-brand">
 
-                    <div className="mystic-footer-heading">
-                        <h3>GIỚI THIỆU</h3>
-                        <span></span>
-                    </div>
+                    <button
+                        type="button"
+                        className="mystic-footer-brand-logo"
+                        onClick={handleLogoClick}
+                        aria-label="Về trang chủ QD Cinema"
+                    >
+                        <img
+                            src="https://api.quangdungcinema.id.vn/uploads/logo/logocinema.png"
+                            alt="QD Cinema"
+                        />
+                    </button>
+
+                    <div className="mystic-footer-brand-line" />
 
                     <p className="mystic-footer-description">
-                        CineStar mang đến trải nghiệm điện ảnh đẳng cấp với hệ
-                        thống rạp hiện đại, âm thanh sống động và dịch vụ tận tâm
-                        hàng đầu.
+                        QD Cinema mang đến trải nghiệm điện ảnh hiện đại
+                        với không gian cao cấp, âm thanh sống động và những
+                        khoảnh khắc đáng nhớ trên màn ảnh rộng.
                     </p>
 
-                    <div className="mystic-footer-divider"></div>
+                    {/* SOCIAL */}
 
-                    <h4 className="mystic-footer-social-title">
-                        KẾT NỐI VỚI CHÚNG TÔI
-                    </h4>
+                    <div className="mystic-footer-social-block">
 
-                    <div className="mystic-footer-socials">
-                        <a href="#" target="_blank" rel="noopener noreferrer">
-                            <Facebook size={22} />
-                        </a>
-                        <a href="#" target="_blank" rel="noopener noreferrer">
-                            <Instagram size={22} />
-                        </a>
-                        <a href="#" target="_blank" rel="noopener noreferrer">
-                            <Youtube size={22} />
-                        </a>
+                        <h4 className="mystic-footer-social-title">
+                            KẾT NỐI VỚI CHÚNG TÔI
+                        </h4>
+
+                        <div className="mystic-footer-socials">
+
+                            <a
+                                href="#"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label="Facebook"
+                            >
+                                <Facebook size={19} strokeWidth={1.8} />
+                            </a>
+
+                            <a
+                                href="#"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label="Instagram"
+                            >
+                                <Instagram size={19} strokeWidth={1.8} />
+                            </a>
+
+                            <a
+                                href="#"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label="Youtube"
+                            >
+                                <Youtube size={19} strokeWidth={1.8} />
+                            </a>
+
+                        </div>
+
                     </div>
 
                 </div>
 
-                {/* =====================================================
+                {/* =================================================
                     DỊCH VỤ
-                ===================================================== */}
+                ================================================= */}
+
                 <div className="mystic-footer-column">
 
                     <div className="mystic-footer-heading">
-                        <h3>DỊCH VỤ</h3>
-                        <span></span>
+
+                        <div className="mystic-footer-heading-title">
+                            <span className="mystic-footer-heading-kicker">
+                                KHÁM PHÁ
+                            </span>
+
+                            <h3>DỊCH VỤ</h3>
+                        </div>
+
+                        <span className="mystic-footer-heading-line" />
+
                     </div>
 
-                    <ul>
+                    <ul className="mystic-footer-list">
+
                         <li>
-                            <Link to="/movies/status/phim-dang-chieu" onClick={scrollToTop}>
-                                <div>
-                                    <Ticket size={19} />
+                            <Link
+                                to="/movies/status/phim-dang-chieu"
+                                onClick={scrollToTop}
+                            >
+                                <div className="mystic-footer-link-content">
+                                    <Ticket
+                                        size={19}
+                                        strokeWidth={1.7}
+                                    />
+
                                     <span>Phim Đang Chiếu</span>
                                 </div>
-                                <ChevronRight size={18} />
+
+                                <ChevronRight
+                                    size={17}
+                                    strokeWidth={1.8}
+                                />
                             </Link>
                         </li>
+
                         <li>
-                            <Link to="/movies/status/phim-sap-chieu" onClick={scrollToTop}>
-                                <div>
-                                    <Ticket size={19} />
+                            <Link
+                                to="/movies/status/phim-sap-chieu"
+                                onClick={scrollToTop}
+                            >
+                                <div className="mystic-footer-link-content">
+                                    <CalendarDays
+                                        size={19}
+                                        strokeWidth={1.7}
+                                    />
+
                                     <span>Phim Sắp Chiếu</span>
                                 </div>
-                                <ChevronRight size={18} />
+
+                                <ChevronRight
+                                    size={17}
+                                    strokeWidth={1.8}
+                                />
                             </Link>
                         </li>
+
                         <li>
-                            <Link to="/promotion" onClick={scrollToTop}>
-                                <div>
-                                    <BadgePercent size={19} />
+                            <Link
+                                to="/promotion"
+                                onClick={scrollToTop}
+                            >
+                                <div className="mystic-footer-link-content">
+                                    <BadgePercent
+                                        size={19}
+                                        strokeWidth={1.7}
+                                    />
+
                                     <span>Khuyến Mãi</span>
                                 </div>
-                                <ChevronRight size={18} />
+
+                                <ChevronRight
+                                    size={17}
+                                    strokeWidth={1.8}
+                                />
                             </Link>
                         </li>
+
                         <li>
-                            <Link to="/blog-cinema" onClick={scrollToTop}>
-                                <div>
-                                    <FileText size={19} />
+                            <Link
+                                to="/blog-cinema"
+                                onClick={scrollToTop}
+                            >
+                                <div className="mystic-footer-link-content">
+                                    <Clapperboard
+                                        size={19}
+                                        strokeWidth={1.7}
+                                    />
+
                                     <span>Góc Điện Ảnh</span>
                                 </div>
-                                <ChevronRight size={18} />
+
+                                <ChevronRight
+                                    size={17}
+                                    strokeWidth={1.8}
+                                />
                             </Link>
                         </li>
+
                         <li>
-                            <Link to="/membership" onClick={scrollToTop}>
-                                <div>
-                                    <Gift size={19} />
+                            <Link
+                                to="/membership"
+                                onClick={scrollToTop}
+                            >
+                                <div className="mystic-footer-link-content">
+                                    <Gift
+                                        size={19}
+                                        strokeWidth={1.7}
+                                    />
+
                                     <span>Ưu Đãi Thành Viên</span>
                                 </div>
-                                <ChevronRight size={18} />
+
+                                <ChevronRight
+                                    size={17}
+                                    strokeWidth={1.8}
+                                />
                             </Link>
                         </li>
+
                     </ul>
 
                 </div>
 
-                {/* =====================================================
+                {/* =================================================
                     LIÊN HỆ
-                ===================================================== */}
+                ================================================= */}
+
                 <div className="mystic-footer-column">
 
                     <div className="mystic-footer-heading">
-                        <h3>LIÊN HỆ</h3>
-                        <span></span>
+
+                        <div className="mystic-footer-heading-title">
+                            <span className="mystic-footer-heading-kicker">
+                                THÔNG TIN
+                            </span>
+
+                            <h3>LIÊN HỆ</h3>
+                        </div>
+
+                        <span className="mystic-footer-heading-line" />
+
                     </div>
 
                     <div className="mystic-footer-contact-list">
 
-                        <div className="mystic-footer-contact-item">
-                            <MapPin size={22} />
-                            <p>
-                                123 Đường Số 7, Bình Tân,
-                                TP. Hồ Chí Minh
-                            </p>
-                        </div>
+                        {/* ADDRESS */}
 
                         <div className="mystic-footer-contact-item">
-                            <Phone size={22} />
-                            <p>Hotline: 1900 1234</p>
+
+                            <div className="mystic-footer-contact-icon">
+                                <MapPin
+                                    size={20}
+                                    strokeWidth={1.7}
+                                />
+                            </div>
+
+                            <div className="mystic-footer-contact-content">
+                                <span className="mystic-footer-contact-label">
+                                    Địa chỉ
+                                </span>
+
+                                <p>
+                                    123 Đường Số 7, Bình Tân,
+                                    <br />
+                                    TP. Hồ Chí Minh
+                                </p>
+                            </div>
+
                         </div>
 
-                        <div className="mystic-footer-contact-item">
-                            <Mail size={22} />
-                            <p>support@cinemashop.vn</p>
-                        </div>
+                        {/* PHONE */}
 
                         <div className="mystic-footer-contact-item">
-                            <Clock3 size={22} />
-                            <p>
-                                Giờ hoạt động:
-                                <br />
-                                08:00 - 23:00 (Tất cả các ngày)
-                            </p>
+
+                            <div className="mystic-footer-contact-icon">
+                                <Phone
+                                    size={20}
+                                    strokeWidth={1.7}
+                                />
+                            </div>
+
+                            <div className="mystic-footer-contact-content">
+                                <span className="mystic-footer-contact-label">
+                                    Hotline
+                                </span>
+
+                                <p>
+                                    1900 1234
+                                </p>
+                            </div>
+
+                        </div>
+
+                        {/* EMAIL */}
+
+                        <div className="mystic-footer-contact-item">
+
+                            <div className="mystic-footer-contact-icon">
+                                <Mail
+                                    size={20}
+                                    strokeWidth={1.7}
+                                />
+                            </div>
+
+                            <div className="mystic-footer-contact-content">
+                                <span className="mystic-footer-contact-label">
+                                    Email
+                                </span>
+
+                                <p>
+                                    support@quangdungcinema.id.vn
+                                </p>
+                            </div>
+
+                        </div>
+
+                        {/* OPENING HOURS */}
+
+                        <div className="mystic-footer-contact-item">
+
+                            <div className="mystic-footer-contact-icon">
+                                <Clock3
+                                    size={20}
+                                    strokeWidth={1.7}
+                                />
+                            </div>
+
+                            <div className="mystic-footer-contact-content">
+                                <span className="mystic-footer-contact-label">
+                                    Giờ hoạt động
+                                </span>
+
+                                <p>
+                                    08:00 - 23:00
+                                    <br />
+                                    Tất cả các ngày
+                                </p>
+                            </div>
+
                         </div>
 
                     </div>
 
                 </div>
 
-                {/* =====================================================
+                {/* =================================================
                     HỖ TRỢ
-                ===================================================== */}
+                ================================================= */}
+
                 <div className="mystic-footer-column">
 
                     <div className="mystic-footer-heading">
-                        <h3>HỖ TRỢ</h3>
-                        <span></span>
+
+                        <div className="mystic-footer-heading-title">
+                            <span className="mystic-footer-heading-kicker">
+                                TRỢ GIÚP
+                            </span>
+
+                            <h3>HỖ TRỢ</h3>
+                        </div>
+
+                        <span className="mystic-footer-heading-line" />
+
                     </div>
 
-                    <ul>
+                    <ul className="mystic-footer-list">
+
                         <li>
-                            <Link to="/faq" onClick={scrollToTop}>
-                                <div>
-                                    <CircleHelp size={19} />
+                            <Link
+                                to="/faq"
+                                onClick={scrollToTop}
+                            >
+                                <div className="mystic-footer-link-content">
+                                    <CircleHelp
+                                        size={19}
+                                        strokeWidth={1.7}
+                                    />
+
                                     <span>Câu Hỏi Thường Gặp</span>
                                 </div>
-                                <ChevronRight size={18} />
+
+                                <ChevronRight
+                                    size={17}
+                                    strokeWidth={1.8}
+                                />
                             </Link>
                         </li>
+
                         <li>
-                            <Link to="/privacy-policy" onClick={scrollToTop}>
-                                <div>
-                                    <ShieldCheck size={19} />
+                            <Link
+                                to="/privacy-policy"
+                                onClick={scrollToTop}
+                            >
+                                <div className="mystic-footer-link-content">
+                                    <ShieldCheck
+                                        size={19}
+                                        strokeWidth={1.7}
+                                    />
+
                                     <span>Chính Sách Bảo Mật</span>
                                 </div>
-                                <ChevronRight size={18} />
+
+                                <ChevronRight
+                                    size={17}
+                                    strokeWidth={1.8}
+                                />
                             </Link>
                         </li>
+
                         <li>
-                            <Link to="/terms" onClick={scrollToTop}>
-                                <div>
-                                    <FileText size={19} />
+                            <Link
+                                to="/terms"
+                                onClick={scrollToTop}
+                            >
+                                <div className="mystic-footer-link-content">
+                                    <FileText
+                                        size={19}
+                                        strokeWidth={1.7}
+                                    />
+
                                     <span>Điều Khoản Sử Dụng</span>
                                 </div>
-                                <ChevronRight size={18} />
+
+                                <ChevronRight
+                                    size={17}
+                                    strokeWidth={1.8}
+                                />
                             </Link>
                         </li>
+
                         <li>
-                            <Link to="/booking-guide" onClick={scrollToTop}>
-                                <div>
-                                    <Ticket size={19} />
+                            <Link
+                                to="/booking-guide"
+                                onClick={scrollToTop}
+                            >
+                                <div className="mystic-footer-link-content">
+                                    <Ticket
+                                        size={19}
+                                        strokeWidth={1.7}
+                                    />
+
                                     <span>Hướng Dẫn Đặt Vé</span>
                                 </div>
-                                <ChevronRight size={18} />
+
+                                <ChevronRight
+                                    size={17}
+                                    strokeWidth={1.8}
+                                />
                             </Link>
                         </li>
+
                         <li>
-                            <Link to="/contacts" onClick={scrollToTop}>
-                                <div>
-                                    <Headphones size={19} />
+                            <Link
+                                to="/contacts"
+                                onClick={scrollToTop}
+                            >
+                                <div className="mystic-footer-link-content">
+                                    <Headphones
+                                        size={19}
+                                        strokeWidth={1.7}
+                                    />
+
                                     <span>Liên Hệ Hỗ Trợ</span>
                                 </div>
-                                <ChevronRight size={18} />
+
+                                <ChevronRight
+                                    size={17}
+                                    strokeWidth={1.8}
+                                />
                             </Link>
                         </li>
+
                     </ul>
 
                 </div>
 
             </div>
 
-            {/* ========= FEATURE BAR ========= */}
-            <div className="mystic-footer-feature-bar">
+            {/* =====================================================
+                FEATURE BAR
+            ===================================================== */}
 
-                <div className="mystic-footer-feature">
-                    <ShieldCheck size={22} />
-                    <span>Thanh toán an toàn</span>
-                </div>
+            <div className="mystic-footer-feature-wrapper">
 
-                <div className="mystic-footer-feature">
-                    <Ticket size={22} />
-                    <span>Đặt vé nhanh chóng</span>
-                </div>
+                <div className="mystic-footer-feature-bar">
 
-                <div className="mystic-footer-feature">
-                    <Headphones size={22} />
-                    <span>Hỗ trợ 24/7</span>
+                    {/* FEATURE 1 */}
+
+                    <div className="mystic-footer-feature">
+
+                        <div className="mystic-footer-feature-icon">
+                            <ShieldCheck
+                                size={24}
+                                strokeWidth={1.6}
+                            />
+                        </div>
+
+                        <div className="mystic-footer-feature-content">
+                            <strong>
+                                Thanh toán an toàn
+                            </strong>
+
+                            <span>
+                                Bảo mật thông tin khách hàng
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <span className="mystic-footer-feature-divider" />
+
+                    {/* FEATURE 2 */}
+
+                    <div className="mystic-footer-feature">
+
+                        <div className="mystic-footer-feature-icon">
+                            <Ticket
+                                size={24}
+                                strokeWidth={1.6}
+                            />
+                        </div>
+
+                        <div className="mystic-footer-feature-content">
+                            <strong>
+                                Đặt vé nhanh chóng
+                            </strong>
+
+                            <span>
+                                Chỉ vài thao tác đơn giản
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <span className="mystic-footer-feature-divider" />
+
+                    {/* FEATURE 3 */}
+
+                    <div className="mystic-footer-feature">
+
+                        <div className="mystic-footer-feature-icon">
+                            <Headphones
+                                size={24}
+                                strokeWidth={1.6}
+                            />
+                        </div>
+
+                        <div className="mystic-footer-feature-content">
+                            <strong>
+                                Hỗ trợ 24/7
+                            </strong>
+
+                            <span>
+                                Luôn sẵn sàng hỗ trợ bạn
+                            </span>
+                        </div>
+
+                    </div>
+
                 </div>
 
             </div>
 
-            {/* ========= COPYRIGHT ========= */}
-            <div className="mystic-footer-bottom">
+            {/* =====================================================
+                BOTTOM BAR
+            ===================================================== */}
 
-                <div
-                    className="mystic-footer-logo"
-                    onClick={() => {
-                        navigate('/');
-                        scrollToTop();
-                    }}
-                >
-                    <img
-                        src="https://api.quangdungcinema.id.vn/uploads/logo/logocinema.png"
-                        alt="Cinema Logo"
-                    />
+            <div className="mystic-footer-bottom-wrapper">
+
+                <div className="mystic-footer-bottom">
+
+                    {/* COPYRIGHT */}
+
+                    <div className="mystic-footer-copyright">
+                        <span>
+                            © 2026 QD Cinema.
+                        </span>
+
+                        <span>
+                            Tất cả quyền được bảo lưu.
+                        </span>
+                    </div>
+
+                    {/* LEGAL LINKS */}
+
+                    <div className="mystic-footer-legal">
+
+                        <Link
+                            to="/terms"
+                            onClick={scrollToTop}
+                        >
+                            Điều khoản sử dụng
+                        </Link>
+
+                        <span>|</span>
+
+                        <Link
+                            to="/privacy-policy"
+                            onClick={scrollToTop}
+                        >
+                            Chính sách bảo mật
+                        </Link>
+
+                        <span>|</span>
+
+                        <Link
+                            to="/contacts"
+                            onClick={scrollToTop}
+                        >
+                            Hỗ trợ khách hàng
+                        </Link>
+
+                    </div>
+
+                    {/* BRAND SIGNATURE */}
+
+                    <button
+                        type="button"
+                        className="mystic-footer-signature"
+                        onClick={handleLogoClick}
+                        aria-label="Về trang chủ QD Cinema"
+                    >
+                        <span className="mystic-footer-signature-icon">
+                            <Sparkles
+                                size={16}
+                                strokeWidth={1.5}
+                            />
+                        </span>
+
+                        <span className="mystic-footer-signature-name">
+                            QD
+                        </span>
+
+                        <span className="mystic-footer-signature-text">
+                            MORE THAN A MOVIE
+                        </span>
+                    </button>
+
+                    {/* SCROLL TOP */}
+
+                    <button
+                        type="button"
+                        className="mystic-footer-scrolltop"
+                        onClick={scrollToTop}
+                        aria-label="Lên đầu trang"
+                    >
+                        <ArrowUp
+                            size={20}
+                            strokeWidth={2}
+                        />
+                    </button>
+
                 </div>
-
-                <p>
-                    © 2026 <span>CineStar</span>. Tất cả quyền được bảo lưu.
-                </p>
-
-                <button
-                    className="mystic-footer-scrolltop"
-                    onClick={() =>
-                        window.scrollTo({
-                            top: 0,
-                            behavior: 'smooth'
-                        })
-                    }
-                >
-                    ↑
-                </button>
 
             </div>
 

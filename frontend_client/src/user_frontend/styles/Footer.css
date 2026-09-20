@@ -1,431 +1,1289 @@
-/* =====================================================
-   FOOTER - QUANG DŨNG CINEMA (SILVER EDITION)
-   SỬ DỤNG 100% BIẾN TỪ INDEX.CSS
-   ===================================================== */
+/* ============================================================
+   QD CINEMA FOOTER
+   PREMIUM CINEMATIC / BLACK - SILVER EDITION
+
+   - Sử dụng biến từ index.css
+   - Không thay đổi cấu trúc layout bên ngoài
+   - Responsive: 4 cột -> 2 cột -> 1 cột
+   ============================================================ */
+
+
+/* ============================================================
+   FOOTER ROOT
+   ============================================================ */
 
 .mystic-footer {
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    padding-top: 0;
-    padding-bottom: 0;
     width: 100%;
-    flex-shrink: 0;
+    margin: 0 !important;
+    padding: 0;
     position: relative;
     overflow: hidden;
+    flex-shrink: 0;
+
+    background: var(--bg-primary);
+
     border-top: var(--border-premium);
-    box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.3);
+
+    box-shadow:
+        0 -8px 40px rgba(0, 0, 0, 0.28);
+
+    isolation: isolate;
 }
 
-/* =====================================================
+
+/* ============================================================
+   CINEMATIC BACKGROUND GLOW
+   ============================================================ */
+
+.mystic-footer::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+
+    pointer-events: none;
+
+    background:
+        linear-gradient(
+            120deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.025) 35%,
+            transparent 60%
+        );
+
+    z-index: -3;
+}
+
+.mystic-footer::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+
+    height: 1px;
+
+    background: var(--silver-primary);
+
+    opacity: 0.35;
+
+    z-index: 5;
+}
+
+
+/* ============================================================
+   DECORATIVE GLOW
+   ============================================================ */
+
+.mystic-footer-glow {
+    position: absolute;
+
+    width: 420px;
+    height: 420px;
+
+    border-radius: 50%;
+
+    pointer-events: none;
+
+    filter: blur(100px);
+
+    opacity: 0.055;
+
+    z-index: -2;
+}
+
+.mystic-footer-glow-left {
+    left: -260px;
+    top: 40px;
+
+    background: var(--silver-primary);
+}
+
+.mystic-footer-glow-right {
+    right: -260px;
+    bottom: 80px;
+
+    background: var(--silver-primary);
+}
+
+
+/* ============================================================
    MAIN CONTAINER
-   ===================================================== */
+   ============================================================ */
 
 .mystic-footer-container {
     width: 100%;
     max-width: var(--container-width);
+
     margin: 0 auto;
-    padding: var(--space-3xl) var(--space-2xl) var(--space-2xl);
+
+    padding:
+        var(--space-3xl)
+        var(--space-2xl)
+        var(--space-3xl);
+
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--space-2xl) var(--space-2xl);
-    border-bottom: var(--border-premium);
+
+    grid-template-columns:
+        minmax(0, 1.15fr)
+        minmax(0, 1fr)
+        minmax(0, 1fr)
+        minmax(0, 1fr);
+
+    gap: var(--space-2xl);
+
+    position: relative;
 }
 
-/* =====================================================
-   HEADING
-   ===================================================== */
 
-.mystic-footer-heading h3 {
-    color: var(--text-heading);
-    font-size: var(--font-size-h3);
-    font-weight: var(--fw-extrabold);
-    margin-bottom: var(--space-md);
-    letter-spacing: 0.05em;
+/* ============================================================
+   COLUMN DIVIDERS
+   ============================================================ */
+
+.mystic-footer-column {
+    position: relative;
+    min-width: 0;
 }
 
-/* =====================================================
-   MÔ TẢ
-   ===================================================== */
+.mystic-footer-column:not(:first-of-type)::before {
+    content: "";
+
+    position: absolute;
+
+    left: calc(var(--space-2xl) * -0.5);
+    top: 4px;
+    bottom: 4px;
+
+    width: 1px;
+
+    background: var(--border-subtle);
+
+    opacity: 0.8;
+}
+
+
+/* ============================================================
+   BRAND
+   ============================================================ */
+
+.mystic-footer-brand {
+    min-width: 0;
+    padding-right: var(--space-lg);
+}
+
+
+/* ============================================================
+   BRAND LOGO
+   ============================================================ */
+
+.mystic-footer-brand-logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+
+    width: auto;
+
+    padding: 0;
+    margin: 0;
+
+    border: 0;
+    outline: 0;
+
+    background: transparent;
+
+    cursor: pointer;
+
+    transition:
+        transform var(--transition-normal),
+        opacity var(--transition-normal);
+}
+
+.mystic-footer-brand-logo img {
+    display: block;
+
+    width: 180px;
+    max-width: 100%;
+    height: auto;
+
+    object-fit: contain;
+
+    transition:
+        transform var(--transition-normal),
+        filter var(--transition-normal);
+}
+
+.mystic-footer-brand-logo:hover {
+    transform: translateY(-2px);
+}
+
+.mystic-footer-brand-logo:hover img {
+    transform: scale(1.025);
+
+    filter:
+        drop-shadow(
+            0 8px 24px
+            rgba(255, 255, 255, 0.08)
+        );
+}
+
+
+/* ============================================================
+   BRAND LINE
+   ============================================================ */
+
+.mystic-footer-brand-line {
+    width: 48px;
+    height: 2px;
+
+    margin-top: var(--space-lg);
+    margin-bottom: var(--space-lg);
+
+    background: var(--silver-primary);
+
+    opacity: 0.8;
+}
+
+
+/* ============================================================
+   DESCRIPTION
+   ============================================================ */
 
 .mystic-footer-description {
+    max-width: 360px;
+
+    margin: 0 0 var(--space-2xl);
+
     color: var(--text-secondary);
-    line-height: var(--line-height-base);
+
     font-size: var(--font-size-base);
-    margin-bottom: var(--space-xl);
-    max-width: 320px;
+
+    line-height: 1.75;
+
+    font-weight: var(--fw-regular);
 }
 
-.mystic-footer-divider {
-    width: 80px;
-    height: 2px;
-    margin-bottom: var(--space-xl);
-    background: rgba(255, 255, 255, 0.08);
-}
 
-/* =====================================================
-   SOCIAL
-   ===================================================== */
+/* ============================================================
+   SOCIAL BLOCK
+   ============================================================ */
+
+.mystic-footer-social-block {
+    margin-top: var(--space-xl);
+}
 
 .mystic-footer-social-title {
-    color: var(--text-body);
-    font-size: var(--font-size-base);
+    margin: 0 0 var(--space-md);
+
+    color: var(--text-heading);
+
+    font-size: var(--font-size-sm);
+
     font-weight: var(--fw-bold);
-    margin-bottom: var(--space-md);
-    letter-spacing: 0.05em;
+
+    letter-spacing: 0.12em;
 }
+
+
+/* ============================================================
+   SOCIAL BUTTONS
+   ============================================================ */
 
 .mystic-footer-socials {
     display: flex;
-    gap: var(--space-md);
+    align-items: center;
+    gap: var(--space-sm);
 }
 
 .mystic-footer-socials a {
-    width: 46px;
-    height: 46px;
-    display: flex;
+    width: 44px;
+    height: 44px;
+
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    text-decoration: none;
-    color: var(--text-body);
-    border-radius: var(--radius-sm);
-    background: rgba(255, 255, 255, 0.04);
+
+    color: var(--text-secondary);
+
+    background: var(--bg-secondary);
+
     border: var(--border-premium);
-    transition: all var(--transition-fast);
+
+    border-radius: var(--radius-sm);
+
+    text-decoration: none;
+
+    transition:
+        color var(--transition-fast),
+        background var(--transition-fast),
+        border-color var(--transition-fast),
+        transform var(--transition-fast),
+        box-shadow var(--transition-fast);
 }
 
 .mystic-footer-socials a:hover {
-    background: rgba(232, 232, 232, 0.12);
+    color: var(--text-heading);
+
+    background: var(--bg-tertiary);
+
     border-color: var(--silver-primary);
-    transform: translateY(-3px);
-    box-shadow: 0 4px 16px rgba(159, 183, 210, 0.15);
+
+    transform: translateY(-4px);
+
+    box-shadow:
+        0 10px 28px
+        rgba(255, 255, 255, 0.08);
 }
 
-/* =====================================================
-   LIST (DỊCH VỤ / HỖ TRỢ)
-   ===================================================== */
 
-.mystic-footer-column ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+/* ============================================================
+   HEADING
+   ============================================================ */
+
+.mystic-footer-heading {
+    margin-bottom: var(--space-lg);
+}
+
+.mystic-footer-heading-title {
     display: flex;
     flex-direction: column;
     gap: var(--space-xs);
 }
 
-.mystic-footer-column ul li {
+.mystic-footer-heading-kicker {
+    display: block;
+
+    color: var(--text-muted);
+
+    font-size: var(--font-size-xs);
+
+    font-weight: var(--fw-semibold);
+
+    letter-spacing: 0.18em;
+}
+
+.mystic-footer-heading h3 {
+    margin: 0;
+
+    color: var(--text-heading);
+
+    font-size: var(--font-size-h3);
+
+    font-weight: var(--fw-extrabold);
+
+    line-height: 1.15;
+
+    letter-spacing: 0.06em;
+}
+
+.mystic-footer-heading-line {
+    display: block;
+
+    width: 38px;
+    height: 2px;
+
+    margin-top: var(--space-md);
+
+    background: var(--silver-primary);
+
+    opacity: 0.75;
+}
+
+
+/* ============================================================
+   LINK LIST
+   ============================================================ */
+
+.mystic-footer-list {
+    list-style: none;
+
+    margin: 0;
+    padding: 0;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.mystic-footer-list li {
     border-bottom: var(--border-subtle);
 }
 
-.mystic-footer-column ul li a {
+.mystic-footer-list li:first-child {
+    border-top: var(--border-subtle);
+}
+
+.mystic-footer-list li a {
+    min-height: 56px;
+
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--space-sm);
-    padding: var(--space-sm) 0;
-    text-decoration: none;
+
+    gap: var(--space-md);
+
+    padding:
+        var(--space-sm)
+        0;
+
     color: var(--text-secondary);
-    transition: all var(--transition-fast);
+
+    text-decoration: none;
+
     font-size: var(--font-size-base);
+
+    transition:
+        color var(--transition-fast),
+        padding-left var(--transition-fast);
 }
 
-.mystic-footer-column ul li a div {
+.mystic-footer-link-content {
+    min-width: 0;
+
     display: flex;
     align-items: center;
+
     gap: var(--space-md);
 }
 
-.mystic-footer-column ul li a div svg {
-    color: var(--silver-primary);
-    opacity: 0.7;
+.mystic-footer-link-content svg {
     flex-shrink: 0;
-}
 
-.mystic-footer-column ul li a .lucide-chevron-right {
-    color: rgba(255, 255, 255, 0.2);
-    transition: all var(--transition-fast);
-}
-
-.mystic-footer-column ul li a:hover {
     color: var(--silver-primary);
+
+    opacity: 0.8;
+
+    transition:
+        transform var(--transition-fast),
+        opacity var(--transition-fast);
+}
+
+.mystic-footer-list li a > svg {
+    flex-shrink: 0;
+
+    color: var(--text-muted);
+
+    opacity: 0.65;
+
+    transition:
+        transform var(--transition-fast),
+        color var(--transition-fast),
+        opacity var(--transition-fast);
+}
+
+.mystic-footer-list li a:hover {
+    color: var(--text-heading);
+
     padding-left: var(--space-xs);
 }
 
-.mystic-footer-column ul li a:hover .lucide-chevron-right {
-    color: var(--silver-primary);
-    transform: translateX(4px);
+.mystic-footer-list li a:hover
+.mystic-footer-link-content svg {
+    opacity: 1;
+
+    transform: translateX(2px);
 }
 
-/* =====================================================
+.mystic-footer-list li a:hover > svg {
+    color: var(--silver-primary);
+
+    opacity: 1;
+
+    transform: translateX(5px);
+}
+
+
+/* ============================================================
    CONTACT
-   ===================================================== */
+   ============================================================ */
 
 .mystic-footer-contact-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-xl);
+
+    gap: 0;
 }
 
 .mystic-footer-contact-item {
     display: flex;
     align-items: flex-start;
+
     gap: var(--space-md);
+
+    padding:
+        var(--space-md)
+        0;
+
+    border-bottom: var(--border-subtle);
 }
 
-.mystic-footer-contact-item svg {
-    color: var(--silver-primary);
+.mystic-footer-contact-item:first-child {
+    padding-top: var(--space-xs);
+}
+
+.mystic-footer-contact-icon {
+    width: 38px;
+    height: 38px;
+
     flex-shrink: 0;
-    margin-top: 2px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: var(--silver-primary);
+
+    border:
+        var(--border-premium);
+
+    border-radius: var(--radius-sm);
+
+    background: var(--bg-secondary);
+
+    transition:
+        background var(--transition-fast),
+        border-color var(--transition-fast),
+        transform var(--transition-fast);
 }
 
-.mystic-footer-contact-item p {
+.mystic-footer-contact-item:hover
+.mystic-footer-contact-icon {
+    background: var(--bg-tertiary);
+
+    border-color: var(--silver-primary);
+
+    transform: translateY(-2px);
+}
+
+.mystic-footer-contact-content {
+    min-width: 0;
+
+    padding-top: 1px;
+}
+
+.mystic-footer-contact-label {
+    display: block;
+
+    margin-bottom: 4px;
+
+    color: var(--text-muted);
+
+    font-size: var(--font-size-xs);
+
+    font-weight: var(--fw-semibold);
+
+    letter-spacing: 0.04em;
+}
+
+.mystic-footer-contact-content p {
     margin: 0;
+
     color: var(--text-secondary);
-    line-height: var(--line-height-base);
+
     font-size: var(--font-size-base);
+
+    line-height: 1.6;
+
+    overflow-wrap: anywhere;
 }
 
-/* =====================================================
+
+/* ============================================================
+   FEATURE WRAPPER
+   ============================================================ */
+
+.mystic-footer-feature-wrapper {
+    width: 100%;
+
+    border-top: var(--border-premium);
+    border-bottom: var(--border-premium);
+
+    background: var(--bg-secondary);
+}
+
+
+/* ============================================================
    FEATURE BAR
-   ===================================================== */
+   ============================================================ */
 
 .mystic-footer-feature-bar {
     width: 100%;
     max-width: var(--container-width);
+
     margin: 0 auto;
-    padding: var(--space-xl) var(--space-2xl);
-    display: flex;
+
+    padding:
+        var(--space-xl)
+        var(--space-2xl);
+
+    display: grid;
+
+    grid-template-columns:
+        1fr
+        auto
+        1fr
+        auto
+        1fr;
+
     align-items: center;
-    justify-content: center;
-    gap: 60px;
-    border-bottom: var(--border-premium);
+
+    gap: var(--space-xl);
 }
+
+
+/* ============================================================
+   FEATURE
+   ============================================================ */
 
 .mystic-footer-feature {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
-    color: var(--text-secondary);
-    font-size: var(--font-size-base);
-    font-weight: var(--fw-medium);
+
+    gap: var(--space-md);
+
+    min-width: 0;
 }
 
-.mystic-footer-feature svg {
+.mystic-footer-feature-icon {
+    width: 48px;
+    height: 48px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
     color: var(--silver-primary);
+
+    border:
+        var(--border-premium);
+
+    border-radius: 50%;
+
+    background: var(--bg-primary);
+
+    transition:
+        transform var(--transition-fast),
+        border-color var(--transition-fast);
 }
 
-/* =====================================================
-   COPYRIGHT
-   ===================================================== */
+.mystic-footer-feature:hover
+.mystic-footer-feature-icon {
+    transform: translateY(-2px);
+
+    border-color: var(--silver-primary);
+}
+
+.mystic-footer-feature-content {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 4px;
+}
+
+.mystic-footer-feature-content strong {
+    color: var(--text-heading);
+
+    font-size: var(--font-size-base);
+
+    font-weight: var(--fw-bold);
+}
+
+.mystic-footer-feature-content span {
+    color: var(--text-muted);
+
+    font-size: var(--font-size-sm);
+
+    line-height: 1.4;
+}
+
+.mystic-footer-feature-divider {
+    width: 1px;
+    height: 42px;
+
+    background: var(--border-subtle);
+}
+
+
+/* ============================================================
+   BOTTOM WRAPPER
+   ============================================================ */
+
+.mystic-footer-bottom-wrapper {
+    width: 100%;
+}
+
+
+/* ============================================================
+   BOTTOM BAR
+   ============================================================ */
 
 .mystic-footer-bottom {
     width: 100%;
     max-width: var(--container-width);
+
+    min-height: 84px;
+
     margin: 0 auto;
-    padding: var(--space-xl) var(--space-2xl);
-    display: flex;
+
+    padding:
+        var(--space-lg)
+        var(--space-2xl);
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        auto
+        minmax(0, 1fr)
+        auto;
+
     align-items: center;
-    justify-content: space-between;
+
     gap: var(--space-xl);
-    position: relative;
 }
 
-.mystic-footer-logo {
-    cursor: pointer;
-    flex-shrink: 0;
-}
 
-.mystic-footer-logo img {
-    width: 140px;
-    object-fit: contain;
-    transition: all var(--transition-normal);
-}
+/* ============================================================
+   COPYRIGHT
+   ============================================================ */
 
-.mystic-footer-logo:hover img {
-    transform: scale(1.04);
-}
+.mystic-footer-copyright {
+    display: flex;
+    flex-wrap: wrap;
 
-.mystic-footer-bottom p {
+    align-items: center;
+
+    gap: var(--space-xs);
+
     color: var(--text-muted);
-    font-size: var(--font-size-base);
-    margin: 0;
+
+    font-size: var(--font-size-sm);
+
+    line-height: 1.5;
 }
 
-.mystic-footer-bottom span {
-    color: var(--silver-primary);
-    font-weight: var(--fw-bold);
+.mystic-footer-copyright span:first-child {
+    color: var(--text-secondary);
+
+    font-weight: var(--fw-semibold);
 }
 
-/* =====================================================
-   SCROLL TOP
-   ===================================================== */
 
-.mystic-footer-scrolltop {
-    width: 52px;
-    height: 52px;
-    border: none;
-    cursor: pointer;
-    border-radius: 50%;
-    color: var(--bg-primary);
-    background: var(--premium-gradient);
-    font-size: var(--font-size-h4);
-    font-weight: var(--fw-bold);
-    transition: all var(--transition-normal);
+/* ============================================================
+   LEGAL LINKS
+   ============================================================ */
+
+.mystic-footer-legal {
     display: flex;
     align-items: center;
     justify-content: center;
+
+    gap: var(--space-sm);
+
+    white-space: nowrap;
+}
+
+.mystic-footer-legal a {
+    color: var(--text-muted);
+
+    text-decoration: none;
+
+    font-size: var(--font-size-sm);
+
+    transition:
+        color var(--transition-fast);
+}
+
+.mystic-footer-legal a:hover {
+    color: var(--silver-primary);
+}
+
+.mystic-footer-legal > span {
+    color: var(--text-muted);
+
+    opacity: 0.4;
+}
+
+
+/* ============================================================
+   SIGNATURE
+   ============================================================ */
+
+.mystic-footer-signature {
+    justify-self: end;
+
+    display: inline-flex;
+    align-items: center;
+
+    gap: var(--space-sm);
+
+    padding: 0;
+
+    border: 0;
+    outline: 0;
+
+    background: transparent;
+
+    color: var(--text-heading);
+
+    cursor: pointer;
+
+    transition:
+        opacity var(--transition-fast),
+        transform var(--transition-fast);
+}
+
+.mystic-footer-signature:hover {
+    transform: translateY(-1px);
+}
+
+.mystic-footer-signature-icon {
+    width: 28px;
+    height: 28px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: var(--silver-primary);
+
+    border:
+        var(--border-premium);
+
+    border-radius: 50%;
+}
+
+.mystic-footer-signature-name {
+    color: var(--text-heading);
+
+    font-size: var(--font-size-h4);
+
+    font-weight: var(--fw-extrabold);
+
+    letter-spacing: 0.08em;
+}
+
+.mystic-footer-signature-text {
+    color: var(--text-muted);
+
+    font-size: var(--font-size-xs);
+
+    font-weight: var(--fw-semibold);
+
+    letter-spacing: 0.22em;
+
+    white-space: nowrap;
+}
+
+
+/* ============================================================
+   SCROLL TOP
+   ============================================================ */
+
+.mystic-footer-scrolltop {
+    width: 44px;
+    height: 44px;
+
     flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    color: var(--text-heading);
+
+    background: var(--bg-secondary);
+
+    border:
+        var(--border-premium);
+
+    border-radius: 50%;
+
+    cursor: pointer;
+
+    transition:
+        color var(--transition-fast),
+        background var(--transition-fast),
+        border-color var(--transition-fast),
+        transform var(--transition-fast),
+        box-shadow var(--transition-fast);
 }
 
 .mystic-footer-scrolltop:hover {
-    background: var(--silver-dark);
-    transform: translateY(-4px);
-    box-shadow: 0 8px 30px rgba(159, 183, 210, 0.3);
     color: var(--bg-primary);
+
+    background: var(--silver-primary);
+
+    border-color: var(--silver-primary);
+
+    transform: translateY(-4px);
+
+    box-shadow:
+        0 10px 28px
+        rgba(255, 255, 255, 0.12);
 }
 
-/* =====================================================
-   RESPONSIVE - 4 KÍCH THƯỚC CHUẨN
-   ===================================================== */
 
-/* --- 1200px: vẫn 4 cột, giảm gap --- */
+/* ============================================================
+   LARGE DESKTOP
+   ============================================================ */
+
 @media (max-width: 1200px) {
+
     .mystic-footer-container {
-        gap: var(--space-2xl) var(--space-xl);
-        padding: var(--space-3xl) var(--space-xl) var(--space-2xl);
+        padding:
+            var(--space-3xl)
+            var(--space-xl)
+            var(--space-3xl);
+
+        gap: var(--space-xl);
     }
-    .mystic-footer-feature-bar,
+
+    .mystic-footer-column:not(:first-of-type)::before {
+        left: calc(var(--space-xl) * -0.5);
+    }
+
+    .mystic-footer-feature-bar {
+        padding-left: var(--space-xl);
+        padding-right: var(--space-xl);
+    }
+
     .mystic-footer-bottom {
         padding-left: var(--space-xl);
         padding-right: var(--space-xl);
     }
+
 }
 
-/* --- 992px: xuống 2 cột --- */
+
+/* ============================================================
+   TABLET - 992PX
+   ============================================================ */
+
 @media (max-width: 992px) {
+
     .mystic-footer-container {
-        grid-template-columns: repeat(2, 1fr);
-        gap: var(--space-2xl) var(--space-xl);
-        padding: var(--space-2xl) var(--space-xl) var(--space-2xl);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+
+        gap:
+            var(--space-3xl)
+            var(--space-xl);
+
+        padding:
+            var(--space-2xl)
+            var(--space-xl);
     }
+
+    .mystic-footer-brand {
+        padding-right: var(--space-md);
+    }
+
+    .mystic-footer-column:nth-child(3)::before {
+        display: none;
+    }
+
+    .mystic-footer-column:not(:first-of-type)::before {
+        left: calc(var(--space-xl) * -0.5);
+    }
+
     .mystic-footer-feature-bar {
-        flex-wrap: wrap;
-        gap: var(--space-xl) var(--space-2xl);
-        padding: var(--space-xl) var(--space-xl);
+        grid-template-columns: 1fr;
+
+        gap: var(--space-lg);
+
+        padding:
+            var(--space-xl);
     }
-    .mystic-footer-bottom {
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: var(--space-md);
-        padding: var(--space-xl) var(--space-xl);
+
+    .mystic-footer-feature-divider {
+        display: none;
     }
+
     .mystic-footer-feature {
-        font-size: var(--font-size-base);
+        justify-content: center;
     }
+
+    .mystic-footer-bottom {
+        grid-template-columns:
+            1fr
+            auto;
+
+        gap: var(--space-lg);
+
+        padding:
+            var(--space-xl);
+    }
+
+    .mystic-footer-legal {
+        justify-self: start;
+    }
+
+    .mystic-footer-signature {
+        justify-self: end;
+    }
+
+}
+
+
+/* ============================================================
+   TABLET SMALL - 768PX
+   ============================================================ */
+
+@media (max-width: 768px) {
+
+    .mystic-footer-container {
+        padding:
+            var(--space-2xl)
+            var(--space-xl);
+
+        gap:
+            var(--space-2xl)
+            var(--space-xl);
+    }
+
+    .mystic-footer-brand-logo img {
+        width: 155px;
+    }
+
     .mystic-footer-description {
         max-width: 100%;
     }
-}
 
-/* --- 768px: vẫn 2 cột, giảm padding --- */
-@media (max-width: 768px) {
-    .mystic-footer-container {
-        grid-template-columns: repeat(2, 1fr);
-        gap: var(--space-2xl) var(--space-xl);
-        padding: var(--space-2xl) var(--space-xl) var(--space-xl);
+    .mystic-footer-column:not(:first-of-type)::before {
+        display: none;
     }
-    .mystic-footer-feature-bar,
-    .mystic-footer-bottom {
-        padding-left: var(--space-xl);
-        padding-right: var(--space-xl);
+
+    .mystic-footer-heading h3 {
+        font-size: var(--font-size-h4);
     }
-    .mystic-footer-feature-bar {
-        gap: var(--space-md) var(--space-xl);
-        padding: var(--space-xl) var(--space-xl);
-    }
-    .mystic-footer-bottom {
-        flex-direction: column;
-        text-align: center;
-        gap: var(--space-md);
-        padding: var(--space-xl) var(--space-xl);
-    }
-    .mystic-footer-scrolltop {
-        position: relative;
-        right: auto;
-    }
-    .mystic-footer-socials {
+
+    .mystic-footer-feature {
         justify-content: flex-start;
     }
-    .mystic-footer-column ul li a {
-        padding: var(--space-sm) 0;
+
+    .mystic-footer-bottom {
+        grid-template-columns: 1fr;
+
+        justify-items: center;
+
+        text-align: center;
+
+        padding:
+            var(--space-xl);
     }
-    .mystic-footer-contact-item {
-        gap: var(--space-md);
+
+    .mystic-footer-copyright {
+        justify-content: center;
     }
-    .mystic-footer-description {
-        max-width: 100%;
+
+    .mystic-footer-legal {
+        justify-self: center;
+
+        flex-wrap: wrap;
+
+        white-space: normal;
     }
+
+    .mystic-footer-signature {
+        justify-self: center;
+    }
+
+    .mystic-footer-scrolltop {
+        width: 42px;
+        height: 42px;
+    }
+
 }
 
-/* --- 480px: xuống 1 cột --- */
-@media (max-width: 480px) {
+
+/* ============================================================
+   MOBILE - 600PX
+   ============================================================ */
+
+@media (max-width: 600px) {
+
     .mystic-footer-container {
         grid-template-columns: 1fr;
-        gap: var(--space-xl);
-        padding: var(--space-xl) var(--space-md) var(--space-xl);
-        text-align: center;
+
+        padding:
+            var(--space-2xl)
+            var(--space-lg);
+
+        gap: var(--space-2xl);
     }
-    .mystic-footer-brand,
-    .mystic-footer-column {
-        text-align: center;
+
+    .mystic-footer-brand {
+        padding-right: 0;
     }
-    .mystic-footer-socials {
-        justify-content: center;
+
+    .mystic-footer-brand-logo {
+        display: flex;
     }
+
+    .mystic-footer-brand-logo img {
+        width: 145px;
+    }
+
     .mystic-footer-description {
-        max-width: 100%;
-        margin-left: auto;
-        margin-right: auto;
+        max-width: 520px;
     }
-    .mystic-footer-column ul li a {
-        justify-content: center;
-        padding: var(--space-sm) 0;
+
+    .mystic-footer-heading {
+        margin-bottom: var(--space-md);
     }
-    .mystic-footer-column ul li a div {
-        justify-content: center;
+
+    .mystic-footer-list li a {
+        min-height: 52px;
     }
-    .mystic-footer-contact-item {
-        justify-content: center;
-        text-align: center;
-    }
-    .mystic-footer-contact-item p {
-        text-align: left;
-    }
+
     .mystic-footer-feature-bar {
-        flex-direction: column;
-        gap: var(--space-md);
-        padding: var(--space-md) var(--space-md);
+        padding:
+            var(--space-lg);
     }
+
     .mystic-footer-feature {
-        font-size: var(--font-size-base);
+        width: 100%;
     }
-    .mystic-footer-bottom {
-        padding: var(--space-xl) var(--space-md);
-        gap: var(--space-md);
-    }
-    .mystic-footer-logo img {
-        width: 100px;
-    }
-    .mystic-footer-bottom p {
-        font-size: var(--font-size-base);
-    }
-    .mystic-footer-scrolltop {
+
+    .mystic-footer-feature-icon {
         width: 44px;
         height: 44px;
-        font-size: var(--font-size-h5);
     }
+
+    .mystic-footer-bottom {
+        padding:
+            var(--space-lg);
+    }
+
+}
+
+
+/* ============================================================
+   MOBILE - 480PX
+   ============================================================ */
+
+@media (max-width: 480px) {
+
+    .mystic-footer-container {
+        padding:
+            var(--space-xl)
+            var(--space-md);
+    }
+
+    .mystic-footer-brand-logo img {
+        width: 135px;
+    }
+
+    .mystic-footer-description {
+        font-size: var(--font-size-sm);
+
+        line-height: 1.7;
+    }
+
+    .mystic-footer-social-title {
+        font-size: var(--font-size-xs);
+    }
+
+    .mystic-footer-socials {
+        gap: var(--space-xs);
+    }
+
     .mystic-footer-socials a {
         width: 40px;
         height: 40px;
     }
+
+    .mystic-footer-heading-kicker {
+        font-size: 10px;
+    }
+
+    .mystic-footer-heading h3 {
+        font-size: var(--font-size-h5);
+    }
+
+    .mystic-footer-contact-item {
+        gap: var(--space-sm);
+    }
+
+    .mystic-footer-contact-icon {
+        width: 34px;
+        height: 34px;
+    }
+
+    .mystic-footer-contact-content p {
+        font-size: var(--font-size-sm);
+    }
+
+    .mystic-footer-link-content {
+        gap: var(--space-sm);
+    }
+
+    .mystic-footer-list li a {
+        font-size: var(--font-size-sm);
+    }
+
+    .mystic-footer-feature-content strong {
+        font-size: var(--font-size-sm);
+    }
+
+    .mystic-footer-feature-content span {
+        font-size: var(--font-size-xs);
+    }
+
+    .mystic-footer-copyright {
+        font-size: var(--font-size-xs);
+    }
+
+    .mystic-footer-legal {
+        gap: var(--space-xs);
+    }
+
+    .mystic-footer-legal a {
+        font-size: var(--font-size-xs);
+    }
+
+    .mystic-footer-signature-name {
+        font-size: var(--font-size-h5);
+    }
+
+    .mystic-footer-signature-text {
+        font-size: 9px;
+        letter-spacing: 0.16em;
+    }
+
+}
+
+
+/* ============================================================
+   VERY SMALL MOBILE - 360PX
+   ============================================================ */
+
+@media (max-width: 360px) {
+
+    .mystic-footer-container {
+        padding:
+            var(--space-xl)
+            var(--space-sm);
+    }
+
+    .mystic-footer-brand-logo img {
+        width: 120px;
+    }
+
+    .mystic-footer-feature {
+        gap: var(--space-sm);
+    }
+
+    .mystic-footer-feature-icon {
+        width: 40px;
+        height: 40px;
+    }
+
+    .mystic-footer-signature-text {
+        display: none;
+    }
+
 }

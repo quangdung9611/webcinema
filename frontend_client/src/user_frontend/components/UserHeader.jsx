@@ -23,7 +23,15 @@ import {
     LogOut,
     LogIn,
     UserPlus,
-    LayoutDashboard
+    LayoutDashboard,
+    Home,
+    Film,
+    MapPin,
+    Clapperboard,
+    Gift,
+    Newspaper,
+    Menu,
+    X
 } from 'lucide-react';
 
 import '../styles/Header.css';
@@ -31,13 +39,20 @@ import '../styles/Header.css';
 // ============================================================
 // USER HEADER
 // ============================================================
-// Mục tiêu:
+// PC
+// - Hover dropdown bằng CSS
+// - Hover "Rạp" sẽ trigger API cinemas
 //
-// 1. Không tự gọi API cinemas khi Header vừa mount.
-// 2. Chỉ gọi /api/cinemas khi user thực sự mở menu "Rạp".
-// 3. Sau lần đầu tải thành công, giữ dữ liệu trong state để
-//    không gọi API lại mỗi lần mở menu.
-// 4. User/auth vẫn lấy từ AuthContext.
+// MOBILE / TABLET
+// - Click menu cha để mở dropdown
+// - Click "Rạp" sẽ trigger API cinemas
+//
+// CINEMAS
+// - Không gọi API khi Header mount
+// - Chỉ gọi khi user mở / hover "Rạp"
+// - Sau khi load thành công giữ dữ liệu trong state
+// - Chặn request trùng bằng ref
+// - Có retry nếu API lỗi
 // ============================================================
 
 const UserHeader = () => {
@@ -56,25 +71,35 @@ const UserHeader = () => {
     const [user, setUser] = useState(contextUser);
 
     // ========================================================
-    // UI STATE
+    // UI
     // ========================================================
 
     const [showDropdown, setShowDropdown] = useState(false);
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [activeSubMenu, setActiveSubMenu] = useState(null);
-    const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+    const [isMenuOpen, setIsMenuOpen] =
+        useState(false);
+
+    const [activeSubMenu, setActiveSubMenu] =
+        useState(null);
+
+    const [isLoggingOut, setIsLoggingOut] =
+        useState(false);
 
     // ========================================================
     // CINEMAS
     // ========================================================
-    // Không fetch lúc Header mount.
-    //
-    // Chỉ fetch khi mở menu "Rạp".
-    // ========================================================
 
-    const [cinemas, setCinemas] = useState([]);
-    const [cinemasLoaded, setCinemasLoaded] = useState(false);
-    const [isLoadingCinemas, setIsLoadingCinemas] = useState(false);
+    const [cinemas, setCinemas] =
+        useState([]);
+
+    const [cinemasLoaded, setCinemasLoaded] =
+        useState(false);
+
+    const [isLoadingCinemas, setIsLoadingCinemas] =
+        useState(false);
+
+    const [cinemasError, setCinemasError] =
+        useState(false);
 
     // ========================================================
     // TOAST
@@ -90,13 +115,27 @@ const UserHeader = () => {
     // REFS
     // ========================================================
 
-    const dropdownRef = useRef(null);
-    const navRef = useRef(null);
-    const toastTimeoutRef = useRef(null);
-    const redirectTimeoutRef = useRef(null);
+    const dropdownRef =
+        useRef(null);
+
+    const navRef =
+        useRef(null);
+
+    const toastTimeoutRef =
+        useRef(null);
+
+    const redirectTimeoutRef =
+        useRef(null);
+
+    // --------------------------------------------------------
+    // Request lock
+    // --------------------------------------------------------
+
+    const cinemasRequestRef =
+        useRef(false);
 
     // ========================================================
-    // SYNC USER FROM AUTH CONTEXT
+    // SYNC USER
     // ========================================================
 
     useEffect(() => {
@@ -107,82 +146,76 @@ const UserHeader = () => {
     // TOAST
     // ========================================================
 
-    const showToast = useCallback((message, type = 'success') => {
-        if (toastTimeoutRef.current) {
-            clearTimeout(toastTimeoutRef.current);
-            toastTimeoutRef.current = null;
-        }
+    const showToast = useCallback(
+        (message, type = 'success') => {
+            if (
+                toastTimeoutRef.current
+            ) {
+                clearTimeout(
+                    toastTimeoutRef.current
+                );
 
-        setToast({
-            show: true,
-            message,
-            type
-        });
+                toastTimeoutRef.current =
+                    null;
+            }
 
-        toastTimeoutRef.current = setTimeout(() => {
             setToast({
-                show: false,
-                message: '',
-                type: 'success'
+                show: true,
+                message,
+                type
             });
 
-            toastTimeoutRef.current = null;
-        }, 4000);
-    }, []);
+            toastTimeoutRef.current =
+                setTimeout(() => {
+                    setToast({
+                        show: false,
+                        message: '',
+                        type: 'success'
+                    });
+
+                    toastTimeoutRef.current =
+                        null;
+                }, 4000);
+        },
+        []
+    );
 
     // ========================================================
     // AUTH EVENTS
     // ========================================================
 
     useEffect(() => {
-        const handleAuthCleanedUp = (event) => {
-            console.log(
-                '🧹 [HEADER] Auth cleaned:',
-                event?.detail
-            );
+        const handleAuthCleanedUp =
+            () => {
+                setUser(null);
+                setShowDropdown(false);
 
-            setUser(null);
-            setShowDropdown(false);
+                try {
+                    socketService.disconnect();
+                } catch (error) {
+                    // Silent
+                }
+            };
 
-            try {
-                socketService.disconnect();
-            } catch (error) {
-                console.warn(
-                    'Socket disconnect error:',
-                    error
-                );
-            }
-        };
+        const handleUserLoggedIn =
+            () => {
+                refetch().catch(() => {});
+            };
 
-        const handleUserLoggedIn = () => {
-            console.log(
-                '🟢 [HEADER] User logged in - updating immediately'
-            );
+        const handleSessionExpired =
+            () => {
+                setUser(null);
+                setShowDropdown(false);
 
-            refetch().catch(() => {});
-        };
+                setIsMenuOpen(false);
+                setActiveSubMenu(null);
 
-        const handleSessionExpired = (event) => {
-            console.warn(
-                '🔴 [HEADER] Session expired:',
-                event?.detail
-            );
-
-            setUser(null);
-            setShowDropdown(false);
-
-            try {
-                socketService.disconnect();
-            } catch (error) {
-                console.warn(
-                    'Socket disconnect error:',
-                    error
-                );
-            }
-
-            setIsMenuOpen(false);
-            setActiveSubMenu(null);
-        };
+                try {
+                    socketService.disconnect();
+                } catch (error) {
+                    // Silent
+                }
+            };
 
         window.addEventListener(
             'authCleanedUp',
@@ -220,181 +253,339 @@ const UserHeader = () => {
     // ========================================================
     // FETCH CINEMAS
     // ========================================================
-    // Đây là điểm quan trọng:
+    // Không gọi khi Header mount.
     //
-    // Header KHÔNG fetch cinemas khi mount.
+    // force = false
+    // -> nếu đã load thành công thì không gọi lại.
     //
-    // Hàm này chỉ được gọi khi user mở menu "Rạp".
+    // force = true
+    // -> dùng cho nút "Thử lại".
     // ========================================================
 
-    const fetchCinemas = useCallback(async () => {
-        // Đã load rồi → không gọi lại API
-        if (cinemasLoaded) {
-            return;
-        }
+    const fetchCinemas = useCallback(
+        async (force = false) => {
+            // ------------------------------------------------
+            // Đã load thành công
+            // ------------------------------------------------
 
-        // Đang request → không tạo request thứ hai
-        if (isLoadingCinemas) {
-            return;
-        }
-
-        setIsLoadingCinemas(true);
-
-        console.log(
-            '🎬 [HEADER] Loading cinemas...'
-        );
-
-        try {
-            const response = await api.get(
-                '/api/cinemas'
-            );
-
-            const raw =
-                response?.data?.data;
-
-            let list = [];
-
-            if (Array.isArray(raw)) {
-                list = raw;
-            } else if (
-                Array.isArray(raw?.data)
+            if (
+                cinemasLoaded &&
+                !force
             ) {
-                list = raw.data;
-            } else if (
-                Array.isArray(raw?.cinemas)
-            ) {
-                list = raw.cinemas;
+                return;
             }
 
-            setCinemas(list);
-            setCinemasLoaded(true);
+            // ------------------------------------------------
+            // Đang request
+            // ------------------------------------------------
 
-            console.log(
-                '✅ [HEADER] Cinemas loaded:',
-                list.length
-            );
-        } catch (error) {
-            console.error(
-                '🔴 [HEADER] Cannot fetch cinemas:',
-                error
-            );
+            if (
+                cinemasRequestRef.current
+            ) {
+                return;
+            }
 
-            setCinemas([]);
-        } finally {
-            setIsLoadingCinemas(false);
-        }
-    }, [
-        cinemasLoaded,
-        isLoadingCinemas
-    ]);
+            cinemasRequestRef.current =
+                true;
+
+            setIsLoadingCinemas(true);
+            setCinemasError(false);
+
+            try {
+                const response =
+                    await api.get(
+                        '/api/cinemas'
+                    );
+
+                console.log(
+                    '📦 [HEADER] Cinemas response:',
+                    response?.data
+                );
+
+                const responseData =
+                    response?.data;
+
+                let list = [];
+
+                // ==================================================
+                // FORMAT 1
+                //
+                // {
+                //   success: true,
+                //   data: [...]
+                // }
+                // ==================================================
+
+                if (
+                    Array.isArray(
+                        responseData?.data
+                    )
+                ) {
+                    list =
+                        responseData.data;
+                }
+
+                // ==================================================
+                // FORMAT 2
+                //
+                // {
+                //   success: true,
+                //   data: {
+                //      data: [...]
+                //   }
+                // }
+                // ==================================================
+
+                else if (
+                    Array.isArray(
+                        responseData
+                            ?.data
+                            ?.data
+                    )
+                ) {
+                    list =
+                        responseData
+                            .data
+                            .data;
+                }
+
+                // ==================================================
+                // FORMAT 3
+                //
+                // {
+                //   success: true,
+                //   data: {
+                //      cinemas: [...]
+                //   }
+                // }
+                // ==================================================
+
+                else if (
+                    Array.isArray(
+                        responseData
+                            ?.data
+                            ?.cinemas
+                    )
+                ) {
+                    list =
+                        responseData
+                            .data
+                            .cinemas;
+                }
+
+                // ==================================================
+                // FORMAT 4
+                //
+                // [...]
+                // ==================================================
+
+                else if (
+                    Array.isArray(
+                        responseData
+                    )
+                ) {
+                    list =
+                        responseData;
+                }
+
+                console.log(
+                    '🎬 [HEADER] Parsed cinemas:',
+                    list
+                );
+
+                // ------------------------------------------------
+                // Lưu danh sách
+                // ------------------------------------------------
+
+                setCinemas(list);
+
+                // ------------------------------------------------
+                // API chạy thành công
+                // dù list rỗng
+                // ------------------------------------------------
+
+                setCinemasLoaded(true);
+                setCinemasError(false);
+
+            } catch (error) {
+                console.error(
+                    '🔴 [HEADER] Cannot fetch cinemas:',
+                    error
+                );
+
+                console.error(
+                    '🔴 [HEADER] Status:',
+                    error?.response?.status
+                );
+
+                console.error(
+                    '🔴 [HEADER] Data:',
+                    error?.response?.data
+                );
+
+                setCinemas([]);
+                setCinemasLoaded(false);
+                setCinemasError(true);
+
+            } finally {
+                cinemasRequestRef.current =
+                    false;
+
+                setIsLoadingCinemas(false);
+            }
+        },
+        [cinemasLoaded]
+    );
 
     // ========================================================
     // LOGOUT
     // ========================================================
 
-    const handleLogout = async () => {
-        if (isLoggingOut) {
-            return;
-        }
+    const handleLogout =
+        async () => {
+            if (isLoggingOut) {
+                return;
+            }
 
-        setIsLoggingOut(true);
+            setIsLoggingOut(true);
 
-        console.log(
-            '🔴 [HEADER] Logging out...'
-        );
+            try {
+                await logout();
 
-        try {
-            await logout();
+                setUser(null);
+                setShowDropdown(false);
 
-            setUser(null);
-            setShowDropdown(false);
+                showToast(
+                    'Đăng xuất thành công! Hẹn gặp lại bạn 👋',
+                    'success'
+                );
 
-            showToast(
-                'Đăng xuất thành công! Hẹn gặp lại bạn 👋',
-                'success'
-            );
+                if (
+                    redirectTimeoutRef.current
+                ) {
+                    clearTimeout(
+                        redirectTimeoutRef.current
+                    );
 
-            if (redirectTimeoutRef.current) {
+                    redirectTimeoutRef.current =
+                        null;
+                }
+
+                redirectTimeoutRef.current =
+                    setTimeout(() => {
+                        navigate(
+                            '/login',
+                            {
+                                replace: true,
+                                state: {
+                                    loggedOut: true,
+                                    message:
+                                        'Đăng xuất thành công!'
+                                }
+                            }
+                        );
+
+                        setIsLoggingOut(false);
+
+                        redirectTimeoutRef.current =
+                            null;
+                    }, 1500);
+
+            } catch (error) {
+                console.error(
+                    '🔴 [HEADER] Logout error:',
+                    error
+                );
+
+                showToast(
+                    'Có lỗi xảy ra khi đăng xuất. Vui lòng thử lại.',
+                    'error'
+                );
+
+                if (
+                    redirectTimeoutRef.current
+                ) {
+                    clearTimeout(
+                        redirectTimeoutRef.current
+                    );
+
+                    redirectTimeoutRef.current =
+                        null;
+                }
+
+                redirectTimeoutRef.current =
+                    setTimeout(() => {
+                        setUser(null);
+
+                        navigate(
+                            '/login',
+                            {
+                                replace: true
+                            }
+                        );
+
+                        setIsLoggingOut(false);
+
+                        redirectTimeoutRef.current =
+                            null;
+                    }, 2000);
+            }
+        };
+
+    // ========================================================
+    // CLEANUP TIMER
+    // ========================================================
+
+    useEffect(() => {
+        return () => {
+            if (
+                toastTimeoutRef.current
+            ) {
+                clearTimeout(
+                    toastTimeoutRef.current
+                );
+            }
+
+            if (
+                redirectTimeoutRef.current
+            ) {
                 clearTimeout(
                     redirectTimeoutRef.current
                 );
-
-                redirectTimeoutRef.current = null;
             }
-
-            redirectTimeoutRef.current =
-                setTimeout(() => {
-                    navigate('/login', {
-                        replace: true,
-                        state: {
-                            loggedOut: true,
-                            message:
-                                'Đăng xuất thành công!'
-                        }
-                    });
-
-                    setIsLoggingOut(false);
-
-                    redirectTimeoutRef.current = null;
-                }, 1500);
-
-        } catch (error) {
-            console.error(
-                '🔴 [HEADER] Logout error:',
-                error
-            );
-
-            showToast(
-                'Có lỗi xảy ra khi đăng xuất. Vui lòng thử lại.',
-                'error'
-            );
-
-            if (redirectTimeoutRef.current) {
-                clearTimeout(
-                    redirectTimeoutRef.current
-                );
-
-                redirectTimeoutRef.current = null;
-            }
-
-            redirectTimeoutRef.current =
-                setTimeout(() => {
-                    setUser(null);
-
-                    navigate('/login', {
-                        replace: true
-                    });
-
-                    setIsLoggingOut(false);
-
-                    redirectTimeoutRef.current = null;
-                }, 2000);
-        }
-    };
+        };
+    }, []);
 
     // ========================================================
     // CLICK OUTSIDE
     // ========================================================
 
     useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (
-                navRef.current &&
-                navRef.current.contains(event.target)
-            ) {
-                return;
-            }
+        const handleClickOutside =
+            (event) => {
+                // Nav đang chứa click
+                if (
+                    navRef.current &&
+                    navRef.current.contains(
+                        event.target
+                    )
+                ) {
+                    return;
+                }
 
-            if (
-                dropdownRef.current &&
-                dropdownRef.current.contains(event.target)
-            ) {
-                return;
-            }
+                // Account đang chứa click
+                if (
+                    dropdownRef.current &&
+                    dropdownRef.current.contains(
+                        event.target
+                    )
+                ) {
+                    return;
+                }
 
-            setActiveSubMenu(null);
-            setShowDropdown(false);
-        };
+                setActiveSubMenu(null);
+                setShowDropdown(false);
+            };
 
         document.addEventListener(
             'mousedown',
@@ -414,12 +605,16 @@ const UserHeader = () => {
     // ========================================================
 
     useEffect(() => {
-        const handleResize = () => {
-            if (window.innerWidth > 768) {
-                setIsMenuOpen(false);
-                setActiveSubMenu(null);
-            }
-        };
+        const handleResize =
+            () => {
+                if (
+                    window.innerWidth >
+                    1200
+                ) {
+                    setIsMenuOpen(false);
+                    setActiveSubMenu(null);
+                }
+            };
 
         window.addEventListener(
             'resize',
@@ -438,68 +633,106 @@ const UserHeader = () => {
     // CLOSE MOBILE MENU
     // ========================================================
 
-    const closeMobileMenu = () => {
-        setIsMenuOpen(false);
-        setActiveSubMenu(null);
-    };
+    const closeMobileMenu =
+        () => {
+            setIsMenuOpen(false);
+            setActiveSubMenu(null);
+        };
 
     // ========================================================
-    // SUB MENU
+    // TOGGLE SUB MENU
+    // ========================================================
+    // Dùng cho mobile/tablet.
+    //
+    // Desktop vẫn dùng :hover bằng CSS.
     // ========================================================
 
-    const toggleSubMenu = (menuName, event) => {
-        event.preventDefault();
-        event.stopPropagation();
+    const toggleSubMenu = (
+        menuName,
+        event
+    ) => {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
 
-        setActiveSubMenu((current) =>
-            current === menuName
-                ? null
-                : menuName
+        const isOpening =
+            activeSubMenu !==
+            menuName;
+
+        setActiveSubMenu(
+            isOpening
+                ? menuName
+                : null
         );
 
-        // -----------------------------------------------
-        // Chỉ khi mở submenu "Rạp" mới fetch cinemas.
-        // -----------------------------------------------
+        // ------------------------------------------------
+        // Chỉ fetch khi mở Rạp
+        // ------------------------------------------------
 
         if (
             menuName === 'rap' &&
-            activeSubMenu !== 'rap'
+            isOpening
         ) {
             fetchCinemas();
         }
     };
 
     // ========================================================
+    // DESKTOP HOVER RẠP
+    // ========================================================
+
+    const handleRapHover =
+        useCallback(() => {
+            if (
+                window.innerWidth >
+                1200
+            ) {
+                fetchCinemas();
+            }
+        }, [fetchCinemas]);
+
+    // ========================================================
     // AVATAR URL
     // ========================================================
 
-    const getAvatarUrl = (avatar) => {
-        if (!avatar) {
-            return null;
-        }
+    const getAvatarUrl =
+        (avatar) => {
+            if (!avatar) {
+                return null;
+            }
 
-        if (avatar.startsWith('http')) {
-            return avatar;
-        }
+            if (
+                avatar.startsWith(
+                    'http'
+                )
+            ) {
+                return avatar;
+            }
 
-        return `https://api.quangdungcinema.id.vn/uploads/avatars/${avatar}`;
-    };
+            return `https://api.quangdungcinema.id.vn/uploads/avatars/${avatar}`;
+        };
 
     // ========================================================
     // USER INFO
     // ========================================================
 
-    const isValidUser = Boolean(
-        user &&
-        Number(user.email_verified) === 1
-    );
+    const isValidUser =
+        Boolean(
+            user &&
+            Number(
+                user.email_verified
+            ) === 1
+        );
 
     const avatarSource =
         user?.user_avatar ||
         user?.avatar;
 
     const avatarUrl =
-        getAvatarUrl(avatarSource);
+        getAvatarUrl(
+            avatarSource
+        );
 
     const displayName =
         user?.username ||
@@ -507,18 +740,48 @@ const UserHeader = () => {
         'Tài khoản';
 
     // ========================================================
-    // LOGIN / REGISTER
+    // LOGIN
     // ========================================================
 
-    const handleLoginClick = () => {
-        setShowDropdown(false);
-        navigate('/login');
-    };
+    const handleLoginClick =
+        () => {
+            setShowDropdown(false);
+            closeMobileMenu();
+            navigate('/login');
+        };
 
-    const handleRegisterClick = () => {
-        setShowDropdown(false);
-        navigate('/register');
-    };
+    // ========================================================
+    // REGISTER
+    // ========================================================
+
+    const handleRegisterClick =
+        () => {
+            setShowDropdown(false);
+            closeMobileMenu();
+            navigate('/register');
+        };
+
+    // ========================================================
+    // MOBILE MENU TOGGLE
+    // ========================================================
+
+    const handleMobileToggle =
+        () => {
+            setIsMenuOpen(
+                (prev) => {
+                    const next =
+                        !prev;
+
+                    if (!next) {
+                        setActiveSubMenu(
+                            null
+                        );
+                    }
+
+                    return next;
+                }
+            );
+        };
 
     // ========================================================
     // RENDER
@@ -529,28 +792,35 @@ const UserHeader = () => {
             {/* ==================================================
                 TOAST
             ================================================== */}
+
             {toast.show && (
                 <div
                     className={`toast-notification toast-${toast.type}`}
                 >
                     <div className="toast-content">
+
                         <span className="toast-icon">
-                            {toast.type === 'success' &&
-                                '✅'}
+                            {toast.type ===
+                                'success' &&
+                                '✓'}
 
-                            {toast.type === 'error' &&
-                                '❌'}
+                            {toast.type ===
+                                'error' &&
+                                '×'}
 
-                            {toast.type === 'warning' &&
-                                '⚠️'}
+                            {toast.type ===
+                                'warning' &&
+                                '!'}
                         </span>
 
                         <span className="toast-message">
                             {toast.message}
                         </span>
+
                     </div>
 
                     <button
+                        type="button"
                         className="toast-close"
                         onClick={() => {
                             setToast({
@@ -571,7 +841,7 @@ const UserHeader = () => {
                             }
                         }}
                     >
-                        ✕
+                        <X size={17} />
                     </button>
                 </div>
             )}
@@ -579,6 +849,7 @@ const UserHeader = () => {
             {/* ==================================================
                 NAVBAR
             ================================================== */}
+
             <nav className="user-navbar">
 
                 <div className="nav-container">
@@ -586,18 +857,25 @@ const UserHeader = () => {
                     {/* ==================================================
                         HAMBURGER
                     ================================================== */}
+
                     <button
+                        type="button"
                         className={`hamburger ${
                             isMenuOpen
                                 ? 'active'
                                 : ''
                         }`}
-                        onClick={() =>
-                            setIsMenuOpen(
-                                (prev) => !prev
-                            )
+                        onClick={
+                            handleMobileToggle
                         }
-                        aria-label="Toggle menu"
+                        aria-label={
+                            isMenuOpen
+                                ? 'Đóng menu'
+                                : 'Mở menu'
+                        }
+                        aria-expanded={
+                            isMenuOpen
+                        }
                     >
                         <span className="bar" />
                         <span className="bar" />
@@ -607,34 +885,39 @@ const UserHeader = () => {
                     {/* ==================================================
                         LOGO
                     ================================================== */}
-                    <div
+
+                    <Link
+                        to="/"
                         className="header-logo"
-                        onClick={() => {
-                            navigate('/');
-                            closeMobileMenu();
-                        }}
+                        onClick={
+                            closeMobileMenu
+                        }
                     >
                         <img
                             src="https://api.quangdungcinema.id.vn/uploads/logo/logocinema.png"
                             alt="Cinema Star Logo"
                         />
-                    </div>
+                    </Link>
 
                     {/* ==================================================
                         MOBILE OVERLAY
                     ================================================== */}
+
                     <div
                         className={`menu-overlay ${
                             isMenuOpen
                                 ? 'active'
                                 : ''
                         }`}
-                        onClick={closeMobileMenu}
+                        onClick={
+                            closeMobileMenu
+                        }
                     />
 
                     {/* ==================================================
                         NAV LINKS
                     ================================================== */}
+
                     <ul
                         ref={navRef}
                         className={`nav-links ${
@@ -645,29 +928,74 @@ const UserHeader = () => {
                     >
 
                         {/* ==================================================
+                            MOBILE CLOSE
+                        ================================================== */}
+
+                        <li className="mobile-menu-header">
+
+                            <div className="mobile-menu-brand">
+                                <span className="mobile-menu-kicker">
+                                    QUANG DŨNG
+                                </span>
+
+                                <span className="mobile-menu-title">
+                                    CINEMA
+                                </span>
+                            </div>
+
+                            <button
+                                type="button"
+                                className="mobile-close-btn"
+                                onClick={
+                                    closeMobileMenu
+                                }
+                                aria-label="Đóng menu"
+                            >
+                                <X size={21} />
+                            </button>
+
+                        </li>
+
+                        {/* ==================================================
                             TRANG CHỦ
                         ================================================== */}
+
                         <li>
                             <Link
                                 to="/"
-                                onClick={closeMobileMenu}
+                                onClick={
+                                    closeMobileMenu
+                                }
                                 className="menu-link"
                             >
-                                Trang chủ
+                                <span className="nav-item-left">
+                                    <Home
+                                        size={18}
+                                        className="menu-icon"
+                                    />
+
+                                    <span>
+                                        Trang chủ
+                                    </span>
+                                </span>
                             </Link>
                         </li>
 
                         {/* ==================================================
                             PHIM
                         ================================================== */}
+
                         <li
                             className={`has-dropdown ${
-                                activeSubMenu === 'phim'
+                                activeSubMenu ===
+                                'phim'
                                     ? 'mobile-active'
                                     : ''
                             }`}
                         >
-                            <div
+
+                            <button
+                                type="button"
                                 className="menu-link mobile-parent"
                                 onClick={(event) =>
                                     toggleSubMenu(
@@ -675,16 +1003,29 @@ const UserHeader = () => {
                                         event
                                     )
                                 }
+                                aria-expanded={
+                                    activeSubMenu ===
+                                    'phim'
+                                }
                             >
-                                <span>
-                                    Phim
+                                <span className="nav-item-left">
+
+                                    <Film
+                                        size={18}
+                                        className="menu-icon"
+                                    />
+
+                                    <span>
+                                        Phim
+                                    </span>
+
                                 </span>
 
                                 <ChevronDown
-                                    size={18}
+                                    size={16}
                                     className="icon-down"
                                 />
-                            </div>
+                            </button>
 
                             <ul className="sub-menu">
 
@@ -695,7 +1036,13 @@ const UserHeader = () => {
                                             closeMobileMenu
                                         }
                                     >
-                                        Phim đang chiếu
+                                        <span>
+                                            Phim đang chiếu
+                                        </span>
+
+                                        <span className="submenu-arrow">
+                                            →
+                                        </span>
                                     </Link>
                                 </li>
 
@@ -706,7 +1053,13 @@ const UserHeader = () => {
                                             closeMobileMenu
                                         }
                                     >
-                                        Phim sắp chiếu
+                                        <span>
+                                            Phim sắp chiếu
+                                        </span>
+
+                                        <span className="submenu-arrow">
+                                            →
+                                        </span>
                                     </Link>
                                 </li>
 
@@ -716,48 +1069,109 @@ const UserHeader = () => {
                         {/* ==================================================
                             RẠP
                         ================================================== */}
+
                         <li
                             className={`has-dropdown ${
-                                activeSubMenu === 'rap'
+                                activeSubMenu ===
+                                'rap'
                                     ? 'mobile-active'
                                     : ''
                             }`}
+                            onMouseEnter={
+                                handleRapHover
+                            }
                         >
-                            <div className="menu-link mobile-parent">
 
-                                <Link
-                                    to="/cinema"
-                                    onClick={
-                                        closeMobileMenu
-                                    }
-                                >
-                                    Rạp
-                                </Link>
+                            <button
+                                type="button"
+                                className="menu-link mobile-parent"
+                                onClick={(event) =>
+                                    toggleSubMenu(
+                                        'rap',
+                                        event
+                                    )
+                                }
+                                aria-expanded={
+                                    activeSubMenu ===
+                                    'rap'
+                                }
+                            >
+                                <span className="nav-item-left">
+
+                                    <MapPin
+                                        size={18}
+                                        className="menu-icon"
+                                    />
+
+                                    <span>
+                                        Rạp
+                                    </span>
+
+                                </span>
 
                                 <ChevronDown
-                                    size={18}
+                                    size={16}
                                     className="icon-down"
-                                    onClick={(event) =>
-                                        toggleSubMenu(
-                                            'rap',
-                                            event
-                                        )
-                                    }
                                 />
+                            </button>
 
-                            </div>
+                            <ul className="sub-menu cinema-sub-menu">
 
-                            <ul className="sub-menu">
+                                {/* ==========================================
+                                    LOADING
+                                ========================================== */}
 
                                 {isLoadingCinemas ? (
-                                    <li>
+                                    <li className="sub-menu-state">
+
+                                        <span className="loading-spinner" />
+
                                         <span>
-                                            Đang tải rạp...
+                                            Đang tải hệ thống rạp...
                                         </span>
+
                                     </li>
-                                ) : cinemas.length > 0 ? (
+                                ) : cinemasError ? (
+
+                                    /* ======================================
+                                        ERROR
+                                    ====================================== */
+
+                                    <li className="sub-menu-state sub-menu-error">
+
+                                        <span>
+                                            Không thể tải hệ thống rạp
+                                        </span>
+
+                                        <button
+                                            type="button"
+                                            className="cinema-retry-btn"
+                                            onClick={(
+                                                event
+                                            ) => {
+                                                event.preventDefault();
+                                                event.stopPropagation();
+
+                                                fetchCinemas(
+                                                    true
+                                                );
+                                            }}
+                                        >
+                                            Thử lại
+                                        </button>
+
+                                    </li>
+                                ) : cinemas.length >
+                                  0 ? (
+
+                                    /* ======================================
+                                        CINEMA LIST
+                                    ====================================== */
+
                                     cinemas.map(
-                                        (cinema) => (
+                                        (
+                                            cinema
+                                        ) => (
                                             <li
                                                 key={
                                                     cinema.cinema_id
@@ -769,22 +1183,45 @@ const UserHeader = () => {
                                                         closeMobileMenu
                                                     }
                                                 >
-                                                    {
-                                                        cinema.cinema_name
-                                                    }
+                                                    <span className="cinema-link-left">
+
+                                                        <MapPin
+                                                            size={
+                                                                15
+                                                            }
+                                                        />
+
+                                                        <span>
+                                                            {
+                                                                cinema.cinema_name
+                                                            }
+                                                        </span>
+
+                                                    </span>
+
+                                                    <span className="submenu-arrow">
+                                                        →
+                                                    </span>
                                                 </Link>
                                             </li>
                                         )
                                     )
-                                ) : (
-                                    cinemasLoaded && (
-                                        <li>
-                                            <span>
-                                                Không có dữ liệu rạp
-                                            </span>
-                                        </li>
-                                    )
-                                )}
+
+                                ) : cinemasLoaded ? (
+
+                                    /* ======================================
+                                        EMPTY
+                                    ====================================== */
+
+                                    <li className="sub-menu-state">
+
+                                        <span>
+                                            Chưa có dữ liệu rạp
+                                        </span>
+
+                                    </li>
+
+                                ) : null}
 
                             </ul>
                         </li>
@@ -792,14 +1229,18 @@ const UserHeader = () => {
                         {/* ==================================================
                             GÓC ĐIỆN ẢNH
                         ================================================== */}
+
                         <li
                             className={`has-dropdown ${
-                                activeSubMenu === 'goc'
+                                activeSubMenu ===
+                                'goc'
                                     ? 'mobile-active'
                                     : ''
                             }`}
                         >
-                            <div
+
+                            <button
+                                type="button"
                                 className="menu-link mobile-parent"
                                 onClick={(event) =>
                                     toggleSubMenu(
@@ -807,16 +1248,29 @@ const UserHeader = () => {
                                         event
                                     )
                                 }
+                                aria-expanded={
+                                    activeSubMenu ===
+                                    'goc'
+                                }
                             >
-                                <span>
-                                    Góc Điện Ảnh
+                                <span className="nav-item-left">
+
+                                    <Clapperboard
+                                        size={18}
+                                        className="menu-icon"
+                                    />
+
+                                    <span>
+                                        Góc điện ảnh
+                                    </span>
+
                                 </span>
 
                                 <ChevronDown
-                                    size={18}
+                                    size={16}
                                     className="icon-down"
                                 />
-                            </div>
+                            </button>
 
                             <ul className="sub-menu">
 
@@ -827,7 +1281,13 @@ const UserHeader = () => {
                                             closeMobileMenu
                                         }
                                     >
-                                        Diễn Viên
+                                        <span>
+                                            Diễn viên
+                                        </span>
+
+                                        <span className="submenu-arrow">
+                                            →
+                                        </span>
                                     </Link>
                                 </li>
 
@@ -838,7 +1298,13 @@ const UserHeader = () => {
                                             closeMobileMenu
                                         }
                                     >
-                                        Tin Tức
+                                        <span>
+                                            Tin tức điện ảnh
+                                        </span>
+
+                                        <span className="submenu-arrow">
+                                            →
+                                        </span>
                                     </Link>
                                 </li>
 
@@ -848,6 +1314,7 @@ const UserHeader = () => {
                         {/* ==================================================
                             KHUYẾN MÃI
                         ================================================== */}
+
                         <li>
                             <Link
                                 to="/promotion"
@@ -856,13 +1323,25 @@ const UserHeader = () => {
                                 }
                                 className="menu-link"
                             >
-                                Khuyến mãi
+                                <span className="nav-item-left">
+
+                                    <Gift
+                                        size={18}
+                                        className="menu-icon"
+                                    />
+
+                                    <span>
+                                        Khuyến mãi
+                                    </span>
+
+                                </span>
                             </Link>
                         </li>
 
                         {/* ==================================================
                             BLOG
                         ================================================== */}
+
                         <li>
                             <Link
                                 to="/blog-cinema"
@@ -871,7 +1350,18 @@ const UserHeader = () => {
                                 }
                                 className="menu-link"
                             >
-                                Blog Điện Ảnh
+                                <span className="nav-item-left">
+
+                                    <Newspaper
+                                        size={18}
+                                        className="menu-icon"
+                                    />
+
+                                    <span>
+                                        Blog điện ảnh
+                                    </span>
+
+                                </span>
                             </Link>
                         </li>
 
@@ -880,17 +1370,27 @@ const UserHeader = () => {
                     {/* ==================================================
                         ACCOUNT
                     ================================================== */}
+
                     <div
                         className="user-menu"
                         ref={dropdownRef}
                     >
 
-                        <div
-                            className="account-trigger"
+                        <button
+                            type="button"
+                            className={`account-trigger ${
+                                showDropdown
+                                    ? 'active'
+                                    : ''
+                            }`}
                             onClick={() =>
                                 setShowDropdown(
-                                    (prev) => !prev
+                                    (prev) =>
+                                        !prev
                                 )
+                            }
+                            aria-expanded={
+                                showDropdown
                             }
                         >
 
@@ -900,13 +1400,6 @@ const UserHeader = () => {
                                     src={avatarUrl}
                                     alt="avatar"
                                     className="header-avatar"
-                                    style={{
-                                        width: '28px',
-                                        height: '28px',
-                                        borderRadius: '50%',
-                                        objectFit: 'cover',
-                                        marginRight: '8px'
-                                    }}
                                 />
                             ) : (
                                 <UserCircle
@@ -916,13 +1409,11 @@ const UserHeader = () => {
                             )}
 
                             <span className="username-display">
-
                                 {authLoading
                                     ? 'Đang tải...'
                                     : isValidUser
                                         ? displayName
                                         : 'Tài khoản'}
-
                             </span>
 
                             <ChevronDown
@@ -934,17 +1425,22 @@ const UserHeader = () => {
                                 }
                             />
 
-                        </div>
+                        </button>
 
                         {/* ==================================================
                             ACCOUNT DROPDOWN
                         ================================================== */}
+
                         {showDropdown && (
-                            <div className="dropdown-content show">
+                            <div className="dropdown-content">
 
                                 {isValidUser ? (
                                     <>
                                         <div className="dropdown-user-info">
+
+                                            <span className="dropdown-kicker">
+                                                TÀI KHOẢN
+                                            </span>
 
                                             <p>
                                                 Chào,{' '}
@@ -966,9 +1462,12 @@ const UserHeader = () => {
 
                                         <div className="dropdown-divider" />
 
+                                        {/* ADMIN */}
+
                                         {user.role ===
                                             'admin' && (
-                                            <div
+                                            <button
+                                                type="button"
                                                 className="dropdown-item admin-link"
                                                 onClick={() => {
                                                     navigate(
@@ -981,16 +1480,25 @@ const UserHeader = () => {
                                                 }}
                                             >
                                                 <LayoutDashboard
-                                                    size={18}
+                                                    size={
+                                                        18
+                                                    }
                                                 />
 
                                                 <span>
-                                                    Trang Quản Trị
+                                                    Trang quản trị
                                                 </span>
-                                            </div>
+
+                                                <span className="account-arrow">
+                                                    →
+                                                </span>
+                                            </button>
                                         )}
 
-                                        <div
+                                        {/* PROFILE */}
+
+                                        <button
+                                            type="button"
                                             className="dropdown-item"
                                             onClick={() => {
                                                 navigate(
@@ -1002,14 +1510,27 @@ const UserHeader = () => {
                                                 );
                                             }}
                                         >
-                                            <IdCard size={18} />
+                                            <IdCard
+                                                size={
+                                                    18
+                                                }
+                                            />
 
                                             <span>
-                                                Hồ sơ
+                                                Hồ sơ cá nhân
                                             </span>
-                                        </div>
 
-                                        <div
+                                            <span className="account-arrow">
+                                                →
+                                            </span>
+                                        </button>
+
+                                        <div className="dropdown-divider" />
+
+                                        {/* LOGOUT */}
+
+                                        <button
+                                            type="button"
                                             className={`dropdown-item logout-btn ${
                                                 isLoggingOut
                                                     ? 'loading'
@@ -1019,24 +1540,29 @@ const UserHeader = () => {
                                                 handleLogout
                                             }
                                         >
-                                            <LogOut size={18} />
+                                            <LogOut
+                                                size={
+                                                    18
+                                                }
+                                            />
 
                                             <span>
                                                 {isLoggingOut
                                                     ? 'Đang đăng xuất...'
                                                     : 'Đăng xuất'}
                                             </span>
-                                        </div>
+                                        </button>
+
                                     </>
                                 ) : (
                                     <>
                                         <div className="dropdown-user-info">
 
-                                            <p
-                                                style={{
-                                                    color: '#f87171'
-                                                }}
-                                            >
+                                            <span className="dropdown-kicker">
+                                                CINEMA STAR
+                                            </span>
+
+                                            <p>
                                                 {user &&
                                                 !Number(
                                                     user.email_verified
@@ -1049,33 +1575,54 @@ const UserHeader = () => {
 
                                         <div className="dropdown-divider" />
 
-                                        <div
+                                        {/* LOGIN */}
+
+                                        <button
+                                            type="button"
                                             className="dropdown-item"
                                             onClick={
                                                 handleLoginClick
                                             }
                                         >
-                                            <LogIn size={18} />
+                                            <LogIn
+                                                size={
+                                                    18
+                                                }
+                                            />
 
                                             <span>
                                                 Đăng nhập
                                             </span>
-                                        </div>
 
-                                        <div
+                                            <span className="account-arrow">
+                                                →
+                                            </span>
+                                        </button>
+
+                                        {/* REGISTER */}
+
+                                        <button
+                                            type="button"
                                             className="dropdown-item"
                                             onClick={
                                                 handleRegisterClick
                                             }
                                         >
                                             <UserPlus
-                                                size={18}
+                                                size={
+                                                    18
+                                                }
                                             />
 
                                             <span>
                                                 Đăng ký
                                             </span>
-                                        </div>
+
+                                            <span className="account-arrow">
+                                                →
+                                            </span>
+                                        </button>
+
                                     </>
                                 )}
 

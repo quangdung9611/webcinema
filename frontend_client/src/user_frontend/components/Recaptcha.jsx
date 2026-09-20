@@ -23,43 +23,10 @@ const Recaptcha = forwardRef(
         const siteKey = import.meta.env.VITE_RECAPTCHA_ID;
 
         // ========================================================
-        // DEBUG
-        // ========================================================
-
-        console.log(
-            '🔑 [RECAPTCHA] Site Key đang dùng:',
-            siteKey
-        );
-
-        console.log(
-            '🔑 [RECAPTCHA] Độ dài key:',
-            siteKey?.length
-        );
-
-        console.log(
-            '🔑 [RECAPTCHA] Key bắt đầu bằng:',
-            siteKey?.substring(0, 10)
-        );
-
-        console.log(
-            '🔑 [RECAPTCHA] Domain hiện tại:',
-            window.location.hostname
-        );
-
-        console.log(
-            '🔑 [RECAPTCHA] Env mode:',
-            import.meta.env.MODE
-        );
-
-        // ========================================================
         // KIỂM TRA SITE KEY
         // ========================================================
 
         if (!siteKey) {
-            console.error(
-                '❌ [RECAPTCHA] Thiếu VITE_RECAPTCHA_ID trong Environment Variables!'
-            );
-
             return (
                 <div className="recaptcha-wrapper recaptcha-error">
                     <span>
@@ -75,25 +42,14 @@ const Recaptcha = forwardRef(
 
         useImperativeHandle(ref, () => ({
             reset: () => {
-                console.log('🔄 [RECAPTCHA] Reset CAPTCHA');
-
                 recaptchaRef.current?.reset();
             },
 
             getValue: () => {
-                const token = recaptchaRef.current?.getValue();
-
-                console.log(
-                    '🔎 [RECAPTCHA] getValue:',
-                    token ? 'Có token' : 'Chưa có token'
-                );
-
-                return token;
+                return recaptchaRef.current?.getValue();
             },
 
             execute: () => {
-                console.log('▶️ [RECAPTCHA] Execute CAPTCHA');
-
                 return recaptchaRef.current?.execute();
             },
         }));
@@ -103,17 +59,6 @@ const Recaptcha = forwardRef(
         // ========================================================
 
         const handleChange = (token) => {
-            if (token) {
-                console.log(
-                    '✅ [RECAPTCHA] Token nhận được:',
-                    `${token.substring(0, 30)}...`
-                );
-            } else {
-                console.log(
-                    '⚠️ [RECAPTCHA] Token đã bị xóa'
-                );
-            }
-
             onChange?.(token || '');
         };
 
@@ -122,10 +67,6 @@ const Recaptcha = forwardRef(
         // ========================================================
 
         const handleExpired = () => {
-            console.log(
-                '⏰ [RECAPTCHA] Token đã hết hạn'
-            );
-
             onChange?.('');
             onExpired?.();
         };
@@ -135,11 +76,6 @@ const Recaptcha = forwardRef(
         // ========================================================
 
         const handleErrored = (error) => {
-            console.error(
-                '❌ [RECAPTCHA] CAPTCHA xảy ra lỗi:',
-                error
-            );
-
             onChange?.('');
             onErrored?.(error);
         };
