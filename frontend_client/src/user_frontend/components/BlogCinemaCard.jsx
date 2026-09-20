@@ -6,11 +6,12 @@ import {
     Calendar
 } from "lucide-react";
 
+import { optimizeCloudinary, IMAGE_SIZES } from "../../utils/imageHelper";
 import "../styles/BlogCinemaCard.css";
 
 /* ==========================================================
    BLOG CINEMA CARD — MAGAZINE 50/50
-   ✅ ĐÃ BỎ BADGE "NỔI BẬT"
+   ✅ ĐÃ TỐI ƯU ẢNH CHO MOBILE
 ========================================================== */
 
 
@@ -156,16 +157,22 @@ const BlogCinemaCard = ({ blogs = [] }) => {
                     )
                 }
             >
-                {/* IMAGE */}
+                {/* IMAGE — Tối ưu cho featured (1200px) */}
 
                 <div className="blog-card__image">
                     <img
-                        src={getBlogImage(blog)}
+                        src={optimizeCloudinary(
+                            getBlogImage(blog),
+                            IMAGE_SIZES.BLOG_FEATURED
+                        )}
                         alt={
                             blog.title ||
                             "Blog Cinema"
                         }
                         loading="lazy"
+                        decoding="async"
+                        width="800"
+                        height="450"
                         draggable={false}
                     />
 
@@ -253,16 +260,22 @@ const BlogCinemaCard = ({ blogs = [] }) => {
                     )
                 }
             >
-                {/* IMAGE */}
+                {/* IMAGE — Tối ưu cho small (600px) */}
 
                 <div className="blog-card__image">
                     <img
-                        src={getBlogImage(blog)}
+                        src={optimizeCloudinary(
+                            getBlogImage(blog),
+                            IMAGE_SIZES.BLOG_SMALL
+                        )}
                         alt={
                             blog.title ||
                             "Blog Cinema"
                         }
                         loading="lazy"
+                        decoding="async"
+                        width="400"
+                        height="225"
                         draggable={false}
                     />
 

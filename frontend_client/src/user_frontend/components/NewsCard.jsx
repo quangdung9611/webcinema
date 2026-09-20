@@ -6,11 +6,12 @@ import {
     Calendar
 } from "lucide-react";
 
+import { optimizeCloudinary } from "../../utils/imageHelper";
 import "../styles/NewsCard.css";
 
 /* ==========================================================
    NEWS CARD — MAGAZINE 50/50
-   ✅ ĐÃ BỎ BADGE "NỔI BẬT"
+   ✅ ĐÃ TỐI ƯU ẢNH CHO MOBILE
 ========================================================== */
 
 const getBackdropUrl = (backdrop) => {
@@ -91,13 +92,16 @@ const NewsCard = ({ news = [] }) => {
                     handleCardKeyDown(event, item.slug)
                 }
             >
-                {/* IMAGE */}
+                {/* IMAGE — Tối ưu cho featured (1200px) */}
 
                 <div className="news-card__image">
                     <img
-                        src={getNewsImage(item)}
+                        src={optimizeCloudinary(getNewsImage(item), 1200)}
                         alt={item.title || "News"}
                         loading="lazy"
+                        decoding="async"
+                        width="800"
+                        height="450"
                         draggable={false}
                     />
 
@@ -175,13 +179,16 @@ const NewsCard = ({ news = [] }) => {
                     handleCardKeyDown(event, item.slug)
                 }
             >
-                {/* IMAGE */}
+                {/* IMAGE — Tối ưu cho small (600px) */}
 
                 <div className="news-card__image">
                     <img
-                        src={getNewsImage(item)}
+                        src={optimizeCloudinary(getNewsImage(item), 600)}
                         alt={item.title || "News"}
                         loading="lazy"
+                        decoding="async"
+                        width="400"
+                        height="225"
                         draggable={false}
                     />
 

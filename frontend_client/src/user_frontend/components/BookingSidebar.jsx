@@ -1,6 +1,8 @@
 // ===================== BookingSidebar.js =====================
 import React from 'react';
 import CountdownTimer from '../pages/CountdownTimer';
+
+import { optimizeCloudinary, IMAGE_SIZES } from '../../utils/imageHelper';
 import '../styles/BookingSidebar.css';
 
 const BookingSidebar = ({
@@ -34,9 +36,15 @@ const BookingSidebar = ({
     const hasFood = foodList.length > 0;
     const finalTotal = grandTotal || totalTicketPrice;
 
-    const posterUrl = movie?.movie_poster || null;
+    const rawPosterUrl = movie?.movie_poster || null;
     const movieTitle = showtimeDetail?.title || movie?.title || 'Đang cập nhật';
     const roomName = showtimeDetail?.room_name || selectedShowtime?.room_name || '---';
+
+    // ✅ Tối ưu ảnh poster cho sidebar (600px)
+    const posterUrl = optimizeCloudinary(
+        rawPosterUrl,
+        IMAGE_SIZES.MOVIE_POSTER_DETAIL
+    );
 
     return (
         <aside className="ticket-sidebar">
@@ -52,6 +60,10 @@ const BookingSidebar = ({
                             src={posterUrl}
                             alt={movieTitle}
                             className="booking-poster"
+                            loading="lazy"
+                            decoding="async"
+                            width="200"
+                            height="300"
                         />
                     ) : (
                         <div className="poster-placeholder" />
@@ -108,7 +120,7 @@ const BookingSidebar = ({
                 </div>
             </div>
 
-            {/* ====== NÚT QUAY LẠI / TIẾP TỤC (NẰM NGOÀI, TRÀN FULL) ====== */}
+            {/* ====== NÚT QUAY LẠI / TIẾP TỤC ====== */}
             {(showContinueButton || showBackButton) && (
                 <div className="full-width-actions">
                     {showBackButton && (
@@ -127,7 +139,6 @@ const BookingSidebar = ({
                     )}
                 </div>
             )}
-            {/* ======================================================== */}
         </aside>
     );
 };

@@ -1,6 +1,8 @@
 import React, { useMemo, useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Ticket, Info } from "lucide-react";
+
+import { optimizeCloudinary, IMAGE_SIZES } from "../../utils/imageHelper";
 import "../styles/MovieCard.css";
 
 const MovieCard = React.memo(({ movie, onClick, index = 0 }) => {
@@ -116,6 +118,14 @@ const MovieCard = React.memo(({ movie, onClick, index = 0 }) => {
     // Lấy movie_id cho booking
     const movieId = movieData.movie_id;
 
+    // ✅ Tối ưu ảnh poster
+    const posterUrl = useMemo(() => {
+        return optimizeCloudinary(
+            movieData.poster,
+            IMAGE_SIZES.MOVIE_POSTER_CARD
+        );
+    }, [movieData.poster]);
+
     return (
         <div
             className={`film-card ${isHover ? "film-card--hover" : ""} ${isOpening ? "film-card--opening" : ""} ${isVisible ? "film-card--visible" : ""}`}
@@ -159,9 +169,12 @@ const MovieCard = React.memo(({ movie, onClick, index = 0 }) => {
                 <div className="film-card__poster">
                     {movieData.poster ? (
                         <img
-                            src={movieData.poster}
+                            src={posterUrl}
                             alt={movieData.title}
                             loading="lazy"
+                            decoding="async"
+                            width="300"
+                            height="450"
                             draggable={false}
                         />
                     ) : (
@@ -179,9 +192,7 @@ const MovieCard = React.memo(({ movie, onClick, index = 0 }) => {
                         <div className="film-card__badge new">✨ Mới</div>
                     )}
 
-                    {/* ==========================================================
-                        ACTION BUTTONS OVERLAY - XUẤT HIỆN KHI HOVER
-                    ========================================================== */}
+                    {/* ACTION BUTTONS OVERLAY */}
                     <div className="film-card__actions-overlay">
                         <div className="film-card__actions-wrapper">
                             <button

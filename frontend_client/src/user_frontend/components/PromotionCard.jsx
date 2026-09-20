@@ -1,6 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
+
+import { optimizeCloudinary, IMAGE_SIZES } from "../../utils/imageHelper";
 import "../styles/PromotionCard.css";
 
 const PromotionCard = ({
@@ -27,10 +29,17 @@ const PromotionCard = ({
             <div className="promotion-card__image">
                 <div className="promotion-card__gradient" />
 
+                {/* ✅ Ảnh khuyến mãi — tối ưu cho card (600px) */}
                 <img
-                    src={image}
+                    src={optimizeCloudinary(
+                        image,
+                        IMAGE_SIZES.PROMOTION_CARD
+                    )}
                     alt={title}
                     loading="lazy"
+                    decoding="async"
+                    width="400"
+                    height="250"
                     draggable={false}
                 />
             </div>

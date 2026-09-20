@@ -1,6 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowUpRight, MapPin, Phone, ExternalLink } from "lucide-react";
+
+import { optimizeCloudinary, IMAGE_SIZES } from "../../utils/imageHelper";
 import "../styles/CinemaCard.css";
 
 const CinemaCard = ({
@@ -57,6 +59,15 @@ const CinemaCard = ({
 
     const isCinema = type === "cinema";
 
+    // ✅ Tối ưu ảnh — chọn size theo type
+    const optimizedImage = React.useMemo(() => {
+        const size = isCinema
+            ? IMAGE_SIZES.CINEMA_CARD
+            : IMAGE_SIZES.BLOG_SMALL;
+
+        return optimizeCloudinary(image, size);
+    }, [image, isCinema]);
+
     return (
         <div
             className={`cinema-card cinema-card--${type} card-animated`}
@@ -73,9 +84,12 @@ const CinemaCard = ({
                 <div className="cinema-card__gradient" />
 
                 <img
-                    src={image}
+                    src={optimizedImage}
                     alt={title}
                     loading="lazy"
+                    decoding="async"
+                    width="400"
+                    height="250"
                     draggable={false}
                 />
             </div>

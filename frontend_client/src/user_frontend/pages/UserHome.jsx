@@ -14,6 +14,8 @@ import PromotionCard from '../components/PromotionCard';
 import BlogCinemaCard from '../components/BlogCinemaCard';
 import NewsCard from '../components/NewsCard';
 
+import { optimizeCloudinary, IMAGE_SIZES } from '../../utils/imageHelper';
+
 import {
   Ticket,
   Star,
@@ -882,7 +884,7 @@ const UserHome = () => {
         <div className="home-container">
 
           {/* ==================================================
-              FEATURES — Card xuất hiện lần lượt
+              FEATURES
           ================================================== */}
 
           <section className="home-features-section">
@@ -924,7 +926,7 @@ const UserHome = () => {
           <StatsSection />
 
           {/* ==================================================
-              TESTIMONIALS — Card xuất hiện lần lượt
+              TESTIMONIALS
           ================================================== */}
 
           <section className="testimonials-section">
@@ -958,13 +960,19 @@ const UserHome = () => {
 
               {testimonials.length > 0 ? (
                 testimonials.map((item, index) => {
-                  const avatarUrl = item.customer_avatar
+                  // ✅ TỐI ƯU ẢNH AVATAR
+                  const rawAvatarUrl = item.customer_avatar
                     ? item.customer_avatar.startsWith('http')
                       ? item.customer_avatar
                       : `https://api.quangdungcinema.id.vn/uploads/avatars/${item.customer_avatar}`
                     : `https://ui-avatars.com/api/?name=${encodeURIComponent(
                         item.customer_name || 'User'
                       )}&background=random&size=80&color=fff&bold=true`;
+
+                  const avatarUrl = optimizeCloudinary(
+                    rawAvatarUrl,
+                    IMAGE_SIZES.AVATAR_SMALL
+                  );
 
                   return (
                     <ScrollReveal
@@ -981,6 +989,9 @@ const UserHome = () => {
                               src={avatarUrl}
                               alt={item.customer_name}
                               loading="lazy"
+                              decoding="async"
+                              width="60"
+                              height="60"
                             />
                           </div>
 
@@ -1032,7 +1043,7 @@ const UserHome = () => {
           </ScrollReveal>
 
           {/* ==================================================
-              PROMOTIONS — Card xuất hiện lần lượt
+              PROMOTIONS
           ================================================== */}
 
           <section className="promotions-section">
@@ -1199,7 +1210,7 @@ const UserHome = () => {
           </section>
 
           {/* ==================================================
-              CINEMAS — Card xuất hiện lần lượt
+              CINEMAS
           ================================================== */}
 
           <section className="cinema-section">

@@ -5,7 +5,9 @@ import api from "../../api/api";
 import MovieCard from "./MovieCard";
 import "../styles/MovieSlider.css";
 
-// Helper unwrap mảng
+/* ==========================================================
+   HELPER — Unwrap mảng
+========================================================== */
 const unwrapArray = (data) => {
   if (Array.isArray(data)) return data;
   if (data?.data && Array.isArray(data.data)) return data.data;
@@ -15,6 +17,9 @@ const unwrapArray = (data) => {
   return [];
 };
 
+/* ==========================================================
+   MOVIE SLIDER
+========================================================== */
 const MovieSlider = () => {
   const navigate = useNavigate();
 
@@ -23,16 +28,20 @@ const MovieSlider = () => {
   const [loading, setLoading] = useState(true);
   const [activeGenre, setActiveGenre] = useState("");
 
-  // Fetch movies theo genre
+  /* =========================================================
+     FETCH MOVIES
+  ========================================================= */
   const fetchMovies = useCallback(async (genreSlug = "") => {
     try {
       setLoading(true);
+
       const url = genreSlug
         ? `/api/movies/with-genre?genre=${genreSlug}`
         : `/api/movies`;
+
       const response = await api.get(url);
-      const rawData = response.data;
-      const moviesArray = unwrapArray(rawData);
+      const moviesArray = unwrapArray(response.data);
+
       setMovies(moviesArray);
     } catch (error) {
       console.error("Lỗi tải phim:", error);
@@ -42,32 +51,41 @@ const MovieSlider = () => {
     }
   }, []);
 
-  // Fetch genres
+  /* =========================================================
+     FETCH GENRES
+  ========================================================= */
   useEffect(() => {
     const fetchGenres = async () => {
       try {
         const response = await api.get("/api/genres");
-        const rawData = response.data;
-        const genresArray = unwrapArray(rawData);
+        const genresArray = unwrapArray(response.data);
+
         setGenres(genresArray);
       } catch (error) {
         console.error("Lỗi tải thể loại:", error);
         setGenres([]);
       }
     };
+
     fetchGenres();
   }, []);
 
-  // Load movies khi activeGenre thay đổi
+  /* =========================================================
+     LOAD MOVIES KHI GENRE THAY ĐỔI
+  ========================================================= */
   useEffect(() => {
     fetchMovies(activeGenre);
   }, [activeGenre, fetchMovies]);
 
-  // Phân loại phim theo status
+  /* =========================================================
+     PHÂN LOẠI PHIM
+  ========================================================= */
   const showingMovies = movies.filter((m) => m.status === "Đang chiếu");
   const comingMovies = movies.filter((m) => m.status === "Sắp chiếu");
 
-  // Component con để render một slider với title, movies và link xem tất cả
+  /* =========================================================
+     RENDER SLIDER
+  ========================================================= */
   const renderSlider = (title, movieList, statusSlug) => {
     if (movieList.length === 0) return null;
 
@@ -83,10 +101,15 @@ const MovieSlider = () => {
               {title}
             </h2>
           </div>
-          <button className="btn-view-all" onClick={() => navigate(viewAllLink)}>
+
+          <button
+            className="btn-view-all"
+            onClick={() => navigate(viewAllLink)}
+          >
             Xem tất cả
           </button>
         </div>
+
         <div className="movie-grid">
           {displayMovies.map((movie) => (
             <MovieCard
@@ -99,9 +122,13 @@ const MovieSlider = () => {
     );
   };
 
+  /* =========================================================
+     RENDER
+  ========================================================= */
   return (
     <div className="movie-slider-page">
       {/* Tabs thể loại */}
+
       <div className="genre-tabs">
         <button
           className={`genre-tab ${activeGenre === "" ? "active" : ""}`}
@@ -109,10 +136,13 @@ const MovieSlider = () => {
         >
           Tất cả
         </button>
+
         {genres.map((genre) => (
           <button
             key={genre.genre_id}
-            className={`genre-tab ${activeGenre === genre.slug ? "active" : ""}`}
+            className={`genre-tab ${
+              activeGenre === genre.slug ? "active" : ""
+            }`}
             onClick={() => setActiveGenre(genre.slug)}
           >
             {genre.genre_name}
@@ -121,6 +151,7 @@ const MovieSlider = () => {
       </div>
 
       {/* Nội dung phim */}
+
       <div className="movie-slider-content">
         {loading ? (
           <div className="loading-movies">Đang tải phim...</div>

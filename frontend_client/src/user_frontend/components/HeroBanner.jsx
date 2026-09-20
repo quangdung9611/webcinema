@@ -1,10 +1,16 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/HeroBanner.css";
 
-const HeroBanner = ({ videoSrc = "/vutru_video.mp4" }) => {
+const HeroBanner = ({
+  videoSrc = "/vutru_video.mp4",
+  posterSrc = "/hero-poster.jpg"
+}) => {
   const navigate = useNavigate();
   const videoRef = useRef(null);
+
+  // ✅ State để biết video đã load xong chưa
+  const [videoLoaded, setVideoLoaded] = useState(false);
 
   // ==========================================================
   // SCROLL PARALLAX
@@ -48,7 +54,9 @@ const HeroBanner = ({ videoSrc = "/vutru_video.mp4" }) => {
           loop
           muted
           playsInline
-          preload="auto"
+          preload="metadata"
+          poster={posterSrc}
+          onLoadedData={() => setVideoLoaded(true)}
         >
           <source src={videoSrc} type="video/mp4" />
         </video>
@@ -161,9 +169,6 @@ const HeroBanner = ({ videoSrc = "/vutru_video.mp4" }) => {
           </div>
         </div>
       </div>
-
-     
-     
     </header>
   );
 };
