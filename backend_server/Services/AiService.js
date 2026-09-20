@@ -1,23 +1,19 @@
 // ============================================================
 // SERVICES / AiService.js
-// QUANG DŨNG CINEMA — AI CINEMA ASSISTANT
+// QUANG DŨNG CINEMA — AI CINEMA ASSISTANT v2
+//
+// MỤC TIÊU:
+// - Phản hồi nhanh hơn
+// - Giảm query DB
+// - Giảm prompt processing
+// - Giảm history gửi lên Gemini
+// - Chống nhiều request cùng refresh context
+// - Giữ nguyên movie suggestion
+// - Giữ nguyên JSON response
+// - Giữ nguyên rate limit + cache
 //
 // SDK:
 // @google/genai
-//
-// Giữ nguyên:
-// - Cache
-// - Rate limit
-// - Detect intent
-// - MovieRepository context
-// - System prompt
-// - History
-// - Movie suggestions
-// - JSON response
-//
-// Thay đổi:
-// - GoogleGenerativeAI  → GoogleGenAI
-// - @google/generative-ai → @google/genai
 // ============================================================
 
 const { GoogleGenAI } = require('@google/genai');
@@ -27,10 +23,6 @@ const MovieRepository = require('../Repositories/MovieRepository');
    GEMINI CLIENT
 ========================================================== */
 
-// SDK mới @google/genai
-//
-// SDK sẽ lấy GEMINI_API_KEY từ environment.
-// Truyền explicit để chắc chắn production dùng đúng biến môi trường.
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 if (!GEMINI_API_KEY) {
@@ -47,45 +39,145 @@ const genAI = new GoogleGenAI({
    CONFIG
 ========================================================== */
 
+// Giữ model hiện tại của bạn
 const MODEL_NAME = 'gemini-3.6-flash';
 
-const TEMPERATURE = 0.7;
-const MAX_TOKENS = 2048;
+// Temperature thấp hơn một chút vì chatbot chủ yếu trả lời
+// dữ liệu thực tế của rạp, không cần quá sáng tạo.
+const TEMPERATURE = 0.5;
+
+// Chatbot chỉ trả 2-5 câu + JSON.
+// 768 token là dư cho nhu cầu hiện tại.
+const MAX_TOKENS = 768;
+
+/* ---------------------------------------------------------
+   CACHE — USER QUESTION
+---------------------------------------------------------- */
 
 const CACHE_TTL = 1000 * 60 * 60 * 4; // 4 giờ
 const CACHE_MAX_SIZE = 500;
 
-const RATE_LIMIT = 10; // 10 tin/phút
+/* ---------------------------------------------------------
+   CACHE — CINEMA CONTEXT
+---------------------------------------------------------- */
+
+// Context gồm:
+// - movies
+// - showtimes
+// - cinemas
+// - prices
+// - promotions
+// - products
+//
+// Không cần query DB ở mỗi request.
+const CONTEXT_CACHE_TTL = 1000 * 60 * 3; // 3 phút
+
+/* ---------------------------------------------------------
+   CACHE — SYSTEM PROMPT
+---------------------------------------------------------- */
+
+// Prompt được xây từ context.
+// Cache riêng để không phải nối chuỗi khổng lồ mỗi request.
+const PROMPT_CACHE_TTL = 1000 * 60 * 3;
+const PROMPT_CACHE_MAX_SIZE = 100;
+
+/* ---------------------------------------------------------
+   RATE LIMIT
+---------------------------------------------------------- */
+
+const RATE_LIMIT = 10;
 const RATE_WINDOW = 1000 * 60;
 
+/* ---------------------------------------------------------
+   HISTORY
+---------------------------------------------------------- */
+
+// Chỉ giữ context hội thoại gần nhất.
+// 6 message = 3 lượt user/assistant.
+const MAX_HISTORY = 6;
+
 /* =========================================================
-   CACHE + RATE LIMIT
+   MEMORY CACHES
 ========================================================== */
 
 const cache = new Map();
+
 const rateLimit = new Map();
 
+const contextCache = {
+    data: null,
+    timestamp: 0,
+
+    // Promise đang load context.
+    // Dùng để chống nhiều request cùng query DB.
+    loadingPromise: null
+};
+
+const promptCache = new Map();
+
 /* =========================================================
-   AUTO CLEANUP CACHE
+   CACHE CLEANUP
    Mỗi 10 phút
 ========================================================== */
 
 setInterval(() => {
     const now = Date.now();
-    let cleaned = 0;
+
+    /* -------------------------------------------------------
+       USER RESPONSE CACHE
+    ------------------------------------------------------- */
+
+    let cleanedResponseCache = 0;
 
     for (const [key, value] of cache.entries()) {
-        if (now - value.ts > CACHE_TTL) {
+        if (
+            now - value.ts >
+            CACHE_TTL
+        ) {
             cache.delete(key);
-            cleaned++;
+            cleanedResponseCache++;
         }
     }
 
-    if (cleaned > 0) {
+    /* -------------------------------------------------------
+       PROMPT CACHE
+    ------------------------------------------------------- */
+
+    let cleanedPromptCache = 0;
+
+    for (const [key, value] of promptCache.entries()) {
+        if (
+            now - value.ts >
+            PROMPT_CACHE_TTL
+        ) {
+            promptCache.delete(key);
+            cleanedPromptCache++;
+        }
+    }
+
+    /* -------------------------------------------------------
+       RATE LIMIT CACHE
+    ------------------------------------------------------- */
+
+    let cleanedRateLimit = 0;
+
+    for (const [ip, value] of rateLimit.entries()) {
+        if (now > value.resetAt + RATE_WINDOW) {
+            rateLimit.delete(ip);
+            cleanedRateLimit++;
+        }
+    }
+
+    if (
+        cleanedResponseCache > 0 ||
+        cleanedPromptCache > 0 ||
+        cleanedRateLimit > 0
+    ) {
         console.log(
-            `🧹 [AI Cache] Cleaned ${cleaned} expired entries`
+            `🧹 [AI Cache] Response: ${cleanedResponseCache} | Prompt: ${cleanedPromptCache} | Rate: ${cleanedRateLimit}`
         );
     }
+
 }, 1000 * 60 * 10);
 
 /* =========================================================
@@ -94,44 +186,61 @@ setInterval(() => {
 
 class AiService {
 
-    /* -------------------------------------------------------
-       CHECK RATE LIMIT
-    ------------------------------------------------------- */
+    /* =======================================================
+       RATE LIMIT
+    ======================================================== */
 
     checkRateLimit(ip) {
         const now = Date.now();
 
-        const rl = rateLimit.get(ip) || {
+        const key = ip || 'unknown';
+
+        const rl = rateLimit.get(key) || {
             count: 0,
             resetAt: now + RATE_WINDOW
         };
+
+        /* ---------------------------------------------------
+           Reset window
+        --------------------------------------------------- */
 
         if (now > rl.resetAt) {
             rl.count = 0;
             rl.resetAt = now + RATE_WINDOW;
         }
 
+        /* ---------------------------------------------------
+           Check limit
+        --------------------------------------------------- */
+
         if (rl.count >= RATE_LIMIT) {
             return {
                 allowed: false,
-                retryAfter: Math.ceil(
-                    (rl.resetAt - now) / 1000
+                retryAfter: Math.max(
+                    1,
+                    Math.ceil(
+                        (rl.resetAt - now) / 1000
+                    )
                 )
             };
         }
 
+        /* ---------------------------------------------------
+           Increase counter
+        --------------------------------------------------- */
+
         rl.count++;
 
-        rateLimit.set(ip, rl);
+        rateLimit.set(key, rl);
 
         return {
             allowed: true
         };
     }
 
-    /* -------------------------------------------------------
-       GET FROM CACHE
-    ------------------------------------------------------- */
+    /* =======================================================
+       RESPONSE CACHE
+    ======================================================== */
 
     getCache(key) {
         const cached = cache.get(key);
@@ -140,7 +249,10 @@ class AiService {
             return null;
         }
 
-        if (Date.now() - cached.ts > CACHE_TTL) {
+        if (
+            Date.now() - cached.ts >
+            CACHE_TTL
+        ) {
             cache.delete(key);
             return null;
         }
@@ -148,9 +260,9 @@ class AiService {
         return cached;
     }
 
-    /* -------------------------------------------------------
-       SET CACHE
-    ------------------------------------------------------- */
+    /* =======================================================
+       SET RESPONSE CACHE
+    ======================================================== */
 
     setCache(key, value) {
         cache.set(key, {
@@ -158,9 +270,16 @@ class AiService {
             ts: Date.now()
         });
 
+        /* ---------------------------------------------------
+           Prevent unlimited memory growth
+        --------------------------------------------------- */
+
         if (cache.size > CACHE_MAX_SIZE) {
             const oldest = [...cache.entries()]
-                .sort((a, b) => a[1].ts - b[1].ts)[0];
+                .sort(
+                    (a, b) =>
+                        a[1].ts - b[1].ts
+                )[0];
 
             if (oldest) {
                 cache.delete(oldest[0]);
@@ -168,15 +287,121 @@ class AiService {
         }
     }
 
-    /* -------------------------------------------------------
-       DETECT INTENT
-    ------------------------------------------------------- */
+    /* =======================================================
+       GET CINEMA CONTEXT
+       
+       Đây là phần tối ưu quan trọng nhất.
+    ======================================================== */
 
-    detectIntent(message) {
-        const lower = message.toLowerCase();
+    async getCinemaContext() {
+
+        const now = Date.now();
+
+        /* ---------------------------------------------------
+           1. Context cache còn hạn
+        --------------------------------------------------- */
 
         if (
-            /(giá|bao nhiêu|price|vé|tiền|đồng|vnd)/.test(lower)
+            contextCache.data &&
+            now - contextCache.timestamp <
+                CONTEXT_CACHE_TTL
+        ) {
+            return {
+                context: contextCache.data,
+                cached: true
+            };
+        }
+
+        /* ---------------------------------------------------
+           2. Đang có request khác load DB
+           
+           Không query DB lần nữa.
+        --------------------------------------------------- */
+
+        if (contextCache.loadingPromise) {
+            const context =
+                await contextCache.loadingPromise;
+
+            return {
+                context,
+                cached: true
+            };
+        }
+
+        /* ---------------------------------------------------
+           3. Load context mới
+        --------------------------------------------------- */
+
+        const startedAt = Date.now();
+
+        contextCache.loadingPromise =
+            MovieRepository
+                .getFullContextForAI()
+                .then((context) => {
+
+                    contextCache.data =
+                        context;
+
+                    contextCache.timestamp =
+                        Date.now();
+
+                    console.log(
+                        `⚡ [AI] Context refreshed in ${Date.now() - startedAt}ms`
+                    );
+
+                    return context;
+                })
+                .finally(() => {
+                    contextCache.loadingPromise =
+                        null;
+                });
+
+        const context =
+            await contextCache.loadingPromise;
+
+        return {
+            context,
+            cached: false
+        };
+    }
+
+    /* =======================================================
+       CLEAR CONTEXT CACHE
+       
+       Có thể gọi khi admin:
+       - thêm phim
+       - sửa phim
+       - thêm suất
+       - sửa giá
+       - sửa khuyến mãi
+       
+       Ví dụ:
+       AiService.clearContextCache();
+    ======================================================== */
+
+    clearContextCache() {
+        contextCache.data = null;
+        contextCache.timestamp = 0;
+
+        // Không hủy loading promise nếu đang query.
+        console.log(
+            '♻️ [AI] Cinema context cache cleared'
+        );
+    }
+
+    /* =======================================================
+       DETECT INTENT
+    ======================================================== */
+
+    detectIntent(message) {
+        const lower = String(
+            message || ''
+        ).toLowerCase();
+
+        if (
+            /(giá|bao nhiêu|price|vé|tiền|đồng|vnd)/.test(
+                lower
+            )
         ) {
             return 'price';
         }
@@ -216,11 +441,16 @@ class AiService {
         return 'general';
     }
 
-    /* -------------------------------------------------------
+    /* =======================================================
        BUILD SYSTEM PROMPT
-    ------------------------------------------------------- */
+    ======================================================== */
 
-    buildSystemPrompt(context, intent, userName = null) {
+    buildSystemPrompt(
+        context,
+        intent,
+        userName = null
+    ) {
+
         const {
             movies = [],
             showtimes = [],
@@ -237,7 +467,15 @@ class AiService {
 
         const movieList = movies
             .map((m) => {
-                return `- ID ${m.movie_id}: "${m.title}" [${m.status}] | ${m.genres || 'N/A'} | ${m.duration}p | T${m.age_rating} | ĐD: ${m.director}`;
+                return (
+                    `- ID ${m.movie_id}: ` +
+                    `"${m.title}" ` +
+                    `[${m.status}] | ` +
+                    `${m.genres || 'N/A'} | ` +
+                    `${m.duration}p | ` +
+                    `T${m.age_rating} | ` +
+                    `ĐD: ${m.director}`
+                );
             })
             .join('\n');
 
@@ -248,6 +486,7 @@ class AiService {
         const showtimeByMovie = {};
 
         showtimes.forEach((s) => {
+
             if (!showtimeByMovie[s.movie_id]) {
                 showtimeByMovie[s.movie_id] = {
                     title: s.movie_title,
@@ -255,19 +494,35 @@ class AiService {
                 };
             }
 
-            showtimeByMovie[s.movie_id].slots.push(
+            showtimeByMovie[
+                s.movie_id
+            ].slots.push(
                 `${s.start_time} | ${s.cinema_name} | ${s.room_name}`
             );
         });
 
-        const showtimeList = Object.entries(showtimeByMovie)
-            .map(([movieId, data]) => {
-                return (
-                    `📽️ ${data.title} (ID ${movieId}):\n` +
-                    `   ${data.slots.slice(0, 8).join('\n   ')}`
-                );
-            })
-            .join('\n\n') ||
+        const showtimeList =
+            Object.entries(
+                showtimeByMovie
+            )
+                .map(([movieId, data]) => {
+
+                    /*
+                     * Chỉ đưa tối đa 6 suất / phim
+                     * để prompt nhẹ hơn.
+                     */
+                    const slots =
+                        data.slots
+                            .slice(0, 6)
+                            .join('\n   ');
+
+                    return (
+                        `📽️ ${data.title} ` +
+                        `(ID ${movieId}):\n` +
+                        `   ${slots}`
+                    );
+                })
+                .join('\n\n') ||
             'Chưa có suất chiếu nào trong 7 ngày tới.';
 
         /* =====================================================
@@ -276,7 +531,11 @@ class AiService {
 
         const cinemaList = cinemas
             .map((c) => {
-                return `- ${c.cinema_name}: ${c.address} | Hotline: ${c.hotline}`;
+                return (
+                    `- ${c.cinema_name}: ` +
+                    `${c.address} | ` +
+                    `Hotline: ${c.hotline}`
+                );
             })
             .join('\n');
 
@@ -287,28 +546,45 @@ class AiService {
         const summaryGroups = {};
 
         priceSummary.forEach((p) => {
+
             if (!summaryGroups[p.room_type]) {
                 summaryGroups[p.room_type] = [];
             }
 
-            const min = Number(p.min_price).toLocaleString('vi-VN');
-            const max = Number(p.max_price).toLocaleString('vi-VN');
+            const min =
+                Number(
+                    p.min_price
+                ).toLocaleString('vi-VN');
+
+            const max =
+                Number(
+                    p.max_price
+                ).toLocaleString('vi-VN');
 
             const range =
-                p.min_price === p.max_price
+                Number(p.min_price) ===
+                Number(p.max_price)
                     ? `${min}đ`
                     : `${min}đ - ${max}đ`;
 
-            summaryGroups[p.room_type].push(
+            summaryGroups[
+                p.room_type
+            ].push(
                 `${p.seat_type}: ${range}`
             );
         });
 
-        const priceSummaryList = Object.entries(summaryGroups)
-            .map(([room, list]) => {
-                return `- ${room} → ${list.join(' | ')}`;
-            })
-            .join('\n');
+        const priceSummaryList =
+            Object.entries(
+                summaryGroups
+            )
+                .map(([room, list]) => {
+                    return (
+                        `- ${room} → ` +
+                        `${list.join(' | ')}`
+                    );
+                })
+                .join('\n');
 
         /* =====================================================
            PRICE STANDARD
@@ -317,22 +593,33 @@ class AiService {
         const standardGroups = {};
 
         priceStandard.forEach((p) => {
-            const key = `${p.room_type} | ${p.day_type}`;
+
+            const key =
+                `${p.room_type} | ${p.day_type}`;
 
             if (!standardGroups[key]) {
                 standardGroups[key] = [];
             }
 
             standardGroups[key].push(
-                `${p.time_slot}: ${Number(p.price).toLocaleString('vi-VN')}đ`
+                `${p.time_slot}: ` +
+                `${Number(
+                    p.price
+                ).toLocaleString('vi-VN')}đ`
             );
         });
 
-        const priceStandardList = Object.entries(standardGroups)
-            .map(([key, values]) => {
-                return `- ${key} → ${values.join(' | ')}`;
-            })
-            .join('\n');
+        const priceStandardList =
+            Object.entries(
+                standardGroups
+            )
+                .map(([key, values]) => {
+                    return (
+                        `- ${key} → ` +
+                        `${values.join(' | ')}`
+                    );
+                })
+                .join('\n');
 
         /* =====================================================
            PROMOTIONS
@@ -341,28 +628,46 @@ class AiService {
         const promoList =
             promotions
                 .map((p) => {
-                    const desc = (p.description || '')
-                        .replace(/<[^>]*>/g, '')
-                        .replace(/&nbsp;/g, ' ')
-                        .trim()
-                        .slice(0, 80);
 
-                    return `- ${p.title}: ${desc}`;
+                    const desc =
+                        (p.description || '')
+                            .replace(
+                                /<[^>]*>/g,
+                                ''
+                            )
+                            .replace(
+                                /&nbsp;/g,
+                                ' '
+                            )
+                            .trim()
+                            .slice(0, 80);
+
+                    return (
+                        `- ${p.title}: ${desc}`
+                    );
                 })
                 .join('\n') ||
             'Hiện chưa có khuyến mãi.';
 
         /* =====================================================
-           PRODUCTS / COMBO
+           PRODUCTS
         ====================================================== */
 
-        const productList = products
-            .map((p) => {
-                return `- ${p.product_name} (${p.category}): ${Number(
-                    p.price
-                ).toLocaleString('vi-VN')}đ`;
-            })
-            .join('\n');
+        const productList =
+            products
+                .map((p) => {
+
+                    return (
+                        `- ${p.product_name} ` +
+                        `(${p.category}): ` +
+                        `${Number(
+                            p.price
+                        ).toLocaleString(
+                            'vi-VN'
+                        )}đ`
+                    );
+                })
+                .join('\n');
 
         /* =====================================================
            USER INFO
@@ -373,9 +678,7 @@ class AiService {
 👤 KHÁCH HÀNG ĐANG CHAT: "${userName}"
 
 → Thỉnh thoảng gọi tên khách trong câu trả lời.
-Ví dụ:
-- "${userName} ơi"
-- "Dạ ${userName}"
+Ví dụ: "${userName} ơi", "Dạ ${userName}".
 
 CHỈ gọi tên 1 lần trong 1 câu trả lời.
 Không lạm dụng.
@@ -383,63 +686,64 @@ Không lạm dụng.
             : '';
 
         /* =====================================================
-           FULL SYSTEM PROMPT
+           PROMPT
         ====================================================== */
 
         return `Bạn là "Cinema Assistant" — trợ lý tư vấn khách hàng của Quang Dũng Cinema.
 ${userInfo}
 ═══════════════════════════════════════════
-🎯 PHONG CÁCH TRẢ LỜI (QUAN TRỌNG NHẤT)
+🎯 PHONG CÁCH TRẢ LỜI
 ═══════════════════════════════════════════
 
-Bạn là một NHÂN VIÊN TƯ VẤN THẬT, đang nói chuyện với khách hàng.
+Bạn là một NHÂN VIÊN TƯ VẤN THẬT đang nói chuyện với khách hàng.
 
 Hãy trả lời:
-- TỰ NHIÊN như người thật đang tư vấn
-- LỊCH SỰ, THÂN THIỆN
-- Có thể dùng emoji nhẹ như 🎬 🍿 😊
-- CÓ CHỦ NGỮ + VỊ NGỮ ĐẦY ĐỦ trong mọi câu
-- KHÔNG trả lời cụt lủn kiểu "Có", "Không", "75.000đ"
-- KHÔNG liệt kê khô khan kiểu "A, B, C, D"
+- TỰ NHIÊN như người thật đang tư vấn.
+- LỊCH SỰ và THÂN THIỆN.
+- Có thể dùng emoji nhẹ như 🎬 🍿 😊.
+- CÓ CHỦ NGỮ + VỊ NGỮ đầy đủ.
+- Không trả lời cụt lủn.
+- Không liệt kê khô khan.
 
 ═══════════════════════════════════════════
-📝 QUY TẮC VIẾT CÂU (BẮT BUỘC)
+📝 QUY TẮC VIẾT CÂU
 ═══════════════════════════════════════════
 
-1. Mọi câu PHẢI có CHỦ NGỮ + VỊ NGỮ đầy đủ.
+1. Mọi câu phải có chủ ngữ + vị ngữ đầy đủ.
 
-❌ SAI:
+❌ Sai:
 "75.000đ"
 
-✅ ĐÚNG:
+✅ Đúng:
 "Ghế VIP ở phòng 2D có giá là 75.000đ ạ."
 
-2. Khi liệt kê nhiều mục, phải có CÂU DẪN + ĐỘNG TỪ.
+2. Khi liệt kê nhiều mục phải có câu dẫn.
 
-❌ SAI:
+❌ Sai:
 "Galaxy Nguyễn Du, Galaxy Tân Bình"
 
-✅ ĐÚNG:
-"Quang Dũng Cinema hiện có 4 chi nhánh ạ: Galaxy Nguyễn Du, Galaxy Tân Bình..."
+✅ Đúng:
+"Quang Dũng Cinema hiện có các chi nhánh sau ạ: ..."
 
 3. Xưng hô:
-- Bạn gọi mình là "mình" hoặc "em"
-- Gọi khách là "bạn" hoặc tên riêng
+- Gọi mình là "mình" hoặc "em".
+- Gọi khách là "bạn" hoặc tên riêng.
 
-4. Kết thúc câu nên có:
+4. Kết thúc câu nên lịch sự:
 - "ạ"
 - "nhé"
 - "bạn nhé"
 
 5. Khi không có thông tin:
-- Xin lỗi lịch sự
-- Gợi ý câu hỏi khác
+- Xin lỗi lịch sự.
+- Không được bịa.
+- Gợi ý câu hỏi khác.
 
 ═══════════════════════════════════════════
 🚫 RÀNG BUỘC
 ═══════════════════════════════════════════
 
-- CHỈ dùng thông tin trong DỮ LIỆU bên dưới.
+- CHỈ sử dụng dữ liệu được cung cấp.
 - KHÔNG bịa tên phim.
 - KHÔNG bịa giá.
 - KHÔNG bịa suất chiếu.
@@ -454,7 +758,7 @@ Hãy trả lời:
 🎬 QUY TẮC CHUNG
 ═══════════════════════════════════════════
 
-- Rạp CÓ 4 loại phòng:
+- Rạp có 4 loại phòng:
   2D, 3D, VIP, IMAX.
 
 - KHÔNG CÓ 4DMAX.
@@ -473,24 +777,24 @@ Hãy trả lời:
   WEEKEND (T7-CN).
 
 ═══════════════════════════════════════════
-💰 QUY TẮC TRẢ LỜI GIÁ VÉ
+💰 QUY TẮC GIÁ VÉ
 ═══════════════════════════════════════════
 
-1. Nếu user hỏi CHUNG:
-→ Trả lời RANGE giá
+1. Nếu user hỏi chung:
+→ Trả lời RANGE giá.
 → Hỏi lại phòng/giờ cụ thể.
 
-2. Nếu user hỏi CỤ THỂ:
-→ Trả lời CHÍNH XÁC 1 con số.
+2. Nếu user hỏi cụ thể:
+→ Trả lời chính xác 1 con số.
 
-3. Luôn nêu rõ:
-- Hạng ghế
-- Loại phòng
-- Khung giờ
-- Ngày
+3. Khi trả lời giá phải nêu rõ:
+- Hạng ghế.
+- Loại phòng.
+- Khung giờ.
+- Loại ngày.
 
 ═══════════════════════════════════════════
-📊 DỮ LIỆU
+📊 DỮ LIỆU THỰC TẾ
 ═══════════════════════════════════════════
 
 📽️ DANH SÁCH PHIM:
@@ -505,7 +809,7 @@ ${cinemaList}
 💰 TÓM TẮT GIÁ THEO HẠNG GHẾ:
 ${priceSummaryList}
 
-💰 GIÁ GHẾ STANDARD (theo phòng + ngày + khung giờ):
+💰 GIÁ GHẾ STANDARD:
 ${priceStandardList}
 
 🎁 KHUYẾN MÃI:
@@ -515,51 +819,14 @@ ${promoList}
 ${productList}
 
 ═══════════════════════════════════════════
-📌 VÍ DỤ TRẢ LỜI ĐÚNG
-═══════════════════════════════════════════
-
-User: "Xin chào"
-
-Bot:
-"Xin chào bạn! 😊 Mình là trợ lý tư vấn của Quang Dũng Cinema. Bạn muốn hỏi mình về phim, giá vé hay rạp chiếu hôm nay ạ?"
-
-User: "Ghế VIP giá bao nhiêu?"
-
-Bot:
-"Dạ, ghế VIP có giá từ 75.000đ (phòng 2D suất sáng ngày thường) đến 495.000đ (phòng IMAX suất đêm cuối tuần) ạ. Bạn cho mình biết bạn muốn xem phòng nào và suất mấy giờ để mình báo giá chính xác nhé!"
-
-User: "2D tối thứ 7 ghế đôi bao nhiêu?"
-
-Bot:
-"Dạ, ghế COUPLE ở phòng 2D suất EVENING vào cuối tuần có giá là 270.000đ ạ. Bạn có muốn mình hướng dẫn cách đặt vé luôn không?"
-
-User: "Rạp ở đâu?"
-
-Bot:
-"Dạ, Quang Dũng Cinema hiện có 4 chi nhánh tại TP.HCM ạ:
-- Galaxy Nguyễn Du: 116 Nguyễn Du, Bến Thành, Q.1
-- Galaxy Tân Bình: 246 Nguyễn Hồng Đào, Tân Bình
-- Galaxy Quang Trung: 304A Quang Trung, Gò Vấp
-- Galaxy Kinh Dương Vương: 718bis Kinh Dương Vương, Q.6
-
-Bạn muốn đến chi nhánh nào để mình hướng dẫn đường đi nhé?"
-
-User: "Có khuyến mãi gì không?"
-
-Bot:
-"Dạ, hiện rạp có 4 chương trình khuyến mãi đang áp dụng ạ: COMBO BẮP NƯỚC giảm 35%, THỨ 4 VUI VẺ giá 45K, NÂNG HẠNG GHẾ VIP chỉ từ +40K, và TÍCH ĐIỂM cho khán giả thân thiết. Bạn muốn mình tư vấn chi tiết chương trình nào ạ?"
-
-═══════════════════════════════════════════
-⚠️ ĐỊNH DẠNG TRẢ VỀ (BẮT BUỘC)
+⚠️ ĐỊNH DẠNG TRẢ VỀ
 ═══════════════════════════════════════════
 
 BẮT BUỘC trả về CHỈ MỘT OBJECT JSON.
 
-KHÔNG có:
-- Markdown
-- \`\`\`json
-- Text bên ngoài JSON
-- Giải thích bên ngoài JSON
+KHÔNG markdown.
+KHÔNG \`\`\`json.
+KHÔNG text bên ngoài JSON.
 
 Format:
 
@@ -576,15 +843,90 @@ Nếu không gợi ý phim:
 }`;
     }
 
-    /* -------------------------------------------------------
+    /* =======================================================
+       GET CACHED PROMPT
+    ======================================================== */
+
+    getCachedPrompt(
+        context,
+        intent,
+        userName
+    ) {
+
+        /*
+         * Context timestamp được dùng làm version.
+         * Khi context refresh thì prompt cache tự thay đổi.
+         */
+
+        const contextVersion =
+            contextCache.timestamp;
+
+        const key =
+            `${contextVersion}|${intent}|${userName || 'guest'}`;
+
+        const cached =
+            promptCache.get(key);
+
+        if (cached) {
+
+            if (
+                Date.now() - cached.ts <
+                PROMPT_CACHE_TTL
+            ) {
+                return cached.prompt;
+            }
+
+            promptCache.delete(key);
+        }
+
+        const prompt =
+            this.buildSystemPrompt(
+                context,
+                intent,
+                userName
+            );
+
+        promptCache.set(key, {
+            prompt,
+            ts: Date.now()
+        });
+
+        /* ---------------------------------------------------
+           Prevent unlimited prompt cache
+        --------------------------------------------------- */
+
+        if (
+            promptCache.size >
+            PROMPT_CACHE_MAX_SIZE
+        ) {
+
+            const oldest =
+                [...promptCache.entries()]
+                    .sort(
+                        (a, b) =>
+                            a[1].ts -
+                            b[1].ts
+                    )[0];
+
+            if (oldest) {
+                promptCache.delete(
+                    oldest[0]
+                );
+            }
+        }
+
+        return prompt;
+    }
+
+    /* =======================================================
        NORMALIZE GEMINI ERROR
-    ------------------------------------------------------- */
+    ======================================================== */
 
     normalizeGeminiError(error) {
+
         const status =
             error?.status ??
             error?.statusCode ??
-            error?.code ??
             error?.error?.status ??
             error?.error?.code ??
             null;
@@ -599,7 +941,9 @@ Nếu không gợi ý phim:
             JSON.stringify(
                 {
                     status,
-                    code: error?.code ?? null,
+                    code:
+                        error?.code ??
+                        null,
                     message
                 },
                 null,
@@ -607,70 +951,117 @@ Nếu không gợi ý phim:
             )
         );
 
-        // Không bao giờ log API key.
-        const normalizedError = new Error(message);
+        const normalized =
+            new Error(message);
 
-        normalizedError.status = Number.isFinite(Number(status))
-            ? Number(status)
-            : status;
+        normalized.status =
+            Number.isFinite(
+                Number(status)
+            )
+                ? Number(status)
+                : status;
 
-        normalizedError.code = error?.code;
-        normalizedError.originalError = error;
+        normalized.code =
+            error?.code;
 
-        return normalizedError;
+        normalized.originalError =
+            error;
+
+        return normalized;
     }
 
-    /* -------------------------------------------------------
-       CLEAN JSON RESPONSE
-    ------------------------------------------------------- */
+    /* =======================================================
+       PARSE AI RESPONSE
+    ======================================================== */
 
     parseAIResponse(rawContent) {
+
         if (!rawContent) {
             return {
-                reply: 'Xin lỗi, mình chưa nhận được câu trả lời từ hệ thống.',
+                reply:
+                    'Xin lỗi, mình chưa nhận được câu trả lời từ hệ thống.',
                 movie_ids: []
             };
         }
 
         try {
-            let cleaned = String(rawContent).trim();
 
-            // Xóa markdown fence nếu model vẫn trả về.
-            if (cleaned.startsWith('```json')) {
-                cleaned = cleaned.slice(7);
-            } else if (cleaned.startsWith('```')) {
-                cleaned = cleaned.slice(3);
+            let cleaned =
+                String(
+                    rawContent
+                ).trim();
+
+            /* -----------------------------------------------
+               Remove markdown fence
+            ------------------------------------------------ */
+
+            if (
+                cleaned.startsWith(
+                    '```json'
+                )
+            ) {
+                cleaned =
+                    cleaned.slice(7);
+            }
+            else if (
+                cleaned.startsWith(
+                    '```'
+                )
+            ) {
+                cleaned =
+                    cleaned.slice(3);
             }
 
-            if (cleaned.endsWith('```')) {
-                cleaned = cleaned.slice(0, -3);
+            if (
+                cleaned.endsWith(
+                    '```'
+                )
+            ) {
+                cleaned =
+                    cleaned.slice(
+                        0,
+                        -3
+                    );
             }
 
-            cleaned = cleaned.trim();
+            cleaned =
+                cleaned.trim();
 
-            const parsed = JSON.parse(cleaned);
+            /* -----------------------------------------------
+               Parse
+            ------------------------------------------------ */
+
+            const parsed =
+                JSON.parse(cleaned);
 
             return {
                 reply:
-                    typeof parsed.reply === 'string'
+                    typeof parsed.reply ===
+                    'string'
                         ? parsed.reply.trim()
                         : 'Xin lỗi, mình chưa có câu trả lời phù hợp.',
 
                 movie_ids:
-                    Array.isArray(parsed.movie_ids)
+                    Array.isArray(
+                        parsed.movie_ids
+                    )
                         ? parsed.movie_ids
                         : []
             };
-        } catch (error) {
+
+        }
+        catch (error) {
+
             console.warn(
                 '⚠️ [AI Service] Parse JSON failed:',
                 error?.message
             );
 
-            // Fallback nếu model trả text thay vì JSON.
             return {
                 reply:
-                    String(rawContent).trim() ||
+                    String(
+                        rawContent
+                    ).trim() ||
                     'Xin lỗi, mình chưa hiểu câu hỏi của bạn.',
 
                 movie_ids: []
@@ -678,53 +1069,85 @@ Nếu không gợi ý phim:
         }
     }
 
-    /* -------------------------------------------------------
-       VALIDATE MOVIE IDS
-    ------------------------------------------------------- */
+    /* =======================================================
+       BUILD SUGGESTED MOVIES
+    ======================================================== */
 
-    buildSuggestedMovies(movieIds, movies) {
-        const validIds = Array.isArray(movieIds)
-            ? movieIds
-                .map(Number)
-                .filter(
-                    (id) =>
-                        Number.isInteger(id) &&
-                        id > 0
-                )
-                .filter((id) =>
-                    movies.some(
-                        (movie) =>
-                            Number(movie.movie_id) === id
+    buildSuggestedMovies(
+        movieIds,
+        movies
+    ) {
+
+        const validIds =
+            Array.isArray(
+                movieIds
+            )
+                ? movieIds
+                    .map(Number)
+                    .filter(
+                        (id) =>
+                            Number.isInteger(
+                                id
+                            ) &&
+                            id > 0
                     )
-                )
-            : [];
+                    .filter(
+                        (id) =>
+                            movies.some(
+                                (movie) =>
+                                    Number(
+                                        movie.movie_id
+                                    ) === id
+                            )
+                    )
+                : [];
 
         return movies
             .filter((movie) =>
                 validIds.includes(
-                    Number(movie.movie_id)
+                    Number(
+                        movie.movie_id
+                    )
                 )
             )
             .slice(0, 3)
             .map((movie) => ({
-                movie_id: movie.movie_id,
-                title: movie.title,
-                slug: movie.slug,
-                movie_poster: movie.movie_poster,
-                duration: movie.duration,
-                age_rating: movie.age_rating,
-                genres: movie.genres
-                    ? movie.genres
-                        .split(',')
-                        .map((genre) => genre.trim())
-                        .filter(Boolean)
-                    : []
+                movie_id:
+                    movie.movie_id,
+
+                title:
+                    movie.title,
+
+                slug:
+                    movie.slug,
+
+                movie_poster:
+                    movie.movie_poster,
+
+                duration:
+                    movie.duration,
+
+                age_rating:
+                    movie.age_rating,
+
+                genres:
+                    movie.genres
+                        ? movie.genres
+                            .split(',')
+                            .map(
+                                (genre) =>
+                                    genre.trim()
+                            )
+                            .filter(
+                                Boolean
+                            )
+                        : []
             }));
     }
 
-    /* -------------------------------------------------------
-       MAIN: CHAT WITH GEMINI
-    ------------------------------------------------------- */
+    /* =======================================================
+       MAIN CHAT
+    ======================================================== */
 
     async chat({
         message,
@@ -732,33 +1155,64 @@ Nếu không gợi ý phim:
         userName = null
     }) {
 
+        const totalStartedAt =
+            Date.now();
+
         /* =====================================================
            CHECK API KEY
         ====================================================== */
 
         if (!GEMINI_API_KEY) {
-            const error = new Error(
-                'GEMINI_API_KEY chưa được cấu hình trong environment.'
-            );
+
+            const error =
+                new Error(
+                    'GEMINI_API_KEY chưa được cấu hình trong environment.'
+                );
 
             error.status = 500;
-            error.code = 'GEMINI_API_KEY_MISSING';
+            error.code =
+                'GEMINI_API_KEY_MISSING';
 
             throw error;
         }
 
         /* =====================================================
-           LOAD CINEMA CONTEXT
+           GET CINEMA CONTEXT
         ====================================================== */
 
-        const context =
-            await MovieRepository.getFullContextForAI();
+        const contextStartedAt =
+            Date.now();
+
+        const {
+            context,
+            cached: contextCached
+        } =
+            await this.getCinemaContext();
+
+        const contextTime =
+            Date.now() -
+            contextStartedAt;
+
+        console.log(
+            `⚡ [AI] Context: ${contextTime}ms | ${
+                contextCached
+                    ? 'CACHE'
+                    : 'DB'
+            }`
+        );
+
+        /* =====================================================
+           CHECK MOVIES
+        ====================================================== */
 
         if (
             !context ||
-            !context.movies ||
+            !Array.isArray(
+                context.movies
+            ) ||
             context.movies.length === 0
         ) {
+
             return {
                 reply:
                     'Dạ, hiện tại rạp chưa có phim nào đang chiếu ạ. Bạn quay lại sau nhé!',
@@ -767,176 +1221,219 @@ Nếu không gợi ý phim:
         }
 
         /* =====================================================
-           DETECT INTENT
+           INTENT
         ====================================================== */
 
         const intent =
-            this.detectIntent(message);
+            this.detectIntent(
+                message
+            );
 
         console.log(
             `🎯 [AI] Intent: ${intent} | User: ${
                 userName || 'guest'
-            } | Message: "${String(message).slice(0, 50)}"`
+            } | Message: "${String(
+                message
+            ).slice(0, 60)}"`
         );
 
         /* =====================================================
-           BUILD SYSTEM PROMPT
+           GET SYSTEM PROMPT
         ====================================================== */
 
+        const promptStartedAt =
+            Date.now();
+
         const systemPrompt =
-            this.buildSystemPrompt(
+            this.getCachedPrompt(
                 context,
                 intent,
                 userName
             );
 
+        const promptTime =
+            Date.now() -
+            promptStartedAt;
+
         console.log(
-            `📏 [AI] Prompt length: ${systemPrompt.length} chars`
+            `⚡ [AI] Prompt: ${promptTime}ms | Length: ${systemPrompt.length} chars`
         );
 
         /* =====================================================
            BUILD HISTORY
         ====================================================== */
 
-        let geminiHistory = Array.isArray(history)
-            ? history
-                .slice(-10)
-                .map((h) => ({
-                    role:
-                        h.role === 'user'
-                            ? 'user'
-                            : 'model',
+        let geminiHistory =
+            Array.isArray(history)
+                ? history
+                    .slice(
+                        -MAX_HISTORY
+                    )
+                    .map((h) => ({
+                        role:
+                            h.role ===
+                            'user'
+                                ? 'user'
+                                : 'model',
 
-                    parts: [
-                        {
-                            text: String(
-                                h.content || ''
-                            )
-                        }
-                    ]
-                }))
-                .filter(
-                    (h) =>
-                        h.parts[0].text.trim().length > 0
-                )
-            : [];
+                        parts: [
+                            {
+                                text: String(
+                                    h.content ||
+                                    ''
+                                )
+                            }
+                        ]
+                    }))
+                    .filter(
+                        (h) =>
+                            h.parts[0]
+                                .text
+                                .trim()
+                                .length > 0
+                    )
+                : [];
 
-        /*
-         * Gemini yêu cầu history hợp lệ.
-         *
-         * Tin đầu tiên phải là user.
-         */
+        /* =====================================================
+           GEMINI HISTORY VALIDATION
+        ====================================================== */
+
         while (
-            geminiHistory.length > 0 &&
-            geminiHistory[0].role === 'model'
+            geminiHistory.length >
+                0 &&
+            geminiHistory[0].role ===
+                'model'
         ) {
             geminiHistory.shift();
         }
 
-        /*
-         * Nếu history kết thúc bằng model thì vẫn OK
-         * vì message mới sẽ là user.
-         */
-
         /* =====================================================
-           CREATE CHAT — SDK MỚI
+           CREATE CHAT
         ====================================================== */
 
-        const chat = genAI.chats.create({
-            model: MODEL_NAME,
+        const chat =
+            genAI.chats.create({
 
-            history: geminiHistory,
+                model:
+                    MODEL_NAME,
 
-            config: {
-                systemInstruction: systemPrompt,
+                history:
+                    geminiHistory,
 
-                temperature: TEMPERATURE,
+                config: {
 
-                maxOutputTokens: MAX_TOKENS,
+                    systemInstruction:
+                        systemPrompt,
 
-                responseMimeType: 'application/json'
-            }
-        });
+                    temperature:
+                        TEMPERATURE,
+
+                    maxOutputTokens:
+                        MAX_TOKENS,
+
+                    responseMimeType:
+                        'application/json'
+                }
+            });
 
         /* =====================================================
-           SEND MESSAGE
+           GEMINI REQUEST
         ====================================================== */
+
+        const geminiStartedAt =
+            Date.now();
 
         let response;
 
         try {
-            response = await chat.sendMessage({
-                message
-            });
-        } catch (error) {
-            const normalizedError =
-                this.normalizeGeminiError(error);
 
-            /*
-             * 403:
-             * API key không hợp lệ / không có quyền /
-             * project hoặc credential có vấn đề.
-             */
+            response =
+                await chat.sendMessage({
+                    message
+                });
+
+        }
+        catch (error) {
+
+            const normalized =
+                this.normalizeGeminiError(
+                    error
+                );
+
             if (
-                normalizedError.status === 403
+                normalized.status ===
+                403
             ) {
                 console.error(
                     '🚫 [Gemini] 403 PERMISSION_DENIED — kiểm tra GEMINI_API_KEY và quyền Gemini API.'
                 );
             }
 
-            /*
-             * 429:
-             * Rate limit / quota.
-             */
             if (
-                normalizedError.status === 429
+                normalized.status ===
+                429
             ) {
                 console.warn(
-                    '⏳ [Gemini] 429 RESOURCE_EXHAUSTED / RATE LIMIT'
+                    '⏳ [Gemini] 429 RATE LIMIT / QUOTA'
                 );
             }
 
-            /*
-             * 503:
-             * Gemini service tạm thời unavailable.
-             */
             if (
-                normalizedError.status === 503
+                normalized.status ===
+                503
             ) {
                 console.warn(
                     '⚠️ [Gemini] 503 SERVICE_UNAVAILABLE'
                 );
             }
 
-            throw normalizedError;
+            throw normalized;
         }
 
+        const geminiTime =
+            Date.now() -
+            geminiStartedAt;
+
+        console.log(
+            `⚡ [AI] Gemini: ${geminiTime}ms`
+        );
+
         /* =====================================================
-           GET RESPONSE TEXT
+           RESPONSE TEXT
         ====================================================== */
 
         const rawContent =
             response?.text || '';
 
         console.log(
-            `📥 [AI] Raw response (first 200): ${rawContent.slice(
+            `📥 [AI] Raw response: ${rawContent.slice(
                 0,
                 200
             )}`
         );
 
         /* =====================================================
-           PARSE JSON
+           PARSE
         ====================================================== */
+
+        const parseStartedAt =
+            Date.now();
 
         const aiResponse =
             this.parseAIResponse(
                 rawContent
             );
 
+        const parseTime =
+            Date.now() -
+            parseStartedAt;
+
+        console.log(
+            `⚡ [AI] Parse: ${parseTime}ms`
+        );
+
         /* =====================================================
-           BUILD SUGGESTED MOVIES
+           SUGGESTED MOVIES
         ====================================================== */
 
         const suggestedMovies =
@@ -944,6 +1441,18 @@ Nếu không gợi ý phim:
                 aiResponse.movie_ids,
                 context.movies
             );
+
+        /* =====================================================
+           TOTAL
+        ====================================================== */
+
+        const totalTime =
+            Date.now() -
+            totalStartedAt;
+
+        console.log(
+            `🚀 [AI] TOTAL: ${totalTime}ms`
+        );
 
         /* =====================================================
            FINAL RESPONSE
@@ -954,7 +1463,8 @@ Nếu không gợi ý phim:
                 aiResponse.reply ||
                 'Xin lỗi, mình chưa có câu trả lời.',
 
-            movies: suggestedMovies
+            movies:
+                suggestedMovies
         };
     }
 }
