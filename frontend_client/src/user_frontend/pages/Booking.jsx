@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import api from '../../api/api';
 import socketService from '../../api/socket';
+import { useAuth } from '../../context/AuthContext';
 import Modal from '../components/Modal';
 import Seat from '../components/Seat';
 import BookingSidebar from '../components/BookingSidebar';
@@ -32,6 +33,9 @@ const Booking = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { slug } = useParams();
+
+    // ✅ Lấy user từ Context
+    const { user: contextUser } = useAuth();
 
     // =========================================================
     // STATE
@@ -79,12 +83,24 @@ const Booking = () => {
     const seatsRef = useRef([]);
     const isSessionClearedRef = useRef(false);
 
+    // ✅ Ref lưu userId xuyên suốt
+    const userIdRef = useRef(null);
+
     // =========================================================
     // SYNC STATE → REF
     // =========================================================
 
     useEffect(() => { selectedSeatsRef.current = selectedSeats; }, [selectedSeats]);
     useEffect(() => { seatsRef.current = seats; }, [seats]);
+
+    // ✅ Sync userId từ context
+    useEffect(() => {
+        if (contextUser?.user_id) {
+            userIdRef.current = Number(contextUser.user_id);
+        } else {
+            userIdRef.current = null;
+        }
+    }, [contextUser]);
 
     // =========================================================
     // SHOWTIME ID
@@ -429,13 +445,16 @@ const Booking = () => {
         const currentSocket = socketService.getSocket();
         if (!currentSocket) return;
 
+        // =====================================================
+        // ✅ HANDLE SEAT LOCKED — DÙNG LIVE SOCKET
+        // =====================================================
         const handleSeatLocked = (data = {}) => {
             const eventShowtimeId = Number(data.showtimeId);
             if (eventShowtimeId !== Number(showtimeId)) return;
             const seatId = Number(data.seatId);
             if (!seatId) return;
 
-            // ✅ FIX: CHECK locked: false TRƯỚC KHI CHECK OWNER
+            // ✅ Check lock thất bại
             if (data.locked === false || data.success === false) {
                 const pending = pendingLocksRef.current.get(seatId);
                 if (pending?.timer) clearTimeout(pending.timer);
@@ -454,16 +473,24 @@ const Booking = () => {
                 return;
             }
 
+            // ✅ LẤY SOCKET MỚI NHẤT — KHÔNG DÙNG CLOSURE CŨ
+            const liveSocket = socketService.getSocket();
+            const mySocketId = liveSocket?.id ? String(liveSocket.id) : null;
+            const myUserId = userIdRef.current ? Number(userIdRef.current) : null;
+
             const eventSocketId = data.socketId ? String(data.socketId) : null;
             const eventOwnerToken = data.ownerToken ? String(data.ownerToken) : null;
-            const mySocketId = currentSocket?.id ? String(currentSocket.id) : null;
-            const isOwnLock = (eventSocketId && mySocketId && eventSocketId === mySocketId) ||
-                (eventOwnerToken && mySocketId && eventOwnerToken === mySocketId);
+            const eventUserId = data.userId ? Number(data.userId) : null;
 
+            const isOwnLock =
+                (eventSocketId && mySocketId && eventSocketId === mySocketId) ||
+                (eventOwnerToken && mySocketId && eventOwnerToken === mySocketId) ||
+                (eventUserId && myUserId && eventUserId === myUserId);
+
+            // ✅ Nếu là lock của mình
             if (isOwnLock) {
                 const pending = pendingLocksRef.current.get(seatId);
-                if (!pending) return;
-                clearTimeout(pending.timer);
+                if (pending?.timer) clearTimeout(pending.timer);
                 pendingLocksRef.current.delete(seatId);
                 setPendingSeatIds(prev => prev.filter(id => Number(id) !== seatId));
                 const matchedSeat = seatsRef.current.find(seat => Number(seat.seat_id) === seatId);
@@ -474,13 +501,13 @@ const Booking = () => {
                     const updated = [...prev, matchedSeat];
                     localStorage.setItem('selectedSeats', JSON.stringify(updated));
                     localStorage.setItem('currentShowtimeId', String(showtimeId));
-                    localStorage.setItem('bookingOwnerToken', String(currentSocket.id));
+                    localStorage.setItem('bookingOwnerToken', String(liveSocket.id));
                     if (!localStorage.getItem('holdExpiresAt')) {
                         localStorage.setItem('holdExpiresAt', String(Date.now() + SEAT_LOCK_TTL * 1000));
                     }
                     return updated;
                 });
-                ownerTokenRef.current = currentSocket.id;
+                ownerTokenRef.current = liveSocket.id;
                 setSeats(prev => prev.map(seat =>
                     Number(seat.seat_id) === seatId
                         ? { ...seat, is_locked_by_user: false, held_by_other: false }
@@ -490,6 +517,7 @@ const Booking = () => {
                 return;
             }
 
+            // ✅ Không phải lock của mình → đánh dấu held_by_other
             setSeats(prev => prev.map(seat =>
                 Number(seat.seat_id) === seatId
                     ? { ...seat, is_locked_by_user: true, held_by_other: true }
@@ -497,6 +525,9 @@ const Booking = () => {
             ));
         };
 
+        // =====================================================
+        // ✅ HANDLE SEAT UNLOCKED
+        // =====================================================
         const handleSeatUnlocked = (data = {}) => {
             if (Number(data.showtimeId) !== Number(showtimeId)) return;
             const seatId = Number(data.seatId);
@@ -514,32 +545,53 @@ const Booking = () => {
             ));
         };
 
+        // =====================================================
+        // ✅ HANDLE SEAT LIST — DÙNG LIVE SOCKET
+        // =====================================================
         const handleSeatList = (seatList = []) => {
             if (!Array.isArray(seatList)) return;
-            const mySocketId = currentSocket?.id ? String(currentSocket.id) : null;
+
+            // ✅ LẤY SOCKET MỚI NHẤT
+            const liveSocket = socketService.getSocket();
+            const mySocketId = liveSocket?.id ? String(liveSocket.id) : null;
+            const myUserId = userIdRef.current ? Number(userIdRef.current) : null;
+
             setSeats(prev => {
                 const updated = [...prev];
+
                 seatList.forEach(lock => {
-                    if (Number(lock.showtimeId) !== Number(showtimeId)) return;
                     const seatId = Number(lock.seatId);
                     if (!seatId) return;
+
                     const index = updated.findIndex(seat => Number(seat.seat_id) === seatId);
                     if (index === -1) return;
+
                     const lockSocketId = lock.socketId ? String(lock.socketId) : null;
                     const lockOwnerToken = lock.ownerToken ? String(lock.ownerToken) : null;
-                    const isOwnLock = (lockSocketId && mySocketId && lockSocketId === mySocketId) ||
-                        (lockOwnerToken && mySocketId && lockOwnerToken === mySocketId);
-                    updated[index] = { ...updated[index], is_locked_by_user: !isOwnLock, held_by_other: !isOwnLock };
+                    const lockUserId = lock.userId ? Number(lock.userId) : null;
+
+                    // ✅ 3 cách nhận diện lock của mình
+                    const isOwnLock =
+                        (lockSocketId && mySocketId && lockSocketId === mySocketId) ||
+                        (lockOwnerToken && mySocketId && lockOwnerToken === mySocketId) ||
+                        (lockUserId && myUserId && lockUserId === myUserId);
+
+                    updated[index] = {
+                        ...updated[index],
+                        is_locked_by_user: !isOwnLock,
+                        held_by_other: !isOwnLock
+                    };
                 });
                 return updated;
             });
         };
 
-        // ✅ FALLBACK: Nghe lỗi hệ thống từ server
+        // =====================================================
+        // ✅ HANDLE SEAT LOCK ERROR
+        // =====================================================
         const handleSeatLockError = (data = {}) => {
             console.error('[BOOKING] Server seat lock error:', data);
 
-            // Xóa tất cả pending
             pendingLocksRef.current.forEach((pending) => {
                 if (pending?.timer) clearTimeout(pending.timer);
             });
@@ -574,9 +626,11 @@ const Booking = () => {
         if (!numericSeatId) return;
         const existing = pendingLocksRef.current.get(numericSeatId);
         if (existing) return;
+
         const timer = setTimeout(() => {
             const pending = pendingLocksRef.current.get(numericSeatId);
             if (!pending) return;
+            console.warn(`⚠️ [BOOKING] Lock timeout cho ghế ${numericSeatId} — không nhận được xác nhận`);
             pendingLocksRef.current.delete(numericSeatId);
             setPendingSeatIds(prev => prev.filter(id => Number(id) !== numericSeatId));
             setSelectedSeats(prev => prev.filter(seat => Number(seat.seat_id) !== numericSeatId));
@@ -587,6 +641,7 @@ const Booking = () => {
             ));
             showErrorModal('Không thể giữ ghế', 'Hệ thống chưa xác nhận được ghế này. Vui lòng chọn lại.');
         }, LOCK_CONFIRM_TIMEOUT);
+
         pendingLocksRef.current.set(numericSeatId, { timer, showtimeId: requestedShowtimeId });
         setPendingSeatIds(prev => {
             if (prev.some(id => Number(id) === numericSeatId)) return prev;
@@ -719,15 +774,23 @@ const Booking = () => {
             showErrorModal('Socket đã ngắt kết nối', 'Phiên giữ ghế không còn hoạt động. Vui lòng tải lại trang và chọn ghế lại.');
             return;
         }
+
+        // ✅ Cho phép ownerToken khác socket.id nếu là cùng user
         const ownerToken = ownerTokenRef.current || localStorage.getItem('bookingOwnerToken') || currentSocket.id;
         if (!ownerToken) {
             showErrorModal('Không xác định được phiên giữ ghế', 'Vui lòng tải lại trang và chọn ghế lại.');
             return;
         }
-        if (String(ownerToken) !== String(currentSocket.id)) {
+
+        // ✅ Chỉ block nếu KHÁC user
+        const isSameUser = userIdRef.current && contextUser?.user_id &&
+                          Number(userIdRef.current) === Number(contextUser.user_id);
+
+        if (!isSameUser && String(ownerToken) !== String(currentSocket.id)) {
             showErrorModal('Phiên giữ ghế không hợp lệ', 'Socket giữ ghế đã thay đổi. Vui lòng tải lại trang và chọn ghế lại.');
             return;
         }
+
         localStorage.setItem('bookingOwnerToken', ownerToken);
         localStorage.setItem('selectedSeats', JSON.stringify(selectedSeats));
         localStorage.setItem('currentShowtimeId', String(showtimeId));
@@ -736,7 +799,7 @@ const Booking = () => {
             state: { movie, selectedCinema, selectedDate, selectedShowtime, selectedSeats, showtimeDetail, ownerToken }
         });
         setTimeout(() => { setIsNavigating(false); }, 3000);
-    }, [pendingSeatIds.length, selectedSeats, showtimeId, movie, selectedCinema, selectedDate, selectedShowtime, showtimeDetail, navigate, showErrorModal, closeModal]);
+    }, [pendingSeatIds.length, selectedSeats, showtimeId, movie, selectedCinema, selectedDate, selectedShowtime, showtimeDetail, navigate, showErrorModal, closeModal, contextUser]);
 
     // =========================================================
     // CLEANUP PENDING TIMERS

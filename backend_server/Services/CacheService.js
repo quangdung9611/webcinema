@@ -726,18 +726,34 @@ class CacheService {
                 [showtimeId, seatId, now]
             );
 
-            // ✅ Check owner linh hoạt:
-            // - user_id khớp → OK (cùng user, khác tab)
-            // - owner_token khớp → OK (guest hoặc cùng socket)
+            // =====================================================
+            // ✅ isOwner — check 3 case
+            // =====================================================
             const isOwner = (row) => {
                 if (!row) return false;
-                if (userId && Number(row.user_id) === Number(userId)) {
+
+                // ✅ Case 1: Cùng user (khác tab, sau F5) — user_id khớp
+                if (userId && row.user_id && Number(row.user_id) === Number(userId)) {
                     return true;
                 }
-                return row.owner_token === ownerToken;
+
+                // ✅ Case 2: Cùng socket (guest hoặc cùng session) — owner_token khớp
+                if (row.owner_token === ownerToken) {
+                    return true;
+                }
+
+                // ✅ Case 3: Lock cũ chưa có user_id + user đã login → cho phép reclaim
+                if (!row.user_id && userId) {
+                    console.log(`⚠️ [CACHE] Old lock without user_id — allowing user ${userId} to reclaim seat ${seatId}`);
+                    return true;
+                }
+
+                return false;
             };
 
+            // =====================================================
             // Đang bị người khác giữ
+            // =====================================================
             if (rows.length > 0 && !isOwner(rows[0])) {
                 await connection.rollback();
 
@@ -754,7 +770,9 @@ class CacheService {
                 };
             }
 
-            // Chính owner đang giữ → renew TTL + cập nhật owner_token mới
+            // =====================================================
+            // Chính owner đang giữ → renew TTL + cập nhật user_id/owner_token mới
+            // =====================================================
             if (rows.length > 0 && isOwner(rows[0])) {
                 await connection.query(
                     `
@@ -772,7 +790,9 @@ class CacheService {
                 return { locked: true, reason: 'OK', ownerToken, ttl };
             }
 
+            // =====================================================
             // Tạo lock mới
+            // =====================================================
             await connection.query(
                 `
                 INSERT INTO seat_locks
@@ -910,7 +930,7 @@ class CacheService {
 
 
     /**
-     * ✅ MỚI: Release tất cả ghế theo user_id
+     * ✅ Release tất cả ghế theo user_id
      */
     async releaseAllSeatLocksByUser(userId) {
         if (!userId) return 0;
@@ -943,7 +963,7 @@ class CacheService {
 
 
     /**
-     * ✅ MỚI: Release theo user + showtime
+     * ✅ Release theo user + showtime
      */
     async releaseShowtimeSeatLocksByUser(showtimeId, userId) {
         if (!showtimeId || !userId) return 0;
