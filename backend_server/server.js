@@ -247,10 +247,8 @@ io.on("connection", async (socket) => {
 
         if (registerUserId && Number(registerUserId) === Number(userId)) {
             try {
-                // 1. Lưu socket_token vào user_sockets
                 await CacheService.saveUserSocket(registerUserId, socketId);
 
-                // ✅ 2. Lưu socket_token vào refresh_tokens — RETRY 3 LẦN
                 if (socket.accessToken) {
                     const accessTokenHash = Jwt.hashRefreshToken(socket.accessToken);
                     let success = false;
@@ -308,7 +306,7 @@ io.on("connection", async (socket) => {
     }
 
     // ============================================================
-    // CLIENT CHỌN GHẾ
+    // ✅ CLIENT CHỌN GHẾ — ĐÃ SỬA
     // ============================================================
     socket.on("client-chon-ghe", async (data) => {
         try {
@@ -328,19 +326,33 @@ io.on("connection", async (socket) => {
                 showtimeId, seatId, ownerToken, 10 * 60
             );
 
+            // ✅ FIX: Nếu ghế đã bị người khác giữ → emit locked: FALSE
             if (!lockResult.locked) {
                 socket.emit("server-khoa-ghe", {
-                    ...data, seatId, showtimeId,
+                    ...data,
+                    seatId,
+                    showtimeId,
                     socketId: lockResult.ownerToken,
-                    userId: null, locked: true, ttl: lockResult.ttl
+                    userId: null,
+                    locked: false,              // ✅ FALSE
+                    success: false,             // ✅ FALSE
+                    message: "Ghế đã được người khác giữ. Vui lòng chọn ghế khác.",
+                    ttl: lockResult.ttl
                 });
                 return;
             }
 
+            // ✅ Lock thành công → broadcast cho tất cả client
             const seatData = {
-                ...data, seatId, showtimeId,
-                socketId, userId, ownerToken,
-                locked: true, ttl: lockResult.ttl
+                ...data,
+                seatId,
+                showtimeId,
+                socketId,
+                userId,
+                ownerToken,
+                locked: true,                   // ✅ TRUE
+                success: true,                  // ✅ TRUE
+                ttl: lockResult.ttl
             };
 
             io.emit("server-khoa-ghe", seatData);
@@ -416,7 +428,9 @@ io.on("connection", async (socket) => {
             }
         } catch (error) {
             socket.emit("clear_all_holding_seats_ack", {
-                success: false, cleared: 0, userId,
+                success: false,
+                cleared: 0,
+                userId,
                 message: "Không thể giải phóng ghế"
             });
         }
@@ -430,13 +444,11 @@ io.on("connection", async (socket) => {
     });
 
     // ============================================================
-    // ✅ DISCONNECT — CHỈ XÓA SOCKET KHỎI user_sockets
-    // KHÔNG clear socket_token (INSERT-ONLY, không UPDATE)
+    // ✅ DISCONNECT
     // ============================================================
     socket.on("disconnect", async () => {
         console.log(`🔴 [SOCKET] Disconnected: ${socketId} - User: ${userId}`);
 
-        // 1. Release seat locks
         try {
             const releasedCount = await CacheService.releaseAllSeatLocksByOwner(ownerToken);
             console.log(`🔓 [CACHE SEAT LOCK] Released ${releasedCount} seats`);
@@ -444,8 +456,6 @@ io.on("connection", async (socket) => {
             console.error("❌ [SOCKET] Release seat locks error:", error.message);
         }
 
-        // ✅ 2. Xóa CHÍNH XÁC socket này khỏi user_sockets
-        // KHÔNG cần clear socket_token trong refresh_tokens
         if (userId) {
             try {
                 await CacheService.deleteUserSocketByToken(userId, socketId);
@@ -570,22 +580,19 @@ server.listen(PORT, "0.0.0.0", async () => {
 // ============================================================
 // ✅ AUTO CLEANUP — MỖI 7 NGÀY
 // ============================================================
-const CLEANUP_INTERVAL = 7 * 24 * 60 * 60 * 1000; // 7 ngày
+const CLEANUP_INTERVAL = 7 * 24 * 60 * 60 * 1000;
 
 const runCleanup = async () => {
     console.log('🧹 [CLEANUP] Bắt đầu dọn dẹp dữ liệu cũ...');
     const startTime = Date.now();
 
     try {
-        // 1. Cleanup refresh_tokens cũ (> 7 ngày, không active)
         const refreshCount = await RefreshTokenRepository.cleanupOldRecords(7);
         console.log(`🧹 [CLEANUP] refresh_tokens: ${refreshCount} records deleted`);
 
-        // 2. Cleanup user_sockets expired > 7 ngày
         const socketCount = await CacheService.cleanupOldSockets(7);
         console.log(`🧹 [CLEANUP] user_sockets: ${socketCount} records deleted`);
 
-        // 3. Cleanup các bảng khác
         await CacheService.cleanupExpiredData();
 
         const duration = Date.now() - startTime;
@@ -596,10 +603,7 @@ const runCleanup = async () => {
     }
 };
 
-// Chạy lần đầu sau 1 phút
 setTimeout(runCleanup, 60 * 1000);
-
-// Chạy định kỳ mỗi 7 ngày
 setInterval(runCleanup, CLEANUP_INTERVAL);
 
 console.log('🧹 [CLEANUP] Auto-cleanup scheduled every 7 days');

@@ -789,9 +789,15 @@ const UserHome = () => {
 
         {/* ==================================================
             QUICK BOOKING
+            👇 ĐÃ THÊM releaseTransform={true}
         ================================================== */}
 
-        <ScrollReveal direction="up" delay={0.2} once>
+        <ScrollReveal
+          direction="up"
+          delay={0.2}
+          once
+          releaseTransform={true}
+        >
           <section className="quick-booking-container">
             <div className="quick-booking-content">
               <div className="quick-booking-row">
@@ -960,7 +966,6 @@ const UserHome = () => {
 
               {testimonials.length > 0 ? (
                 testimonials.map((item, index) => {
-                  // ✅ TỐI ƯU ẢNH AVATAR
                   const rawAvatarUrl = item.customer_avatar
                     ? item.customer_avatar.startsWith('http')
                       ? item.customer_avatar

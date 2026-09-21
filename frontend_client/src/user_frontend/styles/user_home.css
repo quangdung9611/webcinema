@@ -1,21 +1,20 @@
 /* ==========================================================
    QUANG DŨNG CINEMA
    USER HOME — CINEMATIC IMMERSIVE SILVER
-   ==========================================================
+   ========================================================== */
 
-   MỤC TIÊU:
-   - Premium cinematic
-   - Black / Silver / Platinum
-   - Có chiều sâu nhưng không lạm dụng 3D
-   - Atmospheric background
-   - Glass / glow / lighting tinh tế
-   - Giữ nguyên toàn bộ class hiện tại của UserHome.jsx
-   - Responsive: 1200 / 992 / 768 / 480
-
-   NOTE:
-   - Toàn bộ màu sắc đã được chuyển sang biến trong index.css
-   - File này chỉ dùng var(--...) — không hard-code màu
+/* ==========================================================
+   0. QUICK BOOKING — DROPDOWN NẰM TRONG KHUNG
+   Container tự giãn ra để chứa dropdown, không cắt, không tràn
 ========================================================== */
+
+.quick-booking-container,
+.quick-booking-content,
+.quick-booking-row,
+.quick-booking-selects,
+.quick-select-item {
+    overflow: visible;
+}
 
 
 /* ==========================================================
@@ -35,12 +34,6 @@
         var(--bg-primary);
 }
 
-
-/*
-    Ambient light phía sau toàn bộ trang.
-    Không dùng màu sắc mạnh để giữ đúng cinematic silver.
-*/
-
 .user-home::before {
     content: "";
     position: absolute;
@@ -52,12 +45,6 @@
         var(--home-ambient-circle),
         var(--home-ambient-linear);
 }
-
-
-/*
-    Grain rất nhẹ.
-    Giúp background không bị "màu phẳng".
-*/
 
 .user-home::after {
     content: "";
@@ -184,10 +171,6 @@
     min-width: 0;
 }
 
-
-/*
-    Một đường ánh sáng nhỏ bên trái title.
-*/
 
 .section-header-left::before {
     content: "";
@@ -362,7 +345,7 @@
 .quick-booking-container {
     position: relative;
 
-    z-index: 10;
+    z-index: 50;
 
     width: min(100%, var(--container-width));
     max-width: 1340px;
@@ -372,11 +355,6 @@
     padding-inline: var(--container-padding);
 
     box-sizing: border-box;
-
-    /*
-        Kéo nhẹ booking lên phía hero.
-        Nếu HeroBanner đã có spacing riêng thì vẫn an toàn.
-    */
 
     margin-top: -34px;
 }
@@ -392,7 +370,12 @@
 
     padding: 18px;
 
-    overflow: hidden;
+    /*
+       ✅ overflow: visible
+       Container có thể cao lên để chứa dropdown bên trong.
+       Không cắt dropdown.
+    */
+    overflow: visible;
 
     border: var(--home-quick-border);
 
@@ -416,10 +399,6 @@
 }
 
 
-/*
-    Ánh sáng phía trên booking panel.
-*/
-
 .quick-booking-content::before {
     content: "";
 
@@ -434,6 +413,11 @@
     background: var(--home-quick-top-light);
 
     opacity: 0.55;
+
+    pointer-events: none;
+
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
 }
 
 
@@ -456,6 +440,8 @@
 
     animation:
         cinematicPulse 7s ease-in-out infinite;
+
+    z-index: 0;
 }
 
 
@@ -482,7 +468,12 @@
         minmax(0, 1fr)
         auto;
 
-    align-items: center;
+    /*
+       ✅ align-items: start
+       Để select đang mở dropdown không đẩy lệch các select khác
+       khi container cao lên.
+    */
+    align-items: start;
 
     width: 100%;
 
@@ -501,6 +492,9 @@
     gap: 10px;
 
     min-width: 0;
+
+    /* ✅ Các select căn theo top, không căn giữa */
+    align-items: start;
 }
 
 
@@ -519,6 +513,7 @@
     min-width: 0;
     max-width: 100%;
 
+    /* ✅ Cho phép item cao lên khi mở dropdown */
     overflow: visible;
 }
 
@@ -671,22 +666,29 @@
 
 
 /* ==========================================================
-   9. DROPDOWN
+   9. DROPDOWN — NẰM TRONG LUỒNG, KHÔNG ABSOLUTE
 ========================================================== */
 
 .quick-dropdown-list {
-    position: absolute;
+    /*
+       ✅ BỎ position: absolute
+       → dropdown nằm trong luồng document
+       → đẩy container cao lên
+       → luôn nằm trong khung, không tràn
+    */
+    position: relative;
 
-    top: calc(100% + 7px);
-    left: 0;
+    top: auto;
+    left: auto;
 
-    z-index: 100;
+    z-index: 1;
 
     width: 100%;
 
     max-height: 230px;
 
-    margin: 0;
+    /* ✅ Khoảng cách với trigger */
+    margin: 7px 0 0 0;
 
     overflow-y: auto;
     overflow-x: hidden;
@@ -1617,9 +1619,6 @@
 
     margin-top: var(--space-3xl);
 
-    /*
-        Tạo khoảng thở riêng cho khu vực phim.
-    */
     padding-top: 8px;
 }
 
@@ -1650,10 +1649,6 @@
     margin-top: var(--space-3xl);
 }
 
-
-/*
-    Một chút atmospheric light phía sau từng khu.
-*/
 
 .promotions-section::before,
 .cinema-corner-section::before,
@@ -1751,10 +1746,6 @@
     height: 100%;
 
     min-width: 0;
-
-    /*
-        Không override hover của component.
-    */
 }
 
 
@@ -1980,9 +1971,6 @@
         padding-bottom: var(--space-2xl);
     }
 
-
-    /* SECTION HEADER */
-
     .section-header {
         align-items: flex-start;
 
@@ -1991,13 +1979,11 @@
         margin-bottom: 18px;
     }
 
-
     .section-header-left::before {
         width: 32px;
 
         margin-bottom: 8px;
     }
-
 
     .section-title {
         font-size: clamp(
@@ -2009,19 +1995,16 @@
         gap: 10px;
     }
 
-
     .section-title::after {
         bottom: -7px;
 
         max-width: 90px;
     }
 
-
     .section-icon {
         width: 27px;
         height: 27px;
     }
-
 
     .btn-view-all {
         min-height: 36px;
@@ -2031,13 +2014,9 @@
         font-size: var(--font-size-h6);
     }
 
-
-    /* QUICK BOOKING */
-
     .quick-booking-container {
         margin-top: -16px;
     }
-
 
     .quick-booking-content {
         padding: 13px;
@@ -2045,14 +2024,12 @@
         border-radius: 16px;
     }
 
-
     .quick-booking-selects {
         grid-template-columns:
             repeat(2, minmax(0, 1fr));
 
         gap: 8px;
     }
-
 
     .quick-select-trigger {
         height: 46px;
@@ -2062,28 +2039,23 @@
         border-radius: 10px;
     }
 
-
     .quick-select-left {
         gap: 7px;
     }
-
 
     .quick-select-icon {
         width: 17px;
         height: 17px;
     }
 
-
     .quick-select-value {
         font-size: var(--font-size-h6);
     }
-
 
     .quick-select-arrow {
         width: 14px;
         height: 14px;
     }
-
 
     .quick-dropdown-list {
         max-height: 180px;
@@ -2091,13 +2063,11 @@
         border-radius: 11px;
     }
 
-
     .quick-option-item {
         padding: 9px 11px;
 
         font-size: var(--font-size-h6);
     }
-
 
     .btn-quick-booking {
         height: 48px;
@@ -2107,13 +2077,9 @@
         font-size: var(--font-size-h6);
     }
 
-
-    /* FEATURES */
-
     .home-features-section {
         margin-top: var(--space-2xl);
     }
-
 
     .features-grid {
         grid-template-columns:
@@ -2121,7 +2087,6 @@
 
         border-radius: 16px;
     }
-
 
     .feature-item {
         min-height: 100px;
@@ -2131,7 +2096,6 @@
         padding: 17px 14px;
     }
 
-
     .feature-icon-wrapper {
         width: 48px;
         height: 48px;
@@ -2139,12 +2103,10 @@
         border-radius: 11px;
     }
 
-
     .feature-icon-wrapper svg {
         width: 22px;
         height: 22px;
     }
-
 
     .feature-text h4 {
         margin-bottom: 4px;
@@ -2154,15 +2116,11 @@
         line-height: 1.35;
     }
 
-
     .feature-text p {
         font-size: 0.72rem;
 
         line-height: 1.45;
     }
-
-
-    /* STATS */
 
     .stats-section {
         padding: 36px 0;
@@ -2172,19 +2130,16 @@
         border-radius: 18px;
     }
 
-
     .stats-title {
         margin-bottom: 28px;
 
         font-size: var(--font-size-h4);
     }
 
-
     .stat-number {
         font-size:
             clamp(2.4rem, 9vw, 3.6rem);
     }
-
 
     .stat-label {
         margin-top: 10px;
@@ -2194,13 +2149,9 @@
         letter-spacing: 0.07em;
     }
 
-
-    /* TESTIMONIALS */
-
     .testimonials-section {
         margin-top: var(--space-2xl);
     }
-
 
     .testimonials-header {
         align-items: flex-start;
@@ -2208,22 +2159,18 @@
         justify-content: space-between;
     }
 
-
     .testimonials-title-group {
         gap: 10px;
     }
-
 
     .testimonials-icon {
         width: 25px;
         height: 25px;
     }
 
-
     .testimonials-title {
         font-size: var(--font-size-h4);
     }
-
 
     .btn-review-open {
         min-height: 36px;
@@ -2233,14 +2180,12 @@
         font-size: var(--font-size-h6);
     }
 
-
     .testimonials-grid {
         grid-template-columns:
             repeat(2, minmax(0, 1fr));
 
         gap: 10px;
     }
-
 
     .testimonial-card {
         min-height: 220px;
@@ -2250,23 +2195,19 @@
         border-radius: 14px;
     }
 
-
     .testimonial-avatar {
         width: 46px;
         height: 46px;
     }
 
-
     .testimonial-name {
         font-size: var(--font-size-h5);
     }
-
 
     .testimonial-stars svg {
         width: 13px;
         height: 13px;
     }
-
 
     .testimonial-content p {
         font-size: 0.78rem;
@@ -2274,15 +2215,9 @@
         line-height: 1.65;
     }
 
-
-    /* MOVIES */
-
     .movie-container {
         margin-top: var(--space-2xl);
     }
-
-
-    /* SECTIONS */
 
     .promotions-section,
     .cinema-corner-section,
@@ -2291,14 +2226,12 @@
         margin-top: var(--space-2xl);
     }
 
-
     .promotion-grid {
         grid-template-columns:
             repeat(2, minmax(0, 1fr));
 
         gap: 10px;
     }
-
 
     .cinema-grid {
         grid-template-columns:
@@ -2319,19 +2252,14 @@
         opacity: 0.02;
     }
 
-
-    /* SECTION */
-
     .section-title {
         font-size: var(--font-size-h4);
     }
-
 
     .section-icon {
         width: 24px;
         height: 24px;
     }
-
 
     .btn-view-all {
         padding: 6px 12px;
@@ -2339,15 +2267,11 @@
         font-size: 0.72rem;
     }
 
-
-    /* QUICK BOOKING */
-
     .quick-booking-container {
         padding-inline: 12px;
 
         margin-top: -10px;
     }
-
 
     .quick-booking-content {
         padding: 11px;
@@ -2355,14 +2279,12 @@
         border-radius: 14px;
     }
 
-
     .quick-booking-selects {
         grid-template-columns:
             repeat(2, minmax(0, 1fr));
 
         gap: 7px;
     }
-
 
     .quick-select-trigger {
         height: 43px;
@@ -2372,28 +2294,23 @@
         border-radius: 9px;
     }
 
-
     .quick-select-left {
         gap: 6px;
     }
-
 
     .quick-select-icon {
         width: 16px;
         height: 16px;
     }
 
-
     .quick-select-value {
         font-size: 0.69rem;
     }
-
 
     .quick-select-arrow {
         width: 12px;
         height: 12px;
     }
-
 
     .quick-dropdown-list {
         max-height: 155px;
@@ -2403,13 +2320,11 @@
         border-radius: 10px;
     }
 
-
     .quick-option-item {
         padding: 8px 9px;
 
         font-size: 0.69rem;
     }
-
 
     .btn-quick-booking {
         height: 43px;
@@ -2421,16 +2336,12 @@
         letter-spacing: 0.5px;
     }
 
-
-    /* FEATURES */
-
     .features-grid {
         grid-template-columns:
             repeat(2, minmax(0, 1fr));
 
         border-radius: 14px;
     }
-
 
     .feature-item {
         align-items: flex-start;
@@ -2442,7 +2353,6 @@
         padding: 13px 10px;
     }
 
-
     .feature-icon-wrapper {
         width: 40px;
         height: 40px;
@@ -2452,12 +2362,10 @@
         border-radius: 9px;
     }
 
-
     .feature-icon-wrapper svg {
         width: 19px;
         height: 19px;
     }
-
 
     .feature-text h4 {
         margin-bottom: 3px;
@@ -2467,15 +2375,11 @@
         line-height: 1.3;
     }
 
-
     .feature-text p {
         font-size: 0.61rem;
 
         line-height: 1.4;
     }
-
-
-    /* STATS */
 
     .stats-section {
         padding: 28px 0;
@@ -2485,35 +2389,29 @@
         border-radius: 15px;
     }
 
-
     .stats-title {
         margin-bottom: 22px;
 
         font-size: var(--font-size-h5);
     }
 
-
     .stats-grid {
         grid-template-columns:
             repeat(2, 1fr);
     }
 
-
     .stat-item {
         padding: 12px 8px 16px;
     }
-
 
     .stat-item + .stat-item::before {
         height: 65%;
     }
 
-
     .stat-number {
         font-size:
             clamp(2rem, 11vw, 2.8rem);
     }
-
 
     .stat-label {
         margin-top: 8px;
@@ -2525,13 +2423,9 @@
         line-height: 1.35;
     }
 
-
     .stat-item:nth-child(3)::before {
         display: block;
     }
-
-
-    /* TESTIMONIALS */
 
     .testimonials-header {
         align-items: center;
@@ -2539,20 +2433,17 @@
         gap: 10px;
     }
 
-
     .testimonials-title-group {
         flex: 1;
 
         min-width: 0;
     }
 
-
     .testimonials-title {
         font-size: var(--font-size-h5);
 
         line-height: 1.2;
     }
-
 
     .testimonials-icon {
         width: 22px;
@@ -2561,19 +2452,16 @@
         flex-shrink: 0;
     }
 
-
     .btn-review-open {
         padding: 6px 9px;
 
         font-size: 0.66rem;
     }
 
-
     .btn-review-open svg {
         width: 13px;
         height: 13px;
     }
-
 
     .testimonials-grid {
         grid-template-columns:
@@ -2581,7 +2469,6 @@
 
         gap: 8px;
     }
-
 
     .testimonial-card {
         min-height: 205px;
@@ -2591,19 +2478,16 @@
         border-radius: 12px;
     }
 
-
     .testimonial-header {
         gap: 8px;
 
         margin-bottom: 10px;
     }
 
-
     .testimonial-avatar {
         width: 38px;
         height: 38px;
     }
-
 
     .testimonial-name {
         margin-bottom: 3px;
@@ -2611,24 +2495,20 @@
         font-size: 0.72rem;
     }
 
-
     .testimonial-stars {
         gap: 1px;
     }
-
 
     .testimonial-stars svg {
         width: 11px;
         height: 11px;
     }
 
-
     .testimonial-content {
         min-height: 70px;
 
         margin-bottom: 9px;
     }
-
 
     .testimonial-content p {
         font-size: 0.67rem;
@@ -2638,22 +2518,15 @@
         -webkit-line-clamp: 4;
     }
 
-
     .testimonial-date {
         padding-top: 8px;
 
         font-size: 0.58rem;
     }
 
-
-    /* MOVIE */
-
     .movie-container {
         margin-top: var(--space-xl);
     }
-
-
-    /* OTHER SECTIONS */
 
     .promotions-section,
     .cinema-corner-section,
@@ -2662,19 +2535,12 @@
         margin-top: var(--space-xl);
     }
 
-
-    /*
-        Mobile vẫn 2 card.
-        Tránh Home quá dài.
-    */
-
     .promotion-grid {
         grid-template-columns:
             repeat(2, minmax(0, 1fr));
 
         gap: 8px;
     }
-
 
     .cinema-grid {
         grid-template-columns:
