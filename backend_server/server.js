@@ -307,6 +307,10 @@ io.on("connection", async (socket) => {
 
     // ============================================================
     // ✅ CLIENT CHỌN GHẾ — ĐÃ SỬA
+    // Phân biệt rõ:
+    //   - HELD_BY_OTHER  → ghế bị người khác giữ
+    //   - SYSTEM_ERROR   → lỗi hệ thống (DB, deadlock...)
+    //   - OK             → giữ ghế thành công
     // ============================================================
     socket.on("client-chon-ghe", async (data) => {
         try {
@@ -326,7 +330,23 @@ io.on("connection", async (socket) => {
                 showtimeId, seatId, ownerToken, 10 * 60
             );
 
-            // ✅ FIX: Nếu ghế đã bị người khác giữ → emit locked: FALSE
+            // =====================================================
+            // ✅ TRƯỜNG HỢP 1: LỖI HỆ THỐNG
+            // =====================================================
+            if (lockResult.reason === 'SYSTEM_ERROR') {
+                console.error(`🔴 [SOCKET] SYSTEM_ERROR khi giữ ghế ${seatId}:`, lockResult.error);
+                socket.emit("server-seat-lock-error", {
+                    success: false,
+                    seatId,
+                    showtimeId,
+                    message: "Hệ thống đang bận. Vui lòng thử lại sau ít giây."
+                });
+                return;
+            }
+
+            // =====================================================
+            // ✅ TRƯỜNG HỢP 2: GHẾ ĐÃ BỊ NGƯỜI KHÁC GIỮ
+            // =====================================================
             if (!lockResult.locked) {
                 socket.emit("server-khoa-ghe", {
                     ...data,
@@ -342,7 +362,9 @@ io.on("connection", async (socket) => {
                 return;
             }
 
-            // ✅ Lock thành công → broadcast cho tất cả client
+            // =====================================================
+            // ✅ TRƯỜNG HỢP 3: GIỮ GHẾ THÀNH CÔNG
+            // =====================================================
             const seatData = {
                 ...data,
                 seatId,

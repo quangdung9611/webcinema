@@ -712,8 +712,27 @@ class CacheService {
         6. SEAT LOCK
     =======================================================*/
 
+    /**
+     * ✅ FIX: Phân biệt rõ 3 trường hợp:
+     *   - locked: true                      → giữ ghế thành công
+     *   - locked: false, reason: 'HELD_BY_OTHER' → ghế đã bị người khác giữ
+     *   - locked: false, reason: 'SYSTEM_ERROR'  → lỗi hệ thống (DB, deadlock...)
+     */
     async acquireSeatLock(showtimeId, seatId, ownerToken, ttl = SEAT_LOCK_TTL) {
-        const connection = await db.getConnection();
+        let connection;
+
+        try {
+            connection = await db.getConnection();
+        } catch (connError) {
+            console.error("❌ [CACHE] Cannot get DB connection:", connError.message);
+            return {
+                locked: false,
+                reason: 'SYSTEM_ERROR',
+                ownerToken: null,
+                ttl: 0,
+                error: connError.message
+            };
+        }
 
         try {
             await connection.beginTransaction();
@@ -733,7 +752,9 @@ class CacheService {
                 [showtimeId, seatId, now]
             );
 
+            // -----------------------------------------------
             // Đang bị người khác giữ
+            // -----------------------------------------------
             if (rows.length > 0 && rows[0].owner_token !== ownerToken) {
                 await connection.rollback();
 
@@ -744,12 +765,15 @@ class CacheService {
 
                 return {
                     locked: false,
+                    reason: 'HELD_BY_OTHER',
                     ownerToken: existing.owner_token,
                     ttl: Math.max(0, remaining)
                 };
             }
 
+            // -----------------------------------------------
             // Chính owner đang giữ → renew TTL
+            // -----------------------------------------------
             if (rows.length > 0 && rows[0].owner_token === ownerToken) {
                 await connection.query(
                     `
@@ -762,10 +786,12 @@ class CacheService {
 
                 await connection.commit();
 
-                return { locked: true, ownerToken, ttl };
+                return { locked: true, reason: 'OK', ownerToken, ttl };
             }
 
+            // -----------------------------------------------
             // Tạo lock mới
+            // -----------------------------------------------
             await connection.query(
                 `
                 INSERT INTO seat_locks
@@ -777,21 +803,28 @@ class CacheService {
 
             await connection.commit();
 
-            return { locked: true, ownerToken, ttl };
+            return { locked: true, reason: 'OK', ownerToken, ttl };
 
         } catch (error) {
             try {
                 await connection.rollback();
             } catch (rollbackError) {
-                console.error("❌ Seat lock rollback error:", rollbackError.message);
+                console.error("❌ [CACHE] Seat lock rollback error:", rollbackError.message);
             }
 
-            console.error("❌ acquireSeatLock error:", error.message);
+            console.error("❌ [CACHE] acquireSeatLock SYSTEM_ERROR:", error.message);
 
-            return { locked: false, ownerToken: null, ttl: 0 };
+            // ✅ Phân biệt lỗi hệ thống rõ ràng
+            return {
+                locked: false,
+                reason: 'SYSTEM_ERROR',
+                ownerToken: null,
+                ttl: 0,
+                error: error.message
+            };
 
         } finally {
-            connection.release();
+            if (connection) connection.release();
         }
     }
 
@@ -896,25 +929,12 @@ class CacheService {
 
     /*=======================================================
         7. USER SOCKET — INSERT-ONLY
-        ✅ MỖI LẦN CONNECT = 1 RECORD MỚI
-        ✅ KHÔNG CÓ UNIQUE(user_id, socket_token)
-        ✅ socket_id LUÔN AUTO-INCREMENT
     =======================================================*/
 
-    /**
-     * LƯU SOCKET MỚI CHO USER
-     * Mỗi lần connect = 1 record MỚI (socket_id tăng)
-     *
-     * @param {Number} userId
-     * @param {String} socketToken - socket.id từ Socket.IO
-     * @param {Number} ttl - Thời gian sống (giây)
-     * @returns {Number} socket_id vừa insert
-     */
     async saveUserSocket(userId, socketToken, ttl = SOCKET_TTL) {
         const now = new Date();
         const expiresAt = new Date(now.getTime() + ttl * 1000);
 
-        // ✅ INSERT THUẦN — không IGNORE, không UPDATE
         const [result] = await db.query(
             `
             INSERT INTO user_sockets
@@ -929,9 +949,6 @@ class CacheService {
     }
 
 
-    /**
-     * LẤY SOCKET MỚI NHẤT CỦA USER
-     */
     async getUserSocket(userId) {
         const now = new Date();
 
@@ -955,9 +972,6 @@ class CacheService {
     }
 
 
-    /**
-     * LẤY TẤT CẢ SOCKETS ĐANG ACTIVE CỦA USER
-     */
     async getAllUserSockets(userId) {
         const now = new Date();
 
@@ -981,9 +995,6 @@ class CacheService {
     }
 
 
-    /**
-     * XÓA TẤT CẢ SOCKETS CỦA USER
-     */
     async deleteUserSocket(userId) {
         const [result] = await db.query(
             `
@@ -998,9 +1009,6 @@ class CacheService {
     }
 
 
-    /**
-     * XÓA 1 SOCKET CỤ THỂ CỦA USER
-     */
     async deleteUserSocketByToken(userId, socketToken) {
         const [result] = await db.query(
             `
@@ -1019,10 +1027,6 @@ class CacheService {
     }
 
 
-    /**
-     * ✅ CLEANUP — Xóa socket expired > N ngày
-     * Gọi định kỳ (VD: 7 ngày/lần)
-     */
     async cleanupOldSockets(days = 7) {
         const [result] = await db.query(
             `
@@ -1095,7 +1099,6 @@ class CacheService {
             await db.query(`DELETE FROM temp_bookings WHERE expires_at < ?`, [now]);
             await db.query(`DELETE FROM seat_locks WHERE expires_at < ?`, [now]);
 
-            // ✅ Cleanup old sockets (> 7 ngày)
             await this.cleanupOldSockets(7);
 
             console.log("🧹 [CACHE] Cleaned up expired data");

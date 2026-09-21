@@ -535,7 +535,7 @@ const Booking = () => {
             });
         };
 
-        // ✅ FALLBACK: Nghe lỗi từ server (khi CacheService throw)
+        // ✅ FALLBACK: Nghe lỗi hệ thống từ server
         const handleSeatLockError = (data = {}) => {
             console.error('[BOOKING] Server seat lock error:', data);
 
