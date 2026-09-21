@@ -20,6 +20,9 @@ const Modal = ({
     onCancel,
     confirmText = "Xác nhận",
     cancelText = "Hủy",
+    // ✅ PROP MỚI — cho phép custom nút
+    confirmButton = null,
+    cancelButton = null,
 }) => {
     if (!show) return null;
 
@@ -60,6 +63,52 @@ const Modal = ({
         }
     };
 
+    // ========================================================
+    // ✅ RENDER NÚT CANCEL
+    // ========================================================
+    const renderCancelButton = () => {
+        // Nếu có cancelButton custom → dùng nó
+        if (cancelButton) {
+            return cancelButton({
+                onClick: onCancel || onConfirm || handleClose,
+                disabled: false,
+            });
+        }
+
+        // Mặc định
+        return (
+            <button
+                className="modal-btn-cancel"
+                onClick={onCancel || onConfirm || handleClose}
+            >
+                {cancelText}
+            </button>
+        );
+    };
+
+    // ========================================================
+    // ✅ RENDER NÚT CONFIRM
+    // ========================================================
+    const renderConfirmButton = () => {
+        // Nếu có confirmButton custom → dùng nó
+        if (confirmButton) {
+            return confirmButton({
+                onClick: onConfirm,
+                disabled: false,
+            });
+        }
+
+        // Mặc định
+        return (
+            <button
+                className="modal-btn-confirm"
+                onClick={onConfirm}
+            >
+                {confirmText}
+            </button>
+        );
+    };
+
     return (
         <div className="modal-overlay" onClick={handleClose}>
             <div
@@ -85,12 +134,8 @@ const Modal = ({
 
                     {(onConfirm || onCancel) && (
                         <div className="modal-footer">
-                            <button className="modal-btn-cancel" onClick={onCancel || onConfirm || handleClose}>
-                                {cancelText}
-                            </button>
-                            <button className="modal-btn-confirm" onClick={onConfirm}>
-                                {confirmText}
-                            </button>
+                            {renderCancelButton()}
+                            {renderConfirmButton()}
                         </div>
                     )}
                 </div>

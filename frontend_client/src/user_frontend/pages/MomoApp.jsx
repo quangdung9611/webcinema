@@ -12,14 +12,14 @@ import React, {
 
 import {
     useLocation,
-    useNavigate,
-    useBlocker
+    useNavigate
 } from 'react-router-dom';
 
 import {
     Lock,
     Clock,
     RotateCw,
+    Loader2,
 } from 'lucide-react';
 
 import api from '../../api/api';
@@ -38,7 +38,6 @@ import '../styles/MomoApp.css';
 
 const OTP_TTL = 300;
 const OTP_MAX_ATTEMPTS = 5;
-const RESEND_COOLDOWN = 300;
 
 const MomoApp = () => {
     const location = useLocation();
@@ -181,21 +180,15 @@ const MomoApp = () => {
         return saved > 0 ? saved : 0;
     });
 
-    const [resendCooldownExpiresAt, setResendCooldownExpiresAt] = useState(() => {
-        const saved = parseInt(localStorage.getItem('momoResendCooldownExpiresAt') || '0', 10);
-        return saved > 0 ? saved : 0;
-    });
-
     const [lockExpiresAt, setLockExpiresAt] = useState(() => {
         const saved = parseInt(localStorage.getItem('momoLockTime') || '0', 10);
         return saved > 0 ? saved : 0;
     });
 
     const [timeLeft, setTimeLeft] = useState(OTP_TTL);
-    const [resendCooldown, setResendCooldown] = useState(0);
     const [lockTimeLeft, setLockTimeLeft] = useState(0);
 
-    // ✅ UNIFIED TIMER
+    // ✅ UNIFIED TIMER — CHỈ CÒN 1 TIMER OTP + 1 TIMER LOCK
     useEffect(() => {
         const tick = () => {
             const now = Date.now();
@@ -206,17 +199,6 @@ const MomoApp = () => {
                 if (otpRemaining <= 0 && !otpExpiredRef.current) {
                     otpExpiredRef.current = true;
                 }
-            }
-
-            if (resendCooldownExpiresAt > 0) {
-                const cooldownRemaining = Math.max(0, Math.ceil((resendCooldownExpiresAt - now) / 1000));
-                setResendCooldown(cooldownRemaining);
-                if (cooldownRemaining <= 0) {
-                    setResendCooldownExpiresAt(0);
-                    localStorage.removeItem('momoResendCooldownExpiresAt');
-                }
-            } else {
-                setResendCooldown(0);
             }
 
             if (lockExpiresAt > 0) {
@@ -243,7 +225,7 @@ const MomoApp = () => {
                 timerIntervalRef.current = null;
             }
         };
-    }, [otpExpiresAt, resendCooldownExpiresAt, lockExpiresAt]);
+    }, [otpExpiresAt, lockExpiresAt]);
 
     // ============================================================
     // DERIVED STATE
@@ -453,7 +435,7 @@ const MomoApp = () => {
             'momoCustomerEmail', 'momoCustomerName', 'momoCustomerPhone', 'momoTotalAmount',
             'momoMovie', 'momoSelectedCinema', 'momoSelectedDate', 'momoSelectedShowtime',
             'momoFoods', 'momoTotalTicketPrice', 'momoTotalFoodPrice', 'momoShowtimeDetail',
-            'momoOtpExpiresAt', 'momoResendCooldownExpiresAt'
+            'momoOtpExpiresAt'
         ];
         momoKeys.forEach(key => localStorage.removeItem(key));
 
@@ -467,7 +449,6 @@ const MomoApp = () => {
         localStorage.removeItem('bookingOwnerToken');
 
         setOtpExpiresAt(0);
-        setResendCooldownExpiresAt(0);
         setOtp('');
         hasShownModalRef.current = false;
         hasShownExpiredModalRef.current = false;
@@ -665,10 +646,6 @@ const MomoApp = () => {
             localStorage.setItem('momoOtpExpiresAt', String(expiresAt));
             setOtpExpiresAt(expiresAt);
 
-            const cooldownExpiresAt = Date.now() + RESEND_COOLDOWN * 1000;
-            setResendCooldownExpiresAt(cooldownExpiresAt);
-            localStorage.setItem('momoResendCooldownExpiresAt', String(cooldownExpiresAt));
-
             otpExpiredRef.current = false;
             hasShownExpiredModalRef.current = false;
             return true;
@@ -685,6 +662,7 @@ const MomoApp = () => {
 
     // ============================================================
     // RESEND OTP
+    // ✅ CHỈ CHO GỬI KHI OTP ĐÃ HẾT HẠN
     // ============================================================
 
     const handleResendOtp = async () => {
@@ -696,8 +674,9 @@ const MomoApp = () => {
             openModal('info', 'THÔNG BÁO', 'Bạn đã thanh toán thành công!');
             return;
         }
-        if (resendCooldown > 0) {
-            openModal('info', 'THÔNG BÁO', `Vui lòng đợi ${formatTime(resendCooldown)} trước khi gửi lại OTP.`);
+        // ✅ CHỈ CHO GỬI LẠI KHI OTP ĐÃ HẾT HẠN
+        if (!otpExpiredRef.current && timeLeft > 0) {
+            openModal('info', 'THÔNG BÁO', 'Vui lòng đợi OTP hiện tại hết hạn trước khi gửi lại.');
             return;
         }
         if (!tempBookingId || !customerEmail) {
@@ -730,10 +709,6 @@ const MomoApp = () => {
                 localStorage.setItem('momoOtpExpiresAt', String(expiresAt));
                 setOtpExpiresAt(expiresAt);
 
-                const cooldownExpiresAt = Date.now() + RESEND_COOLDOWN * 1000;
-                setResendCooldownExpiresAt(cooldownExpiresAt);
-                localStorage.setItem('momoResendCooldownExpiresAt', String(cooldownExpiresAt));
-
                 otpExpiredRef.current = false;
                 hasShownExpiredModalRef.current = false;
                 openModal('success', 'THÀNH CÔNG', 'Mã OTP mới đã được gửi tới email của bạn.');
@@ -742,10 +717,7 @@ const MomoApp = () => {
             const errorMsg = err.response?.data?.message || 'Không thể gửi lại mã OTP. Vui lòng thử lại.';
             if (err.response?.status === 429) {
                 const remainingSeconds = err.response?.data?.data?.remainingSeconds || 300;
-                const cooldownExpiresAt = Date.now() + remainingSeconds * 1000;
-                setResendCooldownExpiresAt(cooldownExpiresAt);
-                localStorage.setItem('momoResendCooldownExpiresAt', String(cooldownExpiresAt));
-                openModal('error', 'QUÁ NHIỀU YÊU CẦU', `Bạn đã gửi quá nhiều lần (tối đa 3 lần/5 phút). Vui lòng thử lại sau ${formatTime(remainingSeconds)}.`);
+                openModal('error', 'QUÁ NHIỀU YÊU CẦU', `Bạn đã gửi quá nhiều lần. Vui lòng thử lại sau ${formatTime(remainingSeconds)}.`);
             } else {
                 openModal('error', 'LỖI GỬI OTP', errorMsg);
             }
@@ -774,7 +746,7 @@ const MomoApp = () => {
 
             const initiated = localStorage.getItem('momoPaymentInitiated') === 'true' || isPaymentInitiated.current;
 
-            // ✅ SỬA: Nếu đã initiated → Payment ĐÃ GỬI OTP → KHÔNG gửi lại
+            // ✅ Nếu đã initiated → Payment ĐÃ GỬI OTP → KHÔNG gửi lại
             if (initiated) {
                 console.log('[MOMO] OTP đã được gửi từ Payment, không gửi lại');
 
@@ -782,12 +754,6 @@ const MomoApp = () => {
                 hasVisitedMomoApp.current = true;
                 localStorage.setItem('momoHasSentOtp', 'true');
                 localStorage.setItem('momoHasVisited', 'true');
-
-                if (!localStorage.getItem('momoResendCooldownExpiresAt')) {
-                    const cooldownExpiresAt = Date.now() + RESEND_COOLDOWN * 1000;
-                    setResendCooldownExpiresAt(cooldownExpiresAt);
-                    localStorage.setItem('momoResendCooldownExpiresAt', String(cooldownExpiresAt));
-                }
 
                 const redisTime = await fetchTimeFromRedis();
                 if (redisTime !== null && redisTime > 0) {
@@ -1079,6 +1045,22 @@ const MomoApp = () => {
     };
 
     // ============================================================
+    // ✅ DISABLE RESEND BUTTON
+    // Chỉ disable khi:
+    //   - Đang gửi / đang verify
+    //   - Đã thanh toán
+    //   - Bị khóa
+    //   - OTP CHƯA hết hạn (timeLeft > 0)
+    // ============================================================
+
+    const isResendDisabled =
+        loadingSendOtp ||
+        loadingVerify ||
+        paymentCompletedRef.current ||
+        isLocked ||
+        (!otpExpiredRef.current && timeLeft > 0);
+
+    // ============================================================
     // RENDER
     // ============================================================
 
@@ -1138,13 +1120,14 @@ const MomoApp = () => {
                                     onChange={(e) => handleOtpChange(e, index)}
                                     onKeyDown={(e) => handleOtpKeyDown(e, index)}
                                     onPaste={handleOtpPaste}
-                                    disabled={paymentCompletedRef.current || isLocked}
+                                    disabled={paymentCompletedRef.current || isLocked || otpExpiredRef.current}
                                     autoFocus={index === 0 && !otpExpiredRef.current && !isLocked}
                                     ref={(el) => (otpInputsRef.current[index] = el)}
                                 />
                             ))}
                         </div>
 
+                        {/* ✅ CHỈ HIỆN 1 Ô TIMER OTP */}
                         <div className={getTimerBoxClass()}>
                             {isLocked ? (
                                 <span className="timer-text" style={{
@@ -1155,7 +1138,7 @@ const MomoApp = () => {
                                 }}>
                                     <Lock size={16} /> Tài khoản bị khóa: {formatTime(lockTimeLeft)}
                                 </span>
-                            ) : otpExpiredRef.current ? (
+                            ) : (otpExpiredRef.current || timeLeft <= 0) ? (
                                 <span className="timer-text" style={{
                                     display: 'inline-flex',
                                     alignItems: 'center',
@@ -1172,12 +1155,13 @@ const MomoApp = () => {
                             )}
                         </div>
 
+                        {/* ✅ NÚT GỬI LẠI — CHỈ DISABLE, KHÔNG COUNTDOWN */}
                         <div className="momo-resend-wrapper">
                             <button
                                 type="button"
                                 className="btn-resend-otp"
                                 onClick={handleResendOtp}
-                                disabled={loadingSendOtp || paymentCompletedRef.current || isLocked || resendCooldown > 0}
+                                disabled={isResendDisabled}
                                 style={{
                                     display: 'inline-flex',
                                     alignItems: 'center',
@@ -1186,16 +1170,9 @@ const MomoApp = () => {
                                 }}
                             >
                                 {loadingSendOtp ? (
-                                    'Đang gửi...'
-                                ) : isLocked ? (
                                     <>
-                                        <Lock size={16} />
-                                        Đã khóa ({formatTime(lockTimeLeft)})
-                                    </>
-                                ) : resendCooldown > 0 ? (
-                                    <>
-                                        <Clock size={16} />
-                                        Gửi lại sau {formatTime(resendCooldown)}
+                                        <Loader2 size={16} className="spin-icon" />
+                                        Đang gửi...
                                     </>
                                 ) : (
                                     <>

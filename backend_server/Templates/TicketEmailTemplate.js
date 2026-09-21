@@ -1,9 +1,10 @@
-const TicketEmailTemplate = (ticketData, fileExists) => {
+const TicketEmailTemplate = (ticketData) => {
     const {
         bookingId,
         customerName,
         seatLabel,
         movieTitle,
+        moviePoster,       // ✅ URL công khai từ Cloudinary
         cinemaName,
         startTime,
         selectedDate,
@@ -13,6 +14,9 @@ const TicketEmailTemplate = (ticketData, fileExists) => {
         qrCid,
         roomName
     } = ticketData;
+
+    // ✅ Fallback nếu không có poster
+    const posterUrl = moviePoster || '';
 
     // ✅ ICONS — SVG INLINE (từ Lucide)
     const ICON_MAP_PIN = `
@@ -99,8 +103,19 @@ const TicketEmailTemplate = (ticketData, fileExists) => {
                 <div style="padding:30px;">
                     <p>Chào <b>${customerName}</b>,</p>
 
+                    <!-- ✅ POSTER PHIM — DÙNG URL CÔNG KHAI -->
+                    ${posterUrl ? `
+                        <div style="text-align:center; margin:20px 0 25px 0;">
+                            <img 
+                                src="${posterUrl}" 
+                                alt="${movieTitle}"
+                                style="max-width:220px; width:100%; height:auto; border-radius:12px; box-shadow: 0 6px 20px rgba(0,0,0,0.15); display:block; margin:0 auto; border: 0; outline: none;"
+                            />
+                        </div>
+                    ` : ''}
+
                     <div style="border: 2px dashed #eee; padding: 20px; margin: 20px 0; border-radius: 8px;">
-                        <h3 style="color:#e74c3c; margin:0 0 15px 0; font-size:20px;">
+                        <h3 style="color:#e74c3c; margin:0 0 15px 0; font-size:20px; text-align:center;">
                             ${movieTitle}
                         </h3>
 
@@ -133,13 +148,6 @@ const TicketEmailTemplate = (ticketData, fileExists) => {
                         </p>
                     </div>
 
-                    <!-- POSTER -->
-                    ${fileExists ? `
-                        <div style="text-align:center; margin:20px 0;">
-                            <img src="cid:poster_img" style="max-width:200px; border-radius:10px;" />
-                        </div>
-                    ` : ''}
-
                     <!-- QR CODE -->
                     <div style="margin:30px 0; text-align:center; padding:25px; border:1px dashed #ddd; border-radius:12px; background:#fafafa;">
                         <h2 style="margin:0; color:#222; font-size:26px;">MÃ NHẬN VÉ</h2>
@@ -148,7 +156,13 @@ const TicketEmailTemplate = (ticketData, fileExists) => {
                             ${ticketPIN || ""}
                         </div>
 
-                        <img src="cid:${qrCid || 'qr_img'}" alt="QR Code" style="width:220px; height:220px; display:block; margin:20px auto; border-radius:10px; border:8px solid #fff; box-shadow:0 4px 12px rgba(0,0,0,.15);" />
+                        ${qrCid ? `
+                            <img 
+                                src="cid:${qrCid}" 
+                                alt="QR Code" 
+                                style="width:220px; height:220px; display:block; margin:20px auto; border-radius:10px; border:8px solid #fff; box-shadow:0 4px 12px rgba(0,0,0,.15);" 
+                            />
+                        ` : ''}
 
                         <p style="margin-top:15px; color:#666; line-height:24px;">
                             Vui lòng quét mã QR tại quầy hoặc kiosk để in vé.
