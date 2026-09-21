@@ -35,11 +35,6 @@ import '../styles/AdminHeader.css';
 // ============================================================
 // ADMIN HEADER
 // ============================================================
-// Pattern GIỐNG HỆT UserHeader:
-// - Dùng useAdminAuth() từ Context
-// - Không tự gọi API /me
-// - Context quản lý socket (qua adminSocketService)
-// ============================================================
 
 const AdminHeader = ({ toggleSidebar }) => {
     const navigate = useNavigate();
@@ -141,7 +136,6 @@ const AdminHeader = ({ toggleSidebar }) => {
                 '🟢 [ADMIN HEADER] Admin logged in - updating immediately'
             );
 
-            // ✅ FIX: BẬT LẠI refetch() — GIỐNG UserHeader
             refetch().catch(() => {});
         };
 
@@ -392,10 +386,11 @@ const AdminHeader = ({ toggleSidebar }) => {
                         <Menu size={24} />
                     </button>
 
+                    {/* ✅ LOGO GIỐNG USERHEADER */}
                     <Link to="/" className="admin-brand-logo">
                         <img
-                            src="https://api.quangdungcinema.id.vn/uploads/logo/logocinema.png"
-                            alt="Cinema Star"
+                            src="./logocinema1.png"
+                            alt="QD Cinema"
                             className="admin-logo-image"
                         />
                     </Link>

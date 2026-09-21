@@ -141,10 +141,8 @@ io.use(async (socket, next) => {
         let token;
         if (isAdminOrigin) {
             token = cookies["admin_token"] || cookies["user_token"];
-            console.log(`🔑 [SOCKET] Admin origin → ${cookies["admin_token"] ? "admin_token" : "user_token (fallback)"}`);
         } else {
             token = cookies["user_token"] || cookies["admin_token"];
-            console.log(`🔑 [SOCKET] User origin → ${cookies["user_token"] ? "user_token" : "admin_token (fallback)"}`);
         }
 
         if (!token) {
@@ -240,7 +238,7 @@ io.on("connection", async (socket) => {
     }
 
     // ============================================================
-    // ✅ REGISTER SOCKET — RETRY 3 LẦN
+    // REGISTER SOCKET
     // ============================================================
     socket.on("register_socket", async (data) => {
         const { userId: registerUserId } = data || {};
@@ -277,8 +275,6 @@ io.on("connection", async (socket) => {
                     if (!success) {
                         console.warn(`⚠️ [SOCKET] Cannot link token ↔ socket after 3 retries`);
                     }
-                } else {
-                    console.warn(`⚠️ [SOCKET] No accessToken — cannot update socket_token`);
                 }
 
                 socket.emit("socket_registered", { success: true });
@@ -306,11 +302,7 @@ io.on("connection", async (socket) => {
     }
 
     // ============================================================
-    // ✅ CLIENT CHỌN GHẾ — ĐÃ SỬA
-    // Phân biệt rõ:
-    //   - HELD_BY_OTHER  → ghế bị người khác giữ
-    //   - SYSTEM_ERROR   → lỗi hệ thống (DB, deadlock...)
-    //   - OK             → giữ ghế thành công
+    // ✅ CLIENT CHỌN GHẾ — TÍCH HỢP user_id
     // ============================================================
     socket.on("client-chon-ghe", async (data) => {
         try {
@@ -326,13 +318,18 @@ io.on("connection", async (socket) => {
                 return;
             }
 
+            // ✅ Lấy userId từ socket auth
+            const userId = socket.userId || null;
+
             const lockResult = await CacheService.acquireSeatLock(
-                showtimeId, seatId, ownerToken, 10 * 60
+                showtimeId,
+                seatId,
+                ownerToken,
+                userId,
+                10 * 60
             );
 
-            // =====================================================
-            // ✅ TRƯỜNG HỢP 1: LỖI HỆ THỐNG
-            // =====================================================
+            // LỖI HỆ THỐNG
             if (lockResult.reason === 'SYSTEM_ERROR') {
                 console.error(`🔴 [SOCKET] SYSTEM_ERROR khi giữ ghế ${seatId}:`, lockResult.error);
                 socket.emit("server-seat-lock-error", {
@@ -344,9 +341,7 @@ io.on("connection", async (socket) => {
                 return;
             }
 
-            // =====================================================
-            // ✅ TRƯỜNG HỢP 2: GHẾ ĐÃ BỊ NGƯỜI KHÁC GIỮ
-            // =====================================================
+            // GHẾ ĐÃ BỊ NGƯỜI KHÁC GIỮ
             if (!lockResult.locked) {
                 socket.emit("server-khoa-ghe", {
                     ...data,
@@ -354,17 +349,15 @@ io.on("connection", async (socket) => {
                     showtimeId,
                     socketId: lockResult.ownerToken,
                     userId: null,
-                    locked: false,              // ✅ FALSE
-                    success: false,             // ✅ FALSE
+                    locked: false,
+                    success: false,
                     message: "Ghế đã được người khác giữ. Vui lòng chọn ghế khác.",
                     ttl: lockResult.ttl
                 });
                 return;
             }
 
-            // =====================================================
-            // ✅ TRƯỜNG HỢP 3: GIỮ GHẾ THÀNH CÔNG
-            // =====================================================
+            // THÀNH CÔNG
             const seatData = {
                 ...data,
                 seatId,
@@ -372,8 +365,8 @@ io.on("connection", async (socket) => {
                 socketId,
                 userId,
                 ownerToken,
-                locked: true,                   // ✅ TRUE
-                success: true,                  // ✅ TRUE
+                locked: true,
+                success: true,
                 ttl: lockResult.ttl
             };
 
@@ -397,7 +390,15 @@ io.on("connection", async (socket) => {
             const seatId = Number(data.seatId);
             if (!showtimeId || !seatId) return;
 
-            const released = await CacheService.releaseSeatLock(showtimeId, seatId, ownerToken);
+            const userId = socket.userId || null;
+
+            const released = await CacheService.releaseSeatLock(
+                showtimeId,
+                seatId,
+                ownerToken,
+                userId
+            );
+
             if (!released) return;
 
             io.emit("server-mo-khoa-ghe", { seatId, showtimeId });
@@ -424,17 +425,32 @@ io.on("connection", async (socket) => {
     });
 
     // ============================================================
-    // CLEAR ALL HOLDING SEATS
+    // ✅ CLEAR ALL HOLDING SEATS
     // ============================================================
     socket.on("clear_all_holding_seats", async (data) => {
         try {
             let clearedCount = 0;
+
             if (data?.showtimeId) {
-                clearedCount = await CacheService.releaseShowtimeSeatLocksByOwner(
-                    Number(data.showtimeId), ownerToken
-                );
+                if (userId) {
+                    clearedCount = await CacheService.releaseShowtimeSeatLocksByUser(
+                        Number(data.showtimeId),
+                        userId
+                    );
+                }
+                if (clearedCount === 0) {
+                    clearedCount = await CacheService.releaseShowtimeSeatLocksByOwner(
+                        Number(data.showtimeId),
+                        ownerToken
+                    );
+                }
             } else {
-                clearedCount = await CacheService.releaseAllSeatLocksByOwner(ownerToken);
+                if (userId) {
+                    clearedCount = await CacheService.releaseAllSeatLocksByUser(userId);
+                }
+                if (clearedCount === 0) {
+                    clearedCount = await CacheService.releaseAllSeatLocksByOwner(ownerToken);
+                }
             }
 
             socket.emit("clear_all_holding_seats_ack", {
@@ -459,6 +475,29 @@ io.on("connection", async (socket) => {
     });
 
     // ============================================================
+    // ✅ MỚI: USER LOGOUT → RELEASE GHẾ
+    // ============================================================
+    socket.on("user-logout", async () => {
+        try {
+            if (!userId) return;
+
+            const releasedCount = await CacheService.releaseAllSeatLocksByUser(userId);
+            console.log(`🔓 [SOCKET] User ${userId} logout — released ${releasedCount} seats`);
+
+            socket.emit("user-logout-ack", {
+                success: true,
+                released: releasedCount
+            });
+        } catch (error) {
+            console.error("❌ [SOCKET] User logout release error:", error.message);
+            socket.emit("user-logout-ack", {
+                success: false,
+                released: 0
+            });
+        }
+    });
+
+    // ============================================================
     // SESSION EXPIRED ACK
     // ============================================================
     socket.on("session_expired_ack", (data) => {
@@ -466,14 +505,21 @@ io.on("connection", async (socket) => {
     });
 
     // ============================================================
-    // ✅ DISCONNECT
+    // ✅ DISCONNECT — SMART LOGIC
     // ============================================================
     socket.on("disconnect", async () => {
         console.log(`🔴 [SOCKET] Disconnected: ${socketId} - User: ${userId}`);
 
         try {
-            const releasedCount = await CacheService.releaseAllSeatLocksByOwner(ownerToken);
-            console.log(`🔓 [CACHE SEAT LOCK] Released ${releasedCount} seats`);
+            // ✅ LOGIC MỚI:
+            // - User đã login (userId !== null) → KHÔNG xóa lock (giữ cho F5/multi-tab)
+            // - Guest (userId === null) → XÓA lock ngay
+            if (!userId) {
+                const releasedCount = await CacheService.releaseAllSeatLocksByOwner(ownerToken);
+                console.log(`🔓 [CACHE SEAT LOCK] Guest released ${releasedCount} seats`);
+            } else {
+                console.log(`⏸️ [CACHE SEAT LOCK] Logged-in user ${userId} disconnected — kept locks for 10min TTL`);
+            }
         } catch (error) {
             console.error("❌ [SOCKET] Release seat locks error:", error.message);
         }
@@ -600,7 +646,7 @@ server.listen(PORT, "0.0.0.0", async () => {
 });
 
 // ============================================================
-// ✅ AUTO CLEANUP — MỖI 7 NGÀY
+// AUTO CLEANUP — MỖI 7 NGÀY
 // ============================================================
 const CLEANUP_INTERVAL = 7 * 24 * 60 * 60 * 1000;
 

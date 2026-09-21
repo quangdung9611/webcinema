@@ -51,9 +51,7 @@ class CacheService {
             [key, action]
         );
 
-        // ---------------------------------------------------
         // Chưa có record → INSERT
-        // ---------------------------------------------------
         if (rows.length === 0) {
             await db.query(
                 `
@@ -74,9 +72,7 @@ class CacheService {
 
         const data = rows[0];
 
-        // ---------------------------------------------------
         // Record đã hết hạn → reset
-        // ---------------------------------------------------
         if (!data.expires_at || new Date(data.expires_at) <= now) {
             await db.query(
                 `
@@ -99,9 +95,7 @@ class CacheService {
             };
         }
 
-        // ---------------------------------------------------
         // Đã vượt giới hạn
-        // ---------------------------------------------------
         const attempts = Number(data.attempts) || 0;
 
         if (attempts >= maxAttempts) {
@@ -117,9 +111,7 @@ class CacheService {
             };
         }
 
-        // ---------------------------------------------------
         // Tăng attempts
-        // ---------------------------------------------------
         const newAttempts = attempts + 1;
 
         await db.query(
@@ -209,10 +201,6 @@ class CacheService {
     }
 
 
-    /*=======================================================
-        RESET LOGIN ATTEMPTS
-    =======================================================*/
-
     async resetLoginAttempts(email) {
         await db.query(
             `
@@ -225,10 +213,6 @@ class CacheService {
         return true;
     }
 
-
-    /*=======================================================
-        GET LOGIN ATTEMPTS
-    =======================================================*/
 
     async getLoginAttempts(email) {
         const now = new Date();
@@ -303,10 +287,6 @@ class CacheService {
     }
 
 
-    /*=======================================================
-        INCREMENT LOCK LEVEL
-    =======================================================*/
-
     async incrementLockoutLevel(email) {
         const now = new Date();
         const levels = [60, 300, 900, 3600];
@@ -352,10 +332,6 @@ class CacheService {
         return newLevel;
     }
 
-
-    /*=======================================================
-        LOCK DURATION
-    =======================================================*/
 
     getLockDuration(level) {
         const durations = [60, 300, 900, 3600];
@@ -644,9 +620,7 @@ class CacheService {
     async getTTL(key) {
         const now = new Date();
 
-        // ---------------------------------------------------
         // TEMP BOOKING
-        // ---------------------------------------------------
         if (key.startsWith("temp:")) {
             const bookingKey = key.replace("temp:", "");
 
@@ -670,10 +644,7 @@ class CacheService {
             return Math.max(0, remaining);
         }
 
-
-        // ---------------------------------------------------
         // OTP
-        // ---------------------------------------------------
         if (key.startsWith("otp:")) {
             const parts = key.split(":");
             if (parts.length !== 3) return 0;
@@ -710,15 +681,18 @@ class CacheService {
 
     /*=======================================================
         6. SEAT LOCK
+        ✅ HỖ TRỢ user_id — F5 KHÔNG MẤT GHẾ
     =======================================================*/
 
     /**
-     * ✅ FIX: Phân biệt rõ 3 trường hợp:
-     *   - locked: true                      → giữ ghế thành công
-     *   - locked: false, reason: 'HELD_BY_OTHER' → ghế đã bị người khác giữ
-     *   - locked: false, reason: 'SYSTEM_ERROR'  → lỗi hệ thống (DB, deadlock...)
+     * ✅ acquireSeatLock — nhận thêm userId
+     *
+     * Trả về:
+     *   { locked: true,  reason: 'OK',            ... }
+     *   { locked: false, reason: 'HELD_BY_OTHER', ... }
+     *   { locked: false, reason: 'SYSTEM_ERROR',  ... }
      */
-    async acquireSeatLock(showtimeId, seatId, ownerToken, ttl = SEAT_LOCK_TTL) {
+    async acquireSeatLock(showtimeId, seatId, ownerToken, userId = null, ttl = SEAT_LOCK_TTL) {
         let connection;
 
         try {
@@ -752,10 +726,19 @@ class CacheService {
                 [showtimeId, seatId, now]
             );
 
-            // -----------------------------------------------
+            // ✅ Check owner linh hoạt:
+            // - user_id khớp → OK (cùng user, khác tab)
+            // - owner_token khớp → OK (guest hoặc cùng socket)
+            const isOwner = (row) => {
+                if (!row) return false;
+                if (userId && Number(row.user_id) === Number(userId)) {
+                    return true;
+                }
+                return row.owner_token === ownerToken;
+            };
+
             // Đang bị người khác giữ
-            // -----------------------------------------------
-            if (rows.length > 0 && rows[0].owner_token !== ownerToken) {
+            if (rows.length > 0 && !isOwner(rows[0])) {
                 await connection.rollback();
 
                 const existing = rows[0];
@@ -771,17 +754,17 @@ class CacheService {
                 };
             }
 
-            // -----------------------------------------------
-            // Chính owner đang giữ → renew TTL
-            // -----------------------------------------------
-            if (rows.length > 0 && rows[0].owner_token === ownerToken) {
+            // Chính owner đang giữ → renew TTL + cập nhật owner_token mới
+            if (rows.length > 0 && isOwner(rows[0])) {
                 await connection.query(
                     `
                     UPDATE seat_locks
-                    SET expires_at = ?
+                    SET expires_at = ?,
+                        user_id = COALESCE(?, user_id),
+                        owner_token = ?
                     WHERE seat_lock_id = ?
                     `,
-                    [expiresAt, rows[0].seat_lock_id]
+                    [expiresAt, userId, ownerToken, rows[0].seat_lock_id]
                 );
 
                 await connection.commit();
@@ -789,16 +772,14 @@ class CacheService {
                 return { locked: true, reason: 'OK', ownerToken, ttl };
             }
 
-            // -----------------------------------------------
             // Tạo lock mới
-            // -----------------------------------------------
             await connection.query(
                 `
                 INSERT INTO seat_locks
-                (showtime_id, seat_id, owner_token, expires_at, created_at)
-                VALUES (?, ?, ?, ?, ?)
+                (showtime_id, seat_id, user_id, owner_token, expires_at, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
                 `,
-                [showtimeId, seatId, ownerToken, expiresAt, now]
+                [showtimeId, seatId, userId || null, ownerToken, expiresAt, now]
             );
 
             await connection.commit();
@@ -814,7 +795,6 @@ class CacheService {
 
             console.error("❌ [CACHE] acquireSeatLock SYSTEM_ERROR:", error.message);
 
-            // ✅ Phân biệt lỗi hệ thống rõ ràng
             return {
                 locked: false,
                 reason: 'SYSTEM_ERROR',
@@ -829,17 +809,31 @@ class CacheService {
     }
 
 
-    async releaseSeatLock(showtimeId, seatId, ownerToken) {
-        const [result] = await db.query(
-            `
-            DELETE FROM seat_locks
-            WHERE showtime_id = ?
-              AND seat_id = ?
-              AND owner_token = ?
-            `,
-            [showtimeId, seatId, ownerToken]
-        );
+    /**
+     * ✅ releaseSeatLock — linh hoạt theo user_id hoặc owner_token
+     */
+    async releaseSeatLock(showtimeId, seatId, ownerToken, userId = null) {
+        let sql, params;
 
+        if (userId) {
+            sql = `
+                DELETE FROM seat_locks
+                WHERE showtime_id = ?
+                  AND seat_id = ?
+                  AND (user_id = ? OR owner_token = ?)
+            `;
+            params = [showtimeId, seatId, userId, ownerToken];
+        } else {
+            sql = `
+                DELETE FROM seat_locks
+                WHERE showtime_id = ?
+                  AND seat_id = ?
+                  AND owner_token = ?
+            `;
+            params = [showtimeId, seatId, ownerToken];
+        }
+
+        const [result] = await db.query(sql, params);
         return result.affectedRows > 0;
     }
 
@@ -860,7 +854,7 @@ class CacheService {
         );
 
         if (rows.length === 0) {
-            return { locked: false, ownerToken: null, ttl: 0 };
+            return { locked: false, ownerToken: null, userId: null, ttl: 0 };
         }
 
         const data = rows[0];
@@ -871,6 +865,7 @@ class CacheService {
         return {
             locked: true,
             ownerToken: data.owner_token,
+            userId: data.user_id,
             ttl: Math.max(0, remaining)
         };
     }
@@ -881,7 +876,7 @@ class CacheService {
 
         const [rows] = await db.query(
             `
-            SELECT seat_id, owner_token, expires_at
+            SELECT seat_id, owner_token, user_id, expires_at
             FROM seat_locks
             WHERE showtime_id = ?
               AND expires_at > ?
@@ -892,6 +887,7 @@ class CacheService {
         return rows.map(row => ({
             seatId: row.seat_id,
             ownerToken: row.owner_token,
+            userId: row.user_id,
             ttl: Math.max(
                 0,
                 Math.ceil((new Date(row.expires_at).getTime() - now.getTime()) / 1000)
@@ -913,6 +909,25 @@ class CacheService {
     }
 
 
+    /**
+     * ✅ MỚI: Release tất cả ghế theo user_id
+     */
+    async releaseAllSeatLocksByUser(userId) {
+        if (!userId) return 0;
+
+        const [result] = await db.query(
+            `
+            DELETE FROM seat_locks
+            WHERE user_id = ?
+            `,
+            [userId]
+        );
+
+        console.log(`🔓 [CACHE] releaseAllSeatLocksByUser: user=${userId}, released=${result.affectedRows}`);
+        return result.affectedRows || 0;
+    }
+
+
     async releaseShowtimeSeatLocksByOwner(showtimeId, ownerToken) {
         const [result] = await db.query(
             `
@@ -927,8 +942,27 @@ class CacheService {
     }
 
 
+    /**
+     * ✅ MỚI: Release theo user + showtime
+     */
+    async releaseShowtimeSeatLocksByUser(showtimeId, userId) {
+        if (!showtimeId || !userId) return 0;
+
+        const [result] = await db.query(
+            `
+            DELETE FROM seat_locks
+            WHERE showtime_id = ?
+              AND user_id = ?
+            `,
+            [showtimeId, userId]
+        );
+
+        return result.affectedRows || 0;
+    }
+
+
     /*=======================================================
-        7. USER SOCKET — INSERT-ONLY
+        7. USER SOCKET
     =======================================================*/
 
     async saveUserSocket(userId, socketToken, ttl = SOCKET_TTL) {
