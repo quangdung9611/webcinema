@@ -3,7 +3,11 @@ import api from '../../api/api';
 import {
   Loader2,
   Film,
-  Building2
+  Building2,
+  MapPin,
+  Phone,
+  ArrowRight,
+  Sparkles
 } from 'lucide-react';
 
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -11,7 +15,6 @@ import { Autoplay, EffectFade } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/effect-fade';
 
-// 👇 Import CinemaCard
 import CinemaCard from '../components/CinemaCard';
 
 import '../styles/Cinema.css';
@@ -107,15 +110,87 @@ const Cinema = () => {
             </SwiperSlide>
           )}
         </Swiper>
+
+        {/* Overlay tối + gradient trái */}
         <div className="cinema-banner-overlay"></div>
+        <div className="cinema-banner-overlay-side"></div>
+
+        {/* ==================================================
+            BANNER TITLE — BÊN TRÁI, 3D PREMIUM
+        ================================================== */}
         <div className="cinema-banner-title">
-          <h1>Hệ Thống Rạp</h1>
-          <p>Trải nghiệm điện ảnh đẳng cấp tại các rạp của chúng tôi</p>
+          <div className="cinema-banner-title__inner">
+
+            {/* Eyebrow */}
+            <div className="cinema-banner-eyebrow">
+              <span className="cinema-banner-eyebrow__line"></span>
+              <Sparkles size={14} className="cinema-banner-eyebrow__icon" />
+              <span>Hệ thống rạp chiếu phim</span>
+            </div>
+
+            {/* Title — CINEMA MOVIE */}
+            <h1 className="cinema-banner-heading">
+              {/* CINEMA — Solid silver, 2 lớp */}
+              <span className="cinema-banner-heading__solid">
+                <span className="cinema-banner-heading__solid-bg">CINEMA</span>
+                <span className="cinema-banner-heading__solid-fg">CINEMA</span>
+              </span>
+
+              {/* MOVIE — Outline */}
+              <span className="cinema-banner-heading__outline">MOVIE</span>
+            </h1>
+
+            {/* Divider */}
+            <div className="cinema-banner-divider"></div>
+
+            {/* Description */}
+            <p className="cinema-banner-desc">
+              Trải nghiệm điện ảnh đỉnh cao với hệ thống phòng chiếu
+              hiện đại, âm thanh vòm Dolby Atmos và màn hình 4K HDR
+              sắc nét tại mọi rạp của Quang Dũng Cinema.
+            </p>
+
+            {/* Quick stats */}
+            <div className="cinema-banner-stats">
+              <div className="cinema-banner-stat">
+                <Building2 size={20} className="cinema-banner-stat__icon" />
+                <div className="cinema-banner-stat__content">
+                  <span className="cinema-banner-stat__label">Số rạp</span>
+                  <strong className="cinema-banner-stat__value">
+                    {cinemas.length || '—'}
+                  </strong>
+                </div>
+              </div>
+
+              <div className="cinema-banner-stat__divider"></div>
+
+              <div className="cinema-banner-stat">
+                <Film size={20} className="cinema-banner-stat__icon" />
+                <div className="cinema-banner-stat__content">
+                  <span className="cinema-banner-stat__label">Định dạng</span>
+                  <strong className="cinema-banner-stat__value">4K HDR</strong>
+                </div>
+              </div>
+
+              <div className="cinema-banner-stat__divider"></div>
+
+              <div className="cinema-banner-stat">
+                <MapPin size={20} className="cinema-banner-stat__icon" />
+                <div className="cinema-banner-stat__content">
+                  <span className="cinema-banner-stat__label">Khu vực</span>
+                  <strong className="cinema-banner-stat__value">Toàn quốc</strong>
+                </div>
+              </div>
+            </div>
+
+          
+
+          </div>
         </div>
       </div>
 
       {/* ===== CONTENT ===== */}
-      <div className="cinema-content">
+      <div className="cinema-content" id="cinema-list">
         <div className="cinema-header">
           <div className="cinema-header-left">
             <Building2 size={32} className="cinema-header-icon" />

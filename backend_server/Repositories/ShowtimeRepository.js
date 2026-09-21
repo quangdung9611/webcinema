@@ -440,7 +440,6 @@ class ShowtimeRepository {
 
     /*=========================================================
         GET MOVIE SHOWTIME CONFIG - HỖ TRỢ TỪNG NGÀY
-        ✅ ĐÃ ĐỔI: trả về danh sách slot_times thay vì slot_count
     =========================================================*/
     async getMovieShowtimeConfig(movieId, cinemaId, dayType = 'ALL') {
         console.log(`🔍 [CONFIG] movie=${movieId}, cinema=${cinemaId}, dayType=${dayType}`);
@@ -459,7 +458,6 @@ class ShowtimeRepository {
         `;
         const params = [movieId, cinemaId];
 
-        // Nếu có dayType cụ thể (MONDAY, TUESDAY, ...)
         if (dayType && dayType !== 'ALL' && dayType !== 'WEEKDAY' && dayType !== 'WEEKEND') {
             query += ` AND day_type = ?`;
             params.push(dayType);
@@ -475,7 +473,6 @@ class ShowtimeRepository {
         const [specificRows] = await db.query(query, params);
         console.log(`🔍 [CONFIG] specific rows: ${specificRows.length}`);
 
-        // Nếu không có config cho ngày cụ thể, fallback về ALL
         if (specificRows.length === 0 && dayType && dayType !== 'ALL') {
             const [fallbackRows] = await db.query(`
                 SELECT
@@ -497,14 +494,6 @@ class ShowtimeRepository {
             rows = specificRows;
         }
 
-        // BUILD CONFIG OBJECT
-        // Cấu trúc:
-        // {
-        //   MORNING: [
-        //     { room_type: '2D', interval_type: 'NORMAL', slot_times: ['08:00:00', '09:15:00', '10:30:00'] }
-        //   ],
-        //   AFTERNOON: [...]
-        // }
         const config = {};
         for (const row of rows) {
             const slot = row.time_slot;
@@ -729,6 +718,134 @@ class ShowtimeRepository {
         );
 
         return result.affectedRows;
+    }
+
+    /*=========================================================
+        BOOKING SELECT — 1 HÀM DUY NHẤT
+        Trả về: Rạp → Phim → Ngày → Suất (nested)
+    =========================================================*/
+    async bookingSelect() {
+        const [rows] = await db.query(`
+            SELECT
+                c.cinema_id,
+                c.cinema_name,
+                c.slug AS cinema_slug,
+                c.address,
+                c.city,
+                c.hotline,
+                c.cinema_backdrop,
+                
+                m.movie_id,
+                m.title AS movie_title,
+                m.slug AS movie_slug,
+                m.movie_poster,
+                m.duration,
+                m.age_rating,
+                m.status AS movie_status,
+                m.nation,
+                m.release_date,
+                
+                s.showtime_id,
+                s.room_id,
+                DATE_FORMAT(s.start_time, '%Y-%m-%d') AS date,
+                DATE_FORMAT(s.start_time, '%H:%i') AS time,
+                DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i') AS start_time,
+                
+                r.room_name,
+                r.room_type
+            FROM showtimes s
+            INNER JOIN cinemas c ON s.cinema_id = c.cinema_id
+            INNER JOIN movies m ON s.movie_id = m.movie_id
+            INNER JOIN rooms r ON s.room_id = r.room_id
+            WHERE s.start_time >= NOW()
+              AND m.status IN ('Đang chiếu', 'Sắp chiếu')
+            ORDER BY 
+                c.cinema_name ASC,
+                FIELD(m.status, 'Đang chiếu', 'Sắp chiếu'),
+                m.movie_id DESC,
+                s.start_time ASC
+        `);
+
+        const cinemasMap = new Map();
+        const dayLabels = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        for (const row of rows) {
+            // -------- CINEMA --------
+            if (!cinemasMap.has(row.cinema_id)) {
+                cinemasMap.set(row.cinema_id, {
+                    cinema_id: row.cinema_id,
+                    cinema_name: row.cinema_name,
+                    slug: row.cinema_slug,
+                    address: row.address,
+                    city: row.city,
+                    hotline: row.hotline,
+                    cinema_backdrop: row.cinema_backdrop,
+                    movies: []
+                });
+            }
+
+            const cinema = cinemasMap.get(row.cinema_id);
+
+            // -------- MOVIE --------
+            let movie = cinema.movies.find(m => m.movie_id === row.movie_id);
+
+            if (!movie) {
+                movie = {
+                    movie_id: row.movie_id,
+                    title: row.movie_title,
+                    slug: row.movie_slug,
+                    movie_poster: row.movie_poster,
+                    duration: row.duration,
+                    age_rating: row.age_rating,
+                    status: row.movie_status,
+                    nation: row.nation,
+                    release_date: row.release_date,
+                    dates: []
+                };
+                cinema.movies.push(movie);
+            }
+
+            // -------- DATE --------
+            let dateEntry = movie.dates.find(d => d.date === row.date);
+
+            if (!dateEntry) {
+                const d = new Date(row.date + 'T00:00:00');
+                const diff = Math.round((d - today) / 86400000);
+
+                let label = '';
+                if (diff === 0) label = 'Hôm nay';
+                else if (diff === 1) label = 'Ngày mai';
+                else label = dayLabels[d.getDay()];
+
+                dateEntry = {
+                    date: row.date,
+                    label,
+                    day: String(d.getDate()).padStart(2, '0'),
+                    month: String(d.getMonth() + 1).padStart(2, '0'),
+                    is_weekend: d.getDay() === 0 || d.getDay() === 6,
+                    full_label: `${label}, ${d.getDate()}/${d.getMonth() + 1}`,
+                    showtimes: []
+                };
+                movie.dates.push(dateEntry);
+            }
+
+            // -------- SHOWTIME --------
+            dateEntry.showtimes.push({
+                showtime_id: row.showtime_id,
+                time: row.time,
+                start_time: row.start_time,
+                room_id: row.room_id,
+                room_name: row.room_name,
+                room_type: row.room_type
+            });
+        }
+
+        const cinemas = Array.from(cinemasMap.values());
+        const cities = [...new Set(cinemas.map(c => c.city))].filter(Boolean);
+
+        return { cinemas, cities };
     }
 }
 

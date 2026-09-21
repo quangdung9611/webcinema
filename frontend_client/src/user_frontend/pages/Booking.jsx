@@ -6,6 +6,10 @@ import {
     Info,
     ChevronLeft,
     ChevronRight,
+    MapPin,
+    Clock,
+    Calendar,
+    Film
 } from 'lucide-react';
 import api from '../../api/api';
 import socketService from '../../api/socket';
@@ -45,9 +49,9 @@ const Booking = () => {
     const [cinemas, setCinemas] = useState([]);
     const [availableDates, setAvailableDates] = useState([]);
     const [availableShowtimes, setAvailableShowtimes] = useState([]);
-    const [selectedCinema, setSelectedCinema] = useState(null);
-    const [selectedDate, setSelectedDate] = useState(null);
-    const [selectedShowtime, setSelectedShowtime] = useState(null);
+    const [selectedCinema, setSelectedCinema] = useState(location.state?.cinema || null);
+    const [selectedDate, setSelectedDate] = useState(location.state?.date || null);
+    const [selectedShowtime, setSelectedShowtime] = useState(location.state?.showtime || null);
     const [selectedSeats, setSelectedSeats] = useState([]);
     const [seats, setSeats] = useState([]);
     const [showtimeDetail, setShowtimeDetail] = useState(null);
@@ -56,6 +60,9 @@ const Booking = () => {
     const [isTimerActive, setIsTimerActive] = useState(false);
     const [fetchError, setFetchError] = useState(null);
     const [pendingSeatIds, setPendingSeatIds] = useState([]);
+
+    // ✅ Cờ để biết user vào từ BookingSelect hay không
+    const isFromBookingSelect = Boolean(location.state?.showtime);
 
     // =========================================================
     // MODAL
@@ -155,23 +162,6 @@ const Booking = () => {
         if (!seatId || !requestedShowtimeId) return;
         socketService.emit('client-huy-chon-ghe', { seatId, showtimeId: requestedShowtimeId });
     }, []);
-
-    // =========================================================
-    // RELEASE SELECTED SEATS
-    // =========================================================
-
-    const releaseSelectedSeats = useCallback(() => {
-        const currentSocket = socketService.getSocket();
-        if (!currentSocket || !currentSocket.connected) return;
-        const currentShowtimeId = currentShowtimeIdRef.current;
-        if (!currentShowtimeId) return;
-        const currentSeats = selectedSeatsRef.current;
-        if (!Array.isArray(currentSeats) || currentSeats.length === 0) return;
-        currentSeats.forEach(seat => {
-            if (!seat?.seat_id) return;
-            releaseSeat(seat.seat_id, currentShowtimeId);
-        });
-    }, [releaseSeat]);
 
     // =========================================================
     // CLEAR BOOKING SESSION
@@ -287,48 +277,17 @@ const Booking = () => {
     }, [isCoupleSeat, seats]);
 
     // =========================================================
-    // LOCATION STATE
-    // =========================================================
-
-    useEffect(() => {
-        const stateData = location.state;
-        if (!stateData) return;
-        if (stateData.movie) setMovie(stateData.movie);
-        if (stateData.date) setSelectedDate(stateData.date);
-        if (stateData.cinema) setSelectedCinema(stateData.cinema);
-        if (stateData.showtime) setSelectedShowtime(stateData.showtime);
-    }, [location.state]);
-
-    // =========================================================
-    // MATCH CINEMA
-    // =========================================================
-
-    useEffect(() => {
-        const stateData = location.state;
-        if (cinemas.length > 0 && stateData?.cinema) {
-            const matchedCinema = cinemas.find(c => c.cinema_name === stateData.cinema.cinema_name);
-            if (matchedCinema) setSelectedCinema(matchedCinema);
-        }
-    }, [cinemas, location.state]);
-
-    // =========================================================
-    // MATCH SHOWTIME
-    // =========================================================
-
-    useEffect(() => {
-        const stateData = location.state;
-        if (availableShowtimes.length > 0 && stateData?.showtime) {
-            const matchedShowtime = availableShowtimes.find(st => st.showtime_id === stateData.showtime.showtime_id);
-            if (matchedShowtime) setSelectedShowtime(matchedShowtime);
-        }
-    }, [availableShowtimes, location.state]);
-
-    // =========================================================
-    // FETCH MOVIE
+    // ✅ FETCH MOVIE — CHỈ KHI KHÔNG CÓ STATE
     // =========================================================
 
     useEffect(() => {
         window.scrollTo(0, 0);
+
+        // ✅ Nếu có state từ BookingSelect → KHÔNG fetch movie
+        if (isFromBookingSelect && movie?.movie_id) {
+            return;
+        }
+
         const fetchMovieBySlug = async () => {
             if (!slug) { navigate('/'); return; }
             if (movie && movie.movie_poster) return;
@@ -346,13 +305,16 @@ const Booking = () => {
             }
         };
         fetchMovieBySlug();
-    }, [slug, movie, navigate]);
+    }, [slug, movie, navigate, isFromBookingSelect]);
 
     // =========================================================
-    // FETCH INITIAL DATA
+    // ✅ FETCH CINEMAS + DATES — CHỈ KHI KHÔNG CÓ STATE
     // =========================================================
 
     useEffect(() => {
+        // Nếu vào từ BookingSelect → không cần fetch cinemas/dates
+        if (isFromBookingSelect) return;
+
         const fetchInitialData = async () => {
             try {
                 setLoading(true);
@@ -373,13 +335,16 @@ const Booking = () => {
             }
         };
         fetchInitialData();
-    }, []);
+    }, [isFromBookingSelect]);
 
     // =========================================================
-    // FETCH SHOWTIMES
+    // ✅ FETCH SHOWTIMES — CHỈ KHI KHÔNG CÓ STATE
     // =========================================================
 
     useEffect(() => {
+        // Nếu vào từ BookingSelect → không cần fetch showtimes
+        if (isFromBookingSelect) return;
+
         if (!selectedCinema || !selectedDate || !(movie?.movie_id || movie?.id)) {
             setAvailableShowtimes([]);
             return;
@@ -397,7 +362,7 @@ const Booking = () => {
             }
         };
         fetchShowtimes();
-    }, [selectedCinema, selectedDate, movie]);
+    }, [selectedCinema, selectedDate, movie, isFromBookingSelect]);
 
     // =========================================================
     // FETCH SEATS
@@ -794,6 +759,21 @@ const Booking = () => {
     }
 
     // =========================================================
+    // FORMAT DATE
+    // =========================================================
+
+    const formatDate = (dateStr) => {
+        if (!dateStr) return '—';
+        try {
+            const d = new Date(dateStr);
+            const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+            return `${days[d.getDay()]}, ${d.getDate()}/${d.getMonth() + 1}`;
+        } catch {
+            return dateStr;
+        }
+    };
+
+    // =========================================================
     // RENDER
     // =========================================================
 
@@ -805,6 +785,10 @@ const Booking = () => {
                 </div>
                 <div className="booking-container">
                     <main className="booking-main-column">
+
+                        {/* ============================================ */}
+                        {/* SECTION 1: THÔNG TIN SUẤT CHIẾU */}
+                        {/* ============================================ */}
                         <section className="booking-section booking-showtime-section">
                             <div className="section-heading">
                                 <div className="section-number">01</div>
@@ -814,101 +798,161 @@ const Booking = () => {
                                 </div>
                             </div>
                             <div className="section-divider" />
-                            <nav className="booking-nav-flex">
-                                <div className="nav-col cinema-select">
-                                    <label><span>1.</span> CHỌN RẠP</label>
-                                    <div className="select-wrapper">
-                                        <select
-                                            value={selectedCinema?.cinema_id || ''}
-                                            onChange={e => {
-                                                if (selectedSeats.length > 0 || pendingSeatIds.length > 0) {
-                                                    isSessionClearedRef.current = false;
-                                                    clearBookingSession();
-                                                }
-                                                const cinema = cinemas.find(c => c.cinema_id == e.target.value);
-                                                setSelectedCinema(cinema);
-                                                setSelectedDate(null);
-                                                setSelectedShowtime(null);
-                                                setAvailableShowtimes([]);
-                                            }}
-                                        >
-                                            <option value="">-- Chọn rạp --</option>
-                                            {cinemas.map(cinema => (
-                                                <option key={cinema.cinema_id} value={cinema.cinema_id}>{cinema.cinema_name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
-                                <div className={`nav-col date-slider ${!selectedCinema ? 'disabled-step' : ''}`}>
-                                    <label><span>2.</span> CHỌN NGÀY</label>
-                                    <div className="slider-controls">
-                                        <button type="button" className="slide-btn" onClick={() => scrollDate(-1)} disabled={!selectedCinema} aria-label="Ngày trước">
-                                            <ChevronLeft size={18} />
-                                        </button>
-                                        <div className="scroll-list" ref={dateRef}>
-                                            {availableDates.map(date => (
-                                                <div
-                                                    key={date}
-                                                    className={`compact-card ${selectedDate === date ? 'active' : ''}`}
-                                                    onClick={() => {
-                                                        if (!selectedCinema) return;
-                                                        if (selectedSeats.length > 0 || pendingSeatIds.length > 0) {
-                                                            isSessionClearedRef.current = false;
-                                                            clearBookingSession();
-                                                        }
-                                                        setSelectedDate(date);
-                                                        setSelectedShowtime(null);
-                                                    }}
-                                                >
-                                                    <span className="day-txt">{new Date(date).toLocaleDateString('vi-VN', { weekday: 'short' })}</span>
-                                                    <span className="date-txt">{new Date(date).getDate()}/{new Date(date).getMonth() + 1}</span>
-                                                </div>
-                                            ))}
+
+                            {/* ✅ NẾU VÀO TỪ BOOKING SELECT → CHỈ HIỆN INFO, KHÔNG CHỌN LẠI */}
+                            {isFromBookingSelect ? (
+                                <div className="booking-info-selected">
+                                    <div className="booking-info-item">
+                                        <div className="booking-info-item__icon">
+                                            <Film size={18} />
                                         </div>
-                                        <button type="button" className="slide-btn" onClick={() => scrollDate(1)} disabled={!selectedCinema} aria-label="Ngày sau">
-                                            <ChevronRight size={18} />
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className={`nav-col time-slider ${!selectedDate ? 'disabled-step' : ''}`}>
-                                    <label><span>3.</span> SUẤT CHIẾU</label>
-                                    <div className="slider-controls">
-                                        <button type="button" className="slide-btn" onClick={() => scrollTime(-1)} disabled={!selectedDate} aria-label="Suất trước">
-                                            <ChevronLeft size={18} />
-                                        </button>
-                                        <div className="scroll-list" ref={timeRef}>
-                                            {availableShowtimes.length > 0 ? (
-                                                availableShowtimes.map(st => {
-                                                    const stId = st.showtime_id || st.id;
-                                                    const active = Number(selectedShowtime?.showtime_id || selectedShowtime?.id) === Number(stId);
-                                                    return (
-                                                        <div
-                                                            key={stId}
-                                                            className={`compact-card time-card ${active ? 'active' : ''}`}
-                                                            onClick={() => {
-                                                                if (selectedSeats.length > 0 || pendingSeatIds.length > 0) {
-                                                                    isSessionClearedRef.current = false;
-                                                                    clearBookingSession();
-                                                                }
-                                                                setSelectedShowtime(st);
-                                                            }}
-                                                        >
-                                                            <span className="time-day">SUẤT</span>
-                                                            <span className="time-txt">{st.start_time}</span>
-                                                        </div>
-                                                    );
-                                                })
-                                            ) : (
-                                                selectedDate && <span className="no-showtimes">Hết suất</span>
-                                            )}
+                                        <div className="booking-info-item__content">
+                                            <span className="booking-info-item__label">PHIM</span>
+                                            <strong className="booking-info-item__value">
+                                                {movie?.title || '—'}
+                                            </strong>
                                         </div>
-                                        <button type="button" className="slide-btn" onClick={() => scrollTime(1)} disabled={!selectedDate} aria-label="Suất sau">
-                                            <ChevronRight size={18} />
-                                        </button>
+                                    </div>
+
+                                    <div className="booking-info-item">
+                                        <div className="booking-info-item__icon">
+                                            <MapPin size={18} />
+                                        </div>
+                                        <div className="booking-info-item__content">
+                                            <span className="booking-info-item__label">RẠP</span>
+                                            <strong className="booking-info-item__value">
+                                                {selectedCinema?.cinema_name || '—'}
+                                            </strong>
+                                        </div>
+                                    </div>
+
+                                    <div className="booking-info-item">
+                                        <div className="booking-info-item__icon">
+                                            <Calendar size={18} />
+                                        </div>
+                                        <div className="booking-info-item__content">
+                                            <span className="booking-info-item__label">NGÀY</span>
+                                            <strong className="booking-info-item__value">
+                                                {formatDate(selectedDate)}
+                                            </strong>
+                                        </div>
+                                    </div>
+
+                                    <div className="booking-info-item">
+                                        <div className="booking-info-item__icon">
+                                            <Clock size={18} />
+                                        </div>
+                                        <div className="booking-info-item__content">
+                                            <span className="booking-info-item__label">SUẤT</span>
+                                            <strong className="booking-info-item__value">
+                                                {selectedShowtime?.time || selectedShowtime?.start_time || '—'}
+                                                {' · '}
+                                                {selectedShowtime?.room_type || selectedShowtime?.room_name || ''}
+                                            </strong>
+                                        </div>
                                     </div>
                                 </div>
-                            </nav>
+                            ) : (
+                                <nav className="booking-nav-flex">
+                                    <div className="nav-col cinema-select">
+                                        <label><span>1.</span> CHỌN RẠP</label>
+                                        <div className="select-wrapper">
+                                            <select
+                                                value={selectedCinema?.cinema_id || ''}
+                                                onChange={e => {
+                                                    if (selectedSeats.length > 0 || pendingSeatIds.length > 0) {
+                                                        isSessionClearedRef.current = false;
+                                                        clearBookingSession();
+                                                    }
+                                                    const cinema = cinemas.find(c => c.cinema_id == e.target.value);
+                                                    setSelectedCinema(cinema);
+                                                    setSelectedDate(null);
+                                                    setSelectedShowtime(null);
+                                                    setAvailableShowtimes([]);
+                                                }}
+                                            >
+                                                <option value="">-- Chọn rạp --</option>
+                                                {cinemas.map(cinema => (
+                                                    <option key={cinema.cinema_id} value={cinema.cinema_id}>{cinema.cinema_name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div className={`nav-col date-slider ${!selectedCinema ? 'disabled-step' : ''}`}>
+                                        <label><span>2.</span> CHỌN NGÀY</label>
+                                        <div className="slider-controls">
+                                            <button type="button" className="slide-btn" onClick={() => scrollDate(-1)} disabled={!selectedCinema} aria-label="Ngày trước">
+                                                <ChevronLeft size={18} />
+                                            </button>
+                                            <div className="scroll-list" ref={dateRef}>
+                                                {availableDates.map(date => (
+                                                    <div
+                                                        key={date}
+                                                        className={`compact-card ${selectedDate === date ? 'active' : ''}`}
+                                                        onClick={() => {
+                                                            if (!selectedCinema) return;
+                                                            if (selectedSeats.length > 0 || pendingSeatIds.length > 0) {
+                                                                isSessionClearedRef.current = false;
+                                                                clearBookingSession();
+                                                            }
+                                                            setSelectedDate(date);
+                                                            setSelectedShowtime(null);
+                                                        }}
+                                                    >
+                                                        <span className="day-txt">{new Date(date).toLocaleDateString('vi-VN', { weekday: 'short' })}</span>
+                                                        <span className="date-txt">{new Date(date).getDate()}/{new Date(date).getMonth() + 1}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <button type="button" className="slide-btn" onClick={() => scrollDate(1)} disabled={!selectedCinema} aria-label="Ngày sau">
+                                                <ChevronRight size={18} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className={`nav-col time-slider ${!selectedDate ? 'disabled-step' : ''}`}>
+                                        <label><span>3.</span> SUẤT CHIẾU</label>
+                                        <div className="slider-controls">
+                                            <button type="button" className="slide-btn" onClick={() => scrollTime(-1)} disabled={!selectedDate} aria-label="Suất trước">
+                                                <ChevronLeft size={18} />
+                                            </button>
+                                            <div className="scroll-list" ref={timeRef}>
+                                                {availableShowtimes.length > 0 ? (
+                                                    availableShowtimes.map(st => {
+                                                        const stId = st.showtime_id || st.id;
+                                                        const active = Number(selectedShowtime?.showtime_id || selectedShowtime?.id) === Number(stId);
+                                                        return (
+                                                            <div
+                                                                key={stId}
+                                                                className={`compact-card time-card ${active ? 'active' : ''}`}
+                                                                onClick={() => {
+                                                                    if (selectedSeats.length > 0 || pendingSeatIds.length > 0) {
+                                                                        isSessionClearedRef.current = false;
+                                                                        clearBookingSession();
+                                                                    }
+                                                                    setSelectedShowtime(st);
+                                                                }}
+                                                            >
+                                                                <span className="time-day">SUẤT</span>
+                                                                <span className="time-txt">{st.start_time}</span>
+                                                            </div>
+                                                        );
+                                                    })
+                                                ) : (
+                                                    selectedDate && <span className="no-showtimes">Hết suất</span>
+                                                )}
+                                            </div>
+                                            <button type="button" className="slide-btn" onClick={() => scrollTime(1)} disabled={!selectedDate} aria-label="Suất sau">
+                                                <ChevronRight size={18} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </nav>
+                            )}
                         </section>
+
+                        {/* ============================================ */}
+                        {/* SECTION 2: CHỌN GHẾ */}
+                        {/* ============================================ */}
                         <section className="booking-section booking-seat-section">
                             <div className="section-heading">
                                 <div className="section-number">02</div>

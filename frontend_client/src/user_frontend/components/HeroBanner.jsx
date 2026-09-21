@@ -9,8 +9,10 @@ const HeroBanner = ({
   const navigate = useNavigate();
   const videoRef = useRef(null);
 
-  // ✅ State để biết video đã load xong chưa
-  const [videoLoaded, setVideoLoaded] = useState(false);
+  // ==========================================================
+  // VIDEO LOADED
+  // ==========================================================
+  const [, setVideoLoaded] = useState(false);
 
   // ==========================================================
   // SCROLL PARALLAX
@@ -29,12 +31,15 @@ const HeroBanner = ({
       const scale = 1.04 + progress * 0.08;
       const translateY = progress * 25;
 
-      videoRef.current.style.transform = `scale(${scale}) translateY(${translateY}px)`;
+      videoRef.current.style.transform =
+        `scale(${scale}) translateY(${translateY}px)`;
     };
 
     handleScroll();
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("scroll", handleScroll, {
+      passive: true
+    });
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
@@ -43,10 +48,12 @@ const HeroBanner = ({
 
   return (
     <header className="hero-banner">
+
       {/* ==================================================
           BACKGROUND
       ================================================== */}
       <div className="hero-banner__bg">
+
         <video
           ref={videoRef}
           className="hero-banner__video"
@@ -67,10 +74,10 @@ const HeroBanner = ({
         {/* Gradient từ trái sang phải */}
         <div className="hero-banner__overlay-side" />
 
-        {/* Gradient phía dưới */}
+        {/* Giữ tên class để không ảnh hưởng cấu trúc */}
         <div className="hero-banner__overlay-bottom" />
 
-        {/* Soft cinematic vignette */}
+        {/* Cinematic vignette */}
         <div className="hero-banner__vignette" />
       </div>
 
@@ -78,22 +85,34 @@ const HeroBanner = ({
           CONTENT
       ================================================== */}
       <div className="hero-banner__content">
+
         {/* ==================================================
-            LEFT CONTENT
+            MAIN CONTENT
         ================================================== */}
         <div className="hero-banner__left">
+
           {/* Eyebrow */}
           <div className="hero-banner__eyebrow">
             <span className="hero-banner__eyebrow-line" />
-            <span>TRẢI NGHIỆM ĐIỆN ẢNH ĐỈNH CAO</span>
+
+            <span>
+              TRẢI NGHIỆM ĐIỆN ẢNH ĐỈNH CAO
+            </span>
           </div>
 
           {/* ==================================================
               TITLE
           ================================================== */}
           <h1 className="hero-banner__title">
-            <span className="hero-banner__title-solid">CHẠM</span>
-            <span className="hero-banner__title-outline">ẢNH</span>
+
+            <span className="hero-banner__title-solid">
+              CHẠM
+            </span>
+
+            <span className="hero-banner__title-outline">
+              ẢNH
+            </span>
+
           </h1>
 
           {/* Decorative line */}
@@ -105,22 +124,26 @@ const HeroBanner = ({
               DESCRIPTION
           ================================================== */}
           <p className="hero-banner__description">
-            Âm thanh vòm sống động, hình ảnh 4K sắc nét và những câu chuyện lay
-            động lòng người. Mỗi suất chiếu tại Quang Dũng Cinema là một hành
-            trình điện ảnh đáng nhớ.
+            Âm thanh vòm sống động, hình ảnh 4K sắc nét và những câu chuyện
+            lay động lòng người. Mỗi suất chiếu tại Quang Dũng Cinema là
+            một hành trình điện ảnh đáng nhớ.
           </p>
 
           {/* ==================================================
               ACTIONS
           ================================================== */}
           <div className="hero-banner__actions">
+
             <button
               type="button"
               className="hero-banner__btn hero-banner__btn--primary"
               onClick={() => navigate("/booking")}
             >
               <span>Đặt vé ngay</span>
-              <span className="hero-banner__btn-arrow">→</span>
+
+              <span className="hero-banner__btn-arrow">
+                →
+              </span>
             </button>
 
             <button
@@ -130,44 +153,11 @@ const HeroBanner = ({
             >
               Khám phá phim
             </button>
+
           </div>
+
         </div>
 
-        {/* ==================================================
-            RIGHT — CINEMA FEATURES
-        ================================================== */}
-        <div className="hero-banner__right">
-          <div className="hero-banner__right-line" />
-
-          <div className="hero-banner__stats">
-            {/* ---------------- STAT 1 ---------------- */}
-            <div className="hero-banner__stat">
-              <span className="hero-banner__stat-number">01</span>
-              <div className="hero-banner__stat-content">
-                <span className="hero-banner__stat-label">Chất lượng</span>
-                <strong className="hero-banner__stat-value">4K HDR</strong>
-              </div>
-            </div>
-
-            {/* ---------------- STAT 2 ---------------- */}
-            <div className="hero-banner__stat">
-              <span className="hero-banner__stat-number">02</span>
-              <div className="hero-banner__stat-content">
-                <span className="hero-banner__stat-label">Âm thanh</span>
-                <strong className="hero-banner__stat-value">DOLBY ATMOS</strong>
-              </div>
-            </div>
-
-            {/* ---------------- STAT 3 ---------------- */}
-            <div className="hero-banner__stat">
-              <span className="hero-banner__stat-number">03</span>
-              <div className="hero-banner__stat-content">
-                <span className="hero-banner__stat-label">Trải nghiệm</span>
-                <strong className="hero-banner__stat-value">ĐỈNH CAO</strong>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </header>
   );

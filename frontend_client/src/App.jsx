@@ -299,6 +299,22 @@ const CinemaCardDetail = lazy(() =>
     )
 );
 
+// ============================================================
+// ✅ BOOKING SELECT - TRANG CHỌN RẠP/PHIM/SUẤT
+// ============================================================
+
+const BookingSelect = lazy(() =>
+    lazyRetry(() =>
+        import(
+            "./user_frontend/pages/BookingSelect"
+        )
+    )
+);
+
+// ============================================================
+// BOOKING CHECKOUT
+// ============================================================
+
 const Booking = lazy(() =>
     lazyRetry(() =>
         import(
@@ -407,7 +423,6 @@ const AdminLogin = lazy(() =>
     )
 );
 
-// ✅ MỚI: ADMIN FORGOT PASSWORD PAGES
 const AdminForgotPassword = lazy(() =>
     lazyRetry(() =>
         import(
@@ -599,10 +614,6 @@ const PriceConfigPage = lazy(() =>
         )
     )
 );
-
-// ============================================================
-// ✅ LAZY LOAD - CHECK-IN PAGE
-// ============================================================
 
 const CheckIn = lazy(() =>
     lazyRetry(() =>
@@ -918,6 +929,18 @@ const MAIN_ROUTES = [
             </UserRouteGuard>
         ),
     },
+
+    // ============================================================
+    // ✅ BOOKING SELECT - Chọn rạp/phim/suất (không cần login)
+    // ============================================================
+    {
+        path: "booking",
+        element: <BookingSelect />,
+    },
+
+    // ============================================================
+    // BOOKING CHECKOUT - Chọn ghế + thanh toán (cần login)
+    // ============================================================
     {
         path: "booking/:slug",
         element: (
@@ -1061,27 +1084,14 @@ const ADMIN_ROUTES = [
 // ============================================================
 // ADMIN ROUTES COMPONENT
 // ============================================================
-//
-// ⚠️ LƯU Ý:
-// Route /check-in và /check-in/:ticketCode phải đặt
-// TRƯỚC route có <AdminLayout> để KHÔNG bị bọc sidebar.
-//
-// ✅ MỚI: Thêm 3 route Forgot/Verify/Reset Password cho admin
-// ============================================================
 
 const AdminRoutesComponent = () => (
     <Routes>
-        {/* ============================================ */}
-        {/* LOGIN - Không có layout */}
-        {/* ============================================ */}
         <Route
             path="/login"
             element={<AdminLogin />}
         />
 
-        {/* ============================================ */}
-        {/* ✅ MỚI: FORGOT PASSWORD FLOW - Không layout */}
-        {/* ============================================ */}
         <Route
             path="/forgot-password"
             element={<AdminForgotPassword />}
@@ -1097,9 +1107,6 @@ const AdminRoutesComponent = () => (
             element={<AdminResetPassword />}
         />
 
-        {/* ============================================ */}
-        {/* ✅ CHECK-IN - TOÀN MÀN HÌNH (không có sidebar) */}
-        {/* ============================================ */}
         <Route
             path="/check-in"
             element={
@@ -1118,9 +1125,6 @@ const AdminRoutesComponent = () => (
             }
         />
 
-        {/* ============================================ */}
-        {/* ADMIN LAYOUT - Có sidebar */}
-        {/* ============================================ */}
         <Route
             element={
                 <AdminSessionGuard>
@@ -1151,9 +1155,6 @@ const AdminRoutesComponent = () => (
             )}
         </Route>
 
-        {/* ============================================ */}
-        {/* 404 */}
-        {/* ============================================ */}
         <Route
             path="*"
             element={
@@ -1444,17 +1445,6 @@ const AppContent = () => {
 
 // ============================================================
 // APP
-// ============================================================
-// ✅ FIX: CHỈ mount 1 Provider phù hợp với domain
-//
-// Kiến trúc:
-// - RouteLoadingProvider:  Loading state toàn cục
-// - NetworkProvider:        Network state toàn cục
-// - Conditional Provider:
-//   + Admin domain  → CHỈ AdminAuthProvider
-//   + User domain   → CHỈ AuthProvider
-//
-// KHÔNG mount cả 2 → tránh conflict socket + auth state.
 // ============================================================
 
 function App() {

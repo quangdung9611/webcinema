@@ -1,518 +1,1355 @@
-/* ==========================================================
-   CINEMA CARD — SILVER PREMIUM EDITION
-   ----------------------------------------------------------
-   ✅ Cấu trúc giống PromotionCard 100%
-   ✅ Giữ 2 aspect ratio: 2/3 (movie) + 3/2 (cinema)
-   ✅ Dùng 100% biến var() từ index.css
-   ✅ ĐÃ BỎ HOÀN TOÀN BADGE / LABEL
-   Breakpoints: 1200 / 992 / 768 / 480 / 360
-========================================================== */
+
+/* ============================================================
+   QUANG DŨNG CINEMA
+   CINEMA CARD — ULTRA 3D CINEMATIC
+   ============================================================
+
+   DESIGN:
+   - Cùng visual family với PromotionCard
+   - Cinema / location oriented
+   - Deep 3D layering
+   - Premium silver edge
+   - Cinematic image treatment
+   - Smooth hover
+   - Không badge / label
+   - Hỗ trợ:
+        2 / 3  → Movie / Poster
+        3 / 2  → Cinema / Landscape
+   ============================================================ */
 
 
-/* ==========================================================
-   1. CARD WRAPPER
-========================================================== */
+/* ============================================================
+   01. CARD WRAPPER
+   ============================================================ */
+
 .cinema-card {
+    --cinema-radius: var(--radius-xl, 20px);
+
+    position: relative;
+
     display: flex;
     flex-direction: column;
 
     width: 100%;
     height: 100%;
+    min-height: 100%;
 
     overflow: hidden;
 
     cursor: pointer;
-    position: relative;
 
-    background: rgba(255, 255, 255, 0.01);
+    isolation: isolate;
 
-    border: var(--card-border-base);
-    border-radius: var(--radius-xl);
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.14);
 
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    border-radius:
+        var(--cinema-radius);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.075) 0%,
+            rgba(255, 255, 255, 0.025) 34%,
+            rgba(7, 9, 11, 0.96) 100%
+        );
 
     box-shadow:
-        0 4px 20px rgba(0, 0, 0, 0.30),
-        inset 0 1px 0 rgba(244, 246, 248, 0.05);
+        0 8px 18px rgba(0, 0, 0, 0.20),
+        0 18px 45px rgba(0, 0, 0, 0.30),
+        0 38px 80px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.45);
 
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    transform:
+        translate3d(0, 0, 0);
 
-    will-change: transform, background, border-color, box-shadow;
+    transform-style:
+        preserve-3d;
 
-    backface-visibility: hidden;
-    transform: translate3d(0, 0, 0) scale(1);
+    will-change:
+        transform,
+        box-shadow;
 
-    -webkit-font-smoothing: antialiased;
+    backface-visibility:
+        hidden;
+
+    -webkit-font-smoothing:
+        antialiased;
+
+    transition:
+        transform
+            var(--transition-slow, 0.6s cubic-bezier(0.16, 1, 0.3, 1)),
+        border-color
+            var(--transition-normal, 0.4s ease),
+        box-shadow
+            var(--transition-slow, 0.6s cubic-bezier(0.16, 1, 0.3, 1)),
+        background
+            var(--transition-normal, 0.4s ease);
 }
+
+
+/* ============================================================
+   02. SILVER EDGE
+   ============================================================ */
+
+.cinema-card::before {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    z-index: 20;
+
+    pointer-events: none;
+
+    border-radius:
+        inherit;
+
+    padding: 1px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.48),
+            rgba(255, 255, 255, 0.08) 28%,
+            transparent 52%,
+            rgba(255, 255, 255, 0.13) 78%,
+            rgba(255, 255, 255, 0.28)
+        );
+
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+
+    -webkit-mask-composite:
+        xor;
+
+    mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+
+    mask-composite:
+        exclude;
+
+    opacity:
+        0.55;
+
+    transition:
+        opacity
+        var(--transition-normal, 0.4s ease);
+}
+
+
+/* ============================================================
+   03. REFLECTION
+   ============================================================ */
+
+.cinema-card::after {
+    content: "";
+
+    position: absolute;
+
+    width: 180%;
+    height: 65%;
+
+    left: -42%;
+    top: -72%;
+
+    z-index: 21;
+
+    pointer-events: none;
+
+    background:
+        linear-gradient(
+            115deg,
+            transparent 25%,
+            rgba(255, 255, 255, 0.075) 42%,
+            rgba(255, 255, 255, 0.015) 52%,
+            transparent 66%
+        );
+
+    transform:
+        rotate(7deg);
+
+    opacity:
+        0;
+
+    transition:
+        top
+            0.9s cubic-bezier(0.16, 1, 0.3, 1),
+        opacity
+            0.45s ease;
+}
+
+
+/* ============================================================
+   04. HOVER — CARD FLOAT
+   ============================================================ */
 
 .cinema-card:hover {
-    background: rgba(255, 255, 255, 0.03);
-    border: var(--card-border-hover);
-    transform: translateY(-4px);
+    border-color:
+        rgba(255, 255, 255, 0.30);
+
+    transform:
+        translate3d(0, -10px, 0)
+        scale(1.012);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.095) 0%,
+            rgba(255, 255, 255, 0.028) 34%,
+            rgba(7, 9, 11, 0.97) 100%
+        );
 
     box-shadow:
-        0 20px 48px rgba(0, 0, 0, 0.50),
-        0 0 0 1px rgba(244, 246, 248, 0.12);
+        0 12px 24px rgba(0, 0, 0, 0.22),
+        0 28px 65px rgba(0, 0, 0, 0.46),
+        0 48px 100px rgba(0, 0, 0, 0.30),
+        0 0 0 1px rgba(255, 255, 255, 0.055),
+        inset 0 1px 0 rgba(255, 255, 255, 0.13);
 }
+
+
+.cinema-card:hover::before {
+    opacity:
+        0.95;
+}
+
+
+.cinema-card:hover::after {
+    top:
+        112%;
+
+    opacity:
+        1;
+}
+
+
+/* ============================================================
+   05. ACTIVE / FOCUS
+   ============================================================ */
 
 .cinema-card:active {
-    border: var(--card-border-active);
-    transform: translateY(-1px) scale(0.998);
-    transition-duration: 0.18s;
+    transform:
+        translate3d(0, -3px, 0)
+        scale(0.995);
+
+    transition-duration:
+        0.16s;
 }
+
 
 .cinema-card:focus-visible {
-    outline: 2px solid var(--silver-light);
-    outline-offset: 4px;
+    outline:
+        2px solid
+        var(--silver-light, #f4f7fa);
+
+    outline-offset:
+        5px;
 }
 
 
-/* ==========================================================
-   2. IMAGE AREA
-========================================================== */
+/* ============================================================
+   06. IMAGE AREA
+   ============================================================ */
+
 .cinema-card__image {
     position: relative;
+
     width: 100%;
 
-    /* ✅ MẶC ĐỊNH 2:3 — POSTER DỌC */
-    aspect-ratio: 2 / 3;
+    /*
+       Default:
+       Movie / poster style
+    */
+    aspect-ratio:
+        2 / 3;
 
     flex-shrink: 0;
+
     overflow: hidden;
-    background: var(--bg-secondary);
+
+    isolation: isolate;
+
+    background:
+        var(--bg-secondary, #0b0d10);
+
+    transform:
+        translateZ(0);
+
+    transform-style:
+        preserve-3d;
 }
 
-/* ✅ Cinema → 3:2 ngang */
-.cinema-card--cinema .cinema-card__image {
-    aspect-ratio: 3 / 2;
+
+/* ============================================================
+   07. CINEMA — LANDSCAPE
+   ============================================================ */
+
+.cinema-card--cinema
+.cinema-card__image {
+    aspect-ratio:
+        3 / 2;
 }
+
+
+/* ============================================================
+   08. ASPECT RATIO FALLBACK
+   ============================================================ */
 
 @supports not (aspect-ratio: 2 / 3) {
+
     .cinema-card__image {
         height: 0;
-        padding-bottom: 150%;
+
+        padding-bottom:
+            150%;
     }
-    .cinema-card--cinema .cinema-card__image {
-        padding-bottom: 66.6667%;
+
+    .cinema-card--cinema
+    .cinema-card__image {
+        padding-bottom:
+            66.6667%;
     }
+
     .cinema-card__image img {
         position: absolute;
+
         inset: 0;
     }
 }
 
+
+/* ============================================================
+   09. IMAGE
+   ============================================================ */
+
 .cinema-card__image img {
-    width: 100%;
-    height: 100%;
+    position: relative;
+
+    z-index: 1;
+
     display: block;
 
+    width: 100%;
+    height: 100%;
+
     object-fit: cover;
+
     object-position: center;
 
-    opacity: 0.94;
+    opacity:
+        0.88;
+
+    filter:
+        brightness(0.84)
+        contrast(1.06)
+        saturate(0.78);
+
+    transform:
+        scale(1.045)
+        translateZ(0);
+
+    transform-origin:
+        center center;
+
+    will-change:
+        transform,
+        filter,
+        opacity;
+
+    backface-visibility:
+        hidden;
 
     transition:
-        transform var(--transition-slow),
-        opacity var(--transition-normal),
-        filter var(--transition-normal);
-
-    will-change: transform;
-    backface-visibility: hidden;
+        transform
+            1s cubic-bezier(0.16, 1, 0.3, 1),
+        opacity
+            0.7s cubic-bezier(0.16, 1, 0.3, 1),
+        filter
+            0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 
-/* ==========================================================
-   3. GRADIENT OVERLAY
-========================================================== */
-.cinema-card__gradient {
+/* ============================================================
+   10. IMAGE HOVER
+   ============================================================ */
+
+.cinema-card:hover
+.cinema-card__image img {
+    transform:
+        scale(1.105)
+        translate3d(0, -1%, 0);
+
+    opacity:
+        1;
+
+    filter:
+        brightness(1.02)
+        contrast(1.04)
+        saturate(0.98);
+}
+
+
+/* ============================================================
+   11. IMAGE LIGHT LAYER
+   ============================================================ */
+
+.cinema-card__image::before {
+    content: "";
+
     position: absolute;
     inset: 0;
-    z-index: 2;
+
+    z-index: 3;
+
     pointer-events: none;
 
-    background: linear-gradient(
-        to top,
-        rgba(7, 8, 10, 0.9) 0%,
-        rgba(7, 8, 10, 0.5) 40%,
-        transparent 80%
-    );
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.10),
+            transparent 28%,
+            transparent 72%,
+            rgba(0, 0, 0, 0.22)
+        );
 
-    opacity: 0.85;
-    transition: opacity var(--transition-normal);
-}
+    opacity:
+        0.42;
 
-.cinema-card:hover .cinema-card__gradient {
-    opacity: 0.72;
-}
-
-
-/* ==========================================================
-   4. HOVER — ẢNH ZOOM
-========================================================== */
-.cinema-card__image:hover img {
-    transform: scale(1.05);
-    opacity: 1;
-    filter: brightness(1.05) contrast(1.02);
+    transition:
+        opacity
+        var(--transition-normal, 0.4s ease);
 }
 
 
-/* ==========================================================
-   5. CONTENT AREA
-========================================================== */
+.cinema-card:hover
+.cinema-card__image::before {
+    opacity:
+        0.75;
+}
+
+
+/* ============================================================
+   12. TOP SILVER LINE
+   ============================================================ */
+
+.cinema-card__image::after {
+    content: "";
+
+    position: absolute;
+
+    left: 7%;
+    right: 7%;
+    top: 7%;
+
+    z-index: 5;
+
+    height: 1px;
+
+    pointer-events: none;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.34),
+            transparent
+        );
+
+    opacity:
+        0.28;
+
+    transition:
+        opacity
+        var(--transition-normal, 0.4s ease);
+}
+
+
+.cinema-card:hover
+.cinema-card__image::after {
+    opacity:
+        0.68;
+}
+
+
+/* ============================================================
+   13. CINEMATIC GRADIENT
+   ============================================================ */
+
+.cinema-card__gradient {
+    position: absolute;
+
+    inset: 0;
+
+    z-index: 4;
+
+    pointer-events: none;
+
+    background:
+        linear-gradient(
+            to top,
+
+            rgba(7, 8, 10, 0.94) 0%,
+
+            rgba(7, 8, 10, 0.68) 25%,
+
+            rgba(7, 8, 10, 0.22) 52%,
+
+            rgba(7, 8, 10, 0.04) 80%,
+
+            transparent 100%
+        );
+
+    opacity:
+        0.94;
+
+    transition:
+        opacity
+        var(--transition-normal, 0.4s ease);
+}
+
+
+.cinema-card:hover
+.cinema-card__gradient {
+    opacity:
+        0.80;
+}
+
+
+/* ============================================================
+   14. CONTENT
+   ============================================================ */
+
 .cinema-card__content {
+    position: relative;
+
+    z-index: 8;
+
     display: flex;
+
     flex-direction: column;
+
     justify-content: space-between;
+
     flex: 1;
+
     min-height: 0;
 
-    padding: var(--space-xl);
+    padding:
+        var(--space-xl, 32px);
 
-    transition: background var(--transition-normal);
+    background:
+        linear-gradient(
+            180deg,
+            rgba(16, 18, 21, 0.90),
+            rgba(8, 10, 12, 0.98)
+        );
+
+    box-shadow:
+        inset 0 1px 0
+        rgba(255, 255, 255, 0.055);
+
+    transition:
+        background
+            var(--transition-normal, 0.4s ease),
+        box-shadow
+            var(--transition-normal, 0.4s ease);
 }
+
+
+.cinema-card:hover
+.cinema-card__content {
+    background:
+        linear-gradient(
+            180deg,
+            rgba(22, 25, 29, 0.95),
+            rgba(8, 10, 12, 0.99)
+        );
+
+    box-shadow:
+        inset 0 1px 0
+        rgba(255, 255, 255, 0.09);
+}
+
+
+/* ============================================================
+   15. BODY
+   ============================================================ */
 
 .cinema-card__body {
     display: flex;
+
     flex-direction: column;
-    gap: var(--space-xs);
-    margin-bottom: var(--space-md);
+
+    gap:
+        var(--space-xs, 4px);
+
     min-height: 0;
+
+    margin-bottom:
+        var(--space-md, 16px);
 }
 
 
-/* ==========================================================
-   6. TITLE
-========================================================== */
+/* ============================================================
+   16. TITLE
+   ============================================================ */
+
 .cinema-card__title {
-    margin: 0 0 var(--space-sm) 0;
+    position: relative;
 
-    color: var(--text-heading);
+    margin:
+        0 0
+        var(--space-sm, 8px);
 
-    font-family: var(--font-primary);
-    font-size: var(--font-size-h3);
-    font-weight: var(--fw-bold);
-    line-height: 1.3;
-    letter-spacing: -0.01em;
+    color:
+        var(--text-heading, #f4f6f8);
 
-    overflow-wrap: anywhere;
-    word-break: break-word;
+    font-family:
+        var(--font-primary, "Inter"),
+        sans-serif;
 
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size:
+        var(--font-size-h3, 1.65rem);
+
+    font-weight:
+        var(--fw-bold, 700);
+
+    line-height:
+        1.25;
+
+    letter-spacing:
+        -0.015em;
+
+    overflow-wrap:
+        anywhere;
+
+    word-break:
+        break-word;
+
+    display:
+        -webkit-box;
+
+    -webkit-box-orient:
+        vertical;
+
+    -webkit-line-clamp:
+        2;
+
+    overflow:
+        hidden;
+
+    text-overflow:
+        ellipsis;
+
+    transform:
+        translateZ(12px);
 
     transition:
-        color var(--transition-normal),
-        text-shadow var(--transition-normal);
+        color
+            var(--transition-normal, 0.4s ease),
+        text-shadow
+            var(--transition-normal, 0.4s ease),
+        transform
+            var(--transition-normal, 0.4s ease);
 }
 
-.cinema-card:hover .cinema-card__title {
-    color: var(--silver-light);
-    text-shadow: 0 0 16px rgba(244, 246, 248, 0.06);
+
+.cinema-card:hover
+.cinema-card__title {
+    color:
+        var(--silver-light, #f4f7fa);
+
+    text-shadow:
+        0 0 20px
+        rgba(244, 246, 248, 0.10);
+
+    transform:
+        translate3d(0, -2px, 12px);
 }
 
 
-/* ==========================================================
-   7. TEXT DESCRIPTION
-========================================================== */
+/* ============================================================
+   17. DESCRIPTION
+   ============================================================ */
+
 .cinema-card__text {
-    margin: 0;
+    margin:
+        0;
 
-    color: var(--text-secondary);
+    color:
+        var(--text-secondary, #9ea8b3);
 
-    font-family: var(--font-primary);
-    font-size: var(--font-size-h6);
-    font-weight: var(--fw-regular);
-    line-height: 1.6;
+    font-family:
+        var(--font-primary, "Inter"),
+        sans-serif;
 
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size:
+        var(--font-size-h6, 0.875rem);
 
-    transition: color var(--transition-normal);
+    font-weight:
+        var(--fw-regular, 400);
+
+    line-height:
+        1.65;
+
+    display:
+        -webkit-box;
+
+    -webkit-box-orient:
+        vertical;
+
+    -webkit-line-clamp:
+        2;
+
+    overflow:
+        hidden;
+
+    text-overflow:
+        ellipsis;
+
+    transition:
+        color
+        var(--transition-normal, 0.4s ease);
 }
 
-.cinema-card:hover .cinema-card__text {
-    color: var(--text-body);
+
+.cinema-card:hover
+.cinema-card__text {
+    color:
+        var(--text-body, #d9dde2);
 }
 
 
-/* ==========================================================
-   8. ADDRESS / HOTLINE
-========================================================== */
+/* ============================================================
+   18. ADDRESS / HOTLINE
+   ============================================================ */
+
 .cinema-card__address,
 .cinema-card__hotline {
     display: flex;
+
     align-items: center;
-    gap: var(--space-xs);
 
-    color: var(--text-secondary);
+    gap:
+        var(--space-xs, 4px);
 
-    font-family: var(--font-primary);
-    font-size: var(--font-size-h6);
-    line-height: 1.5;
+    color:
+        var(--text-secondary, #9ea8b3);
 
-    transition: color var(--transition-normal);
+    font-family:
+        var(--font-primary, "Inter"),
+        sans-serif;
+
+    font-size:
+        var(--font-size-h6, 0.875rem);
+
+    line-height:
+        1.5;
+
+    transition:
+        color
+        var(--transition-normal, 0.4s ease);
 }
+
 
 .cinema-card__address svg,
 .cinema-card__hotline svg {
-    color: var(--silver-primary);
-    flex-shrink: 0;
-}
+    color:
+        var(--silver-primary, #dde2e8);
 
-.cinema-card:hover .cinema-card__address,
-.cinema-card:hover .cinema-card__hotline {
-    color: var(--text-body);
-}
-
-
-/* ==========================================================
-   9. FOOTER — LINK + MAP
-========================================================== */
-.cinema-card__footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-md);
-    flex-wrap: wrap;
-}
-
-/* Link "Xem chi tiết" */
-.cinema-card__link {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-sm);
-
-    width: fit-content;
-    flex-shrink: 0;
-
-    color: var(--silver-primary);
-
-    font-family: var(--font-primary);
-    font-size: var(--font-size-h6);
-    font-weight: var(--fw-bold);
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-
-    text-decoration: none;
-    cursor: pointer;
-
-    transition: color var(--transition-normal);
-}
-
-.cinema-card:hover .cinema-card__link {
-    color: var(--silver-light);
-}
-
-.cinema-card__link:hover {
-    color: var(--silver-bright);
-}
-
-.cinema-card__link-icon {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-    transition: transform var(--transition-normal);
-}
-
-.cinema-card__link:hover .cinema-card__link-icon,
-.cinema-card:hover .cinema-card__link-icon {
-    transform: translate(3px, -3px);
-}
-
-/* Link Google Maps */
-.cinema-card__map {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-xs);
-
-    color: var(--text-muted);
-
-    font-family: var(--font-primary);
-    font-size: var(--font-size-h6);
-    font-weight: var(--fw-semibold);
-    letter-spacing: 0.05em;
-
-    text-decoration: none;
-    cursor: pointer;
+    flex-shrink:
+        0;
 
     transition:
-        color var(--transition-normal),
-        transform var(--transition-normal);
+        transform
+        var(--transition-normal, 0.4s ease);
 }
+
+
+.cinema-card:hover
+.cinema-card__address,
+.cinema-card:hover
+.cinema-card__hotline {
+    color:
+        var(--text-body, #d9dde2);
+}
+
+
+.cinema-card:hover
+.cinema-card__address svg,
+.cinema-card:hover
+.cinema-card__hotline svg {
+    transform:
+        translateY(-1px);
+}
+
+
+/* ============================================================
+   19. FOOTER
+   ============================================================ */
+
+.cinema-card__footer {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap:
+        var(--space-md, 16px);
+
+    flex-wrap:
+        wrap;
+}
+
+
+/* ============================================================
+   20. DETAIL LINK
+   ============================================================ */
+
+.cinema-card__link {
+    position: relative;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap:
+        var(--space-sm, 8px);
+
+    width:
+        fit-content;
+
+    flex-shrink:
+        0;
+
+    color:
+        var(--silver-primary, #dde2e8);
+
+    font-family:
+        var(--font-primary, "Inter"),
+        sans-serif;
+
+    font-size:
+        var(--font-size-h6, 0.875rem);
+
+    font-weight:
+        var(--fw-bold, 700);
+
+    letter-spacing:
+        0.16em;
+
+    text-transform:
+        uppercase;
+
+    text-decoration:
+        none;
+
+    cursor:
+        pointer;
+
+    transform:
+        translateZ(16px);
+
+    transition:
+        color
+            var(--transition-normal, 0.4s ease),
+        transform
+            var(--transition-normal, 0.4s ease);
+}
+
+
+/* Underline */
+
+.cinema-card__link::after {
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+    bottom: -6px;
+
+    width: 0;
+    height: 1px;
+
+    background:
+        linear-gradient(
+            90deg,
+            var(--silver-light, #f4f7fa),
+            transparent
+        );
+
+    transition:
+        width
+        0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+
+.cinema-card:hover
+.cinema-card__link {
+    color:
+        var(--silver-light, #f4f7fa);
+
+    transform:
+        translate3d(0, -2px, 16px);
+}
+
+
+.cinema-card:hover
+.cinema-card__link::after {
+    width:
+        100%;
+}
+
+
+/* ============================================================
+   21. DETAIL LINK ICON
+   ============================================================ */
+
+.cinema-card__link-icon {
+    width:
+        16px;
+
+    height:
+        16px;
+
+    flex-shrink:
+        0;
+
+    transition:
+        transform
+        0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+
+.cinema-card__link:hover
+.cinema-card__link-icon,
+.cinema-card:hover
+.cinema-card__link-icon {
+    transform:
+        translate3d(4px, -4px, 0);
+}
+
+
+/* ============================================================
+   22. GOOGLE MAPS
+   ============================================================ */
+
+.cinema-card__map {
+    display: inline-flex;
+
+    align-items: center;
+
+    gap:
+        var(--space-xs, 4px);
+
+    color:
+        var(--text-muted, #6a737d);
+
+    font-family:
+        var(--font-primary, "Inter"),
+        sans-serif;
+
+    font-size:
+        var(--font-size-h6, 0.875rem);
+
+    font-weight:
+        var(--fw-semibold, 600);
+
+    letter-spacing:
+        0.05em;
+
+    text-decoration:
+        none;
+
+    cursor:
+        pointer;
+
+    transition:
+        color
+            var(--transition-normal, 0.4s ease),
+        transform
+            var(--transition-normal, 0.4s ease);
+}
+
 
 .cinema-card__map svg {
-    color: var(--silver-primary);
-    flex-shrink: 0;
+    color:
+        var(--silver-primary, #dde2e8);
+
+    flex-shrink:
+        0;
+
+    transition:
+        transform
+        var(--transition-normal, 0.4s ease);
 }
+
 
 .cinema-card__map:hover {
-    color: var(--silver-light);
-    transform: translateX(3px);
+    color:
+        var(--silver-light, #f4f7fa);
+
+    transform:
+        translateX(3px);
 }
 
 
-/* ==========================================================
-   10. GRID ITEM
-========================================================== */
+.cinema-card__map:hover svg {
+    transform:
+        translateY(-1px);
+}
+
+
+/* ============================================================
+   23. CINEMA GRID
+   ============================================================ */
+
 .cinema-grid > * {
-    display: flex;
-    min-width: 0;
-    min-height: 0;
-    height: 100%;
+    display:
+        flex;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    height:
+        100%;
 }
+
 
 .cinema-grid > * > * {
-    flex: 1;
-    width: 100%;
+    flex:
+        1;
+
+    width:
+        100%;
 }
 
-/* ==========================================================
-   12. RESPONSIVE — 1200px
-========================================================== */
+
+/* ============================================================
+   24. RESPONSIVE — 1200px
+   ============================================================ */
+
 @media (max-width: 1200px) {
+
+    .cinema-card {
+        --cinema-radius:
+            var(--radius-lg, 16px);
+    }
+
     .cinema-card__content {
-        padding: var(--space-lg);
+        padding:
+            var(--space-lg, 24px);
     }
 
     .cinema-card__title {
-        font-size: var(--font-size-h4);
+        font-size:
+            var(--font-size-h4, 1.125rem);
     }
 
     .cinema-card__link {
-        letter-spacing: 0.15em;
+        letter-spacing:
+            0.15em;
     }
 }
 
 
-/* ==========================================================
-   13. RESPONSIVE — 992px
-========================================================== */
+/* ============================================================
+   25. RESPONSIVE — 992px
+   ============================================================ */
+
 @media (max-width: 992px) {
+
+    .cinema-card:hover {
+        transform:
+            translate3d(0, -7px, 0)
+            scale(1.008);
+    }
+
     .cinema-card__content {
-        padding: var(--space-md) var(--space-lg);
+        padding:
+            var(--space-md, 16px)
+            var(--space-lg, 24px);
     }
 
     .cinema-card__title {
-        font-size: var(--font-size-h4);
+        font-size:
+            var(--font-size-h4, 1.125rem);
     }
 
     .cinema-card__address,
     .cinema-card__hotline,
     .cinema-card__map {
-        font-size: calc(var(--font-size-h6) * 0.95);
+        font-size:
+            0.83rem;
     }
 
     .cinema-card__footer {
-        gap: var(--space-sm);
+        gap:
+            var(--space-sm, 8px);
     }
 }
 
 
-/* ==========================================================
-   14. RESPONSIVE — 768px
-========================================================== */
+/* ============================================================
+   26. RESPONSIVE — 768px
+   ============================================================ */
+
 @media (max-width: 768px) {
-    .cinema-card__image:hover img {
-        transform: scale(1.03);
+
+    .cinema-card:hover {
+        transform:
+            translate3d(0, -5px, 0)
+            scale(1.005);
+    }
+
+    .cinema-card__image img {
+        transform:
+            scale(1.025);
+    }
+
+    .cinema-card:hover
+    .cinema-card__image img {
+        transform:
+            scale(1.065);
     }
 
     .cinema-card__content {
-        padding: var(--space-md);
+        padding:
+            var(--space-md, 16px);
     }
 
     .cinema-card__title {
-        font-size: var(--font-size-h5);
-        -webkit-line-clamp: 2;
+        font-size:
+            var(--font-size-h5, 1rem);
+
+        -webkit-line-clamp:
+            2;
     }
 
     .cinema-card__link {
-        font-size: calc(var(--font-size-h6) * 0.95);
-        letter-spacing: 0.12em;
-        gap: var(--space-xs);
+        font-size:
+            0.72rem;
+
+        letter-spacing:
+            0.12em;
+
+        gap:
+            var(--space-xs, 4px);
     }
 
     .cinema-card__link-icon {
-        width: 14px;
-        height: 14px;
+        width:
+            14px;
+
+        height:
+            14px;
     }
 
     .cinema-card__address,
     .cinema-card__hotline,
     .cinema-card__map {
-        font-size: calc(var(--font-size-h6) * 0.9);
+        font-size:
+            0.79rem;
     }
 
     .cinema-card__map svg,
     .cinema-card__address svg,
     .cinema-card__hotline svg {
-        width: 12px;
-        height: 12px;
+        width:
+            12px;
+
+        height:
+            12px;
     }
 
     .cinema-card__footer {
-        gap: var(--space-xs);
+        gap:
+            var(--space-xs, 4px);
     }
 }
 
 
-/* ==========================================================
-   15. RESPONSIVE — 480px
-========================================================== */
+/* ============================================================
+   27. RESPONSIVE — 480px
+   ============================================================ */
+
 @media (max-width: 480px) {
-    .cinema-card__image:hover img {
-        transform: scale(1.02);
+
+    .cinema-card {
+        --cinema-radius:
+            var(--radius-md, 12px);
+    }
+
+    .cinema-card:hover {
+        transform:
+            translate3d(0, -4px, 0)
+            scale(1.003);
+    }
+
+    .cinema-card__image img {
+        transform:
+            scale(1.015);
+    }
+
+    .cinema-card:hover
+    .cinema-card__image img {
+        transform:
+            scale(1.04);
     }
 
     .cinema-card__content {
-        padding: var(--space-md);
+        padding:
+            var(--space-md, 16px);
     }
 
     .cinema-card__title {
-        font-size: var(--font-size-h6);
-        line-height: 1.35;
-        margin-bottom: var(--space-xs);
+        font-size:
+            var(--font-size-h6, 0.875rem);
+
+        line-height:
+            1.35;
+
+        margin-bottom:
+            var(--space-xs, 4px);
     }
 
     .cinema-card__body {
-        gap: 6px;
-        margin-bottom: var(--space-sm);
+        gap:
+            6px;
+
+        margin-bottom:
+            var(--space-sm, 8px);
     }
 
     .cinema-card__link {
-        font-size: calc(var(--font-size-h6) * 0.9);
-        letter-spacing: 0.1em;
-        gap: 6px;
+        font-size:
+            0.64rem;
+
+        letter-spacing:
+            0.10em;
+
+        gap:
+            6px;
     }
 
     .cinema-card__link-icon {
-        width: 12px;
-        height: 12px;
+        width:
+            12px;
+
+        height:
+            12px;
     }
 
     .cinema-card__address,
     .cinema-card__hotline,
     .cinema-card__map {
-        font-size: calc(var(--font-size-h6) * 0.85);
-        line-height: 1.4;
+        font-size:
+            0.74rem;
+
+        line-height:
+            1.4;
     }
 
     .cinema-card__map svg,
     .cinema-card__address svg,
     .cinema-card__hotline svg {
-        width: 11px;
-        height: 11px;
+        width:
+            11px;
+
+        height:
+            11px;
     }
 
     .cinema-card__footer {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 6px;
+        flex-direction:
+            column;
+
+        align-items:
+            flex-start;
+
+        gap:
+            7px;
     }
 }
+
+
+/* ============================================================
+   28. VERY SMALL MOBILE — 360px
+   ============================================================ */
+
+@media (max-width: 360px) {
+
+    .cinema-card__content {
+        padding:
+            13px;
+    }
+
+    .cinema-card__title {
+        font-size:
+            0.82rem;
+    }
+
+    .cinema-card__text,
+    .cinema-card__address,
+    .cinema-card__hotline,
+    .cinema-card__map {
+        font-size:
+            0.7rem;
+    }
+
+    .cinema-card__link {
+        font-size:
+            0.58rem;
+
+        letter-spacing:
+            0.08em;
+    }
+}
+
+
+
+/* ============================================================
+   30. TOUCH DEVICES
+   ============================================================ */
+
+@media (hover: none) {
+
+    .cinema-card:hover {
+        transform:
+            none;
+
+        box-shadow:
+            0 8px 18px rgba(0, 0, 0, 0.20),
+            0 18px 45px rgba(0, 0, 0, 0.30),
+            inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .cinema-card:hover
+    .cinema-card__image img {
+        transform:
+            scale(1.045);
+    }
+
+    .cinema-card:hover
+    .cinema-card__title,
+    .cinema-card:hover
+    .cinema-card__link {
+        transform:
+            none;
+    }
+
+    .cinema-card::after {
+        display:
+            none;
+    }
+}
+

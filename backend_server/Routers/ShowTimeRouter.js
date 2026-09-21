@@ -12,6 +12,15 @@ const {
     PUBLIC ROUTES
 ========================================================== */
 
+// BOOKING SELECT — 1 API DUY NHẤT
+// URL: GET /api/showtimes/booking
+// Trả về: Rạp → Phim → Ngày → Suất (nested)
+router.get(
+    "/booking",
+    ShowtimeController.bookingSelect
+);
+
+
 // GET ALL SHOWTIMES - KHÔNG PHÂN TRANG
 router.get(
     "/",

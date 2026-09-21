@@ -221,13 +221,12 @@ exports.getShowtimesForMovieDetail = async (req, res) => {
 exports.createAutoSchedule = async (req, res) => {
     try {
         const { 
-            movies,      // [{ movie_id }]
+            movies,
             cinema_id, 
             start_date, 
             end_date
         } = req.body;
         
-        // Validate movies
         let moviesArray = [];
         if (Array.isArray(movies) && movies.length > 0) {
             moviesArray = movies.map(item => ({
@@ -235,7 +234,6 @@ exports.createAutoSchedule = async (req, res) => {
             })).filter(item => !isNaN(item.movie_id) && item.movie_id > 0);
         }
         
-        // Validate cinema_id
         if (!cinema_id) {
             return res.status(400).json({
                 success: false,
@@ -244,7 +242,6 @@ exports.createAutoSchedule = async (req, res) => {
             });
         }
 
-        // Validate dates
         if (!start_date || !end_date) {
             return res.status(400).json({
                 success: false,
@@ -311,6 +308,28 @@ exports.deleteShowtime = async (req, res) => {
         });
     } catch (err) {
         console.error("Delete Showtime Error:", err);
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
+    BOOKING SELECT — 1 API DUY NHẤT
+    GET /api/showtimes/booking
+    Trả về: Rạp → Phim → Ngày → Suất (nested)
+=========================================================*/
+exports.bookingSelect = async (req, res) => {
+    try {
+        const data = await ShowtimeService.bookingSelect();
+
+        return res.status(200).json({
+            success: true,
+            data
+        });
+    } catch (err) {
+        console.error("Booking Select Error:", err);
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"

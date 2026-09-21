@@ -36,7 +36,6 @@ const DAY_TYPE_LABELS = {
     SUNDAY: "Chủ Nhật"
 };
 
-// ✅ MAP INTERVAL_TYPE → MINUTES
 const INTERVAL_MINUTES_MAP = {
     'HOT': 45,
     'NORMAL': 75,
@@ -366,11 +365,6 @@ class ShowtimeService {
         return await ShowtimeRepository.create({ movie_id, cinema_id, room_id, start_time });
     }
 
-    // ==========================================================
-    // SCHEDULE SHOWTIMES - HỖ TRỢ TỪNG NGÀY
-    // ✅ ĐÃ ĐỔI: dùng slot_times thay vì slot_count
-    // ==========================================================
-
     async scheduleShowtimes(data) {
         if (!data) {
             const err = new Error("Dữ liệu tạo lịch chiếu không hợp lệ");
@@ -404,13 +398,11 @@ class ShowtimeService {
             throw err;
         }
 
-        // Lấy giờ hoạt động của rạp
         const operatingHours = await ShowtimeRepository.getOperatingHours(cinemaId);
         console.log(`📋 GIỜ HOẠT ĐỘNG CỦA RẠP ${cinemaId}:`);
         console.log(`  Ngày thường: ${operatingHours.weekday.open} → ${operatingHours.weekday.close}`);
         console.log(`  Cuối tuần: ${operatingHours.weekend.open} → ${operatingHours.weekend.close}`);
 
-        // Xây dựng danh sách phim
         let moviesData = [];
         if (Array.isArray(movies) && movies.length > 0) {
             for (const item of movies) {
@@ -439,7 +431,6 @@ class ShowtimeService {
             console.log(`  🎬 ${movie.title} (${movie.movie_id})`);
         }
 
-        // Lấy phòng của rạp
         let rooms = await ShowtimeRepository.findRoomsByCinema(cinemaId);
         rooms = rooms.map(room => ({
             ...room,
@@ -457,7 +448,6 @@ class ShowtimeService {
         const allRoomTypes = [...new Set(rooms.map(r => r.room_type).filter(type => ALLOWED_ROOM_TYPES.includes(type)))];
         console.log(`📋 Rạp có ${rooms.length} phòng:`, rooms.map(r => `${r.room_name} (${r.room_type})`).join(', '));
 
-        // Lấy existing showtimes
         const schedulerRoomIds = rooms.map(room => Number(room.room_id));
         const existingShowtimes = await ShowtimeRepository.getExistingShowtimes({
             cinemaId,
@@ -467,13 +457,11 @@ class ShowtimeService {
         });
         console.log(`📚 Đã tải ${existingShowtimes?.length || 0} suất chiếu hiện tại`);
 
-        // Cấu hình manual
         const manualConfigs = {};
         for (const movie of moviesData) {
             manualConfigs[movie.movie_id] = {};
         }
 
-        // Tạo lịch chiếu
         const created = [], conflicts = [], skippedPast = [];
         const skippedNoRoom = [];
         const skippedOutsideHours = [];
@@ -497,7 +485,6 @@ class ShowtimeService {
             SUNDAY: { count: 0, slots: [] }
         };
 
-        // Duyệt từng ngày
         let currentDate = parseDate(start_date);
         while (currentDate <= endDate) {
             const dateStr = formatDate(currentDate);
@@ -513,12 +500,10 @@ class ShowtimeService {
             console.log(`\n📅 NGÀY ${dateStr} (${dayOfWeek} - ${dayType}):`);
             console.log(`  Giờ hoạt động: ${minutesToTime(timeRange.startMinutes)} → ${minutesToTime(timeRange.endMinutes)}`);
 
-            // Duyệt từng phim
             for (const movie of moviesData) {
                 const movieId = movie.movie_id;
                 const duration = Number(movie.duration);
 
-                // Lấy config theo thứ tự ưu tiên
                 let config = await ShowtimeRepository.getMovieShowtimeConfig(movieId, cinemaId, dayOfWeek);
 
                 if (!config || Object.keys(config).length === 0) {
@@ -546,10 +531,8 @@ class ShowtimeService {
                     continue;
                 }
 
-                // Duyệt từng time slot
                 for (const [timeSlotKey, slotConfigs] of Object.entries(config)) {
                     for (const slotConfig of slotConfigs) {
-                        // ✅ Dùng slot_times thay vì slot_count
                         const { room_type, slot_times, interval_type } = slotConfig;
 
                         if (!Array.isArray(slot_times) || slot_times.length === 0) {
@@ -559,7 +542,6 @@ class ShowtimeService {
 
                         const interval_minutes = getIntervalMinutes(interval_type);
 
-                        // Tìm phòng theo room_type
                         const availableRooms = rooms.filter(r => r.room_type === room_type);
                         if (availableRooms.length === 0) {
                             console.warn(`⚠️ Không có phòng ${room_type} cho phim ${movie.title}`);
@@ -574,7 +556,6 @@ class ShowtimeService {
                             continue;
                         }
 
-                        // Xác định khung giờ thực tế
                         const actualSlotRange = getActualTimeSlotRange(timeSlotKey, timeRange);
                         if (!actualSlotRange || actualSlotRange.startMinutes >= actualSlotRange.endMinutes) {
                             skippedOutsideHours.push({
@@ -592,14 +573,12 @@ class ShowtimeService {
                         console.log(`  🎬 ${movie.title} | ${timeSlotKey} | ${room_type} | ${slot_times.length} suất | ${interval_type}`);
                         console.log(`     📋 Các giờ: ${slot_times.join(', ')}`);
 
-                        // ✅ DUYỆT TỪNG slot_time
                         let slotsCreated = 0;
                         let roomIndex = 0;
 
                         for (const slotTimeRaw of slot_times) {
                             const startMinutes = timeToMinutes(slotTimeRaw);
 
-                            // Validate slot_time nằm trong khung
                             if (
                                 startMinutes < actualSlotRange.startMinutes ||
                                 startMinutes >= actualSlotRange.endMinutes
@@ -706,7 +685,6 @@ class ShowtimeService {
             currentDate = addDays(currentDate, 1);
         }
 
-        // SUMMARY
         const summary = {
             cinemaId,
             roomCount: rooms.length,
@@ -908,6 +886,13 @@ class ShowtimeService {
             throw err;
         }
         return await ShowtimeRepository.filterShowtimes(movie_id, room_id, date);
+    }
+
+    /* ==========================================================
+       BOOKING SELECT — 1 HÀM DUY NHẤT
+       ========================================================== */
+    async bookingSelect() {
+        return await ShowtimeRepository.bookingSelect();
     }
 }
 
