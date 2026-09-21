@@ -305,6 +305,9 @@ io.on("connection", async (socket) => {
     // ✅ CLIENT CHỌN GHẾ — TÍCH HỢP user_id
     // ============================================================
     socket.on("client-chon-ghe", async (data) => {
+        console.log('🎯 [SERVER] client-chon-ghe NHẬN:', data);
+        console.log('🎯 [SERVER] socket.id:', socket.id, '| userId:', socket.userId);
+
         try {
             if (!data) return;
             const showtimeId = Number(data.showtimeId);
@@ -328,6 +331,8 @@ io.on("connection", async (socket) => {
                 userId,
                 10 * 60
             );
+
+            console.log('🎯 [SERVER] lockResult:', lockResult);
 
             // LỖI HỆ THỐNG
             if (lockResult.reason === 'SYSTEM_ERROR') {
@@ -370,6 +375,7 @@ io.on("connection", async (socket) => {
                 ttl: lockResult.ttl
             };
 
+            console.log('📤 [SERVER] EMIT server-khoa-ghe:', seatData);
             io.emit("server-khoa-ghe", seatData);
         } catch (error) {
             console.error("❌ [SOCKET] Seat lock error:", error.message);
@@ -511,9 +517,6 @@ io.on("connection", async (socket) => {
         console.log(`🔴 [SOCKET] Disconnected: ${socketId} - User: ${userId}`);
 
         try {
-            // ✅ LOGIC MỚI:
-            // - User đã login (userId !== null) → KHÔNG xóa lock (giữ cho F5/multi-tab)
-            // - Guest (userId === null) → XÓA lock ngay
             if (!userId) {
                 const releasedCount = await CacheService.releaseAllSeatLocksByOwner(ownerToken);
                 console.log(`🔓 [CACHE SEAT LOCK] Guest released ${releasedCount} seats`);
