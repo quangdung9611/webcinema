@@ -560,98 +560,98 @@ class UserRepository {
     }
 
     /*=========================================================
-        ✅ GET BOOKINGS BY USER
-        FIX: Convert UTC → VN (+7h) bằng DATE_ADD
-        THÊM: rescheduleCount, ticketStatus
-    =========================================================*/
-    async getBookingsByUser(userId, from = null, to = null) {
-        let dateCondition = "";
-        const params = [userId];
+    ✅ GET BOOKINGS BY USER
+    - Giống ShowtimeService: KHÔNG convert timezone
+    - DB đã lưu giờ VN sẵn
+    - Chỉ format để hiển thị
+=========================================================*/
+async getBookingsByUser(userId, from = null, to = null) {
+    let dateCondition = "";
+    const params = [userId];
 
-        if (from) {
-            dateCondition += " AND DATE(b.booking_date) >= ?";
-            params.push(from);
-        }
-
-        if (to) {
-            dateCondition += " AND DATE(b.booking_date) <= ?";
-            params.push(to);
-        }
-
-        const [rows] = await db.query(
-            `
-            SELECT
-                b.booking_id AS bookingId,
-                b.total_amount AS totalAmount,
-                b.status,
-                COALESCE(b.reschedule_count, 0) AS rescheduleCount,
-                b.booking_date AS bookingDate,
-
-                m.title AS movieTitle,
-                m.movie_poster AS moviePoster,
-
-                c.cinema_name AS cinemaName,
-                r.room_name AS roomName,
-
-                -- ✅ ISO UTC + offset (frontend parse được)
-                DATE_FORMAT(
-                    DATE_ADD(s.start_time, INTERVAL 7 HOUR),
-                    '%Y-%m-%dT%H:%i:%s.000+07:00'
-                ) AS startTimeFull,
-
-                -- ✅ Ngày chiếu VN
-                DATE_FORMAT(
-                    DATE_ADD(s.start_time, INTERVAL 7 HOUR),
-                    '%d/%m/%Y'
-                ) AS selectedDate,
-
-                -- ✅ Giờ chiếu VN
-                DATE_FORMAT(
-                    DATE_ADD(s.start_time, INTERVAL 7 HOUR),
-                    '%H:%i'
-                ) AS startTime,
-
-                -- ✅ Full display
-                DATE_FORMAT(
-                    DATE_ADD(s.start_time, INTERVAL 7 HOUR),
-                    '%H:%i - %d/%m/%Y'
-                ) AS startTimeDisplay,
-
-                -- ✅ Ngày đặt vé
-                DATE_FORMAT(b.booking_date, '%d/%m/%Y %H:%i') AS bookingDateFull,
-
-                -- ✅ Ghế
-                GROUP_CONCAT(
-                    CONCAT(st.seat_row, st.seat_number)
-                    ORDER BY st.seat_row, st.seat_number
-                    SEPARATOR ', '
-                ) AS seatDisplay,
-
-                -- ✅ PIN
-                CONCAT('PIN-', LPAD(b.booking_id, 6, '0')) AS ticketPIN,
-
-                -- ✅ Trạng thái ticket
-                MIN(t.ticket_status) AS ticketStatus
-
-            FROM bookings b
-            INNER JOIN showtimes s ON b.showtime_id = s.showtime_id
-            INNER JOIN movies m ON s.movie_id = m.movie_id
-            INNER JOIN rooms r ON s.room_id = r.room_id
-            INNER JOIN cinemas c ON r.cinema_id = c.cinema_id
-            LEFT JOIN booking_details bd ON b.booking_id = bd.booking_id
-            LEFT JOIN seats st ON bd.seat_id = st.seat_id
-            LEFT JOIN tickets t ON t.booking_id = b.booking_id
-            WHERE b.user_id = ?
-            ${dateCondition}
-            GROUP BY b.booking_id
-            ORDER BY b.booking_date DESC
-            `,
-            params
-        );
-
-        return rows;
+    if (from) {
+        dateCondition += " AND DATE(b.booking_date) >= ?";
+        params.push(from);
     }
 
+    if (to) {
+        dateCondition += " AND DATE(b.booking_date) <= ?";
+        params.push(to);
+    }
+
+    const [rows] = await db.query(
+        `
+        SELECT
+            b.booking_id AS bookingId,
+            b.total_amount AS totalAmount,
+            b.status,
+            COALESCE(b.reschedule_count, 0) AS rescheduleCount,
+            b.booking_date AS bookingDate,
+
+            m.title AS movieTitle,
+            m.movie_poster AS moviePoster,
+
+            c.cinema_name AS cinemaName,
+            r.room_name AS roomName,
+
+            -- ✅ ISO để frontend parse (KHÔNG cộng 7h — DB đã lưu giờ VN)
+            DATE_FORMAT(
+                s.start_time,
+                '%Y-%m-%dT%H:%i:%s.000'
+            ) AS startTimeFull,
+
+            -- ✅ Ngày chiếu
+            DATE_FORMAT(
+                s.start_time,
+                '%d/%m/%Y'
+            ) AS selectedDate,
+
+            -- ✅ Giờ chiếu
+            DATE_FORMAT(
+                s.start_time,
+                '%H:%i'
+            ) AS startTime,
+
+            -- ✅ Full display
+            DATE_FORMAT(
+                s.start_time,
+                '%H:%i - %d/%m/%Y'
+            ) AS startTimeDisplay,
+
+            -- ✅ Ngày đặt vé
+            DATE_FORMAT(b.booking_date, '%d/%m/%Y %H:%i') AS bookingDateFull,
+
+            -- ✅ Ghế
+            GROUP_CONCAT(
+                CONCAT(st.seat_row, st.seat_number)
+                ORDER BY st.seat_row, st.seat_number
+                SEPARATOR ', '
+            ) AS seatDisplay,
+
+            -- ✅ PIN
+            CONCAT('PIN-', LPAD(b.booking_id, 6, '0')) AS ticketPIN,
+
+            -- ✅ Trạng thái ticket
+            MIN(t.ticket_status) AS ticketStatus
+
+        FROM bookings b
+        INNER JOIN showtimes s ON b.showtime_id = s.showtime_id
+        INNER JOIN movies m ON s.movie_id = m.movie_id
+        INNER JOIN rooms r ON s.room_id = r.room_id
+        INNER JOIN cinemas c ON r.cinema_id = c.cinema_id
+        LEFT JOIN booking_details bd ON b.booking_id = bd.booking_id
+        LEFT JOIN seats st ON bd.seat_id = st.seat_id
+        LEFT JOIN tickets t ON t.booking_id = b.booking_id
+        WHERE b.user_id = ?
+        ${dateCondition}
+        GROUP BY b.booking_id
+        ORDER BY b.booking_date DESC
+        `,
+        params
+    );
+
+    return rows;
+}
     /*=========================================================
         CLEAR BOOKINGS BY USER
     =========================================================*/
