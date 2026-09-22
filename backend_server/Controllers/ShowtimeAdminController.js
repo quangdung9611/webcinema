@@ -4,27 +4,14 @@ const ShowtimeService = require("../Services/ShowtimeService");
 
 class ShowtimeAdminController {
 
-    /* ==========================================================
-       CHECK BOOKINGS — GET /admin/api/showtimes/:id/check-bookings
-       ========================================================== */
     async checkBookings(req, res) {
         try {
             const showtimeId = Number(req.params.id);
-
             if (!showtimeId) {
-                return res.status(400).json({
-                    success: false,
-                    message: "ID suất chiếu không hợp lệ"
-                });
+                return res.status(400).json({ success: false, message: "ID suất chiếu không hợp lệ" });
             }
-
             const result = await ShowtimeService.checkBookings(showtimeId);
-
-            return res.status(200).json({
-                success: true,
-                data: result
-            });
-
+            return res.status(200).json({ success: true, data: result });
         } catch (err) {
             console.error("❌ [ADMIN] checkBookings error:", err);
             return res.status(err.statusCode || 500).json({
@@ -34,31 +21,17 @@ class ShowtimeAdminController {
         }
     }
 
-    /* ==========================================================
-       CANCEL SHOWTIME — POST /admin/api/showtimes/:id/cancel
-       ========================================================== */
     async cancelShowtime(req, res) {
         try {
             const showtimeId = Number(req.params.id);
             const { reason } = req.body;
-
-            const adminId =
-                req.admin?.admin_id ||
-                req.user?.user_id ||
-                null;
+            const adminId = req.admin?.admin_id || req.user?.user_id || null;
 
             if (!showtimeId) {
-                return res.status(400).json({
-                    success: false,
-                    message: "ID suất chiếu không hợp lệ"
-                });
+                return res.status(400).json({ success: false, message: "ID suất chiếu không hợp lệ" });
             }
-
             if (!reason || !String(reason).trim()) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Vui lòng nhập lý do hủy"
-                });
+                return res.status(400).json({ success: false, message: "Vui lòng nhập lý do hủy" });
             }
 
             const result = await ShowtimeService.cancelShowtime(
@@ -72,7 +45,6 @@ class ShowtimeAdminController {
                 message: result.message,
                 data: result
             });
-
         } catch (err) {
             console.error("❌ [ADMIN] cancelShowtime error:", err);
             return res.status(err.statusCode || 500).json({

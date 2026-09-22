@@ -1,6 +1,6 @@
 // ============================================================
 // SHOWTIME CANCELLED TEMPLATE
-// Email thông báo suất chiếu bị hủy + hoàn điểm
+// Email thông báo hủy + hoàn điểm + link đổi vé miễn phí
 // ============================================================
 
 const ShowtimeCancelledTemplate = (data) => {
@@ -14,6 +14,8 @@ const ShowtimeCancelledTemplate = (data) => {
         reason,
         refundPoints = 0,
         newTotalPoints = 0,
+        rescheduleLink = '',
+        expiresAt = null,
     } = data;
 
     const posterUrl = moviePoster || '';
@@ -36,7 +38,24 @@ const ShowtimeCancelledTemplate = (data) => {
         }
     };
 
+    const formatExpiryDate = (date) => {
+        if (!date) return '---';
+        try {
+            const d = new Date(date);
+            return d.toLocaleDateString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+            });
+        } catch {
+            return '---';
+        }
+    };
+
     const { date: showDate, time: showTime } = formatDateTime(startTime);
+    const expiryFormatted = formatExpiryDate(expiresAt);
 
     // =========================================================
     // FORMAT NUMBER
@@ -115,6 +134,18 @@ const ShowtimeCancelledTemplate = (data) => {
         </svg>
     `;
 
+    const ICON_CALENDAR = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
+             viewBox="0 0 24 24" fill="none" stroke="#f39c12" 
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+             style="vertical-align: middle; margin-right: 6px;">
+            <rect width="18" height="18" x="3" y="4" rx="2"/>
+            <path d="M16 2v4"/>
+            <path d="M8 2v4"/>
+            <path d="M3 10h18"/>
+        </svg>
+    `;
+
     // =========================================================
     // RENDER HTML
     // =========================================================
@@ -144,7 +175,6 @@ const ShowtimeCancelledTemplate = (data) => {
                         Chúng tôi chân thành xin lỗi vì sự bất tiện này.
                     </p>
 
-                    <!-- POSTER -->
                     ${posterUrl ? `
                         <div style="text-align:center; margin:25px 0;">
                             <img 
@@ -155,7 +185,6 @@ const ShowtimeCancelledTemplate = (data) => {
                         </div>
                     ` : ''}
 
-                    <!-- THÔNG TIN SUẤT CHIẾU BỊ HỦY -->
                     <div style="border: 2px dashed #f39c12; padding: 20px; margin: 20px 0; border-radius: 8px; background: #fffdf5;">
                         <h3 style="color:#e74c3c; margin:0 0 15px 0; font-size:18px; text-align:center;">
                             ${movieTitle}
@@ -212,19 +241,42 @@ const ShowtimeCancelledTemplate = (data) => {
                                 ${formatNumber(newTotalPoints)} điểm
                             </div>
                         </div>
-
-                        <p style="margin: 20px 0 0 0; font-size: 13px; color: #666; line-height: 1.6;">
-                            Bạn có thể dùng điểm này để đặt vé cho lần sau.
-                            Điểm đã được cộng tự động vào tài khoản của bạn.
-                        </p>
                     </div>
+
+                    <!-- HOẶC ĐỔI VÉ MIỄN PHÍ -->
+                    ${rescheduleLink ? `
+                        <div style="margin:30px 0; padding:25px; border:2px dashed #3b82f6; border-radius:12px; background:#eff6ff; text-align: center;">
+                            <h2 style="margin:0 0 12px 0; color:#3b82f6; font-size:20px;">
+                                HOẶC ĐỔI SANG SUẤT KHÁC
+                            </h2>
+
+                            <p style="margin: 0 0 20px 0; color: #666; font-size: 14px; line-height: 1.6;">
+                                Bạn có thể click link dưới đây để đổi sang suất chiếu khác 
+                                <strong style="color: #3b82f6;">MIỄN PHÍ 100%</strong> 
+                                (không cần dùng điểm).
+                            </p>
+
+                            <a 
+                                href="${rescheduleLink}" 
+                                style="display: inline-block; padding: 14px 40px; background: linear-gradient(135deg, #3b82f6, #2563eb); color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 700; border-radius: 8px; letter-spacing: 0.5px; box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);"
+                            >
+                                ĐỔI SUẤT MIỄN PHÍ
+                            </a>
+
+                            <p style="margin: 20px 0 0 0; font-size: 13px; color: #999;">
+                                ${ICON_CALENDAR}
+                                Link có hiệu lực đến <strong>${expiryFormatted}</strong>
+                            </p>
+                        </div>
+                    ` : ''}
 
                     <!-- LƯU Ý -->
                     <div style="background: #fff9f9; padding: 15px 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #e74c3c;">
                         <p style="margin: 0; font-size: 13px; color: #666; line-height: 1.7;">
                             <strong style="color: #e74c3c;">💡 Lưu ý:</strong> 
                             Vé của bạn đã được hủy và hoàn điểm tự động.
-                            Điểm có thể dùng để đặt vé xem phim hoặc mua đồ ăn tại rạp.
+                            Bạn có thể dùng điểm để đặt vé mới, 
+                            hoặc click link trên để đổi suất MIỄN PHÍ.
                             Nếu có thắc mắc, vui lòng liên hệ hotline <strong>1900 1234</strong>.
                         </p>
                     </div>

@@ -7,49 +7,7 @@ const db = require("../Config/db");
 class ShowtimeRepository {
 
     /*=========================================================
-        FIND ALL - KHÔNG PHÂN TRANG
-    =========================================================*/
-    async findAllAll(search = "") {
-        search = typeof search === "string" ? search.trim() : "";
-
-        let whereClause = "";
-        const queryParams = [];
-
-        if (search) {
-            whereClause = `
-                WHERE m.title LIKE ?
-                OR c.cinema_name LIKE ?
-                OR r.room_name LIKE ?
-            `;
-            const keyword = `%${search}%`;
-            queryParams.push(keyword, keyword, keyword);
-        }
-
-        const [rows] = await db.query(
-            `
-            SELECT
-                s.showtime_id,
-                DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i') AS start_time,
-                m.title,
-                m.duration,
-                c.cinema_name,
-                r.room_name,
-                r.room_type
-            FROM showtimes s
-            JOIN movies m ON s.movie_id = m.movie_id
-            JOIN cinemas c ON s.cinema_id = c.cinema_id
-            JOIN rooms r ON s.room_id = r.room_id
-            ${whereClause}
-            ORDER BY s.start_time DESC
-            `,
-            queryParams
-        );
-
-        return rows;
-    }
-
-    /*=========================================================
-        FIND ALL - CÓ PHÂN TRANG
+        FIND ALL - CÓ PHÂN TRANG (thêm ticket_count)
     =========================================================*/
     async findAll(page = 1, limit = 20, search = "") {
         page = Number.parseInt(page, 10);
@@ -83,9 +41,22 @@ class ShowtimeRepository {
                 DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i') AS start_time,
                 m.title,
                 m.duration,
+                m.slug AS movie_slug,
                 c.cinema_name,
                 r.room_name,
-                r.room_type
+                r.room_type,
+
+                (
+                    SELECT COUNT(*)
+                    FROM tickets t
+                    WHERE t.showtime_id = s.showtime_id
+                      AND t.ticket_status = 'Valid'
+                ) AS ticket_count,
+
+                s.status AS showtime_status,
+                s.cancel_reason AS cancel_reason,
+                s.update_reason AS update_reason
+
             FROM showtimes s
             JOIN movies m ON s.movie_id = m.movie_id
             JOIN cinemas c ON s.cinema_id = c.cinema_id
@@ -174,7 +145,10 @@ class ShowtimeRepository {
                 m.duration,
                 r.room_name,
                 r.room_type,
-                c.cinema_name
+                c.cinema_name,
+                s.status AS showtime_status,
+                s.cancel_reason,
+                s.update_reason
             FROM showtimes s
             JOIN movies m ON s.movie_id = m.movie_id
             JOIN rooms r ON s.room_id = r.room_id
@@ -689,18 +663,31 @@ class ShowtimeRepository {
     }
 
     /*=========================================================
-        UPDATE
+        UPDATE — CÓ LƯU update_reason
     =========================================================*/
     async update(showtimeId, data) {
-        const { movie_id, cinema_id, room_id, start_time } = data;
+        const { movie_id, cinema_id, room_id, start_time, update_reason } = data;
 
         const [result] = await db.query(
             `
             UPDATE showtimes
-            SET movie_id = ?, cinema_id = ?, room_id = ?, start_time = STR_TO_DATE(?, '%Y-%m-%d %H:%i')
+            SET 
+                movie_id = ?,
+                cinema_id = ?,
+                room_id = ?,
+                start_time = STR_TO_DATE(?, '%Y-%m-%d %H:%i'),
+                update_reason = ?,
+                updated_at = NOW()
             WHERE showtime_id = ?
             `,
-            [movie_id, cinema_id, room_id, start_time, showtimeId]
+            [
+                movie_id,
+                cinema_id,
+                room_id,
+                start_time,
+                update_reason || null,
+                showtimeId
+            ]
         );
 
         return result.affectedRows;

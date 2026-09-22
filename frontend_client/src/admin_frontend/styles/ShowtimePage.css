@@ -135,6 +135,41 @@
 }
 
 /* ==========================================================
+   ✅ FORM TEXTAREA — LÝ DO THAY ĐỔI
+   ========================================================== */
+.showtime-form-textarea {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--bg-secondary);
+    border: var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-body);
+    font-family: inherit;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    resize: vertical;
+    min-height: 80px;
+    max-height: 200px;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    outline: none;
+    box-sizing: border-box;
+}
+
+.showtime-form-textarea:focus {
+    border-color: var(--accent-ice);
+    box-shadow: 0 0 0 3px var(--accent-ice-soft);
+}
+
+.showtime-form-textarea:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.showtime-form-textarea::placeholder {
+    color: var(--text-muted);
+}
+
+/* ==========================================================
    FORM ERROR
    ========================================================== */
 .showtime-form-error {
@@ -185,6 +220,51 @@
 }
 
 .showtime-movie-checkbox input[type="checkbox"] {
+    display: none;
+}
+
+/* ==========================================================
+   ROOM CHECKBOX LIST (EDIT)
+   ========================================================== */
+.showtime-room-checkbox-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    max-height: 200px;
+    overflow-y: auto;
+    padding: var(--space-sm);
+    background: var(--bg-secondary);
+    border: var(--border-subtle);
+    border-radius: var(--radius-sm);
+}
+
+.showtime-room-checkbox {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: 6px 14px;
+    background: var(--bg-tertiary);
+    border: var(--border-subtle);
+    border-radius: var(--radius-round);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    user-select: none;
+}
+
+.showtime-room-checkbox:hover {
+    border-color: var(--accent-ice-border);
+    color: var(--text-body);
+}
+
+.showtime-room-checkbox.checked {
+    background: var(--accent-ice-bg);
+    border-color: var(--accent-ice);
+    color: var(--accent-ice);
+}
+
+.showtime-room-checkbox input[type="checkbox"] {
     display: none;
 }
 
@@ -732,7 +812,8 @@
     }
 
     .showtime-form-input,
-    .showtime-form-select {
+    .showtime-form-select,
+    .showtime-form-textarea {
         padding: 8px 12px;
         font-size: 0.9rem;
     }
@@ -773,26 +854,31 @@
 /* ==========================================================
    SCROLLBAR CHO CHECKBOX LIST
    ========================================================== */
-.showtime-movie-checkbox-list::-webkit-scrollbar {
+.showtime-movie-checkbox-list::-webkit-scrollbar,
+.showtime-room-checkbox-list::-webkit-scrollbar {
     width: 6px;
     height: 6px;
 }
 
-.showtime-movie-checkbox-list::-webkit-scrollbar-track {
+.showtime-movie-checkbox-list::-webkit-scrollbar-track,
+.showtime-room-checkbox-list::-webkit-scrollbar-track {
     background: transparent;
 }
 
-.showtime-movie-checkbox-list::-webkit-scrollbar-thumb {
+.showtime-movie-checkbox-list::-webkit-scrollbar-thumb,
+.showtime-room-checkbox-list::-webkit-scrollbar-thumb {
     background: var(--text-disabled);
     border-radius: var(--radius-round);
     border: none;
 }
 
-.showtime-movie-checkbox-list::-webkit-scrollbar-thumb:hover {
+.showtime-movie-checkbox-list::-webkit-scrollbar-thumb:hover,
+.showtime-room-checkbox-list::-webkit-scrollbar-thumb:hover {
     background: var(--text-muted);
 }
 
-.showtime-movie-checkbox-list {
+.showtime-movie-checkbox-list,
+.showtime-room-checkbox-list {
     scrollbar-width: thin;
     scrollbar-color: var(--text-disabled) transparent;
 }

@@ -4,6 +4,7 @@
 
 const ShowtimeRepository = require("../Repositories/ShowtimeRepository");
 const db = require("../Config/db");
+const crypto = require("crypto");
 
 // ==========================================================
 // CONSTANTS
@@ -795,24 +796,56 @@ class ShowtimeService {
         };
     }
 
+        /* ==========================================================
+       ✅ UPDATE SHOWTIME — Sửa + lưu lý do + gửi VÉ MỚI nếu có khách
+       ========================================================== */
+        /* ==========================================================
+       ✅ UPDATE SHOWTIME — Sửa + lưu lý do + gửi VÉ MỚI nếu có khách
+       ========================================================== */
     async updateShowtime(showtimeId, data) {
-        let { movie_id, cinema_id, room_id, start_time } = data;
+        let { movie_id, cinema_id, room_id, start_time, reason } = data;
+
+        // =====================================================
+        // 1. CHECK SUẤT CHIẾU TỒN TẠI
+        // =====================================================
         const existing = await ShowtimeRepository.findById(showtimeId);
         if (!existing) {
             const err = new Error("Không tìm thấy suất chiếu");
             err.statusCode = 404;
             throw err;
         }
+
+        // =====================================================
+        // 2. VALIDATE
+        // =====================================================
         start_time = formatDateTime(start_time);
         movie_id = Number(movie_id);
         cinema_id = Number(cinema_id);
         room_id = Number(room_id);
+
         const validationError = validateShowtime({ movie_id, cinema_id, room_id, start_time });
         if (validationError) {
             const err = new Error(validationError);
             err.statusCode = 400;
             throw err;
         }
+
+        // ✅ BẮT BUỘC NHẬP LÝ DO SỬA
+        const trimmedReason = String(reason || "").trim();
+        if (!trimmedReason) {
+            const err = new Error("Vui lòng nhập lý do thay đổi suất chiếu");
+            err.statusCode = 400;
+            err.field = "reason";
+            throw err;
+        }
+
+        if (trimmedReason.length > 255) {
+            const err = new Error("Lý do không được vượt quá 255 ký tự");
+            err.statusCode = 400;
+            err.field = "reason";
+            throw err;
+        }
+
         const isPast = await ShowtimeRepository.isPastTime(start_time);
         if (isPast) {
             const err = new Error("Không thể cập nhật suất chiếu trong quá khứ");
@@ -820,6 +853,7 @@ class ShowtimeService {
             err.field = "start_time";
             throw err;
         }
+
         const conflict = await ShowtimeRepository.findConflict(room_id, start_time, showtimeId);
         if (conflict) {
             const err = new Error("Phòng này đã có lịch chiếu giờ đó");
@@ -827,13 +861,173 @@ class ShowtimeService {
             err.field = "start_time";
             throw err;
         }
-        const affected = await ShowtimeRepository.update(showtimeId, { movie_id, cinema_id, room_id, start_time });
+
+        // =====================================================
+        // 3. LƯU THÔNG TIN CŨ (để so sánh)
+        // =====================================================
+        const oldInfo = {
+            movie_id: existing.movie_id,
+            movie_title: existing.title,
+            cinema_id: existing.cinema_id,
+            cinema_name: existing.cinema_name,
+            room_id: existing.room_id,
+            room_name: existing.room_name,
+            room_type: existing.room_type,
+            start_time: existing.start_time,
+        };
+
+        // =====================================================
+        // 4. UPDATE SUẤT CHIẾU + LƯU LÝ DO
+        // =====================================================
+        const affected = await ShowtimeRepository.update(showtimeId, {
+            movie_id,
+            cinema_id,
+            room_id,
+            start_time,
+            update_reason: trimmedReason // ✅ LƯU LÝ DO
+        });
+
         if (affected === 0) {
             const err = new Error("Không thể cập nhật suất chiếu");
             err.statusCode = 500;
             throw err;
         }
-        return true;
+
+        // =====================================================
+        // 5. LẤY BOOKINGS CÓ KHÁCH ĐẶT VÉ (nếu có)
+        // =====================================================
+        const [bookings] = await db.query(
+            `
+            SELECT 
+                b.booking_id,
+                b.user_id,
+                b.email,
+                u.full_name
+            FROM bookings b
+            LEFT JOIN users u ON b.user_id = u.user_id
+            WHERE b.showtime_id = ?
+              AND b.status = 'Completed'
+            `,
+            [showtimeId]
+        );
+
+        // =====================================================
+        // 6. LẤY THÔNG TIN MỚI SAU KHI UPDATE
+        // =====================================================
+        const newShowtime = await ShowtimeRepository.findById(showtimeId);
+
+        // =====================================================
+        // 7. NẾU CÓ KHÁCH → GỬI VÉ MỚI CHO TỪNG KHÁCH
+        // =====================================================
+        let emailSuccessCount = 0;
+        let emailFailCount = 0;
+
+        if (bookings.length > 0) {
+            console.log(`📧 [UPDATE] Suất chiếu ${showtimeId} có ${bookings.length} khách. Gửi vé mới...`);
+            console.log(`📝 [UPDATE] Lý do thay đổi: ${trimmedReason}`);
+
+            try {
+                const MailService = require("./MailService");
+                const BookingService = require("./BookingService");
+                const TicketService = require("./TicketService");
+                const connection = await db.getConnection();
+
+                try {
+                    for (const booking of bookings) {
+                        try {
+                            const order = await BookingService.getBookingDetail(
+                                connection,
+                                booking.booking_id
+                            );
+
+                            if (!order) {
+                                console.warn(`⚠️ [UPDATE] Booking ${booking.booking_id} not found`);
+                                continue;
+                            }
+
+                            const foods = await BookingService.getFoodDetail(
+                                connection,
+                                booking.booking_id
+                            );
+
+                            const tickets = await TicketService.getTicketsByBooking(
+                                connection,
+                                booking.booking_id
+                            );
+
+                            const firstTicketCode = tickets?.[0]?.ticket_code || null;
+                            const qrUrl = firstTicketCode
+                                ? `https://admin.quangdungcinema.id.vn/check-in/${firstTicketCode}`
+                                : null;
+
+                            const foodString = foods.length
+                                ? foods.map(f => `${f.item_name} (x${f.quantity})`).join(", ")
+                                : "Không có";
+
+                            // ✅ Gửi VÉ MỚI kèm lý do thay đổi
+                            await MailService.sendTicketEmail({
+                                email: booking.email || order.email,
+                                bookingId: booking.booking_id,
+                                customerName: order.full_name || booking.full_name || "Quý khách",
+                                movieTitle: order.movie_name,
+                                moviePoster: order.movie_poster,
+                                cinemaName: order.cinema_name,
+                                roomName: order.room_name,
+                                startTime: order.start_time
+                                    ? order.start_time.split(" ")[1]?.substring(0, 5)
+                                    : "---",
+                                selectedDate: order.start_time
+                                    ? order.start_time.split(" ")[0].split("-").reverse().join("/")
+                                    : "---",
+                                seatLabel: order.seat_label || "---",
+                                selectedFoods: foodString,
+                                earnedPoints: 0,
+                                ticketPIN: firstTicketCode || "",
+                                ticketCode: firstTicketCode,
+                                qrUrl: qrUrl,
+                                // ✅ 2 field để hiển thị box cảnh báo trong email
+                                changeReason: trimmedReason,
+                                isRescheduled: true,
+                            });
+
+                            emailSuccessCount++;
+                            console.log(`✅ [UPDATE] New ticket email sent to ${booking.email}`);
+
+                        } catch (mailError) {
+                            emailFailCount++;
+                            console.error(`❌ [UPDATE] Email failed for ${booking.email}:`, mailError.message);
+                        }
+                    }
+                } finally {
+                    connection.release();
+                }
+            } catch (mailServiceError) {
+                console.error("❌ [UPDATE] MailService error:", mailServiceError.message);
+            }
+        }
+
+        console.log(`✅ [UPDATE] Showtime ${showtimeId} updated. ${bookings.length} bookings affected. Emails sent: ${emailSuccessCount}/${bookings.length}`);
+
+        return {
+            success: true,
+            showtimeId,
+            hasBookings: bookings.length > 0,
+            bookingCount: bookings.length,
+            emailSuccessCount,
+            emailFailCount,
+            reason: trimmedReason,
+            oldInfo,
+            newInfo: {
+                movie_title: newShowtime.title,
+                cinema_name: newShowtime.cinema_name,
+                room_name: newShowtime.room_name,
+                room_type: newShowtime.room_type,
+                start_time: newShowtime.start_time,
+            },
+            message: bookings.length > 0
+                ? `Đã cập nhật suất chiếu. Gửi vé mới cho ${emailSuccessCount}/${bookings.length} khách.`
+                : "Đã cập nhật suất chiếu."
+        };
     }
 
     async deleteShowtime(showtimeId) {
@@ -845,7 +1039,7 @@ class ShowtimeService {
         }
         const hasTickets = await ShowtimeRepository.hasTickets(showtimeId);
         if (hasTickets) {
-            const err = new Error("Suất chiếu này đã có vé bán, không thể xóa");
+            const err = new Error("Suất chiếu này đã có vé bán, không thể xóa. Vui lòng dùng chức năng Hủy suất.");
             err.statusCode = 400;
             throw err;
         }
@@ -897,7 +1091,7 @@ class ShowtimeService {
     }
 
     /* ==========================================================
-       ✅ CHECK BOOKINGS — ĐẾM SỐ KHÁCH ĐÃ ĐẶT SUẤT CHIẾU
+       ✅ CHECK BOOKINGS
        ========================================================== */
     async checkBookings(showtimeId) {
         const id = Number(showtimeId);
@@ -937,6 +1131,7 @@ class ShowtimeService {
             showtimeId: showtime.showtime_id,
             movieTitle: showtime.title,
             moviePoster: showtime.movie_poster,
+            movieSlug: showtime.slug,
             cinemaName: showtime.cinema_name,
             roomName: showtime.room_name,
             roomType: showtime.room_type,
@@ -950,14 +1145,11 @@ class ShowtimeService {
     }
 
     /* ==========================================================
-       ✅ CANCEL SHOWTIME — HỦY SUẤT CHIẾU + HOÀN ĐIỂM + GỬI EMAIL
+       ✅ CANCEL SHOWTIME — HỦY + HOÀN ĐIỂM + GỬI EMAIL
        ========================================================== */
     async cancelShowtime(showtimeId, reason, adminId = null) {
         const id = Number(showtimeId);
 
-        // =====================================================
-        // 1. VALIDATE
-        // =====================================================
         if (!Number.isInteger(id) || id <= 0) {
             const err = new Error("ID suất chiếu không hợp lệ");
             err.statusCode = 400;
@@ -972,9 +1164,6 @@ class ShowtimeService {
 
         const trimmedReason = String(reason).trim();
 
-        // =====================================================
-        // 2. CHECK SHOWTIME TỒN TẠI + CHƯA DIỄN RA
-        // =====================================================
         const showtime = await ShowtimeRepository.findById(id);
 
         if (!showtime) {
@@ -990,9 +1179,6 @@ class ShowtimeService {
             throw err;
         }
 
-        // =====================================================
-        // 3. LẤY BOOKINGS COMPLETED CỦA SUẤT NÀY
-        // =====================================================
         const [bookings] = await db.query(
             `
             SELECT 
@@ -1011,9 +1197,6 @@ class ShowtimeService {
             [id]
         );
 
-        // =====================================================
-        // 4. UPDATE SHOWTIME → Cancelled
-        // =====================================================
         await db.query(
             `
             UPDATE showtimes
@@ -1028,29 +1211,38 @@ class ShowtimeService {
             [trimmedReason, adminId || null, id]
         );
 
-        // =====================================================
-        // 5. HOÀN ĐIỂM + UPDATE BOOKINGS
-        // =====================================================
+        const tokenExpiresAt = new Date();
+        tokenExpiresAt.setDate(tokenExpiresAt.getDate() + 2);
+
         const affectedBookings = [];
         let totalPointsRefunded = 0;
 
         for (const booking of bookings) {
             const refundPoints = Number(booking.total_amount) || 0;
+            const token = crypto.randomBytes(32).toString("hex");
 
-            // Update booking → Cancelled
             await db.query(
                 `
                 UPDATE bookings
                 SET 
                     status = 'Cancelled',
                     cancel_reason = ?,
+                    reschedule_token = ?,
+                    reschedule_expires_at = ?,
+                    reschedule_status = 'PENDING',
+                    old_showtime_id = ?,
                     updated_at = NOW()
                 WHERE booking_id = ?
                 `,
-                [trimmedReason, booking.booking_id]
+                [
+                    trimmedReason,
+                    token,
+                    tokenExpiresAt,
+                    id,
+                    booking.booking_id
+                ]
             );
 
-            // Cộng điểm hoàn cho user
             if (booking.user_id && refundPoints > 0) {
                 await db.query(
                     `
@@ -1069,23 +1261,24 @@ class ShowtimeService {
             affectedBookings.push({
                 ...booking,
                 refundPoints,
-                newPoints: (Number(booking.current_points) || 0) + refundPoints
+                newPoints: (Number(booking.current_points) || 0) + refundPoints,
+                token
             });
         }
 
         console.log(`✅ [CANCEL] Showtime ${id} cancelled. ${bookings.length} bookings affected. Total points refunded: ${totalPointsRefunded}`);
 
-        // =====================================================
-        // 6. GỬI EMAIL
-        // =====================================================
         let emailSuccessCount = 0;
         let emailFailCount = 0;
 
         try {
             const MailService = require("./MailService");
+            const FRONTEND_URL = process.env.FRONTEND_URL || "https://quangdungcinema.id.vn";
 
             for (const booking of affectedBookings) {
                 try {
+                    const rescheduleLink = `${FRONTEND_URL}/booking/${showtime.slug}?reschedule=${booking.token}`;
+
                     await MailService.sendShowtimeCancelledEmail({
                         email: booking.email,
                         customerName: booking.full_name || "Quý khách",
@@ -1096,7 +1289,9 @@ class ShowtimeService {
                         startTime: showtime.start_time,
                         reason: trimmedReason,
                         refundPoints: booking.refundPoints,
-                        newTotalPoints: booking.newPoints
+                        newTotalPoints: booking.newPoints,
+                        rescheduleLink: rescheduleLink,
+                        expiresAt: tokenExpiresAt,
                     });
 
                     emailSuccessCount++;
