@@ -1198,26 +1198,27 @@ class ShowtimeService {
         };
     }
 
-    /* ==========================================================
-       ✅ CANCEL SHOWTIME — HỦY + HOÀN ĐIỂM + GỬI EMAIL
-       CÓ LOCK CHỐNG SPAM
+        /* ==========================================================
+       ✅ CANCEL SHOWTIME — HỦY + XÓA KHỎI CSDL + HOÀN ĐIỂM + GỬI EMAIL
        ========================================================== */
     async cancelShowtime(showtimeId, reason, adminId = null) {
         const id = Number(showtimeId);
         const lockKey = `cancel_${id}`;
 
-        // ✅ CHỐNG SPAM: Nếu đang xử lý → reject
+        // ✅ CHỐNG SPAM
         if (processingLocks.has(lockKey)) {
-            console.log(`🔒 [CANCEL] Showtime ${id} đang hủy, reject request trùng`);
             const err = new Error("Suất chiếu này đang được xử lý hủy. Vui lòng đợi.");
             err.statusCode = 429;
             throw err;
         }
 
         processingLocks.add(lockKey);
-        console.log(`🔒 [CANCEL] Lock showtime ${id} | Time: ${Date.now()}`);
+        console.log(`🔒 [CANCEL] Lock showtime ${id}`);
 
         try {
+            // =====================================================
+            // 1. VALIDATE
+            // =====================================================
             if (!Number.isInteger(id) || id <= 0) {
                 const err = new Error("ID suất chiếu không hợp lệ");
                 err.statusCode = 400;
@@ -1232,18 +1233,14 @@ class ShowtimeService {
 
             const trimmedReason = String(reason).trim();
 
+            // =====================================================
+            // 2. CHECK SUẤT CHIẾU TỒN TẠI
+            // =====================================================
             const showtime = await ShowtimeRepository.findById(id);
 
             if (!showtime) {
                 const err = new Error("Không tìm thấy suất chiếu");
                 err.statusCode = 404;
-                throw err;
-            }
-
-            // ✅ CHỐNG SPAM: Nếu đã Cancelled → reject
-            if (showtime.showtime_status === 'Cancelled') {
-                const err = new Error("Suất chiếu này đã bị hủy trước đó");
-                err.statusCode = 400;
                 throw err;
             }
 
@@ -1254,6 +1251,9 @@ class ShowtimeService {
                 throw err;
             }
 
+            // =====================================================
+            // 3. LẤY BOOKINGS (TRƯỚC KHI XÓA)
+            // =====================================================
             const [bookings] = await db.query(
                 `
                 SELECT 
@@ -1272,20 +1272,11 @@ class ShowtimeService {
                 [id]
             );
 
-            await db.query(
-                `
-                UPDATE showtimes
-                SET 
-                    status = 'Cancelled',
-                    cancel_reason = ?,
-                    cancelled_at = NOW(),
-                    cancelled_by = ?
-                WHERE showtime_id = ?
-                  AND (status IS NULL OR status = 'Active')
-                `,
-                [trimmedReason, adminId || null, id]
-            );
+            console.log(`📋 [CANCEL] Tìm thấy ${bookings.length} bookings cho showtime ${id}`);
 
+            // =====================================================
+            // 4. HOÀN ĐIỂM + UPDATE BOOKINGS
+            // =====================================================
             const tokenExpiresAt = new Date();
             tokenExpiresAt.setDate(tokenExpiresAt.getDate() + 2);
 
@@ -1309,27 +1300,16 @@ class ShowtimeService {
                         updated_at = NOW()
                     WHERE booking_id = ?
                     `,
-                    [
-                        trimmedReason,
-                        token,
-                        tokenExpiresAt,
-                        id,
-                        booking.booking_id
-                    ]
+                    [trimmedReason, token, tokenExpiresAt, id, booking.booking_id]
                 );
 
                 if (booking.user_id && refundPoints > 0) {
                     await db.query(
-                        `
-                        UPDATE users
-                        SET points = COALESCE(points, 0) + ?
-                        WHERE user_id = ?
-                        `,
+                        `UPDATE users SET points = COALESCE(points, 0) + ? WHERE user_id = ?`,
                         [refundPoints, booking.user_id]
                     );
 
                     totalPointsRefunded += refundPoints;
-
                     console.log(`💰 [CANCEL] Refunded ${refundPoints} points to user ${booking.user_id}`);
                 }
 
@@ -1341,8 +1321,9 @@ class ShowtimeService {
                 });
             }
 
-            console.log(`✅ [CANCEL] Showtime ${id} cancelled. ${bookings.length} bookings affected. Total points refunded: ${totalPointsRefunded}`);
-
+            // =====================================================
+            // 5. GỬI EMAIL (TRƯỚC KHI XÓA — vì cần thông tin showtime)
+            // =====================================================
             let emailSuccessCount = 0;
             let emailFailCount = 0;
 
@@ -1380,6 +1361,16 @@ class ShowtimeService {
             } catch (mailServiceError) {
                 console.error("❌ [CANCEL] MailService error:", mailServiceError.message);
             }
+
+            // =====================================================
+            // 6. ✅ XÓA HẲN SUẤT CHIẾU KHỎI CSDL
+            // =====================================================
+            // FK CASCADE tự xóa: bookings, booking_details, tickets
+            await db.query(`DELETE FROM showtimes WHERE showtime_id = ?`, [id]);
+
+            console.log(`🗑️ [CANCEL] Đã xóa showtime ${id} + cascade bookings/tickets`);
+
+            console.log(`✅ [CANCEL] Showtime ${id} cancelled. ${bookings.length} bookings. Refunded: ${totalPointsRefunded} points`);
 
             return {
                 success: true,
