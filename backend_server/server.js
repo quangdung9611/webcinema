@@ -321,7 +321,6 @@ io.on("connection", async (socket) => {
                 return;
             }
 
-            // ✅ Lấy userId từ socket auth
             const userId = socket.userId || null;
 
             const lockResult = await CacheService.acquireSeatLock(
@@ -481,7 +480,7 @@ io.on("connection", async (socket) => {
     });
 
     // ============================================================
-    // ✅ MỚI: USER LOGOUT → RELEASE GHẾ
+    // ✅ USER LOGOUT → RELEASE GHẾ
     // ============================================================
     socket.on("user-logout", async () => {
         try {
@@ -678,6 +677,50 @@ setTimeout(runCleanup, 60 * 1000);
 setInterval(runCleanup, CLEANUP_INTERVAL);
 
 console.log('🧹 [CLEANUP] Auto-cleanup scheduled every 7 days');
+
+// ============================================================
+// ✅ REMINDER CRON — GỬI EMAIL NHẮC NHỞ SUẤT CHIẾU
+// ============================================================
+const REMINDER_ENABLED = process.env.REMINDER_ENABLED !== 'false';
+const REMINDER_CRON_INTERVAL =
+    parseInt(process.env.REMINDER_CRON_INTERVAL, 10) || 5;
+
+if (REMINDER_ENABLED) {
+    const ReminderService = require("./Services/ReminderService");
+
+    const runReminder = async () => {
+        console.log('📧 [REMINDER] Checking for upcoming showtimes...');
+        const startTime = Date.now();
+
+        try {
+            const count = await ReminderService.sendReminders();
+            const duration = Date.now() - startTime;
+
+            if (count > 0) {
+                console.log(`✅ [REMINDER] Sent ${count} reminders in ${duration}ms`);
+            } else {
+                console.log(`📭 [REMINDER] No reminders to send (${duration}ms)`);
+            }
+        } catch (error) {
+            console.error('❌ [REMINDER] Error:', error.message);
+        }
+    };
+
+    // Chạy sau 2 phút khi server start (đợi DB + mail warm up)
+    setTimeout(runReminder, 2 * 60 * 1000);
+
+    // Chạy mỗi N phút
+    setInterval(runReminder, REMINDER_CRON_INTERVAL * 60 * 1000);
+
+    console.log(
+        `📧 [REMINDER] Cron scheduled every ${REMINDER_CRON_INTERVAL} minutes`
+    );
+    console.log(
+        `📧 [REMINDER] Window: ${process.env.REMINDER_MINUTES_BEFORE || 30} ± ${process.env.REMINDER_WINDOW_MINUTES || 5} minutes`
+    );
+} else {
+    console.log('📧 [REMINDER] Disabled by config');
+}
 
 // ============================================================
 // EXPORT

@@ -12,6 +12,7 @@ const TicketEmailTemplate = require("../Templates/TicketEmailTemplate");
 const ForgotPasswordTemplate = require("../Templates/ForgotPasswordTemplate");
 const VerifyEmailTemplate = require("../Templates/VerifyEmailTemplate");
 const ForgotPinTemplate = require("../Templates/ForgotPinTemplate");
+const TicketReminderTemplate = require("../Templates/TicketReminderTemplate");
 
 // =========================================================
 // HÀM LẤY THỜI GIAN VN (UTC+7)
@@ -36,30 +37,9 @@ const getVNTime = (addMinutes = 0) => {
 const MailService = {
 
     // =====================================================
-    // ✅ SEND TICKET EMAIL — GỬI VÉ VỀ EMAIL (MỚI)
+    // ✅ SEND TICKET EMAIL — GỬI VÉ VỀ EMAIL
     // =====================================================
 
-    /**
-     * Gửi email chứa vé + QR code cho user
-     *
-     * @param {Object} data - Object chứa:
-     *   - email (required): Email người nhận
-     *   - bookingId: Mã booking
-     *   - customerName: Tên khách hàng
-     *   - seatLabel: VD "A1, A2, A3"
-     *   - movieTitle: Tên phim
-     *   - cinemaName: Tên rạp
-     *   - roomName: Tên phòng
-     *   - startTime: Giờ chiếu "20:00"
-     *   - selectedDate: Ngày chiếu "17/09/2026"
-     *   - selectedFoods: Đồ ăn
-     *   - earnedPoints: Điểm tích lũy
-     *   - ticketPIN: Mã PIN hiển thị
-     *   - ticketCode: Mã vé để tạo QR
-     *   - qrUrl: URL check-in (nếu có)
-     *
-     * @returns {Promise<Object>} Info từ nodemailer
-     */
     sendTicketEmail: async (data) => {
         const {
             email,
@@ -327,7 +307,150 @@ const MailService = {
             console.error(error);
             throw error;
         }
-    }
+    },   // ✅ ĐÃ THÊM DẤU PHẨY
+
+    // =====================================================
+    // ✅ SEND TICKET REMINDER — GỬI NHẮC NHỞ SUẤT CHIẾU
+    // =====================================================
+
+    /**
+     * Gửi email nhắc nhở suất chiếu sắp bắt đầu
+     *
+     * @param {Object} data - Object chứa:
+     *   - email (required): Email người nhận
+     *   - bookingId: Mã booking
+     *   - customerName: Tên khách hàng
+     *   - seatLabel: VD "A1, A2"
+     *   - movieTitle: Tên phim
+     *   - moviePoster: URL poster
+     *   - cinemaName: Tên rạp
+     *   - cinemaAddress: Địa chỉ rạp
+     *   - cinemaMap: Link Google Maps
+     *   - roomName: Tên phòng
+     *   - startTime: Giờ chiếu "20:00"
+     *   - selectedDate: Ngày chiếu "17/09/2026"
+     *   - selectedFoods: Đồ ăn
+     *   - ticketPIN: Mã PIN hiển thị
+     *   - ticketCode: Mã vé để tạo QR
+     *   - qrUrl: URL check-in
+     *   - minutesBefore: Số phút trước suất chiếu
+     *
+     * @returns {Promise<Object>} Info từ nodemailer
+     */
+    sendTicketReminder: async (data) => {
+        const {
+            email,
+            bookingId,
+            customerName,
+            seatLabel,
+            movieTitle,
+            moviePoster,
+            cinemaName,
+            cinemaAddress,
+            cinemaMap,
+            roomName,
+            startTime,
+            selectedDate,
+            selectedFoods,
+            ticketPIN,
+            ticketCode,
+            qrUrl,
+            minutesBefore = 30,
+        } = data || {};
+
+        console.log(`📨 [MAIL] SEND TICKET REMINDER -> ${email} | Booking: ${bookingId}`);
+
+        if (!email) {
+            throw new Error("Email người nhận không hợp lệ");
+        }
+
+        try {
+            // =====================================================
+            // 1. TẠO QR CODE
+            // =====================================================
+
+            const attachments = [];
+            const qrContent = qrUrl || ticketCode || ticketPIN;
+            let qrCid = null;
+
+            if (qrContent) {
+                try {
+                    const qrBuffer = await QRCode.toBuffer(qrContent, {
+                        width: 500,
+                        margin: 4,
+                        errorCorrectionLevel: "H",
+                        color: {
+                            dark: "#000000",
+                            light: "#FFFFFF",
+                        },
+                    });
+
+                    qrCid = "qr_img";
+
+                    attachments.push({
+                        filename: `qr-reminder-${bookingId}.png`,
+                        content: qrBuffer,
+                        cid: qrCid,
+                        contentType: "image/png",
+                    });
+
+                    console.log(`✅ [MAIL] QR code attached (cid: ${qrCid})`);
+                } catch (qrError) {
+                    console.error("❌ [MAIL] QR code generation error:", qrError.message);
+                }
+            }
+
+            // =====================================================
+            // 2. BUILD TEMPLATE DATA
+            // =====================================================
+
+            const templateData = {
+                bookingId,
+                customerName: customerName || "Quý khách",
+                seatLabel: seatLabel || "---",
+                movieTitle: movieTitle || "---",
+                moviePoster: moviePoster || "",
+                cinemaName: cinemaName || "---",
+                cinemaAddress: cinemaAddress || "",
+                cinemaMap: cinemaMap || "",
+                roomName: roomName || "---",
+                startTime: startTime || "---",
+                selectedDate: selectedDate || "---",
+                selectedFoods: selectedFoods || "",
+                ticketPIN: ticketPIN || ticketCode || "",
+                qrCid: qrCid,
+                minutesBefore: minutesBefore,
+            };
+
+            // =====================================================
+            // 3. RENDER HTML
+            // =====================================================
+
+            const html = TicketReminderTemplate(templateData);
+
+            // =====================================================
+            // 4. SEND EMAIL
+            // =====================================================
+
+            const info = await transporter.sendMail({
+                from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
+                to: email,
+                subject: `⏰ Nhắc nhở: "${movieTitle}" sẽ bắt đầu sau ${minutesBefore} phút`,
+                html,
+                attachments,
+            });
+
+            console.log("✅ [MAIL] TICKET REMINDER SENT");
+            console.log(`📧 Message ID: ${info.messageId}`);
+
+            return info;
+
+        } catch (error) {
+            console.error("❌ [MAIL] SEND TICKET REMINDER ERROR");
+            console.error(error);
+            throw error;
+        }
+    },
 };
 
 // =========================================================

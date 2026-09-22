@@ -1220,7 +1220,105 @@ class BookingRepository {
 
         return rows[0] || null;
     }
+        // =========================================================
+    // ✅ FIND UPCOMING BOOKINGS — CHO REMINDER CRON
+    // Tìm bookings cần gửi email nhắc nhở
+    // - status = 'Completed'
+    // - reminder_sent = 0
+    // - start_time nằm trong window [now + minutesBefore - window, now + minutesBefore + window]
+    // =========================================================
 
+    async findUpcomingBookings(connection, minutesBefore = 30, windowMinutes = 5) {
+        const minMinutes = minutesBefore - windowMinutes;
+        const maxMinutes = minutesBefore + windowMinutes;
+
+        const [rows] = await connection.query(
+            `
+            SELECT
+                b.booking_id,
+                b.email AS booking_email,
+                b.user_id,
+                b.showtime_id,
+                b.total_amount,
+
+                u.full_name,
+                u.email AS user_email,
+                u.phone,
+
+                m.title AS movie_name,
+                m.movie_poster,
+
+                c.cinema_name,
+                c.address AS cinema_address,
+                c.map_link AS cinema_map,
+
+                r.room_name,
+
+                s.start_time,
+                s.cinema_id,
+                s.room_id
+
+            FROM bookings b
+
+            INNER JOIN users u
+                ON b.user_id = u.user_id
+
+            INNER JOIN showtimes s
+                ON b.showtime_id = s.showtime_id
+
+            INNER JOIN movies m
+                ON s.movie_id = m.movie_id
+
+            INNER JOIN cinemas c
+                ON s.cinema_id = c.cinema_id
+
+            INNER JOIN rooms r
+                ON s.room_id = r.room_id
+
+            WHERE
+                b.status = 'Completed'
+                AND b.reminder_sent = 0
+                AND s.start_time BETWEEN
+                    DATE_ADD(NOW(), INTERVAL ? MINUTE)
+                    AND DATE_ADD(NOW(), INTERVAL ? MINUTE)
+
+            ORDER BY s.start_time ASC
+            `,
+            [minMinutes, maxMinutes]
+        );
+
+        return rows;
+    }
+
+    // =========================================================
+    // ✅ MARK REMINDER SENT — CHỈ UPDATE NẾU CHƯA GỬI
+    // Atomic: WHERE reminder_sent = 0
+    // Trả về affectedRows để biết đã set thành công chưa
+    // =========================================================
+
+    async markReminderSent(connection, bookingId) {
+        if (!connection) {
+            throw new Error(
+                "BookingRepository.markReminderSent requires connection"
+            );
+        }
+
+        const [result] = await connection.query(
+            `
+            UPDATE bookings
+
+            SET
+                reminder_sent = 1,
+                reminder_sent_at = NOW()
+
+            WHERE booking_id = ?
+              AND reminder_sent = 0
+            `,
+            [bookingId]
+        );
+
+        return result.affectedRows;
+    }
     // =========================================================
     // DELETE BOOKING
     //
