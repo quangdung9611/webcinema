@@ -128,7 +128,7 @@ class UserRepository {
     }
 
     /*=========================================================
-        ✅ FIND USER PROFILE - ĐÃ THÊM `password`
+        FIND USER PROFILE
     =========================================================*/
     async findProfile(userId) {
         const [rows] = await db.query(
@@ -192,7 +192,7 @@ class UserRepository {
     }
 
     /*=========================================================
-        ✅ FIND USER BY GOOGLE ID
+        FIND USER BY GOOGLE ID
     =========================================================*/
     async findByGoogleId(googleId) {
         const [rows] = await db.query(
@@ -266,7 +266,7 @@ class UserRepository {
     }
 
     /*=========================================================
-        ✅ CHECK GOOGLE ID EXISTS
+        CHECK GOOGLE ID EXISTS
     =========================================================*/
     async existsByGoogleId(googleId) {
         const [rows] = await db.query(
@@ -279,7 +279,6 @@ class UserRepository {
 
     /*=========================================================
         CREATE USER
-        ✅ status = "ACTIVE", provider = "LOCAL"
     =========================================================*/
     async create(user) {
         const [result] = await db.query(
@@ -301,14 +300,14 @@ class UserRepository {
                 user.email,
                 user.password || null,
                 user.user_avatar || null,
-                user.role || "customer",       // ✅ role THƯỜNG
-                user.status || "ACTIVE",       // ✅ status HOA
+                user.role || "customer",
+                user.status || "ACTIVE",
                 user.email_verified || 0,
                 user.email_verified_at || null,
                 user.points || 0,
                 user.pin_hash || null,
                 user.google_id || null,
-                user.provider || "LOCAL"       // ✅ provider HOA
+                user.provider || "LOCAL"
             ]
         );
 
@@ -316,8 +315,7 @@ class UserRepository {
     }
 
     /*=========================================================
-        ✅ CREATE USER FROM GOOGLE
-        ✅ status = "ACTIVE", provider = "GOOGLE"
+        CREATE USER FROM GOOGLE
     =========================================================*/
     async createGoogleUser(data) {
         const [result] = await db.query(
@@ -334,19 +332,19 @@ class UserRepository {
             [
                 data.username,
                 data.full_name,
-                null,                       // phone NULL
-                "",                         // address empty
+                null,
+                "",
                 data.email,
-                null,                       // password NULL
+                null,
                 data.user_avatar || null,
-                "customer",                 // ✅ role THƯỜNG
-                "ACTIVE",                   // ✅ status HOA
-                1,                          // email_verified = 1
-                new Date(),                 // email_verified_at
-                0,                          // points
-                null,                       // pin_hash NULL
+                "customer",
+                "ACTIVE",
+                1,
+                new Date(),
+                0,
+                null,
                 data.google_id,
-                "GOOGLE"                    // ✅ provider HOA
+                "GOOGLE"
             ]
         );
 
@@ -354,7 +352,7 @@ class UserRepository {
     }
 
     /*=========================================================
-        ✅ LINK GOOGLE ACCOUNT VÀO USER CŨ
+        LINK GOOGLE ACCOUNT VÀO USER CŨ
     =========================================================*/
     async linkGoogleAccount(userId, googleId, avatarUrl = null) {
         const [result] = await db.query(
@@ -375,7 +373,7 @@ class UserRepository {
     }
 
     /*=========================================================
-        ✅ UPDATE PHONE
+        UPDATE PHONE
     =========================================================*/
     async updatePhone(userId, phone) {
         const [result] = await db.query(
@@ -562,7 +560,9 @@ class UserRepository {
     }
 
     /*=========================================================
-        GET BOOKINGS BY USER
+        ✅ GET BOOKINGS BY USER
+        FIX: Convert UTC → VN (+7h) bằng DATE_ADD
+        THÊM: rescheduleCount, ticketStatus
     =========================================================*/
     async getBookingsByUser(userId, from = null, to = null) {
         let dateCondition = "";
@@ -584,21 +584,55 @@ class UserRepository {
                 b.booking_id AS bookingId,
                 b.total_amount AS totalAmount,
                 b.status,
+                COALESCE(b.reschedule_count, 0) AS rescheduleCount,
                 b.booking_date AS bookingDate,
+
                 m.title AS movieTitle,
                 m.movie_poster AS moviePoster,
+
                 c.cinema_name AS cinemaName,
                 r.room_name AS roomName,
-                s.start_time AS startTime,
-                DATE_FORMAT(s.start_time, '%d/%m/%Y') AS selectedDate,
-                DATE_FORMAT(s.start_time, '%H:%i') AS startTimeDisplay,
+
+                -- ✅ ISO UTC + offset (frontend parse được)
+                DATE_FORMAT(
+                    DATE_ADD(s.start_time, INTERVAL 7 HOUR),
+                    '%Y-%m-%dT%H:%i:%s.000+07:00'
+                ) AS startTimeFull,
+
+                -- ✅ Ngày chiếu VN
+                DATE_FORMAT(
+                    DATE_ADD(s.start_time, INTERVAL 7 HOUR),
+                    '%d/%m/%Y'
+                ) AS selectedDate,
+
+                -- ✅ Giờ chiếu VN
+                DATE_FORMAT(
+                    DATE_ADD(s.start_time, INTERVAL 7 HOUR),
+                    '%H:%i'
+                ) AS startTime,
+
+                -- ✅ Full display
+                DATE_FORMAT(
+                    DATE_ADD(s.start_time, INTERVAL 7 HOUR),
+                    '%H:%i - %d/%m/%Y'
+                ) AS startTimeDisplay,
+
+                -- ✅ Ngày đặt vé
                 DATE_FORMAT(b.booking_date, '%d/%m/%Y %H:%i') AS bookingDateFull,
+
+                -- ✅ Ghế
                 GROUP_CONCAT(
                     CONCAT(st.seat_row, st.seat_number)
                     ORDER BY st.seat_row, st.seat_number
                     SEPARATOR ', '
                 ) AS seatDisplay,
-                CONCAT('PIN-', LPAD(b.booking_id, 6, '0')) AS ticketPIN
+
+                -- ✅ PIN
+                CONCAT('PIN-', LPAD(b.booking_id, 6, '0')) AS ticketPIN,
+
+                -- ✅ Trạng thái ticket
+                MIN(t.ticket_status) AS ticketStatus
+
             FROM bookings b
             INNER JOIN showtimes s ON b.showtime_id = s.showtime_id
             INNER JOIN movies m ON s.movie_id = m.movie_id
@@ -606,6 +640,7 @@ class UserRepository {
             INNER JOIN cinemas c ON r.cinema_id = c.cinema_id
             LEFT JOIN booking_details bd ON b.booking_id = bd.booking_id
             LEFT JOIN seats st ON bd.seat_id = st.seat_id
+            LEFT JOIN tickets t ON t.booking_id = b.booking_id
             WHERE b.user_id = ?
             ${dateCondition}
             GROUP BY b.booking_id

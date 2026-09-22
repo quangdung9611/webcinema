@@ -38,7 +38,7 @@ import {
     Lightbulb,
     Globe,
     Plus,
-    RefreshCw,      // ✅ THÊM - Cho nút đổi suất
+    RefreshCw,
 } from 'lucide-react';
 
 const Profile = () => {
@@ -93,7 +93,7 @@ const Profile = () => {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     // =========================================================
-    // ✅ STATE: CREATE PASSWORD MODAL (CHO USER GOOGLE)
+    // STATE: CREATE PASSWORD MODAL (CHO USER GOOGLE)
     // =========================================================
     const [showCreatePasswordModal, setShowCreatePasswordModal] = useState(false);
     const [createPasswordData, setCreatePasswordData] = useState({
@@ -185,7 +185,9 @@ const Profile = () => {
         setLoadingHistory(true);
         try {
             const res = await api.get('/api/users/booking-history');
-            setBookingHistory(res.data.bookings || []);
+            const bookings = res.data.bookings || [];
+            console.log('📋 [PROFILE] Booking history:', bookings);
+            setBookingHistory(bookings);
         } catch (error) {
             console.error('Lỗi fetch lịch sử:', error);
         } finally {
@@ -224,43 +226,134 @@ const Profile = () => {
     };
 
     // =========================================================
-    // ✅ CHECK CÓ THỂ ĐỔI SUẤT KHÔNG
+    // ✅ FORMAT DATETIME VN (UTC+7)
+    // Dùng Intl.DateTimeFormat cho chuẩn
     // =========================================================
-    const canReschedule = (item) => {
-        // Phải là vé Completed
-        if (item.status !== 'Completed') return false;
+    const formatDateTimeVN = (dateStr) => {
+        if (!dateStr) return { date: '---', time: '---', full: '---', timestamp: 0 };
 
-        // Phải còn hiệu lực (không bị hủy)
-        if (item.ticketStatus === 'Cancelled') return false;
-
-        // Check thời gian: phải trước giờ chiếu ≥ 2 tiếng
         try {
-            // Ưu tiên dùng startTimeFull nếu có
-            let startStr = item.startTimeFull;
+            let d;
 
-            // Nếu không có → build từ selectedDate + startTime
-            if (!startStr && item.selectedDate && item.startTime) {
-                const [day, month, year] = String(item.selectedDate).split('/');
-                startStr = `${year}-${month}-${day}T${item.startTime}:00`;
+            // Case 1: ISO string (có T + Z) → parse như UTC
+            if (typeof dateStr === 'string' && dateStr.includes('T')) {
+                d = new Date(dateStr);
+            }
+            // Case 2: "yyyy-mm-dd hh:mm:ss" (MySQL datetime → coi như UTC)
+            else if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+                const str = String(dateStr).replace(' ', 'T') + 'Z';
+                d = new Date(str);
+            }
+            else {
+                return { date: String(dateStr), time: '---', full: String(dateStr), timestamp: 0 };
             }
 
-            if (!startStr) return false;
+            if (isNaN(d.getTime())) {
+                return { date: '---', time: '---', full: '---', timestamp: 0 };
+            }
 
-            const start = new Date(String(startStr).replace(' ', 'T'));
-            const now = new Date();
-            const hoursLeft = (start - now) / (1000 * 60 * 60);
+            // ✅ Convert sang giờ VN bằng Intl
+            const formatter = new Intl.DateTimeFormat('vi-VN', {
+                timeZone: 'Asia/Ho_Chi_Minh',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+            });
 
-            return hoursLeft >= 2;
+            const parts = formatter.formatToParts(d);
+            const getPart = (type) => parts.find(p => p.type === type)?.value || '';
+
+            const day = getPart('day');
+            const month = getPart('month');
+            const year = getPart('year');
+            const hour = getPart('hour');
+            const minute = getPart('minute');
+
+            return {
+                date: `${day}/${month}/${year}`,
+                time: `${hour}:${minute}`,
+                full: `${hour}:${minute} - ${day}/${month}/${year}`,
+                timestamp: d.getTime()  // ✅ Dùng để check quá khứ
+            };
+        } catch (err) {
+            console.error('❌ formatDateTimeVN error:', err, dateStr);
+            return { date: '---', time: '---', full: '---', timestamp: 0 };
+        }
+    };
+
+    // =========================================================
+    // ✅ CHECK SUẤT CHIẾU ĐÃ QUA CHƯA
+    // =========================================================
+    const isShowtimePast = (item) => {
+        // Ưu tiên dùng startTimeFull (ISO) để so sánh
+        const dateStr = item.startTimeFull || item.startTime;
+        if (!dateStr) return false;
+
+        try {
+            const d = new Date(String(dateStr).includes('T') ? dateStr : String(dateStr).replace(' ', 'T') + 'Z');
+            if (isNaN(d.getTime())) return false;
+
+            return d.getTime() < Date.now();
         } catch {
             return false;
         }
     };
 
-      // =========================================================
+    // =========================================================
+    // ✅ CHECK CÓ THỂ ĐỔI SUẤT KHÔNG
+    // Điều kiện:
+    //   1. Vé Completed
+    //   2. Vé chưa bị hủy
+    //   3. Suất chiếu chưa qua
+    //   4. Chưa đổi quá 2 lần
+    // =========================================================
+    const canReschedule = (item) => {
+        // 1. Phải là vé Completed
+        if (item.status !== 'Completed') return false;
+
+        // 2. Chưa bị hủy
+        if (item.ticketStatus === 'Cancelled') return false;
+
+        // 3. Suất chiếu chưa qua
+        if (isShowtimePast(item)) return false;
+
+        // 4. Chưa đổi quá 2 lần
+        const rescheduleCount = Number(item.rescheduleCount || 0);
+        if (rescheduleCount >= 2) return false;
+
+        return true;
+    };
+
+    // =========================================================
+    // ✅ LẤY LÝ DO DISABLE NÚT ĐỔI SUẤT
+    // =========================================================
+    const getRescheduleDisabledReason = (item) => {
+        if (item.status !== 'Completed') return 'Vé chưa thanh toán';
+        if (item.ticketStatus === 'Cancelled') return 'Vé đã bị hủy';
+
+        if (isShowtimePast(item)) return 'Suất chiếu đã qua';
+
+        const rescheduleCount = Number(item.rescheduleCount || 0);
+        if (rescheduleCount >= 2) return `Đã đổi suất ${rescheduleCount}/2 lần (tối đa)`;
+
+        return '';
+    };
+
+    // =========================================================
     // ✅ HANDLE ĐỔI SUẤT
     // =========================================================
     const handleReschedule = (item) => {
-        navigate(`/reschedule/${item.bookingId}/select`);  // ✅ MỚI
+        if (!canReschedule(item)) {
+            const reason = getRescheduleDisabledReason(item);
+            showModal('warning', 'KHÔNG THỂ ĐỔI SUẤT', reason);
+            return;
+        }
+
+        console.log('🔄 [PROFILE] Đổi suất cho booking:', item.bookingId);
+        navigate(`/reschedule/${item.bookingId}/select`);
     };
 
     // =========================================================
@@ -461,7 +554,7 @@ const Profile = () => {
     };
 
     // =========================================================
-    // ✅ SUBMIT CREATE PASSWORD (CHO USER GOOGLE)
+    // SUBMIT CREATE PASSWORD (CHO USER GOOGLE)
     // =========================================================
     const handleCreatePassword = async (e) => {
         e.preventDefault();
@@ -496,7 +589,6 @@ const Profile = () => {
             });
             setShowCreatePasswordModal(false);
 
-            // Refresh user data để cập nhật has_password = true
             await fetchUserProfile();
 
             showModal(
@@ -792,66 +884,108 @@ const Profile = () => {
                                         <div className="loading-text">Đang tải lịch sử giao dịch...</div>
                                     ) : filteredBookings.length > 0 ? (
                                         <div className="ticket-list">
-                                            {filteredBookings.map((item, index) => (
-                                                <div key={index} className="history-ticket-item">
-                                                    <div className="ticket-thumb">
-                                                        <img
-                                                            src={
-                                                                item.moviePoster?.startsWith('http')
-                                                                    ? item.moviePoster
-                                                                    : `https://api.quangdungcinema.id.vn/uploads/posters/${item.moviePoster}`
-                                                            }
-                                                            alt="poster"
-                                                            onError={(e) => e.target.src = '/default-poster.jpg'}
-                                                        />
-                                                    </div>
-                                                    <div className="ticket-main-info">
-                                                        <h4 className="movie-title-history">{item.movieTitle}</h4>
-                                                        <div className="info-row">
-                                                            <ReceiptText size={14} />
-                                                            <span>Ngày đặt: <strong>{item.bookingDateFull}</strong></span>
-                                                        </div>
-                                                        <div className="info-row">
-                                                            <MapPin size={14} />
-                                                            <span>{item.cinemaName} | {item.roomName}</span>
-                                                        </div>
-                                                        <div className="info-row highlight">
-                                                            <Calendar size={14} />
-                                                            <span>{item.selectedDate}</span>
-                                                            <Clock size={14} className="info-icon-gap" />
-                                                            <span>{item.startTime}</span>
-                                                        </div>
-                                                        <div className="seat-text">
-                                                            <Armchair size={14} />
-                                                            <span><strong>{item.seatDisplay}</strong></span>
-                                                        </div>
-                                                        <p className="price-text">
-                                                            Tổng tiền: <span>{item.totalAmount ? Number(item.totalAmount).toLocaleString() : '0'} đ</span>
-                                                        </p>
-                                                    </div>
-                                                    <div className="ticket-qr-side">
-                                                        <span className={`status-label ${item.status === 'Completed' ? 'paid' : 'pending'}`}>
-                                                            {item.status === 'Completed' ? 'Đã thanh toán' : 'Chờ xử lý'}
-                                                        </span>
-                                                        <div className="qr-container-mini">
-                                                            <QRCodeCanvas value={`TICKET-${item.bookingId}-${item.ticketPIN}`} size={70} />
-                                                        </div>
-                                                        <span className="pin-text">PIN: {item.ticketPIN}</span>
+                                            {filteredBookings.map((item, index) => {
+                                                // ✅ Format giờ VN
+                                                const startDT = formatDateTimeVN(item.startTimeFull || item.startTime);
+                                                const showRescheduleBtn = canReschedule(item);
+                                                const disabledReason = getRescheduleDisabledReason(item);
+                                                const rescheduleCount = Number(item.rescheduleCount || 0);
+                                                const isPast = isShowtimePast(item);
 
-                                                        {/* ✅ NÚT ĐỔI SUẤT CHIẾU */}
-                                                        {canReschedule(item) && (
+                                                return (
+                                                    <div key={index} className="history-ticket-item">
+                                                        <div className="ticket-thumb">
+                                                            <img
+                                                                src={
+                                                                    item.moviePoster?.startsWith('http')
+                                                                        ? item.moviePoster
+                                                                        : `https://api.quangdungcinema.id.vn/uploads/posters/${item.moviePoster}`
+                                                                }
+                                                                alt="poster"
+                                                                onError={(e) => e.target.src = '/default-poster.jpg'}
+                                                            />
+                                                        </div>
+                                                        <div className="ticket-main-info">
+                                                            <h4 className="movie-title-history">{item.movieTitle}</h4>
+                                                            <div className="info-row">
+                                                                <ReceiptText size={14} />
+                                                                <span>Ngày đặt: <strong>{item.bookingDateFull}</strong></span>
+                                                            </div>
+                                                            <div className="info-row">
+                                                                <MapPin size={14} />
+                                                                <span>{item.cinemaName} | {item.roomName}</span>
+                                                            </div>
+                                                            <div className="info-row highlight">
+                                                                <Calendar size={14} />
+                                                                <span>{startDT.date}</span>
+                                                                <Clock size={14} className="info-icon-gap" />
+                                                                <span>{startDT.time}</span>
+                                                            </div>
+                                                            <div className="seat-text">
+                                                                <Armchair size={14} />
+                                                                <span><strong>{item.seatDisplay}</strong></span>
+                                                            </div>
+                                                            <p className="price-text">
+                                                                Tổng tiền: <span>{item.totalAmount ? Number(item.totalAmount).toLocaleString() : '0'} đ</span>
+                                                            </p>
+
+                                                            {/* ✅ SỐ LẦN ĐÃ ĐỔI */}
+                                                            {rescheduleCount > 0 && (
+                                                                <p style={{
+                                                                    fontSize: 12,
+                                                                    color: '#f37021',
+                                                                    margin: '4px 0 0 0',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: 4
+                                                                }}>
+                                                                    <RefreshCw size={12} />
+                                                                    Đã đổi suất {rescheduleCount}/2 lần
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                        <div className="ticket-qr-side">
+                                                            <span className={`status-label ${item.status === 'Completed' ? 'paid' : 'pending'}`}>
+                                                                {item.status === 'Completed' ? 'Đã thanh toán' : 'Chờ xử lý'}
+                                                            </span>
+                                                            <div className="qr-container-mini">
+                                                                <QRCodeCanvas value={`TICKET-${item.bookingId}-${item.ticketPIN}`} size={70} />
+                                                            </div>
+                                                            <span className="pin-text">PIN: {item.ticketPIN}</span>
+
+                                                            {/* ✅ NÚT ĐỔI SUẤT — LUÔN HIỆN NHƯNG DISABLE ĐÚNG ĐIỀU KIỆN */}
                                                             <button
                                                                 className="btn-reschedule"
                                                                 onClick={() => handleReschedule(item)}
-                                                                title="Đổi sang suất chiếu khác"
+                                                                disabled={!showRescheduleBtn}
+                                                                title={
+                                                                    showRescheduleBtn
+                                                                        ? 'Đổi sang suất chiếu khác'
+                                                                        : disabledReason
+                                                                }
+                                                                style={{
+                                                                    marginTop: 8,
+                                                                    display: 'inline-flex',
+                                                                    alignItems: 'center',
+                                                                    gap: 6,
+                                                                    opacity: showRescheduleBtn ? 1 : 0.5,
+                                                                    cursor: showRescheduleBtn ? 'pointer' : 'not-allowed',
+                                                                }}
                                                             >
                                                                 <RefreshCw size={14} />
-                                                                <span>Đổi suất</span>
+                                                                <span>
+                                                                    {isPast
+                                                                        ? 'Đã qua'
+                                                                        : showRescheduleBtn
+                                                                            ? 'Đổi suất'
+                                                                            : 'Không thể đổi'
+                                                                    }
+                                                                </span>
                                                             </button>
-                                                        )}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     ) : (
                                         <div className="empty-history">
@@ -905,7 +1039,6 @@ const Profile = () => {
                                         </span>
                                     </div>
 
-                                    {/* ✅ HIỂN THỊ PROVIDER */}
                                     <div className="profile-info-item">
                                         <span className="label"><Globe size={16} /> Phương thức đăng nhập</span>
                                         <span className="value">
@@ -934,7 +1067,6 @@ const Profile = () => {
                                         </button>
                                     </div>
 
-                                    {/* THÔNG TIN CƠ BẢN */}
                                     <div className="edit-section">
                                         <h4 className="section-title">
                                             <User size={18} /> Thông tin cơ bản
@@ -993,7 +1125,6 @@ const Profile = () => {
                                                     {loadingEdit ? 'Đang lưu...' : 'Lưu thông tin'}
                                                 </button>
 
-                                                {/* ✅ NÚT TẠO MẬT KHẨU / ĐỔI MẬT KHẨU */}
                                                 {formData.has_password ? (
                                                     <button
                                                         type="button"
@@ -1021,7 +1152,6 @@ const Profile = () => {
                                                 </button>
                                             </div>
 
-                                            {/* ✅ THÔNG BÁO CHO USER GOOGLE CHƯA CÓ PASSWORD */}
                                             {formData.provider === 'GOOGLE' && !formData.has_password && (
                                                 <div className="password-notice">
                                                     <Lightbulb size={16} />
@@ -1159,7 +1289,7 @@ const Profile = () => {
                 </div>
             )}
 
-            {/* ✅ MODAL: TẠO MẬT KHẨU (CHO USER GOOGLE) */}
+            {/* MODAL: TẠO MẬT KHẨU (CHO USER GOOGLE) */}
             {showCreatePasswordModal && (
                 <div className="modal-overlay" onClick={() => setShowCreatePasswordModal(false)}>
                     <div className="modal-container" onClick={e => e.stopPropagation()}>
