@@ -1,0 +1,52 @@
+/* ============================================================
+   RESCHEDULE SELECT — Bổ sung cho BookingSelect.css
+   ============================================================ */
+
+/* ===== INFO VÉ CŨ — GRID ===== */
+.rsvp-current-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    padding: 4px 0;
+}
+
+.rsvp-info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.rsvp-info-item svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: var(--silver-dark, #A9B2BC);
+}
+
+.rsvp-info-item > div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.rsvp-info-item span {
+    font-size: 0.72rem;
+    color: var(--text-muted, #6A737D);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.rsvp-info-item strong {
+    color: var(--text-heading, #F4F6F8);
+    font-size: 0.92rem;
+    font-weight: 600;
+    word-break: break-word;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .rsvp-current-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+}

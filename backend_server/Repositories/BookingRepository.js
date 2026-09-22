@@ -247,8 +247,6 @@ class BookingRepository {
 
     // =========================================================
     // FIND BOOKING BY ID + FOR UPDATE
-    //
-    // Dùng khi transaction cần khóa booking.
     // =========================================================
 
     async findByIdForUpdate(connection, bookingId) {
@@ -454,8 +452,6 @@ class BookingRepository {
 
     // =========================================================
     // CREATE BOOKING
-    //
-    // Dùng bên trong transaction.
     // =========================================================
 
     async createBooking(
@@ -595,8 +591,6 @@ class BookingRepository {
 
     // =========================================================
     // GET SHOWTIME + ROOM + CINEMA
-    //
-    // Dùng transaction.
     // =========================================================
 
     async getShowtimeInfo(
@@ -643,12 +637,6 @@ class BookingRepository {
 
     // =========================================================
     // GET SEATS + LOCK FOR UPDATE
-    //
-    // QUAN TRỌNG:
-    // Đây là lớp bảo vệ MySQL cuối cùng.
-    //
-    // Tất cả seat phải được lock theo thứ tự seat_id
-    // để giảm nguy cơ deadlock.
     // =========================================================
 
     async lockSeatsForBooking(
@@ -800,8 +788,6 @@ class BookingRepository {
 
     // =========================================================
     // GET EXISTING TICKETS FOR SHOWTIME
-    //
-    // Dùng trong transaction sau khi seat rows đã lock.
     // =========================================================
 
     async getTicketsForSeats(
@@ -865,8 +851,6 @@ class BookingRepository {
 
     // =========================================================
     // CHECK SEATS AVAILABLE
-    //
-    // Phải gọi sau getTicketsForSeats()
     // =========================================================
 
     async assertSeatsAvailable(
@@ -924,18 +908,6 @@ class BookingRepository {
 
     // =========================================================
     // CREATE / REACTIVATE TICKET
-    //
-    // CSDL có UNIQUE:
-    //
-    // showtime_id
-    // cinema_id
-    // room_id
-    // seat_id
-    //
-    // Vì vậy KHÔNG INSERT mù.
-    //
-    // Nếu ticket cũ Cancelled -> tái sử dụng.
-    // Nếu ticket đang active -> báo lỗi.
     // =========================================================
 
     async createTicket(
@@ -955,10 +927,6 @@ class BookingRepository {
                 "BookingRepository.createTicket requires connection"
             );
         }
-
-        // -----------------------------------------------------
-        // LOCK existing ticket
-        // -----------------------------------------------------
 
         const [existingRows] =
             await connection.query(
@@ -992,10 +960,6 @@ class BookingRepository {
         const existing =
             existingRows[0];
 
-        // -----------------------------------------------------
-        // TICKET EXISTS
-        // -----------------------------------------------------
-
         if (existing) {
 
             const canReuse =
@@ -1016,10 +980,6 @@ class BookingRepository {
 
                 throw error;
             }
-
-            // -------------------------------------------------
-            // REACTIVATE CANCELLED TICKET
-            // -------------------------------------------------
 
             const [updateResult] =
                 await connection.query(
@@ -1058,10 +1018,6 @@ class BookingRepository {
 
             return existing.ticket_id;
         }
-
-        // -----------------------------------------------------
-        // CREATE NEW TICKET
-        // -----------------------------------------------------
 
         try {
 
@@ -1107,10 +1063,6 @@ class BookingRepository {
 
         } catch (error) {
 
-            // -------------------------------------------------
-            // UNIQUE CONSTRAINT
-            // -------------------------------------------------
-
             if (error?.code === "ER_DUP_ENTRY") {
 
                 const duplicateError =
@@ -1133,12 +1085,6 @@ class BookingRepository {
 
     // =========================================================
     // UPDATE USER POINTS
-    //
-    // Atomic increment:
-    //
-    // points = points + ?
-    //
-    // Không SELECT rồi UPDATE riêng.
     // =========================================================
 
     async addUserPoints(
@@ -1220,12 +1166,9 @@ class BookingRepository {
 
         return rows[0] || null;
     }
-        // =========================================================
+
+    // =========================================================
     // ✅ FIND UPCOMING BOOKINGS — CHO REMINDER CRON
-    // Tìm bookings cần gửi email nhắc nhở
-    // - status = 'Completed'
-    // - reminder_sent = 0
-    // - start_time nằm trong window [now + minutesBefore - window, now + minutesBefore + window]
     // =========================================================
 
     async findUpcomingBookings(connection, minutesBefore = 30, windowMinutes = 5) {
@@ -1291,9 +1234,7 @@ class BookingRepository {
     }
 
     // =========================================================
-    // ✅ MARK REMINDER SENT — CHỈ UPDATE NẾU CHƯA GỬI
-    // Atomic: WHERE reminder_sent = 0
-    // Trả về affectedRows để biết đã set thành công chưa
+    // ✅ MARK REMINDER SENT
     // =========================================================
 
     async markReminderSent(connection, bookingId) {
@@ -1319,10 +1260,9 @@ class BookingRepository {
 
         return result.affectedRows;
     }
+
     // =========================================================
     // DELETE BOOKING
-    //
-    // Giữ nguyên API cũ.
     // =========================================================
 
     async delete(bookingId) {
@@ -1390,9 +1330,6 @@ class BookingRepository {
 
     // =========================================================
     // RELEASE CONNECTION
-    //
-    // CỰC KỲ QUAN TRỌNG:
-    // connection lấy từ pool phải release().
     // =========================================================
 
     async releaseConnection(connection) {
@@ -1405,20 +1342,6 @@ class BookingRepository {
 
     // =========================================================
     // SAFE TRANSACTION HELPER
-    //
-    // Cho phép:
-    //
-    // await BookingRepository.transaction(
-    //     async (connection) => {
-    //         ...
-    //     }
-    // );
-    //
-    // Tự:
-    // BEGIN
-    // COMMIT
-    // ROLLBACK
-    // RELEASE
     // =========================================================
 
     async transaction(callback) {
@@ -1461,6 +1384,405 @@ class BookingRepository {
                 connection
             );
         }
+    }
+
+    // =========================================================
+    // ✅ RESCHEDULE — TÌM BOOKING THEO ID + STATUS
+    // =========================================================
+
+    async findBookingForReschedule(connection, bookingId) {
+        const [rows] = await connection.query(
+            `
+            SELECT
+                b.booking_id,
+                b.user_id,
+                b.email,
+                b.showtime_id,
+                b.total_amount,
+                b.status,
+                b.reschedule_status,
+                b.reschedule_count,
+                b.old_showtime_id,
+                b.new_showtime_id,
+
+                u.full_name,
+
+                s.movie_id,
+                s.cinema_id,
+                s.room_id,
+                s.start_time,
+
+                m.title AS movie_title,
+                m.movie_poster,
+                m.duration AS movie_duration,
+
+                c.cinema_name,
+                r.room_name,
+                r.room_type
+
+            FROM bookings b
+
+            INNER JOIN users u ON b.user_id = u.user_id
+            INNER JOIN showtimes s ON b.showtime_id = s.showtime_id
+            INNER JOIN movies m ON s.movie_id = m.movie_id
+            INNER JOIN cinemas c ON s.cinema_id = c.cinema_id
+            INNER JOIN rooms r ON s.room_id = r.room_id
+
+            WHERE b.booking_id = ?
+            LIMIT 1
+            FOR UPDATE
+            `,
+            [bookingId]
+        );
+
+        return rows[0] || null;
+    }
+
+    // =========================================================
+    // ✅ RESCHEDULE — LẤY DANH SÁCH GHẾ HIỆN TẠI CỦA BOOKING
+    // =========================================================
+
+    async getBookingSeats(connection, bookingId) {
+        const [rows] = await connection.query(
+            `
+            SELECT
+                t.ticket_id,
+                t.ticket_code,
+                t.seat_id,
+                t.price,
+
+                st.seat_row,
+                st.seat_number,
+                st.seat_type
+
+            FROM tickets t
+
+            INNER JOIN seats st ON t.seat_id = st.seat_id
+
+            WHERE t.booking_id = ?
+              AND t.ticket_status = 'Valid'
+
+            ORDER BY st.seat_row, st.seat_number
+            `,
+            [bookingId]
+        );
+
+        return rows;
+    }
+
+    // =========================================================
+    // ✅ RESCHEDULE — ĐẾM SỐ LẦN ĐÃ ĐỔI SUẤT
+    // Dùng cột reschedule_count (INT) — đếm chính xác
+    // =========================================================
+
+    async countRescheduleHistory(connection, bookingId) {
+        if (!connection) {
+            throw new Error(
+                "BookingRepository.countRescheduleHistory requires connection"
+            );
+        }
+
+        const [rows] = await connection.query(
+            `
+            SELECT COALESCE(reschedule_count, 0) AS total
+            FROM bookings
+            WHERE booking_id = ?
+            LIMIT 1
+            `,
+            [bookingId]
+        );
+
+        return Number(rows[0]?.total) || 0;
+    }
+
+    // =========================================================
+    // ✅ RESCHEDULE — TÌM SUẤT CHIẾU MỚI CÙNG PHIM + RẠP
+    // =========================================================
+
+    async findRescheduleOptions({
+        movieId,
+        cinemaId,
+        currentShowtimeId,
+        minStartTime
+    }) {
+        const [rows] = await db.query(
+            `
+            SELECT
+                s.showtime_id,
+                s.movie_id,
+                s.cinema_id,
+                s.room_id,
+                s.start_time,
+
+                r.room_name,
+                r.room_type,
+                r.total_seats
+
+            FROM showtimes s
+
+            INNER JOIN rooms r ON s.room_id = r.room_id
+
+            WHERE s.movie_id = ?
+              AND s.cinema_id = ?
+              AND s.showtime_id != ?
+              AND s.status = 'Active'
+              AND s.start_time >= ?
+
+            ORDER BY s.start_time ASC
+            `,
+            [movieId, cinemaId, currentShowtimeId, minStartTime]
+        );
+
+        return rows;
+    }
+
+    // =========================================================
+    // ✅ RESCHEDULE — LẤY GHẾ TRỐNG
+    // seat_type = null/undefined → lấy TẤT CẢ các hạng
+    // seat_type có giá trị → filter theo hạng
+    // =========================================================
+
+    async getAvailableSeatsByType(showtimeId, seatType = null) {
+        const params = [showtimeId];
+        let typeClause = "";
+
+        if (seatType && String(seatType).trim()) {
+            typeClause = "AND st.seat_type = ?";
+            params.push(String(seatType).trim());
+        }
+
+        const [rows] = await db.query(
+            `
+            SELECT
+                st.seat_id,
+                st.seat_row,
+                st.seat_number,
+                st.seat_type,
+                st.price,
+                st.room_id,
+                st.cinema_id
+
+            FROM seats st
+
+            INNER JOIN showtimes s
+                ON s.room_id = st.room_id
+               AND s.cinema_id = st.cinema_id
+
+            LEFT JOIN tickets t
+                ON t.showtime_id = s.showtime_id
+               AND t.seat_id = st.seat_id
+               AND t.ticket_status = 'Valid'
+
+            WHERE s.showtime_id = ?
+              AND st.is_active = 1
+              AND t.ticket_id IS NULL
+              ${typeClause}
+
+            ORDER BY st.seat_row ASC, st.seat_number ASC
+            `,
+            params
+        );
+
+        return rows;
+    }
+
+    // =========================================================
+    // ✅ RESCHEDULE — LẤY GIÁ VÉ TỪ price_config
+    // =========================================================
+
+    async getPriceFromConfig({
+        roomType,
+        timeSlot,
+        dayType,
+        seatType
+    }) {
+        const [rows] = await db.query(
+            `
+            SELECT price
+            FROM price_config
+            WHERE room_type = ?
+              AND time_slot = ?
+              AND day_type = ?
+              AND seat_type = ?
+              AND status = 1
+            LIMIT 1
+            `,
+            [roomType, timeSlot, dayType, seatType]
+        );
+
+        return rows[0]?.price ? Number(rows[0].price) : null;
+    }
+
+    // =========================================================
+    // ✅ RESCHEDULE — PERFORM RESCHEDULE
+    // - Truyền userId thẳng (không dùng subquery)
+    // - Giữ nguyên food (không xóa)
+    // - Tăng reschedule_count
+    // - Update points an toàn
+    // =========================================================
+
+    async performReschedule(connection, {
+        bookingId,
+        userId,
+        oldShowtimeId,
+        newShowtimeId,
+        newRoomId,
+        newCinemaId,
+        newTicketData,
+        newTotalAmount,
+        priceDifference
+    }) {
+        if (!connection) {
+            throw new Error(
+                "BookingRepository.performReschedule requires connection"
+            );
+        }
+
+        // ---------------------------------------------
+        // 1. UPDATE BOOKING + TĂNG reschedule_count
+        // ---------------------------------------------
+        await connection.query(
+            `
+            UPDATE bookings
+            SET
+                showtime_id = ?,
+                total_amount = ?,
+                reschedule_status = 'COMPLETED',
+                reschedule_count = COALESCE(reschedule_count, 0) + 1,
+                old_showtime_id = ?,
+                new_showtime_id = ?,
+                updated_at = NOW()
+            WHERE booking_id = ?
+            `,
+            [
+                newShowtimeId,
+                newTotalAmount,
+                oldShowtimeId,
+                newShowtimeId,
+                bookingId
+            ]
+        );
+
+        // ---------------------------------------------
+        // 2. XÓA TICKETS CŨ
+        // ---------------------------------------------
+        await connection.query(
+            `
+            DELETE FROM tickets
+            WHERE booking_id = ?
+            `,
+            [bookingId]
+        );
+
+        // ---------------------------------------------
+        // 3. XÓA BOOKING_DETAILS ghế cũ (GIỮ food)
+        // ---------------------------------------------
+        await connection.query(
+            `
+            DELETE FROM booking_details
+            WHERE booking_id = ?
+              AND seat_id IS NOT NULL
+            `,
+            [bookingId]
+        );
+
+        // ---------------------------------------------
+        // 4. INSERT TICKETS MỚI + BOOKING_DETAILS ghế
+        // ---------------------------------------------
+        for (const ticket of newTicketData) {
+            await connection.query(
+                `
+                INSERT INTO tickets (
+                    booking_id,
+                    showtime_id,
+                    room_id,
+                    cinema_id,
+                    seat_id,
+                    ticket_code,
+                    price,
+                    seat_status,
+                    ticket_status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, 'Booked', 'Valid')
+                `,
+                [
+                    bookingId,
+                    newShowtimeId,
+                    newRoomId,
+                    newCinemaId,
+                    ticket.seat_id,
+                    ticket.ticket_code,
+                    ticket.price
+                ]
+            );
+
+            await connection.query(
+                `
+                INSERT INTO booking_details (
+                    booking_id,
+                    seat_id,
+                    item_name,
+                    quantity,
+                    price
+                ) VALUES (?, ?, ?, 1, ?)
+                `,
+                [
+                    bookingId,
+                    ticket.seat_id,
+                    `Ghế ${ticket.seat_row}${ticket.seat_number}`,
+                    ticket.price
+                ]
+            );
+        }
+
+        // ---------------------------------------------
+        // 5. CẬP NHẬT ĐIỂM
+        // priceDifference > 0 → trừ điểm
+        // priceDifference < 0 → cộng điểm
+        // priceDifference = 0 → không đổi
+        // ---------------------------------------------
+        if (priceDifference !== 0) {
+            const [updateResult] = await connection.query(
+                `
+                UPDATE users
+                SET points = COALESCE(points, 0) - ?
+                WHERE user_id = ?
+                `,
+                [priceDifference, userId]
+            );
+
+            if (updateResult.affectedRows === 0) {
+                const error = new Error("Không thể cập nhật điểm cho user");
+                error.code = "POINTS_UPDATE_FAILED";
+                throw error;
+            }
+        }
+
+        return true;
+    }
+
+    // =========================================================
+    // ✅ RESCHEDULE — LẤY USER + LOCK (CHECK ĐIỂM AN TOÀN)
+    // =========================================================
+
+    async getUserPoints(connection, userId) {
+        if (!connection) {
+            throw new Error(
+                "BookingRepository.getUserPoints requires connection"
+            );
+        }
+
+        const [rows] = await connection.query(
+            `
+            SELECT user_id, full_name, email, points
+            FROM users
+            WHERE user_id = ?
+            LIMIT 1
+            FOR UPDATE
+            `,
+            [userId]
+        );
+
+        return rows[0] || null;
     }
 }
 

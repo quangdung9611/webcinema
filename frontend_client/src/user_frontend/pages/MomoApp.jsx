@@ -1,6 +1,7 @@
 // ============================================================
 // MOMO APP
 // Bước 5: THANH TOÁN MOMO + OTP
+// HỖ TRỢ CẢ ĐẶT VÉ THƯỜNG VÀ ĐỔI VÉ (RESCHEDULE)
 // ============================================================
 
 import React, {
@@ -20,6 +21,7 @@ import {
     Clock,
     RotateCw,
     Loader2,
+    RefreshCw,
 } from 'lucide-react';
 
 import api from '../../api/api';
@@ -115,7 +117,26 @@ const MomoApp = () => {
     const customerEmail = bookingData.customerEmail || localStorage.getItem('momoCustomerEmail') || '';
     const customerName = bookingData.customerName || '';
     const customerPhone = bookingData.customerPhone || '';
-    const totalAmount = Number(bookingData.totalAmount) || 0;
+    const ownerToken = bookingData.ownerToken || localStorage.getItem('bookingOwnerToken') || '';
+
+    // ============================================================
+    // ✅ RESCHEDULE MODE
+    // ============================================================
+
+    const isRescheduleMode =
+        bookingData?.mode === 'reschedule' ||
+        bookingData?.isReschedulePayment === true;
+
+    const rescheduleBookingId = bookingData?.rescheduleBookingId || null;
+    const deltaAmount = Number(bookingData?.deltaAmount || 0);
+    const oldTotalAmount = Number(bookingData?.oldTotalAmount || 0);
+    const newTotalAmount = Number(bookingData?.newTotalAmount || 0);
+
+    // ✅ Số tiền cần thanh toán
+    const totalAmount = isRescheduleMode
+        ? Math.max(0, deltaAmount)
+        : Number(bookingData.totalAmount) || 0;
+
     const movie = bookingData.movie || {};
     const selectedCinema = bookingData.selectedCinema || {};
     const selectedDate = bookingData.selectedDate || '';
@@ -126,12 +147,11 @@ const MomoApp = () => {
     const totalTicketPrice = Number(bookingData.totalTicketPrice) || 0;
     const totalFoodPrice = Number(bookingData.totalFoodPrice) || 0;
     const showtimeDetail = bookingData.showtimeDetail || {};
-    const ownerToken = bookingData.ownerToken || localStorage.getItem('bookingOwnerToken') || '';
 
     const showtimeId = selectedShowtime?.showtime_id || selectedShowtime?.id || showtimeDetail?.showtime_id || showtimeDetail?.id || '';
 
     // ============================================================
-    // 🔥 SỬ DỤNG useOTPGuard
+    // useOTPGuard
     // ============================================================
 
     const { safeNavigate, invalidateOTP } = useOTPGuard(customerEmail, 'PAYMENT', {
@@ -172,7 +192,7 @@ const MomoApp = () => {
     const timerIntervalRef = useRef(null);
 
     // ============================================================
-    // ✅ TIME STATE - CHỈ LƯU MỐC TUYỆT ĐỐI
+    // TIME STATE
     // ============================================================
 
     const [otpExpiresAt, setOtpExpiresAt] = useState(() => {
@@ -188,7 +208,7 @@ const MomoApp = () => {
     const [timeLeft, setTimeLeft] = useState(OTP_TTL);
     const [lockTimeLeft, setLockTimeLeft] = useState(0);
 
-    // ✅ UNIFIED TIMER — CHỈ CÒN 1 TIMER OTP + 1 TIMER LOCK
+    // ✅ UNIFIED TIMER
     useEffect(() => {
         const tick = () => {
             const now = Date.now();
@@ -402,6 +422,7 @@ const MomoApp = () => {
     // ============================================================
 
     const releaseSeatLocks = useCallback(async () => {
+        if (isRescheduleMode) return; // Không cần release khi reschedule
         if (isReleasingSeatsRef.current) return;
         if (!showtimeId) return;
         if (!socketService.isConnectedStatus()) {
@@ -419,7 +440,7 @@ const MomoApp = () => {
                 isReleasingSeatsRef.current = false;
             }, 500);
         }
-    }, [showtimeId, ownerToken]);
+    }, [showtimeId, ownerToken, isRescheduleMode]);
 
     // ============================================================
     // XÓA BOOKING DATA
@@ -465,16 +486,26 @@ const MomoApp = () => {
         if (isCancellingRef.current) return;
         isCancellingRef.current = true;
         try {
-            await api.post('/api/momo/cancel', { tempBookingId }, {
-                headers: { 'Content-Type': 'application/json' }
-            });
-            console.log('[MOMO] Temp booking cancelled');
+            if (isRescheduleMode) {
+                await api.post('/api/payment/cancel-reschedule-timeout', {
+                    tempBookingId,
+                    rescheduleBookingId,
+                }, {
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                console.log('[MOMO] Reschedule temp booking cancelled');
+            } else {
+                await api.post('/api/momo/cancel', { tempBookingId }, {
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                console.log('[MOMO] Temp booking cancelled');
+            }
         } catch (err) {
             console.error('[MOMO] Lỗi hủy temp booking:', err);
         } finally {
             isCancellingRef.current = false;
         }
-    }, [tempBookingId]);
+    }, [tempBookingId, isRescheduleMode, rescheduleBookingId]);
 
     // ============================================================
     // EXPIRE FLOW
@@ -493,10 +524,10 @@ const MomoApp = () => {
             'Thời gian thanh toán đã hết. Ghế của bạn đã được giải phóng. Vui lòng đặt vé lại.',
             () => {
                 closeModal();
-                safeNavigate('/booking');
+                safeNavigate(isRescheduleMode ? '/profile' : '/booking');
             }
         );
-    }, [releaseSeatLocks, cancelBookingOnServer, clearAllBookingData, openModal, closeModal, safeNavigate, invalidateOTP]);
+    }, [releaseSeatLocks, cancelBookingOnServer, clearAllBookingData, openModal, closeModal, safeNavigate, invalidateOTP, isRescheduleMode]);
 
     // ============================================================
     // CHECK PAYMENT COMPLETED
@@ -546,10 +577,11 @@ const MomoApp = () => {
     }, [tempBookingId, customerEmail, openModal, closeModal, safeNavigate]);
 
     // ============================================================
-    // CHECK OWNER TOKEN
+    // CHECK OWNER TOKEN (chỉ flow thường)
     // ============================================================
 
     useEffect(() => {
+        if (isRescheduleMode) return; // Bỏ qua khi reschedule
         if (!ownerToken || paymentCompletedRef.current) return;
         const currentSocketId = socketService.getSocketId();
         if (currentSocketId && currentSocketId !== ownerToken) {
@@ -566,7 +598,7 @@ const MomoApp = () => {
                 }
             );
         }
-    }, [ownerToken, cancelBookingOnServer, clearAllBookingData, openModal, closeModal, safeNavigate]);
+    }, [ownerToken, cancelBookingOnServer, clearAllBookingData, openModal, closeModal, safeNavigate, isRescheduleMode]);
 
     // ============================================================
     // CLEANUP
@@ -590,7 +622,7 @@ const MomoApp = () => {
         await releaseSeatLocks();
         await cancelBookingOnServer();
         clearAllBookingData();
-        safeNavigate('/');
+        safeNavigate(isRescheduleMode ? '/profile' : '/');
     };
 
     // ============================================================
@@ -621,6 +653,10 @@ const MomoApp = () => {
         setLoadingSendOtp(true);
         try {
             const payload = { email: customerEmail, tempBookingId };
+            if (isRescheduleMode) {
+                payload.isReschedule = true;
+                payload.rescheduleBookingId = rescheduleBookingId;
+            }
             const response = await api.post('/api/momo/send-otp', payload, {
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -662,7 +698,6 @@ const MomoApp = () => {
 
     // ============================================================
     // RESEND OTP
-    // ✅ CHỈ CHO GỬI KHI OTP ĐÃ HẾT HẠN
     // ============================================================
 
     const handleResendOtp = async () => {
@@ -674,7 +709,6 @@ const MomoApp = () => {
             openModal('info', 'THÔNG BÁO', 'Bạn đã thanh toán thành công!');
             return;
         }
-        // ✅ CHỈ CHO GỬI LẠI KHI OTP ĐÃ HẾT HẠN
         if (!otpExpiredRef.current && timeLeft > 0) {
             openModal('info', 'THÔNG BÁO', 'Vui lòng đợi OTP hiện tại hết hạn trước khi gửi lại.');
             return;
@@ -686,6 +720,10 @@ const MomoApp = () => {
         setLoadingSendOtp(true);
         try {
             const payload = { email: customerEmail, tempBookingId };
+            if (isRescheduleMode) {
+                payload.isReschedule = true;
+                payload.rescheduleBookingId = rescheduleBookingId;
+            }
             const response = await api.post('/api/momo/resend-otp', payload, {
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -727,7 +765,7 @@ const MomoApp = () => {
     };
 
     // ============================================================
-    // ✅ INITIALIZE MOMO APP - KHÔNG GỬI OTP LẠI
+    // INITIALIZE MOMO APP
     // ============================================================
 
     useEffect(() => {
@@ -746,7 +784,6 @@ const MomoApp = () => {
 
             const initiated = localStorage.getItem('momoPaymentInitiated') === 'true' || isPaymentInitiated.current;
 
-            // ✅ Nếu đã initiated → Payment ĐÃ GỬI OTP → KHÔNG gửi lại
             if (initiated) {
                 console.log('[MOMO] OTP đã được gửi từ Payment, không gửi lại');
 
@@ -769,10 +806,9 @@ const MomoApp = () => {
                     }
                 }
 
-                return;  // ✅ DỪNG - KHÔNG GỌI sendOtpApi()
+                return;
             }
 
-            // Chưa initiated → chặn truy cập trực tiếp
             if (!isFirstLoad.current && !modalConfig.show && !hasShownModalRef.current) {
                 openModal(
                     'error',
@@ -793,7 +829,7 @@ const MomoApp = () => {
     }, [customerEmail, tempBookingId, syncTimerWithRedis, modalConfig.show, openModal, closeModal, navigate, bookingData, fetchTimeFromRedis]);
 
     // ============================================================
-    // REDIS TIMER CHECK (Định kỳ)
+    // REDIS TIMER CHECK
     // ============================================================
 
     useEffect(() => {
@@ -820,7 +856,7 @@ const MomoApp = () => {
     }, [tempBookingId, fetchTimeFromRedis]);
 
     // ============================================================
-    // ✅ AUTO SHOW MODAL KHI OTP HẾT HẠN
+    // AUTO SHOW MODAL KHI OTP HẾT HẠN
     // ============================================================
 
     useEffect(() => {
@@ -843,7 +879,7 @@ const MomoApp = () => {
     }, [timeLeft, isLocked, openModal, closeModal, otpExpiresAt]);
 
     // ============================================================
-    // VERIFY OTP
+    // ✅ VERIFY OTP — HỖ TRỢ CẢ FLOW THƯỜNG + RESCHEDULE
     // ============================================================
 
     const handleVerifyPayment = async () => {
@@ -872,27 +908,46 @@ const MomoApp = () => {
             return;
         }
 
-        if (!ownerToken) {
-            openModal('error', 'PHIÊN GIỮ GHẾ KHÔNG HỢP LỆ', 'Không tìm thấy phiên giữ ghế. Vui lòng quay lại chọn ghế.');
-            return;
-        }
-
-        const currentSocketId = socketService.getSocketId();
-        if (!socketService.isConnectedStatus() || !currentSocketId || currentSocketId !== ownerToken) {
-            openModal('error', 'MẤT KẾT NỐI GIỮ GHẾ', 'Phiên giữ ghế đã bị gián đoạn. Vui lòng quay lại đặt vé.');
-            return;
+        // ✅ Check ownerToken CHỈ khi flow thường
+        if (!isRescheduleMode) {
+            if (!ownerToken) {
+                openModal('error', 'PHIÊN GIỮ GHẾ KHÔNG HỢP LỆ', 'Không tìm thấy phiên giữ ghế. Vui lòng quay lại chọn ghế.');
+                return;
+            }
+            const currentSocketId = socketService.getSocketId();
+            if (!socketService.isConnectedStatus() || !currentSocketId || currentSocketId !== ownerToken) {
+                openModal('error', 'MẤT KẾT NỐI GIỮ GHẾ', 'Phiên giữ ghế đã bị gián đoạn. Vui lòng quay lại đặt vé.');
+                return;
+            }
         }
 
         setLoadingVerify(true);
         try {
-            const payload = {
-                email: customerEmail,
-                otp,
-                tempBookingId,
-                full_name: customerName,
-                phone: customerPhone
-            };
-            const res = await api.post('/api/momo/verify-otp', payload, {
+            // ✅ Payload khác nhau
+            const payload = isRescheduleMode
+                ? {
+                    email: customerEmail,
+                    otp,
+                    tempBookingId,
+                    full_name: customerName,
+                    phone: customerPhone,
+                    isReschedule: true,
+                    rescheduleBookingId,
+                    deltaAmount: Math.max(0, deltaAmount),
+                }
+                : {
+                    email: customerEmail,
+                    otp,
+                    tempBookingId,
+                    full_name: customerName,
+                    phone: customerPhone
+                };
+
+            const endpoint = isRescheduleMode
+                ? '/api/payment/verify-reschedule-otp-momo'
+                : '/api/momo/verify-otp';
+
+            const res = await api.post(endpoint, payload, {
                 headers: { 'Content-Type': 'application/json' }
             });
 
@@ -905,22 +960,34 @@ const MomoApp = () => {
                 localStorage.setItem('momoCompletedBookingId', String(realBookingId));
                 paymentCompletedRef.current = true;
                 clearAllBookingData();
+
+                // ✅ Thông báo khác nhau
+                const successTitle = isRescheduleMode
+                    ? 'ĐỔI SUẤT THÀNH CÔNG'
+                    : 'THANH TOÁN THÀNH CÔNG';
+
+                const successMessage = isRescheduleMode
+                    ? `Đổi suất thành công! Bạn đã bù thêm ${Math.max(0, deltaAmount).toLocaleString('vi-VN')} điểm.`
+                    : 'Cảm ơn bạn đã đặt vé! Vui lòng kiểm tra email để nhận vé.';
+
+                const successNavigate = isRescheduleMode ? '/profile' : '/confirm-success';
+
                 openModal(
                     'success',
-                    'THANH TOÁN THÀNH CÔNG',
-                    'Cảm ơn bạn đã đặt vé! Vui lòng kiểm tra email để nhận vé.',
+                    successTitle,
+                    successMessage,
                     () => {
                         if (autoNavigateRef.current) {
                             clearTimeout(autoNavigateRef.current);
                         }
                         closeModal();
-                        safeNavigate('/confirm-success', { state: bookingData });
+                        safeNavigate(successNavigate, { state: bookingData });
                     }
                 );
                 autoNavigateRef.current = setTimeout(() => {
                     if (isModalOpenRef.current) {
                         closeModal();
-                        safeNavigate('/confirm-success', { state: bookingData });
+                        safeNavigate(successNavigate, { state: bookingData });
                     }
                     autoNavigateRef.current = null;
                 }, 3000);
@@ -1045,12 +1112,7 @@ const MomoApp = () => {
     };
 
     // ============================================================
-    // ✅ DISABLE RESEND BUTTON
-    // Chỉ disable khi:
-    //   - Đang gửi / đang verify
-    //   - Đã thanh toán
-    //   - Bị khóa
-    //   - OTP CHƯA hết hạn (timeLeft > 0)
+    // DISABLE RESEND BUTTON
     // ============================================================
 
     const isResendDisabled =
@@ -1066,9 +1128,7 @@ const MomoApp = () => {
 
     return (
         <div className="momo-checkout-page">
-
             <main className="momo-checkout-container">
-
                 <div className="momo-sidebar-wrapper">
                     <BookingSidebar
                         movie={movie}
@@ -1084,14 +1144,32 @@ const MomoApp = () => {
                         grandTotal={totalAmount}
                         isTimerActive={true}
                         remainingTime={timeLeft}
-                        showFoodSection={true}
+                        showFoodSection={!isRescheduleMode}
                         onTimeExpire={handleExpireFlow}
                     />
                 </div>
 
                 <div className="momo-otp-section">
-
                     <div className="otp-card">
+                        {/* ✅ BANNER RESCHEDULE */}
+                        {isRescheduleMode && (
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 10,
+                                padding: '10px 14px',
+                                background: '#fff3e6',
+                                border: '1px solid #f37021',
+                                borderRadius: 8,
+                                marginBottom: 12,
+                                fontSize: 13
+                            }}>
+                                <RefreshCw size={16} style={{ color: '#f37021', flexShrink: 0 }} />
+                                <span>
+                                    Đổi suất chiếu — Bù thêm <strong>{totalAmount.toLocaleString('vi-VN')} ₫</strong>
+                                </span>
+                            </div>
+                        )}
 
                         <div className="momo-qr-wrapper">
                             <img
@@ -1127,7 +1205,6 @@ const MomoApp = () => {
                             ))}
                         </div>
 
-                        {/* ✅ CHỈ HIỆN 1 Ô TIMER OTP */}
                         <div className={getTimerBoxClass()}>
                             {isLocked ? (
                                 <span className="timer-text" style={{
@@ -1155,7 +1232,6 @@ const MomoApp = () => {
                             )}
                         </div>
 
-                        {/* ✅ NÚT GỬI LẠI — CHỈ DISABLE, KHÔNG COUNTDOWN */}
                         <div className="momo-resend-wrapper">
                             <button
                                 type="button"
@@ -1193,13 +1269,10 @@ const MomoApp = () => {
                             className="btn-confirm-payment"
                             spinnerColor="#ffffff"
                         >
-                            XÁC NHẬN THANH TOÁN
+                            {isRescheduleMode ? 'XÁC NHẬN ĐỔI VÉ' : 'XÁC NHẬN THANH TOÁN'}
                         </LoadingButton>
-
                     </div>
-
                 </div>
-
             </main>
 
             <Modal
@@ -1222,7 +1295,6 @@ const MomoApp = () => {
                 confirmText="Xác nhận rời"
                 cancelText="Ở lại"
             />
-
         </div>
     );
 };

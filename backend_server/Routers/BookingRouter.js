@@ -4,7 +4,7 @@ const bookingController = require("../Controllers/BookingController");
 const { authenticateAdmin } = require("../Middlewares/AdminAuthMiddleware");
 
 /* ==========================================================
-    ADMIN ROUTES (Tất cả đều cần admin)
+    ADMIN ROUTES
 ========================================================== */
 
 // Lấy toàn bộ booking (không phân trang)
@@ -21,5 +21,21 @@ router.put("/update/:booking_id/status", authenticateAdmin, bookingController.up
 
 // Xóa booking
 router.delete("/delete/:booking_id", authenticateAdmin, bookingController.deleteBooking);
+
+/* ==========================================================
+    ✅ RESCHEDULE ROUTES (USER)
+========================================================== */
+
+// Lấy info để hiện form đổi suất
+router.get("/:booking_id/reschedule-info", bookingController.getRescheduleInfo);
+
+// Lấy danh sách suất có thể đổi
+router.get("/:booking_id/reschedule-options", bookingController.getRescheduleOptions);
+
+// Lấy ghế trống theo hạng ở suất mới
+router.get("/showtime/:showtime_id/available-seats", bookingController.getAvailableSeats);
+
+// Thực hiện đổi suất
+router.post("/:booking_id/reschedule", bookingController.rescheduleBooking);
 
 module.exports = router;

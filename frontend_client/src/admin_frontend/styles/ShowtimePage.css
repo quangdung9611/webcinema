@@ -135,7 +135,109 @@
 }
 
 /* ==========================================================
-   ✅ FORM TEXTAREA — LÝ DO THAY ĐỔI
+   ✅ TIME PICKER 24H — 2 SELECT GIỜ/PHÚT
+   ========================================================== */
+
+.showtime-time-picker {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 10px;
+    background: var(--bg-secondary);
+    border: var(--border-subtle);
+    border-radius: var(--radius-sm);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.showtime-time-picker:focus-within {
+    border-color: var(--accent-ice);
+    box-shadow: 0 0 0 3px var(--accent-ice-soft);
+}
+
+.showtime-time-picker .time-select-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: var(--border-subtle);
+    border-radius: var(--radius-sm);
+    background: var(--bg-tertiary);
+    transition: border-color var(--transition-fast);
+}
+
+.showtime-time-picker .time-select-wrap:hover {
+    border-color: var(--accent-ice-border);
+}
+
+.showtime-time-picker .time-select-wrap:focus-within {
+    border-color: var(--accent-ice);
+    box-shadow: 0 0 0 3px var(--accent-ice-soft);
+}
+
+.showtime-time-picker .time-select {
+    width: 60px;
+    min-width: 60px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--text-heading);
+    font-size: 1.05rem;
+    font-weight: var(--fw-bold);
+    font-family: inherit;
+    text-align: center;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
+    text-align: center;
+}
+
+.showtime-time-picker .time-select option {
+    background: var(--bg-secondary);
+    color: var(--text-heading);
+    padding: 8px;
+}
+
+.showtime-time-picker .time-unit {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: var(--fw-medium);
+    user-select: none;
+}
+
+.showtime-time-picker .time-separator {
+    color: var(--text-heading);
+    font-size: 1.5rem;
+    font-weight: var(--fw-bold);
+    line-height: 1;
+    user-select: none;
+}
+
+.showtime-time-picker .time-preview {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    padding: 8px 16px;
+    border-radius: var(--radius-round);
+    background: var(--accent-ice-soft);
+    border: 1px solid var(--accent-ice-border);
+    color: var(--accent-ice);
+    font-size: 1rem;
+    font-weight: var(--fw-bold);
+    font-family: 'Inter', monospace, 'Courier New';
+    letter-spacing: 0.08em;
+}
+
+.showtime-time-picker .time-preview svg {
+    flex-shrink: 0;
+    opacity: 0.9;
+}
+
+/* ==========================================================
+   FORM TEXTAREA — LÝ DO THAY ĐỔI
    ========================================================== */
 .showtime-form-textarea {
     width: 100%;
@@ -769,6 +871,18 @@
         font-size: 0.65rem;
         padding: 2px 8px;
     }
+
+    /* Time picker responsive */
+    .showtime-time-picker .time-select {
+        width: 55px;
+        min-width: 55px;
+        font-size: 1rem;
+    }
+
+    .showtime-time-picker .time-preview {
+        font-size: 0.9rem;
+        padding: 6px 12px;
+    }
 }
 
 @media (max-width: 768px) {
@@ -802,6 +916,18 @@
 
     .admin-table-wrapper {
         max-height: 500px;
+    }
+
+    /* Time picker mobile */
+    .showtime-time-picker {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .showtime-time-picker .time-preview {
+        width: 100%;
+        margin-left: 0;
+        justify-content: center;
     }
 }
 
@@ -848,6 +974,37 @@
 
     .admin-table-wrapper {
         max-height: 400px;
+    }
+
+    /* Time picker mobile nhỏ */
+    .showtime-time-picker {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        padding: 10px;
+    }
+
+    .showtime-time-picker .time-separator {
+        display: none;
+    }
+
+    .showtime-time-picker .time-select-wrap {
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .showtime-time-picker .time-select {
+        width: 100%;
+        min-width: 0;
+        text-align: left;
+        padding-left: 10px;
+    }
+
+    .showtime-time-picker .time-preview {
+        width: 100%;
+        margin-left: 0;
+        justify-content: center;
+        font-size: 1rem;
     }
 }
 

@@ -93,7 +93,7 @@ const ShowTimePage = () => {
     const abortControllerRef = useRef(null);
     const prevSearchRef = useRef('');
 
-    // ✅ CHỐNG SPAM: Ref chặn double-click/submit
+    // ✅ CHỐNG SPAM
     const isSubmittingRef = useRef(false);
     const isCancellingRef = useRef(false);
 
@@ -150,6 +150,50 @@ const ShowTimePage = () => {
             date: `${day}/${month}/${year}`,
             time: `${hour}:${minute}`
         };
+    };
+
+    // ======================================================
+    // ✅ HELPER: TÁCH GIỜ / PHÚT TỪ operating_start
+    // ======================================================
+
+    const getHourFromStart = () => {
+        const start = scheduleData.operating_start || '08:00';
+        return String(start).split(':')[0] || '08';
+    };
+
+    const getMinuteFromStart = () => {
+        const start = scheduleData.operating_start || '08:00';
+        return String(start).split(':')[1] || '00';
+    };
+
+    // ✅ Set giờ (không reset phút)
+    const handleHourChange = (e) => {
+        const newHour = e.target.value;
+        const currentMinute = getMinuteFromStart();
+
+        if (formErrors.operating_start) {
+            setFormErrors(prev => ({ ...prev, operating_start: '' }));
+        }
+
+        setScheduleData(prev => ({
+            ...prev,
+            operating_start: `${newHour}:${currentMinute}`
+        }));
+    };
+
+    // ✅ Set phút (không reset giờ)
+    const handleMinuteChange = (e) => {
+        const newMinute = e.target.value;
+        const currentHour = getHourFromStart();
+
+        if (formErrors.operating_start) {
+            setFormErrors(prev => ({ ...prev, operating_start: '' }));
+        }
+
+        setScheduleData(prev => ({
+            ...prev,
+            operating_start: `${currentHour}:${newMinute}`
+        }));
     };
 
     // ======================================================
@@ -291,7 +335,7 @@ const ShowTimePage = () => {
     };
 
     // ======================================================
-    // OPEN ADD (TẠO LỊCH CHIẾU)
+    // OPEN ADD
     // ======================================================
 
     const handleOpenAdd = () => {
@@ -309,7 +353,7 @@ const ShowTimePage = () => {
     };
 
     // ======================================================
-    // ✅ OPEN EDIT (SỬA SUẤT CHIẾU)
+    // OPEN EDIT
     // ======================================================
 
     const handleOpenEdit = async (showtime) => {
@@ -345,7 +389,7 @@ const ShowTimePage = () => {
     };
 
     // ======================================================
-    // ✅ OPEN CANCEL MODAL
+    // OPEN CANCEL MODAL
     // ======================================================
 
     const handleOpenCancel = async (showtime) => {
@@ -397,11 +441,10 @@ const ShowTimePage = () => {
     };
 
     // ======================================================
-    // ✅ CONFIRM CANCEL SHOWTIME — CHỐNG SPAM BẰNG REF
+    // CONFIRM CANCEL
     // ======================================================
 
     const handleConfirmCancel = async () => {
-        // ✅ CHẶN NGAY LẬP TỨC bằng ref (không phụ thuộc state)
         if (isCancellingRef.current) {
             console.log('⏭️ [CANCEL] Đang xử lý, bỏ qua click trùng');
             return;
@@ -412,7 +455,6 @@ const ShowTimePage = () => {
             return;
         }
 
-        // ✅ Khóa ngay
         isCancellingRef.current = true;
 
         try {
@@ -429,7 +471,6 @@ const ShowTimePage = () => {
                 emailSuccessCount
             } = res.data?.data || {};
 
-            // Reset ref TRƯỚC khi đóng modal
             isCancellingRef.current = false;
 
             setCancelModal({
@@ -682,13 +723,12 @@ const ShowTimePage = () => {
     };
 
     // ======================================================
-    // ✅ HANDLE SUBMIT — CHỐNG SPAM BẰNG REF
+    // HANDLE SUBMIT
     // ======================================================
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // ✅ CHẶN NGAY LẬP TỨC bằng ref
         if (isSubmittingRef.current) {
             console.log('⏭️ [SUBMIT] Đang xử lý, bỏ qua submit trùng');
             return;
@@ -843,7 +883,7 @@ const ShowTimePage = () => {
     };
 
     // ======================================================
-    // DELETE (XÓA SUẤT)
+    // DELETE
     // ======================================================
 
     const handleDelete = async (showtime) => {
@@ -1143,16 +1183,58 @@ const ShowTimePage = () => {
                         </div>
                     </div>
 
+                    {/* ✅ GIỜ CHIẾU — 2 SELECT 24H */}
                     {editingShowtime && (
                         <div className="showtime-form-group">
-                            <label className="showtime-form-label">Giờ chiếu</label>
-                            <input
-                                type="time"
-                                name="operating_start"
-                                value={scheduleData.operating_start || ''}
-                                onChange={handleChange}
-                                className="showtime-form-input"
-                            />
+                            <label className="showtime-form-label">
+                                Giờ chiếu
+                                <span className="showtime-form-hint">
+                                    (Định dạng 24 giờ)
+                                </span>
+                            </label>
+
+                            <div className="showtime-time-picker">
+                                <div className="time-select-wrap">
+                                    <select
+                                        value={getHourFromStart()}
+                                        onChange={handleHourChange}
+                                        className="showtime-form-select time-select"
+                                    >
+                                        {Array.from({ length: 24 }, (_, i) => {
+                                            const h = String(i).padStart(2, '0');
+                                            return (
+                                                <option key={h} value={h}>
+                                                    {h}
+                                                </option>
+                                            );
+                                        })}
+                                    </select>
+                                    <span className="time-unit">giờ</span>
+                                </div>
+
+                                <span className="time-separator">:</span>
+
+                                <div className="time-select-wrap">
+                                    <select
+                                        value={getMinuteFromStart()}
+                                        onChange={handleMinuteChange}
+                                        className="showtime-form-select time-select"
+                                    >
+                                        {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map(m => (
+                                            <option key={m} value={m}>
+                                                {m}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <span className="time-unit">phút</span>
+                                </div>
+
+                                <span className="time-preview">
+                                    <Clock size={14} />
+                                    {scheduleData.operating_start || '08:00'}
+                                </span>
+                            </div>
+
                             {formErrors.operating_start && (
                                 <span className="showtime-form-error">{formErrors.operating_start}</span>
                             )}

@@ -412,6 +412,18 @@ const MemberShip = lazy(() =>
 );
 
 // ============================================================
+// ✅ RESCHEDULE SELECT - CHỌN SUẤT MỚI (ĐỔI SUẤT CHIẾU)
+// ============================================================
+
+const RescheduleSelect = lazy(() =>
+    lazyRetry(() =>
+        import(
+            "./user_frontend/pages/RescheduleSelect"
+        )
+    )
+);
+
+// ============================================================
 // LAZY LOAD - ADMIN PAGES
 // ============================================================
 
@@ -926,6 +938,18 @@ const MAIN_ROUTES = [
         element: (
             <UserRouteGuard>
                 <Profile />
+            </UserRouteGuard>
+        ),
+    },
+
+    // ============================================================
+    // ✅ ĐỔI SUẤT CHIẾU (RESCHEDULE) — CHỌN SUẤT MỚI
+    // ============================================================
+    {
+        path: "reschedule/:bookingId/select",
+        element: (
+            <UserRouteGuard>
+                <RescheduleSelect />
             </UserRouteGuard>
         ),
     },

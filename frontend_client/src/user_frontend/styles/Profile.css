@@ -24,7 +24,6 @@
 
 /* =========================================================
    ✅ ẨN INPUT FILE MẶC ĐỊNH CỦA TRÌNH DUYỆT
-   (Dùng cho upload avatar - fix nút "Choose File" bị lệch)
    ========================================================= */
 .hidden-file-input {
     position: absolute;
@@ -529,7 +528,7 @@
 }
 
 /* =========================================================
-   EDIT ACTIONS ROW - 3 NÚT KẾ BÊN NHAU
+   EDIT ACTIONS ROW
    ========================================================= */
 
 .edit-actions-row {
@@ -642,7 +641,47 @@
 }
 
 /* =========================================================
-   PIN INPUT - 6 Ô TRÒN VỚI ICON MẮT CÁCH XA
+   ✅ NÚT ĐỔI SUẤT CHIẾU
+   ========================================================= */
+
+.btn-reschedule {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 10px;
+    padding: 8px 14px;
+    border: 1.5px solid rgba(39, 174, 96, 0.4);
+    border-radius: var(--radius-sm);
+    background: rgba(39, 174, 96, 0.1);
+    color: #27ae60;
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-bold);
+    font-family: var(--font-primary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+}
+
+.btn-reschedule:hover {
+    border-color: #27ae60;
+    background: rgba(39, 174, 96, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(39, 174, 96, 0.25);
+    color: #2ecc71;
+}
+
+.btn-reschedule:active {
+    transform: translateY(0);
+}
+
+.btn-reschedule svg {
+    flex-shrink: 0;
+}
+
+/* =========================================================
+   PIN INPUT
    ========================================================= */
 
 .pin-input-group {
@@ -1571,6 +1610,13 @@
         right: calc(-8px - 20px - 8px);
         width: 30px;
         height: 30px;
+    }
+
+    /* ✅ Nút đổi suất mobile */
+    .btn-reschedule {
+        width: 100%;
+        justify-content: center;
+        padding: 10px 14px;
     }
 }
 

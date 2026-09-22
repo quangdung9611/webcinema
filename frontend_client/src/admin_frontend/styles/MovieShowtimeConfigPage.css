@@ -62,7 +62,6 @@
 
 /* ============================================================
    CONTROL AREA
-   Đây là phần thay cho chuỗi nhiều card cũ.
    ============================================================ */
 
 .showtime-controls {
@@ -490,6 +489,25 @@
 .date-item.weekend {
     border-color: rgba(221, 226, 232, 0.18);
     background: rgba(221, 226, 232, 0.07);
+    color: var(--silver-light);
+}
+
+/* ============================================================
+   ✅ NGÀY QUÁ KHỨ / HÔM NAY
+   ============================================================ */
+
+.date-item.past {
+    opacity: 0.4;
+    filter: grayscale(1);
+    cursor: not-allowed;
+}
+
+.date-item.today {
+    border-color: var(--silver-primary);
+    box-shadow: 0 0 0 1px var(--silver-primary) inset;
+}
+
+.date-item.today .date-item-day {
     color: var(--silver-light);
 }
 
@@ -1012,8 +1030,6 @@
 
 /* ============================================================
    TABLE SHELL
-   Không còn max-height / overflow-y cho từng cell.
-   Chỉ scroll ngang khi màn hình quá hẹp.
    ============================================================ */
 
 .schedule-table-shell {
@@ -1123,6 +1139,21 @@
     color: var(--silver-dark);
 }
 
+/* ✅ Cột ngày đã qua — mờ đi */
+.schedule-table .date-column.past {
+    opacity: 0.4;
+}
+
+.schedule-table .date-column.past strong,
+.schedule-table .date-column.past span {
+    color: var(--text-disabled);
+}
+
+/* ✅ Cột ngày hôm nay — viền nhấn */
+.schedule-table .date-column.today {
+    box-shadow: inset 0 -3px 0 var(--silver-primary);
+}
+
 /* ============================================================
    PERIOD HEADER
    ============================================================ */
@@ -1179,9 +1210,6 @@
 
 /* ============================================================
    ROOM ROW
-   ============================================================
-
-   Cột loại phòng sticky để khi kéo ngang vẫn biết đang xem 2D/3D/VIP/IMAX.
    ============================================================ */
 
 .schedule-table .room-row td {
@@ -1232,6 +1260,11 @@
 
 .schedule-table .room-row:hover .slot-cell.weekend-cell {
     background: rgba(221, 226, 232, 0.05);
+}
+
+/* ✅ Ô ngày đã qua — mờ đi */
+.slot-cell.past-cell {
+    background: rgba(120, 120, 120, 0.03);
 }
 
 /* ============================================================
@@ -1291,6 +1324,34 @@
     border-color: var(--silver-bright);
     background: var(--premium-gradient-hover);
     transform: translateY(-1px);
+}
+
+/* ✅ SLOT ĐÃ QUA — DISABLED */
+.slot-button.past {
+    background: rgba(120, 120, 120, 0.08);
+    border-color: rgba(120, 120, 120, 0.15);
+    color: var(--text-disabled);
+    cursor: not-allowed;
+    opacity: 0.45;
+    text-decoration: line-through;
+    position: relative;
+}
+
+.slot-button.past:hover {
+    background: rgba(120, 120, 120, 0.08);
+    border-color: rgba(120, 120, 120, 0.15);
+    color: var(--text-disabled);
+    transform: none;
+    box-shadow: none;
+}
+
+.slot-button.past svg {
+    color: var(--text-disabled);
+}
+
+.slot-button:disabled {
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 .slot-disabled {

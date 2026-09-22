@@ -6,6 +6,8 @@ import {
     Info,
     ChevronLeft,
     ChevronRight,
+    RefreshCw,
+    Loader2,
 } from 'lucide-react';
 import api from '../../api/api';
 import socketService from '../../api/socket';
@@ -37,6 +39,14 @@ const Booking = () => {
     const { user: contextUser } = useAuth();
 
     // =========================================================
+    // ✅ RESCHEDULE MODE
+    // =========================================================
+
+    const isRescheduleMode = location.state?.mode === 'reschedule';
+    const rescheduleBookingId = location.state?.rescheduleBookingId || null;
+    const oldBookingInfo = location.state?.oldBooking || null;
+
+    // =========================================================
     // STATE
     // =========================================================
 
@@ -55,6 +65,14 @@ const Booking = () => {
     const [isTimerActive, setIsTimerActive] = useState(false);
     const [fetchError, setFetchError] = useState(null);
     const [pendingSeatIds, setPendingSeatIds] = useState([]);
+
+    // ✅ Số tiền vé cũ (chỉ dùng khi reschedule)
+    const [oldTotalAmount, setOldTotalAmount] = useState(
+        Number(location.state?.oldBooking?.old_total || 0)
+    );
+
+    // ✅ Đang submit reschedule
+    const [submittingReschedule, setSubmittingReschedule] = useState(false);
 
     // =========================================================
     // MODAL
@@ -122,7 +140,7 @@ const Booking = () => {
     }, []);
 
     // =========================================================
-    // MODAL
+    // MODAL HELPERS
     // =========================================================
 
     const closeModal = useCallback(() => {
@@ -154,15 +172,16 @@ const Booking = () => {
     }, []);
 
     // =========================================================
-    // RELEASE ONE SEAT
+    // RELEASE ONE SEAT (chỉ dùng cho flow thường)
     // =========================================================
 
     const releaseSeat = useCallback((seatId, requestedShowtimeId) => {
+        if (isRescheduleMode) return;
         const currentSocket = socketService.getSocket();
         if (!currentSocket || !currentSocket.connected) return;
         if (!seatId || !requestedShowtimeId) return;
         socketService.emit('client-huy-chon-ghe', { seatId, showtimeId: requestedShowtimeId });
-    }, []);
+    }, [isRescheduleMode]);
 
     // =========================================================
     // CLEAR BOOKING SESSION
@@ -173,7 +192,7 @@ const Booking = () => {
         console.log('[BOOKING] Clearing booking session...');
         const currentSocket = socketService.getSocket();
         const currentShowtimeId = currentShowtimeIdRef.current;
-        if (currentSocket?.connected && currentShowtimeId) {
+        if (!isRescheduleMode && currentSocket?.connected && currentShowtimeId) {
             selectedSeatsRef.current.forEach(seat => {
                 if (!seat?.seat_id) return;
                 releaseSeat(seat.seat_id, currentShowtimeId);
@@ -193,8 +212,7 @@ const Booking = () => {
         setSeats(prev => prev.map(seat => ({ ...seat, is_locked_by_user: false, held_by_other: false })));
         clearOwnerToken();
         isSessionClearedRef.current = true;
-        console.log('[BOOKING] Booking session cleared');
-    }, [clearBookingLocalStorage, clearOwnerToken, releaseSeat]);
+    }, [clearBookingLocalStorage, clearOwnerToken, releaseSeat, isRescheduleMode]);
 
     // =========================================================
     // SESSION GUARD
@@ -288,6 +306,9 @@ const Booking = () => {
         if (stateData.date) setSelectedDate(stateData.date);
         if (stateData.cinema) setSelectedCinema(stateData.cinema);
         if (stateData.showtime) setSelectedShowtime(stateData.showtime);
+        if (stateData.oldBooking?.old_total) {
+            setOldTotalAmount(Number(stateData.oldBooking.old_total));
+        }
     }, [location.state]);
 
     // =========================================================
@@ -391,39 +412,88 @@ const Booking = () => {
     }, [selectedCinema, selectedDate, movie]);
 
     // =========================================================
-    // FETCH SEATS
+    // ✅ FETCH SEATS
+    // - Flow thường: dùng /api/seats/showtime/:id + socket lock
+    // - Reschedule: dùng /api/bookings/showtime/:id/available-seats
     // =========================================================
 
     const fetchSeats = useCallback(async () => {
         if (!showtimeId) return;
         try {
             setLoading(true);
-            const [detailRes, seatsRes] = await Promise.all([
-                api.get(`/api/showtimes/detail/${showtimeId}`),
-                api.get(`/api/seats/showtime/${showtimeId}`)
-            ]);
-            setShowtimeDetail(detailRes.data?.data);
-            const seatsData = seatsRes.data?.data || [];
-            setSelectedSeats([]);
-            selectedSeatsRef.current = [];
-            setPendingSeatIds([]);
-            pendingLocksRef.current.forEach(pending => { if (pending?.timer) clearTimeout(pending.timer); });
-            pendingLocksRef.current.clear();
-            clearBookingLocalStorage();
-            clearOwnerToken();
-            setIsTimerActive(false);
-            const normalizedSeats = seatsData.map(seat => ({ ...seat, is_locked_by_user: false, held_by_other: false }));
-            setSeats(normalizedSeats);
-            seatsRef.current = normalizedSeats;
-            if (socketService.isConnectedStatus()) {
-                socketService.emit('request-holding-seats', { showtimeId });
+
+            if (isRescheduleMode) {
+                // ✅ RESCHEDULE: lấy TẤT CẢ ghế (không filter seat_type)
+                const [detailRes, seatsRes] = await Promise.all([
+                    api.get(`/api/showtimes/detail/${showtimeId}`),
+                    api.get(`/api/bookings/showtime/${showtimeId}/available-seats`)
+                ]);
+
+                setShowtimeDetail(detailRes.data?.data);
+
+                const availableSeats = seatsRes.data?.data || [];
+
+                // ✅ Lấy TẤT CẢ ghế của phòng (kể cả đã đặt) để vẽ sơ đồ đầy đủ
+                // Gọi API seats của showtime (giống flow thường) để lấy hết ghế + trạng thái
+                let allSeats = [];
+                try {
+                    const allSeatsRes = await api.get(`/api/seats/showtime/${showtimeId}`);
+                    allSeats = allSeatsRes.data?.data || [];
+                } catch (err) {
+                    console.warn('Không lấy được all seats, dùng available seats:', err);
+                    allSeats = availableSeats;
+                }
+
+                // ✅ Đánh dấu ghế nào available (không có trong danh sách đã đặt)
+                const availableSet = new Set(availableSeats.map(s => Number(s.seat_id)));
+
+                const normalizedSeats = allSeats.map(seat => {
+                    const isAvailable = availableSet.has(Number(seat.seat_id));
+                    return {
+                        ...seat,
+                        // ✅ Nếu không available → đánh dấu Booked
+                        seat_status: isAvailable
+                            ? 'Available'
+                            : (seat.seat_status || 'Booked'),
+                        is_locked_by_user: false,
+                        held_by_other: !isAvailable,
+                    };
+                });
+
+                setSeats(normalizedSeats);
+                seatsRef.current = normalizedSeats;
+                setSelectedSeats([]);
+                selectedSeatsRef.current = [];
+            } else {
+                // ✅ FLOW THƯỜNG: giữ nguyên
+                const [detailRes, seatsRes] = await Promise.all([
+                    api.get(`/api/showtimes/detail/${showtimeId}`),
+                    api.get(`/api/seats/showtime/${showtimeId}`)
+                ]);
+                setShowtimeDetail(detailRes.data?.data);
+                const seatsData = seatsRes.data?.data || [];
+                setSelectedSeats([]);
+                selectedSeatsRef.current = [];
+                setPendingSeatIds([]);
+                pendingLocksRef.current.forEach(pending => { if (pending?.timer) clearTimeout(pending.timer); });
+                pendingLocksRef.current.clear();
+                clearBookingLocalStorage();
+                clearOwnerToken();
+                setIsTimerActive(false);
+                const normalizedSeats = seatsData.map(seat => ({ ...seat, is_locked_by_user: false, held_by_other: false }));
+                setSeats(normalizedSeats);
+                seatsRef.current = normalizedSeats;
+                if (socketService.isConnectedStatus()) {
+                    socketService.emit('request-holding-seats', { showtimeId });
+                }
             }
         } catch (err) {
             console.error('Lỗi tải sơ đồ ghế:', err);
+            showErrorModal('Không thể tải ghế', 'Vui lòng thử lại sau.');
         } finally {
             setLoading(false);
         }
-    }, [showtimeId, clearBookingLocalStorage, clearOwnerToken]);
+    }, [showtimeId, clearBookingLocalStorage, clearOwnerToken, isRescheduleMode, showErrorModal]);
 
     useEffect(() => {
         if (showtimeId) {
@@ -433,30 +503,20 @@ const Booking = () => {
     }, [showtimeId, fetchSeats]);
 
     // =========================================================
-    // SOCKET REALTIME
+    // SOCKET REALTIME (chỉ flow thường)
     // =========================================================
 
     useEffect(() => {
         if (!showtimeId) return;
+        if (isRescheduleMode) return;
         const currentSocket = socketService.getSocket();
         if (!currentSocket) return;
 
-        // =====================================================
-        // ✅ HANDLE SEAT LOCKED — BỎ CHECK showtimeId
-        // =====================================================
         const handleSeatLocked = (data = {}) => {
-            console.log('📥 [BOOKING] server-khoa-ghe NHẬN:', data);
-
             const seatId = Number(data.seatId);
-            if (!seatId) {
-                console.warn('⚠️ [BOOKING] Không có seatId');
-                return;
-            }
+            if (!seatId) return;
 
-            // ✅ Check lock thất bại
             if (data.locked === false || data.success === false) {
-                console.log('❌ [BOOKING] Lock thất bại — ghế bị người khác giữ');
-
                 const pending = pendingLocksRef.current.get(seatId);
                 if (pending?.timer) clearTimeout(pending.timer);
                 pendingLocksRef.current.delete(seatId);
@@ -474,7 +534,6 @@ const Booking = () => {
                 return;
             }
 
-            // ✅ Lấy socket MỚI NHẤT
             const liveSocket = socketService.getSocket();
             const mySocketId = liveSocket?.id ? String(liveSocket.id) : null;
             const myUserId = userIdRef.current ? Number(userIdRef.current) : null;
@@ -488,28 +547,13 @@ const Booking = () => {
                 (eventOwnerToken && mySocketId && eventOwnerToken === mySocketId) ||
                 (eventUserId && myUserId && eventUserId === myUserId);
 
-            console.log('🔍 [BOOKING] Check owner:', {
-                mySocketId,
-                myUserId,
-                eventSocketId,
-                eventOwnerToken,
-                eventUserId,
-                isOwnLock
-            });
-
-            // ✅ Nếu là lock của mình
             if (isOwnLock) {
-                console.log('✅ [BOOKING] Lock của mình — xử lý thành công');
-
                 const pending = pendingLocksRef.current.get(seatId);
                 if (pending?.timer) clearTimeout(pending.timer);
                 pendingLocksRef.current.delete(seatId);
                 setPendingSeatIds(prev => prev.filter(id => Number(id) !== seatId));
                 const matchedSeat = seatsRef.current.find(seat => Number(seat.seat_id) === seatId);
-                if (!matchedSeat) {
-                    console.warn('⚠️ [BOOKING] Không tìm thấy seat trong seatsRef:', seatId);
-                    return;
-                }
+                if (!matchedSeat) return;
                 setSelectedSeats(prev => {
                     const exists = prev.some(seat => Number(seat.seat_id) === seatId);
                     if (exists) return prev;
@@ -532,8 +576,6 @@ const Booking = () => {
                 return;
             }
 
-            // ✅ Không phải lock của mình → đánh dấu held_by_other
-            console.log('👥 [BOOKING] Lock của người khác — đánh dấu held_by_other');
             setSeats(prev => prev.map(seat =>
                 Number(seat.seat_id) === seatId
                     ? { ...seat, is_locked_by_user: true, held_by_other: true }
@@ -541,9 +583,6 @@ const Booking = () => {
             ));
         };
 
-        // =====================================================
-        // ✅ HANDLE SEAT UNLOCKED
-        // =====================================================
         const handleSeatUnlocked = (data = {}) => {
             const seatId = Number(data.seatId);
             if (!seatId) return;
@@ -560,36 +599,26 @@ const Booking = () => {
             ));
         };
 
-        // =====================================================
-        // ✅ HANDLE SEAT LIST
-        // =====================================================
         const handleSeatList = (seatList = []) => {
             if (!Array.isArray(seatList)) return;
-            console.log('📥 [BOOKING] server-gui-danh-sach-dang-giu:', seatList);
-
             const liveSocket = socketService.getSocket();
             const mySocketId = liveSocket?.id ? String(liveSocket.id) : null;
             const myUserId = userIdRef.current ? Number(userIdRef.current) : null;
 
             setSeats(prev => {
                 const updated = [...prev];
-
                 seatList.forEach(lock => {
                     const seatId = Number(lock.seatId);
                     if (!seatId) return;
-
                     const index = updated.findIndex(seat => Number(seat.seat_id) === seatId);
                     if (index === -1) return;
-
                     const lockSocketId = lock.socketId ? String(lock.socketId) : null;
                     const lockOwnerToken = lock.ownerToken ? String(lock.ownerToken) : null;
                     const lockUserId = lock.userId ? Number(lock.userId) : null;
-
                     const isOwnLock =
                         (lockSocketId && mySocketId && lockSocketId === mySocketId) ||
                         (lockOwnerToken && mySocketId && lockOwnerToken === mySocketId) ||
                         (lockUserId && myUserId && lockUserId === myUserId);
-
                     updated[index] = {
                         ...updated[index],
                         is_locked_by_user: !isOwnLock,
@@ -600,18 +629,12 @@ const Booking = () => {
             });
         };
 
-        // =====================================================
-        // ✅ HANDLE SEAT LOCK ERROR
-        // =====================================================
         const handleSeatLockError = (data = {}) => {
-            console.error('❌ [BOOKING] server-seat-lock-error:', data);
-
             pendingLocksRef.current.forEach((pending) => {
                 if (pending?.timer) clearTimeout(pending.timer);
             });
             pendingLocksRef.current.clear();
             setPendingSeatIds([]);
-
             showErrorModal(
                 'Không thể giữ ghế',
                 data.message || 'Hệ thống không thể giữ ghế. Vui lòng chọn ghế khác.'
@@ -629,10 +652,10 @@ const Booking = () => {
             currentSocket.off('server-gui-danh-sach-dang-giu', handleSeatList);
             currentSocket.off('server-seat-lock-error', handleSeatLockError);
         };
-    }, [showtimeId, showErrorModal]);
+    }, [showtimeId, showErrorModal, isRescheduleMode]);
 
     // =========================================================
-    // REGISTER PENDING LOCK
+    // REGISTER PENDING LOCK (flow thường)
     // =========================================================
 
     const registerPendingLock = useCallback((seatId, requestedShowtimeId) => {
@@ -644,7 +667,6 @@ const Booking = () => {
         const timer = setTimeout(() => {
             const pending = pendingLocksRef.current.get(numericSeatId);
             if (!pending) return;
-            console.warn(`⚠️ [BOOKING] Lock timeout cho ghế ${numericSeatId}`);
             pendingLocksRef.current.delete(numericSeatId);
             setPendingSeatIds(prev => prev.filter(id => Number(id) !== numericSeatId));
             setSelectedSeats(prev => prev.filter(seat => Number(seat.seat_id) !== numericSeatId));
@@ -664,34 +686,114 @@ const Booking = () => {
     }, [showErrorModal]);
 
     // =========================================================
-    // HANDLE SEAT CLICK
+    // ✅ HANDLE SEAT CLICK
+    // - Reschedule: chọn ghế tự do, KHÔNG dùng socket
+    // - Flow thường: dùng socket lock
     // =========================================================
 
     const handleSeatClick = useCallback((seat) => {
         if (!seat) return;
         const numericSeatId = Number(seat.seat_id);
         if (!numericSeatId) return;
-        if (seat.seat_status === 'Booked' || Number(seat.is_active) === 0 || seat.held_by_other || seat.is_locked_by_user) return;
+
+        // Check ghế đã đặt / bảo trì
+        if (seat.seat_status === 'Booked' || Number(seat.is_active) === 0) return;
+
+        // ===================================================
+        // ✅ RESCHEDULE MODE: chọn ghế tự do, không socket
+        // ===================================================
+        if (isRescheduleMode) {
+            // Check ghế đang bị người khác giữ
+            if (seat.held_by_other || seat.is_locked_by_user) {
+                showErrorModal('Ghế không khả dụng', 'Ghế này đang được người khác chọn.');
+                return;
+            }
+
+            const couple = isCoupleSeat(seat);
+            let seatsToToggle = [seat];
+
+            if (couple) {
+                const pairSeat = getCouplePair(seat, seatsRef.current);
+                if (!pairSeat) {
+                    showErrorModal('Ghế Couple không hợp lệ', 'Không tìm thấy ghế đôi đi kèm.');
+                    return;
+                }
+                // Check ghế đôi có trống không
+                if (pairSeat.seat_status === 'Booked' ||
+                    Number(pairSeat.is_active) === 0 ||
+                    pairSeat.held_by_other ||
+                    pairSeat.is_locked_by_user) {
+                    showErrorModal('Ghế đôi không khả dụng', 'Một ghế trong cặp Couple đang không trống.');
+                    return;
+                }
+                seatsToToggle = [seat, pairSeat];
+            }
+
+            const currentSelected = selectedSeatsRef.current;
+            const allSelected = seatsToToggle.every(targetSeat =>
+                currentSelected.some(s => Number(s.seat_id) === Number(targetSeat.seat_id))
+            );
+
+            // === BỎ CHỌN ===
+            if (allSelected) {
+                const updated = currentSelected.filter(s =>
+                    !seatsToToggle.some(t => Number(t.seat_id) === Number(s.seat_id))
+                );
+                setSelectedSeats(updated);
+                selectedSeatsRef.current = updated;
+                return;
+            }
+
+            // === CHỌN MỚI ===
+            const newSeatCount = currentSelected.length + seatsToToggle.length;
+            if (newSeatCount > MAX_SEATS) {
+                setModalConfig({
+                    show: true,
+                    type: 'error',
+                    title: 'Giới hạn ghế',
+                    message: 'Bạn chỉ được chọn tối đa 8 ghế!',
+                    onConfirm: closeModal,
+                    onCancel: closeModal
+                });
+                return;
+            }
+
+            const updated = [...currentSelected, ...seatsToToggle];
+            setSelectedSeats(updated);
+            selectedSeatsRef.current = updated;
+            return;
+        }
+
+        // ===================================================
+        // FLOW THƯỜNG (socket)
+        // ===================================================
         if (pendingSeatIds.some(id => Number(id) === numericSeatId)) return;
+
         const currentSocket = socketService.getSocket();
         if (!currentSocket || !currentSocket.connected) {
             showErrorModal('Phiên làm việc hết hạn', 'Socket đã ngắt kết nối. Vui lòng tải lại trang.');
             return;
         }
+
         const ownerToken = getOwnerToken();
         if (!ownerToken) {
             showErrorModal('Không thể giữ ghế', 'Không xác định được phiên giữ ghế. Vui lòng tải lại trang.');
             return;
         }
+
         const couple = isCoupleSeat(seat);
         let seatsToToggle = [seat];
+
         if (couple) {
             const pairSeat = getCouplePair(seat, seatsRef.current);
             if (!pairSeat) {
                 showErrorModal('Ghế Couple không hợp lệ', 'Không tìm thấy ghế đôi đi kèm.');
                 return;
             }
-            if (pairSeat.seat_status === 'Booked' || Number(pairSeat.is_active) === 0 || pairSeat.held_by_other || pairSeat.is_locked_by_user) {
+            if (pairSeat.seat_status === 'Booked' ||
+                Number(pairSeat.is_active) === 0 ||
+                pairSeat.held_by_other ||
+                pairSeat.is_locked_by_user) {
                 showErrorModal('Ghế đôi không khả dụng', 'Một ghế trong cặp Couple hiện không thể chọn.');
                 return;
             }
@@ -699,10 +801,12 @@ const Booking = () => {
             if (pairPending) return;
             seatsToToggle = [seat, pairSeat];
         }
+
         const currentSelected = selectedSeatsRef.current;
         const allSelected = seatsToToggle.every(targetSeat =>
             currentSelected.some(selectedSeat => Number(selectedSeat.seat_id) === Number(targetSeat.seat_id))
         );
+
         if (allSelected) {
             seatsToToggle.forEach(targetSeat => { releaseSeat(targetSeat.seat_id, showtimeId); });
             const updated = currentSelected.filter(selectedSeat =>
@@ -726,6 +830,7 @@ const Booking = () => {
             }
             return;
         }
+
         const newSeatCount = currentSelected.length + seatsToToggle.length;
         if (newSeatCount > MAX_SEATS) {
             setModalConfig({
@@ -738,41 +843,120 @@ const Booking = () => {
             });
             return;
         }
+
         const hasPending = seatsToToggle.some(targetSeat =>
             pendingSeatIds.some(id => Number(id) === Number(targetSeat.seat_id))
         );
         if (hasPending) return;
+
         const hasOtherLock = seatsToToggle.some(targetSeat => targetSeat.held_by_other || targetSeat.is_locked_by_user);
         if (hasOtherLock) return;
+
         seatsToToggle.forEach(targetSeat => { registerPendingLock(targetSeat.seat_id, showtimeId); });
         seatsToToggle.forEach(targetSeat => {
-            console.log('📤 [BOOKING] EMIT client-chon-ghe:', { seatId: targetSeat.seat_id, showtimeId, ownerToken });
             socketService.emit('client-chon-ghe', { seatId: targetSeat.seat_id, showtimeId, ownerToken });
         });
-    }, [pendingSeatIds, showtimeId, getOwnerToken, isCoupleSeat, getCouplePair, registerPendingLock, releaseSeat, showErrorModal, closeModal, clearOwnerToken]);
+    }, [
+        pendingSeatIds, showtimeId, getOwnerToken, isCoupleSeat, getCouplePair,
+        registerPendingLock, releaseSeat, showErrorModal, closeModal, clearOwnerToken,
+        isRescheduleMode
+    ]);
 
     // =========================================================
-    // SAVE SELECTED SEATS
+    // SAVE SELECTED SEATS (flow thường)
     // =========================================================
 
     useEffect(() => {
-        if (pendingSeatIds.length === 0 && selectedSeats.length > 0) {
+        if (pendingSeatIds.length === 0 && selectedSeats.length > 0 && !isRescheduleMode) {
             localStorage.setItem('selectedSeats', JSON.stringify(selectedSeats));
             localStorage.setItem('currentShowtimeId', String(showtimeId));
             const ownerToken = ownerTokenRef.current || localStorage.getItem('bookingOwnerToken');
             if (ownerToken) localStorage.setItem('bookingOwnerToken', ownerToken);
         }
-    }, [pendingSeatIds.length, selectedSeats, showtimeId]);
+    }, [pendingSeatIds.length, selectedSeats, showtimeId, isRescheduleMode]);
 
     // =========================================================
-    // HANDLE CONTINUE
+    // ✅ SUBMIT RESCHEDULE
+    // =========================================================
+
+    const submitReschedule = useCallback(async () => {
+        if (!isRescheduleMode || !rescheduleBookingId) return;
+        if (selectedSeats.length === 0) {
+            setModalConfig({
+                show: true,
+                type: 'warning',
+                title: 'THÔNG BÁO',
+                message: 'Vui lòng chọn ít nhất một ghế.',
+                onConfirm: closeModal,
+                onCancel: closeModal
+            });
+            return;
+        }
+
+        setSubmittingReschedule(true);
+
+        try {
+            const res = await api.post(
+                `/api/bookings/${rescheduleBookingId}/reschedule`,
+                {
+                    new_showtime_id: showtimeId,
+                    new_seat_ids: selectedSeats.map(s => Number(s.seat_id))
+                }
+            );
+
+            if (res.data?.success) {
+                const data = res.data.data;
+                const delta = Number(data.priceDifference || 0);
+
+                let message = 'Đổi suất chiếu thành công!';
+                if (delta > 0) {
+                    message = `Đổi suất thành công! Bạn đã bù thêm ${delta.toLocaleString('vi-VN')} điểm vào tài khoản.`;
+                } else if (delta < 0) {
+                    message = `Đổi suất thành công! Hệ thống đã hoàn ${Math.abs(delta).toLocaleString('vi-VN')} điểm vào tài khoản của bạn.`;
+                }
+
+                setModalConfig({
+                    show: true,
+                    type: 'success',
+                    title: 'ĐỔI SUẤT THÀNH CÔNG',
+                    message,
+                    onConfirm: () => {
+                        closeModal();
+                        navigate('/profile');
+                    },
+                    onCancel: () => {
+                        closeModal();
+                        navigate('/profile');
+                    }
+                });
+
+                // Tự về profile sau 5s
+                setTimeout(() => {
+                    navigate('/profile');
+                }, 5000);
+
+            } else {
+                showErrorModal(
+                    'Đổi suất thất bại',
+                    res.data?.message || 'Có lỗi xảy ra.'
+                );
+            }
+        } catch (err) {
+            console.error('Reschedule error:', err);
+            showErrorModal(
+                'Đổi suất thất bại',
+                err.response?.data?.message || 'Có lỗi xảy ra khi đổi suất. Vui lòng thử lại.'
+            );
+        } finally {
+            setSubmittingReschedule(false);
+        }
+    }, [isRescheduleMode, rescheduleBookingId, selectedSeats, showtimeId, navigate, closeModal, showErrorModal]);
+
+    // =========================================================
+    // ✅ HANDLE CONTINUE
     // =========================================================
 
     const handleContinue = useCallback(() => {
-        if (pendingSeatIds.length > 0) {
-            showErrorModal('Đang xác nhận ghế', 'Hệ thống đang xác nhận ghế bạn chọn. Vui lòng đợi một chút rồi tiếp tục.');
-            return;
-        }
         if (selectedSeats.length === 0) {
             setModalConfig({
                 show: true,
@@ -784,11 +968,29 @@ const Booking = () => {
             });
             return;
         }
+
+        // ===================================================
+        // ✅ RESCHEDULE MODE: gọi API trực tiếp
+        // ===================================================
+        if (isRescheduleMode) {
+            submitReschedule();
+            return;
+        }
+
+        // ===================================================
+        // FLOW THƯỜNG
+        // ===================================================
+        if (pendingSeatIds.length > 0) {
+            showErrorModal('Đang xác nhận ghế', 'Hệ thống đang xác nhận ghế bạn chọn. Vui lòng đợi một chút rồi tiếp tục.');
+            return;
+        }
+
         const currentSocket = socketService.getSocket();
         if (!currentSocket || !currentSocket.connected) {
             showErrorModal('Socket đã ngắt kết nối', 'Phiên giữ ghế không còn hoạt động. Vui lòng tải lại trang và chọn ghế lại.');
             return;
         }
+
         const ownerToken = ownerTokenRef.current || localStorage.getItem('bookingOwnerToken') || currentSocket.id;
         if (!ownerToken) {
             showErrorModal('Không xác định được phiên giữ ghế', 'Vui lòng tải lại trang và chọn ghế lại.');
@@ -811,10 +1013,14 @@ const Booking = () => {
             state: { movie, selectedCinema, selectedDate, selectedShowtime, selectedSeats, showtimeDetail, ownerToken }
         });
         setTimeout(() => { setIsNavigating(false); }, 3000);
-    }, [pendingSeatIds.length, selectedSeats, showtimeId, movie, selectedCinema, selectedDate, selectedShowtime, showtimeDetail, navigate, showErrorModal, closeModal, contextUser]);
+    }, [
+        selectedSeats, pendingSeatIds.length, showtimeId, movie, selectedCinema,
+        selectedDate, selectedShowtime, showtimeDetail, navigate, showErrorModal,
+        closeModal, contextUser, isRescheduleMode, submitReschedule
+    ]);
 
     // =========================================================
-    // CLEANUP PENDING TIMERS
+    // CLEANUP
     // =========================================================
 
     useEffect(() => {
@@ -852,7 +1058,10 @@ const Booking = () => {
     // =========================================================
 
     const totalTicketPrice = useMemo(() => {
-        return selectedSeats.reduce((sum, seat) => sum + Number(seat.price || 0), 0);
+        return selectedSeats.reduce((sum, seat) => {
+            // ✅ Reschedule: tính giá theo price_config mới, không dùng seat.price (giá cũ)
+            return sum + Number(seat.price || 0);
+        }, 0);
     }, [selectedSeats]);
 
     // =========================================================
@@ -877,6 +1086,14 @@ const Booking = () => {
     return (
         <>
             <div className="booking-wrapper">
+                {/* ✅ RESCHEDULE BANNER */}
+                {isRescheduleMode && (
+                    <div className="reschedule-banner">
+                        <RefreshCw size={16} />
+                        <span>Bạn đang đổi suất chiếu — Chọn ghế mới (tự do số lượng & hạng)</span>
+                    </div>
+                )}
+
                 <div className="booking-progress-wrapper">
                     <BookingProgress currentStep={2} />
                 </div>
@@ -898,6 +1115,7 @@ const Booking = () => {
                                         <select
                                             value={selectedCinema?.cinema_id || ''}
                                             onChange={e => {
+                                                if (isRescheduleMode) return;
                                                 if (selectedSeats.length > 0 || pendingSeatIds.length > 0) {
                                                     isSessionClearedRef.current = false;
                                                     clearBookingSession();
@@ -908,6 +1126,7 @@ const Booking = () => {
                                                 setSelectedShowtime(null);
                                                 setAvailableShowtimes([]);
                                             }}
+                                            disabled={isRescheduleMode}
                                         >
                                             <option value="">-- Chọn rạp --</option>
                                             {cinemas.map(cinema => (
@@ -929,6 +1148,7 @@ const Booking = () => {
                                                     className={`compact-card ${selectedDate === date ? 'active' : ''}`}
                                                     onClick={() => {
                                                         if (!selectedCinema) return;
+                                                        if (isRescheduleMode) return;
                                                         if (selectedSeats.length > 0 || pendingSeatIds.length > 0) {
                                                             isSessionClearedRef.current = false;
                                                             clearBookingSession();
@@ -963,6 +1183,7 @@ const Booking = () => {
                                                             key={stId}
                                                             className={`compact-card time-card ${active ? 'active' : ''}`}
                                                             onClick={() => {
+                                                                if (isRescheduleMode) return;
                                                                 if (selectedSeats.length > 0 || pendingSeatIds.length > 0) {
                                                                     isSessionClearedRef.current = false;
                                                                     clearBookingSession();
@@ -986,6 +1207,7 @@ const Booking = () => {
                                 </div>
                             </nav>
                         </section>
+
                         <section className="booking-section booking-seat-section">
                             <div className="section-heading">
                                 <div className="section-number">02</div>
@@ -1002,66 +1224,73 @@ const Booking = () => {
                             <div className="section-divider" />
                             <div className="seat-selection-content">
                                 {selectedShowtime ? (
-                                    <div className="seat-map-booking">
-                                        <div className="screen-header">
-                                            <div className="screen-glow" />
-                                            <div className="screen-line" />
-                                            <span>MÀN HÌNH</span>
+                                    loading ? (
+                                        <div className="placeholder-msg">
+                                            <Loader2 size={24} className="spin-icon" />
+                                            <p>Đang tải sơ đồ ghế...</p>
                                         </div>
-                                        <div className="seats-layout">
-                                            {(() => {
-                                                const sortedRowKeys = Object.keys(groupedSeats).sort((a, b) => {
-                                                    const aNum = parseInt(a);
-                                                    const bNum = parseInt(b);
-                                                    if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
-                                                    return a.localeCompare(b);
-                                                });
-                                                return sortedRowKeys.map(row => {
-                                                    const rowSeats = groupedSeats[row] || [];
-                                                    const displaySeats = rowSeats.filter(seat => isCoupleDisplaySeat(seat));
-                                                    return (
-                                                        <div key={row} className="seat-row">
-                                                            <span className="row-id">{row}</span>
-                                                            <div className="row-items">
-                                                                {displaySeats.map(seat => {
-                                                                    const couple = isCoupleSeat(seat);
-                                                                    const isSelectedByMe = selectedSeats.some(selected => Number(selected.seat_id) === Number(seat.seat_id));
-                                                                    const isPending = pendingSeatIds.some(id => Number(id) === Number(seat.seat_id));
-                                                                    let displayNumber = seat.seat_number;
-                                                                    if (couple) {
-                                                                        const pairSeat = getCouplePair(seat, seats);
-                                                                        if (pairSeat) displayNumber = `${seat.seat_number}-${pairSeat.seat_number}`;
-                                                                    }
-                                                                    return (
-                                                                        <Seat
-                                                                            key={seat.seat_id}
-                                                                            type={seat.seat_type}
-                                                                            selected={isSelectedByMe}
-                                                                            sold={seat.seat_status === 'Booked'}
-                                                                            maintenance={Number(seat.is_active) === 0}
-                                                                            locked={isPending || (seat.is_locked_by_user && !isSelectedByMe)}
-                                                                            heldByOther={Boolean(seat.held_by_other)}
-                                                                            number={displayNumber}
-                                                                            onClick={() => handleSeatClick(seat)}
-                                                                        />
-                                                                    );
-                                                                })}
+                                    ) : (
+                                        <div className="seat-map-booking">
+                                            <div className="screen-header">
+                                                <div className="screen-glow" />
+                                                <div className="screen-line" />
+                                                <span>MÀN HÌNH</span>
+                                            </div>
+                                            <div className="seats-layout">
+                                                {(() => {
+                                                    const sortedRowKeys = Object.keys(groupedSeats).sort((a, b) => {
+                                                        const aNum = parseInt(a);
+                                                        const bNum = parseInt(b);
+                                                        if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
+                                                        return a.localeCompare(b);
+                                                    });
+                                                    return sortedRowKeys.map(row => {
+                                                        const rowSeats = groupedSeats[row] || [];
+                                                        const displaySeats = rowSeats.filter(seat => isCoupleDisplaySeat(seat));
+                                                        return (
+                                                            <div key={row} className="seat-row">
+                                                                <span className="row-id">{row}</span>
+                                                                <div className="row-items">
+                                                                    {displaySeats.map(seat => {
+                                                                        const couple = isCoupleSeat(seat);
+                                                                        const isSelectedByMe = selectedSeats.some(selected => Number(selected.seat_id) === Number(seat.seat_id));
+                                                                        const isPending = pendingSeatIds.some(id => Number(id) === Number(seat.seat_id));
+                                                                        let displayNumber = seat.seat_number;
+                                                                        if (couple) {
+                                                                            const pairSeat = getCouplePair(seat, seats);
+                                                                            if (pairSeat) displayNumber = `${seat.seat_number}-${pairSeat.seat_number}`;
+                                                                        }
+                                                                        return (
+                                                                            <Seat
+                                                                                key={seat.seat_id}
+                                                                                type={seat.seat_type}
+                                                                                selected={isSelectedByMe}
+                                                                                sold={seat.seat_status === 'Booked'}
+                                                                                maintenance={Number(seat.is_active) === 0}
+                                                                                locked={isPending || (seat.is_locked_by_user && !isSelectedByMe)}
+                                                                                heldByOther={Boolean(seat.held_by_other)}
+                                                                                number={displayNumber}
+                                                                                onClick={() => handleSeatClick(seat)}
+                                                                            />
+                                                                        );
+                                                                    })}
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    );
-                                                });
-                                            })()}
+                                                        );
+                                                    });
+                                                })()}
+                                            </div>
+                                            <div className="seat-legend">
+                                                <div className="leg-item"><div className="box maintenance" />Bảo trì</div>
+                                                <div className="leg-item"><div className="box normal" />Thường</div>
+                                                <div className="leg-item"><div className="box vip" />VIP</div>
+                                                <div className="leg-item"><div className="box couple" />Đôi</div>
+                                                <div className="leg-item"><div className="box selected" />Đang chọn</div>
+                                                <div className="leg-item"><div className="box sold" />Đã bán</div>
+                                                <div className="leg-item"><div className="box held-by-other" />Đang được chọn</div>
+                                            </div>
                                         </div>
-                                        <div className="seat-legend">
-                                            <div className="leg-item"><div className="box maintenance" />Bảo trì</div>
-                                            <div className="leg-item"><div className="box normal" />Thường</div>
-                                            <div className="leg-item"><div className="box vip" />VIP</div>
-                                            <div className="leg-item"><div className="box couple" />Đôi</div>
-                                            <div className="leg-item"><div className="box selected" />Đang chọn</div>
-                                            <div className="leg-item"><div className="box sold" />Đã bán</div>
-                                            <div className="leg-item"><div className="box held-by-other" />Đang được chọn</div>
-                                        </div>
-                                    </div>
+                                    )
                                 ) : (
                                     <div className="placeholder-msg">
                                         <Info size={20} />
@@ -1071,6 +1300,7 @@ const Booking = () => {
                             </div>
                         </section>
                     </main>
+
                     <aside className="booking-sidebar-column">
                         <div className="sidebar-sticky">
                             <BookingSidebar
@@ -1088,11 +1318,22 @@ const Booking = () => {
                                 isTimerActive={isTimerActive}
                                 showContinueButton={true}
                                 showBackButton={true}
-                                continueText="TIẾP TỤC"
+                                continueText={
+                                    submittingReschedule
+                                        ? 'ĐANG XỬ LÝ...'
+                                        : isRescheduleMode
+                                            ? 'XÁC NHẬN ĐỔI VÉ'
+                                            : 'TIẾP TỤC'
+                                }
                                 onContinue={handleContinue}
                                 onBack={() => navigate(-1)}
-                                isContinueDisabled={selectedSeats.length === 0 || pendingSeatIds.length > 0}
+                                isContinueDisabled={
+                                    selectedSeats.length === 0 ||
+                                    pendingSeatIds.length > 0 ||
+                                    submittingReschedule
+                                }
                                 onExpire={() => {
+                                    if (isRescheduleMode) return;
                                     isSessionClearedRef.current = false;
                                     clearBookingSession();
                                     setModalConfig({
@@ -1109,6 +1350,7 @@ const Booking = () => {
                     </aside>
                 </div>
             </div>
+
             <Modal
                 show={modalConfig.show}
                 type={modalConfig.type}

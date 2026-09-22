@@ -1,12 +1,22 @@
 // =========================================================
 // FOOD.JS
 // PREMIUM SILVER BOOKING FLOW
+// HỖ TRỢ CẢ ĐẶT VÉ THƯỜNG VÀ ĐỔI VÉ (RESCHEDULE)
 // =========================================================
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../../api/api';
-import { Popcorn, Plus, Minus, ChevronLeft, ChevronRight, Coffee, UtensilsCrossed } from 'lucide-react';
+import {
+    Popcorn,
+    Plus,
+    Minus,
+    ChevronLeft,
+    ChevronRight,
+    Coffee,
+    UtensilsCrossed,
+    RefreshCw,
+} from 'lucide-react';
 import Modal from '../components/Modal';
 import BookingSidebar from '../components/BookingSidebar';
 import BookingProgress from '../components/BookingProgress';
@@ -21,6 +31,15 @@ const Food = () => {
 
     const location = useLocation();
     const navigate = useNavigate();
+
+    // =====================================================
+    // ✅ RESCHEDULE MODE
+    // =====================================================
+
+    const isRescheduleMode = location.state?.mode === 'reschedule';
+    const rescheduleBookingId = location.state?.rescheduleBookingId || null;
+    const oldBookingInfo = location.state?.oldBooking || null;
+    const oldTotalAmount = Number(location.state?.oldBooking?.old_total || 0);
 
     // =====================================================
     // MODAL HẾT GIỜ
@@ -96,6 +115,38 @@ const Food = () => {
     const [loadingFoods, setLoadingFoods] = useState(false);
 
     // =====================================================
+    // ✅ RESCHEDULE: TỰ ĐỘNG CHUYỂN SANG PAYMENT
+    // (Bỏ qua bước chọn đồ ăn — giữ nguyên đồ ăn cũ)
+    // =====================================================
+
+    useEffect(() => {
+        if (!isRescheduleMode) return;
+
+        const newTotal = selectedSeats.reduce((sum, s) => sum + Number(s.price || 0), 0);
+        const delta = newTotal - oldTotalAmount;
+
+        console.log('[FOOD] Reschedule mode — chuyển thẳng Payment');
+
+        navigate('/payment', {
+            replace: true,
+            state: {
+                ...initialData,
+                mode: 'reschedule',
+                rescheduleBookingId,
+                oldBooking: oldBookingInfo,
+                oldTotalAmount,
+                // Không có food mới
+                selectedFoods: [],
+                foods: [],
+                totalTicketPrice: newTotal,
+                totalFoodPrice: 0,
+                grandTotal: newTotal,
+                deltaAmount: delta,
+            }
+        });
+    }, [isRescheduleMode, navigate, selectedSeats, initialData, oldTotalAmount, rescheduleBookingId, oldBookingInfo]);
+
+    // =====================================================
     // SAVE OWNER TOKEN
     // =====================================================
 
@@ -113,19 +164,23 @@ const Food = () => {
     // =====================================================
 
     useEffect(() => {
+        if (isRescheduleMode) return;
         try {
             localStorage.setItem('selectedFoods', JSON.stringify(selectedFoods));
         } catch (err) {
             console.error('❌ [FOOD] Lỗi lưu selectedFoods:', err);
         }
-    }, [selectedFoods]);
+    }, [selectedFoods, isRescheduleMode]);
 
     // =====================================================
     // INITIAL CHECK + FETCH FOODS
     // =====================================================
 
     useEffect(() => {
+        if (isRescheduleMode) return;
+
         window.scrollTo(0, 0);
+
         if (!selectedSeats || selectedSeats.length === 0) {
             console.warn('⚠️ [FOOD] Không có selectedSeats');
             navigate('/');
@@ -141,19 +196,23 @@ const Food = () => {
             navigate('/');
             return;
         }
+
         const holdExpiresAt = localStorage.getItem('holdExpiresAt');
         if (!holdExpiresAt) {
             console.warn('⚠️ [FOOD] Không có holdExpiresAt');
             navigate('/');
             return;
         }
+
         const expiresAt = Number(holdExpiresAt);
         if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
             console.warn('⏰ [FOOD] holdExpiresAt đã hết hạn');
             handleTimeExpireInternal();
             return;
         }
+
         setIsTimerActive(true);
+
         const fetchFoods = async () => {
             setLoadingFoods(true);
             try {
@@ -161,7 +220,6 @@ const Food = () => {
                 if (res.data && Array.isArray(res.data.data)) {
                     setFoods(res.data.data);
                 } else {
-                    console.error('❌ [FOOD] Dữ liệu foods không đúng định dạng:', res.data);
                     setFoods([]);
                 }
             } catch (err) {
@@ -171,8 +229,9 @@ const Food = () => {
                 setLoadingFoods(false);
             }
         };
+
         fetchFoods();
-    }, [navigate, selectedSeats.length, ownerToken, showtimeId]);
+    }, [navigate, selectedSeats.length, ownerToken, showtimeId, isRescheduleMode]);
 
     // =====================================================
     // CLEAR BOOKING DATA
@@ -189,7 +248,7 @@ const Food = () => {
     };
 
     // =====================================================
-    // HẾT GIỜ GIỮ GHẾ - INTERNAL
+    // HẾT GIỜ GIỮ GHẾ
     // =====================================================
 
     const handleTimeExpireInternal = () => {
@@ -198,17 +257,9 @@ const Food = () => {
         setShowExpiredModal(true);
     };
 
-    // =====================================================
-    // HẾT GIỜ GIỮ GHẾ
-    // =====================================================
-
     const handleTimeExpire = () => {
         handleTimeExpireInternal();
     };
-
-    // =====================================================
-    // MODAL CONFIRM
-    // =====================================================
 
     const handleModalConfirm = () => {
         setShowExpiredModal(false);
@@ -228,16 +279,12 @@ const Food = () => {
     };
 
     // =====================================================
-    // TOTAL TICKET
+    // TOTAL
     // =====================================================
 
     const totalTicketPrice = useMemo(() => {
         return selectedSeats.reduce((sum, seat) => sum + Number(seat?.price || 0), 0);
     }, [selectedSeats]);
-
-    // =====================================================
-    // TOTAL FOOD
-    // =====================================================
 
     const totalFoodPrice = useMemo(() => {
         return foods.reduce((sum, item) => {
@@ -245,10 +292,6 @@ const Food = () => {
             return sum + Number(item.price || 0) * quantity;
         }, 0);
     }, [foods, selectedFoods]);
-
-    // =====================================================
-    // GRAND TOTAL
-    // =====================================================
 
     const grandTotal = totalTicketPrice + totalFoodPrice;
 
@@ -267,12 +310,15 @@ const Food = () => {
             navigate('/');
             return;
         }
+
         const holdExpiresAt = Number(localStorage.getItem('holdExpiresAt'));
         if (!Number.isFinite(holdExpiresAt) || holdExpiresAt <= Date.now()) {
             handleTimeExpire();
             return;
         }
+
         setLoading(true);
+
         const finalFoods = foods
             .filter(food => Number(selectedFoods[food.product_id] || 0) > 0)
             .map(food => ({
@@ -281,6 +327,7 @@ const Food = () => {
                 quantity: Number(selectedFoods[food.product_id]),
                 price: food.price
             }));
+
         const finalBookingData = {
             ...initialData,
             ...location.state,
@@ -297,6 +344,7 @@ const Food = () => {
             totalFoodPrice,
             grandTotal
         };
+
         try {
             localStorage.setItem('booking_temp', JSON.stringify(finalBookingData));
             localStorage.setItem('selectedFoods', JSON.stringify(selectedFoods));
@@ -309,6 +357,7 @@ const Food = () => {
             setLoading(false);
             return;
         }
+
         navigate('/payment', { state: finalBookingData });
     };
 
@@ -326,6 +375,7 @@ const Food = () => {
                 </div>
             );
         }
+
         if (foods.length === 0) {
             return (
                 <div className="food-empty">
@@ -335,6 +385,7 @@ const Food = () => {
                 </div>
             );
         }
+
         return foods.map(item => {
             const quantity = Number(selectedFoods[item.product_id] || 0);
             return (
@@ -357,11 +408,11 @@ const Food = () => {
                         <div className="food-action-row">
                             <span className="food-quantity-label">SỐ LƯỢNG</span>
                             <div className="food-actions">
-                                <button type="button" className="food-qty-btn food-qty-minus" onClick={() => updateQty(item.product_id, -1)} aria-label={`Giảm ${item.product_name}`}>
+                                <button type="button" className="food-qty-btn food-qty-minus" onClick={() => updateQty(item.product_id, -1)}>
                                     <Minus size={16} strokeWidth={2.5} />
                                 </button>
                                 <span className="food-qty">{quantity}</span>
-                                <button type="button" className="food-qty-btn food-qty-plus" onClick={() => updateQty(item.product_id, 1)} aria-label={`Tăng ${item.product_name}`}>
+                                <button type="button" className="food-qty-btn food-qty-plus" onClick={() => updateQty(item.product_id, 1)}>
                                     <Plus size={16} strokeWidth={2.5} />
                                 </button>
                             </div>
@@ -377,6 +428,28 @@ const Food = () => {
             );
         });
     };
+
+    // =====================================================
+    // ✅ RESCHEDULE: KHÔNG RENDER UI
+    // =====================================================
+
+    if (isRescheduleMode) {
+        return (
+            <div className="food-wrapper">
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: '60vh',
+                    gap: 12
+                }}>
+                    <RefreshCw size={48} className="spin-icon" />
+                    <p>Đang chuyển đến trang thanh toán...</p>
+                </div>
+            </div>
+        );
+    }
 
     // =====================================================
     // RENDER

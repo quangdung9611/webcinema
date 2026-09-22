@@ -32,6 +32,7 @@ import {
     Sunset,
     Timer,
     Trash2,
+    Ban,
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -192,6 +193,38 @@ const getNextWeekDate = () => {
     return now.toISOString().split('T')[0];
 };
 
+// ✅ Ngày hôm nay dạng YYYY-MM-DD
+const getTodayString = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+// ✅ Giờ hiện tại dạng phút (0-1439)
+const getNowMinutes = () => {
+    const now = new Date();
+    return now.getHours() * 60 + now.getMinutes();
+};
+
+// ✅ Check 1 slot đã qua so với thời gian thực chưa
+// date: YYYY-MM-DD
+// startMinutes: 0-1439
+const isSlotInPast = (date, startMinutes) => {
+    const today = getTodayString();
+
+    // Ngày đã qua → past
+    if (date < today) return true;
+
+    // Ngày tương lai → OK
+    if (date > today) return false;
+
+    // Hôm nay → check giờ
+    const nowMinutes = getNowMinutes();
+    return startMinutes <= nowMinutes;
+};
+
 const getDatesInRange = (startDate, endDate) => {
     const dates = [];
     const start = new Date(`${startDate}T00:00:00Z`);
@@ -236,6 +269,9 @@ const getDatesInRange = (startDate, endDate) => {
                 'T7',
             ][dayOfWeek],
             isWeekend: dayOfWeek === 0 || dayOfWeek === 6,
+            // ✅ Check ngày này có phải quá khứ không
+            isPast: `${year}-${month}-${day}` < getTodayString(),
+            isToday: `${year}-${month}-${day}` === getTodayString(),
         });
 
         current.setUTCDate(current.getUTCDate() + 1);
@@ -392,6 +428,17 @@ const MovieShowtimeConfigPage = () => {
         type: 'default',
     });
 
+    // ✅ State để update "now" mỗi phút (cho slot disabled realtime)
+    const [nowTick, setNowTick] = useState(Date.now());
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setNowTick(Date.now());
+        }, 60 * 1000); // mỗi phút
+
+        return () => clearInterval(timer);
+    }, []);
+
     const selectedCinemaObject = useMemo(() => {
         return cinemas.find(
             (cinema) =>
@@ -422,7 +469,8 @@ const MovieShowtimeConfigPage = () => {
             dateRange.startDate,
             dateRange.endDate
         );
-    }, [dateRange.startDate, dateRange.endDate]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dateRange.startDate, dateRange.endDate, nowTick]);
 
     const showAlert = (
         title,
@@ -460,6 +508,7 @@ const MovieShowtimeConfigPage = () => {
         ) {
             loadAllConfigs();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedCinema, selectedMovies]);
 
     const fetchMovies = async () => {
@@ -667,13 +716,25 @@ const MovieShowtimeConfigPage = () => {
     // SLOT ACTIONS
     // ========================================================
 
+    // ✅ Sửa toggleSlot — chặn nếu slot đã qua
     const toggleSlot = (
         movieId,
         timeSlot,
         roomType,
         dayType,
-        startMinutes
+        startMinutes,
+        dateStr  // ✅ thêm date để check
     ) => {
+        // ✅ Check quá khứ
+        if (isSlotInPast(dateStr, startMinutes)) {
+            showAlert(
+                'Không thể chọn',
+                `Suất ${minutesToTime(startMinutes)} ngày ${dateStr.split('-').reverse().join('/')} đã qua so với thời gian hiện tại.`,
+                'warning'
+            );
+            return;
+        }
+
         const key = buildSlotKey(
             timeSlot,
             roomType,
@@ -741,6 +802,7 @@ const MovieShowtimeConfigPage = () => {
         }));
     };
 
+    // ✅ Sửa handleAutoFill — bỏ qua slot quá khứ
     const handleAutoFill = (movieId) => {
         const intervalType =
             getMovieInterval(movieId);
@@ -775,7 +837,15 @@ const MovieShowtimeConfigPage = () => {
 
                 for (const roomType of ROOM_TYPES) {
                     for (const date of datesInRange) {
+                        // ✅ Bỏ qua ngày đã qua
+                        if (date.isPast) continue;
+
                         for (const time of times) {
+                            // ✅ Bỏ qua giờ đã qua trong hôm nay
+                            if (isSlotInPast(date.date, time)) {
+                                continue;
+                            }
+
                             const key = buildSlotKey(
                                 timeSlot.key,
                                 roomType,
@@ -814,7 +884,7 @@ const MovieShowtimeConfigPage = () => {
 
         showAlert(
             'Thành công',
-            'Đã chọn tất cả giờ có thể chiếu!',
+            'Đã chọn tất cả giờ có thể chiếu (bỏ qua giờ đã qua)!',
             'success'
         );
     };
@@ -1004,9 +1074,7 @@ const MovieShowtimeConfigPage = () => {
                 buttonIcon={<ArrowLeft size={18} />}
             >
                 <div className="movie-showtime-config-page">
-                    {/* ==================================================
-                        CONTROL AREA
-                    ================================================== */}
+                    {/* CONTROL AREA */}
                     <section className="showtime-controls">
                         {/* RẠP */}
                         <div className="control-row cinema-row">
@@ -1266,7 +1334,7 @@ const MovieShowtimeConfigPage = () => {
                                                     key={
                                                         date.date
                                                     }
-                                                    className={`date-item ${date.isWeekend ? 'weekend' : ''}`}
+                                                    className={`date-item ${date.isWeekend ? 'weekend' : ''} ${date.isPast ? 'past' : ''} ${date.isToday ? 'today' : ''}`}
                                                 >
                                                     <span className="date-item-day">
                                                         {
@@ -1286,9 +1354,7 @@ const MovieShowtimeConfigPage = () => {
                             )}
                     </section>
 
-                    {/* ==================================================
-                        EMPTY STATE
-                    ================================================== */}
+                    {/* EMPTY STATE */}
                     {selectedCinema &&
                         selectedMovies.length === 0 && (
                             <section className="showtime-empty-state">
@@ -1306,9 +1372,7 @@ const MovieShowtimeConfigPage = () => {
                             </section>
                         )}
 
-                    {/* ==================================================
-                        CONFIG WORKSPACE
-                    ================================================== */}
+                    {/* CONFIG WORKSPACE */}
                     {selectedCinema &&
                         selectedMovies.length >
                         0 && (
@@ -1428,7 +1492,7 @@ const MovieShowtimeConfigPage = () => {
                                                         <div className="movie-config-index">
                                                             {String(
                                                                 movieIndex +
-                                                                    1
+                                                                1
                                                             ).padStart(
                                                                 2,
                                                                 '0'
@@ -1588,7 +1652,7 @@ const MovieShowtimeConfigPage = () => {
                                                                         size={16}
                                                                     />
                                                                     <span>
-                                                                        Giờ được sinh theo khoảng cách đã chọn và giờ hoạt động của rạp.
+                                                                        Giờ đã qua so với thời gian thực sẽ bị vô hiệu hóa.
                                                                     </span>
                                                                 </div>
 
@@ -1642,7 +1706,7 @@ const MovieShowtimeConfigPage = () => {
                                                                                             key={
                                                                                                 date.date
                                                                                             }
-                                                                                            className={`date-column ${date.isWeekend ? 'weekend' : ''}`}
+                                                                                            className={`date-column ${date.isWeekend ? 'weekend' : ''} ${date.isPast ? 'past' : ''} ${date.isToday ? 'today' : ''}`}
                                                                                         >
                                                                                             <span>
                                                                                                 {
@@ -1791,7 +1855,7 @@ const MovieShowtimeConfigPage = () => {
                                                                                                                         key={
                                                                                                                             date.date
                                                                                                                         }
-                                                                                                                        className={`slot-cell ${date.isWeekend ? 'weekend-cell' : ''}`}
+                                                                                                                        className={`slot-cell ${date.isWeekend ? 'weekend-cell' : ''} ${date.isPast ? 'past-cell' : ''}`}
                                                                                                                     >
                                                                                                                         {!isValidRange ? (
                                                                                                                             <span className="slot-disabled">
@@ -1817,29 +1881,49 @@ const MovieShowtimeConfigPage = () => {
                                                                                                                                                 ]
                                                                                                                                             );
 
+                                                                                                                                        // ✅ Check slot quá khứ
+                                                                                                                                        const isPast =
+                                                                                                                                            isSlotInPast(
+                                                                                                                                                date.date,
+                                                                                                                                                time
+                                                                                                                                            );
+
                                                                                                                                         return (
                                                                                                                                             <button
                                                                                                                                                 key={
                                                                                                                                                     time
                                                                                                                                                 }
                                                                                                                                                 type="button"
-                                                                                                                                                className={`slot-button ${isSelected ? 'selected' : ''}`}
-                                                                                                                                                onClick={() =>
+                                                                                                                                                className={`slot-button ${isSelected ? 'selected' : ''} ${isPast ? 'past' : ''}`}
+                                                                                                                                                disabled={isPast}
+                                                                                                                                                onClick={() => {
+                                                                                                                                                    if (isPast) return;
                                                                                                                                                     toggleSlot(
                                                                                                                                                         movieId,
                                                                                                                                                         timeSlot.key,
                                                                                                                                                         roomType,
                                                                                                                                                         date.dayKey,
-                                                                                                                                                        time
-                                                                                                                                                    )
+                                                                                                                                                        time,
+                                                                                                                                                        date.date
+                                                                                                                                                    );
+                                                                                                                                                }}
+                                                                                                                                                title={
+                                                                                                                                                    isPast
+                                                                                                                                                        ? `${minutesToTime(time)} · ${roomType} · Đã qua`
+                                                                                                                                                        : `${minutesToTime(time)} · ${roomType} · ${date.fullDisplay}`
                                                                                                                                                 }
-                                                                                                                                                title={`${minutesToTime(time)} · ${roomType} · ${date.fullDisplay}`}
                                                                                                                                             >
-                                                                                                                                                {isSelected && (
-                                                                                                                                                    <Check
+                                                                                                                                                {isPast ? (
+                                                                                                                                                    <Ban
                                                                                                                                                         size={12}
-                                                                                                                                                        strokeWidth={3}
                                                                                                                                                     />
+                                                                                                                                                ) : (
+                                                                                                                                                    isSelected && (
+                                                                                                                                                        <Check
+                                                                                                                                                            size={12}
+                                                                                                                                                            strokeWidth={3}
+                                                                                                                                                        />
+                                                                                                                                                    )
                                                                                                                                                 )}
                                                                                                                                                 <span>
                                                                                                                                                     {minutesToTime(
@@ -1964,7 +2048,10 @@ const MovieShowtimeConfigPage = () => {
                                                                         Ô sáng bạc = suất đã chọn
                                                                     </span>
                                                                     <span>
-                                                                        Click lại giờ đã chọn để bỏ chọn
+                                                                        <Ban
+                                                                            size={14}
+                                                                        />
+                                                                        Suất mờ = đã qua so với thời gian thực
                                                                     </span>
                                                                 </div>
                                                             </div>

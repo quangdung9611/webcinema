@@ -15,7 +15,7 @@ const ForgotPinTemplate = require("../Templates/ForgotPinTemplate");
 const TicketReminderTemplate = require("../Templates/TicketReminderTemplate");
 const ShowtimeCancelledTemplate = require("../Templates/ShowtimeCancelledTemplate");
 const ShowtimeChangedTemplate = require("../Templates/ShowtimeChangedTemplate");
-
+const RescheduleSuccessTemplate = require("../Templates/RescheduleSuccessTemplate");
 // =========================================================
 // HÀM LẤY THỜI GIAN VN (UTC+7)
 // =========================================================
@@ -398,6 +398,104 @@ const MailService = {
 
         } catch (error) {
             console.error("❌ [MAIL] SEND SHOWTIME CHANGED ERROR");
+            console.error(error);
+            throw error;
+        }
+    },
+        /* =====================================================
+       ✅ SEND RESCHEDULE SUCCESS EMAIL — ĐỔI SUẤT THÀNH CÔNG
+    ===================================================== */
+    sendRescheduleSuccessEmail: async (data) => {
+        const {
+            email,
+            customerName,
+            movieTitle,
+            moviePoster,
+            oldInfo = {},
+            newInfo = {},
+            priceDifference = 0,
+            newTotalAmount = 0,
+
+            // ✅ THÔNG TIN VÉ MỚI
+            bookingId,
+            seatLabel,
+            cinemaName,
+            roomName,
+            startTime,
+            selectedDate,
+            selectedFoods,
+            ticketPIN,
+            ticketCode,
+            qrUrl,
+        } = data || {};
+
+        console.log(`📨 [MAIL] SEND RESCHEDULE SUCCESS -> ${email} | Booking: ${bookingId}`);
+        console.log(`🖼️ [MAIL] moviePoster: ${moviePoster}`);
+        console.log(`💰 [MAIL] Price diff: ${priceDifference}`);
+
+        if (!email) {
+            throw new Error("Email người nhận không hợp lệ");
+        }
+
+        try {
+            // ✅ Generate QR code
+            const attachments = [];
+            const qrContent = qrUrl || ticketCode || ticketPIN;
+            let qrCid = null;
+
+            if (qrContent) {
+                try {
+                    const qrBuffer = await QRCode.toBuffer(qrContent, {
+                        width: 500, margin: 4, errorCorrectionLevel: "H",
+                        color: { dark: "#000000", light: "#FFFFFF" },
+                    });
+                    qrCid = "qr_img";
+                    attachments.push({
+                        filename: `qr-reschedule-${bookingId}.png`,
+                        content: qrBuffer, cid: qrCid, contentType: "image/png",
+                    });
+                } catch (qrError) {
+                    console.error("❌ [MAIL] QR code generation error:", qrError.message);
+                }
+            }
+
+            const templateData = {
+                customerName: customerName || "Quý khách",
+                movieTitle: movieTitle || "---",
+                moviePoster: moviePoster || "",
+                oldInfo: oldInfo,
+                newInfo: newInfo,
+                priceDifference: priceDifference,
+                newTotalAmount: newTotalAmount,
+
+                bookingId,
+                seatLabel: seatLabel || "---",
+                cinemaName: cinemaName || "---",
+                roomName: roomName || "---",
+                startTime: startTime || "---",
+                selectedDate: selectedDate || "---",
+                selectedFoods: selectedFoods || "",
+                ticketPIN: ticketPIN || ticketCode || "",
+                qrCid: qrCid,
+            };
+
+            const html = RescheduleSuccessTemplate(templateData);
+
+            const info = await transporter.sendMail({
+                from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
+                to: email,
+                subject: `✅ Đổi suất chiếu thành công — "${movieTitle}"`,
+                html,
+                attachments,
+            });
+
+            console.log("✅ [MAIL] RESCHEDULE SUCCESS EMAIL SENT");
+            console.log(`📧 Message ID: ${info.messageId}`);
+
+            return info;
+
+        } catch (error) {
+            console.error("❌ [MAIL] SEND RESCHEDULE SUCCESS ERROR");
             console.error(error);
             throw error;
         }

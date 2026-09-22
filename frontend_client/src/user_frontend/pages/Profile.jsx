@@ -38,6 +38,7 @@ import {
     Lightbulb,
     Globe,
     Plus,
+    RefreshCw,      // ✅ THÊM - Cho nút đổi suất
 } from 'lucide-react';
 
 const Profile = () => {
@@ -220,6 +221,46 @@ const Profile = () => {
 
     const closeModal = () => {
         setModal(prev => ({ ...prev, show: false }));
+    };
+
+    // =========================================================
+    // ✅ CHECK CÓ THỂ ĐỔI SUẤT KHÔNG
+    // =========================================================
+    const canReschedule = (item) => {
+        // Phải là vé Completed
+        if (item.status !== 'Completed') return false;
+
+        // Phải còn hiệu lực (không bị hủy)
+        if (item.ticketStatus === 'Cancelled') return false;
+
+        // Check thời gian: phải trước giờ chiếu ≥ 2 tiếng
+        try {
+            // Ưu tiên dùng startTimeFull nếu có
+            let startStr = item.startTimeFull;
+
+            // Nếu không có → build từ selectedDate + startTime
+            if (!startStr && item.selectedDate && item.startTime) {
+                const [day, month, year] = String(item.selectedDate).split('/');
+                startStr = `${year}-${month}-${day}T${item.startTime}:00`;
+            }
+
+            if (!startStr) return false;
+
+            const start = new Date(String(startStr).replace(' ', 'T'));
+            const now = new Date();
+            const hoursLeft = (start - now) / (1000 * 60 * 60);
+
+            return hoursLeft >= 2;
+        } catch {
+            return false;
+        }
+    };
+
+      // =========================================================
+    // ✅ HANDLE ĐỔI SUẤT
+    // =========================================================
+    const handleReschedule = (item) => {
+        navigate(`/reschedule/${item.bookingId}/select`);  // ✅ MỚI
     };
 
     // =========================================================
@@ -796,6 +837,18 @@ const Profile = () => {
                                                             <QRCodeCanvas value={`TICKET-${item.bookingId}-${item.ticketPIN}`} size={70} />
                                                         </div>
                                                         <span className="pin-text">PIN: {item.ticketPIN}</span>
+
+                                                        {/* ✅ NÚT ĐỔI SUẤT CHIẾU */}
+                                                        {canReschedule(item) && (
+                                                            <button
+                                                                className="btn-reschedule"
+                                                                onClick={() => handleReschedule(item)}
+                                                                title="Đổi sang suất chiếu khác"
+                                                            >
+                                                                <RefreshCw size={14} />
+                                                                <span>Đổi suất</span>
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </div>
                                             ))}

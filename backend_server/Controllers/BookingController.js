@@ -202,3 +202,108 @@ exports.deleteBooking = async (req, res) => {
         });
     }
 };
+
+/*=========================================================
+    ✅ RESCHEDULE — LẤY INFO ĐỂ HIỆN FORM ĐỔI SUẤT
+=========================================================*/
+exports.getRescheduleInfo = async (req, res) => {
+    const connection = await BookingRepository.getConnection();
+    try {
+        const { booking_id } = req.params;
+
+        const info = await BookingService.getRescheduleInfo(connection, booking_id);
+
+        return res.json({
+            success: true,
+            data: info
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message
+        });
+    } finally {
+        connection.release();
+    }
+};
+
+/*=========================================================
+    ✅ RESCHEDULE — LẤY DANH SÁCH SUẤT CÓ THỂ ĐỔI
+=========================================================*/
+exports.getRescheduleOptions = async (req, res) => {
+    try {
+        const { booking_id } = req.params;
+
+        const options = await BookingService.getRescheduleOptions(booking_id);
+
+        return res.json({
+            success: true,
+            data: options
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+/*=========================================================
+    ✅ RESCHEDULE — LẤY GHẾ TRỐNG THEO HẠNG Ở SUẤT MỚI
+=========================================================*/
+exports.getAvailableSeats = async (req, res) => {
+    try {
+        const { showtime_id } = req.params;
+        const { seat_type } = req.query;
+
+        const seats = await BookingService.getAvailableSeats(showtime_id, seat_type);
+
+        return res.json({
+            success: true,
+            data: seats
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+/*=========================================================
+    ✅ RESCHEDULE — THỰC HIỆN ĐỔI SUẤT
+=========================================================*/
+exports.rescheduleBooking = async (req, res) => {
+    try {
+        const { booking_id } = req.params;
+        const { new_showtime_id, new_seat_ids } = req.body;
+
+        if (!new_showtime_id || !Array.isArray(new_seat_ids) || new_seat_ids.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Thiếu new_showtime_id hoặc new_seat_ids"
+            });
+        }
+
+        const result = await BookingService.rescheduleBooking(
+            booking_id,
+            new_showtime_id,
+            new_seat_ids
+        );
+
+        return res.json({
+            success: true,
+            data: result,
+            message: result.message
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};

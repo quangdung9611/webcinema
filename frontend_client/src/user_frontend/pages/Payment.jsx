@@ -1,6 +1,7 @@
 // ============================================================
 // PAYMENT PAGE
 // Bước 4: THANH TOÁN
+// HỖ TRỢ CẢ ĐẶT VÉ THƯỜNG VÀ ĐỔI VÉ (RESCHEDULE)
 // ============================================================
 
 import React, { useState, useEffect } from 'react';
@@ -11,7 +12,8 @@ import BookingSidebar from '../components/BookingSidebar';
 import LoadingButton from '../components/LoadingButton';
 import PaymentPinModal from '../components/PaymentPinModal';
 import BookingProgress from '../components/BookingProgress';
-import useOTPGuard from '../../hooks/useOTPGuard'; // 🔥 IMPORT
+import useOTPGuard from '../../hooks/useOTPGuard';
+import { RefreshCw, Check } from 'lucide-react';
 import '../styles/Payment.css';
 
 // ============================================================
@@ -22,6 +24,15 @@ const Payment = () => {
 
     const location = useLocation();
     const navigate = useNavigate();
+
+    // ============================================================
+    // ✅ RESCHEDULE MODE
+    // ============================================================
+
+    const isRescheduleMode = location.state?.mode === 'reschedule';
+    const rescheduleBookingId = location.state?.rescheduleBookingId || null;
+    const oldTotalAmount = Number(location.state?.oldTotalAmount || 0);
+    const deltaAmount = Number(location.state?.deltaAmount || 0);
 
     // ============================================================
     // LẤY DỮ LIỆU BOOKING
@@ -97,6 +108,9 @@ const Payment = () => {
     const [pinError, setPinError] = useState('');
     const [isVerifyingPin, setIsVerifyingPin] = useState(false);
 
+    // ✅ RESCHEDULE: đang xử lý hoàn điểm tự động
+    const [rescheduleProcessing, setRescheduleProcessing] = useState(false);
+
     // ============================================================
     // NOTICE MODAL
     // ============================================================
@@ -117,6 +131,9 @@ const Payment = () => {
 
     const subTotal = Number(totalTicketPrice || 0) + Number(totalFoodPrice || 0);
     const grandTotal = Math.max(0, subTotal - Number(discountAmount || 0));
+
+    // ✅ Reschedule: số tiền cần bù (nếu > 0)
+    const reschedulePayAmount = isRescheduleMode ? Math.max(0, deltaAmount) : 0;
 
     // ============================================================
     // CHECK SESSION
@@ -155,6 +172,65 @@ const Payment = () => {
     };
 
     // ============================================================
+    // ✅ RESCHEDULE: XỬ LÝ HOÀN ĐIỂM NGAY (delta <= 0)
+    // ============================================================
+
+    const processRescheduleNoPayment = async () => {
+        if (rescheduleProcessing) return;
+        setRescheduleProcessing(true);
+
+        try {
+            const res = await api.post(
+                `/api/bookings/${rescheduleBookingId}/reschedule`,
+                {
+                    new_showtime_id: showtimeId,
+                    new_seat_ids: selectedSeats.map(s => Number(s.seat_id))
+                }
+            );
+
+            if (res.data?.success) {
+                const data = res.data.data;
+                const delta = Number(data.priceDifference || 0);
+                const refund = Math.abs(delta);
+
+                let message = 'Đổi suất chiếu thành công!';
+                if (refund > 0) {
+                    message = `Đổi suất thành công! Hệ thống đã hoàn ${refund.toLocaleString('vi-VN')} điểm vào tài khoản của bạn.`;
+                } else if (delta > 0) {
+                    message = `Đổi suất thành công! Bạn đã bù thêm ${delta.toLocaleString('vi-VN')} điểm.`;
+                }
+
+                showNotice(
+                    'success',
+                    'ĐỔI SUẤT THÀNH CÔNG',
+                    message,
+                    () => navigate('/profile')
+                );
+
+                // Tự về profile sau 5s
+                setTimeout(() => navigate('/profile'), 5000);
+            } else {
+                showNotice(
+                    'error',
+                    'ĐỔI SUẤT THẤT BẠI',
+                    res.data?.message || 'Có lỗi xảy ra.',
+                    () => navigate(-1)
+                );
+            }
+        } catch (err) {
+            console.error('❌ [PAYMENT] Reschedule error:', err);
+            showNotice(
+                'error',
+                'ĐỔI SUẤT THẤT BẠI',
+                err.response?.data?.message || 'Có lỗi xảy ra khi đổi suất.',
+                () => navigate(-1)
+            );
+        } finally {
+            setRescheduleProcessing(false);
+        }
+    };
+
+    // ============================================================
     // QUAY LẠI TỪ FORGOT PIN
     // ============================================================
 
@@ -173,6 +249,39 @@ const Payment = () => {
 
     useEffect(() => {
         window.scrollTo(0, 0);
+
+        // =============================================
+        // ✅ RESCHEDULE MODE
+        // =============================================
+        if (isRescheduleMode) {
+            if (!rescheduleBookingId) {
+                showNotice('error', 'LỖI', 'Không tìm thấy mã booking để đổi.', () => navigate('/profile'));
+                return;
+            }
+            if (selectedSeats.length === 0) {
+                showNotice('error', 'LỖI', 'Chưa có ghế nào được chọn.', () => navigate('/profile'));
+                return;
+            }
+            if (!showtimeId) {
+                showNotice('error', 'LỖI', 'Không xác định được suất chiếu mới.', () => navigate('/profile'));
+                return;
+            }
+
+            // ✅ Nếu delta <= 0 → hoàn điểm ngay, không cần thanh toán
+            if (deltaAmount <= 0) {
+                processRescheduleNoPayment();
+                return;
+            }
+
+            // ✅ Nếu delta > 0 → cho user thanh toán bù
+            // (tiếp tục flow bên dưới)
+            verifySessionAndProceed();
+            return;
+        }
+
+        // =============================================
+        // FLOW THƯỜNG
+        // =============================================
         if (!movie || typeof movie !== 'object' || selectedSeats.length === 0) {
             console.warn('⚠️ [PAYMENT] Booking không hợp lệ');
             navigate('/');
@@ -198,18 +307,22 @@ const Payment = () => {
             );
             return;
         }
+
         try {
             localStorage.setItem('booking_owner_token', ownerToken);
         } catch (err) {
             console.error('❌ [PAYMENT] Không thể lưu ownerToken:', err);
         }
+
         const holdExpiresAt = Number(localStorage.getItem('holdExpiresAt'));
         if (!Number.isFinite(holdExpiresAt) || holdExpiresAt <= Date.now()) {
             console.warn('⏰ [PAYMENT] Hold time đã hết');
             handleTimeExpireInternal();
             return;
         }
+
         setIsTimerActive(true);
+
         const bankKeys = [
             'lastSuccessTicket', 'bankHasSentOtp', 'bankHasVisited', 'bankOtpTimeLeft',
             'bankOtpInput', 'bankLastOtpSentAt', 'paymentCompleted', 'completedBookingId', 'paymentInitiated'
@@ -225,19 +338,12 @@ const Payment = () => {
             'momoIsLocked', 'momoLockTime', 'momoOtpAttempts', 'momoResendCooldown', 'momoOwnerToken'
         ];
         momoKeys.forEach(key => localStorage.removeItem(key));
+
         const savedTempId = localStorage.getItem('tempBookingId');
         if (savedTempId) setTempBookingId(savedTempId);
-        const verifySession = async () => {
-            const isValid = await checkSession();
-            if (!isValid) return;
-            const currentHold = Number(localStorage.getItem('holdExpiresAt'));
-            if (Number.isFinite(currentHold) && currentHold > Date.now()) {
-                setIsTimerActive(true);
-            } else {
-                handleTimeExpireInternal();
-            }
-        };
-        verifySession();
+
+        verifySessionAndProceed();
+
         const handleSessionExpired = event => {
             console.log('🔴 [PAYMENT] Session expired event:', event.detail);
             showNotice(
@@ -251,7 +357,18 @@ const Payment = () => {
         return () => {
             window.removeEventListener('sessionExpired', handleSessionExpired);
         };
-    }, [navigate, location.pathname, ownerToken, showtimeId, selectedSeats.length]);
+    }, [navigate, location.pathname, ownerToken, showtimeId, selectedSeats.length, isRescheduleMode, deltaAmount, rescheduleBookingId]);
+
+    const verifySessionAndProceed = async () => {
+        const isValid = await checkSession();
+        if (!isValid) return;
+        const currentHold = Number(localStorage.getItem('holdExpiresAt'));
+        if (Number.isFinite(currentHold) && currentHold > Date.now()) {
+            setIsTimerActive(true);
+        } else if (!isRescheduleMode) {
+            handleTimeExpireInternal();
+        }
+    };
 
     // ============================================================
     // CLEAR BOOKING DATA
@@ -274,6 +391,7 @@ const Payment = () => {
     // ============================================================
 
     const handleTimeExpireInternal = () => {
+        if (isRescheduleMode) return;
         clearBookingData();
         setTempBookingId(null);
         setIsTimerActive(false);
@@ -290,6 +408,7 @@ const Payment = () => {
     // ============================================================
 
     const handleTimeExpire = async () => {
+        if (isRescheduleMode) return;
         if (tempBookingId) {
             try {
                 await api.post('/api/bank/cancel-timeout', { tempBookingId });
@@ -313,6 +432,10 @@ const Payment = () => {
     // ============================================================
 
     const handleApplyCoupon = async () => {
+        if (isRescheduleMode) {
+            showNotice('info', 'THÔNG BÁO', 'Không áp dụng mã giảm giá khi đổi suất chiếu.');
+            return;
+        }
         const inputCode = couponCode.toUpperCase().trim();
         if (!inputCode) {
             showNotice('error', 'THIẾU THÔNG TIN', 'Vui lòng nhập mã giảm giá.');
@@ -357,26 +480,12 @@ const Payment = () => {
             );
             return;
         }
-        if (!ownerToken) {
-            showNotice(
-                'error',
-                'PHIÊN GIỮ GHẾ KHÔNG HỢP LỆ',
-                'Không xác định được phiên giữ ghế. Vui lòng chọn ghế lại.',
-                () => { navigate('/'); }
-            );
-            return;
-        }
         if (selectedSeats.length === 0) {
             showNotice('error', 'CHƯA CHỌN GHẾ', 'Vui lòng chọn ghế trước khi thanh toán.');
             return;
         }
         if (!showtimeId) {
             showNotice('error', 'LỖI SUẤT CHIẾU', 'Không xác định được suất chiếu.');
-            return;
-        }
-        const holdExpiry = Number(localStorage.getItem('holdExpiresAt'));
-        if (!Number.isFinite(holdExpiry) || holdExpiry <= Date.now()) {
-            handleTimeExpire();
             return;
         }
         if (!userInfo.full_name || !userInfo.email || !userInfo.phone) {
@@ -415,11 +524,169 @@ const Payment = () => {
     };
 
     // ============================================================
-    // PAYMENT PROCESS - CHỜ EMAIL GỬI XONG MỚI CHUYỂN TRANG
+    // ✅ PAYMENT PROCESS
     // ============================================================
 
     const handleProceed = async () => {
         if (isProcessing) return;
+
+        // =============================================
+        // ✅ RESCHEDULE MODE — thanh toán bù
+        // =============================================
+        if (isRescheduleMode) {
+            if (!userInfo.user_id) {
+                showNotice(
+                    'error',
+                    'YÊU CẦU ĐĂNG NHẬP',
+                    'Vui lòng đăng nhập để tiếp tục.',
+                    () => navigate('/login', { state: { from: location.pathname } })
+                );
+                return;
+            }
+            const email = userInfo.email.trim();
+            const fullName = userInfo.full_name.trim();
+            const phone = userInfo.phone.trim();
+            if (!fullName || !email || !phone) {
+                showNotice('error', 'THIẾU THÔNG TIN', 'Vui lòng nhập đầy đủ thông tin nhận vé.');
+                return;
+            }
+
+            setIsProcessing(true);
+
+            try {
+                // ✅ Bước 1: Tạo temp booking cho phần bù tiền
+                const seatsWithPrice = selectedSeats.map(seat => ({
+                    seat_id: seat.seat_id,
+                    seat_row: seat.seat_row || '',
+                    seat_number: seat.seat_number || '',
+                    price: Number(seat.price || 0)
+                }));
+
+                const postData = {
+                    userId: userInfo.user_id,
+                    showtimeId,
+                    ownerToken: null,
+                    totalAmount: reschedulePayAmount, // ✅ Chỉ phần bù
+                    discountAmount: 0,
+                    couponId: null,
+                    selectedSeats: seatsWithPrice,
+                    selectedFoods: [],
+                    customerEmail: email,
+                    customerName: fullName,
+                    customerPhone: phone,
+                    movieTitle: movie?.title || '',
+                    cinemaName: selectedCinema?.cinema_name || '',
+                    startTime: selectedShowtime?.start_time || '',
+                    // ✅ Báo cho backend biết đây là reschedule
+                    isReschedule: true,
+                    rescheduleBookingId,
+                    newShowtimeId: showtimeId,
+                    newSeatIds: selectedSeats.map(s => Number(s.seat_id)),
+                };
+
+                const response = await api.post('/api/payment/process-reschedule', postData);
+
+                if (response.data?.success) {
+                    const tempId = response.data.tempBookingId;
+                    if (!tempId) throw new Error('Server không trả về tempBookingId.');
+
+                    setTempBookingId(tempId);
+                    localStorage.setItem('tempBookingId', tempId);
+
+                    const finalState = {
+                        tempBookingId: tempId,
+                        mode: 'reschedule',
+                        rescheduleBookingId,
+                        isReschedulePayment: true,
+                        deltaAmount: reschedulePayAmount,
+                        oldTotalAmount,
+                        newTotalAmount: grandTotal,
+                        ownerToken: null,
+                        showtimeId,
+                        totalAmount: reschedulePayAmount,
+                        customerName: fullName,
+                        customerEmail: email,
+                        customerPhone: phone,
+                        movie,
+                        selectedCinema,
+                        selectedDate,
+                        selectedShowtime,
+                        selectedSeats,
+                        selectedFoods: [],
+                        foods: [],
+                        totalTicketPrice,
+                        totalFoodPrice: 0,
+                        discountAmount: 0,
+                        couponId: null,
+                        showtimeDetail,
+                    };
+
+                    localStorage.setItem('lastSuccessTicket', JSON.stringify(finalState));
+
+                    showNotice('info', 'ĐANG XỬ LÝ', 'Vui lòng chờ trong giây lát...');
+
+                    if (paymentMethod === 'bank') {
+                        const sendOtpResponse = await api.post('/api/bank/send-otp', {
+                            email,
+                            tempBookingId: tempId,
+                            isReschedule: true,
+                            rescheduleBookingId,
+                        });
+                        if (!sendOtpResponse.data?.success) {
+                            throw new Error(sendOtpResponse.data?.message || 'Không thể gửi OTP.');
+                        }
+                        localStorage.setItem('paymentInitiated', 'true');
+                        navigate('/bank-app', { state: finalState });
+                        return;
+                    }
+
+                    // MOMO
+                    const sendMomoOtpResponse = await api.post('/api/momo/send-otp', {
+                        email,
+                        tempBookingId: tempId,
+                        isReschedule: true,
+                        rescheduleBookingId,
+                    });
+                    if (!sendMomoOtpResponse.data?.success) {
+                        throw new Error(sendMomoOtpResponse.data?.message || 'Không thể gửi OTP.');
+                    }
+                    localStorage.setItem('momoTempBookingId', tempId);
+                    localStorage.setItem('momoPaymentInitiated', 'true');
+                    localStorage.setItem('momoCustomerEmail', email);
+                    localStorage.setItem('momoCustomerName', fullName);
+                    localStorage.setItem('momoCustomerPhone', phone);
+                    localStorage.setItem('momoTotalAmount', String(reschedulePayAmount));
+                    localStorage.setItem('momoMovie', JSON.stringify(movie));
+                    localStorage.setItem('momoSelectedCinema', JSON.stringify(selectedCinema));
+                    localStorage.setItem('momoSelectedDate', selectedDate || '');
+                    localStorage.setItem('momoSelectedShowtime', JSON.stringify(selectedShowtime));
+                    localStorage.setItem('momoSelectedSeats', JSON.stringify(selectedSeats));
+                    localStorage.setItem('momoSelectedFoods', JSON.stringify([]));
+                    localStorage.setItem('momoFoods', JSON.stringify([]));
+                    localStorage.setItem('momoTotalTicketPrice', String(totalTicketPrice));
+                    localStorage.setItem('momoTotalFoodPrice', '0');
+                    localStorage.setItem('momoShowtimeDetail', JSON.stringify(showtimeDetail));
+                    navigate('/momo-app', { state: finalState });
+                    return;
+                }
+
+                showNotice('error', 'KHÔNG THỂ TIẾP TỤC', response.data?.message || 'Không thể xử lý thanh toán.');
+            } catch (err) {
+                console.error('❌ [PAYMENT] Reschedule payment error:', err);
+                showNotice(
+                    'error',
+                    'LỖI THANH TOÁN',
+                    err.response?.data?.message || err.message || 'Không thể xử lý thanh toán.'
+                );
+            } finally {
+                setIsProcessing(false);
+            }
+            return;
+        }
+
+        // =============================================
+        // FLOW THƯỜNG
+        // =============================================
         if (!ownerToken) {
             showNotice(
                 'error',
@@ -452,13 +719,12 @@ const Payment = () => {
             return;
         }
 
-        // 🔥 Xóa OTP cũ trước khi tạo phiên mới
+        // 🔥 Xóa OTP cũ
         try {
             await api.post('/api/auth/invalidate-otp', {
                 email: email,
                 purpose: 'PAYMENT'
             });
-            console.log('🔴 [PAYMENT] Invalidated old OTP before new payment');
         } catch (err) {
             console.warn('⚠️ [PAYMENT] Failed to invalidate old OTP:', err);
         }
@@ -479,6 +745,7 @@ const Payment = () => {
         ];
         momoKeys.forEach(key => localStorage.removeItem(key));
         setIsProcessing(true);
+
         try {
             const seatsWithPrice = selectedSeats.map(seat => ({
                 seat_id: seat.seat_id,
@@ -513,12 +780,7 @@ const Payment = () => {
                 cinemaName: selectedCinema?.cinema_name || '',
                 startTime: selectedShowtime?.start_time || ''
             };
-            console.log('🟡 [PAYMENT] Processing payment:', {
-                showtimeId,
-                ownerToken,
-                seats: seatsWithPrice.map(seat => seat.seat_id),
-                totalAmount: Number(grandTotal)
-            });
+
             const response = await api.post('/api/payment/process', postData);
             if (response.data?.success) {
                 const tempId = response.data.tempBookingId;
@@ -553,11 +815,9 @@ const Payment = () => {
                 localStorage.removeItem('currentShowtimeId');
                 setIsTimerActive(false);
 
-                // ✅ CHỜ EMAIL GỬI XONG MỚI CHUYỂN (GỌI API SEND-OTP TRƯỚC)
-                showNotice('info', 'ĐANG XỬ LÝ', 'Vui lòng chờ trong giây lát để hệ thống gửi mã OTP tới email của bạn...');
-                
+                showNotice('info', 'ĐANG XỬ LÝ', 'Vui lòng chờ trong giây lát để hệ thống gửi mã OTP...');
+
                 if (paymentMethod === 'bank') {
-                    // Gọi API send OTP để chắc chắn email đã được gửi
                     const sendOtpResponse = await api.post('/api/bank/send-otp', {
                         email,
                         tempBookingId: tempId
@@ -633,12 +893,11 @@ const Payment = () => {
     };
 
     // ============================================================
-    // BEFORE UNLOAD - THÊM INVALIDATE OTP KHI ĐÓNG TAB
+    // BEFORE UNLOAD
     // ============================================================
 
     useEffect(() => {
         const handleBeforeUnload = (event) => {
-            // Kiểm tra nếu có OTP đang được nhập hoặc đã gửi
             const hasOtp = localStorage.getItem('bankOtpInput') || localStorage.getItem('momoOtpInput');
             const hasSentOtp = localStorage.getItem('bankHasSentOtp') === 'true' || 
                                localStorage.getItem('momoHasSentOtp') === 'true';
@@ -659,6 +918,43 @@ const Payment = () => {
         window.addEventListener('beforeunload', handleBeforeUnload);
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [userInfo.email, isProcessing]);
+
+    // ============================================================
+    // ✅ RESCHEDULE: ĐANG XỬ LÝ HOÀN ĐIỂM
+    // ============================================================
+
+    if (isRescheduleMode && deltaAmount <= 0 && !modal.show) {
+        return (
+            <div className="payment-page">
+                <div className="payment-container">
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minHeight: '60vh',
+                        gap: 16
+                    }}>
+                        <RefreshCw size={48} className="spin-icon" style={{ color: '#f37021' }} />
+                        <h2 style={{ margin: 0 }}>ĐANG XỬ LÝ ĐỔI SUẤT</h2>
+                        <p style={{ color: '#666', margin: 0 }}>
+                            {deltaAmount < 0
+                                ? `Hệ thống đang hoàn ${Math.abs(deltaAmount).toLocaleString('vi-VN')} điểm vào tài khoản của bạn...`
+                                : 'Đang xử lý đổi suất chiếu...'}
+                        </p>
+                    </div>
+                </div>
+                <Modal
+                    show={modal.show}
+                    type={modal.type}
+                    title={modal.title}
+                    message={modal.message}
+                    onConfirm={modal.onConfirm}
+                    onCancel={() => setModal(prev => ({ ...prev, show: false }))}
+                />
+            </div>
+        );
+    }
 
     // ============================================================
     // RENDER
@@ -704,38 +1000,70 @@ const Payment = () => {
                         )}
                         {!isLoadingUser && userInfo.user_id && (
                             <>
-                                <div className="payment-card">
-                                    <div className="payment-section-heading">
-                                        <span className="payment-section-number">01</span>
-                                        <div>
-                                            <h3>MÃ GIẢM GIÁ</h3>
-                                            <p>Nhập mã ưu đãi nếu bạn có</p>
+                                {/* ✅ RESCHEDULE BANNER */}
+                                {isRescheduleMode && (
+                                    <div className="payment-card reschedule-notice-card">
+                                        <div style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 12,
+                                            padding: '12px 16px',
+                                            background: '#fff3e6',
+                                            border: '1px solid #f37021',
+                                            borderRadius: 8
+                                        }}>
+                                            <RefreshCw size={20} style={{ color: '#f37021', flexShrink: 0 }} />
+                                            <div>
+                                                <strong style={{ display: 'block', marginBottom: 4 }}>
+                                                    BẠN ĐANG ĐỔI SUẤT CHIẾU
+                                                </strong>
+                                                <span style={{ fontSize: 13, color: '#666' }}>
+                                                    Chỉ cần bù thêm <strong style={{ color: '#f37021' }}>
+                                                        {reschedulePayAmount.toLocaleString('vi-VN')} ₫
+                                                    </strong> để hoàn tất đổi suất
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="coupon-group">
-                                        <input
-                                            type="text"
-                                            placeholder="Nhập mã giảm giá..."
-                                            value={couponCode}
-                                            onChange={e => setCouponCode(e.target.value)}
-                                            disabled={isApplyingCoupon || isProcessing}
-                                        />
-                                        <LoadingButton
-                                            type="button"
-                                            loading={isApplyingCoupon}
-                                            loadingText="Đang áp dụng..."
-                                            onClick={handleApplyCoupon}
-                                            disabled={isApplyingCoupon || isProcessing}
-                                            className="coupon-btn"
-                                            spinnerColor="#ffffff"
-                                        >
-                                            ÁP DỤNG
-                                        </LoadingButton>
+                                )}
+
+                                {/* COUPON — chỉ hiện khi KHÔNG phải reschedule */}
+                                {!isRescheduleMode && (
+                                    <div className="payment-card">
+                                        <div className="payment-section-heading">
+                                            <span className="payment-section-number">01</span>
+                                            <div>
+                                                <h3>MÃ GIẢM GIÁ</h3>
+                                                <p>Nhập mã ưu đãi nếu bạn có</p>
+                                            </div>
+                                        </div>
+                                        <div className="coupon-group">
+                                            <input
+                                                type="text"
+                                                placeholder="Nhập mã giảm giá..."
+                                                value={couponCode}
+                                                onChange={e => setCouponCode(e.target.value)}
+                                                disabled={isApplyingCoupon || isProcessing}
+                                            />
+                                            <LoadingButton
+                                                type="button"
+                                                loading={isApplyingCoupon}
+                                                loadingText="Đang áp dụng..."
+                                                onClick={handleApplyCoupon}
+                                                disabled={isApplyingCoupon || isProcessing}
+                                                className="coupon-btn"
+                                                spinnerColor="#ffffff"
+                                            >
+                                                ÁP DỤNG
+                                            </LoadingButton>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
+
+                                {/* THÔNG TIN NHẬN VÉ */}
                                 <div className="payment-card">
                                     <div className="payment-section-heading">
-                                        <span className="payment-section-number">02</span>
+                                        <span className="payment-section-number">{isRescheduleMode ? '01' : '02'}</span>
                                         <div>
                                             <h3>THÔNG TIN NHẬN VÉ</h3>
                                             <p>Thông tin dùng để gửi vé điện tử</p>
@@ -774,9 +1102,11 @@ const Payment = () => {
                                         />
                                     </div>
                                 </div>
+
+                                {/* HÌNH THỨC THANH TOÁN */}
                                 <div className="payment-card">
                                     <div className="payment-section-heading">
-                                        <span className="payment-section-number">03</span>
+                                        <span className="payment-section-number">{isRescheduleMode ? '02' : '03'}</span>
                                         <div>
                                             <h3>HÌNH THỨC THANH TOÁN</h3>
                                             <p>Chọn phương thức thanh toán</p>
@@ -812,7 +1142,12 @@ const Payment = () => {
                                     </div>
                                     <div className="payment-total">
                                         <span>TỔNG THANH TOÁN</span>
-                                        <strong>{grandTotal.toLocaleString('vi-VN')} ₫</strong>
+                                        <strong>
+                                            {isRescheduleMode
+                                                ? reschedulePayAmount.toLocaleString('vi-VN')
+                                                : grandTotal.toLocaleString('vi-VN')
+                                            } ₫
+                                        </strong>
                                     </div>
                                     <div className="payment-actions">
                                         <LoadingButton
@@ -824,7 +1159,7 @@ const Payment = () => {
                                             className="btn-next"
                                             spinnerColor="#ffffff"
                                         >
-                                            XÁC NHẬN THANH TOÁN
+                                            {isRescheduleMode ? 'XÁC NHẬN ĐỔI VÉ' : 'XÁC NHẬN THANH TOÁN'}
                                         </LoadingButton>
                                         <button type="button" className="btn-back" onClick={() => navigate(-1)} disabled={isProcessing}>
                                             ← QUAY LẠI
@@ -846,10 +1181,10 @@ const Payment = () => {
                             selectedFoods={Array.isArray(selectedFoods) ? selectedFoods : []}
                             totalTicketPrice={totalTicketPrice}
                             totalFoodPrice={totalFoodPrice}
-                            grandTotal={grandTotal}
+                            grandTotal={isRescheduleMode ? reschedulePayAmount : grandTotal}
                             isTimerActive={isTimerActive}
                             onExpire={handleTimeExpire}
-                            showFoodSection={true}
+                            showFoodSection={!isRescheduleMode}
                         />
                     </aside>
                 </div>
