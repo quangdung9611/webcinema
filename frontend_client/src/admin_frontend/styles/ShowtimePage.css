@@ -45,7 +45,6 @@
     font-style: normal;
 }
 
-/* ✅ Icon trong strong của info box */
 .showtime-create-body strong svg {
     display: inline-block;
     vertical-align: middle;
@@ -145,7 +144,7 @@
 }
 
 /* ==========================================================
-   MOVIE CHECKBOX LIST (Create mode)
+   MOVIE CHECKBOX LIST
    ========================================================== */
 .showtime-movie-checkbox-list {
     display: flex;
@@ -186,49 +185,6 @@
 }
 
 .showtime-movie-checkbox input[type="checkbox"] {
-    display: none;
-}
-
-/* ==========================================================
-   ROOM CHECKBOX LIST (Edit mode)
-   ========================================================== */
-.showtime-room-checkbox-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-sm);
-    padding: var(--space-sm);
-    background: var(--bg-secondary);
-    border: var(--border-subtle);
-    border-radius: var(--radius-sm);
-}
-
-.showtime-room-checkbox {
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
-    padding: 6px 14px;
-    background: var(--bg-tertiary);
-    border: var(--border-subtle);
-    border-radius: var(--radius-round);
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    user-select: none;
-}
-
-.showtime-room-checkbox:hover {
-    border-color: var(--accent-ice-border);
-    color: var(--text-body);
-}
-
-.showtime-room-checkbox.checked {
-    background: var(--accent-ice-bg);
-    border-color: var(--accent-ice);
-    color: var(--accent-ice);
-}
-
-.showtime-room-checkbox input[type="checkbox"] {
     display: none;
 }
 
@@ -276,13 +232,12 @@
     opacity: 0.8;
 }
 
-/* ✅ Icon trong nút submit */
 .showtime-submit-btn svg {
     flex-shrink: 0;
 }
 
 /* ==========================================================
-   SPIN ICON (Loader)
+   SPIN ICON
    ========================================================== */
 .spin-icon {
     animation: spin 0.8s linear infinite;
@@ -294,7 +249,7 @@
 }
 
 /* ==========================================================
-   TABLE CELLS (AdminTable override)
+   TABLE CELLS
    ========================================================== */
 .showtime-movie-cell {
     display: flex;
@@ -357,17 +312,13 @@
 }
 
 /* ==========================================================
-   ✅ ADMIN TABLE - VIỀN BẠC SÁNG NỔI TRÊN NỀN ĐEN
+   ADMIN TABLE
    ========================================================== */
-
-/* Wrapper bao ngoài bảng */
 .admin-table-wrapper {
     overflow: auto;
     max-height: 700px;
     border-radius: var(--radius-md);
-    /* ✅ Viền bạc sáng */
     border: 1.5px solid var(--silver-primary);
-    /* ✅ Glow nhẹ để bảng nổi bật trên nền đen */
     box-shadow:
         0 0 0 1px rgba(221, 226, 232, 0.1),
         0 0 24px rgba(221, 226, 232, 0.12),
@@ -375,14 +326,12 @@
     background: var(--bg-primary);
 }
 
-/* Bảng chính */
 .admin-table {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
     font-size: 0.9rem;
     min-width: 800px;
-    /* ✅ Viền ngoài cùng cho table */
     border: 1px solid rgba(221, 226, 232, 0.15);
 }
 
@@ -398,9 +347,7 @@
     text-align: left;
     font-weight: var(--fw-bold);
     color: var(--text-heading);
-    /* ✅ Viền dưới bạc sáng */
     border-bottom: 2px solid var(--silver-primary);
-    /* ✅ Viền phải mờ giữa các cột */
     border-right: 1px solid rgba(221, 226, 232, 0.08);
     font-size: 0.85rem;
     white-space: nowrap;
@@ -416,9 +363,7 @@
 .admin-table td {
     padding: 10px 14px;
     text-align: left;
-    /* ✅ Viền dưới mờ phân tách row */
     border-bottom: 1px solid rgba(221, 226, 232, 0.06);
-    /* ✅ Viền phải mờ giữa các cột */
     border-right: 1px solid rgba(221, 226, 232, 0.04);
     vertical-align: middle;
     background: var(--bg-primary);
@@ -438,7 +383,6 @@
     border-bottom: none;
 }
 
-/* Scrollbar cho admin-table-wrapper */
 .admin-table-wrapper::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -459,7 +403,6 @@
     background: var(--silver-primary);
 }
 
-/* Firefox */
 .admin-table-wrapper {
     scrollbar-width: thin;
     scrollbar-color: var(--silver-dark) var(--bg-primary);
@@ -503,7 +446,7 @@
 }
 
 /* ==========================================================
-   STATUS BADGE (Reuse from global)
+   STATUS BADGE
    ========================================================== */
 .status-badge {
     display: inline-block;
@@ -552,7 +495,7 @@
 }
 
 /* ==========================================================
-   ✅ ALERT MODAL CONTENT (có hỗ trợ icon)
+   ALERT MODAL CONTENT
    ========================================================== */
 .admin-alert-content {
     padding: var(--space-sm) 0;
@@ -564,7 +507,6 @@
     color: var(--text-body);
 }
 
-/* ✅ Message trong alert giữ format xuống dòng */
 .admin-alert-message {
     white-space: pre-wrap;
     line-height: 1.6;
@@ -572,7 +514,106 @@
 }
 
 /* ==========================================================
-   RESPONSIVE - 1200px
+   ✅ CANCEL SHOWTIME MODAL
+   ========================================================== */
+
+.cancel-showtime-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.cancel-warning-box {
+    display: flex;
+    gap: 12px;
+    padding: 14px 16px;
+    background: rgba(243, 156, 18, 0.1);
+    border-left: 4px solid #f39c12;
+    border-radius: 8px;
+}
+
+.cancel-warning-box svg {
+    color: #f39c12;
+    flex-shrink: 0;
+}
+
+.cancel-warning-box strong {
+    display: block;
+    color: #f39c12;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+
+.cancel-warning-box p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.cancel-info-box {
+    padding: 14px 16px;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    border: var(--border-subtle);
+}
+
+.cancel-info-box p {
+    margin: 6px 0;
+    font-size: 13px;
+    color: var(--text-body);
+}
+
+.cancel-info-box strong {
+    color: var(--text-heading);
+    min-width: 70px;
+    display: inline-block;
+}
+
+.cancel-reason-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cancel-reason-group label {
+    font-weight: var(--fw-medium);
+    color: var(--text-heading);
+    font-size: 14px;
+}
+
+.cancel-reason-group textarea {
+    padding: 12px;
+    background: var(--bg-secondary);
+    border: var(--border-subtle);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--text-body);
+    resize: vertical;
+    min-height: 80px;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    outline: none;
+}
+
+.cancel-reason-group textarea:focus {
+    border-color: var(--accent-ice);
+    box-shadow: 0 0 0 3px var(--accent-ice-soft);
+}
+
+.cancel-reason-group textarea:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.cancel-reason-group small {
+    align-self: flex-end;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+/* ==========================================================
+   RESPONSIVE
    ========================================================== */
 @media (max-width: 1200px) {
     .admin-table {
@@ -602,9 +643,6 @@
     }
 }
 
-/* ==========================================================
-   RESPONSIVE - 992px
-   ========================================================== */
 @media (max-width: 992px) {
     .admin-table {
         font-size: 0.85rem;
@@ -638,8 +676,7 @@
         font-size: 0.9rem;
     }
 
-    .showtime-movie-checkbox-list,
-    .showtime-room-checkbox-list {
+    .showtime-movie-checkbox-list {
         max-height: 200px;
     }
 
@@ -654,17 +691,13 @@
     }
 }
 
-/* ==========================================================
-   RESPONSIVE - 768px (Tablet)
-   ========================================================== */
 @media (max-width: 768px) {
     .showtime-form-row {
         grid-template-columns: 1fr;
         gap: var(--space-sm);
     }
 
-    .showtime-movie-checkbox-list,
-    .showtime-room-checkbox-list {
+    .showtime-movie-checkbox-list {
         max-height: 180px;
     }
 
@@ -692,12 +725,8 @@
     }
 }
 
-/* ==========================================================
-   RESPONSIVE - 480px (Mobile)
-   ========================================================== */
 @media (max-width: 480px) {
-    .showtime-movie-checkbox,
-    .showtime-room-checkbox {
+    .showtime-movie-checkbox {
         font-size: 0.78rem;
         padding: 4px 10px;
     }
@@ -742,34 +771,28 @@
 }
 
 /* ==========================================================
-   SCROLLBAR TRONG CHECKBOX LIST (Override)
+   SCROLLBAR CHO CHECKBOX LIST
    ========================================================== */
-.showtime-movie-checkbox-list::-webkit-scrollbar,
-.showtime-room-checkbox-list::-webkit-scrollbar {
+.showtime-movie-checkbox-list::-webkit-scrollbar {
     width: 6px;
     height: 6px;
 }
 
-.showtime-movie-checkbox-list::-webkit-scrollbar-track,
-.showtime-room-checkbox-list::-webkit-scrollbar-track {
+.showtime-movie-checkbox-list::-webkit-scrollbar-track {
     background: transparent;
 }
 
-.showtime-movie-checkbox-list::-webkit-scrollbar-thumb,
-.showtime-room-checkbox-list::-webkit-scrollbar-thumb {
+.showtime-movie-checkbox-list::-webkit-scrollbar-thumb {
     background: var(--text-disabled);
     border-radius: var(--radius-round);
     border: none;
 }
 
-.showtime-movie-checkbox-list::-webkit-scrollbar-thumb:hover,
-.showtime-room-checkbox-list::-webkit-scrollbar-thumb:hover {
+.showtime-movie-checkbox-list::-webkit-scrollbar-thumb:hover {
     background: var(--text-muted);
 }
 
-/* Firefox */
-.showtime-movie-checkbox-list,
-.showtime-room-checkbox-list {
+.showtime-movie-checkbox-list {
     scrollbar-width: thin;
     scrollbar-color: var(--text-disabled) transparent;
 }

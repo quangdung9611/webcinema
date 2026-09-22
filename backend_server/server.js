@@ -62,6 +62,9 @@ const priceConfigRoutes = require("./Routers/PriceConfigRouter");
 const showtimeConfigRoutes = require('./Routers/ShowtimeConfigRouter');
 const aiRoutes = require('./Routers/AiRouter');
 
+// ✅ SHOWTIME ADMIN ROUTES — HỦY SUẤT CHIẾU
+const showtimeAdminRoutes = require("./Routers/ShowtimeAdminRouter");
+
 // ============================================================
 // APP / SERVER
 // ============================================================
@@ -591,6 +594,9 @@ app.use("/api/price-config", priceConfigRoutes);
 app.use("/admin/api/dashboard", dashboardRouter);
 app.use('/api/ai', aiRoutes);
 
+// ✅ SHOWTIME ADMIN ROUTES — HỦY SUẤT CHIẾU
+app.use("/admin/api/showtimes", showtimeAdminRoutes);
+
 app.use((req, res) => {
     res.status(404).json({
         success: false, code: "NOT_FOUND",
@@ -706,10 +712,7 @@ if (REMINDER_ENABLED) {
         }
     };
 
-    // Chạy sau 2 phút khi server start (đợi DB + mail warm up)
     setTimeout(runReminder, 2 * 60 * 1000);
-
-    // Chạy mỗi N phút
     setInterval(runReminder, REMINDER_CRON_INTERVAL * 60 * 1000);
 
     console.log(

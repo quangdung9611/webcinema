@@ -785,7 +785,7 @@ const UserHome = () => {
 
       <div className="user-home">
 
-        <HeroBanner videoSrc="/movietheater_video.mp4" />
+    <HeroBanner videoSrc="https://res.cloudinary.com/mlznpd9x/video/upload/v1790042515/movietheater_video_dyynv5.mp4" />
 
         {/* ==================================================
             QUICK BOOKING

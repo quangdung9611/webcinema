@@ -893,8 +893,8 @@ const UserHeader = () => {
                             closeMobileMenu
                         }
                     >
-                      <img
-                            src="./logocinema1.png"
+                        <img
+                            src="https://res.cloudinary.com/mlznpd9x/image/upload/v1790041080/logocinema1_wuqztk.png"
                             alt="QD Cinema"
                         />
                     </Link>

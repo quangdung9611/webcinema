@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import "../styles/HeroBanner.css";
 
 const HeroBanner = ({
-  videoSrc = "/vutru_video.mp4",
-  posterSrc = "/hero-poster.jpg"
+  // ✅ Video Cloudinary — chỉ giữ video, bỏ poster
+  videoSrc = "https://res.cloudinary.com/mlznpd9x/video/upload/v1790042515/movietheater_video_dyynv5.mp4"
 }) => {
   const navigate = useNavigate();
   const videoRef = useRef(null);
@@ -61,8 +61,7 @@ const HeroBanner = ({
           loop
           muted
           playsInline
-          preload="metadata"
-          poster={posterSrc}
+          preload="auto"
           onLoadedData={() => setVideoLoaded(true)}
         >
           <source src={videoSrc} type="video/mp4" />

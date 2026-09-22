@@ -13,6 +13,7 @@ const ForgotPasswordTemplate = require("../Templates/ForgotPasswordTemplate");
 const VerifyEmailTemplate = require("../Templates/VerifyEmailTemplate");
 const ForgotPinTemplate = require("../Templates/ForgotPinTemplate");
 const TicketReminderTemplate = require("../Templates/TicketReminderTemplate");
+const ShowtimeCancelledTemplate = require("../Templates/ShowtimeCancelledTemplate");
 
 // =========================================================
 // HÀM LẤY THỜI GIAN VN (UTC+7)
@@ -66,10 +67,6 @@ const MailService = {
         }
 
         try {
-            // =====================================================
-            // 1. CHUẨN BỊ ATTACHMENTS + CID
-            // =====================================================
-
             const attachments = [];
 
             // ----- QR CODE -----
@@ -126,10 +123,6 @@ const MailService = {
                 console.log("ℹ️ [MAIL] No poster — skipped");
             }
 
-            // =====================================================
-            // 2. BUILD TEMPLATE DATA
-            // =====================================================
-
             const templateData = {
                 bookingId,
                 customerName: customerName || "Quý khách",
@@ -145,15 +138,7 @@ const MailService = {
                 qrCid: qrCid,
             };
 
-            // =====================================================
-            // 3. RENDER HTML
-            // =====================================================
-
             const html = TicketEmailTemplate(templateData, fileExists);
-
-            // =====================================================
-            // 4. SEND EMAIL
-            // =====================================================
 
             const info = await transporter.sendMail({
                 from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
@@ -307,36 +292,12 @@ const MailService = {
             console.error(error);
             throw error;
         }
-    },   // ✅ ĐÃ THÊM DẤU PHẨY
+    },
 
     // =====================================================
     // ✅ SEND TICKET REMINDER — GỬI NHẮC NHỞ SUẤT CHIẾU
     // =====================================================
 
-    /**
-     * Gửi email nhắc nhở suất chiếu sắp bắt đầu
-     *
-     * @param {Object} data - Object chứa:
-     *   - email (required): Email người nhận
-     *   - bookingId: Mã booking
-     *   - customerName: Tên khách hàng
-     *   - seatLabel: VD "A1, A2"
-     *   - movieTitle: Tên phim
-     *   - moviePoster: URL poster
-     *   - cinemaName: Tên rạp
-     *   - cinemaAddress: Địa chỉ rạp
-     *   - cinemaMap: Link Google Maps
-     *   - roomName: Tên phòng
-     *   - startTime: Giờ chiếu "20:00"
-     *   - selectedDate: Ngày chiếu "17/09/2026"
-     *   - selectedFoods: Đồ ăn
-     *   - ticketPIN: Mã PIN hiển thị
-     *   - ticketCode: Mã vé để tạo QR
-     *   - qrUrl: URL check-in
-     *   - minutesBefore: Số phút trước suất chiếu
-     *
-     * @returns {Promise<Object>} Info từ nodemailer
-     */
     sendTicketReminder: async (data) => {
         const {
             email,
@@ -365,10 +326,6 @@ const MailService = {
         }
 
         try {
-            // =====================================================
-            // 1. TẠO QR CODE
-            // =====================================================
-
             const attachments = [];
             const qrContent = qrUrl || ticketCode || ticketPIN;
             let qrCid = null;
@@ -400,10 +357,6 @@ const MailService = {
                 }
             }
 
-            // =====================================================
-            // 2. BUILD TEMPLATE DATA
-            // =====================================================
-
             const templateData = {
                 bookingId,
                 customerName: customerName || "Quý khách",
@@ -422,15 +375,7 @@ const MailService = {
                 minutesBefore: minutesBefore,
             };
 
-            // =====================================================
-            // 3. RENDER HTML
-            // =====================================================
-
             const html = TicketReminderTemplate(templateData);
-
-            // =====================================================
-            // 4. SEND EMAIL
-            // =====================================================
 
             const info = await transporter.sendMail({
                 from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
@@ -447,6 +392,64 @@ const MailService = {
 
         } catch (error) {
             console.error("❌ [MAIL] SEND TICKET REMINDER ERROR");
+            console.error(error);
+            throw error;
+        }
+    },
+
+    // =====================================================
+    // ✅ SEND SHOWTIME CANCELLED EMAIL — THÔNG BÁO HỦY + HOÀN ĐIỂM
+    // =====================================================
+
+    sendShowtimeCancelledEmail: async (data) => {
+        const {
+            email,
+            customerName,
+            movieTitle,
+            moviePoster,
+            cinemaName,
+            roomName,
+            startTime,
+            reason,
+            refundPoints = 0,
+            newTotalPoints = 0,
+        } = data || {};
+
+        console.log(`📨 [MAIL] SEND SHOWTIME CANCELLED -> ${email} | Movie: ${movieTitle} | Refund: ${refundPoints} points`);
+
+        if (!email) {
+            throw new Error("Email người nhận không hợp lệ");
+        }
+
+        try {
+            const templateData = {
+                customerName: customerName || "Quý khách",
+                movieTitle: movieTitle || "---",
+                moviePoster: moviePoster || "",
+                cinemaName: cinemaName || "---",
+                roomName: roomName || "---",
+                startTime: startTime || "---",
+                reason: reason || "Sự cố kỹ thuật",
+                refundPoints: refundPoints,
+                newTotalPoints: newTotalPoints,
+            };
+
+            const html = ShowtimeCancelledTemplate(templateData);
+
+            const info = await transporter.sendMail({
+                from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
+                to: email,
+                subject: `⚠️ Suất chiếu "${movieTitle}" đã bị hủy — Hoàn ${Number(refundPoints).toLocaleString('vi-VN')} điểm`,
+                html,
+            });
+
+            console.log("✅ [MAIL] SHOWTIME CANCELLED EMAIL SENT");
+            console.log(`📧 Message ID: ${info.messageId}`);
+
+            return info;
+
+        } catch (error) {
+            console.error("❌ [MAIL] SEND SHOWTIME CANCELLED ERROR");
             console.error(error);
             throw error;
         }

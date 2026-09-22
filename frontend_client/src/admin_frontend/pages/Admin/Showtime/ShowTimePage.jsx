@@ -17,16 +17,7 @@ import {
     Clock,
     Sparkles,
     Rocket,
-    BarChart3,
-    CheckCircle2,
     AlertTriangle,
-    XCircle,
-    SkipForward,
-    Search,
-    Home,
-    Settings,
-    Calendar,
-    Info,
     Lightbulb,
 } from 'lucide-react';
 
@@ -50,7 +41,6 @@ const ShowTimePage = () => {
     const [showtimes, setShowtimes] = useState([]);
     const [movies, setMovies] = useState([]);
     const [cinemas, setCinemas] = useState([]);
-    const [rooms, setRooms] = useState([]);
 
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
@@ -67,7 +57,6 @@ const ShowTimePage = () => {
     });
 
     const [isFormOpen, setIsFormOpen] = useState(false);
-    const [editingShowtime, setEditingShowtime] = useState(null);
 
     const [scheduleData, setScheduleData] = useState({
         movie_ids: [],
@@ -77,6 +66,18 @@ const ShowTimePage = () => {
     });
 
     const [formErrors, setFormErrors] = useState({});
+
+    // ✅ STATE CHO MODAL HỦY SUẤT CHIẾU
+    const [cancelModal, setCancelModal] = useState({
+        open: false,
+        showtime: null,
+        bookingCount: 0,
+        hasBookings: false,
+        isPast: false,
+        canCancel: true,
+        reason: '',
+        loading: false
+    });
 
     const [alertModal, setAlertModal] = useState({
         open: false,
@@ -221,28 +222,6 @@ const ShowTimePage = () => {
     }, []);
 
     // ======================================================
-    // FETCH ROOMS
-    // ======================================================
-
-    const fetchRoomsByCinema = useCallback(async (cinemaId) => {
-        if (!cinemaId) {
-            setRooms([]);
-            return [];
-        }
-
-        try {
-            const res = await api.get(`/api/rooms/cinema/${cinemaId}`);
-            const roomData = res.data?.data || [];
-            setRooms(roomData);
-            return roomData;
-        } catch (error) {
-            console.error('FETCH ROOMS ERROR:', error);
-            setRooms([]);
-            return [];
-        }
-    }, []);
-
-    // ======================================================
     // INITIAL EFFECT
     // ======================================================
 
@@ -285,68 +264,126 @@ const ShowTimePage = () => {
     };
 
     // ======================================================
-    // OPEN ADD
+    // OPEN ADD (TẠO LỊCH CHIẾU)
     // ======================================================
 
     const handleOpenAdd = () => {
-        setEditingShowtime(null);
         setScheduleData({
             movie_ids: [],
             cinema_id: '',
             start_date: '',
             end_date: ''
         });
-        setRooms([]);
         setFormErrors({});
         setIsFormOpen(true);
     };
 
     // ======================================================
-    // OPEN EDIT
+    // ✅ OPEN CANCEL MODAL — NÚT "SỬA" GIỜ LÀ "HỦY SUẤT"
     // ======================================================
 
-    const handleOpenEdit = async (showtime) => {
+    const handleOpenCancel = async (showtime) => {
         try {
             setLoading(true);
 
-            const res = await api.get(`/api/showtimes/detail/${showtime.showtime_id}`);
-            const st = res.data?.data || res.data;
+            // Check suất chiếu có booking không
+            const checkRes = await api.get(
+                `/admin/api/showtimes/${showtime.showtime_id}/check-bookings`
+            );
 
-            await fetchRoomsByCinema(st.cinema_id);
+            const checkData = checkRes.data?.data || {};
 
-            setEditingShowtime(st);
-            setFormErrors({});
-
-            setScheduleData({
-                movie_id: st.movie_id,
-                cinema_id: st.cinema_id,
-                room_ids: [Number(st.room_id)],
-                start_date: st.start_time?.slice(0, 10) || '',
-                end_date: st.start_time?.slice(0, 10) || '',
-                operating_start: st.start_time?.slice(11, 16) || '08:00'
+            setCancelModal({
+                open: true,
+                showtime: showtime,
+                bookingCount: checkData.bookingCount || 0,
+                hasBookings: checkData.hasBookings || false,
+                isPast: checkData.isPast || false,
+                canCancel: checkData.canCancel !== false,
+                reason: '',
+                loading: false
             });
 
-            setIsFormOpen(true);
-
         } catch (error) {
-            console.error('FETCH SHOWTIME DETAIL ERROR:', error);
-            showAlert('Lỗi', 'Không thể tải dữ liệu suất chiếu.', 'error');
+            console.error('CHECK BOOKINGS ERROR:', error);
+            showAlert('Lỗi', error.response?.data?.message || 'Không thể kiểm tra suất chiếu.', 'error');
         } finally {
             setLoading(false);
         }
     };
 
     // ======================================================
-    // CLOSE FORM
+    // ✅ CLOSE CANCEL MODAL
+    // ======================================================
+
+    const closeCancelModal = () => {
+        if (cancelModal.loading) return;
+
+        setCancelModal({
+            open: false,
+            showtime: null,
+            bookingCount: 0,
+            hasBookings: false,
+            isPast: false,
+            canCancel: true,
+            reason: '',
+            loading: false
+        });
+    };
+
+    // ======================================================
+    // ✅ CONFIRM CANCEL SHOWTIME (HỦY + HOÀN ĐIỂM)
+    // ======================================================
+
+    const handleConfirmCancel = async () => {
+        if (!cancelModal.reason.trim()) {
+            showAlert('Lỗi', 'Vui lòng nhập lý do hủy.', 'error');
+            return;
+        }
+
+        try {
+            setCancelModal(prev => ({ ...prev, loading: true }));
+
+            const res = await api.post(
+                `/admin/api/showtimes/${cancelModal.showtime.showtime_id}/cancel`,
+                { reason: cancelModal.reason.trim() }
+            );
+
+            const {
+                cancelledBookings,
+                totalPointsRefunded,
+                emailSuccessCount
+            } = res.data?.data || {};
+
+            closeCancelModal();
+
+            await fetchShowtimes(pagination.page, search);
+
+            showAlert(
+                'Đã hủy suất chiếu',
+                `✅ Đã hủy suất chiếu.\n\n` +
+                `👥 Số khách bị ảnh hưởng: ${cancelledBookings || 0}\n` +
+                `💰 Tổng điểm hoàn: ${Number(totalPointsRefunded || 0).toLocaleString('vi-VN')} điểm\n` +
+                `📧 Email gửi thành công: ${emailSuccessCount || 0}/${cancelledBookings || 0}`,
+                'success'
+            );
+
+        } catch (error) {
+            console.error('CANCEL SHOWTIME ERROR:', error);
+            setCancelModal(prev => ({ ...prev, loading: false }));
+            showAlert('Lỗi', error.response?.data?.message || 'Không thể hủy suất chiếu.', 'error');
+        }
+    };
+
+    // ======================================================
+    // CLOSE FORM (TẠO LỊCH)
     // ======================================================
 
     const handleCloseForm = () => {
         if (submitLoading) return;
 
         setIsFormOpen(false);
-        setEditingShowtime(null);
         setFormErrors({});
-        setRooms([]);
     };
 
     // ======================================================
@@ -370,31 +407,6 @@ const ShowTimePage = () => {
                     : currentIds.filter(id => id !== movieId);
 
                 return { ...prev, movie_ids: nextIds };
-            });
-
-            return;
-        }
-
-        if (name === 'cinema_id') {
-            setScheduleData(prev => ({ ...prev, cinema_id: value }));
-
-            if (!editingShowtime) {
-                fetchRoomsByCinema(value);
-            }
-
-            return;
-        }
-
-        if (name === 'room_ids' && editingShowtime) {
-            const roomId = Number(value);
-
-            setScheduleData(prev => {
-                const currentRoomIds = Array.isArray(prev.room_ids) ? prev.room_ids : [];
-                const nextRoomIds = checked
-                    ? (currentRoomIds.includes(roomId) ? currentRoomIds : [...currentRoomIds, roomId])
-                    : currentRoomIds.filter(id => id !== roomId);
-
-                return { ...prev, room_ids: nextRoomIds };
             });
 
             return;
@@ -430,22 +442,8 @@ const ShowTimePage = () => {
             errors.end_date = 'Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu';
         }
 
-        if (editingShowtime) {
-            if (!scheduleData.movie_id) {
-                errors.movie_id = 'Vui lòng chọn phim';
-            }
-
-            if (!Array.isArray(scheduleData.room_ids) || scheduleData.room_ids.length === 0) {
-                errors.room_ids = 'Vui lòng chọn phòng chiếu';
-            }
-
-            if (!scheduleData.operating_start) {
-                errors.operating_start = 'Vui lòng chọn giờ';
-            }
-        } else {
-            if (!Array.isArray(scheduleData.movie_ids) || scheduleData.movie_ids.length === 0) {
-                errors.movie_ids = 'Vui lòng chọn ít nhất 1 phim';
-            }
+        if (!Array.isArray(scheduleData.movie_ids) || scheduleData.movie_ids.length === 0) {
+            errors.movie_ids = 'Vui lòng chọn ít nhất 1 phim';
         }
 
         setFormErrors(errors);
@@ -535,34 +533,6 @@ const ShowTimePage = () => {
             }
         }
 
-        if (summary?.byRoomType && typeof summary.byRoomType === 'object') {
-            message += `\n\nPHÂN BỔ THEO HẠNG PHÒNG:`;
-            for (const [type, count] of Object.entries(summary.byRoomType)) {
-                message += `\n  - ${type}: ${Number(count) || 0} suất`;
-            }
-        }
-
-        if (summary?.byTimeSlot && typeof summary.byTimeSlot === 'object') {
-            message += `\n\nPHÂN BỔ THEO KHUNG GIỜ:`;
-            message += `\n  - Sáng: ${Number(summary.byTimeSlot.MORNING) || 0} suất`;
-            message += `\n  - Trưa: ${Number(summary.byTimeSlot.AFTERNOON) || 0} suất`;
-            message += `\n  - Chiều: ${Number(summary.byTimeSlot.EVENING) || 0} suất`;
-            message += `\n  - Đêm: ${Number(summary.byTimeSlot.NIGHT) || 0} suất`;
-        }
-
-        if (summary?.byDayType && typeof summary.byDayType === 'object') {
-            message += `\n\nPHÂN BỔ THEO LOẠI NGÀY:`;
-            if (summary.byDayType.ALL !== undefined) {
-                message += `\n  - ALL: ${Number(summary.byDayType.ALL) || 0} suất`;
-            }
-            if (summary.byDayType.WEEKDAY !== undefined) {
-                message += `\n  - WEEKDAY: ${Number(summary.byDayType.WEEKDAY) || 0} suất`;
-            }
-            if (summary.byDayType.WEEKEND !== undefined) {
-                message += `\n  - WEEKEND: ${Number(summary.byDayType.WEEKEND) || 0} suất`;
-            }
-        }
-
         if (createdCount === 0) {
             message += `\n\nKHÔNG TẠO ĐƯỢC SUẤT NÀO!`;
             message += `\n\nHệ thống đã kiểm tra:`;
@@ -579,42 +549,12 @@ const ShowTimePage = () => {
     };
 
     // ======================================================
-    // HANDLE SUBMIT
+    // HANDLE SUBMIT (CHỈ TẠO LỊCH)
     // ======================================================
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // EDIT SHOWTIME
-        if (editingShowtime) {
-            if (!validateSchedule()) return;
-
-            try {
-                setSubmitLoading(true);
-                setFormErrors({});
-
-                await api.put(`/api/showtimes/${editingShowtime.showtime_id}`, {
-                    movie_id: Number(scheduleData.movie_id),
-                    cinema_id: Number(scheduleData.cinema_id),
-                    room_id: Number(scheduleData.room_ids[0]),
-                    start_time: `${scheduleData.start_date} ${scheduleData.operating_start}`
-                });
-
-                setIsFormOpen(false);
-                await fetchShowtimes(pagination.page, search);
-                showAlert('Thành công', 'Cập nhật suất chiếu thành công.', 'success');
-
-            } catch (error) {
-                console.error('UPDATE SHOWTIME ERROR:', error);
-                showAlert('Lỗi', error.response?.data?.message || 'Không thể cập nhật suất chiếu.', 'error');
-            } finally {
-                setSubmitLoading(false);
-            }
-
-            return;
-        }
-
-        // CREATE AUTO
         if (!validateSchedule()) return;
 
         try {
@@ -624,8 +564,6 @@ const ShowTimePage = () => {
             const movieIds = Array.isArray(scheduleData.movie_ids)
                 ? scheduleData.movie_ids
                 : [];
-
-            console.log('movieIds:', movieIds);
 
             if (movieIds.length === 0) {
                 showAlert('Lỗi', 'Vui lòng chọn ít nhất 1 phim', 'error');
@@ -640,14 +578,9 @@ const ShowTimePage = () => {
                 end_date: scheduleData.end_date
             };
 
-            console.log('AUTO SCHEDULE PAYLOAD:', payload);
-
             const res = await api.post('/api/showtimes/schedule', payload);
 
-            console.log('RAW RESPONSE:', res.data);
-
             const result = normalizeScheduleResult(res);
-            console.log('NORMALIZED RESULT:', result);
 
             await fetchShowtimes(pagination.page, search);
 
@@ -674,7 +607,6 @@ const ShowTimePage = () => {
 
         } catch (error) {
             console.error('CREATE SCHEDULE ERROR:', error);
-            console.error('BACKEND RESPONSE:', error.response?.data);
 
             const backendData = error.response?.data;
             const backendField = backendData?.field;
@@ -705,13 +637,13 @@ const ShowTimePage = () => {
     };
 
     // ======================================================
-    // DELETE
+    // DELETE (XÓA BÌNH THƯỜNG)
     // ======================================================
 
     const handleDelete = (showtime) => {
         showAlert(
             'Xác nhận xóa',
-            `Bạn có chắc muốn xóa suất chiếu phim "${showtime.title}"?`,
+            `Bạn có chắc muốn xóa suất chiếu phim "${showtime.title}"?\n\nLưu ý: Nếu suất đã có khách đặt vé, hệ thống sẽ không cho xóa. Vui lòng dùng nút "Hủy suất" (icon bút chì) thay vì xóa.`,
             'warning',
             async () => {
                 try {
@@ -789,10 +721,18 @@ const ShowTimePage = () => {
             key: 'actions',
             render: row => (
                 <div className="admin-table-actions">
-                    <button className="admin-action-btn edit-btn" onClick={() => handleOpenEdit(row)}>
+                    <button
+                        className="admin-action-btn edit-btn"
+                        onClick={() => handleOpenCancel(row)}
+                        title="Hủy suất chiếu"
+                    >
                         <Edit size={16} />
                     </button>
-                    <button className="admin-action-btn delete-btn" onClick={() => handleDelete(row)}>
+                    <button
+                        className="admin-action-btn delete-btn"
+                        onClick={() => handleDelete(row)}
+                        title="Xóa suất chiếu"
+                    >
                         <Trash2 size={16} />
                     </button>
                 </div>
@@ -832,81 +772,66 @@ const ShowTimePage = () => {
                 )}
             </AdminPage>
 
-            {/* FORM MODAL */}
+            {/* ============================================
+                FORM MODAL — TẠO LỊCH CHIẾU
+            ============================================ */}
             <AdminModal
                 open={isFormOpen}
                 onClose={handleCloseForm}
-                title={editingShowtime ? 'Cập nhật suất chiếu' : 'Tạo lịch chiếu'}
+                title="Tạo lịch chiếu"
                 type="default"
                 size="lg"
             >
-                {!editingShowtime && (
-                    <div className="showtime-create-info">
-                        <div className="showtime-create-header">
-                            <Sparkles size={18} />
-                            Tạo lịch chiếu
-                        </div>
-                        <div className="showtime-create-body">
-                            <strong>Hệ thống sẽ:</strong>
-                            <br />
-                            1. Lấy cấu hình suất chiếu từ database (<strong>movie_showtime_config</strong>)
-                            <br />
-                            2. Tự tìm phòng đúng loại và tránh trùng
-                            <br />
-                            3. Tự xử lý WEEKDAY / WEEKEND
-                            <br />
-                            4. Tự tính giờ hoạt động của rạp
-                            <br /><br />
-                            <strong>
-                                <Lightbulb size={14} /> Cấu hình được quản lý tại trang <em>"Cấu hình lịch chiếu"</em>
-                            </strong>
-                        </div>
+                <div className="showtime-create-info">
+                    <div className="showtime-create-header">
+                        <Sparkles size={18} />
+                        Tạo lịch chiếu tự động
                     </div>
-                )}
+                    <div className="showtime-create-body">
+                        <strong>Hệ thống sẽ:</strong>
+                        <br />
+                        1. Lấy cấu hình suất chiếu từ database (<strong>movie_showtime_config</strong>)
+                        <br />
+                        2. Tự tìm phòng đúng loại và tránh trùng
+                        <br />
+                        3. Tự xử lý WEEKDAY / WEEKEND
+                        <br />
+                        4. Tự tính giờ hoạt động của rạp
+                        <br /><br />
+                        <strong>
+                            <Lightbulb size={14} /> Cấu hình được quản lý tại trang <em>"Cấu hình lịch chiếu"</em>
+                        </strong>
+                    </div>
+                </div>
 
                 <div className="showtime-form">
-                    {/* MOVIE - CREATE */}
-                    {!editingShowtime && (
-                        <div className="showtime-form-group">
-                            <label className="showtime-form-label">
-                                Chọn phim
-                                <span className="showtime-form-hint">(Có thể chọn nhiều phim)</span>
-                            </label>
-                            <div className="showtime-movie-checkbox-list">
-                                {movies.map(movie => {
-                                    const isChecked = scheduleData.movie_ids?.includes(movie.movie_id);
-                                    return (
-                                        <label key={movie.movie_id} className={`showtime-movie-checkbox ${isChecked ? 'checked' : ''}`}>
-                                            <input
-                                                type="checkbox"
-                                                name="movie_ids"
-                                                value={movie.movie_id}
-                                                checked={isChecked}
-                                                onChange={handleChange}
-                                            />
-                                            {movie.title}
-                                        </label>
-                                    );
-                                })}
-                            </div>
-                            {formErrors.movie_ids && (
-                                <span className="showtime-form-error">{formErrors.movie_ids}</span>
-                            )}
+                    {/* MOVIE */}
+                    <div className="showtime-form-group">
+                        <label className="showtime-form-label">
+                            Chọn phim
+                            <span className="showtime-form-hint">(Có thể chọn nhiều phim)</span>
+                        </label>
+                        <div className="showtime-movie-checkbox-list">
+                            {movies.map(movie => {
+                                const isChecked = scheduleData.movie_ids?.includes(movie.movie_id);
+                                return (
+                                    <label key={movie.movie_id} className={`showtime-movie-checkbox ${isChecked ? 'checked' : ''}`}>
+                                        <input
+                                            type="checkbox"
+                                            name="movie_ids"
+                                            value={movie.movie_id}
+                                            checked={isChecked}
+                                            onChange={handleChange}
+                                        />
+                                        {movie.title}
+                                    </label>
+                                );
+                            })}
                         </div>
-                    )}
-
-                    {/* MOVIE - EDIT */}
-                    {editingShowtime && (
-                        <div className="showtime-form-group">
-                            <label className="showtime-form-label">Phim</label>
-                            <input
-                                type="text"
-                                value={editingShowtime.title || ''}
-                                disabled
-                                className="showtime-form-input showtime-form-input-disabled"
-                            />
-                        </div>
-                    )}
+                        {formErrors.movie_ids && (
+                            <span className="showtime-form-error">{formErrors.movie_ids}</span>
+                        )}
+                    </div>
 
                     {/* CINEMA */}
                     <div className="showtime-form-group">
@@ -915,7 +840,6 @@ const ShowTimePage = () => {
                             name="cinema_id"
                             value={scheduleData.cinema_id}
                             onChange={handleChange}
-                            disabled={Boolean(editingShowtime)}
                             className="showtime-form-select"
                         >
                             <option value="">-- Chọn rạp --</option>
@@ -929,33 +853,6 @@ const ShowTimePage = () => {
                             <span className="showtime-form-error">{formErrors.cinema_id}</span>
                         )}
                     </div>
-
-                    {/* ROOM - EDIT */}
-                    {editingShowtime && (
-                        <div className="showtime-form-group">
-                            <label className="showtime-form-label">Phòng chiếu</label>
-                            <div className="showtime-room-checkbox-list">
-                                {rooms.map(room => {
-                                    const checked = scheduleData.room_ids?.includes(Number(room.room_id));
-                                    return (
-                                        <label key={room.room_id} className={`showtime-room-checkbox ${checked ? 'checked' : ''}`}>
-                                            <input
-                                                type="checkbox"
-                                                name="room_ids"
-                                                value={room.room_id}
-                                                checked={checked}
-                                                onChange={handleChange}
-                                            />
-                                            {room.room_name} ({room.room_type})
-                                        </label>
-                                    );
-                                })}
-                            </div>
-                            {formErrors.room_ids && (
-                                <span className="showtime-form-error">{formErrors.room_ids}</span>
-                            )}
-                        </div>
-                    )}
 
                     {/* DATE */}
                     <div className="showtime-form-row">
@@ -987,23 +884,6 @@ const ShowTimePage = () => {
                         </div>
                     </div>
 
-                    {/* TIME - EDIT */}
-                    {editingShowtime && (
-                        <div className="showtime-form-group">
-                            <label className="showtime-form-label">Giờ chiếu</label>
-                            <input
-                                type="time"
-                                name="operating_start"
-                                value={scheduleData.operating_start || ''}
-                                onChange={handleChange}
-                                className="showtime-form-input"
-                            />
-                            {formErrors.operating_start && (
-                                <span className="showtime-form-error">{formErrors.operating_start}</span>
-                            )}
-                        </div>
-                    )}
-
                     {/* SUBMIT */}
                     <button
                         type="submit"
@@ -1017,15 +897,89 @@ const ShowTimePage = () => {
                                 Đang xử lý...
                             </>
                         ) : (
-                            editingShowtime ? (
-                                'Lưu thay đổi'
-                            ) : (
-                                <>
-                                    <Rocket size={18} /> Tạo lịch chiếu
-                                </>
-                            )
+                            <>
+                                <Rocket size={18} /> Tạo lịch chiếu
+                            </>
                         )}
                     </button>
+                </div>
+            </AdminModal>
+
+            {/* ============================================
+                CANCEL MODAL — HỦY SUẤT CHIẾU + HOÀN ĐIỂM
+            ============================================ */}
+            <AdminModal
+                open={cancelModal.open}
+                onClose={closeCancelModal}
+                title="Hủy suất chiếu"
+                type="warning"
+                size="md"
+                onConfirm={cancelModal.isPast ? closeCancelModal : handleConfirmCancel}
+                onCancel={closeCancelModal}
+                confirmText={cancelModal.loading ? 'Đang xử lý...' : 'Xác nhận hủy'}
+                cancelText="Hủy bỏ"
+            >
+                <div className="cancel-showtime-content">
+                    {/* SUẤT ĐÃ DIỄN RA */}
+                    {cancelModal.isPast && (
+                        <div className="cancel-warning-box" style={{ background: 'rgba(231,76,60,0.1)', borderColor: '#e74c3c' }}>
+                            <AlertTriangle size={24} style={{ color: '#e74c3c' }} />
+                            <div>
+                                <strong style={{ color: '#e74c3c' }}>Không thể hủy!</strong>
+                                <p>Suất chiếu này đã diễn ra rồi.</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* CÓ BOOKING */}
+                    {!cancelModal.isPast && cancelModal.hasBookings && (
+                        <div className="cancel-warning-box">
+                            <AlertTriangle size={24} />
+                            <div>
+                                <strong>Suất chiếu này có {cancelModal.bookingCount} khách đã đặt vé!</strong>
+                                <p>Khi hủy, hệ thống sẽ hoàn 100% số tiền vé vào điểm tích lũy của từng khách và gửi email thông báo.</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* CHƯA CÓ BOOKING */}
+                    {!cancelModal.isPast && !cancelModal.hasBookings && (
+                        <div className="cancel-info-box" style={{ background: '#f0f9ff', borderColor: '#3b82f6' }}>
+                            <p style={{ margin: 0, color: '#3b82f6', fontWeight: 600, fontSize: 14 }}>
+                                ℹ️ Suất chiếu này chưa có khách đặt vé.
+                            </p>
+                            <p style={{ margin: '8px 0 0 0', color: '#666', fontSize: 13 }}>
+                                Bạn có thể yên tâm hủy suất chiếu này.
+                            </p>
+                        </div>
+                    )}
+
+                    {/* THÔNG TIN SUẤT CHIẾU */}
+                    <div className="cancel-info-box">
+                        <p><strong>Phim:</strong> {cancelModal.showtime?.title}</p>
+                        <p><strong>Rạp:</strong> {cancelModal.showtime?.cinema_name}</p>
+                        <p><strong>Phòng:</strong> {cancelModal.showtime?.room_name} ({cancelModal.showtime?.room_type})</p>
+                        <p><strong>Giờ:</strong> {formatDateTime(cancelModal.showtime?.start_time).time}</p>
+                        <p><strong>Ngày:</strong> {formatDateTime(cancelModal.showtime?.start_time).date}</p>
+                    </div>
+
+                    {/* NHẬP LÝ DO */}
+                    {!cancelModal.isPast && (
+                        <div className="cancel-reason-group">
+                            <label>
+                                Lý do hủy <span style={{ color: '#e74c3c' }}>*</span>
+                            </label>
+                            <textarea
+                                value={cancelModal.reason}
+                                onChange={(e) => setCancelModal(prev => ({ ...prev, reason: e.target.value }))}
+                                placeholder="VD: Mất điện đột xuất, máy chiếu bảo trì, sự cố kỹ thuật..."
+                                rows={3}
+                                disabled={cancelModal.loading}
+                                maxLength={255}
+                            />
+                            <small>{cancelModal.reason.length}/255</small>
+                        </div>
+                    )}
                 </div>
             </AdminModal>
 
