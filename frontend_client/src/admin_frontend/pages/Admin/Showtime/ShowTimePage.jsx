@@ -69,7 +69,6 @@ const ShowTimePage = () => {
 
     const [formErrors, setFormErrors] = useState({});
 
-    // ✅ State cho modal HỦY SUẤT CHIẾU
     const [cancelModal, setCancelModal] = useState({
         open: false,
         showtime: null,
@@ -93,6 +92,10 @@ const ShowTimePage = () => {
     const isFetching = useRef(false);
     const abortControllerRef = useRef(null);
     const prevSearchRef = useRef('');
+
+    // ✅ CHỐNG SPAM: Ref chặn double-click/submit
+    const isSubmittingRef = useRef(false);
+    const isCancellingRef = useRef(false);
 
     // ======================================================
     // ALERT
@@ -328,7 +331,7 @@ const ShowTimePage = () => {
                 start_date: st.start_time?.slice(0, 10) || '',
                 end_date: st.start_time?.slice(0, 10) || '',
                 operating_start: st.start_time?.slice(11, 16) || '08:00',
-                reason: '' // ✅ Reset lý do
+                reason: ''
             });
 
             setIsFormOpen(true);
@@ -342,7 +345,7 @@ const ShowTimePage = () => {
     };
 
     // ======================================================
-    // ✅ OPEN CANCEL MODAL (HỦY SUẤT CHIẾU) — cho nút XÓA
+    // ✅ OPEN CANCEL MODAL
     // ======================================================
 
     const handleOpenCancel = async (showtime) => {
@@ -379,7 +382,7 @@ const ShowTimePage = () => {
     // ======================================================
 
     const closeCancelModal = () => {
-        if (cancelModal.loading) return;
+        if (cancelModal.loading || isCancellingRef.current) return;
 
         setCancelModal({
             open: false,
@@ -394,14 +397,23 @@ const ShowTimePage = () => {
     };
 
     // ======================================================
-    // CONFIRM CANCEL SHOWTIME (HỦY + HOÀN ĐIỂM)
+    // ✅ CONFIRM CANCEL SHOWTIME — CHỐNG SPAM BẰNG REF
     // ======================================================
 
     const handleConfirmCancel = async () => {
+        // ✅ CHẶN NGAY LẬP TỨC bằng ref (không phụ thuộc state)
+        if (isCancellingRef.current) {
+            console.log('⏭️ [CANCEL] Đang xử lý, bỏ qua click trùng');
+            return;
+        }
+
         if (!cancelModal.reason.trim()) {
             showAlert('Lỗi', 'Vui lòng nhập lý do hủy.', 'error');
             return;
         }
+
+        // ✅ Khóa ngay
+        isCancellingRef.current = true;
 
         try {
             setCancelModal(prev => ({ ...prev, loading: true }));
@@ -417,7 +429,19 @@ const ShowTimePage = () => {
                 emailSuccessCount
             } = res.data?.data || {};
 
-            closeCancelModal();
+            // Reset ref TRƯỚC khi đóng modal
+            isCancellingRef.current = false;
+
+            setCancelModal({
+                open: false,
+                showtime: null,
+                bookingCount: 0,
+                hasBookings: false,
+                isPast: false,
+                canCancel: true,
+                reason: '',
+                loading: false
+            });
 
             await fetchShowtimes(pagination.page, search);
 
@@ -432,6 +456,7 @@ const ShowTimePage = () => {
 
         } catch (error) {
             console.error('CANCEL SHOWTIME ERROR:', error);
+            isCancellingRef.current = false;
             setCancelModal(prev => ({ ...prev, loading: false }));
             showAlert('Lỗi', error.response?.data?.message || 'Không thể hủy suất chiếu.', 'error');
         }
@@ -442,7 +467,7 @@ const ShowTimePage = () => {
     // ======================================================
 
     const handleCloseForm = () => {
-        if (submitLoading) return;
+        if (submitLoading || isSubmittingRef.current) return;
 
         setIsFormOpen(false);
         setEditingShowtime(null);
@@ -545,7 +570,6 @@ const ShowTimePage = () => {
                 errors.operating_start = 'Vui lòng chọn giờ';
             }
 
-            // ✅ BẮT BUỘC NHẬP LÝ DO KHI SỬA
             if (!scheduleData.reason || !scheduleData.reason.trim()) {
                 errors.reason = 'Vui lòng nhập lý do thay đổi suất chiếu';
             }
@@ -658,17 +682,25 @@ const ShowTimePage = () => {
     };
 
     // ======================================================
-    // HANDLE SUBMIT (CREATE + EDIT)
+    // ✅ HANDLE SUBMIT — CHỐNG SPAM BẰNG REF
     // ======================================================
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // ✅ CHẶN NGAY LẬP TỨC bằng ref
+        if (isSubmittingRef.current) {
+            console.log('⏭️ [SUBMIT] Đang xử lý, bỏ qua submit trùng');
+            return;
+        }
 
         // =====================================================
         // EDIT SHOWTIME
         // =====================================================
         if (editingShowtime) {
             if (!validateSchedule()) return;
+
+            isSubmittingRef.current = true;
 
             try {
                 setSubmitLoading(true);
@@ -679,7 +711,7 @@ const ShowTimePage = () => {
                     cinema_id: Number(scheduleData.cinema_id),
                     room_id: Number(scheduleData.room_ids[0]),
                     start_time: `${scheduleData.start_date} ${scheduleData.operating_start}`,
-                    reason: scheduleData.reason.trim() // ✅ GỬI LÝ DO
+                    reason: scheduleData.reason.trim()
                 });
 
                 const result = res.data?.data || {};
@@ -691,12 +723,11 @@ const ShowTimePage = () => {
 
                 await fetchShowtimes(pagination.page, search);
 
-                // Nếu có gửi email → thông báo
                 if (bookingCount > 0) {
                     showAlert(
                         'Cập nhật thành công',
                         `✅ Đã cập nhật suất chiếu.\n\n` +
-                        `📧 Đã gửi vé mới cho ${emailCount}/${bookingCount} khách.`,
+                        `📧 Đã gửi email thông báo cho ${emailCount}/${bookingCount} khách.`,
                         'success'
                     );
                 } else {
@@ -716,6 +747,7 @@ const ShowTimePage = () => {
                 }
 
             } finally {
+                isSubmittingRef.current = false;
                 setSubmitLoading(false);
             }
 
@@ -727,6 +759,8 @@ const ShowTimePage = () => {
         // =====================================================
         if (!validateSchedule()) return;
 
+        isSubmittingRef.current = true;
+
         try {
             setSubmitLoading(true);
             setFormErrors({});
@@ -737,6 +771,7 @@ const ShowTimePage = () => {
 
             if (movieIds.length === 0) {
                 showAlert('Lỗi', 'Vui lòng chọn ít nhất 1 phim', 'error');
+                isSubmittingRef.current = false;
                 setSubmitLoading(false);
                 return;
             }
@@ -802,6 +837,7 @@ const ShowTimePage = () => {
             }
 
         } finally {
+            isSubmittingRef.current = false;
             setSubmitLoading(false);
         }
     };
@@ -812,7 +848,6 @@ const ShowTimePage = () => {
 
     const handleDelete = async (showtime) => {
         try {
-            // Check booking trước
             const checkRes = await api.get(
                 `/admin/api/showtimes/${showtime.showtime_id}/check-bookings`
             );
@@ -820,10 +855,8 @@ const ShowTimePage = () => {
             const checkData = checkRes.data?.data || {};
 
             if (checkData.hasBookings) {
-                // Có khách → mở modal HỦY SUẤT (hoàn điểm)
                 await handleOpenCancel(showtime);
             } else {
-                // Không có khách → xóa thẳng
                 showAlert(
                     'Xác nhận xóa',
                     `Suất chiếu "${showtime.title}" chưa có khách đặt vé.\nBạn có chắc muốn xóa?`,
@@ -960,9 +993,7 @@ const ShowTimePage = () => {
                 )}
             </AdminPage>
 
-            {/* ============================================
-                FORM MODAL — TẠO LỊCH / SỬA SUẤT
-            ============================================ */}
+            {/* FORM MODAL */}
             <AdminModal
                 open={isFormOpen}
                 onClose={handleCloseForm}
@@ -995,7 +1026,6 @@ const ShowTimePage = () => {
                 )}
 
                 <div className="showtime-form">
-                    {/* MOVIE - CREATE */}
                     {!editingShowtime && (
                         <div className="showtime-form-group">
                             <label className="showtime-form-label">
@@ -1025,7 +1055,6 @@ const ShowTimePage = () => {
                         </div>
                     )}
 
-                    {/* MOVIE - EDIT */}
                     {editingShowtime && (
                         <div className="showtime-form-group">
                             <label className="showtime-form-label">Phim</label>
@@ -1038,7 +1067,6 @@ const ShowTimePage = () => {
                         </div>
                     )}
 
-                    {/* CINEMA */}
                     <div className="showtime-form-group">
                         <label className="showtime-form-label">Rạp chiếu</label>
                         <select
@@ -1060,7 +1088,6 @@ const ShowTimePage = () => {
                         )}
                     </div>
 
-                    {/* ROOM - EDIT */}
                     {editingShowtime && (
                         <div className="showtime-form-group">
                             <label className="showtime-form-label">Phòng chiếu</label>
@@ -1087,7 +1114,6 @@ const ShowTimePage = () => {
                         </div>
                     )}
 
-                    {/* DATE */}
                     <div className="showtime-form-row">
                         <div className="showtime-form-group">
                             <label className="showtime-form-label">Ngày bắt đầu</label>
@@ -1117,7 +1143,6 @@ const ShowTimePage = () => {
                         </div>
                     </div>
 
-                    {/* TIME - EDIT */}
                     {editingShowtime && (
                         <div className="showtime-form-group">
                             <label className="showtime-form-label">Giờ chiếu</label>
@@ -1134,7 +1159,6 @@ const ShowTimePage = () => {
                         </div>
                     )}
 
-                    {/* ✅ LÝ DO THAY ĐỔI - CHỈ KHI EDIT */}
                     {editingShowtime && (
                         <div className="showtime-form-group">
                             <label className="showtime-form-label">
@@ -1159,11 +1183,10 @@ const ShowTimePage = () => {
                         </div>
                     )}
 
-                    {/* SUBMIT */}
                     <button
                         type="submit"
                         onClick={handleSubmit}
-                        disabled={submitLoading}
+                        disabled={submitLoading || isSubmittingRef.current}
                         className={`showtime-submit-btn ${submitLoading ? 'loading' : ''}`}
                     >
                         {submitLoading ? (
@@ -1184,17 +1207,23 @@ const ShowTimePage = () => {
                 </div>
             </AdminModal>
 
-            {/* ============================================
-                CANCEL MODAL — HỦY SUẤT CHIẾU + HOÀN ĐIỂM
-            ============================================ */}
+            {/* CANCEL MODAL */}
             <AdminModal
                 open={cancelModal.open}
                 onClose={closeCancelModal}
                 title="Hủy suất chiếu"
                 type="warning"
                 size="md"
-                onConfirm={cancelModal.isPast ? closeCancelModal : handleConfirmCancel}
-                onCancel={closeCancelModal}
+                onConfirm={
+                    cancelModal.isPast || cancelModal.loading || isCancellingRef.current
+                        ? null
+                        : handleConfirmCancel
+                }
+                onCancel={
+                    cancelModal.loading || isCancellingRef.current
+                        ? null
+                        : closeCancelModal
+                }
                 confirmText={cancelModal.loading ? 'Đang xử lý...' : 'Xác nhận hủy'}
                 cancelText="Hủy bỏ"
             >
