@@ -15,6 +15,7 @@ const ForgotPinTemplate = require("../Templates/ForgotPinTemplate");
 const TicketReminderTemplate = require("../Templates/TicketReminderTemplate");
 const ShowtimeCancelledTemplate = require("../Templates/ShowtimeCancelledTemplate");
 const ShowtimeChangedTemplate = require("../Templates/ShowtimeChangedTemplate");
+
 // =========================================================
 // HÀM LẤY THỜI GIAN VN (UTC+7)
 // =========================================================
@@ -37,14 +38,19 @@ const getVNTime = (addMinutes = 0) => {
 
 const MailService = {
 
+    /* =========================================================
+       ✅ SEND TICKET EMAIL — CÓ POSTER
+    ========================================================= */
     sendTicketEmail: async (data) => {
         const {
             email, bookingId, customerName, seatLabel, movieTitle,
+            moviePoster,        // ✅ THÊM DÒNG NÀY
             cinemaName, roomName, startTime, selectedDate, selectedFoods,
             earnedPoints = 0, ticketPIN, ticketCode, qrUrl, posterPath,
         } = data || {};
 
         console.log(`📨 [MAIL] SEND TICKET -> ${email} | Booking: ${bookingId}`);
+        console.log(`🖼️ [MAIL] moviePoster: ${moviePoster}`);
 
         if (!email) throw new Error("Email người nhận không hợp lệ");
 
@@ -85,6 +91,7 @@ const MailService = {
             const templateData = {
                 bookingId, customerName: customerName || "Quý khách",
                 seatLabel: seatLabel || "---", movieTitle: movieTitle || "---",
+                moviePoster: moviePoster || "",        // ✅ TRUYỀN VÀO TEMPLATE
                 cinemaName: cinemaName || "---", roomName: roomName || "---",
                 startTime: startTime || "---", selectedDate: selectedDate || "---",
                 selectedFoods: selectedFoods || "", earnedPoints: earnedPoints || 0,
@@ -296,9 +303,10 @@ const MailService = {
             throw error;
         }
     },
-        // =====================================================
-    // ✅ SEND SHOWTIME CHANGED EMAIL — THÔNG BÁO SỬA SUẤT
-    // =====================================================
+
+    /* =====================================================
+       ✅ SEND SHOWTIME CHANGED EMAIL — CÓ POSTER + QR
+    ===================================================== */
     sendShowtimeChangedEmail: async (data) => {
         const {
             email,
@@ -308,15 +316,50 @@ const MailService = {
             oldInfo = {},
             newInfo = {},
             reason,
+
+            // ✅ THÔNG TIN VÉ
+            bookingId,
+            seatLabel,
+            cinemaName,
+            roomName,
+            startTime,
+            selectedDate,
+            selectedFoods,
+            earnedPoints = 0,
+            ticketPIN,
+            ticketCode,
+            qrUrl,
         } = data || {};
 
         console.log(`📨 [MAIL] SEND SHOWTIME CHANGED -> ${email} | Movie: ${movieTitle}`);
+        console.log(`🖼️ [MAIL] moviePoster: ${moviePoster}`);
 
         if (!email) {
             throw new Error("Email người nhận không hợp lệ");
         }
 
         try {
+            // ✅ Generate QR code
+            const attachments = [];
+            const qrContent = qrUrl || ticketCode || ticketPIN;
+            let qrCid = null;
+
+            if (qrContent) {
+                try {
+                    const qrBuffer = await QRCode.toBuffer(qrContent, {
+                        width: 500, margin: 4, errorCorrectionLevel: "H",
+                        color: { dark: "#000000", light: "#FFFFFF" },
+                    });
+                    qrCid = "qr_img";
+                    attachments.push({
+                        filename: `qr-ticket-${bookingId}.png`,
+                        content: qrBuffer, cid: qrCid, contentType: "image/png",
+                    });
+                } catch (qrError) {
+                    console.error("❌ [MAIL] QR code generation error:", qrError.message);
+                }
+            }
+
             const templateData = {
                 customerName: customerName || "Quý khách",
                 movieTitle: movieTitle || "---",
@@ -324,6 +367,18 @@ const MailService = {
                 oldInfo: oldInfo,
                 newInfo: newInfo,
                 reason: reason || "",
+
+                // ✅ THÔNG TIN VÉ
+                bookingId,
+                seatLabel: seatLabel || "---",
+                cinemaName: cinemaName || "---",
+                roomName: roomName || "---",
+                startTime: startTime || "---",
+                selectedDate: selectedDate || "---",
+                selectedFoods: selectedFoods || "",
+                earnedPoints: earnedPoints || 0,
+                ticketPIN: ticketPIN || ticketCode || "",
+                qrCid: qrCid,
             };
 
             const html = ShowtimeChangedTemplate(templateData);
@@ -333,6 +388,7 @@ const MailService = {
                 to: email,
                 subject: `🔄 Suất chiếu "${movieTitle}" của bạn đã thay đổi`,
                 html,
+                attachments,   // ✅ gửi kèm QR
             });
 
             console.log("✅ [MAIL] SHOWTIME CHANGED EMAIL SENT");

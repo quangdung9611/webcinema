@@ -796,11 +796,8 @@ class ShowtimeService {
         };
     }
 
-        /* ==========================================================
-       ✅ UPDATE SHOWTIME — Sửa + lưu lý do + gửi VÉ MỚI nếu có khách
-       ========================================================== */
-        /* ==========================================================
-       ✅ UPDATE SHOWTIME — Sửa + lưu lý do + gửi VÉ MỚI nếu có khách
+    /* ==========================================================
+       ✅ UPDATE SHOWTIME — Sửa + lưu lý do + gửi THÔNG BÁO THAY ĐỔI
        ========================================================== */
     async updateShowtime(showtimeId, data) {
         let { movie_id, cinema_id, room_id, start_time, reason } = data;
@@ -884,7 +881,7 @@ class ShowtimeService {
             cinema_id,
             room_id,
             start_time,
-            update_reason: trimmedReason // ✅ LƯU LÝ DO
+            update_reason: trimmedReason
         });
 
         if (affected === 0) {
@@ -894,7 +891,7 @@ class ShowtimeService {
         }
 
         // =====================================================
-        // 5. LẤY BOOKINGS CÓ KHÁCH ĐẶT VÉ (nếu có)
+        // 5. LẤY BOOKINGS CÓ KHÁCH ĐẶT VÉ
         // =====================================================
         const [bookings] = await db.query(
             `
@@ -917,13 +914,13 @@ class ShowtimeService {
         const newShowtime = await ShowtimeRepository.findById(showtimeId);
 
         // =====================================================
-        // 7. NẾU CÓ KHÁCH → GỬI VÉ MỚI CHO TỪNG KHÁCH
+        // 7. NẾU CÓ KHÁCH → GỬI EMAIL THÔNG BÁO THAY ĐỔI
         // =====================================================
         let emailSuccessCount = 0;
         let emailFailCount = 0;
 
         if (bookings.length > 0) {
-            console.log(`📧 [UPDATE] Suất chiếu ${showtimeId} có ${bookings.length} khách. Gửi vé mới...`);
+            console.log(`📧 [UPDATE] Suất chiếu ${showtimeId} có ${bookings.length} khách. Gửi email thay đổi...`);
             console.log(`📝 [UPDATE] Lý do thay đổi: ${trimmedReason}`);
 
             try {
@@ -964,13 +961,37 @@ class ShowtimeService {
                                 ? foods.map(f => `${f.item_name} (x${f.quantity})`).join(", ")
                                 : "Không có";
 
-                            // ✅ Gửi VÉ MỚI kèm lý do thay đổi
-                            await MailService.sendTicketEmail({
+                            // ✅ GỬI EMAIL THÔNG BÁO THAY ĐỔI (có poster + QR + vé)
+                            await MailService.sendShowtimeChangedEmail({
                                 email: booking.email || order.email,
-                                bookingId: booking.booking_id,
                                 customerName: order.full_name || booking.full_name || "Quý khách",
+
+                                // Thông tin phim
                                 movieTitle: order.movie_name,
-                                moviePoster: order.movie_poster,
+                                moviePoster: order.movie_poster || order.moviePoster || "",
+
+                                // So sánh cũ / mới
+                                oldInfo: {
+                                    movie_title: oldInfo.movie_title,
+                                    cinema_name: oldInfo.cinema_name,
+                                    room_id: oldInfo.room_id,
+                                    room_name: oldInfo.room_name,
+                                    start_time: oldInfo.start_time,
+                                },
+                                newInfo: {
+                                    movie_title: newShowtime.title,
+                                    cinema_name: newShowtime.cinema_name,
+                                    room_id: newShowtime.room_id,
+                                    room_name: newShowtime.room_name,
+                                    start_time: newShowtime.start_time,
+                                },
+
+                                // Lý do
+                                reason: trimmedReason,
+
+                                // ✅ THÔNG TIN VÉ
+                                bookingId: booking.booking_id,
+                                seatLabel: order.seat_label || "---",
                                 cinemaName: order.cinema_name,
                                 roomName: order.room_name,
                                 startTime: order.start_time
@@ -979,19 +1000,15 @@ class ShowtimeService {
                                 selectedDate: order.start_time
                                     ? order.start_time.split(" ")[0].split("-").reverse().join("/")
                                     : "---",
-                                seatLabel: order.seat_label || "---",
                                 selectedFoods: foodString,
                                 earnedPoints: 0,
                                 ticketPIN: firstTicketCode || "",
                                 ticketCode: firstTicketCode,
                                 qrUrl: qrUrl,
-                                // ✅ 2 field để hiển thị box cảnh báo trong email
-                                changeReason: trimmedReason,
-                                isRescheduled: true,
                             });
 
                             emailSuccessCount++;
-                            console.log(`✅ [UPDATE] New ticket email sent to ${booking.email}`);
+                            console.log(`✅ [UPDATE] Email sent to ${booking.email}`);
 
                         } catch (mailError) {
                             emailFailCount++;
@@ -1006,7 +1023,7 @@ class ShowtimeService {
             }
         }
 
-        console.log(`✅ [UPDATE] Showtime ${showtimeId} updated. ${bookings.length} bookings affected. Emails sent: ${emailSuccessCount}/${bookings.length}`);
+        console.log(`✅ [UPDATE] Showtime ${showtimeId} updated. ${bookings.length} bookings affected. Emails: ${emailSuccessCount}/${bookings.length}`);
 
         return {
             success: true,
@@ -1025,7 +1042,7 @@ class ShowtimeService {
                 start_time: newShowtime.start_time,
             },
             message: bookings.length > 0
-                ? `Đã cập nhật suất chiếu. Gửi vé mới cho ${emailSuccessCount}/${bookings.length} khách.`
+                ? `Đã cập nhật suất chiếu. Gửi email thông báo cho ${emailSuccessCount}/${bookings.length} khách.`
                 : "Đã cập nhật suất chiếu."
         };
     }

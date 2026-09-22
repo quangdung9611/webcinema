@@ -52,7 +52,7 @@
 }
 
 /* =========================================================
-   LOGO
+   ✅ LOGO – ĐÃ THU NHỎ
 ========================================================= */
 
 .admin-brand-logo {
@@ -63,17 +63,40 @@
     border-radius: 0 !important;
     background: transparent !important;
     padding: 0;
+    line-height: 0;
 }
 
-.admin-logo-image {
-    height: 50px;
+/* ✅ Áp dụng cho MỌI thẻ img con bên trong logo */
+.admin-brand-logo img {
+    height: 36px;
     width: auto;
+    max-height: 36px;
     object-fit: contain;
     display: block;
     border: none !important;
     border-radius: 0 !important;
     background: transparent !important;
     padding: 0;
+    margin: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.admin-brand-logo:hover img {
+    opacity: 0.85;
+}
+
+/* Fallback class cũ (nếu có nơi khác dùng) */
+.admin-logo-image {
+    height: 36px;
+    width: auto;
+    max-height: 36px;
+    object-fit: contain;
+    display: block;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    padding: 0;
+    margin: 0;
 }
 
 .admin-brand-text {
@@ -421,6 +444,13 @@
         max-width: 300px;
     }
 
+    /* Logo nhỏ hơn chút */
+    .admin-brand-logo img,
+    .admin-logo-image {
+        height: 34px;
+        max-height: 34px;
+    }
+
     /* Nút soát vé gọn hơn */
     .admin-checkin-btn {
         height: 42px;
@@ -440,9 +470,14 @@
         height: 72px;
         padding: 0 var(--space-md);
     }
+
+    /* ✅ Logo mobile nhỏ hơn nữa */
+    .admin-brand-logo img,
     .admin-logo-image {
-        height: 40px;
+        height: 30px;
+        max-height: 30px;
     }
+
     .admin-header-search-wrapper {
         display: none;
     }
@@ -484,6 +519,13 @@
 ========================================================= */
 
 @media screen and (max-width: 480px) {
+    /* ✅ Logo siêu nhỏ cho màn hình hẹp */
+    .admin-brand-logo img,
+    .admin-logo-image {
+        height: 28px;
+        max-height: 28px;
+    }
+
     .admin-checkin-btn {
         width: 40px;
         height: 40px;
@@ -495,5 +537,208 @@
     }
     .admin-checkin-pulse {
         border-radius: var(--radius-sm, 8px);
+    }
+}
+
+/* =========================================================
+   DROPDOWN USER MENU
+========================================================= */
+
+.admin-dropdown-content {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: var(--space-xl);
+    min-width: 240px;
+    background: rgba(15, 15, 15, 0.98);
+    backdrop-filter: blur(14px);
+    border: var(--border-premium);
+    border-radius: var(--radius-md);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    padding: var(--space-sm);
+    z-index: 1400;
+    animation: dropdownFadeIn 0.18s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.admin-dropdown-user-info {
+    padding: var(--space-sm) var(--space-md);
+}
+
+.admin-dropdown-user-info p {
+    margin: 0 0 6px;
+    color: var(--text-body);
+    font-size: var(--font-size-base);
+}
+
+.admin-dropdown-user-info strong {
+    color: var(--silver-primary);
+}
+
+.admin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 10px;
+    border-radius: var(--radius-round);
+    background: rgba(232, 232, 232, 0.06);
+    border: var(--border-premium);
+    color: var(--silver-primary);
+    font-size: 0.72rem;
+    font-weight: var(--fw-medium);
+}
+
+.admin-dropdown-divider {
+    height: 1px;
+    background: rgba(232, 232, 232, 0.08);
+    margin: 6px 0;
+}
+
+.admin-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: var(--font-size-base);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.admin-dropdown-item:hover {
+    background: rgba(232, 232, 232, 0.06);
+    color: var(--text-body);
+}
+
+.admin-dropdown-item svg {
+    flex-shrink: 0;
+    color: var(--text-muted);
+}
+
+.admin-dropdown-item:hover svg {
+    color: var(--silver-primary);
+}
+
+.admin-dropdown-logout {
+    color: #D85A5A;
+}
+
+.admin-dropdown-logout:hover {
+    background: rgba(216, 90, 90, 0.1);
+    color: #ff6b6b;
+}
+
+.admin-dropdown-logout:hover svg {
+    color: #ff6b6b;
+}
+
+.admin-dropdown-logout.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* =========================================================
+   TOAST NOTIFICATION
+========================================================= */
+
+.toast-notification {
+    position: fixed;
+    top: 90px;
+    right: 24px;
+    min-width: 300px;
+    max-width: 420px;
+    padding: 14px 18px;
+    background: rgba(15, 15, 15, 0.98);
+    backdrop-filter: blur(14px);
+    border: var(--border-premium);
+    border-radius: var(--radius-md);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    z-index: 9999;
+    animation: toastSlideIn 0.3s ease-out;
+}
+
+@keyframes toastSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.toast-notification.toast-success {
+    border-left: 4px solid #43B77A;
+}
+
+.toast-notification.toast-error {
+    border-left: 4px solid #D85A5A;
+}
+
+.toast-notification.toast-warning {
+    border-left: 4px solid #f39c12;
+}
+
+.toast-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.toast-icon {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.toast-message {
+    color: var(--text-body);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.toast-close {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.toast-close:hover {
+    background: rgba(232, 232, 232, 0.08);
+    color: var(--text-body);
+}
+
+/* =========================================================
+   RESPONSIVE – TOAST
+========================================================= */
+
+@media screen and (max-width: 739px) {
+    .toast-notification {
+        top: 84px;
+        right: 12px;
+        left: 12px;
+        min-width: unset;
+        max-width: unset;
     }
 }

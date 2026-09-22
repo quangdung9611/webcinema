@@ -48,6 +48,7 @@ class PaymentService {
             customerName,
             customerPhone,
             movieTitle,
+            moviePoster,        // ✅ THÊM
             cinemaName,
             startTime,
             ownerToken
@@ -91,6 +92,27 @@ class PaymentService {
         const room_id = rows[0].room_id;
         const cinema_id = rows[0].cinema_id;
         const roomName = rows[0].room_name;
+
+        /*=====================================================
+            ✅ LẤY MOVIE POSTER TỪ DB (nếu frontend không truyền)
+        =====================================================*/
+
+        let finalMoviePoster = moviePoster;
+
+        if (!finalMoviePoster) {
+            const [movieRows] = await db.execute(`
+                SELECT m.movie_poster
+                FROM showtimes sh
+                JOIN movies m ON sh.movie_id = m.movie_id
+                WHERE sh.showtime_id = ?
+                LIMIT 1
+            `, [showtimeId]);
+
+            finalMoviePoster = movieRows[0]?.movie_poster || "";
+            console.log(`🎬 [PAYMENT] Fallback movie_poster from DB: ${finalMoviePoster}`);
+        } else {
+            console.log(`🎬 [PAYMENT] movie_poster from frontend: ${finalMoviePoster}`);
+        }
 
         /*=====================================================
             KIỂM TRA CACHE SEAT LOCK
@@ -144,6 +166,7 @@ class PaymentService {
             customerName,
             customerPhone,
             movieTitle,
+            moviePoster: finalMoviePoster,   // ✅ LƯU VÀO CACHE
             cinemaName,
             startTime,
             ownerToken,
@@ -159,6 +182,7 @@ class PaymentService {
         await CacheService.set(key, tempData, TEMP_BOOKING_TTL);
 
         console.log(`✅ Temp booking ${tempBookingId} saved (${TEMP_BOOKING_TTL}s)`);
+        console.log(`🎬 Poster saved in cache: ${finalMoviePoster}`);
 
         /*=====================================================
             RETURN
@@ -204,6 +228,7 @@ class PaymentService {
             customerName,
             customerPhone,
             movieTitle,
+            moviePoster,        // ✅ THÊM
             cinemaName,
             startTime,
             ownerToken
@@ -302,6 +327,7 @@ class PaymentService {
         await CacheService.delete(key);
 
         console.log(`✅ Booking ${bookingId} committed successfully`);
+        console.log(`🎬 [COMMIT] moviePoster: ${moviePoster}`);
 
         return {
             bookingId,
@@ -316,6 +342,7 @@ class PaymentService {
             customerName,
             customerPhone,
             movieTitle,
+            moviePoster,        // ✅ RETURN RA NGOÀI
             cinemaName,
             startTime,
             selectedSeats,
@@ -410,8 +437,6 @@ class PaymentService {
 
     /*=========================================================
         7. RESEND OTP PAYMENT
-        🔥 SỬA: deleteOTPByEmailAndPurpose → markOTPAsUsed
-        ✅ THÊM: serverTime + CHỜ GỬI EMAIL (await)
     =========================================================*/
 
     async resendOtpPayment(email, tempBookingId) {
@@ -451,7 +476,6 @@ class PaymentService {
 
         const otpResult = await OtpService.createOTP(email, OtpService.PURPOSE.PAYMENT);
 
-        // ✅ Lấy mốc thời gian hiện tại của server để đồng bộ timer
         const serverTime = Date.now();
 
         const updatedData = typeof tempData === "string" ? JSON.parse(tempData) : tempData;
@@ -462,7 +486,6 @@ class PaymentService {
 
         const MailService = require("./MailService");
 
-        // ✅ SỬA: CHỜ GỬI EMAIL XONG RỒI MỚI TRẢ VỀ (await thay setImmediate)
         await MailService.sendPaymentOTP(email, otpResult.otp, updatedData.customerName, updatedData.totalAmount)
             .then(() => {
                 console.log(`✅ Payment OTP email sent to ${email}`);
@@ -479,7 +502,7 @@ class PaymentService {
             message: "Mã OTP đã được gửi lại tới email.",
             data: {
                 expiresIn: ttl > 0 ? ttl : 300,
-                serverTime: serverTime // ✅ Gửi mốc thời gian tuyệt đối này về cho Frontend
+                serverTime: serverTime
             }
         };
     }
