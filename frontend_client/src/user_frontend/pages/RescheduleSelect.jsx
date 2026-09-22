@@ -119,13 +119,128 @@ const RescheduleSelect = () => {
     }, [bookingId]);
 
     // ========================================================
-    // GROUP OPTIONS BY DATE
+    // ✅ FORMAT DATETIME VN (UTC+7) — GIỐNG PROFILE
+    // Dùng Intl.DateTimeFormat cho chuẩn
+    // ========================================================
+    const formatDateTimeVN = (dateStr) => {
+        if (!dateStr) return { date: '---', time: '---', full: '---', timestamp: 0 };
+
+        try {
+            let d;
+
+            // Case 1: ISO string (có T + Z) → parse như UTC
+            if (typeof dateStr === 'string' && dateStr.includes('T')) {
+                d = new Date(dateStr);
+            }
+            // Case 2: "yyyy-mm-dd hh:mm:ss" (MySQL datetime → coi như UTC)
+            else if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+                const str = String(dateStr).replace(' ', 'T') + 'Z';
+                d = new Date(str);
+            }
+            else {
+                return { date: String(dateStr), time: '---', full: String(dateStr), timestamp: 0 };
+            }
+
+            if (isNaN(d.getTime())) {
+                return { date: '---', time: '---', full: '---', timestamp: 0 };
+            }
+
+            // ✅ Convert sang giờ VN bằng Intl
+            const formatter = new Intl.DateTimeFormat('vi-VN', {
+                timeZone: 'Asia/Ho_Chi_Minh',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+            });
+
+            const parts = formatter.formatToParts(d);
+            const getPart = (type) => parts.find(p => p.type === type)?.value || '';
+
+            const day = getPart('day');
+            const month = getPart('month');
+            const year = getPart('year');
+            const hour = getPart('hour');
+            const minute = getPart('minute');
+
+            return {
+                date: `${day}/${month}/${year}`,
+                time: `${hour}:${minute}`,
+                full: `${hour}:${minute} - ${day}/${month}/${year}`,
+                timestamp: d.getTime()
+            };
+        } catch (err) {
+            console.error('❌ formatDateTimeVN error:', err, dateStr);
+            return { date: '---', time: '---', full: '---', timestamp: 0 };
+        }
+    };
+
+    // ========================================================
+    // ✅ FORMAT TIME ONLY — Cho suất chiếu
+    // ========================================================
+    const formatTimeVN = (dateStr) => {
+        return formatDateTimeVN(dateStr).time;
+    };
+
+    // ========================================================
+    // ✅ FORMAT DATE ISO — Để group
+    // ========================================================
+    const getDateISO = (dateStr) => {
+        if (!dateStr) return '';
+
+        try {
+            let d;
+
+            if (typeof dateStr === 'string' && dateStr.includes('T')) {
+                d = new Date(dateStr);
+            } else if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+                const str = String(dateStr).replace(' ', 'T') + 'Z';
+                d = new Date(str);
+            } else {
+                return '';
+            }
+
+            if (isNaN(d.getTime())) return '';
+
+            // ✅ Convert sang VN (UTC+7)
+            const vnDate = new Date(d.getTime() + 7 * 60 * 60 * 1000);
+            const year = vnDate.getUTCFullYear();
+            const month = String(vnDate.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(vnDate.getUTCDate()).padStart(2, '0');
+
+            return `${year}-${month}-${day}`;
+        } catch {
+            return '';
+        }
+    };
+
+    // ========================================================
+    // ✅ GET LABEL THỨ TRONG TUẦN
+    // ========================================================
+    const getDayLabel = (dateISO) => {
+        if (!dateISO) return '';
+
+        try {
+            const d = new Date(dateISO + 'T00:00:00');
+            const days = ['Chủ Nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+            return days[d.getDay()];
+        } catch {
+            return '';
+        }
+    };
+
+    // ========================================================
+    // GROUP OPTIONS BY DATE (theo giờ VN)
     // ========================================================
     const groupedOptions = useMemo(() => {
         const groups = {};
 
         options.forEach(opt => {
-            const dateStr = String(opt.start_time).split(' ')[0];
+            const dateStr = getDateISO(opt.start_time);
+
+            if (!dateStr) return;
 
             if (!groups[dateStr]) {
                 groups[dateStr] = [];
@@ -140,30 +255,6 @@ const RescheduleSelect = () => {
     const sortedDates = useMemo(() => {
         return Object.keys(groupedOptions).sort();
     }, [groupedOptions]);
-
-    // ========================================================
-    // FORMAT DATE TIME
-    // ========================================================
-    const formatDateTime = (dateStr) => {
-        if (!dateStr) {
-            return { date: '---', time: '---' };
-        }
-
-        const str = String(dateStr).replace('T', ' ');
-        const [datePart, timePart] = str.split(' ');
-
-        if (!datePart || !timePart) {
-            return { date: '---', time: '---' };
-        }
-
-        const [year, month, day] = datePart.split('-');
-        const [hour, minute] = timePart.split(':');
-
-        return {
-            date: `${day}/${month}/${year}`,
-            time: `${hour}:${minute}`
-        };
-    };
 
     // ========================================================
     // FORMAT MONEY
@@ -193,9 +284,8 @@ const RescheduleSelect = () => {
         if (!canContinue || !info?.booking) return;
 
         const booking = info.booking;
-        const oldStart = String(booking.start_time).replace('T', ' ');
-        const oldTime = oldStart.split(' ')[1]?.substring(0, 5) || '---';
-        const oldDate = oldStart.split(' ')[0]?.split('-').reverse().join('/') || '---';
+        const oldDT = formatDateTimeVN(booking.start_time);
+        const newDT = formatDateTimeVN(selectedShowtime.start_time);
 
         navigate(
             `/booking/${booking.movie_slug || booking.movie_id}`,
@@ -220,23 +310,23 @@ const RescheduleSelect = () => {
                         cinema_name: booking.cinema_name
                     },
 
-                    // Suất mới đã chọn
-                    date: formatDateTime(selectedShowtime.start_time).date.split('/').reverse().join('-'),
+                    // ✅ Suất mới — format giờ VN
+                    date: getDateISO(selectedShowtime.start_time),
                     showtime: {
                         showtime_id: selectedShowtime.showtime_id,
                         start_time: selectedShowtime.start_time,
-                        time: formatDateTime(selectedShowtime.start_time).time,
+                        time: newDT.time,
                         room_id: selectedShowtime.room_id,
                         room_name: selectedShowtime.room_name,
                         room_type: selectedShowtime.room_type
                     },
 
-                    // Info vé cũ
+                    // ✅ Info vé cũ — format giờ VN
                     oldBooking: {
                         booking_id: booking.booking_id,
                         old_start_time: booking.start_time,
-                        old_time: oldTime,
-                        old_date: oldDate,
+                        old_time: oldDT.time,
+                        old_date: oldDT.date,
                         old_room_name: booking.room_name,
                         old_room_type: booking.room_type,
                         old_seats: currentSeats.map(s => `${s.seat_row}${s.seat_number}`).join(', '),
@@ -288,7 +378,7 @@ const RescheduleSelect = () => {
     // DATA READY
     // ========================================================
     const booking = info.booking;
-    const oldDT = formatDateTime(booking.start_time);
+    const oldDT = formatDateTimeVN(booking.start_time);
 
     // ========================================================
     // RENDER
@@ -440,7 +530,7 @@ const RescheduleSelect = () => {
                                     <div className="booking-panel__selected">
                                         <Check size={15} />
                                         <span>
-                                            {formatDateTime(selectedShowtime.start_time).time}
+                                            {formatTimeVN(selectedShowtime.start_time)}
                                         </span>
                                     </div>
                                 )}
@@ -454,26 +544,26 @@ const RescheduleSelect = () => {
                                 </div>
                             ) : (
                                 <div className="booking-showtime-list">
-                                    {sortedDates.map(dateStr => {
-                                        const dt = formatDateTime(`${dateStr} 00:00`);
-                                        const dayName = new Date(`${dateStr}T00:00:00`)
-                                            .toLocaleDateString('vi-VN', { weekday: 'long' });
+                                    {sortedDates.map(dateISO => {
+                                        const dayLabel = getDayLabel(dateISO);
+                                        const firstOpt = groupedOptions[dateISO][0];
+                                        const firstOptDT = formatDateTimeVN(firstOpt.start_time);
 
                                         return (
-                                            <div key={dateStr} className="booking-showtime-group">
+                                            <div key={dateISO} className="booking-showtime-group">
                                                 <div className="booking-showtime-group__header">
                                                     <div>
-                                                        <strong>{dayName}</strong>
-                                                        <span>{dt.date}</span>
+                                                        <strong>{dayLabel}</strong>
+                                                        <span>{firstOptDT.date}</span>
                                                     </div>
                                                     <span>
-                                                        {groupedOptions[dateStr].length} suất
+                                                        {groupedOptions[dateISO].length} suất
                                                     </span>
                                                 </div>
 
                                                 <div className="booking-time-list">
-                                                    {groupedOptions[dateStr].map(opt => {
-                                                        const optDT = formatDateTime(opt.start_time);
+                                                    {groupedOptions[dateISO].map(opt => {
+                                                        const optTime = formatTimeVN(opt.start_time);
                                                         const isSelected =
                                                             selectedShowtime?.showtime_id === opt.showtime_id;
 
@@ -487,7 +577,7 @@ const RescheduleSelect = () => {
                                                                 <span className="booking-time__clock">
                                                                     <Clock3 size={15} />
                                                                 </span>
-                                                                <strong>{optDT.time}</strong>
+                                                                <strong>{optTime}</strong>
                                                                 <small style={{ marginLeft: 6, color: '#999', fontSize: 11 }}>
                                                                     {opt.room_name}
                                                                 </small>
@@ -520,7 +610,7 @@ const RescheduleSelect = () => {
                                     cinema_name: booking.cinema_name
                                 }}
                                 selectedDate={selectedShowtime
-                                    ? formatDateTime(selectedShowtime.start_time).date
+                                    ? formatDateTimeVN(selectedShowtime.start_time).date
                                     : oldDT.date
                                 }
                                 selectedShowtime={selectedShowtime || {
