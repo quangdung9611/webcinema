@@ -13,6 +13,14 @@ router.get("/", authenticateAdmin, bookingController.getAllBookingsAll);
 // Lấy booking có phân trang
 router.get("/paginated", authenticateAdmin, bookingController.getBookingsWithPagination);
 
+// ✅ ADMIN — Danh sách booking đã đổi suất chiếu
+// ⚠️ PHẢI ĐẶT TRƯỚC route /:booking_id/* để tránh conflict
+router.get(
+    "/rescheduled",
+    authenticateAdmin,
+    bookingController.getRescheduledBookings
+);
+
 // Lấy chi tiết booking
 router.get("/detail/:booking_id", authenticateAdmin, bookingController.getBookingDetails);
 

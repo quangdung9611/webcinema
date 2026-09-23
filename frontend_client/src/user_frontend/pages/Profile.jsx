@@ -935,7 +935,7 @@ const Profile = () => {
                                                                 {item.status === 'Completed' ? 'Đã thanh toán' : 'Chờ xử lý'}
                                                             </span>
 
-                                                            {/* ✅ NHIỀU QR — MỖI GHẾ 1 QR */}
+                                                            {/* ✅ NHIỀU QR — MỖI GHẾ 1 QR (TO RÕ) */}
                                                             <div className="qr-list">
                                                                 {tickets.length > 0 ? (
                                                                     tickets.map((ticket, idx) => (
@@ -943,7 +943,9 @@ const Profile = () => {
                                                                             <div className="qr-container-mini">
                                                                                 <QRCodeCanvas
                                                                                     value={`https://admin.quangdungcinema.id.vn/check-in/${ticket.ticket_code}`}
-                                                                                    size={70}
+                                                                                    size={80}
+                                                                                    level="H"
+                                                                                    includeMargin={false}
                                                                                 />
                                                                             </div>
                                                                             <span className="qr-seat-label">
@@ -953,11 +955,7 @@ const Profile = () => {
                                                                                 className="qr-code-text"
                                                                                 title={ticket.ticket_code}
                                                                             >
-                                                                                {ticket.ticket_code
-                                                                                    ? ticket.ticket_code.length > 14
-                                                                                        ? ticket.ticket_code.substring(0, 12) + '...'
-                                                                                        : ticket.ticket_code
-                                                                                    : '---'}
+                                                                                {ticket.ticket_code || '---'}
                                                                             </span>
                                                                         </div>
                                                                     ))

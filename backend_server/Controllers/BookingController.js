@@ -143,7 +143,7 @@ exports.updateBookingStatus = async (req, res) => {
 };
 
 /*=========================================================
-    ✅ UPDATE CUSTOMER INFO (FULL_NAME, PHONE, EMAIL)
+    ✅ UPDATE CUSTOMER INFO
 =========================================================*/
 exports.updateBookingCustomerInfo = async (req, res) => {
     const connection = await BookingRepository.getConnection();
@@ -251,7 +251,7 @@ exports.getRescheduleOptions = async (req, res) => {
 };
 
 /*=========================================================
-    ✅ RESCHEDULE — LẤY GHẾ TRỐNG THEO HẠNG Ở SUẤT MỚI
+    ✅ RESCHEDULE — LẤY GHẾ TRỐNG
 =========================================================*/
 exports.getAvailableSeats = async (req, res) => {
     try {
@@ -304,6 +304,28 @@ exports.rescheduleBooking = async (req, res) => {
         return res.status(error.statusCode || 500).json({
             success: false,
             message: error.message
+        });
+    }
+};
+
+/*=========================================================
+    ✅ ADMIN — LẤY DANH SÁCH BOOKING ĐÃ ĐỔI SUẤT CHIẾU
+=========================================================*/
+exports.getRescheduledBookings = async (req, res) => {
+    try {
+        const { search = "", from, to } = req.query;
+
+        const data = await BookingService.getRescheduledBookings(search, from, to);
+
+        return res.status(200).json({
+            success: true,
+            data
+        });
+    } catch (error) {
+        console.error("Get Rescheduled Bookings Error:", error);
+        return res.status(500).json({
+            success: false,
+            message: error.message || "Lỗi lấy danh sách booking đã đổi suất"
         });
     }
 };

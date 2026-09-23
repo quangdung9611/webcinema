@@ -1254,22 +1254,34 @@
 }
 
 /* =========================================================
-   POSTER
+   ✅ POSTER - TỶ LỆ CHUẨN 2:3
    ========================================================= */
 
 .ticket-thumb {
     width: 160px;
     min-width: 160px;
+    /* ✅ 160 * 3/2 = 240 → tỷ lệ 2:3 chuẩn poster phim */
+    height: 240px;
+    align-self: center;
     overflow: hidden;
     background: var(--bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
+    margin: 0;
+    flex-shrink: 0;
 }
 
 .ticket-thumb img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center;
     display: block;
     transition: all var(--transition-normal);
+    max-height: 100%;
+    max-width: 100%;
 }
 
 .history-ticket-item:hover .ticket-thumb img {
@@ -1287,6 +1299,7 @@
     flex-direction: column;
     justify-content: center;
     gap: var(--space-xs);
+    min-width: 0;
 }
 
 .movie-title-history {
@@ -1348,21 +1361,22 @@
 }
 
 /* =========================================================
-   QR SIDE
+   ✅ QR SIDE
    ========================================================= */
 
 .ticket-qr-side {
-    width: 200px;
-    min-width: 200px;
+    width: 240px;
+    min-width: 240px;
     position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: var(--space-xs);
+    gap: var(--space-sm);
     padding: var(--space-md);
     border-left: 1px dashed rgba(255, 255, 255, 0.04);
     background: rgba(255, 255, 255, 0.01);
+    flex-shrink: 0;
 }
 
 .ticket-qr-side::before,
@@ -1405,9 +1419,13 @@
 }
 
 .qr-container-mini {
-    padding: var(--space-xs);
-    border-radius: var(--radius-sm);
-    background: var(--silver-light);
+    padding: var(--space-sm);
+    border-radius: var(--radius-md);
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 .pin-text {
@@ -1423,23 +1441,23 @@
 }
 
 /* =========================================================
-   ✅ NHIỀU QR — MỖI GHẾ 1 QR
+   ✅ NHIỀU QR — MỖI GHẾ 1 QR (TO RÕ)
    ========================================================= */
 
 .qr-list {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    margin: 8px 0;
-    max-height: 400px;
+    margin: 6px 0;
+    max-height: 500px;
     overflow-y: auto;
-    padding-right: 4px;
+    padding: 2px 4px 2px 2px;
     scrollbar-width: thin;
     width: 100%;
 }
 
 .qr-list::-webkit-scrollbar {
-    width: 4px;
+    width: 5px;
 }
 
 .qr-list::-webkit-scrollbar-track {
@@ -1447,57 +1465,77 @@
 }
 
 .qr-list::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
 }
 
 .qr-list::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.35);
 }
 
 .qr-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-    padding: 8px 6px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: var(--radius-sm);
+    gap: 6px;
+    padding: 12px 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
     transition: all var(--transition-fast);
 }
 
 .qr-item:hover {
-    border-color: rgba(243, 112, 33, 0.4);
-    background: rgba(243, 112, 33, 0.05);
+    border-color: rgba(243, 112, 33, 0.5);
+    background: rgba(243, 112, 33, 0.06);
     transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(243, 112, 33, 0.15);
 }
 
 .qr-item .qr-container-mini {
-    background: var(--silver-light);
-    padding: 4px;
-    border-radius: var(--radius-xs);
+    background: #ffffff;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
+/* ✅ GHẾ TO RÕ */
 .qr-seat-label {
-    font-size: 11px;
+    font-size: 16px;
     font-weight: var(--fw-bold);
     color: #f37021;
-    letter-spacing: 0.5px;
-    margin-top: 2px;
+    letter-spacing: 0.8px;
+    margin-top: 4px;
     text-transform: uppercase;
+    text-shadow: 0 0 10px rgba(243, 112, 33, 0.3);
 }
 
+/* ✅ MÃ CODE TO RÕ */
 .qr-code-text {
-    font-size: 9px;
-    color: var(--text-muted);
+    font-size: 11px;
+    color: var(--text-body);
     font-family: 'Courier New', monospace;
-    max-width: 110px;
+    font-weight: var(--fw-semibold);
+    max-width: 200px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     text-align: center;
-    letter-spacing: -0.2px;
+    letter-spacing: 0.3px;
+    padding: 5px 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-xs);
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    transition: all var(--transition-fast);
+}
+
+.qr-item:hover .qr-code-text {
+    color: var(--text-heading);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(243, 112, 33, 0.3);
 }
 
 /* =========================================================
@@ -1578,10 +1616,11 @@
     .ticket-thumb {
         width: 140px;
         min-width: 140px;
+        height: 210px;
     }
     .ticket-qr-side {
-        width: 180px;
-        min-width: 180px;
+        width: 220px;
+        min-width: 220px;
     }
 }
 
@@ -1592,15 +1631,21 @@
     .galaxy-sidebar {
         position: static;
     }
+    .history-ticket-item {
+        flex-direction: column;
+    }
     .ticket-thumb {
         width: 100%;
-        height: 240px;
+        height: 320px;
+        border-radius: var(--radius-md) var(--radius-md) 0 0;
+        align-self: stretch;
     }
     .ticket-qr-side {
         width: 100%;
         min-width: 100%;
         border-left: none;
         border-top: 1px dashed rgba(255, 255, 255, 0.04);
+        padding: var(--space-lg);
     }
     .ticket-qr-side::before,
     .ticket-qr-side::after {
@@ -1699,6 +1744,10 @@
         height: 30px;
     }
 
+    .ticket-thumb {
+        height: 260px;
+    }
+
     /* Nút đổi suất mobile */
     .btn-reschedule {
         width: 100%;
@@ -1708,17 +1757,22 @@
 
     /* ✅ NHIỀU QR mobile */
     .qr-list {
-        max-height: 280px;
+        max-height: 400px;
+        gap: 10px;
     }
     .qr-item {
-        padding: 6px 4px;
+        padding: 10px 8px;
+        gap: 4px;
     }
     .qr-seat-label {
-        font-size: 10px;
+        font-size: 15px;
     }
     .qr-code-text {
-        font-size: 8px;
-        max-width: 90px;
+        font-size: 10px;
+        max-width: 180px;
+    }
+    .qr-item .qr-container-mini {
+        padding: 6px;
     }
 }
 
@@ -1731,7 +1785,7 @@
         padding: var(--space-md);
     }
     .ticket-thumb {
-        height: 200px;
+        height: 220px;
     }
     .seat-text {
         width: 100%;

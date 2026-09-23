@@ -12,7 +12,10 @@ import {
     Ticket,
     Popcorn,
     Calendar,
-    MapPin
+    MapPin,
+    RefreshCw,
+    ArrowRight,
+    Filter,
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -52,7 +55,12 @@ const parsePagination = (response) => {
 // ==========================================================
 const BookingPage = () => {
     // ------------------------------------------------------
-    // STATES
+    // TAB STATE
+    // ------------------------------------------------------
+    const [activeTab, setActiveTab] = useState('bookings'); // 'bookings' | 'rescheduled'
+
+    // ------------------------------------------------------
+    // BOOKINGS STATES
     // ------------------------------------------------------
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -74,8 +82,19 @@ const BookingPage = () => {
     const [bookingDetails, setBookingDetails] = useState([]);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
 
+    // ------------------------------------------------------
+    // RESCHEDULED STATES
+    // ------------------------------------------------------
+    const [rescheduled, setRescheduled] = useState([]);
+    const [loadingRescheduled, setLoadingRescheduled] = useState(false);
+    const [rescheduleSearch, setRescheduleSearch] = useState('');
+    const [rescheduleFrom, setRescheduleFrom] = useState('');
+    const [rescheduleTo, setRescheduleTo] = useState('');
+
+    const isFetchingRescheduled = useRef(false);
+
     // ======================================================
-    // ALERT MODAL (giống UserPage)
+    // ALERT MODAL
     // ======================================================
     const [alertModal, setAlertModal] = useState({
         open: false,
@@ -107,13 +126,10 @@ const BookingPage = () => {
     };
 
     // ------------------------------------------------------
-    // FETCH BOOKINGS - GỌI /paginated
+    // FETCH BOOKINGS
     // ------------------------------------------------------
     const fetchBookings = useCallback(async (page = 1, keyword = '') => {
-        if (isFetching.current) {
-            console.log('⏳ Đang fetch, bỏ qua lần gọi mới');
-            return;
-        }
+        if (isFetching.current) return;
 
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
@@ -134,7 +150,6 @@ const BookingPage = () => {
                 signal: controller.signal
             });
 
-            // ✅ Lấy trực tiếp từ res.data giống các trang khác
             const bookingsData = res.data?.data || [];
             const paginationData = res.data?.pagination || {
                 page: 1,
@@ -149,7 +164,6 @@ const BookingPage = () => {
             setPagination(paginationData);
         } catch (error) {
             if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
-                console.log('🛑 Request bị hủy');
                 return;
             }
             console.error('FETCH BOOKINGS ERROR:', error);
@@ -173,19 +187,23 @@ const BookingPage = () => {
     }, []);
 
     useEffect(() => {
-        fetchBookings(1, '');
+        if (activeTab === 'bookings') {
+            fetchBookings(1, '');
+        }
         return () => {
             if (abortControllerRef.current) {
                 abortControllerRef.current.abort();
             }
         };
-    }, [fetchBookings]);
+    }, [fetchBookings, activeTab]);
 
     // ------------------------------------------------------
-    // SEARCH DEBOUNCE
+    // SEARCH DEBOUNCE (bookings)
     // ------------------------------------------------------
     const prevSearchRef = useRef('');
     useEffect(() => {
+        if (activeTab !== 'bookings') return;
+
         const currentSearch = search;
         const prevSearch = prevSearchRef.current;
 
@@ -197,11 +215,49 @@ const BookingPage = () => {
         }, 400);
 
         return () => clearTimeout(timer);
-    }, [search, fetchBookings]);
+    }, [search, fetchBookings, activeTab]);
 
     const handlePageChange = (page) => {
         fetchBookings(page, search);
     };
+
+    // ======================================================
+    // FETCH RESCHEDULED
+    // ======================================================
+    const fetchRescheduled = useCallback(async () => {
+        if (isFetchingRescheduled.current) return;
+        isFetchingRescheduled.current = true;
+        setLoadingRescheduled(true);
+
+        try {
+            const res = await api.get('/api/bookings/rescheduled', {
+                params: {
+                    search: rescheduleSearch.trim() || undefined,
+                    from: rescheduleFrom || undefined,
+                    to: rescheduleTo || undefined,
+                }
+            });
+
+            if (res.data?.success) {
+                setRescheduled(res.data.data || []);
+            } else {
+                setRescheduled([]);
+            }
+        } catch (error) {
+            console.error('FETCH RESCHEDULED ERROR:', error);
+            setRescheduled([]);
+            showAlert('Lỗi', 'Không thể tải danh sách đổi suất.', 'error');
+        } finally {
+            setLoadingRescheduled(false);
+            isFetchingRescheduled.current = false;
+        }
+    }, [rescheduleSearch, rescheduleFrom, rescheduleTo]);
+
+    useEffect(() => {
+        if (activeTab === 'rescheduled') {
+            fetchRescheduled();
+        }
+    }, [activeTab, fetchRescheduled]);
 
     // ------------------------------------------------------
     // HANDLE VIEW DETAIL
@@ -303,9 +359,9 @@ const BookingPage = () => {
         );
     };
 
-    // ------------------------------------------------------
-    // TABLE COLUMNS
-    // ------------------------------------------------------
+    // ======================================================
+    // TABLE COLUMNS - BOOKINGS
+    // ======================================================
     const columns = [
         {
             title: 'ID',
@@ -382,6 +438,123 @@ const BookingPage = () => {
         }
     ];
 
+    // ======================================================
+    // TABLE COLUMNS - RESCHEDULED
+    // ======================================================
+    const rescheduledColumns = [
+        {
+            title: 'Booking',
+            key: 'bookingId',
+            render: (row) => (
+                <div>
+                    <strong style={{ color: '#f97316', fontSize: 14 }}>
+                        #{row.bookingId}
+                    </strong>
+                    <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>
+                        Đổi {row.rescheduleCount}/2 lần
+                    </div>
+                </div>
+            )
+        },
+        {
+            title: 'Khách hàng',
+            key: 'customerName',
+            render: (row) => (
+                <div>
+                    <div style={{ fontWeight: 600 }}>{row.customerName}</div>
+                    <small style={{ color: '#64748b' }}>{row.customerEmail}</small>
+                </div>
+            )
+        },
+        {
+            title: 'Phim',
+            key: 'movieTitle',
+            render: (row) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <img
+                        src={
+                            row.moviePoster?.startsWith('http')
+                                ? row.moviePoster
+                                : `https://api.quangdungcinema.id.vn/uploads/posters/${row.moviePoster}`
+                        }
+                        alt={row.movieTitle}
+                        style={{
+                            width: 32,
+                            height: 48,
+                            objectFit: 'cover',
+                            borderRadius: 4,
+                        }}
+                        onError={(e) => (e.target.style.display = 'none')}
+                    />
+                    <span style={{ fontWeight: 600 }}>{row.movieTitle}</span>
+                </div>
+            )
+        },
+        {
+            title: 'Suất chiếu',
+            key: 'showtime',
+            render: (row) => (
+                <div style={{ fontSize: 12 }}>
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            color: '#94a3b8',
+                            textDecoration: 'line-through',
+                            marginBottom: 4,
+                        }}
+                    >
+                        <span>{row.oldTime || '---'}</span>
+                        <span>-</span>
+                        <span>{row.oldDate || '---'}</span>
+                    </div>
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            color: '#f97316',
+                            fontWeight: 700,
+                        }}
+                    >
+                        <ArrowRight size={12} />
+                        <span>{row.newTime || '---'}</span>
+                        <span>-</span>
+                        <span>{row.newDate || '---'}</span>
+                    </div>
+                </div>
+            )
+        },
+        {
+            title: 'Ghế',
+            key: 'currentSeats',
+            render: (row) => (
+                <span className="status-badge">
+                    {row.currentSeats || '---'}
+                </span>
+            )
+        },
+        {
+            title: 'Rạp',
+            key: 'cinemaName',
+            render: (row) => (
+                <span style={{ fontSize: 12, color: '#94a3b8' }}>
+                    {row.cinemaName}
+                </span>
+            )
+        },
+        {
+            title: 'Ngày đổi',
+            key: 'rescheduledAt',
+            render: (row) => (
+                <span style={{ fontSize: 12, color: '#94a3b8' }}>
+                    {row.rescheduledAt}
+                </span>
+            )
+        }
+    ];
+
     // ------------------------------------------------------
     // RENDER DETAIL DATA
     // ------------------------------------------------------
@@ -397,29 +570,126 @@ const BookingPage = () => {
                 title="Quản lý đơn hàng"
                 subtitle="Quản lý toàn bộ booking trong hệ thống"
                 icon={<ClipboardList size={30} />}
-                searchValue={search}
-                onSearchChange={setSearch}
+                searchValue={activeTab === 'bookings' ? search : rescheduleSearch}
+                onSearchChange={
+                    activeTab === 'bookings' ? setSearch : setRescheduleSearch
+                }
+                searchPlaceholder={
+                    activeTab === 'bookings'
+                        ? 'Tìm theo mã đơn, tên KH...'
+                        : 'Tìm theo mã booking, tên KH, email...'
+                }
             >
-                {loading ? (
-                    <div className="admin-loading">
-                        <Loader2 size={32} className="spin-icon" />
-                        <span>Đang tải dữ liệu...</span>
-                    </div>
-                ) : (
+                {/* TABS */}
+                <div className="admin-tabs">
+                    <button
+                        className={`admin-tab-btn ${activeTab === 'bookings' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('bookings')}
+                    >
+                        <ClipboardList size={16} />
+                        Đơn hàng
+                    </button>
+                    <button
+                        className={`admin-tab-btn ${activeTab === 'rescheduled' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('rescheduled')}
+                    >
+                        <RefreshCw size={16} />
+                        Đổi suất chiếu
+                        {rescheduled.length > 0 && activeTab !== 'rescheduled' && (
+                            <span className="admin-tab-badge">
+                                {rescheduled.length}
+                            </span>
+                        )}
+                    </button>
+                </div>
+
+                {/* TAB: BOOKINGS */}
+                {activeTab === 'bookings' && (
                     <>
-                        <AdminTable columns={columns} data={bookings} />
-                        <AdminPagination
-                            currentPage={pagination.page}
-                            totalPages={pagination.totalPages}
-                            onPageChange={handlePageChange}
-                        />
+                        {loading ? (
+                            <div className="admin-loading">
+                                <Loader2 size={32} className="spin-icon" />
+                                <span>Đang tải dữ liệu...</span>
+                            </div>
+                        ) : (
+                            <>
+                                <AdminTable columns={columns} data={bookings} />
+                                <AdminPagination
+                                    currentPage={pagination.page}
+                                    totalPages={pagination.totalPages}
+                                    onPageChange={handlePageChange}
+                                />
+                            </>
+                        )}
+                    </>
+                )}
+
+                {/* TAB: RESCHEDULED */}
+                {activeTab === 'rescheduled' && (
+                    <>
+                        {/* Filter ngày */}
+                        <div className="reschedule-tab-filter">
+                            <div className="reschedule-tab-filter__group">
+                                <Calendar size={14} />
+                                <label>Từ ngày</label>
+                                <input
+                                    type="date"
+                                    value={rescheduleFrom}
+                                    onChange={(e) => setRescheduleFrom(e.target.value)}
+                                />
+                            </div>
+                            <div className="reschedule-tab-filter__group">
+                                <Calendar size={14} />
+                                <label>Đến ngày</label>
+                                <input
+                                    type="date"
+                                    value={rescheduleTo}
+                                    onChange={(e) => setRescheduleTo(e.target.value)}
+                                />
+                            </div>
+                            <button
+                                className="reschedule-tab-filter__btn reschedule-tab-filter__btn--primary"
+                                onClick={fetchRescheduled}
+                                disabled={loadingRescheduled}
+                            >
+                                <Filter size={14} />
+                                Lọc
+                            </button>
+                            {(rescheduleFrom || rescheduleTo) && (
+                                <button
+                                    className="reschedule-tab-filter__btn reschedule-tab-filter__btn--clear"
+                                    onClick={() => {
+                                        setRescheduleFrom('');
+                                        setRescheduleTo('');
+                                        setTimeout(fetchRescheduled, 0);
+                                    }}
+                                >
+                                    Xóa lọc
+                                </button>
+                            )}
+                        </div>
+
+                        {loadingRescheduled ? (
+                            <div className="admin-loading">
+                                <Loader2 size={32} className="spin-icon" />
+                                <span>Đang tải danh sách đổi suất...</span>
+                            </div>
+                        ) : rescheduled.length === 0 ? (
+                            <div className="reschedule-tab-empty">
+                                <RefreshCw size={48} />
+                                <p>Chưa có booking nào được đổi suất chiếu</p>
+                            </div>
+                        ) : (
+                            <AdminTable
+                                columns={rescheduledColumns}
+                                data={rescheduled}
+                            />
+                        )}
                     </>
                 )}
             </AdminPage>
 
-            {/* ==================================================
-                DETAIL MODAL
-            ================================================== */}
+            {/* DETAIL MODAL */}
             <AdminModal
                 open={isDetailOpen}
                 onClose={() => setIsDetailOpen(false)}
@@ -522,9 +792,7 @@ const BookingPage = () => {
                 )}
             </AdminModal>
 
-            {/* ==================================================
-                ALERT / CONFIRM MODAL (giống UserPage)
-            ================================================== */}
+            {/* ALERT MODAL */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}

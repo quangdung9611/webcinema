@@ -224,7 +224,7 @@ class BookingRepository {
     }
 
     // =========================================================
-    // ✅ GET DETAIL — CÓ movie_slug
+    // GET DETAIL
     // =========================================================
 
     async getDetail(connection, bookingId) {
@@ -1036,7 +1036,6 @@ class BookingRepository {
 
     // =========================================================
     // ✅ RESCHEDULE — TÌM BOOKING THEO ID + STATUS
-    // ⭐ ĐÃ THÊM: movie_slug + movie_age_rating
     // =========================================================
 
     async findBookingForReschedule(connection, bookingId) {
@@ -1408,6 +1407,113 @@ class BookingRepository {
         );
 
         return rows[0] || null;
+    }
+
+    // =========================================================
+    // ✅ ADMIN — LẤY DANH SÁCH BOOKING ĐÃ ĐỔI SUẤT CHIẾU
+    // =========================================================
+
+    async getRescheduledBookings(search = "", from = null, to = null) {
+        search = typeof search === "string" ? search.trim() : "";
+
+        let whereClause = `WHERE b.reschedule_count > 0`;
+        const queryParams = [];
+
+        if (search) {
+            whereClause += `
+                AND (
+                    b.memo LIKE ?
+                    OR u.full_name LIKE ?
+                    OR u.email LIKE ?
+                    OR CAST(b.booking_id AS CHAR) LIKE ?
+                )
+            `;
+
+            const keyword = `%${search}%`;
+            queryParams.push(keyword, keyword, keyword, keyword);
+        }
+
+        if (from) {
+            whereClause += ` AND DATE(b.updated_at) >= ?`;
+            queryParams.push(from);
+        }
+
+        if (to) {
+            whereClause += ` AND DATE(b.updated_at) <= ?`;
+            queryParams.push(to);
+        }
+
+        const [rows] = await db.query(
+            `
+            SELECT
+                b.booking_id AS bookingId,
+                b.user_id AS userId,
+                b.total_amount AS totalAmount,
+                b.status,
+                b.memo,
+                b.reschedule_count AS rescheduleCount,
+                b.reschedule_status AS rescheduleStatus,
+                b.old_showtime_id AS oldShowtimeId,
+                b.new_showtime_id AS newShowtimeId,
+
+                DATE_FORMAT(b.booking_date, '%d/%m/%Y %H:%i') AS bookingDate,
+                DATE_FORMAT(b.updated_at, '%d/%m/%Y %H:%i') AS rescheduledAt,
+
+                -- Khách hàng
+                u.full_name AS customerName,
+                u.email AS customerEmail,
+                u.phone AS customerPhone,
+
+                -- Phim
+                m.title AS movieTitle,
+                m.movie_poster AS moviePoster,
+
+                -- Rạp
+                c.cinema_name AS cinemaName,
+
+                -- Suất cũ
+                DATE_FORMAT(s_old.start_time, '%d/%m/%Y') AS oldDate,
+                DATE_FORMAT(s_old.start_time, '%H:%i') AS oldTime,
+                r_old.room_name AS oldRoomName,
+                r_old.room_type AS oldRoomType,
+
+                -- Suất mới (hiện tại)
+                DATE_FORMAT(s_new.start_time, '%d/%m/%Y') AS newDate,
+                DATE_FORMAT(s_new.start_time, '%H:%i') AS newTime,
+                r_new.room_name AS newRoomName,
+                r_new.room_type AS newRoomType,
+
+                -- Ghế hiện tại
+                GROUP_CONCAT(
+                    DISTINCT CONCAT(st.seat_row, st.seat_number)
+                    ORDER BY st.seat_row, st.seat_number
+                    SEPARATOR ', '
+                ) AS currentSeats
+
+            FROM bookings b
+
+            INNER JOIN users u ON b.user_id = u.user_id
+            INNER JOIN showtimes s_new ON b.showtime_id = s_new.showtime_id
+            INNER JOIN movies m ON s_new.movie_id = m.movie_id
+            INNER JOIN cinemas c ON s_new.cinema_id = c.cinema_id
+            INNER JOIN rooms r_new ON s_new.room_id = r_new.room_id
+
+            LEFT JOIN showtimes s_old ON b.old_showtime_id = s_old.showtime_id
+            LEFT JOIN rooms r_old ON s_old.room_id = r_old.room_id
+
+            LEFT JOIN booking_details bd ON b.booking_id = bd.booking_id
+            LEFT JOIN seats st ON bd.seat_id = st.seat_id
+
+            ${whereClause}
+
+            GROUP BY b.booking_id
+
+            ORDER BY b.updated_at DESC
+            `,
+            queryParams
+        );
+
+        return rows;
     }
 }
 

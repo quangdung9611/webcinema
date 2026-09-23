@@ -115,7 +115,7 @@ class BookingService {
             throw err;
         }
 
-        // ✅ Đếm số lần đã đổi (dùng cột reschedule_count)
+        // ✅ Đếm số lần đã đổi
         const rescheduleCount = await BookingRepository.countRescheduleHistory(connection, bookingId);
 
         if (rescheduleCount >= 2) {
@@ -180,7 +180,6 @@ class BookingService {
 
     /* ==========================================================
        ✅ RESCHEDULE — LẤY GHẾ TRỐNG
-       seatType optional — nếu không truyền thì lấy TẤT CẢ
        ========================================================== */
     async getAvailableSeats(showtimeId, seatType = null) {
         if (!showtimeId) {
@@ -195,7 +194,7 @@ class BookingService {
     }
 
     /* ==========================================================
-       ✅ RESCHEDULE — HÀM CHÍNH: ĐỔI SUẤT + TRỪ/CỘNG ĐIỂM
+       ✅ RESCHEDULE — HÀM CHÍNH
        ========================================================== */
     async rescheduleBooking(bookingId, newShowtimeId, newSeatIds) {
         const connection = await BookingRepository.getConnection();
@@ -203,13 +202,9 @@ class BookingService {
         try {
             await BookingRepository.beginTransaction(connection);
 
-            // =============================================
             // 1. GET INFO + VALIDATE
-            //    (đã check: Completed, ≥2h, ≤2 lần)
-            // =============================================
             const info = await this.getRescheduleInfo(connection, bookingId);
 
-            // ✅ Cho chọn ghế tự do — chỉ cần ≥1 ghế
             if (!Array.isArray(newSeatIds) || newSeatIds.length === 0) {
                 throw new Error("Vui lòng chọn ít nhất 1 ghế mới");
             }
@@ -218,9 +213,7 @@ class BookingService {
                 throw new Error("Chỉ được chọn tối đa 8 ghế");
             }
 
-            // =============================================
-            // 2. GET SHOWTIME MỚI + VALIDATE
-            // =============================================
+            // 2. GET SHOWTIME MỚI
             const [newShowtimeRows] = await connection.query(
                 `
                 SELECT
@@ -252,7 +245,6 @@ class BookingService {
                 throw new Error("Suất chiếu mới không tồn tại");
             }
 
-            // ✅ Check cùng phim + rạp
             if (Number(newShowtime.movie_id) !== Number(info.booking.movie_id)) {
                 throw new Error("Chỉ có thể đổi sang suất chiếu cùng phim");
             }
@@ -265,7 +257,6 @@ class BookingService {
                 throw new Error("Không thể đổi sang cùng suất chiếu");
             }
 
-            // ✅ Check thời gian suất mới (≥ 2h nữa mới chiếu)
             const newStart = new Date(String(newShowtime.start_time).replace(" ", "T"));
             const now = new Date();
             const hoursLeft = (newStart - now) / (1000 * 60 * 60);
@@ -274,9 +265,7 @@ class BookingService {
                 throw new Error("Chỉ có thể đổi sang suất chiếu trước giờ chiếu ít nhất 2 tiếng");
             }
 
-            // =============================================
-            // 3. LOCK GHẾ MỚI + CHECK AVAILABLE
-            // =============================================
+            // 3. LOCK GHẾ MỚI
             const normalizedSeatIds = [
                 ...new Set(newSeatIds.map(Number).filter(Number.isInteger))
             ].sort((a, b) => a - b);
@@ -308,14 +297,12 @@ class BookingService {
                 throw new Error("Một số ghế không hợp lệ cho suất chiếu mới");
             }
 
-            // ✅ Check ghế active
             for (const seat of seatRows) {
                 if (Number(seat.is_active) !== 1) {
                     throw new Error(`Ghế ${seat.seat_row}${seat.seat_number} đang bảo trì`);
                 }
             }
 
-            // ✅ Check ghế đã có người đặt chưa
             const [bookedTickets] = await connection.query(
                 `
                 SELECT seat_id
@@ -333,9 +320,7 @@ class BookingService {
                 throw new Error(`Một số ghế đã được đặt: ${bookedIds.join(", ")}`);
             }
 
-            // =============================================
-            // 4. TÍNH GIÁ MỚI THEO price_config
-            // =============================================
+            // 4. TÍNH GIÁ MỚI
             const timeSlot = this._getTimeSlot(newShowtime.start_time);
             const dayType = this._getDayType(newShowtime.start_time);
 
@@ -366,16 +351,11 @@ class BookingService {
                 });
             }
 
-            // =============================================
             // 5. TÍNH CHÊNH LỆCH
-            //    (giữ nguyên food → chỉ so sánh giá ghế)
-            // =============================================
             const oldTicketAmount = Number(info.booking.total_amount) || 0;
             const priceDifference = newTotalTicketAmount - oldTicketAmount;
 
-            // =============================================
-            // 6. CHECK ĐỦ ĐIỂM (NẾU CẦN BÙ THÊM)
-            // =============================================
+            // 6. CHECK ĐỦ ĐIỂM
             if (priceDifference > 0) {
                 const userInfo = await BookingRepository.getUserPoints(
                     connection,
@@ -393,17 +373,13 @@ class BookingService {
                 }
             }
 
-            // =============================================
-            // 7. LẤY FOOD (để gửi mail — GIỮ NGUYÊN)
-            // =============================================
+            // 7. LẤY FOOD
             const foods = await BookingRepository.getFoodDetails(connection, bookingId);
             const foodString = foods.length
                 ? foods.map(f => `${f.item_name} (x${f.quantity})`).join(", ")
                 : "Không có";
 
-            // =============================================
             // 8. PERFORM RESCHEDULE
-            // =============================================
             await BookingRepository.performReschedule(connection, {
                 bookingId,
                 userId: info.booking.user_id,
@@ -418,9 +394,7 @@ class BookingService {
 
             await BookingRepository.commit(connection);
 
-            // =============================================
             // 9. GỬI MAIL
-            // =============================================
             try {
                 const MailService = require("./MailService");
 
@@ -477,9 +451,7 @@ class BookingService {
                 console.error("❌ [RESCHEDULE] Email failed:", mailError.message);
             }
 
-            // =============================================
             // 10. RETURN
-            // =============================================
             return {
                 success: true,
                 bookingId,
@@ -504,6 +476,13 @@ class BookingService {
         } finally {
             connection.release();
         }
+    }
+
+    /* ==========================================================
+       ✅ ADMIN — LẤY DANH SÁCH BOOKING ĐÃ ĐỔI SUẤT
+       ========================================================== */
+    async getRescheduledBookings(search = "", from = null, to = null) {
+        return await BookingRepository.getRescheduledBookings(search, from, to);
     }
 
     /* ==========================================================
