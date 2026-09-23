@@ -93,7 +93,7 @@ const Profile = () => {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     // =========================================================
-    // STATE: CREATE PASSWORD MODAL (CHO USER GOOGLE)
+    // STATE: CREATE PASSWORD MODAL
     // =========================================================
     const [showCreatePasswordModal, setShowCreatePasswordModal] = useState(false);
     const [createPasswordData, setCreatePasswordData] = useState({
@@ -226,8 +226,7 @@ const Profile = () => {
     };
 
     // =========================================================
-    // ✅ FORMAT DATETIME VN (UTC+7)
-    // Dùng Intl.DateTimeFormat cho chuẩn
+    // ✅ FORMAT DATETIME VN
     // =========================================================
     const formatDateTimeVN = (dateStr) => {
         if (!dateStr) return { date: '---', time: '---', full: '---', timestamp: 0 };
@@ -235,11 +234,9 @@ const Profile = () => {
         try {
             let d;
 
-            // Case 1: ISO string (có T + Z) → parse như UTC
             if (typeof dateStr === 'string' && dateStr.includes('T')) {
                 d = new Date(dateStr);
             }
-            // Case 2: "yyyy-mm-dd hh:mm:ss" (MySQL datetime → coi như UTC)
             else if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
                 const str = String(dateStr).replace(' ', 'T') + 'Z';
                 d = new Date(str);
@@ -252,7 +249,6 @@ const Profile = () => {
                 return { date: '---', time: '---', full: '---', timestamp: 0 };
             }
 
-            // ✅ Convert sang giờ VN bằng Intl
             const formatter = new Intl.DateTimeFormat('vi-VN', {
                 timeZone: 'Asia/Ho_Chi_Minh',
                 day: '2-digit',
@@ -276,7 +272,7 @@ const Profile = () => {
                 date: `${day}/${month}/${year}`,
                 time: `${hour}:${minute}`,
                 full: `${hour}:${minute} - ${day}/${month}/${year}`,
-                timestamp: d.getTime()  // ✅ Dùng để check quá khứ
+                timestamp: d.getTime()
             };
         } catch (err) {
             console.error('❌ formatDateTimeVN error:', err, dateStr);
@@ -288,7 +284,6 @@ const Profile = () => {
     // ✅ CHECK SUẤT CHIẾU ĐÃ QUA CHƯA
     // =========================================================
     const isShowtimePast = (item) => {
-        // Ưu tiên dùng startTimeFull (ISO) để so sánh
         const dateStr = item.startTimeFull || item.startTime;
         if (!dateStr) return false;
 
@@ -304,23 +299,12 @@ const Profile = () => {
 
     // =========================================================
     // ✅ CHECK CÓ THỂ ĐỔI SUẤT KHÔNG
-    // Điều kiện:
-    //   1. Vé Completed
-    //   2. Vé chưa bị hủy
-    //   3. Suất chiếu chưa qua
-    //   4. Chưa đổi quá 2 lần
     // =========================================================
     const canReschedule = (item) => {
-        // 1. Phải là vé Completed
         if (item.status !== 'Completed') return false;
-
-        // 2. Chưa bị hủy
         if (item.ticketStatus === 'Cancelled') return false;
-
-        // 3. Suất chiếu chưa qua
         if (isShowtimePast(item)) return false;
 
-        // 4. Chưa đổi quá 2 lần
         const rescheduleCount = Number(item.rescheduleCount || 0);
         if (rescheduleCount >= 2) return false;
 
@@ -328,12 +312,11 @@ const Profile = () => {
     };
 
     // =========================================================
-    // ✅ LẤY LÝ DO DISABLE NÚT ĐỔI SUẤT
+    // ✅ LÝ DO DISABLE NÚT ĐỔI SUẤT
     // =========================================================
     const getRescheduleDisabledReason = (item) => {
         if (item.status !== 'Completed') return 'Vé chưa thanh toán';
         if (item.ticketStatus === 'Cancelled') return 'Vé đã bị hủy';
-
         if (isShowtimePast(item)) return 'Suất chiếu đã qua';
 
         const rescheduleCount = Number(item.rescheduleCount || 0);
@@ -449,15 +432,12 @@ const Profile = () => {
     const filteredBookings = getFilteredBookings();
 
     // =========================================================
-    // HANDLE FORGOT PASSWORD
+    // HANDLE FORGOT PASSWORD / PIN
     // =========================================================
     const handleForgotPassword = () => {
         navigate('/forgot-password');
     };
 
-    // =========================================================
-    // HANDLE FORGOT PIN
-    // =========================================================
     const handleForgotPin = () => {
         navigate('/forgot-pin');
     };
@@ -554,7 +534,7 @@ const Profile = () => {
     };
 
     // =========================================================
-    // SUBMIT CREATE PASSWORD (CHO USER GOOGLE)
+    // SUBMIT CREATE PASSWORD
     // =========================================================
     const handleCreatePassword = async (e) => {
         e.preventDefault();
@@ -885,12 +865,19 @@ const Profile = () => {
                                     ) : filteredBookings.length > 0 ? (
                                         <div className="ticket-list">
                                             {filteredBookings.map((item, index) => {
-                                                // ✅ Format giờ VN
                                                 const startDT = formatDateTimeVN(item.startTimeFull || item.startTime);
                                                 const showRescheduleBtn = canReschedule(item);
                                                 const disabledReason = getRescheduleDisabledReason(item);
                                                 const rescheduleCount = Number(item.rescheduleCount || 0);
                                                 const isPast = isShowtimePast(item);
+
+                                                // ✅ Lấy mảng tickets (fallback nếu backend chưa fix)
+                                                const tickets = Array.isArray(item.tickets) && item.tickets.length > 0
+                                                    ? item.tickets
+                                                    : (item.ticketPIN ? [{
+                                                        ticket_code: item.ticketPIN,
+                                                        seat_label: item.seatDisplay,
+                                                    }] : []);
 
                                                 return (
                                                     <div key={index} className="history-ticket-item">
@@ -929,7 +916,6 @@ const Profile = () => {
                                                                 Tổng tiền: <span>{item.totalAmount ? Number(item.totalAmount).toLocaleString() : '0'} đ</span>
                                                             </p>
 
-                                                            {/* ✅ SỐ LẦN ĐÃ ĐỔI */}
                                                             {rescheduleCount > 0 && (
                                                                 <p style={{
                                                                     fontSize: 12,
@@ -948,12 +934,39 @@ const Profile = () => {
                                                             <span className={`status-label ${item.status === 'Completed' ? 'paid' : 'pending'}`}>
                                                                 {item.status === 'Completed' ? 'Đã thanh toán' : 'Chờ xử lý'}
                                                             </span>
-                                                            <div className="qr-container-mini">
-                                                                <QRCodeCanvas value={`TICKET-${item.bookingId}-${item.ticketPIN}`} size={70} />
-                                                            </div>
-                                                            <span className="pin-text">PIN: {item.ticketPIN}</span>
 
-                                                            {/* ✅ NÚT ĐỔI SUẤT — LUÔN HIỆN NHƯNG DISABLE ĐÚNG ĐIỀU KIỆN */}
+                                                            {/* ✅ NHIỀU QR — MỖI GHẾ 1 QR */}
+                                                            <div className="qr-list">
+                                                                {tickets.length > 0 ? (
+                                                                    tickets.map((ticket, idx) => (
+                                                                        <div key={ticket.ticket_id || idx} className="qr-item">
+                                                                            <div className="qr-container-mini">
+                                                                                <QRCodeCanvas
+                                                                                    value={`https://admin.quangdungcinema.id.vn/check-in/${ticket.ticket_code}`}
+                                                                                    size={70}
+                                                                                />
+                                                                            </div>
+                                                                            <span className="qr-seat-label">
+                                                                                {ticket.seat_label || `Ghế ${idx + 1}`}
+                                                                            </span>
+                                                                            <span
+                                                                                className="qr-code-text"
+                                                                                title={ticket.ticket_code}
+                                                                            >
+                                                                                {ticket.ticket_code
+                                                                                    ? ticket.ticket_code.length > 14
+                                                                                        ? ticket.ticket_code.substring(0, 12) + '...'
+                                                                                        : ticket.ticket_code
+                                                                                    : '---'}
+                                                                            </span>
+                                                                        </div>
+                                                                    ))
+                                                                ) : (
+                                                                    <span className="pin-text">Chưa có vé</span>
+                                                                )}
+                                                            </div>
+
+                                                            {/* NÚT ĐỔI SUẤT */}
                                                             <button
                                                                 className="btn-reschedule"
                                                                 onClick={() => handleReschedule(item)}
@@ -1038,7 +1051,6 @@ const Profile = () => {
                                             )}
                                         </span>
                                     </div>
-
                                     <div className="profile-info-item">
                                         <span className="label"><Globe size={16} /> Phương thức đăng nhập</span>
                                         <span className="value">
@@ -1289,7 +1301,7 @@ const Profile = () => {
                 </div>
             )}
 
-            {/* MODAL: TẠO MẬT KHẨU (CHO USER GOOGLE) */}
+            {/* MODAL: TẠO MẬT KHẨU */}
             {showCreatePasswordModal && (
                 <div className="modal-overlay" onClick={() => setShowCreatePasswordModal(false)}>
                     <div className="modal-container" onClick={e => e.stopPropagation()}>

@@ -412,9 +412,7 @@ const Booking = () => {
     }, [selectedCinema, selectedDate, movie]);
 
     // =========================================================
-    // ✅ FETCH SEATS
-    // - Flow thường: dùng /api/seats/showtime/:id + socket lock
-    // - Reschedule: dùng /api/bookings/showtime/:id/available-seats
+    // FETCH SEATS
     // =========================================================
 
     const fetchSeats = useCallback(async () => {
@@ -423,7 +421,6 @@ const Booking = () => {
             setLoading(true);
 
             if (isRescheduleMode) {
-                // ✅ RESCHEDULE: lấy TẤT CẢ ghế (không filter seat_type)
                 const [detailRes, seatsRes] = await Promise.all([
                     api.get(`/api/showtimes/detail/${showtimeId}`),
                     api.get(`/api/bookings/showtime/${showtimeId}/available-seats`)
@@ -433,8 +430,6 @@ const Booking = () => {
 
                 const availableSeats = seatsRes.data?.data || [];
 
-                // ✅ Lấy TẤT CẢ ghế của phòng (kể cả đã đặt) để vẽ sơ đồ đầy đủ
-                // Gọi API seats của showtime (giống flow thường) để lấy hết ghế + trạng thái
                 let allSeats = [];
                 try {
                     const allSeatsRes = await api.get(`/api/seats/showtime/${showtimeId}`);
@@ -444,14 +439,12 @@ const Booking = () => {
                     allSeats = availableSeats;
                 }
 
-                // ✅ Đánh dấu ghế nào available (không có trong danh sách đã đặt)
                 const availableSet = new Set(availableSeats.map(s => Number(s.seat_id)));
 
                 const normalizedSeats = allSeats.map(seat => {
                     const isAvailable = availableSet.has(Number(seat.seat_id));
                     return {
                         ...seat,
-                        // ✅ Nếu không available → đánh dấu Booked
                         seat_status: isAvailable
                             ? 'Available'
                             : (seat.seat_status || 'Booked'),
@@ -465,7 +458,6 @@ const Booking = () => {
                 setSelectedSeats([]);
                 selectedSeatsRef.current = [];
             } else {
-                // ✅ FLOW THƯỜNG: giữ nguyên
                 const [detailRes, seatsRes] = await Promise.all([
                     api.get(`/api/showtimes/detail/${showtimeId}`),
                     api.get(`/api/seats/showtime/${showtimeId}`)
@@ -503,7 +495,7 @@ const Booking = () => {
     }, [showtimeId, fetchSeats]);
 
     // =========================================================
-    // SOCKET REALTIME (chỉ flow thường)
+    // SOCKET REALTIME
     // =========================================================
 
     useEffect(() => {
@@ -655,7 +647,7 @@ const Booking = () => {
     }, [showtimeId, showErrorModal, isRescheduleMode]);
 
     // =========================================================
-    // REGISTER PENDING LOCK (flow thường)
+    // REGISTER PENDING LOCK
     // =========================================================
 
     const registerPendingLock = useCallback((seatId, requestedShowtimeId) => {
@@ -686,9 +678,7 @@ const Booking = () => {
     }, [showErrorModal]);
 
     // =========================================================
-    // ✅ HANDLE SEAT CLICK
-    // - Reschedule: chọn ghế tự do, KHÔNG dùng socket
-    // - Flow thường: dùng socket lock
+    // HANDLE SEAT CLICK
     // =========================================================
 
     const handleSeatClick = useCallback((seat) => {
@@ -696,14 +686,10 @@ const Booking = () => {
         const numericSeatId = Number(seat.seat_id);
         if (!numericSeatId) return;
 
-        // Check ghế đã đặt / bảo trì
         if (seat.seat_status === 'Booked' || Number(seat.is_active) === 0) return;
 
-        // ===================================================
-        // ✅ RESCHEDULE MODE: chọn ghế tự do, không socket
-        // ===================================================
+        // ✅ RESCHEDULE MODE
         if (isRescheduleMode) {
-            // Check ghế đang bị người khác giữ
             if (seat.held_by_other || seat.is_locked_by_user) {
                 showErrorModal('Ghế không khả dụng', 'Ghế này đang được người khác chọn.');
                 return;
@@ -718,7 +704,6 @@ const Booking = () => {
                     showErrorModal('Ghế Couple không hợp lệ', 'Không tìm thấy ghế đôi đi kèm.');
                     return;
                 }
-                // Check ghế đôi có trống không
                 if (pairSeat.seat_status === 'Booked' ||
                     Number(pairSeat.is_active) === 0 ||
                     pairSeat.held_by_other ||
@@ -734,7 +719,6 @@ const Booking = () => {
                 currentSelected.some(s => Number(s.seat_id) === Number(targetSeat.seat_id))
             );
 
-            // === BỎ CHỌN ===
             if (allSelected) {
                 const updated = currentSelected.filter(s =>
                     !seatsToToggle.some(t => Number(t.seat_id) === Number(s.seat_id))
@@ -744,7 +728,6 @@ const Booking = () => {
                 return;
             }
 
-            // === CHỌN MỚI ===
             const newSeatCount = currentSelected.length + seatsToToggle.length;
             if (newSeatCount > MAX_SEATS) {
                 setModalConfig({
@@ -764,9 +747,7 @@ const Booking = () => {
             return;
         }
 
-        // ===================================================
         // FLOW THƯỜNG (socket)
-        // ===================================================
         if (pendingSeatIds.some(id => Number(id) === numericSeatId)) return;
 
         const currentSocket = socketService.getSocket();
@@ -863,7 +844,7 @@ const Booking = () => {
     ]);
 
     // =========================================================
-    // SAVE SELECTED SEATS (flow thường)
+    // SAVE SELECTED SEATS
     // =========================================================
 
     useEffect(() => {
@@ -876,7 +857,7 @@ const Booking = () => {
     }, [pendingSeatIds.length, selectedSeats, showtimeId, isRescheduleMode]);
 
     // =========================================================
-    // ✅ SUBMIT RESCHEDULE
+    // SUBMIT RESCHEDULE
     // =========================================================
 
     const submitReschedule = useCallback(async () => {
@@ -910,7 +891,7 @@ const Booking = () => {
 
                 let message = 'Đổi suất chiếu thành công!';
                 if (delta > 0) {
-                    message = `Đổi suất thành công! Bạn đã bù thêm ${delta.toLocaleString('vi-VN')} điểm vào tài khoản.`;
+                    message = `Đổi suất thành công! Bạn đã bù thêm ${delta.toLocaleString('vi-VN')} điểm.`;
                 } else if (delta < 0) {
                     message = `Đổi suất thành công! Hệ thống đã hoàn ${Math.abs(delta).toLocaleString('vi-VN')} điểm vào tài khoản của bạn.`;
                 }
@@ -930,7 +911,6 @@ const Booking = () => {
                     }
                 });
 
-                // Tự về profile sau 5s
                 setTimeout(() => {
                     navigate('/profile');
                 }, 5000);
@@ -953,7 +933,7 @@ const Booking = () => {
     }, [isRescheduleMode, rescheduleBookingId, selectedSeats, showtimeId, navigate, closeModal, showErrorModal]);
 
     // =========================================================
-    // ✅ HANDLE CONTINUE
+    // HANDLE CONTINUE
     // =========================================================
 
     const handleContinue = useCallback(() => {
@@ -969,17 +949,11 @@ const Booking = () => {
             return;
         }
 
-        // ===================================================
-        // ✅ RESCHEDULE MODE: gọi API trực tiếp
-        // ===================================================
         if (isRescheduleMode) {
             submitReschedule();
             return;
         }
 
-        // ===================================================
-        // FLOW THƯỜNG
-        // ===================================================
         if (pendingSeatIds.length > 0) {
             showErrorModal('Đang xác nhận ghế', 'Hệ thống đang xác nhận ghế bạn chọn. Vui lòng đợi một chút rồi tiếp tục.');
             return;
@@ -1059,7 +1033,6 @@ const Booking = () => {
 
     const totalTicketPrice = useMemo(() => {
         return selectedSeats.reduce((sum, seat) => {
-            // ✅ Reschedule: tính giá theo price_config mới, không dùng seat.price (giá cũ)
             return sum + Number(seat.price || 0);
         }, 0);
     }, [selectedSeats]);
@@ -1086,7 +1059,6 @@ const Booking = () => {
     return (
         <>
             <div className="booking-wrapper">
-                {/* ✅ RESCHEDULE BANNER */}
                 {isRescheduleMode && (
                     <div className="reschedule-banner">
                         <RefreshCw size={16} />
@@ -1316,6 +1288,11 @@ const Booking = () => {
                                 totalFoodPrice={0}
                                 grandTotal={totalTicketPrice}
                                 isTimerActive={isTimerActive}
+
+                                // ✅ THÊM 2 DÒNG NÀY
+                                isReschedule={isRescheduleMode}
+                                oldTotalAmount={oldTotalAmount}
+
                                 showContinueButton={true}
                                 showBackButton={true}
                                 continueText={

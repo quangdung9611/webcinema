@@ -664,7 +664,7 @@
     letter-spacing: 0.02em;
 }
 
-.btn-reschedule:hover {
+.btn-reschedule:hover:not(:disabled) {
     border-color: #27ae60;
     background: rgba(39, 174, 96, 0.2);
     transform: translateY(-2px);
@@ -672,8 +672,13 @@
     color: #2ecc71;
 }
 
-.btn-reschedule:active {
+.btn-reschedule:active:not(:disabled) {
     transform: translateY(0);
+}
+
+.btn-reschedule:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .btn-reschedule svg {
@@ -1347,8 +1352,8 @@
    ========================================================= */
 
 .ticket-qr-side {
-    width: 170px;
-    min-width: 170px;
+    width: 200px;
+    min-width: 200px;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -1415,6 +1420,84 @@
     font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
     letter-spacing: 1px;
+}
+
+/* =========================================================
+   ✅ NHIỀU QR — MỖI GHẾ 1 QR
+   ========================================================= */
+
+.qr-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 8px 0;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    width: 100%;
+}
+
+.qr-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.qr-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.qr-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+}
+
+.qr-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.qr-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 6px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.qr-item:hover {
+    border-color: rgba(243, 112, 33, 0.4);
+    background: rgba(243, 112, 33, 0.05);
+    transform: translateY(-2px);
+}
+
+.qr-item .qr-container-mini {
+    background: var(--silver-light);
+    padding: 4px;
+    border-radius: var(--radius-xs);
+}
+
+.qr-seat-label {
+    font-size: 11px;
+    font-weight: var(--fw-bold);
+    color: #f37021;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+    text-transform: uppercase;
+}
+
+.qr-code-text {
+    font-size: 9px;
+    color: var(--text-muted);
+    font-family: 'Courier New', monospace;
+    max-width: 110px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+    letter-spacing: -0.2px;
 }
 
 /* =========================================================
@@ -1495,6 +1578,10 @@
     .ticket-thumb {
         width: 140px;
         min-width: 140px;
+    }
+    .ticket-qr-side {
+        width: 180px;
+        min-width: 180px;
     }
 }
 
@@ -1612,11 +1699,26 @@
         height: 30px;
     }
 
-    /* ✅ Nút đổi suất mobile */
+    /* Nút đổi suất mobile */
     .btn-reschedule {
         width: 100%;
         justify-content: center;
         padding: 10px 14px;
+    }
+
+    /* ✅ NHIỀU QR mobile */
+    .qr-list {
+        max-height: 280px;
+    }
+    .qr-item {
+        padding: 6px 4px;
+    }
+    .qr-seat-label {
+        font-size: 10px;
+    }
+    .qr-code-text {
+        font-size: 8px;
+        max-width: 90px;
     }
 }
 

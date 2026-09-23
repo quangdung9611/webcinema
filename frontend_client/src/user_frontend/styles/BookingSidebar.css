@@ -400,7 +400,95 @@
 
     transform: none;
 }
+/* =========================================================
+   ✅ RESCHEDULE — HIỂN THỊ SO SÁNH GIÁ
+========================================================= */
 
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+}
+
+.summary-row.summary-old {
+    opacity: 0.6;
+}
+
+.summary-row.summary-old .summary-value-strike {
+    text-decoration: line-through;
+    text-decoration-color: #999;
+    text-decoration-thickness: 2px;
+    color: #999;
+    font-weight: 500;
+    font-size: 15px;
+}
+
+.summary-row.summary-new {
+    margin-top: 2px;
+}
+
+.summary-row.summary-new .summary-value-new {
+    color: #f37021;
+    font-weight: 700;
+    font-size: 18px;
+}
+
+.summary-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #ccc, transparent);
+    margin: 8px 0;
+}
+
+.summary-row.summary-delta {
+    margin-top: 8px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #f9fafb;
+}
+
+.summary-row.summary-delta .summary-label {
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.summary-row.summary-delta .summary-value-delta {
+    font-weight: 800;
+    font-size: 18px;
+}
+
+/* Bù thêm — màu cam */
+.summary-row.summary-delta.delta-pay {
+    background: #fff3e6;
+    border: 1px solid #f37021;
+}
+
+.summary-row.summary-delta.delta-pay .summary-label,
+.summary-row.summary-delta.delta-pay .summary-value-delta {
+    color: #f37021;
+}
+
+/* Hoàn lại — màu xanh lá */
+.summary-row.summary-delta.delta-refund {
+    background: #d4edda;
+    border: 1px solid #27ae60;
+}
+
+.summary-row.summary-delta.delta-refund .summary-label,
+.summary-row.summary-delta.delta-refund .summary-value-delta {
+    color: #155724;
+}
+
+/* Không đổi — màu xanh dương */
+.summary-row.summary-delta.delta-same {
+    background: #e7f3ff;
+    border: 1px solid #2196F3;
+}
+
+.summary-row.summary-delta.delta-same .summary-label,
+.summary-row.summary-delta.delta-same .summary-value-delta {
+    color: #0c5460;
+}
 
 /* =========================================================
    RESPONSIVE <= 1200px

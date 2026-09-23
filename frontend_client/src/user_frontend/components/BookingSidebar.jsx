@@ -29,12 +29,19 @@ const BookingSidebar = ({
     showFoodSection = false,
     showContinueButton = false,
     showBackButton = false,
-    onBack = null
+    onBack = null,
+
+    // ✅ PROPS MỚI CHO RESCHEDULE
+    isReschedule = false,
+    oldTotalAmount = 0,
 }) => {
 
     const foodList = Array.isArray(selectedFoods) ? selectedFoods : [];
     const hasFood = foodList.length > 0;
     const finalTotal = grandTotal || totalTicketPrice;
+
+    // ✅ Tính chênh lệch (chỉ khi reschedule)
+    const deltaAmount = isReschedule ? (totalTicketPrice - oldTotalAmount) : 0;
 
     const rawPosterUrl = movie?.movie_poster || null;
     const movieTitle = showtimeDetail?.title || movie?.title || 'Đang cập nhật';
@@ -47,8 +54,8 @@ const BookingSidebar = ({
 
     // ✅ CHỈ LẤY PHẦN GIỜ (HH:mm) — BỎ NGÀY
     const rawStartTime =
-        selectedShowtime?.time ||          // API thường có sẵn "18:15"
-        selectedShowtime?.start_time ||    // Fallback: "2026-09-21 18:15"
+        selectedShowtime?.time ||
+        selectedShowtime?.start_time ||
         showtimeDetail?.start_time ||
         '';
 
@@ -58,18 +65,15 @@ const BookingSidebar = ({
 
         const str = String(rawStartTime).trim();
 
-        // Nếu đã là "18:15" hoặc "18:15:00" → lấy 5 ký tự đầu
         if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(str)) {
             return str.substring(0, 5);
         }
 
-        // Nếu là "2026-09-21 18:15" hoặc "2026-09-21 18:15:00" → split lấy phần giờ
         const parts = str.split(' ');
         if (parts.length >= 2) {
             return parts[1].substring(0, 5);
         }
 
-        // Fallback cuối
         return str;
     })();
 
@@ -80,7 +84,7 @@ const BookingSidebar = ({
             : startTime
         : '---';
 
-    // ✅ Format ngày cho đẹp (nếu là "2026-09-21" → "21/09/2026")
+    // ✅ Format ngày cho đẹp
     const formatDate = (dateStr) => {
         if (!dateStr) return '---';
 
@@ -98,7 +102,7 @@ const BookingSidebar = ({
         }
     };
 
-    // ✅ Tối ưu ảnh poster cho sidebar (600px)
+    // ✅ Tối ưu ảnh poster
     const posterUrl = optimizeCloudinary(
         rawPosterUrl,
         IMAGE_SIZES.MOVIE_POSTER_DETAIL
@@ -106,7 +110,7 @@ const BookingSidebar = ({
 
     return (
         <aside className="ticket-sidebar">
-            {/* Timer luôn nằm trên cùng */}
+            {/* Timer */}
             {isTimerActive && <CountdownTimer onExpire={onExpire} />}
 
             {/* ====== LAYOUT NGANG (Poster + Info) ====== */}
@@ -132,25 +136,25 @@ const BookingSidebar = ({
                 <div className="ticket-details">
                     <h2 className="movie-name">{movieTitle}</h2>
 
-                    {/* ✅ RẠP */}
+                    {/* RẠP */}
                     <div className="detail-item">
                         <span>Rạp:</span>
                         <strong>{selectedCinema?.cinema_name || '---'}</strong>
                     </div>
 
-                    {/* ✅ NGÀY — GIỮ NGUYÊN */}
+                    {/* NGÀY */}
                     <div className="detail-item">
                         <span>Ngày:</span>
                         <strong>{formatDate(selectedDate)}</strong>
                     </div>
 
-                    {/* ✅ SUẤT — CHỈ GIỜ + PHÒNG, KHÔNG CÓ NGÀY */}
+                    {/* SUẤT */}
                     <div className="detail-item">
                         <span>Suất:</span>
                         <strong>{showtimeDisplay}</strong>
                     </div>
 
-                    {/* ✅ GHẾ */}
+                    {/* GHẾ */}
                     <div className="detail-item">
                         <span>Ghế:</span>
                         <strong className="seats-list">
@@ -179,12 +183,55 @@ const BookingSidebar = ({
 
                     {/* ====== TỔNG CỘNG ====== */}
                     <div className="total-summary-box">
-                        <div className="summary-total">
-                            <span className="summary-label">Tổng cộng</span>
-                            <strong className="summary-value">
-                                {Number(finalTotal).toLocaleString()}₫
-                            </strong>
-                        </div>
+                        {isReschedule ? (
+                            <>
+                                {/* ✅ RESCHEDULE — HIỂN THỊ SO SÁNH */}
+                                
+                                {/* Giá vé gốc (gạch ngang) */}
+                                <div className="summary-row summary-old">
+                                    <span className="summary-label">Giá vé gốc</span>
+                                    <strong className="summary-value-strike">
+                                        {Number(oldTotalAmount).toLocaleString()}₫
+                                    </strong>
+                                </div>
+
+                                {/* Giá vé mới */}
+                                <div className="summary-row summary-new">
+                                    <span className="summary-label">Giá vé mới</span>
+                                    <strong className="summary-value-new">
+                                        {Number(totalTicketPrice).toLocaleString()}₫
+                                    </strong>
+                                </div>
+
+                                {/* Đường phân cách */}
+                                <div className="summary-divider" />
+
+                                {/* Chênh lệch */}
+                                <div className={`summary-row summary-delta ${deltaAmount > 0 ? 'delta-pay' : deltaAmount < 0 ? 'delta-refund' : 'delta-same'}`}>
+                                    <span className="summary-label">
+                                        {deltaAmount > 0
+                                            ? 'Bù thêm'
+                                            : deltaAmount < 0
+                                                ? 'Hoàn lại'
+                                                : 'Không đổi'}
+                                    </span>
+                                    <strong className="summary-value-delta">
+                                        {deltaAmount === 0
+                                            ? '0₫'
+                                            : `${deltaAmount > 0 ? '+' : '-'}${Math.abs(deltaAmount).toLocaleString()}₫`
+                                        }
+                                    </strong>
+                                </div>
+                            </>
+                        ) : (
+                            /* ✅ FLOW THƯỜNG */
+                            <div className="summary-total">
+                                <span className="summary-label">Tổng cộng</span>
+                                <strong className="summary-value">
+                                    {Number(finalTotal).toLocaleString()}₫
+                                </strong>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
