@@ -6,6 +6,9 @@ import {
     SeatCouple
 } from "./SeatIcon";
 
+// ✅ Import CSS riêng cho Seat
+import '../styles/Seat.css';
+
 const Seat = ({
     type,
     selected,
@@ -15,7 +18,12 @@ const Seat = ({
     heldByOther,
     number,
     onClick,
-    adminMode = false
+    adminMode = false,
+
+    // ✅ Props mới cho hover preview (couple seat)
+    highlighted = false,
+    onMouseEnter,
+    onMouseLeave,
 }) => {
 
     const seatType = type?.toUpperCase();
@@ -51,18 +59,30 @@ const Seat = ({
         heldByOther ||
         (maintenance && !adminMode);
 
+    // ✅ Build className gọn hơn với array + filter
+    const classNames = [
+        'seat',
+        seatType || 'STANDARD',
+        selected ? 'selected' : '',
+        sold ? 'sold' : '',
+        maintenance ? 'maintenance' : '',
+        locked ? 'locked' : '',
+        heldByOther ? 'held-by-other' : '',
+        highlighted ? 'highlighted' : '',
+    ]
+        .filter(Boolean)
+        .join(' ');
+
     return (
         <div
-            className={`
-                seat
-                ${seatType || "STANDARD"}
-                ${selected ? "selected" : ""}
-                ${sold ? "sold" : ""}
-                ${maintenance ? "maintenance" : ""}
-                ${locked ? "locked" : ""}
-                ${heldByOther ? "held-by-other" : ""}
-            `}
+            className={classNames}
             onClick={!isDisabled ? onClick : undefined}
+            onMouseEnter={onMouseEnter}
+            onMouseLeave={onMouseLeave}
+            role="button"
+            aria-label={`Ghế ${number}`}
+            aria-pressed={selected}
+            aria-disabled={isDisabled}
         >
             <Icon className="seat-icon" />
 

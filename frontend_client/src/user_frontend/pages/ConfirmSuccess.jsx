@@ -73,16 +73,34 @@ const ConfirmSuccess = () => {
       hasConfirmed.current = true;
 
       try {
-        const response = await api.get(`/api/bookings/detail/${orderId}`);
+        // ✅ GỌI API USER — không cần admin token, chỉ cần user login
+        const response = await api.get(`/api/bookings/my-booking/${orderId}`);
 
         if (response.data.success) {
           const b = response.data.booking;
           const details = response.data.details || [];
+          const tickets = response.data.tickets || [];
 
-          const seats = details
-            .filter((i) => i.seat_id || i.item_name?.includes('Ghế'))
-            .map((i) => i.item_name.replace('Ghế ', '').trim())
-            .join(', ');
+          // ✅ Build seat display từ tickets hoặc details
+          let seatDisplay = b.seat_label || '';
+
+          if (!seatDisplay) {
+            const seatSources = details.length > 0 ? details : tickets;
+            const seats = seatSources
+              .filter((i) => i.seat_id || i.item_name?.includes('Ghế'))
+              .map((i) => {
+                if (i.item_name) {
+                  return i.item_name.replace('Ghế ', '').trim();
+                }
+                if (i.seat_row && i.seat_number) {
+                  return `${i.seat_row}${i.seat_number}`;
+                }
+                return null;
+              })
+              .filter(Boolean)
+              .join(', ');
+            seatDisplay = seats;
+          }
 
           const foods = details.filter(
             (i) => !i.seat_id && !i.item_name?.includes('Ghế')
@@ -97,8 +115,8 @@ const ConfirmSuccess = () => {
             roomName: b.room_name,
             startTime: b.start_time?.split(' ')[1]?.substring(0, 5),
             selectedDate: b.start_time?.split(' ')[0]?.split('-').reverse().join('/'),
-            seatDisplay: b.seat_label || seats,
-            ticketPIN: b.pin || b.memo?.slice(-6),
+            seatDisplay: seatDisplay || '---',
+            ticketPIN: b.pin || b.memo?.slice(-6) || '------',
             customerName: b.full_name,
             customerEmail: b.email,
             selectedFoods: foods,
@@ -107,24 +125,20 @@ const ConfirmSuccess = () => {
           setTicketData(ticketDataFromAPI);
 
           sessionStorage.setItem('lastSuccessTicket', JSON.stringify(ticketDataFromAPI));
-
-          try {
-            const userRes = await api.get('/api/auth/me');
-            if (userRes.data.success) {
-              localStorage.setItem('user', JSON.stringify(userRes.data.user));
-              window.dispatchEvent(new Event('storage'));
-            }
-          } catch (e) {
-            console.warn('Không lấy được user info:', e.message);
-          }
         } else {
           console.error('API không trả về success');
         }
       } catch (err) {
         console.error('Lỗi lấy thông tin vé:', err.message);
+
+        // ✅ Fallback: thử lấy từ sessionStorage
         const saved = sessionStorage.getItem('lastSuccessTicket');
         if (saved) {
-          setTicketData(JSON.parse(saved));
+          try {
+            setTicketData(JSON.parse(saved));
+          } catch (parseErr) {
+            console.error('Parse sessionStorage error:', parseErr);
+          }
         }
       } finally {
         setLoading(false);
@@ -139,7 +153,7 @@ const ConfirmSuccess = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // ✅ Về trang chủ — dùng replace để không lưu history
+  // ✅ Về trang chủ
   const handleGoHome = () => {
     localStorage.removeItem('paymentCompleted');
     localStorage.removeItem('completedBookingId');
@@ -149,9 +163,8 @@ const ConfirmSuccess = () => {
     navigate('/', { replace: true });
   };
 
-  // ✅ Tải vé về máy — dùng window.print() để lưu PDF hoặc in
+  // ✅ Tải vé về máy
   const handleDownload = () => {
-    // Đợi 1 nhịp để đảm bảo DOM đã sẵn sàng
     setTimeout(() => {
       window.print();
     }, 100);

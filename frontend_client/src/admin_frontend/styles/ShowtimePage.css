@@ -1,541 +1,1019 @@
 /* ==========================================================
-   SHOWTIME PAGE STYLES
+   QUANG DŨNG CINEMA — SHOWTIME PAGE / CREATE SHOWTIME
+   REDESIGN 2026
+   ----------------------------------------------------------
+   Giữ nguyên toàn bộ class hiện tại để không phải sửa JSX.
+   Phong cách: Premium / Cinematic / Black / Silver / Ice
    ========================================================== */
 
+
 /* ==========================================================
-   CREATE INFO (Hướng dẫn tạo lịch)
+   01. CREATE INFO — KHỐI HƯỚNG DẪN
    ========================================================== */
+
 .showtime-create-info {
-    background: var(--glass-bg);
-    border: var(--border-premium);
-    border-radius: var(--radius-md);
-    padding: var(--space-lg);
-    margin-bottom: var(--space-xl);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 24px 26px;
+    margin: 0 0 26px;
+    background:
+        linear-gradient(145deg, rgba(255,255,255,0.055), rgba(255,255,255,0.018)),
+        rgba(12, 14, 17, 0.92);
+    border: 1px solid rgba(221, 226, 232, 0.16);
+    border-radius: 18px;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.055),
+        0 16px 40px rgba(0,0,0,0.22);
+    overflow: hidden;
+}
+
+.showtime-create-info::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(221,226,232,0.25) 18%,
+        rgba(221,226,232,0.9) 50%,
+        rgba(221,226,232,0.25) 82%,
+        transparent 100%
+    );
 }
 
 .showtime-create-header {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
-    font-weight: var(--fw-bold);
-    font-size: 1.1rem;
-    color: var(--text-heading);
-    margin-bottom: var(--space-sm);
+    gap: 11px;
+    margin: 0 0 14px;
+    color: var(--text-heading, #f3f5f7);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
 }
 
 .showtime-create-header svg {
-    color: var(--accent-ice);
+    width: 20px;
+    height: 20px;
     flex-shrink: 0;
+    color: var(--accent-ice, #dce8f4);
+    filter: drop-shadow(0 0 8px rgba(190,210,230,0.2));
 }
 
 .showtime-create-body {
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-    line-height: 1.8;
+    color: var(--text-secondary, #aeb6c0);
+    font-size: 0.9rem;
+    line-height: 1.75;
 }
 
 .showtime-create-body strong {
-    color: var(--text-heading);
+    color: var(--text-heading, #f3f5f7);
+    font-weight: 650;
 }
 
 .showtime-create-body em {
-    color: var(--accent-ice);
+    color: var(--accent-ice, #dce8f4);
     font-style: normal;
+    font-weight: 600;
 }
 
 .showtime-create-body strong svg {
     display: inline-block;
-    vertical-align: middle;
-    margin-right: 4px;
-    color: var(--accent-ice);
+    width: 15px;
+    height: 15px;
+    margin-right: 5px;
+    vertical-align: -2px;
+    color: var(--accent-ice, #dce8f4);
 }
 
+
 /* ==========================================================
-   FORM
+   02. FORM CONTAINER
    ========================================================== */
+
 .showtime-form {
     display: flex;
     flex-direction: column;
-    gap: var(--space-lg);
+    gap: 24px;
+    width: 100%;
+    max-width: 820px;
+    margin: 0 auto;
+    box-sizing: border-box;
 }
 
+
 /* ==========================================================
-   FORM GROUP
+   03. FORM GROUP
    ========================================================== */
+
 .showtime-form-group {
     display: flex;
     flex-direction: column;
-    gap: var(--space-xs);
+    gap: 9px;
+    width: 100%;
 }
 
 .showtime-form-label {
-    font-weight: var(--fw-medium);
-    font-size: 0.9rem;
-    color: var(--text-heading);
     display: flex;
-    align-items: center;
-    gap: var(--space-sm);
+    align-items: baseline;
+    gap: 8px;
     flex-wrap: wrap;
+    margin: 0;
+    color: var(--text-heading, #f2f4f6);
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: -0.005em;
 }
 
 .showtime-form-hint {
-    font-size: 0.75rem;
-    font-weight: var(--fw-regular);
-    color: var(--text-muted);
+    color: var(--text-muted, #747d88);
+    font-size: 0.74rem;
+    font-weight: 500;
 }
 
+
 /* ==========================================================
-   FORM ROW (2 columns)
+   04. FORM ROW — NGÀY BẮT ĐẦU / KẾT THÚC
    ========================================================== */
+
 .showtime-form-row {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-md);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 16px;
+    width: 100%;
 }
 
+
 /* ==========================================================
-   FORM INPUTS
+   05. INPUT / SELECT
    ========================================================== */
+
 .showtime-form-input,
 .showtime-form-select {
     width: 100%;
-    padding: 10px 14px;
-    background: var(--bg-secondary);
-    border: var(--border-subtle);
-    border-radius: var(--radius-sm);
-    color: var(--text-body);
-    font-size: 0.95rem;
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    min-height: 52px;
+    box-sizing: border-box;
+    padding: 0 16px;
+    border: 1px solid rgba(221,226,232,0.105);
+    border-radius: 13px;
     outline: none;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.018), rgba(255,255,255,0)),
+        rgba(7, 9, 12, 0.92);
+    color: var(--text-body, #d6dbe1);
+    font-family: inherit;
+    font-size: 0.92rem;
+    font-weight: 500;
+    transition:
+        border-color 180ms ease,
+        box-shadow 180ms ease,
+        background 180ms ease,
+        transform 180ms ease;
+}
+
+.showtime-form-input:hover,
+.showtime-form-select:hover {
+    border-color: rgba(221,226,232,0.2);
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.026), rgba(255,255,255,0)),
+        rgba(9, 11, 14, 0.96);
 }
 
 .showtime-form-input:focus,
 .showtime-form-select:focus {
-    border-color: var(--accent-ice);
-    box-shadow: 0 0 0 3px var(--accent-ice-soft);
+    border-color: rgba(207,220,235,0.58);
+    box-shadow:
+        0 0 0 3px rgba(180,202,224,0.07),
+        0 8px 26px rgba(0,0,0,0.18);
+    background: rgba(10,12,15,0.98);
 }
 
 .showtime-form-input:disabled,
 .showtime-form-select:disabled {
-    opacity: 0.5;
+    opacity: 0.45;
     cursor: not-allowed;
 }
 
 .showtime-form-input-disabled {
-    background: var(--bg-tertiary);
-    color: var(--text-muted);
+    background: rgba(255,255,255,0.025);
+    color: var(--text-muted, #6f7781);
     cursor: not-allowed;
+}
+
+.showtime-form-input::placeholder {
+    color: #68717c;
+}
+
+.showtime-form-select {
+    cursor: pointer;
+    appearance: auto;
+    color-scheme: dark;
 }
 
 .showtime-form-select option {
-    background: var(--bg-secondary);
-    color: var(--text-body);
+    background: #111419;
+    color: #e7eaee;
 }
+
 
 /* ==========================================================
-   ✅ TIME PICKER 24H — 2 SELECT GIỜ/PHÚT
+   06. MOVIE PICKER — SEARCH + LIST DỌC
+   ----------------------------------------------------------
+   - Search cố định phía trên
+   - Danh sách phim xếp dọc
+   - Scroll dọc riêng — MAX-HEIGHT 150PX
+   - Multi-select
+   - Highlight bạc/ice khi được chọn
    ========================================================== */
 
-.showtime-time-picker {
+.showtime-movie-picker-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 14px;
+    width: 100%;
+}
+
+.showtime-movie-selected-count {
+    flex-shrink: 0;
+    padding: 6px 10px;
+    border: 1px solid rgba(221, 226, 232, 0.12);
+    border-radius: 999px;
+    background: rgba(221, 226, 232, 0.045);
+    color: #aeb8c3;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+.showtime-movie-picker {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    gap: 9px;
+}
+
+.showtime-movie-search {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    padding: 10px;
-    background: var(--bg-secondary);
-    border: var(--border-subtle);
-    border-radius: var(--radius-sm);
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    width: 100%;
+    min-height: 50px;
+    box-sizing: border-box;
+    border: 1px solid rgba(221, 226, 232, 0.12);
+    border-radius: 13px;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.022), rgba(255,255,255,0)),
+        rgba(7, 9, 12, 0.92);
+    transition:
+        border-color 180ms ease,
+        box-shadow 180ms ease,
+        background 180ms ease;
 }
 
-.showtime-time-picker:focus-within {
-    border-color: var(--accent-ice);
-    box-shadow: 0 0 0 3px var(--accent-ice-soft);
+.showtime-movie-search:focus-within {
+    border-color: rgba(207, 220, 235, 0.55);
+    box-shadow:
+        0 0 0 3px rgba(180, 202, 224, 0.065),
+        0 10px 28px rgba(0, 0, 0, 0.14);
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.028), rgba(255,255,255,0)),
+        rgba(9, 11, 14, 0.98);
 }
 
-.showtime-time-picker .time-select-wrap {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    border: var(--border-subtle);
-    border-radius: var(--radius-sm);
-    background: var(--bg-tertiary);
-    transition: border-color var(--transition-fast);
+.showtime-movie-search > svg {
+    flex: 0 0 auto;
+    margin-left: 15px;
+    color: #87929e;
+    pointer-events: none;
 }
 
-.showtime-time-picker .time-select-wrap:hover {
-    border-color: var(--accent-ice-border);
-}
-
-.showtime-time-picker .time-select-wrap:focus-within {
-    border-color: var(--accent-ice);
-    box-shadow: 0 0 0 3px var(--accent-ice-soft);
-}
-
-.showtime-time-picker .time-select {
-    width: 60px;
-    min-width: 60px;
-    padding: 0;
+.showtime-movie-search input {
+    width: 100%;
+    min-width: 0;
+    height: 48px;
+    box-sizing: border-box;
+    padding: 0 44px 0 11px;
     border: none;
-    background: transparent;
-    color: var(--text-heading);
-    font-size: 1.05rem;
-    font-weight: var(--fw-bold);
-    font-family: inherit;
-    text-align: center;
     outline: none;
-    cursor: pointer;
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: textfield;
-    text-align: center;
+    background: transparent;
+    color: #e3e7eb;
+    font: inherit;
+    font-size: 0.88rem;
 }
 
-.showtime-time-picker .time-select option {
-    background: var(--bg-secondary);
-    color: var(--text-heading);
-    padding: 8px;
+.showtime-movie-search input::placeholder {
+    color: #68727d;
 }
 
-.showtime-time-picker .time-unit {
-    color: var(--text-muted);
-    font-size: 0.78rem;
-    font-weight: var(--fw-medium);
-    user-select: none;
-}
-
-.showtime-time-picker .time-separator {
-    color: var(--text-heading);
-    font-size: 1.5rem;
-    font-weight: var(--fw-bold);
-    line-height: 1;
-    user-select: none;
-}
-
-.showtime-time-picker .time-preview {
+.showtime-movie-search-clear {
+    position: absolute;
+    top: 50%;
+    right: 10px;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    margin-left: auto;
-    padding: 8px 16px;
-    border-radius: var(--radius-round);
-    background: var(--accent-ice-soft);
-    border: 1px solid var(--accent-ice-border);
-    color: var(--accent-ice);
-    font-size: 1rem;
-    font-weight: var(--fw-bold);
-    font-family: 'Inter', monospace, 'Courier New';
-    letter-spacing: 0.08em;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    transform: translateY(-50%);
+    border: 1px solid rgba(221,226,232,0.1);
+    border-radius: 50%;
+    background: rgba(255,255,255,0.045);
+    color: #aeb7c0;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    transition:
+        color 160ms ease,
+        background 160ms ease,
+        border-color 160ms ease;
 }
 
-.showtime-time-picker .time-preview svg {
-    flex-shrink: 0;
-    opacity: 0.9;
+.showtime-movie-search-clear:hover {
+    border-color: rgba(221,226,232,0.24);
+    background: rgba(255,255,255,0.09);
+    color: #f0f2f4;
 }
 
-/* ==========================================================
-   FORM TEXTAREA — LÝ DO THAY ĐỔI
-   ========================================================== */
-.showtime-form-textarea {
-    width: 100%;
-    padding: 12px 14px;
-    background: var(--bg-secondary);
-    border: var(--border-subtle);
-    border-radius: var(--radius-sm);
-    color: var(--text-body);
-    font-family: inherit;
-    font-size: 0.95rem;
-    line-height: 1.5;
-    resize: vertical;
-    min-height: 80px;
-    max-height: 200px;
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-    outline: none;
-    box-sizing: border-box;
-}
-
-.showtime-form-textarea:focus {
-    border-color: var(--accent-ice);
-    box-shadow: 0 0 0 3px var(--accent-ice-soft);
-}
-
-.showtime-form-textarea:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.showtime-form-textarea::placeholder {
-    color: var(--text-muted);
-}
-
-/* ==========================================================
-   FORM ERROR
-   ========================================================== */
-.showtime-form-error {
-    font-size: 0.8rem;
-    color: #D85A5A;
-    margin-top: var(--space-xs);
-}
-
-/* ==========================================================
-   MOVIE CHECKBOX LIST
-   ========================================================== */
-.showtime-movie-checkbox-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-sm);
-    max-height: 240px;
-    overflow-y: auto;
-    padding: var(--space-sm);
-    background: var(--bg-secondary);
-    border: var(--border-subtle);
-    border-radius: var(--radius-sm);
-}
-
-.showtime-movie-checkbox {
+.showtime-movie-results-meta {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
-    padding: 6px 14px;
-    background: var(--bg-tertiary);
-    border: var(--border-subtle);
-    border-radius: var(--radius-round);
-    font-size: 0.85rem;
-    color: var(--text-secondary);
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 20px;
+    padding: 0 2px;
+    color: #69737e;
+    font-size: 0.68rem;
+    font-weight: 600;
+}
+
+.showtime-movie-results-meta span:last-child {
+    color: #aeb9c5;
+}
+
+/* ⭐ MOVIE LIST — MAX-HEIGHT 150PX + SCROLL DỌC */
+
+.showtime-movie-checkbox-list {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    flex-wrap: nowrap;
+    gap: 6px;
+    width: 100%;
+
+    /* ⭐ MAX-HEIGHT 150PX */
+    max-height: 150px;
+    min-height: 92px;
+
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    box-sizing: border-box;
+    padding: 7px;
+    border: 1px solid rgba(221,226,232,0.11);
+    border-radius: 15px;
+    background:
+        linear-gradient(145deg, rgba(255,255,255,0.025), rgba(255,255,255,0.008)),
+        rgba(7, 9, 12, 0.88);
+
+    scrollbar-width: thin;
+    scrollbar-color: #464e57 transparent;
+}
+
+.showtime-movie-checkbox-list::-webkit-scrollbar {
+    width: 7px;
+}
+
+.showtime-movie-checkbox-list::-webkit-scrollbar-track {
+    margin: 6px 0;
+    background: transparent;
+}
+
+.showtime-movie-checkbox-list::-webkit-scrollbar-thumb {
+    border: 2px solid rgba(7,9,12,0.88);
+    border-radius: 999px;
+    background: #464e57;
+}
+
+.showtime-movie-checkbox-list::-webkit-scrollbar-thumb:hover {
+    background: #89939e;
+}
+
+/* ⭐ MOVIE ITEM */
+
+.showtime-movie-checkbox {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex: 0 0 auto;
+    width: 100%;
+    min-height: 46px;
+    box-sizing: border-box;
+    padding: 0 13px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.018);
+    color: #aab2bc;
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.35;
     cursor: pointer;
-    transition: all var(--transition-fast);
     user-select: none;
+    transition:
+        color 160ms ease,
+        border-color 160ms ease,
+        background 160ms ease,
+        transform 160ms ease,
+        box-shadow 160ms ease;
 }
 
 .showtime-movie-checkbox:hover {
-    border-color: var(--accent-ice-border);
-    color: var(--text-body);
+    transform: translateX(2px);
+    border-color: rgba(221,226,232,0.13);
+    background: rgba(255,255,255,0.045);
+    color: #e4e8ec;
 }
 
 .showtime-movie-checkbox.checked {
-    background: var(--accent-ice-bg);
-    border-color: var(--accent-ice);
-    color: var(--accent-ice);
+    transform: none;
+    border-color: rgba(222,232,242,0.5);
+    background:
+        linear-gradient(90deg, rgba(216,226,237,0.12), rgba(216,226,237,0.045));
+    color: #edf1f4;
+    box-shadow:
+        inset 3px 0 0 rgba(221, 230, 239, 0.72),
+        inset 0 1px 0 rgba(255,255,255,0.035);
 }
 
 .showtime-movie-checkbox input[type="checkbox"] {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
 }
 
+.showtime-movie-checkmark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 22px;
+    width: 22px;
+    height: 22px;
+    margin-right: 11px;
+    box-sizing: border-box;
+    border: 1px solid rgba(221,226,232,0.18);
+    border-radius: 6px;
+    background: rgba(255,255,255,0.025);
+    color: #101419;
+    font-size: 0.72rem;
+    font-weight: 900;
+    transition:
+        background 160ms ease,
+        border-color 160ms ease,
+        color 160ms ease,
+        box-shadow 160ms ease;
+}
+
+.showtime-movie-checkbox:hover .showtime-movie-checkmark {
+    border-color: rgba(221,226,232,0.38);
+}
+
+.showtime-movie-checkbox.checked .showtime-movie-checkmark {
+    border-color: rgba(235,240,246,0.95);
+    background: linear-gradient(135deg, #f1f4f7, #b9c3ce);
+    box-shadow:
+        0 4px 14px rgba(190, 208, 225, 0.11),
+        inset 0 1px 0 rgba(255,255,255,0.85);
+}
+
+.showtime-movie-checkbox-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.showtime-movie-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 100px;
+    padding: 20px 15px;
+    box-sizing: border-box;
+    color: #737e89;
+    text-align: center;
+}
+
+.showtime-movie-empty svg {
+    color: #8995a1;
+    opacity: 0.75;
+}
+
+.showtime-movie-empty strong {
+    color: #c8cfd6;
+    font-size: 0.82rem;
+}
+
+.showtime-movie-empty span {
+    color: #68727d;
+    font-size: 0.72rem;
+}
+
+
 /* ==========================================================
-   ROOM CHECKBOX LIST (EDIT)
+   07. ROOM PICKER — DÙNG CHO EDIT
    ========================================================== */
+
 .showtime-room-checkbox-list {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-sm);
-    max-height: 200px;
+    gap: 9px;
+
+    /* ⭐ MAX-HEIGHT 150PX */
+    max-height: 150px;
     overflow-y: auto;
-    padding: var(--space-sm);
-    background: var(--bg-secondary);
-    border: var(--border-subtle);
-    border-radius: var(--radius-sm);
+
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+    border: 1px solid rgba(221,226,232,0.09);
+    border-radius: 15px;
+    background:
+        linear-gradient(145deg, rgba(255,255,255,0.025), rgba(255,255,255,0.008)),
+        rgba(7, 9, 12, 0.82);
+
+    scrollbar-width: thin;
+    scrollbar-color: #3f464e transparent;
+}
+
+.showtime-room-checkbox-list::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.showtime-room-checkbox-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.showtime-room-checkbox-list::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: #3f464e;
+}
+
+.showtime-room-checkbox-list::-webkit-scrollbar-thumb:hover {
+    background: #8b949e;
 }
 
 .showtime-room-checkbox {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: var(--space-xs);
-    padding: 6px 14px;
-    background: var(--bg-tertiary);
-    border: var(--border-subtle);
-    border-radius: var(--radius-round);
-    font-size: 0.85rem;
-    color: var(--text-secondary);
+    justify-content: center;
+    min-height: 38px;
+    box-sizing: border-box;
+    padding: 0 14px;
+    border: 1px solid rgba(221,226,232,0.1);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.018);
+    color: #9ca5b0;
+    font-size: 0.78rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: all var(--transition-fast);
     user-select: none;
+    transition:
+        color 180ms ease,
+        border-color 180ms ease,
+        background 180ms ease,
+        transform 180ms ease;
 }
 
 .showtime-room-checkbox:hover {
-    border-color: var(--accent-ice-border);
-    color: var(--text-body);
+    border-color: rgba(221,226,232,0.28);
+    color: #e1e5e9;
+    background: rgba(255,255,255,0.04);
+    transform: translateY(-1px);
 }
 
 .showtime-room-checkbox.checked {
-    background: var(--accent-ice-bg);
-    border-color: var(--accent-ice);
-    color: var(--accent-ice);
+    border-color: rgba(222,232,242,0.65);
+    background: rgba(207,220,234,0.12);
+    color: #e4ebf2;
+    box-shadow: inset 0 0 0 1px rgba(220,230,240,0.05);
 }
 
 .showtime-room-checkbox input[type="checkbox"] {
     display: none;
 }
 
+
 /* ==========================================================
-   SUBMIT BUTTON
+   08. TIME PICKER 24H
    ========================================================== */
-.showtime-submit-btn {
+
+.showtime-time-picker {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 58px;
+    box-sizing: border-box;
+    padding: 7px;
+    border: 1px solid rgba(221,226,232,0.1);
+    border-radius: 14px;
+    background:
+        linear-gradient(145deg, rgba(255,255,255,0.025), rgba(255,255,255,0.008)),
+        rgba(7, 9, 12, 0.9);
+    transition:
+        border-color 180ms ease,
+        box-shadow 180ms ease;
+}
+
+.showtime-time-picker:focus-within {
+    border-color: rgba(207,220,235,0.52);
+    box-shadow: 0 0 0 3px rgba(180,202,224,0.055);
+}
+
+.showtime-time-picker .time-select-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 42px;
+    padding: 0 10px;
+    border: 1px solid rgba(221,226,232,0.08);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.025);
+    transition:
+        border-color 180ms ease,
+        background 180ms ease;
+}
+
+.showtime-time-picker .time-select-wrap:hover,
+.showtime-time-picker .time-select-wrap:focus-within {
+    border-color: rgba(221,226,232,0.22);
+    background: rgba(255,255,255,0.045);
+}
+
+.showtime-time-picker .time-select {
+    width: 56px;
+    min-width: 56px;
+    padding: 0;
+    border: none;
+    outline: none;
+    appearance: none;
+    background: transparent;
+    color: #edf0f3;
+    font-family: "Inter", monospace, "Courier New", sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+    color-scheme: dark;
+}
+
+.showtime-time-picker .time-select option {
+    padding: 8px;
+    background: #111419;
+    color: #edf0f3;
+}
+
+.showtime-time-picker .time-unit {
+    color: #717a85;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.showtime-time-picker .time-separator {
+    color: #b8c0ca;
+    font-size: 1.25rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.showtime-time-picker .time-preview {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-sm);
-    padding: 12px 32px;
-    background: var(--btn-silver-bg);
-    color: var(--bg-primary) !important;
-    font-weight: var(--fw-bold);
-    font-size: 0.95rem;
-    border-radius: var(--radius-round);
-    box-shadow: var(--btn-silver-shadow);
-    transition: all var(--transition-normal);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    margin-top: var(--space-sm);
-    width: 100%;
-    border: none;
-    cursor: pointer;
+    gap: 7px;
+    min-height: 40px;
+    margin-left: auto;
+    padding: 0 15px;
+    border: 1px solid rgba(221,226,232,0.15);
+    border-radius: 999px;
+    background: rgba(205,219,234,0.075);
+    color: #dbe6f1;
+    font-family: "Inter", monospace, "Courier New", sans-serif;
+    font-size: 0.86rem;
+    font-weight: 750;
+    letter-spacing: 0.08em;
 }
 
-.showtime-submit-btn:hover:not(:disabled) {
-    filter: brightness(1.08);
-    box-shadow: 0 4px 32px rgba(159, 183, 210, 0.35);
-    transform: scale(1.01);
-    color: var(--bg-primary) !important;
-}
-
-.showtime-submit-btn:active:not(:disabled) {
-    transform: scale(0.97);
-}
-
-.showtime-submit-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.showtime-submit-btn.loading {
+.showtime-time-picker .time-preview svg {
+    flex-shrink: 0;
     opacity: 0.8;
 }
 
+
+/* ==========================================================
+   09. TEXTAREA
+   ========================================================== */
+
+.showtime-form-textarea {
+    width: 100%;
+    min-height: 92px;
+    max-height: 220px;
+    box-sizing: border-box;
+    padding: 13px 15px;
+    border: 1px solid rgba(221,226,232,0.1);
+    border-radius: 13px;
+    outline: none;
+    resize: vertical;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.018), rgba(255,255,255,0)),
+        rgba(7, 9, 12, 0.92);
+    color: var(--text-body, #d6dbe1);
+    font-family: inherit;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    transition:
+        border-color 180ms ease,
+        box-shadow 180ms ease;
+}
+
+.showtime-form-textarea:focus {
+    border-color: rgba(207,220,235,0.52);
+    box-shadow: 0 0 0 3px rgba(180,202,224,0.055);
+}
+
+.showtime-form-textarea:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.showtime-form-textarea::placeholder {
+    color: #68717c;
+}
+
+
+/* ==========================================================
+   10. FORM ERROR
+   ========================================================== */
+
+.showtime-form-error {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+    color: #e58b8b;
+    font-size: 0.76rem;
+    font-weight: 550;
+    line-height: 1.4;
+}
+
+
+/* ==========================================================
+   11. SUBMIT BUTTON
+   ========================================================== */
+
+.showtime-submit-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 56px;
+    box-sizing: border-box;
+    margin-top: 4px;
+    padding: 0 28px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.7);
+    border-radius: 999px;
+    background:
+        linear-gradient(
+            135deg,
+            #f3f5f7 0%,
+            #dce2e8 48%,
+            #b9c2cc 100%
+        );
+    color: #0a0d10 !important;
+    box-shadow:
+        0 10px 30px rgba(180,195,210,0.12),
+        inset 0 1px 0 rgba(255,255,255,0.9);
+    font-size: 0.84rem;
+    font-weight: 800;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition:
+        transform 180ms ease,
+        filter 180ms ease,
+        box-shadow 180ms ease;
+}
+
+.showtime-submit-btn::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-110%);
+    background: linear-gradient(
+        110deg,
+        transparent 25%,
+        rgba(255,255,255,0.5) 50%,
+        transparent 75%
+    );
+    transition: transform 550ms ease;
+}
+
+.showtime-submit-btn:hover:not(:disabled) {
+    filter: brightness(1.045);
+    transform: translateY(-2px);
+    box-shadow:
+        0 15px 38px rgba(180,195,210,0.17),
+        inset 0 1px 0 rgba(255,255,255,0.95);
+}
+
+.showtime-submit-btn:hover:not(:disabled)::before {
+    transform: translateX(110%);
+}
+
+.showtime-submit-btn:active:not(:disabled) {
+    transform: translateY(0) scale(0.985);
+}
+
+.showtime-submit-btn:disabled {
+    opacity: 0.48;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.showtime-submit-btn.loading {
+    opacity: 0.72;
+}
+
 .showtime-submit-btn svg {
+    position: relative;
+    z-index: 1;
     flex-shrink: 0;
 }
 
+.showtime-submit-btn > * {
+    position: relative;
+    z-index: 1;
+}
+
+
 /* ==========================================================
-   SPIN ICON
+   12. SPIN ICON
    ========================================================== */
+
 .spin-icon {
-    animation: spin 0.8s linear infinite;
+    animation: showtimeSpin 0.8s linear infinite;
 }
 
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+@keyframes showtimeSpin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
+
 
 /* ==========================================================
-   TABLE CELLS
+   13. TABLE — MOVIE / CINEMA / ROOM / TIME
    ========================================================== */
+
 .showtime-movie-cell {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
+    gap: 10px;
+    min-width: 180px;
 }
 
 .showtime-movie-icon {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    background: var(--accent-ice-soft);
-    border-radius: var(--radius-sm);
-    color: var(--accent-ice);
-    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border: 1px solid rgba(221,226,232,0.12);
+    border-radius: 10px;
+    background: rgba(210,224,239,0.07);
+    color: #dce8f4;
 }
 
 .showtime-movie-title {
-    font-weight: var(--fw-medium);
-    color: var(--text-heading);
+    color: var(--text-heading, #f0f2f4);
+    font-size: 0.88rem;
+    font-weight: 650;
+    line-height: 1.35;
 }
 
 .showtime-movie-duration {
-    color: var(--text-muted);
-    font-size: 0.75rem;
+    margin-top: 3px;
+    color: var(--text-muted, #747d88);
+    font-size: 0.7rem;
 }
 
 .showtime-cinema-name {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
-    color: var(--text-body);
-    font-size: 0.9rem;
+    gap: 6px;
+    color: var(--text-body, #d1d6dc);
+    font-size: 0.82rem;
 }
 
 .showtime-cinema-name svg {
-    color: var(--text-muted);
     flex-shrink: 0;
+    color: #89939e;
+}
+
+.showtime-room-badge,
+.showtime-time-badge {
+    border: 1px solid rgba(221,226,232,0.12);
+    background: rgba(255,255,255,0.035);
+    color: #cfd7df;
+    border-radius: 999px;
 }
 
 .showtime-room-badge {
     display: inline-block;
-    margin-top: var(--space-xs);
-    font-size: 0.7rem;
-    padding: 2px 10px;
+    margin-top: 5px;
+    padding: 3px 9px;
+    font-size: 0.66rem;
 }
 
 .showtime-time-badge {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-xs);
-    font-size: 0.8rem;
-    padding: 4px 12px;
+    gap: 5px;
+    padding: 5px 10px;
+    font-size: 0.74rem;
+    font-weight: 650;
 }
 
 .showtime-time-badge svg {
     flex-shrink: 0;
 }
 
+
 /* ==========================================================
-   ADMIN TABLE
+   14. ADMIN TABLE
    ========================================================== */
+
 .admin-table-wrapper {
+    position: relative;
     overflow: auto;
-    max-height: 700px;
-    border-radius: var(--radius-md);
-    border: 1.5px solid var(--silver-primary);
+    max-height: 680px;
+    border: 1px solid rgba(221,226,232,0.13);
+    border-radius: 16px;
+    background: #090b0e;
     box-shadow:
-        0 0 0 1px rgba(221, 226, 232, 0.1),
-        0 0 24px rgba(221, 226, 232, 0.12),
-        0 8px 32px rgba(0, 0, 0, 0.4);
-    background: var(--bg-primary);
+        0 18px 45px rgba(0,0,0,0.28),
+        inset 0 1px 0 rgba(255,255,255,0.025);
 }
 
 .admin-table {
     width: 100%;
+    min-width: 820px;
     border-collapse: separate;
     border-spacing: 0;
-    font-size: 0.9rem;
-    min-width: 800px;
-    border: 1px solid rgba(221, 226, 232, 0.15);
+    font-size: 0.82rem;
 }
 
 .admin-table thead {
-    background: var(--bg-elevated);
     position: sticky;
     top: 0;
     z-index: 10;
+    background: rgba(18,21,25,0.96);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
 
 .admin-table th {
-    padding: 12px 14px;
+    padding: 13px 15px;
+    border-bottom: 1px solid rgba(221,226,232,0.16);
+    border-right: 1px solid rgba(221,226,232,0.055);
+    background: rgba(22,25,29,0.96);
+    color: #cfd5db;
+    font-size: 0.71rem;
+    font-weight: 750;
+    letter-spacing: 0.07em;
     text-align: left;
-    font-weight: var(--fw-bold);
-    color: var(--text-heading);
-    border-bottom: 2px solid var(--silver-primary);
-    border-right: 1px solid rgba(221, 226, 232, 0.08);
-    font-size: 0.85rem;
-    white-space: nowrap;
     text-transform: uppercase;
-    letter-spacing: 0.03em;
-    background: var(--bg-elevated);
+    white-space: nowrap;
 }
 
 .admin-table th:last-child {
@@ -543,14 +1021,13 @@
 }
 
 .admin-table td {
-    padding: 10px 14px;
-    text-align: left;
-    border-bottom: 1px solid rgba(221, 226, 232, 0.06);
-    border-right: 1px solid rgba(221, 226, 232, 0.04);
+    padding: 12px 15px;
+    border-bottom: 1px solid rgba(221,226,232,0.055);
+    border-right: 1px solid rgba(221,226,232,0.035);
+    background: #090b0e;
+    color: #c5cbd2;
     vertical-align: middle;
-    background: var(--bg-primary);
-    color: var(--text-body);
-    transition: background var(--transition-fast);
+    transition: background 160ms ease;
 }
 
 .admin-table td:last-child {
@@ -558,12 +1035,17 @@
 }
 
 .admin-table tbody tr:hover td {
-    background: var(--bg-elevated);
+    background: rgba(255,255,255,0.028);
 }
 
 .admin-table tbody tr:last-child td {
     border-bottom: none;
 }
+
+
+/* ==========================================================
+   15. TABLE SCROLLBAR
+   ========================================================== */
 
 .admin-table-wrapper::-webkit-scrollbar {
     width: 8px;
@@ -571,185 +1053,202 @@
 }
 
 .admin-table-wrapper::-webkit-scrollbar-track {
-    background: var(--bg-primary);
-    border-radius: var(--radius-sm);
+    background: #080a0d;
 }
 
 .admin-table-wrapper::-webkit-scrollbar-thumb {
-    background: var(--silver-dark);
-    border-radius: var(--radius-round);
-    border: 2px solid var(--bg-primary);
+    border: 2px solid #080a0d;
+    border-radius: 999px;
+    background: #4c535c;
 }
 
 .admin-table-wrapper::-webkit-scrollbar-thumb:hover {
-    background: var(--silver-primary);
+    background: #aeb7c1;
 }
 
 .admin-table-wrapper {
     scrollbar-width: thin;
-    scrollbar-color: var(--silver-dark) var(--bg-primary);
+    scrollbar-color: #4c535c #080a0d;
 }
 
+
 /* ==========================================================
-   ADMIN TABLE ACTIONS
+   16. TABLE ACTIONS
    ========================================================== */
+
 .admin-table-actions {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
+    gap: 5px;
 }
 
 .admin-action-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: var(--radius-sm);
-    transition: all var(--transition-fast);
-    color: var(--text-secondary);
+    width: 34px;
+    height: 34px;
+    border: 1px solid transparent;
+    border-radius: 9px;
     background: transparent;
-    border: none;
+    color: #7f8893;
     cursor: pointer;
+    transition:
+        color 160ms ease,
+        background 160ms ease,
+        border-color 160ms ease,
+        transform 160ms ease;
 }
 
 .admin-action-btn:hover {
-    color: var(--text-heading);
+    transform: translateY(-1px);
+    color: #e9edf1;
 }
 
 .admin-action-btn.edit-btn:hover {
-    background: var(--accent-ice-soft);
-    color: var(--accent-ice);
+    border-color: rgba(186,207,229,0.14);
+    background: rgba(186,207,229,0.08);
+    color: #d9e8f6;
 }
 
 .admin-action-btn.delete-btn:hover {
-    background: rgba(216, 90, 90, 0.15);
-    color: #D85A5A;
+    border-color: rgba(216,90,90,0.16);
+    background: rgba(216,90,90,0.09);
+    color: #e28a8a;
 }
 
+
 /* ==========================================================
-   STATUS BADGE
+   17. STATUS BADGE
    ========================================================== */
+
 .status-badge {
-    display: inline-block;
-    padding: 2px 12px;
-    border-radius: var(--radius-round);
-    font-size: 0.75rem;
-    font-weight: var(--fw-medium);
-    background: var(--bg-tertiary);
-    color: var(--text-secondary);
-    border: var(--border-subtle);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 25px;
+    box-sizing: border-box;
+    padding: 0 10px;
+    border: 1px solid rgba(221,226,232,0.1);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.035);
+    color: #aeb6bf;
+    font-size: 0.68rem;
+    font-weight: 650;
 }
 
 .status-badge.pending {
-    background: rgba(166, 193, 217, 0.12);
-    color: var(--accent-ice);
-    border-color: var(--accent-ice-border);
+    border-color: rgba(175,201,226,0.2);
+    background: rgba(175,201,226,0.09);
+    color: #c9dff2;
 }
 
 .status-badge.active {
-    background: rgba(67, 183, 122, 0.12);
-    color: #43B77A;
-    border-color: rgba(67, 183, 122, 0.2);
+    border-color: rgba(67,183,122,0.2);
+    background: rgba(67,183,122,0.09);
+    color: #72c99a;
 }
 
 .status-badge.inactive {
-    background: rgba(216, 90, 90, 0.12);
-    color: #D85A5A;
-    border-color: rgba(216, 90, 90, 0.2);
+    border-color: rgba(216,90,90,0.2);
+    background: rgba(216,90,90,0.09);
+    color: #e28a8a;
 }
 
+
 /* ==========================================================
-   ADMIN LOADING
+   18. LOADING
    ========================================================== */
+
 .admin-loading {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: var(--space-md);
-    padding: var(--space-3xl) 0;
-    color: var(--text-muted);
+    gap: 14px;
+    min-height: 220px;
+    padding: 40px 0;
+    color: #727c87;
 }
 
 .admin-loading .spin-icon {
-    color: var(--accent-ice);
+    color: #cddbe9;
 }
 
+
 /* ==========================================================
-   ALERT MODAL CONTENT
+   19. ALERT MODAL CONTENT
    ========================================================== */
+
 .admin-alert-content {
-    padding: var(--space-sm) 0;
+    padding: 6px 0;
 }
 
-.admin-alert-content p {
-    white-space: pre-wrap;
-    line-height: 1.6;
-    color: var(--text-body);
-}
-
+.admin-alert-content p,
 .admin-alert-message {
+    margin: 0;
+    color: var(--text-body, #d1d6dc);
+    line-height: 1.65;
     white-space: pre-wrap;
-    line-height: 1.6;
-    color: var(--text-body);
 }
+
 
 /* ==========================================================
-   ✅ CANCEL SHOWTIME MODAL
+   20. CANCEL SHOWTIME MODAL
    ========================================================== */
 
 .cancel-showtime-content {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 15px;
 }
 
 .cancel-warning-box {
     display: flex;
     gap: 12px;
     padding: 14px 16px;
-    background: rgba(243, 156, 18, 0.1);
-    border-left: 4px solid #f39c12;
-    border-radius: 8px;
+    border: 1px solid rgba(243,156,18,0.14);
+    border-left: 3px solid #d99327;
+    border-radius: 12px;
+    background: rgba(243,156,18,0.065);
 }
 
 .cancel-warning-box svg {
-    color: #f39c12;
     flex-shrink: 0;
+    color: #e0a344;
 }
 
 .cancel-warning-box strong {
     display: block;
-    color: #f39c12;
     margin-bottom: 4px;
-    font-size: 14px;
+    color: #e3aa59;
+    font-size: 0.82rem;
 }
 
 .cancel-warning-box p {
     margin: 0;
-    color: var(--text-secondary);
-    font-size: 13px;
-    line-height: 1.5;
+    color: #a9afb6;
+    font-size: 0.78rem;
+    line-height: 1.55;
 }
 
 .cancel-info-box {
     padding: 14px 16px;
-    background: var(--bg-tertiary);
-    border-radius: 8px;
-    border: var(--border-subtle);
+    border: 1px solid rgba(221,226,232,0.08);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.025);
 }
 
 .cancel-info-box p {
     margin: 6px 0;
-    font-size: 13px;
-    color: var(--text-body);
+    color: #bcc3ca;
+    font-size: 0.78rem;
 }
 
 .cancel-info-box strong {
-    color: var(--text-heading);
-    min-width: 70px;
     display: inline-block;
+    min-width: 76px;
+    color: #edf0f2;
 }
 
 .cancel-reason-group {
@@ -759,47 +1258,100 @@
 }
 
 .cancel-reason-group label {
-    font-weight: var(--fw-medium);
-    color: var(--text-heading);
-    font-size: 14px;
+    color: #e8ebee;
+    font-size: 0.8rem;
+    font-weight: 650;
 }
 
 .cancel-reason-group textarea {
-    padding: 12px;
-    background: var(--bg-secondary);
-    border: var(--border-subtle);
-    border-radius: 8px;
-    font-family: inherit;
-    font-size: 14px;
-    color: var(--text-body);
-    resize: vertical;
-    min-height: 80px;
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    min-height: 88px;
+    padding: 12px 14px;
+    box-sizing: border-box;
+    border: 1px solid rgba(221,226,232,0.1);
+    border-radius: 12px;
     outline: none;
+    resize: vertical;
+    background: #090b0e;
+    color: #d4d9df;
+    font-family: inherit;
+    font-size: 0.82rem;
+    transition:
+        border-color 180ms ease,
+        box-shadow 180ms ease;
 }
 
 .cancel-reason-group textarea:focus {
-    border-color: var(--accent-ice);
-    box-shadow: 0 0 0 3px var(--accent-ice-soft);
+    border-color: rgba(207,220,235,0.5);
+    box-shadow: 0 0 0 3px rgba(180,202,224,0.05);
 }
 
 .cancel-reason-group textarea:disabled {
-    opacity: 0.6;
+    opacity: 0.55;
     cursor: not-allowed;
 }
 
 .cancel-reason-group small {
     align-self: flex-end;
-    color: var(--text-muted);
-    font-size: 12px;
+    color: #68717b;
+    font-size: 0.68rem;
 }
 
+
 /* ==========================================================
-   RESPONSIVE
+   21. RESPONSIVE — 1200PX
    ========================================================== */
+
 @media (max-width: 1200px) {
+    .showtime-form {
+        max-width: 100%;
+    }
+
+    .showtime-create-info {
+        padding: 22px 22px;
+    }
+
     .admin-table {
-        font-size: 0.85rem;
+        min-width: 780px;
+    }
+
+    .admin-table th,
+    .admin-table td {
+        padding: 11px 13px;
+    }
+
+    .admin-table-wrapper {
+        max-height: 620px;
+    }
+}
+
+
+/* ==========================================================
+   22. RESPONSIVE — 992PX
+   ========================================================== */
+
+@media (max-width: 992px) {
+    .showtime-form {
+        max-width: 100%;
+    }
+
+    .showtime-create-info {
+        padding: 21px 22px;
+    }
+
+    .showtime-form-row {
+        gap: 13px;
+    }
+
+    .showtime-movie-checkbox-list {
+        max-height: 150px;
+    }
+
+    .showtime-room-checkbox-list {
+        max-height: 150px;
+    }
+
+    .admin-table {
+        min-width: 720px;
     }
 
     .admin-table th,
@@ -808,180 +1360,173 @@
     }
 
     .admin-table-wrapper {
-        max-height: 600px;
-    }
-
-    .showtime-submit-btn {
-        padding: 12px 28px;
-    }
-
-    .showtime-movie-icon {
-        width: 28px;
-        height: 28px;
-    }
-
-    .showtime-movie-title {
-        font-size: 0.9rem;
+        max-height: 580px;
     }
 }
 
-@media (max-width: 992px) {
-    .admin-table {
-        font-size: 0.85rem;
-        min-width: 700px;
+
+/* ==========================================================
+   23. RESPONSIVE — 768PX
+   ========================================================== */
+
+@media (max-width: 768px) {
+    .showtime-form {
+        gap: 19px;
     }
 
-    .admin-table th,
-    .admin-table td {
-        padding: 8px 10px;
-    }
-
-    .admin-table-wrapper {
-        max-height: 550px;
-    }
-
-    .showtime-form-row {
-        grid-template-columns: 1fr 1fr;
-        gap: var(--space-sm);
+    .showtime-create-info {
+        padding: 18px;
+        border-radius: 15px;
     }
 
     .showtime-create-header {
-        font-size: 1rem;
+        font-size: 0.94rem;
     }
 
     .showtime-create-body {
-        font-size: 0.9rem;
+        font-size: 0.82rem;
     }
 
-    .showtime-submit-btn {
-        padding: 11px 24px;
-        font-size: 0.9rem;
-    }
-
-    .showtime-movie-checkbox-list {
-        max-height: 200px;
-    }
-
-    .showtime-time-badge {
-        font-size: 0.75rem;
-        padding: 3px 10px;
-    }
-
-    .showtime-room-badge {
-        font-size: 0.65rem;
-        padding: 2px 8px;
-    }
-
-    /* Time picker responsive */
-    .showtime-time-picker .time-select {
-        width: 55px;
-        min-width: 55px;
-        font-size: 1rem;
-    }
-
-    .showtime-time-picker .time-preview {
-        font-size: 0.9rem;
-        padding: 6px 12px;
-    }
-}
-
-@media (max-width: 768px) {
     .showtime-form-row {
         grid-template-columns: 1fr;
-        gap: var(--space-sm);
+        gap: 15px;
     }
 
+    .showtime-form-input,
+    .showtime-form-select {
+        min-height: 50px;
+    }
+
+    .showtime-movie-picker-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+    .showtime-movie-selected-count {
+        align-self: flex-start;
+    }
+
+    /* ⭐ Movie list vẫn 150px */
     .showtime-movie-checkbox-list {
-        max-height: 180px;
+        max-height: 150px;
+    }
+
+    .showtime-movie-checkbox {
+        min-height: 44px;
+        padding: 0 11px;
+        font-size: 0.78rem;
+    }
+
+    .showtime-movie-checkmark {
+        flex-basis: 21px;
+        width: 21px;
+        height: 21px;
+        margin-right: 9px;
+    }
+
+    .showtime-room-checkbox-list {
+        max-height: 150px;
     }
 
     .showtime-submit-btn {
-        padding: 10px 24px;
-        font-size: 0.9rem;
+        min-height: 54px;
+        font-size: 0.8rem;
     }
 
-    .showtime-create-body {
-        font-size: 0.85rem;
-    }
-
-    .admin-table {
-        font-size: 0.85rem;
-        min-width: 600px;
-    }
-
-    .admin-table th,
-    .admin-table td {
-        padding: 8px 10px;
-    }
-
-    .admin-table-wrapper {
-        max-height: 500px;
-    }
-
-    /* Time picker mobile */
     .showtime-time-picker {
         flex-wrap: wrap;
-        gap: 8px;
     }
 
     .showtime-time-picker .time-preview {
         width: 100%;
         margin-left: 0;
-        justify-content: center;
+    }
+
+    .admin-table {
+        min-width: 620px;
+        font-size: 0.78rem;
+    }
+
+    .admin-table-wrapper {
+        max-height: 500px;
     }
 }
 
+
+/* ==========================================================
+   24. RESPONSIVE — 480PX
+   ========================================================== */
+
 @media (max-width: 480px) {
-    .showtime-movie-checkbox {
-        font-size: 0.78rem;
-        padding: 4px 10px;
+    .showtime-create-info {
+        padding: 16px;
+    }
+
+    .showtime-form-label {
+        font-size: 0.82rem;
+    }
+
+    .showtime-form-hint {
+        font-size: 0.68rem;
     }
 
     .showtime-form-input,
     .showtime-form-select,
     .showtime-form-textarea {
-        padding: 8px 12px;
-        font-size: 0.9rem;
+        font-size: 0.84rem;
     }
 
-    .showtime-create-info {
-        padding: var(--space-md);
+    .showtime-movie-search {
+        min-height: 47px;
     }
 
-    .admin-table-actions {
-        gap: 2px;
+    .showtime-movie-search input {
+        height: 45px;
+        font-size: 0.82rem;
     }
 
-    .admin-action-btn {
-        width: 28px;
-        height: 28px;
+    /* ⭐ Movie list vẫn 150px */
+    .showtime-movie-checkbox-list {
+        max-height: 150px;
+        padding: 5px;
     }
 
-    .admin-action-btn svg {
-        width: 14px;
-        height: 14px;
+    .showtime-movie-checkbox {
+        min-height: 43px;
+        padding: 0 9px;
+        font-size: 0.74rem;
     }
 
-    .admin-table {
-        font-size: 0.8rem;
-        min-width: 500px;
+    .showtime-movie-checkbox-title {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
     }
 
-    .admin-table th,
-    .admin-table td {
-        padding: 6px 8px;
+    .showtime-movie-results-meta {
+        font-size: 0.64rem;
     }
 
-    .admin-table-wrapper {
-        max-height: 400px;
+    .showtime-movie-checkmark {
+        flex-basis: 20px;
+        width: 20px;
+        height: 20px;
+        margin-right: 8px;
+        font-size: 0.66rem;
     }
 
-    /* Time picker mobile nhỏ */
+    .showtime-room-checkbox {
+        min-height: 36px;
+        padding: 0 11px;
+        font-size: 0.72rem;
+    }
+
     .showtime-time-picker {
         flex-direction: column;
         align-items: stretch;
         gap: 8px;
-        padding: 10px;
+        padding: 8px;
     }
 
     .showtime-time-picker .time-separator {
@@ -997,45 +1542,31 @@
         width: 100%;
         min-width: 0;
         text-align: left;
-        padding-left: 10px;
+        padding-left: 8px;
     }
 
     .showtime-time-picker .time-preview {
         width: 100%;
         margin-left: 0;
-        justify-content: center;
-        font-size: 1rem;
     }
-}
 
-/* ==========================================================
-   SCROLLBAR CHO CHECKBOX LIST
-   ========================================================== */
-.showtime-movie-checkbox-list::-webkit-scrollbar,
-.showtime-room-checkbox-list::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
+    .showtime-submit-btn {
+        min-height: 52px;
+        padding: 0 18px;
+        font-size: 0.74rem;
+    }
 
-.showtime-movie-checkbox-list::-webkit-scrollbar-track,
-.showtime-room-checkbox-list::-webkit-scrollbar-track {
-    background: transparent;
-}
+    .admin-table-actions {
+        gap: 2px;
+    }
 
-.showtime-movie-checkbox-list::-webkit-scrollbar-thumb,
-.showtime-room-checkbox-list::-webkit-scrollbar-thumb {
-    background: var(--text-disabled);
-    border-radius: var(--radius-round);
-    border: none;
-}
+    .admin-action-btn {
+        width: 30px;
+        height: 30px;
+    }
 
-.showtime-movie-checkbox-list::-webkit-scrollbar-thumb:hover,
-.showtime-room-checkbox-list::-webkit-scrollbar-thumb:hover {
-    background: var(--text-muted);
-}
-
-.showtime-movie-checkbox-list,
-.showtime-room-checkbox-list {
-    scrollbar-width: thin;
-    scrollbar-color: var(--text-disabled) transparent;
+    .admin-action-btn svg {
+        width: 14px;
+        height: 14px;
+    }
 }

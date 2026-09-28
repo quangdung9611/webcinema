@@ -10,7 +10,10 @@ import {
     CircleCheck,
     CircleX,
     UtensilsCrossed,
-    Sandwich, // ⭐ MỚI: icon bánh mì
+    CupSoda,       // ⭐ Cho Drink
+    Utensils,      // ⭐ Cho Combo
+    Cookie,        // ⭐ Cho Snack
+    Sandwich,      // ⭐ Cho Break (Bánh mì)
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -37,34 +40,43 @@ const initialFormData = {
     status: '1'
 };
 
-// ⭐ Danh sách category — dùng chung cho toàn bộ
+// ⭐ Danh sách category
 const CATEGORY_OPTIONS = [
     { label: 'Bắp rang', value: 'Popcorn' },
     { label: 'Nước uống', value: 'Drink' },
     { label: 'Combo', value: 'Combo' },
     { label: 'Snack', value: 'Snack' },
-    { label: 'Bánh mì', value: 'Break' }, // ⭐ MỚI
+    { label: 'Bánh mì', value: 'Break' },
     { label: 'Khác', value: 'Other' }
 ];
 
-// ⭐ Map label để render trong table
 const CATEGORY_LABEL_MAP = {
     Popcorn: 'Bắp rang',
     Drink: 'Nước uống',
     Combo: 'Combo',
     Snack: 'Snack',
-    Break: 'Bánh mì', // ⭐ MỚI
+    Break: 'Bánh mì',
     Other: 'Khác'
 };
 
-// ⭐ Map icon cho từng category
+// ⭐ Map category → Lucide icon component
 const CATEGORY_ICON_MAP = {
-    Popcorn: '🍿',
-    Drink: '🥤',
-    Combo: '🍱',
-    Snack: '🍟',
-    Break: '🥖', // ⭐ MỚI
-    Other: '🍽️'
+    Popcorn: Popcorn,
+    Drink: CupSoda,
+    Combo: Utensils,
+    Snack: Cookie,
+    Break: Sandwich,
+    Other: UtensilsCrossed
+};
+
+// ⭐ Map category → màu sắc riêng cho icon
+const CATEGORY_COLOR_MAP = {
+    Popcorn: { bg: 'linear-gradient(135deg, #fef3c7, #fde68a)', color: '#d97706' },
+    Drink:   { bg: 'linear-gradient(135deg, #cffafe, #a5f3fc)', color: '#0891b2' },
+    Combo:   { bg: 'linear-gradient(135deg, #fce7f3, #fbcfe8)', color: '#db2777' },
+    Snack:   { bg: 'linear-gradient(135deg, #ffedd5, #fed7aa)', color: '#ea580c' },
+    Break:   { bg: 'linear-gradient(135deg, #fef9c3, #fde047)', color: '#ca8a04' },
+    Other:   { bg: 'linear-gradient(135deg, #e0e7ff, #c7d2fe)', color: '#4f46e5' }
 };
 
 // ==========================================================
@@ -193,9 +205,6 @@ const FoodPage = () => {
         };
     }, [fetchFoods]);
 
-    // ------------------------------------------------------
-    // SEARCH DEBOUNCE
-    // ------------------------------------------------------
     const prevSearchRef = useRef('');
     useEffect(() => {
         const currentSearch = search;
@@ -227,11 +236,12 @@ const FoodPage = () => {
             errors.price = 'Vui lòng nhập giá sản phẩm.';
         } else if (Number(formData.price) <= 0) {
             errors.price = 'Giá sản phẩm phải lớn hơn 0.';
+        } else if (!Number.isInteger(Number(formData.price))) {
+            errors.price = 'Giá sản phẩm phải là số nguyên.';
         }
         if (!formData.category) {
             errors.category = 'Vui lòng chọn danh mục.';
         }
-        // ⭐ Validate category mới
         const validCategories = CATEGORY_OPTIONS.map(opt => opt.value);
         if (formData.category && !validCategories.includes(formData.category)) {
             errors.category = 'Danh mục không hợp lệ.';
@@ -259,7 +269,7 @@ const FoodPage = () => {
         setEditingFood(food);
         setFormData({
             product_name: food.product_name || '',
-            price: food.price || '',
+            price: String(food.price || ''),
             category: food.category || 'Popcorn',
             status: String(food.status ?? '1')
         });
@@ -287,6 +297,9 @@ const FoodPage = () => {
         setFilePreviews({});
     };
 
+    // ------------------------------------------------------
+    // HANDLE FORM CHANGE
+    // ------------------------------------------------------
     const handleChange = (e) => {
         const { name, value, files } = e.target;
 
@@ -311,9 +324,18 @@ const FoodPage = () => {
             return;
         }
 
+        if (name === 'price') {
+            const cleanValue = value.replace(/[^0-9]/g, '');
+            setFormData((prev) => ({ ...prev, [name]: cleanValue }));
+            return;
+        }
+
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
+    // ------------------------------------------------------
+    // HANDLE SUBMIT
+    // ------------------------------------------------------
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateForm()) return;
@@ -322,9 +344,16 @@ const FoodPage = () => {
             setSubmitLoading(true);
 
             const submitData = new FormData();
+
             Object.entries(formData).forEach(([key, value]) => {
-                submitData.append(key, value);
+                if (key === 'price') {
+                    const intPrice = Math.round(Number(value) || 0);
+                    submitData.append(key, String(intPrice));
+                } else {
+                    submitData.append(key, value);
+                }
             });
+
             if (foodImage) {
                 submitData.append('food_image', foodImage);
             }
@@ -396,6 +425,43 @@ const FoodPage = () => {
     };
 
     // ------------------------------------------------------
+    // ⭐ COMPONENT: Category Badge — dùng Lucide icon
+    // ------------------------------------------------------
+    const CategoryBadge = ({ category }) => {
+        const IconComponent = CATEGORY_ICON_MAP[category] || UtensilsCrossed;
+        const colors = CATEGORY_COLOR_MAP[category] || CATEGORY_COLOR_MAP.Other;
+        const label = CATEGORY_LABEL_MAP[category] || category;
+
+        return (
+            <span
+                className="status-badge used"
+                style={{
+                    gap: '8px',
+                    paddingLeft: '6px',
+                    display: 'inline-flex',
+                    alignItems: 'center'
+                }}
+            >
+                <span
+                    style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '6px',
+                        background: colors.bg,
+                        color: colors.color
+                    }}
+                >
+                    <IconComponent size={14} strokeWidth={2.4} />
+                </span>
+                {label}
+            </span>
+        );
+    };
+
+    // ------------------------------------------------------
     // TABLE COLUMNS
     // ------------------------------------------------------
     const columns = [
@@ -447,14 +513,8 @@ const FoodPage = () => {
         {
             title: 'Danh mục',
             key: 'category',
-            render: (row) => (
-                <span className="status-badge used" style={{ gap: '6px' }}>
-                    <Tag size={14} />
-                    {/* ⭐ Hiển thị icon + label đẹp hơn */}
-                    {CATEGORY_ICON_MAP[row.category] || '📦'}{' '}
-                    {CATEGORY_LABEL_MAP[row.category] || row.category}
-                </span>
-            )
+            // ⭐ Dùng component CategoryBadge
+            render: (row) => <CategoryBadge category={row.category} />
         },
         {
             title: 'Giá',
@@ -498,7 +558,7 @@ const FoodPage = () => {
     ];
 
     // ------------------------------------------------------
-    // FORM FIELDS — ⭐ THÊM "Bánh mì"
+    // FORM FIELDS
     // ------------------------------------------------------
     const formFields = [
         {
@@ -511,13 +571,16 @@ const FoodPage = () => {
             label: 'Giá sản phẩm',
             name: 'price',
             type: 'number',
-            placeholder: 'Ví dụ: 79000'
+            placeholder: 'Ví dụ: 79000',
+            step: 1,
+            min: 0,
+            inputMode: 'numeric'
         },
         {
             label: 'Danh mục',
             name: 'category',
             type: 'select',
-            options: CATEGORY_OPTIONS // ⭐ Dùng constant — dễ maintain
+            options: CATEGORY_OPTIONS
         },
         {
             label: 'Trạng thái',

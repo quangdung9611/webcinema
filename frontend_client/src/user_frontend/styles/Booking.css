@@ -1,8 +1,8 @@
 /* =========================================================
    BOOKING PAGE - PREMIUM SILVER EDITION
-   SUBTLE HOVER EDITION
    MAX WIDTH: 1300px
    USING GLOBAL VARIABLES FROM INDEX.CSS
+   ✅ SEAT STYLES ĐÃ CHUYỂN SANG Seat.css
 ========================================================= */
 
 /* =========================================================
@@ -129,7 +129,6 @@
     pointer-events: none;
 }
 
-/* Hover nhẹ */
 .booking-section:hover {
     border-color: rgba(232, 232, 232, 0.22);
     box-shadow:
@@ -137,7 +136,6 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-/* ✅ Không dùng spotlight nữa */
 .section-spotlight {
     display: none;
 }
@@ -288,10 +286,6 @@
     align-items: start;
 }
 
-/* =========================================================
-   NAV COLUMN
-========================================================= */
-
 .nav-col {
     min-width: 0;
     display: flex;
@@ -418,7 +412,7 @@
 }
 
 /* =========================================================
-   SLIDE BUTTON — hover nhẹ
+   SLIDE BUTTON
 ========================================================= */
 
 .slide-btn {
@@ -458,7 +452,7 @@
 }
 
 /* =========================================================
-   COMPACT CARD — hover nhẹ
+   COMPACT CARD
 ========================================================= */
 
 .compact-card {
@@ -575,577 +569,6 @@
     font-size: 11px;
     font-weight: var(--fw-semibold);
     white-space: nowrap;
-}
-
-/* =========================================================
-   SEAT SELECTION
-========================================================= */
-
-.seat-selection-content {
-    width: 100%;
-}
-
-.seat-map-booking {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-/* =========================================================
-   SCREEN
-========================================================= */
-
-.screen-header {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 48px;
-    position: relative;
-}
-
-.screen-glow {
-    position: absolute;
-    top: -15px;
-    width: 65%;
-    height: 55px;
-    border-radius: 50%;
-    background:
-        radial-gradient(
-            ellipse,
-            rgba(232, 232, 232, 0.10),
-            transparent 68%
-        );
-    filter: blur(8px);
-    pointer-events: none;
-}
-
-.screen-line {
-    position: relative;
-    width: 78%;
-    height: 5px;
-    margin-bottom: 11px;
-    border-radius: var(--radius-round);
-    background:
-        linear-gradient(
-            90deg,
-            transparent,
-            var(--silver-primary) 18%,
-            #ffffff 50%,
-            var(--silver-primary) 82%,
-            transparent
-        );
-    box-shadow:
-        0 0 14px rgba(232, 232, 232, 0.35),
-        0 5px 20px rgba(232, 232, 232, 0.10);
-    transform: perspective(500px) rotateX(-38deg);
-}
-
-.screen-header span {
-    position: relative;
-    font-size: 12px;
-    font-weight: var(--fw-extrabold);
-    letter-spacing: 6px;
-    color: var(--silver-primary);
-    text-transform: uppercase;
-}
-
-.screen-header small {
-    position: relative;
-    margin-top: 5px;
-    font-size: 8px;
-    letter-spacing: 1.6px;
-    color: var(--text-muted);
-    text-transform: uppercase;
-}
-
-/* =========================================================
-   SEATS LAYOUT
-========================================================= */
-
-.seats-layout {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 9px;
-    overflow-x: auto;
-    padding: 4px 0 8px;
-}
-
-.seats-layout::-webkit-scrollbar {
-    height: 4px;
-}
-
-.seats-layout::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.025);
-}
-
-.seats-layout::-webkit-scrollbar-thumb {
-    background: rgba(232, 232, 232, 0.16);
-    border-radius: var(--radius-round);
-}
-
-/* =========================================================
-   SEAT ROW
-========================================================= */
-
-.seat-row {
-    width: max-content;
-    min-width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 13px;
-}
-
-.row-id {
-    width: 24px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: var(--fw-extrabold);
-    color: var(--text-muted);
-    transition: color 0.2s ease;
-}
-
-.seat-row:hover .row-id {
-    color: var(--silver-dark);
-}
-
-.row-items {
-    display: grid;
-    grid-template-columns: repeat(10, auto);
-    gap: 8px;
-    align-items: center;
-    justify-content: center;
-}
-
-/* =========================================================
-   SEAT — HOVER NHẸ
-========================================================= */
-
-.seat {
-    position: relative;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    cursor: pointer;
-    transition:
-        transform 0.2s ease,
-        filter 0.2s ease,
-        color 0.2s ease;
-    fill: currentColor !important;
-    stroke: currentColor !important;
-}
-
-/* Hover chung — bay lên nhẹ + sáng lên nhẹ */
-.seat:hover:not(.sold):not(.maintenance):not(.held-by-other):not(.locked) {
-    transform: translateY(-3px) scale(1.08);
-    filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.3)) brightness(1.15);
-    z-index: 3;
-}
-
-.seat.COUPLE,
-.seat.DOUBLE {
-    width: 76px;
-}
-
-.seat-icon {
-    width: 100%;
-    height: 100%;
-    display: block;
-    fill: currentColor !important;
-}
-
-.seat-number {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -48%);
-    padding: 1px 3px;
-    border-radius: 3px;
-    font-size: 11px;
-    font-weight: var(--fw-extrabold);
-    line-height: 1.1;
-    z-index: 2;
-    pointer-events: none;
-    user-select: none;
-    background: rgba(255, 255, 255, 0.72);
-    color: var(--bg-primary);
-    white-space: nowrap;
-}
-
-/* =========================================================
-   STANDARD
-========================================================= */
-
-.seat.NORMAL,
-.seat.STANDARD,
-.seat.THUONG {
-    color: var(--seat-standard-color) !important;
-}
-
-.seat.NORMAL .seat-number,
-.seat.STANDARD .seat-number,
-.seat.THUONG .seat-number {
-    background: rgba(255, 255, 255, 0.82);
-    color: var(--bg-primary);
-}
-
-.seat.NORMAL:hover:not(.sold):not(.maintenance):not(.held-by-other):not(.locked),
-.seat.STANDARD:hover:not(.sold):not(.maintenance):not(.held-by-other):not(.locked),
-.seat.THUONG:hover:not(.sold):not(.maintenance):not(.held-by-other):not(.locked) {
-    color: #ffffff !important;
-    filter:
-        drop-shadow(0 5px 10px rgba(0, 0, 0, 0.35))
-        brightness(1.25);
-}
-
-/* =========================================================
-   VIP — hover vàng nhẹ
-========================================================= */
-
-.seat.VIP {
-    color: var(--seat-vip-color) !important;
-}
-
-.seat.VIP .seat-number {
-    background: rgba(0, 0, 0, 0.16);
-    color: var(--bg-primary);
-}
-
-.seat.VIP:hover:not(.sold):not(.maintenance):not(.held-by-other):not(.locked) {
-    color: #FFD966 !important;
-    filter:
-        drop-shadow(0 5px 10px rgba(0, 0, 0, 0.35))
-        drop-shadow(0 0 10px rgba(255, 217, 102, 0.45))
-        brightness(1.2);
-}
-
-/* =========================================================
-   COUPLE — hover hồng nhẹ
-========================================================= */
-
-.seat.COUPLE,
-.seat.DOUBLE {
-    color: var(--seat-couple-color) !important;
-}
-
-.seat.COUPLE .seat-number,
-.seat.DOUBLE .seat-number {
-    background: rgba(255, 255, 255, 0.62);
-    color: var(--bg-primary);
-}
-
-.seat.COUPLE:hover:not(.sold):not(.maintenance):not(.held-by-other):not(.locked),
-.seat.DOUBLE:hover:not(.sold):not(.maintenance):not(.held-by-other):not(.locked) {
-    color: #F48FB1 !important;
-    filter:
-        drop-shadow(0 5px 10px rgba(0, 0, 0, 0.35))
-        drop-shadow(0 0 10px rgba(244, 143, 177, 0.45))
-        brightness(1.2);
-}
-
-/* =========================================================
-   DELUXE — hover xám bạc nhẹ
-========================================================= */
-
-.seat.DELUXE {
-    color: var(--seat-deluxe-color, #B8C0C9) !important;
-}
-
-.seat.DELUXE .seat-number {
-    background: rgba(255, 255, 255, 0.8);
-    color: var(--bg-primary);
-}
-
-.seat.DELUXE:hover:not(.sold):not(.maintenance):not(.held-by-other):not(.locked) {
-    color: #D8DEE4 !important;
-    filter:
-        drop-shadow(0 5px 10px rgba(0, 0, 0, 0.35))
-        drop-shadow(0 0 10px rgba(216, 222, 228, 0.4))
-        brightness(1.2);
-}
-
-/* =========================================================
-   RECLINER — hover xanh xám nhẹ
-========================================================= */
-
-.seat.RECLINER {
-    color: var(--seat-recliner-color, #6F8FA8) !important;
-}
-
-.seat.RECLINER .seat-number {
-    background: rgba(255, 255, 255, 0.75);
-    color: var(--bg-primary);
-}
-
-.seat.RECLINER:hover:not(.sold):not(.maintenance):not(.held-by-other):not(.locked) {
-    color: #9DB6CC !important;
-    filter:
-        drop-shadow(0 5px 10px rgba(0, 0, 0, 0.35))
-        drop-shadow(0 0 10px rgba(157, 182, 204, 0.4))
-        brightness(1.2);
-}
-
-/* =========================================================
-   PREMIUM
-========================================================= */
-
-.seat.PREMIUM {
-    color: var(--seat-premium-color, #d9d9d9) !important;
-}
-
-.seat.PREMIUM .seat-number {
-    background: rgba(255, 255, 255, 0.84);
-    color: var(--bg-primary);
-}
-
-/* =========================================================
-   LUXURY
-========================================================= */
-
-.seat.LUXURY {
-    color: var(--seat-luxury-color, #f0f0f0) !important;
-}
-
-.seat.LUXURY .seat-number {
-    background: rgba(0, 0, 0, 0.20);
-    color: var(--bg-primary);
-}
-
-/* =========================================================
-   SELECTED — glow nhẹ, KHÔNG breathing
-========================================================= */
-
-.seat.selected {
-    color: var(--seat-selected-color) !important;
-    filter: drop-shadow(0 0 8px rgba(67, 183, 122, 0.4));
-}
-
-.seat.selected .seat-number {
-    background: rgba(67, 183, 122, 0.95);
-    color: #ffffff !important;
-}
-
-.seat.selected:hover {
-    transform: translateY(-3px) scale(1.08);
-    filter:
-        drop-shadow(0 5px 10px rgba(0, 0, 0, 0.35))
-        drop-shadow(0 0 12px rgba(67, 183, 122, 0.6))
-        brightness(1.15);
-}
-
-/* =========================================================
-   SOLD — không hover
-========================================================= */
-
-.seat.sold {
-    color: var(--seat-sold-color) !important;
-    opacity: 0.85;
-    cursor: not-allowed;
-}
-
-.seat.sold:hover {
-    transform: none !important;
-    filter: none !important;
-}
-
-.seat.sold .seat-number {
-    background: rgba(0, 0, 0, 0.30);
-    color: var(--silver-light);
-}
-
-/* =========================================================
-   MAINTENANCE — không hover
-========================================================= */
-
-.seat.maintenance {
-    color: var(--seat-maintenance-color) !important;
-    opacity: 0.48;
-    cursor: not-allowed;
-}
-
-.seat.maintenance:hover {
-    transform: none !important;
-    filter: none !important;
-}
-
-.seat.maintenance .seat-number {
-    background: rgba(0, 0, 0, 0.20);
-    color: var(--text-secondary);
-}
-
-/* =========================================================
-   HELD BY OTHER — không hover
-========================================================= */
-
-.seat.held-by-other {
-    color: #f39c12 !important;
-    opacity: 0.92;
-    cursor: not-allowed !important;
-}
-
-.seat.held-by-other:hover {
-    transform: none !important;
-    filter: none !important;
-}
-
-.seat.held-by-other .seat-icon {
-    color: #f39c12 !important;
-    fill: #f39c12 !important;
-}
-
-.seat.held-by-other .seat-number {
-    background: rgba(243, 156, 18, 0.86);
-    color: #1a1a1a !important;
-}
-
-.seat.held-by-other::after {
-    content: "🔒";
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    z-index: 5;
-    padding: 2px 3px;
-    border-radius: 50%;
-    background: rgba(0, 0, 0, 0.78);
-    color: #fff;
-    font-size: 9px;
-    line-height: 1;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-}
-
-/* =========================================================
-   LOCKED — pulse nhẹ (giữ để user biết đang chờ)
-========================================================= */
-
-.seat.locked {
-    animation: seatLockedPulse 1.6s ease-in-out infinite;
-    cursor: wait;
-}
-
-@keyframes seatLockedPulse {
-    0%, 100% { opacity: 0.6; }
-    50% { opacity: 0.95; }
-}
-
-/* =========================================================
-   LEGEND
-========================================================= */
-
-.seat-legend {
-    width: 100%;
-    margin-top: 45px;
-    padding-top: 22px;
-    border-top: 1px solid rgba(255, 255, 255, 0.07);
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 14px 24px;
-}
-
-.legend-title {
-    font-size: 9px;
-    font-weight: var(--fw-bold);
-    letter-spacing: 2px;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    flex-shrink: 0;
-}
-
-.legend-items {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px 20px;
-    flex: 1;
-    justify-content: center;
-}
-
-.leg-item {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    font-size: 10px;
-    color: var(--text-secondary);
-    white-space: nowrap;
-    transition: color 0.2s ease;
-}
-
-.leg-item:hover {
-    color: var(--silver-light);
-}
-
-.leg-item .box {
-    width: 17px;
-    height: 17px;
-    flex-shrink: 0;
-    border-radius: 5px;
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    transition: border-color 0.2s ease;
-}
-
-.leg-item:hover .box {
-    border-color: rgba(255, 255, 255, 0.35);
-}
-
-.box.normal,
-.box.standard {
-    background: var(--seat-standard-color) !important;
-}
-
-.box.vip {
-    background: var(--seat-vip-color) !important;
-}
-
-.box.couple {
-    width: 31px;
-    background: var(--seat-couple-color) !important;
-}
-
-.box.premium {
-    background: var(--seat-premium-color, #d9d9d9) !important;
-}
-
-.box.luxury {
-    background: var(--seat-luxury-color, #f0f0f0) !important;
-}
-
-.box.selected {
-    background: var(--seat-selected-color) !important;
-}
-
-.box.sold {
-    background: var(--seat-sold-color) !important;
-}
-
-.box.maintenance {
-    background: var(--seat-maintenance-color) !important;
-}
-
-.box.held-by-other {
-    position: relative;
-    background: #f39c12 !important;
-    border-color: #e67e22 !important;
-}
-
-.box.held-by-other::after {
-    content: "🔒";
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    font-size: 7px;
-    line-height: 1;
 }
 
 /* =========================================================
@@ -1359,36 +782,6 @@
     50% { opacity: 0.4; }
 }
 
-/* ✅ Seat map bị disable khi socket chưa ready */
-.seat-map-booking--disabled {
-    opacity: 0.55;
-    pointer-events: none;
-    filter: grayscale(0.4);
-    transition: all var(--transition-fast);
-    position: relative;
-}
-
-.seat-map-booking--disabled::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 255, 255, 0.04),
-        transparent
-    );
-    background-size: 200% 100%;
-    animation: shimmerBg 1.6s linear infinite;
-    pointer-events: none;
-    border-radius: var(--radius-lg);
-}
-
-@keyframes shimmerBg {
-    0% { background-position: 100% 0; }
-    100% { background-position: -100% 0; }
-}
-
 /* =========================================================
    RESPONSIVE - 1200px
 ========================================================= */
@@ -1421,20 +814,6 @@
     .time-card {
         width: 64px;
         min-width: 64px;
-    }
-
-    .seat {
-        width: 37px;
-        height: 37px;
-    }
-
-    .seat.COUPLE,
-    .seat.DOUBLE {
-        width: 70px;
-    }
-
-    .row-items {
-        gap: 7px;
     }
 }
 
@@ -1481,18 +860,6 @@
 
     .scroll-list {
         max-width: none;
-    }
-
-    .seat-row {
-        min-width: 0;
-    }
-
-    .seat-legend {
-        gap: 12px 18px;
-    }
-
-    .legend-items {
-        gap: 8px 14px;
     }
 }
 
@@ -1587,74 +954,6 @@
         gap: 5px;
     }
 
-    .screen-header {
-        margin-bottom: 38px;
-    }
-
-    .screen-line {
-        width: 88%;
-        height: 4px;
-    }
-
-    .screen-header span {
-        font-size: 10px;
-        letter-spacing: 4px;
-    }
-
-    .screen-header small {
-        font-size: 7px;
-    }
-
-    .seat-row {
-        gap: 9px;
-    }
-
-    .row-id {
-        width: 18px;
-        font-size: 10px;
-    }
-
-    .row-items {
-        gap: 5px;
-    }
-
-    .seat {
-        width: 31px;
-        height: 31px;
-    }
-
-    .seat.COUPLE,
-    .seat.DOUBLE {
-        width: 58px;
-    }
-
-    .seat-number {
-        font-size: 9px;
-    }
-
-    .seat-legend {
-        margin-top: 35px;
-        padding-top: 18px;
-        gap: 10px 16px;
-    }
-
-    .legend-items {
-        gap: 8px 12px;
-    }
-
-    .leg-item {
-        font-size: 9px;
-    }
-
-    .leg-item .box {
-        width: 15px;
-        height: 15px;
-    }
-
-    .box.couple {
-        width: 27px;
-    }
-
     .placeholder-msg {
         min-height: 300px;
     }
@@ -1682,60 +981,6 @@
 
     .section-heading h2 {
         font-size: 13px;
-    }
-
-    .seat-row {
-        gap: 6px;
-    }
-
-    .row-items {
-        gap: 4px;
-    }
-
-    .seat {
-        width: 28px;
-        height: 28px;
-    }
-
-    .seat.COUPLE,
-    .seat.DOUBLE {
-        width: 52px;
-    }
-
-    .seat-number {
-        font-size: 8px;
-        padding: 1px 2px;
-    }
-
-    .screen-header {
-        margin-bottom: 32px;
-    }
-
-    .screen-line {
-        width: 94%;
-    }
-
-    .seat-legend {
-        margin-top: 30px;
-        gap: 8px 12px;
-    }
-
-    .legend-items {
-        gap: 6px 10px;
-    }
-
-    .leg-item {
-        font-size: 8px;
-        gap: 5px;
-    }
-
-    .leg-item .box {
-        width: 13px;
-        height: 13px;
-    }
-
-    .box.couple {
-        width: 24px;
     }
 }
 
@@ -1862,85 +1107,6 @@
     .no-showtimes {
         height: 43px;
         font-size: 9px;
-    }
-
-    .screen-header {
-        margin-bottom: 27px;
-    }
-
-    .screen-line {
-        width: 96%;
-        height: 3px;
-        margin-bottom: 8px;
-    }
-
-    .screen-header span {
-        font-size: 8px;
-        letter-spacing: 2.5px;
-    }
-
-    .screen-header small {
-        font-size: 6px;
-        letter-spacing: 1px;
-    }
-
-    .seat-row {
-        gap: 4px;
-    }
-
-    .row-id {
-        width: 12px;
-        font-size: 8px;
-    }
-
-    .row-items {
-        gap: 3px;
-    }
-
-    .seat {
-        width: 24px;
-        height: 24px;
-    }
-
-    .seat.COUPLE,
-    .seat.DOUBLE {
-        width: 45px;
-    }
-
-    .seat-number {
-        font-size: 7px;
-        padding: 0 1px;
-    }
-
-    .seat-legend {
-        margin-top: 24px;
-        padding-top: 15px;
-        gap: 6px 10px;
-    }
-
-    .legend-title {
-        font-size: 7px;
-        width: 100%;
-        text-align: center;
-    }
-
-    .legend-items {
-        gap: 5px 8px;
-    }
-
-    .leg-item {
-        gap: 4px;
-        font-size: 7px;
-    }
-
-    .leg-item .box {
-        width: 12px;
-        height: 12px;
-        border-radius: 3px;
-    }
-
-    .box.couple {
-        width: 22px;
     }
 
     .placeholder-msg {

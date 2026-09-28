@@ -90,6 +90,67 @@ exports.getBookingDetails = async (req, res) => {
 };
 
 /*=========================================================
+    ✅ USER - GET MY BOOKING DETAIL
+    User chỉ xem được booking của chính mình
+=========================================================*/
+exports.getMyBookingDetail = async (req, res) => {
+    const connection = await BookingRepository.getConnection();
+    try {
+        const { booking_id } = req.params;
+        const userId = req.user?.user_id;
+
+        if (!userId) {
+            connection.release();
+            return res.status(401).json({
+                success: false,
+                message: "Vui lòng đăng nhập để xem thông tin vé"
+            });
+        }
+
+        const booking = await BookingService.getBookingDetail(connection, booking_id);
+
+        if (!booking) {
+            connection.release();
+            return res.status(404).json({
+                success: false,
+                message: "Không tìm thấy booking"
+            });
+        }
+
+        // ✅ CHECK OWNER — chỉ cho phép xem booking của chính mình
+        if (Number(booking.user_id) !== Number(userId)) {
+            connection.release();
+            return res.status(403).json({
+                success: false,
+                message: "Bạn không có quyền xem booking này"
+            });
+        }
+
+        // ✅ Lấy đầy đủ tickets + foods + details
+        const tickets = await TicketService.getTicketsByBooking(connection, booking_id);
+        const foods = await BookingService.getFoodDetail(connection, booking_id);
+        const details = booking.details || [];
+
+        connection.release();
+
+        return res.json({
+            success: true,
+            booking,
+            tickets,
+            foods,
+            details,
+        });
+    } catch (error) {
+        connection.release();
+        console.error("❌ [getMyBookingDetail]", error);
+        return res.status(500).json({
+            success: false,
+            message: error.message || "Lỗi lấy chi tiết booking"
+        });
+    }
+};
+
+/*=========================================================
     ADMIN - UPDATE BOOKING STATUS
 =========================================================*/
 exports.updateBookingStatus = async (req, res) => {
@@ -151,6 +212,7 @@ exports.updateBookingCustomerInfo = async (req, res) => {
         const { booking_id, full_name, phone, email } = req.body;
 
         if (!booking_id || !full_name || !phone || !email) {
+            connection.release();
             return res.status(400).json({
                 success: false,
                 message: "Thiếu thông tin booking_id, full_name, phone hoặc email"

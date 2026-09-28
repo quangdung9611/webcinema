@@ -2,6 +2,8 @@
 // FOOD.JS
 // PREMIUM SILVER BOOKING FLOW
 // HỖ TRỢ CẢ ĐẶT VÉ THƯỜNG VÀ ĐỔI VÉ (RESCHEDULE)
+// CLOUDINARY READY
+// ✅ CATEGORY FILTER THEO ENUM CSDL
 // =========================================================
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -16,12 +18,100 @@ import {
     Coffee,
     UtensilsCrossed,
     RefreshCw,
+    Sparkles,
+    Cookie,
+    Wine,
+    IceCream,
+    Sandwich,
+    Check,
 } from 'lucide-react';
 import Modal from '../components/Modal';
 import BookingSidebar from '../components/BookingSidebar';
 import BookingProgress from '../components/BookingProgress';
 import LoadingButton from '../components/LoadingButton';
 import '../styles/Food.css';
+
+// =========================================================
+// ⭐ HELPER: LẤY URL ẢNH TỪ CLOUDINARY
+// =========================================================
+
+const getImageUrl = (image) => {
+    if (!image) return '';
+    if (image.startsWith('http://') || image.startsWith('https://')) {
+        return image;
+    }
+    return `https://api.quangdungcinema.id.vn/uploads/foods/${image}`;
+};
+
+// =========================================================
+// ✅ CATEGORY FILTER — KHỚP ENUM CSDL
+// enum('Popcorn','Drink','Combo','Snack','Break','Other')
+// =========================================================
+
+const CATEGORIES = [
+    {
+        id: 'all',
+        label: 'TẤT CẢ',
+        icon: Sparkles,
+        value: null,
+    },
+    {
+        id: 'combo',
+        label: 'COMBO',
+        icon: Popcorn,
+        value: 'Combo',
+    },
+    {
+        id: 'popcorn',
+        label: 'BẮP',
+        icon: Cookie,
+        value: 'Popcorn',
+    },
+    {
+        id: 'drink',
+        label: 'NƯỚC',
+        icon: Wine,
+        value: 'Drink',
+    },
+    {
+        id: 'break',
+        label: 'BÁNH MÌ',
+        icon: Sandwich,
+        value: 'Break',
+    },
+    {
+        id: 'snack',
+        label: 'ĂN VẶT',
+        icon: IceCream,
+        value: 'Snack',
+    },
+    {
+        id: 'other',
+        label: 'KHÁC',
+        icon: UtensilsCrossed,
+        value: 'Other',
+    },
+];
+
+// ✅ Map enum → label hiển thị trên badge
+const CATEGORY_LABELS = {
+    Popcorn: 'BẮP',
+    Drink: 'NƯỚC',
+    Combo: 'COMBO',
+    Snack: 'ĂN VẶT',
+    Break: 'BÁNH MÌ',
+    Other: 'KHÁC',
+};
+
+// ✅ Map enum → màu badge
+const CATEGORY_COLORS = {
+    Popcorn: '#F4D77A',   // vàng bắp
+    Drink: '#7FA0BC',     // xanh nước
+    Combo: '#E8C56A',     // vàng combo
+    Snack: '#E89BC0',     // hồng snack
+    Break: '#F5A623',     // cam bánh mì
+    Other: '#A9B2BC',     // xám khác
+};
 
 // =========================================================
 // COMPONENT
@@ -114,9 +204,11 @@ const Food = () => {
     const [loading, setLoading] = useState(false);
     const [loadingFoods, setLoadingFoods] = useState(false);
 
+    // ✅ Category filter
+    const [activeCategory, setActiveCategory] = useState('all');
+
     // =====================================================
     // ✅ RESCHEDULE: TỰ ĐỘNG CHUYỂN SANG PAYMENT
-    // (Bỏ qua bước chọn đồ ăn — giữ nguyên đồ ăn cũ)
     // =====================================================
 
     useEffect(() => {
@@ -135,7 +227,6 @@ const Food = () => {
                 rescheduleBookingId,
                 oldBooking: oldBookingInfo,
                 oldTotalAmount,
-                // Không có food mới
                 selectedFoods: [],
                 foods: [],
                 totalTicketPrice: newTotal,
@@ -218,6 +309,7 @@ const Food = () => {
             try {
                 const res = await api.get('/api/foods');
                 if (res.data && Array.isArray(res.data.data)) {
+                    console.log('🍿 [FOOD] Loaded foods:', res.data.data.length);
                     setFoods(res.data.data);
                 } else {
                     setFoods([]);
@@ -294,6 +386,35 @@ const Food = () => {
     }, [foods, selectedFoods]);
 
     const grandTotal = totalTicketPrice + totalFoodPrice;
+
+    // ✅ Đếm tổng số món đã chọn
+    const totalItems = useMemo(() => {
+        return Object.values(selectedFoods).reduce((sum, qty) => sum + Number(qty || 0), 0);
+    }, [selectedFoods]);
+
+    // =====================================================
+    // ✅ FILTER FOODS BY CATEGORY (theo enum CSDL)
+    // =====================================================
+
+    const filteredFoods = useMemo(() => {
+        if (activeCategory === 'all') return foods;
+
+        const category = CATEGORIES.find(c => c.id === activeCategory);
+        if (!category || !category.value) return foods;
+
+        return foods.filter(item => item.category === category.value);
+    }, [foods, activeCategory]);
+
+    // ✅ Đếm số sản phẩm mỗi category (để hiển thị badge số)
+    const categoryCounts = useMemo(() => {
+        const counts = { all: foods.length };
+        CATEGORIES.forEach(cat => {
+            if (cat.value) {
+                counts[cat.id] = foods.filter(f => f.category === cat.value).length;
+            }
+        });
+        return counts;
+    }, [foods]);
 
     // =====================================================
     // CONTINUE PAYMENT
@@ -393,8 +514,30 @@ const Food = () => {
             );
         }
 
-        return foods.map(item => {
+        if (filteredFoods.length === 0) {
+            return (
+                <div className="food-empty">
+                    <div className="food-empty-icon">
+                        <UtensilsCrossed size={48} strokeWidth={1.5} />
+                    </div>
+                    <h3>KHÔNG CÓ SẢN PHẨM</h3>
+                    <p>
+                        Danh mục{' '}
+                        <strong>
+                            {CATEGORIES.find(c => c.id === activeCategory)?.label}
+                        </strong>{' '}
+                        chưa có sản phẩm nào.
+                    </p>
+                </div>
+            );
+        }
+
+        return filteredFoods.map(item => {
             const quantity = Number(selectedFoods[item.product_id] || 0);
+            const imageUrl = getImageUrl(item.food_image);
+            const categoryLabel = CATEGORY_LABELS[item.category] || item.category || '';
+            const categoryColor = CATEGORY_COLORS[item.category] || '#A9B2BC';
+
             return (
                 <article
                     key={item.product_id}
@@ -402,11 +545,22 @@ const Food = () => {
                 >
                     <div className="food-image-wrapper">
                         <div className="food-image">
-                            {item.food_image ? (
+                            {imageUrl ? (
                                 <img
-                                    src={`https://api.quangdungcinema.id.vn/uploads/foods/${item.food_image}`}
+                                    src={imageUrl}
                                     alt={item.product_name}
                                     loading="lazy"
+                                    onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.style.display = 'none';
+                                        const parent = e.target.parentElement;
+                                        if (parent && !parent.querySelector('.food-no-image')) {
+                                            const placeholder = document.createElement('div');
+                                            placeholder.className = 'food-no-image';
+                                            placeholder.innerHTML = '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>';
+                                            parent.appendChild(placeholder);
+                                        }
+                                    }}
                                 />
                             ) : (
                                 <div className="food-no-image">
@@ -414,8 +568,22 @@ const Food = () => {
                                 </div>
                             )}
                         </div>
+
+                        {/* ✅ Category badge */}
+                        {categoryLabel && (
+                            <div
+                                className="food-category-badge"
+                                style={{ '--badge-color': categoryColor }}
+                            >
+                                {categoryLabel}
+                            </div>
+                        )}
+
                         {quantity > 0 && (
-                            <div className="food-selected-badge">ĐÃ CHỌN</div>
+                            <div className="food-selected-badge">
+                                <Check size={10} strokeWidth={3} />
+                                <span>ĐÃ CHỌN</span>
+                            </div>
                         )}
                     </div>
 
@@ -434,6 +602,8 @@ const Food = () => {
                                     type="button"
                                     className="food-qty-btn food-qty-minus"
                                     onClick={() => updateQty(item.product_id, -1)}
+                                    disabled={quantity === 0}
+                                    aria-label="Giảm số lượng"
                                 >
                                     <Minus size={16} strokeWidth={2.5} />
                                 </button>
@@ -442,6 +612,7 @@ const Food = () => {
                                     type="button"
                                     className="food-qty-btn food-qty-plus"
                                     onClick={() => updateQty(item.product_id, 1)}
+                                    aria-label="Tăng số lượng"
                                 >
                                     <Plus size={16} strokeWidth={2.5} />
                                 </button>
@@ -495,6 +666,31 @@ const Food = () => {
             />
 
             <div className="food-container">
+                {/* ✅ HEADER */}
+                <header className="food-page-header">
+                    <div className="food-page-header__row">
+                        <div>
+                            <div className="food-page-header__eyebrow">
+                                QUANG DŨNG CINEMA
+                            </div>
+                            <h1>
+                                CHỌN{' '}
+                                <span className="food-page-header__accent">
+                                    COMBO
+                                </span>
+                            </h1>
+                            <p>
+                                Thêm bắp nước để trải nghiệm phim trọn vẹn hơn.
+                            </p>
+                        </div>
+
+                        <div className="food-page-header__badge">
+                            <Sparkles size={14} />
+                            <span>BƯỚC 03 / 04</span>
+                        </div>
+                    </div>
+                </header>
+
                 <div className="food-progress-wrapper">
                     <BookingProgress currentStep={3} />
                 </div>
@@ -542,19 +738,54 @@ const Food = () => {
                                 <p>Bạn có thể thêm bắp, nước và các combo vào đơn hàng.</p>
                             </div>
                             <div className="food-count-badge">
-                                <strong>{foods.length}</strong>
-                                <span>SẢN PHẨM</span>
+                                <strong>{totalItems}</strong>
+                                <span>ĐÃ CHỌN</span>
                             </div>
                         </section>
+
+                        {/* ✅ CATEGORY FILTER TABS */}
+                        <nav className="food-category-tabs">
+                            {CATEGORIES.map(cat => {
+                                const Icon = cat.icon;
+                                const isActive = activeCategory === cat.id;
+                                const count = categoryCounts[cat.id] || 0;
+
+                                return (
+                                    <button
+                                        key={cat.id}
+                                        type="button"
+                                        className={`food-category-tab ${isActive ? 'active' : ''}`}
+                                        onClick={() => setActiveCategory(cat.id)}
+                                    >
+                                        <Icon size={14} strokeWidth={2.2} />
+                                        <span>{cat.label}</span>
+                                        {count > 0 && (
+                                            <span className="food-category-tab__count">
+                                                {count}
+                                            </span>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </nav>
 
                         <section className="food-list-card">
                             <div className="food-list-header">
                                 <div>
                                     <span className="food-section-label">
-                                        <Coffee size={12} strokeWidth={2} /> FOOD &amp; DRINK
+                                        <Coffee size={12} strokeWidth={2} />
+                                        FOOD &amp; DRINK
                                     </span>
-                                    <h2>COMBO ĐANG CÓ</h2>
+                                    <h2>
+                                        {activeCategory === 'all'
+                                            ? 'COMBO ĐANG CÓ'
+                                            : CATEGORIES.find(c => c.id === activeCategory)?.label
+                                        }
+                                    </h2>
                                 </div>
+                                <span className="food-result-count">
+                                    {filteredFoods.length} sản phẩm
+                                </span>
                             </div>
 
                             <div className="food-grid">{renderFoods()}</div>

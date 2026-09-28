@@ -1,134 +1,319 @@
-/* ================================
-   BANK APP PAGE - SILVER EDITION (ĐỒNG BỘ INDEX.CSS)
-================================ */
+/* ============================================================
+   BANK APP PAGE — PREMIUM SILVER EDITION
+   LAYOUT: Sidebar LEFT (390px) + OTP RIGHT
+   ============================================================ */
+
+/* ============================================================
+   PAGE WRAPPER
+============================================================ */
 
 .bank-checkout-page {
+    width: 100%;
     min-height: 100vh;
-    padding: var(--space-2xl) 0 var(--space-3xl);
-    background: var(--bg-primary);
+    padding: 42px 20px 70px;
+    background:
+        radial-gradient(
+            ellipse 80% 40% at 50% -10%,
+            rgba(221, 226, 232, 0.09),
+            transparent 60%
+        ),
+        radial-gradient(
+            ellipse 60% 30% at 20% 40%,
+            rgba(190, 200, 212, 0.025),
+            transparent 70%
+        ),
+        radial-gradient(
+            ellipse 60% 30% at 85% 75%,
+            rgba(190, 200, 212, 0.02),
+            transparent 70%
+        ),
+        var(--bg-primary);
+    overflow-x: hidden;
 }
 
-/* ================================
-   MAIN LAYOUT
-================================ */
+/* ============================================================
+   MAIN CONTAINER
+============================================================ */
 
 .bank-checkout-container {
     width: 100%;
     max-width: 1300px;
     margin: 0 auto;
-    padding: 0 var(--space-lg);
-    display: flex;
+    display: grid;
+    grid-template-columns: 390px minmax(0, 1fr);
     gap: var(--space-lg);
-    align-items: flex-start;
+    align-items: start;
 }
 
-/* ================================
+/* ============================================================
    LEFT SIDEBAR
-================================ */
+============================================================ */
 
 .bank-sidebar-wrapper {
-    width: 390px;
-    flex-shrink: 0;
+    width: 100%;
+    min-width: 0;
     position: sticky;
-    top: 110px;
+    top: 20px;
 }
 
 .bank-sidebar-wrapper > * {
     width: 100%;
 }
 
-/* ================================
+/* ============================================================
    RIGHT OTP SECTION
-================================ */
+============================================================ */
 
 .bank-otp-section {
-    flex: 1;
+    min-width: 0;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    gap: var(--space-lg);
 }
 
-/* ================================
-   OTP CARD
-================================ */
+/* ============================================================
+   ✅ PAGE HEADER — ĐỒNG BỘ
+============================================================ */
 
-.otp-card {
-    width: 100%;
-    max-width: 860px;
+.bank-page-header {
+    padding: 0;
     position: relative;
     overflow: hidden;
-    padding: var(--space-2xl) var(--space-2xl);
+}
+
+.bank-page-header__row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-lg);
+    position: relative;
+    z-index: 1;
+}
+
+.bank-page-header__eyebrow {
+    margin-bottom: var(--space-sm);
+    font-size: 0.72rem;
+    font-weight: var(--fw-extrabold);
+    letter-spacing: 0.24em;
+    color: var(--silver-dark);
+}
+
+.bank-page-header h1 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.8rem, 4vw, 3.2rem);
+    font-weight: var(--fw-bold);
+    line-height: 0.95;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+    color: var(--silver-light);
+    text-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+}
+
+.bank-page-header__accent {
+    background: linear-gradient(
+        135deg,
+        #F4F6F8 0%,
+        #A9B2BC 60%,
+        #DDE2E8 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+
+.bank-page-header p {
+    max-width: 600px;
+    margin: var(--space-md) 0 0;
+    font-size: var(--font-size-h5);
+    line-height: var(--line-height-base);
+    color: var(--text-muted);
+}
+
+/* Badge "BƯỚC 05 / 05" */
+.bank-page-header__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: var(--radius-round);
+    background: linear-gradient(
+        135deg,
+        rgba(244, 246, 248, 0.08),
+        rgba(244, 246, 248, 0.02)
+    );
+    border: 1px solid rgba(221, 226, 232, 0.2);
+    color: var(--silver-light);
+    font-size: 0.72rem;
+    font-weight: var(--fw-extrabold);
+    letter-spacing: 0.16em;
+    white-space: nowrap;
+    flex-shrink: 0;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    position: relative;
+    overflow: hidden;
+}
+
+.bank-page-header__badge::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        110deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.12) 50%,
+        transparent 70%
+    );
+    background-size: 200% 100%;
+    animation: badgeShimmer 3s linear infinite;
+    pointer-events: none;
+}
+
+.bank-page-header__badge svg {
+    color: var(--silver-primary);
+    flex-shrink: 0;
+    animation: sparkleRotate 4s ease-in-out infinite;
+}
+
+@keyframes badgeShimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+@keyframes sparkleRotate {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(180deg) scale(1.1); }
+}
+
+/* ============================================================
+   OTP CARD
+============================================================ */
+
+.otp-card {
+    position: relative;
+    width: 100%;
+    padding: var(--space-2xl);
     border-radius: var(--radius-xl);
     border: var(--border-premium);
-    background: var(--bg-card);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    box-shadow: var(--glass-shadow);
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.055),
+            rgba(255, 255, 255, 0.018)
+        );
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    box-shadow:
+        0 18px 55px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.045);
+    overflow: hidden;
 }
 
 .otp-card::before {
-    content: '';
+    content: "";
     position: absolute;
     width: 320px;
     height: 320px;
-    top: -120px;
+    top: -140px;
     right: -120px;
     border-radius: 50%;
-    background: rgba(232, 232, 232, 0.10);
+    background: rgba(232, 232, 232, 0.08);
     filter: blur(90px);
     pointer-events: none;
 }
 
-/* ================================
+.otp-card::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(232, 232, 232, 0.55),
+        transparent
+    );
+    opacity: 0.65;
+    pointer-events: none;
+}
+
+/* ============================================================
    ✅ RESCHEDULE BANNER
-================================ */
+============================================================ */
 
 .reschedule-banner {
+    position: relative;
+    z-index: 1;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
-    background: #fff3e6;
-    border: 1px solid #f37021;
-    border-radius: 8px;
-    margin-bottom: 12px;
-    font-size: 13px;
+    gap: 12px;
+    padding: 12px 16px;
+    margin-bottom: var(--space-lg);
+    border-radius: var(--radius-md);
+    background: linear-gradient(
+        100deg,
+        rgba(243, 112, 33, 0.15),
+        rgba(243, 112, 33, 0.05)
+    );
+    border: 1px solid rgba(243, 112, 33, 0.4);
+    color: #FFB74D;
+    font-size: 0.85rem;
+    font-weight: var(--fw-semibold);
+    box-shadow: 0 8px 24px rgba(243, 112, 33, 0.1);
 }
 
 .reschedule-banner .reschedule-icon {
     color: #f37021;
     flex-shrink: 0;
+    animation: rescheduleSpin 3s linear infinite;
+}
+
+@keyframes rescheduleSpin {
+    0%, 80%, 100% { transform: rotate(0deg); }
+    85% { transform: rotate(180deg); }
+    90% { transform: rotate(360deg); }
 }
 
 .reschedule-banner strong {
-    font-weight: var(--fw-bold);
+    color: #FFB74D;
+    font-weight: var(--fw-extrabold);
+    text-shadow: 0 0 12px rgba(255, 183, 77, 0.4);
 }
 
-/* ================================
-   LOADING TTL TEXT
-================================ */
-
-.loading-ttl-text {
-    text-align: center;
-    margin: var(--space-lg) 0;
-    color: var(--text-secondary);
-    font-size: var(--font-size-lg);
-    font-weight: var(--fw-medium);
-    padding: var(--space-xl) 0;
-}
-
-/* ================================
-   QR
-================================ */
+/* ============================================================
+   QR CARD
+============================================================ */
 
 .bank-qr-mini-wrapper {
-    width: 240px;
-    height: 240px;
-    margin: 0 auto var(--space-xl);
-    padding: var(--space-md);
-    border-radius: var(--radius-xl);
-    background: var(--silver-light);
     position: relative;
-    box-shadow: var(--glass-shadow);
+    z-index: 1;
+    width: 220px;
+    height: 220px;
+    margin: 0 auto var(--space-xl);
+    padding: 16px;
+    border-radius: var(--radius-xl);
+    background: linear-gradient(135deg, #FFFFFF 0%, #E8ECF1 100%);
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+}
+
+.bank-qr-mini-wrapper:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow:
+        0 28px 60px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.15),
+        0 0 32px rgba(232, 232, 232, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .bank-qr-mini {
@@ -136,89 +321,106 @@
     height: 100%;
     object-fit: cover;
     border-radius: var(--radius-md);
+    display: block;
 }
 
-/* ================================
-   QR ANIMATION
-================================ */
-
+/* QR scan line animation */
 .qr-scan-line {
     position: absolute;
-    left: var(--space-md);
-    right: var(--space-md);
-    height: 4px;
+    left: 16px;
+    right: 16px;
+    height: 3px;
     border-radius: var(--radius-round);
-    background: linear-gradient(90deg, transparent, var(--silver-primary), transparent);
-    animation: scanLine 2s linear infinite;
-    box-shadow: 0 0 20px rgba(232, 232, 232, 0.2);
+    background: linear-gradient(
+        90deg,
+        transparent,
+        #43B77A,
+        #ffffff,
+        #43B77A,
+        transparent
+    );
+    box-shadow:
+        0 0 20px rgba(67, 183, 122, 0.6),
+        0 0 40px rgba(67, 183, 122, 0.3);
+    animation: scanLine 2.4s ease-in-out infinite;
+    pointer-events: none;
 }
 
 @keyframes scanLine {
     0% {
-        top: 22px;
+        top: 20px;
         opacity: 0;
     }
     20% {
         opacity: 1;
     }
-    50% {
-        top: 110px;
+    80% {
+        top: calc(100% - 24px);
         opacity: 1;
     }
     100% {
-        top: 205px;
+        top: 20px;
         opacity: 0;
     }
 }
 
-/* ================================
+/* ============================================================
    TEXT
-================================ */
+============================================================ */
 
 .otp-title {
-    font-size: var(--font-size-h1);
-    font-weight: var(--fw-extrabold);
+    position: relative;
+    z-index: 1;
+    margin: 0 0 var(--space-sm);
+    font-family: var(--font-display);
+    font-size: clamp(1.4rem, 2.8vw, 2rem);
+    font-weight: var(--fw-bold);
     line-height: 1.1;
+    letter-spacing: 0.06em;
     text-align: center;
-    margin-bottom: var(--space-sm);
-    color: var(--text-heading);
-    letter-spacing: 0.5px;
+    color: var(--silver-light);
+    text-transform: uppercase;
 }
 
 .otp-sub {
+    position: relative;
+    z-index: 1;
+    margin: 0 0 var(--space-2xl);
     text-align: center;
-    font-size: var(--font-size-h4);
+    font-size: var(--font-size-h6);
     color: var(--text-secondary);
-    margin-bottom: var(--space-2xl);
     font-weight: var(--fw-medium);
 }
 
 .otp-sub strong {
-    color: var(--text-body);
+    color: var(--silver-primary);
     font-weight: var(--fw-bold);
+    letter-spacing: 0.02em;
 }
 
-/* ================================
-   ✅ OTP INPUT WRAPPER — chứa 6 ô HOẶC 1 dấu to
-================================ */
+/* ============================================================
+   OTP INPUT WRAPPER
+============================================================ */
 
 .otp-input-wrapper {
+    position: relative;
+    z-index: 1;
     width: 100%;
     min-height: 140px;
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
     margin-bottom: var(--space-lg);
 }
 
-/* ================================
-   OTP 6 Ô TRÒN INPUT
-================================ */
+/* ============================================================
+   OTP 6 Ô TRÒN
+============================================================ */
 
 .otp-circle-container {
     display: flex;
     justify-content: center;
+    align-items: center;
     gap: 14px;
     width: 100%;
     position: relative;
@@ -230,36 +432,53 @@
     height: 62px;
     border-radius: 50%;
     text-align: center;
-    font-size: var(--font-size-xl);
-    font-weight: var(--fw-bold);
-    color: var(--text-heading);
-    background: rgba(255, 255, 255, 0.04);
-    border: 2px solid rgba(255, 255, 255, 0.12);
+    font-size: 1.5rem;
+    font-weight: var(--fw-extrabold);
+    color: var(--silver-light);
+    background: linear-gradient(
+        145deg,
+        rgba(255, 255, 255, 0.06),
+        rgba(255, 255, 255, 0.02)
+    );
+    border: 2px solid rgba(255, 255, 255, 0.14);
     outline: none;
-    transition: all var(--transition-fast);
     padding: 0;
     line-height: 1;
     caret-color: var(--silver-primary);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    font-variant-numeric: tabular-nums;
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    transition:
+        border-color 0.25s ease,
+        background 0.25s ease,
+        box-shadow 0.25s ease,
+        transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.otp-circle:hover {
-    border-color: rgba(255, 255, 255, 0.25);
-    background: rgba(255, 255, 255, 0.06);
+.otp-circle:hover:not(:disabled) {
+    border-color: rgba(255, 255, 255, 0.3);
+    background: linear-gradient(
+        145deg,
+        rgba(255, 255, 255, 0.09),
+        rgba(255, 255, 255, 0.03)
+    );
 }
 
-.otp-circle:focus {
+.otp-circle:focus:not(:disabled) {
     border-color: var(--silver-primary);
-    background: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 0 0 4px rgba(200, 204, 210, 0.15), 0 2px 12px rgba(0, 0, 0, 0.3);
-    transform: scale(1.06);
+    background: rgba(232, 232, 232, 0.1);
+    box-shadow:
+        0 0 0 4px rgba(232, 232, 232, 0.12),
+        0 4px 20px rgba(232, 232, 232, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transform: scale(1.08);
 }
 
 .otp-circle:disabled {
     opacity: 0.4;
     cursor: not-allowed;
     transform: none !important;
-    box-shadow: none !important;
 }
 
 .otp-circle::placeholder {
@@ -267,8 +486,8 @@
 }
 
 /* ============================================================
-   ✅ OTP RESULT — 1 DẤU ✓/✗ TO Ở GIỮA
-   ============================================================ */
+   ✅ OTP RESULT — DẤU ✓/✗ TO
+============================================================ */
 
 .otp-result-container {
     flex: 1;
@@ -336,18 +555,16 @@
     }
 }
 
-/* ✅ SUCCESS — xanh lá #43B77A */
+/* ✅ SUCCESS */
 .otp-result-icon--success {
-    background:
-        radial-gradient(
-            circle at center,
-            rgba(67, 183, 122, 0.25) 0%,
-            rgba(67, 183, 122, 0.10) 60%,
-            rgba(67, 183, 122, 0.04) 100%
-        );
+    background: radial-gradient(
+        circle at center,
+        rgba(67, 183, 122, 0.25) 0%,
+        rgba(67, 183, 122, 0.10) 60%,
+        rgba(67, 183, 122, 0.04) 100%
+    );
     border: 3px solid rgba(67, 183, 122, 0.65);
     color: #43B77A;
-
     box-shadow:
         0 0 0 8px rgba(67, 183, 122, 0.08),
         0 0 40px rgba(67, 183, 122, 0.45),
@@ -360,7 +577,7 @@
 }
 
 .otp-result-icon--success::before {
-    content: '';
+    content: "";
     position: absolute;
     inset: -20px;
     border-radius: 50%;
@@ -371,7 +588,7 @@
 }
 
 .otp-result-icon--success::after {
-    content: '';
+    content: "";
     position: absolute;
     inset: -40px;
     border-radius: 50%;
@@ -392,18 +609,16 @@
     }
 }
 
-/* ❌ ERROR — đỏ #ff6b8a */
+/* ❌ ERROR */
 .otp-result-icon--error {
-    background:
-        radial-gradient(
-            circle at center,
-            rgba(216, 90, 90, 0.25) 0%,
-            rgba(216, 90, 90, 0.10) 60%,
-            rgba(216, 90, 90, 0.04) 100%
-        );
+    background: radial-gradient(
+        circle at center,
+        rgba(216, 90, 90, 0.25) 0%,
+        rgba(216, 90, 90, 0.10) 60%,
+        rgba(216, 90, 90, 0.04) 100%
+    );
     border: 3px solid rgba(216, 90, 90, 0.65);
     color: #ff6b8a;
-
     box-shadow:
         0 0 0 8px rgba(216, 90, 90, 0.08),
         0 0 40px rgba(216, 90, 90, 0.45),
@@ -416,7 +631,7 @@
 }
 
 .otp-result-icon--error::before {
-    content: '';
+    content: "";
     position: absolute;
     inset: -20px;
     border-radius: 50%;
@@ -442,13 +657,14 @@
 
 /* ❌ Error text */
 .otp-error-text {
+    position: relative;
+    z-index: 1;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-xs);
+    gap: 6px;
     color: #ff6b8a;
-    font-family: var(--font-primary);
-    font-size: var(--font-size-h6);
+    font-size: 0.85rem;
     font-weight: var(--fw-semibold);
     margin-top: var(--space-sm);
     animation: otpErrorText 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;
@@ -465,11 +681,13 @@
     }
 }
 
-/* ================================
-   ✅ TIMER BOX
-================================ */
+/* ============================================================
+   TIMER BOX
+============================================================ */
 
 .bank-timer-box {
+    position: relative;
+    z-index: 1;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -479,33 +697,38 @@
     max-width: 420px;
     border-radius: var(--radius-lg);
     text-align: center;
-    background: rgba(255, 255, 255, 0.04);
-    border: var(--border-premium);
-    font-size: 15px;
+    background: linear-gradient(
+        135deg,
+        rgba(232, 232, 232, 0.06),
+        rgba(232, 232, 232, 0.02)
+    );
+    border: 1px solid rgba(232, 232, 232, 0.15);
+    font-size: 0.95rem;
     font-weight: var(--fw-medium);
     color: var(--text-secondary);
-    transition: all var(--transition-fast);
+    transition: all 0.3s ease;
     min-height: 50px;
     line-height: 1.4;
+    overflow: hidden;
 }
 
 .bank-timer-box .timer-label {
-    font-size: 15px;
+    font-size: 0.9rem;
     color: var(--text-secondary);
     font-weight: var(--fw-medium);
 }
 
 .bank-timer-box .timer-value {
-    font-size: 18px;
+    font-size: 1.15rem;
     font-weight: var(--fw-extrabold);
     color: var(--silver-primary);
     letter-spacing: 2px;
-    margin-left: var(--space-xs);
-    text-shadow: 0 0 20px rgba(200, 204, 210, 0.15);
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 20px rgba(200, 204, 210, 0.25);
 }
 
 .bank-timer-box .timer-text {
-    font-size: 14px;
+    font-size: 0.88rem;
     font-weight: var(--fw-semibold);
     color: #D85A5A;
 }
@@ -518,342 +741,423 @@
 }
 
 .bank-timer-box.expired {
-    background: rgba(216, 90, 90, 0.08);
-    border-color: rgba(216, 90, 90, 0.25);
+    background: linear-gradient(
+        135deg,
+        rgba(216, 90, 90, 0.12),
+        rgba(216, 90, 90, 0.04)
+    );
+    border-color: rgba(216, 90, 90, 0.35);
     color: #D85A5A;
+    animation: timerPulse 2s ease-in-out infinite;
 }
 
-.bank-timer-box.expired .timer-text {
-    color: #D85A5A;
-    font-size: 14px;
-    font-weight: var(--fw-semibold);
+@keyframes timerPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(216, 90, 90, 0.2); }
+    50% { box-shadow: 0 0 0 6px rgba(216, 90, 90, 0); }
 }
 
 .bank-timer-box.locked {
-    background: rgba(216, 90, 90, 0.12);
-    border-color: rgba(216, 90, 90, 0.3);
+    background: linear-gradient(
+        135deg,
+        rgba(216, 90, 90, 0.15),
+        rgba(216, 90, 90, 0.05)
+    );
+    border-color: rgba(216, 90, 90, 0.45);
     color: #D85A5A;
 }
 
 .bank-timer-box.locked .timer-text {
-    color: #D85A5A;
-    font-size: 14px;
     font-weight: var(--fw-bold);
 }
 
-/* ================================
-   BUTTON
-================================ */
+/* ============================================================
+   BUTTONS
+============================================================ */
 
 .btn-confirm-payment {
+    position: relative;
+    z-index: 1;
     width: 100%;
-    height: 66px;
+    height: 62px;
     border: none;
     border-radius: var(--radius-lg);
     background: var(--premium-gradient);
     color: var(--bg-primary);
-    font-size: var(--font-size-h4);
+    font-size: 1rem;
     font-weight: var(--fw-extrabold);
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    box-shadow: var(--btn-silver-shadow);
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    cursor: pointer;
+    box-shadow: var(--btn-silver-shadow);
+    transition:
+        transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.3s ease,
+        filter 0.3s ease;
 }
 
 .btn-confirm-payment:hover:not(:disabled) {
-    transform: translateY(-2px) scale(1.01);
-    box-shadow: var(--card-shadow-hover);
+    transform: translateY(-2px);
+    box-shadow:
+        0 12px 32px rgba(232, 232, 232, 0.3),
+        0 0 32px rgba(232, 232, 232, 0.15);
     filter: brightness(1.05);
 }
 
 .btn-confirm-payment:active:not(:disabled) {
-    transform: translateY(0) scale(0.98);
+    transform: translateY(0) scale(0.99);
 }
 
 .btn-confirm-payment:disabled {
-    opacity: 0.6;
+    opacity: 0.55;
     cursor: not-allowed;
     transform: none !important;
     box-shadow: var(--btn-silver-shadow);
 }
 
-/* ================================
-   NÚT GỬI LẠI OTP
-================================ */
-
+/* Resend OTP */
 .bank-resend-wrapper {
+    position: relative;
+    z-index: 1;
     text-align: center;
     margin-bottom: var(--space-lg);
 }
 
 .btn-resend-otp {
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-    font-size: var(--font-size-sm);
-    font-weight: var(--fw-medium);
-    cursor: pointer;
-    padding: var(--space-sm) var(--space-md);
-    transition: all var(--transition-fast);
-    text-decoration: underline;
-    text-underline-offset: 4px;
-    text-decoration-color: rgba(200, 204, 210, 0.3);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
+    padding: 10px 18px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: var(--radius-round);
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-resend-otp:hover:not(:disabled) {
-    color: var(--silver-primary);
-    text-decoration-color: var(--silver-primary);
+    color: var(--silver-light);
+    border-color: rgba(232, 232, 232, 0.4);
+    background: rgba(232, 232, 232, 0.06);
+    transform: translateY(-1px);
 }
 
 .btn-resend-otp:disabled {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: not-allowed;
-    text-decoration: none;
 }
 
-/* ================================
-   SPIN ICON
-================================ */
+/* ============================================================
+   SPIN
+============================================================ */
 
 .spin-icon {
     animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
-/* ================================
-   RESPONSIVE — OTP Result
-================================ */
+/* ============================================================
+   RESPONSIVE — 1200px
+============================================================ */
 
 @media (max-width: 1200px) {
-    .bank-sidebar-wrapper {
-        width: 340px;
+    .bank-checkout-page {
+        padding-left: 16px;
+        padding-right: 16px;
     }
+
+    .bank-checkout-container {
+        grid-template-columns: 320px minmax(0, 1fr);
+        gap: 18px;
+    }
+
     .otp-circle {
         width: 54px;
         height: 54px;
-        font-size: var(--font-size-lg);
+        font-size: 1.3rem;
     }
+
     .otp-circle-container {
         gap: 12px;
     }
+
     .otp-result-icon {
         width: 110px;
         height: 110px;
     }
+
     .otp-result-icon svg {
         width: 100px !important;
         height: 100px !important;
     }
 }
 
+/* ============================================================
+   RESPONSIVE — 992px
+============================================================ */
+
 @media (max-width: 992px) {
     .bank-checkout-container {
+        display: flex;
         flex-direction: column;
+        gap: 20px;
     }
+
     .bank-sidebar-wrapper {
         width: 100%;
-        position: relative;
-        top: unset;
+        position: static;
     }
+
     .bank-otp-section {
         width: 100%;
     }
-    .otp-card {
-        max-width: 100%;
+
+    .bank-page-header__row {
+        flex-direction: column;
+        gap: var(--space-md);
     }
-    .otp-circle {
-        width: 56px;
-        height: 56px;
-        font-size: var(--font-size-lg);
-    }
-    .otp-circle-container {
-        gap: 12px;
-    }
-    .otp-result-icon {
-        width: 105px;
-        height: 105px;
-    }
-    .otp-result-icon svg {
-        width: 95px !important;
-        height: 95px !important;
+
+    .bank-page-header__badge {
+        align-self: flex-start;
     }
 }
 
+/* ============================================================
+   RESPONSIVE — 768px
+============================================================ */
+
 @media (max-width: 768px) {
     .bank-checkout-page {
-        padding-top: var(--space-lg);
-        padding-bottom: var(--space-2xl);
+        padding: 20px 12px 45px;
     }
-    .bank-checkout-container {
-        padding: 0 var(--space-md);
-        gap: var(--space-md);
+
+    .bank-page-header h1 {
+        font-size: clamp(1.5rem, 7vw, 2.4rem);
     }
+
+    .bank-page-header__badge {
+        padding: 8px 14px;
+        font-size: 0.65rem;
+    }
+
     .otp-card {
         padding: var(--space-xl) var(--space-lg);
-        border-radius: var(--radius-xl);
+        border-radius: var(--radius-lg);
     }
+
     .bank-qr-mini-wrapper {
         width: 180px;
         height: 180px;
-        padding: var(--space-sm);
+        padding: 12px;
     }
+
+    .qr-scan-line {
+        left: 12px;
+        right: 12px;
+    }
+
     .otp-title {
-        font-size: var(--font-size-h2);
+        font-size: 1.5rem;
     }
+
     .otp-sub {
-        font-size: var(--font-size-base);
+        font-size: 0.88rem;
         margin-bottom: var(--space-xl);
     }
+
     .otp-circle {
         width: 48px;
         height: 48px;
-        font-size: var(--font-size-lg);
-        border-width: 2px;
+        font-size: 1.15rem;
     }
+
     .otp-circle-container {
         gap: 10px;
     }
+
     .otp-input-wrapper {
         min-height: 115px;
     }
+
     .otp-result-icon {
         width: 95px;
         height: 95px;
     }
+
     .otp-result-icon svg {
         width: 85px !important;
         height: 85px !important;
     }
+
     .bank-timer-box {
         padding: 12px 18px;
-        font-size: 14px;
+        font-size: 0.85rem;
         max-width: 100%;
     }
-    .bank-timer-box .timer-label {
-        font-size: 14px;
-    }
+
     .bank-timer-box .timer-value {
-        font-size: 16px;
+        font-size: 1rem;
     }
-    .bank-timer-box .timer-text {
-        font-size: 13px;
-    }
+
     .btn-confirm-payment {
-        height: 58px;
-        font-size: var(--font-size-h4);
+        height: 54px;
+        font-size: 0.9rem;
     }
 }
 
+/* ============================================================
+   RESPONSIVE — 480px
+============================================================ */
+
 @media (max-width: 480px) {
-    .bank-checkout-container {
-        padding: 0 var(--space-sm);
-        gap: var(--space-sm);
-    }
     .bank-checkout-page {
-        padding: var(--space-md) 0 var(--space-xl);
+        padding: 10px 8px 28px;
     }
+
     .otp-card {
         padding: var(--space-lg) var(--space-md);
-        border-radius: var(--radius-lg);
+        border-radius: var(--radius-md);
     }
-    .otp-title {
-        font-size: var(--font-size-h3);
-        margin-bottom: var(--space-xs);
-    }
-    .otp-sub {
-        font-size: var(--font-size-sm);
-        margin-bottom: var(--space-lg);
-    }
+
     .bank-qr-mini-wrapper {
         width: 140px;
         height: 140px;
-        padding: var(--space-xs);
+        padding: 10px;
     }
+
+    .qr-scan-line {
+        left: 10px;
+        right: 10px;
+    }
+
+    .otp-title {
+        font-size: 1.2rem;
+        letter-spacing: 0.04em;
+    }
+
+    .otp-sub {
+        font-size: 0.78rem;
+        margin-bottom: var(--space-lg);
+    }
+
     .otp-circle {
         width: 42px;
         height: 42px;
-        font-size: var(--font-size-base);
+        font-size: 1rem;
         border-width: 2px;
     }
+
     .otp-circle-container {
         gap: 8px;
     }
+
     .otp-input-wrapper {
         min-height: 105px;
     }
+
     .otp-result-icon {
         width: 85px;
         height: 85px;
-        border-width: 2.5px;
     }
+
     .otp-result-icon svg {
         width: 75px !important;
         height: 75px !important;
     }
+
     .bank-timer-box {
         padding: 10px 14px;
-        font-size: 13px;
-        max-width: 100%;
+        font-size: 0.78rem;
     }
+
     .bank-timer-box .timer-label {
-        font-size: 13px;
+        font-size: 0.78rem;
     }
+
     .bank-timer-box .timer-value {
-        font-size: 15px;
+        font-size: 0.95rem;
     }
-    .bank-timer-box .timer-text {
-        font-size: 12px;
-    }
+
     .btn-confirm-payment {
-        height: 52px;
-        font-size: var(--font-size-base);
-        padding: 0 var(--space-md);
+        height: 50px;
+        font-size: 0.85rem;
+    }
+
+    .btn-resend-otp {
+        font-size: 0.75rem;
+        padding: 8px 14px;
     }
 }
+
+/* ============================================================
+   RESPONSIVE — 360px
+============================================================ */
 
 @media (max-width: 360px) {
     .otp-circle {
         width: 36px;
         height: 36px;
-        font-size: var(--font-size-sm);
-        border-width: 2px;
+        font-size: 0.9rem;
     }
+
     .otp-circle-container {
         gap: 6px;
     }
-    .otp-input-wrapper {
-        min-height: 95px;
-    }
+
     .otp-result-icon {
         width: 75px;
         height: 75px;
     }
+
     .otp-result-icon svg {
         width: 65px !important;
         height: 65px !important;
     }
-    .otp-title {
-        font-size: var(--font-size-h4);
-    }
+
     .bank-qr-mini-wrapper {
         width: 120px;
         height: 120px;
     }
+
     .btn-confirm-payment {
-        height: 48px;
-        font-size: var(--font-size-sm);
+        height: 46px;
+        font-size: 0.8rem;
     }
 }
+
+/* ============================================================
+   REDUCE MOTION
+============================================================ */
+/* 
+@media (prefers-reduced-motion: reduce) {
+    .otp-circle,
+    .otp-result-icon,
+    .otp-result-icon svg,
+    .otp-result-container,
+    .otp-result-icon::before,
+    .otp-result-icon::after,
+    .qr-scan-line,
+    .reschedule-banner .reschedule-icon,
+    .bank-page-header__badge::before,
+    .bank-page-header__badge svg,
+    .bank-timer-box,
+    .btn-confirm-payment,
+    .btn-resend-otp {
+        animation: none !important;
+        transition: none !important;
+    }
+
+    .bank-qr-mini-wrapper:hover,
+    .btn-confirm-payment:hover:not(:disabled),
+    .btn-resend-otp:hover:not(:disabled) {
+        transform: none !important;
+    }
+} */

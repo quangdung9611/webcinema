@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const bookingController = require("../Controllers/BookingController");
 const { authenticateAdmin } = require("../Middlewares/AdminAuthMiddleware");
+const { authenticateUser } = require("../Middlewares/UserAuthMiddleware");
 
 /* ==========================================================
     ADMIN ROUTES
@@ -21,7 +22,7 @@ router.get(
     bookingController.getRescheduledBookings
 );
 
-// Lấy chi tiết booking
+// Lấy chi tiết booking (ADMIN)
 router.get("/detail/:booking_id", authenticateAdmin, bookingController.getBookingDetails);
 
 // Cập nhật trạng thái booking
@@ -29,6 +30,18 @@ router.put("/update/:booking_id/status", authenticateAdmin, bookingController.up
 
 // Xóa booking
 router.delete("/delete/:booking_id", authenticateAdmin, bookingController.deleteBooking);
+
+/* ==========================================================
+    ✅ USER ROUTES (đặt TRƯỚC các route động :booking_id/*)
+========================================================== */
+
+// ✅ Lấy chi tiết booking của chính user (không cần admin)
+// ⚠️ PHẢI đặt TRƯỚC /:booking_id/reschedule-info để tránh conflict
+router.get(
+    "/my-booking/:booking_id",
+    authenticateUser,
+    bookingController.getMyBookingDetail
+);
 
 /* ==========================================================
     ✅ RESCHEDULE ROUTES (USER)

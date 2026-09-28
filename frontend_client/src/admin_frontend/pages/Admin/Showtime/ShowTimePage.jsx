@@ -19,6 +19,7 @@ import {
     Rocket,
     AlertTriangle,
     Lightbulb,
+    Search,
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -47,6 +48,7 @@ const ShowTimePage = () => {
     const [submitLoading, setSubmitLoading] = useState(false);
 
     const [search, setSearch] = useState('');
+    const [movieSearch, setMovieSearch] = useState('');
 
     const [pagination, setPagination] = useState({
         page: 1,
@@ -340,6 +342,7 @@ const ShowTimePage = () => {
 
     const handleOpenAdd = () => {
         setEditingShowtime(null);
+        setMovieSearch('');
         setScheduleData({
             movie_ids: [],
             cinema_id: '',
@@ -512,6 +515,7 @@ const ShowTimePage = () => {
 
         setIsFormOpen(false);
         setEditingShowtime(null);
+        setMovieSearch('');
         setFormErrors({});
         setRooms([]);
         setScheduleData(prev => ({ ...prev, reason: '' }));
@@ -929,6 +933,20 @@ const ShowTimePage = () => {
     };
 
     // ======================================================
+    // MOVIE SEARCH — LỌC PHIM TRONG FORM TẠO LỊCH
+    // ======================================================
+
+    const normalizedMovieSearch = movieSearch.trim().toLowerCase();
+
+    const filteredMovies = normalizedMovieSearch
+        ? movies.filter(movie =>
+            String(movie.title || '')
+                .toLowerCase()
+                .includes(normalizedMovieSearch)
+        )
+        : movies;
+
+    // ======================================================
     // COLUMNS
     // ======================================================
 
@@ -1068,27 +1086,94 @@ const ShowTimePage = () => {
                 <div className="showtime-form">
                     {!editingShowtime && (
                         <div className="showtime-form-group">
-                            <label className="showtime-form-label">
-                                Chọn phim
-                                <span className="showtime-form-hint">(Có thể chọn nhiều phim)</span>
-                            </label>
-                            <div className="showtime-movie-checkbox-list">
-                                {movies.map(movie => {
-                                    const isChecked = scheduleData.movie_ids?.includes(movie.movie_id);
-                                    return (
-                                        <label key={movie.movie_id} className={`showtime-movie-checkbox ${isChecked ? 'checked' : ''}`}>
-                                            <input
-                                                type="checkbox"
-                                                name="movie_ids"
-                                                value={movie.movie_id}
-                                                checked={isChecked}
-                                                onChange={handleChange}
-                                            />
-                                            {movie.title}
-                                        </label>
-                                    );
-                                })}
+                            <div className="showtime-movie-picker-heading">
+                                <label className="showtime-form-label">
+                                    Chọn phim
+                                    <span className="showtime-form-hint">(Có thể chọn nhiều phim)</span>
+                                </label>
+
+                                <span className="showtime-movie-selected-count">
+                                    {scheduleData.movie_ids?.length || 0} phim đã chọn
+                                </span>
                             </div>
+
+                            <div className="showtime-movie-picker">
+                                <div className="showtime-movie-search">
+                                    <Search size={17} aria-hidden="true" />
+                                    <input
+                                        type="search"
+                                        value={movieSearch}
+                                        onChange={(e) => setMovieSearch(e.target.value)}
+                                        placeholder="Tìm tên phim..."
+                                        aria-label="Tìm kiếm phim"
+                                        autoComplete="off"
+                                    />
+                                    {movieSearch && (
+                                        <button
+                                            type="button"
+                                            className="showtime-movie-search-clear"
+                                            onClick={() => setMovieSearch('')}
+                                            aria-label="Xóa tìm kiếm phim"
+                                        >
+                                            ×
+                                        </button>
+                                    )}
+                                </div>
+
+                                <div className="showtime-movie-results-meta">
+                                    <span>
+                                        {normalizedMovieSearch
+                                            ? `${filteredMovies.length} phim phù hợp`
+                                            : `${movies.length} phim`}
+                                    </span>
+
+                                    {scheduleData.movie_ids?.length > 0 && (
+                                        <span>
+                                            Đã chọn {scheduleData.movie_ids.length}
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div className="showtime-movie-checkbox-list">
+                                    {filteredMovies.length > 0 ? (
+                                        filteredMovies.map(movie => {
+                                            const isChecked = scheduleData.movie_ids?.includes(movie.movie_id);
+
+                                            return (
+                                                <label
+                                                    key={movie.movie_id}
+                                                    className={`showtime-movie-checkbox ${isChecked ? 'checked' : ''}`}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        name="movie_ids"
+                                                        value={movie.movie_id}
+                                                        checked={isChecked}
+                                                        onChange={handleChange}
+                                                    />
+
+                                                    <span className="showtime-movie-checkmark" aria-hidden="true">
+                                                        {isChecked ? '✓' : ''}
+                                                    </span>
+
+                                                    <span className="showtime-movie-checkbox-title">
+                                                        {movie.title}
+                                                    </span>
+                                                </label>
+                                            );
+                                        })
+                                    ) : (
+                                        <div className="showtime-movie-empty">
+                                            <Film size={20} />
+                                            <strong>Không tìm thấy phim</strong>
+                                            <span>
+                                                Thử tìm với từ khóa khác.
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
                             {formErrors.movie_ids && (
                                 <span className="showtime-form-error">{formErrors.movie_ids}</span>
                             )}

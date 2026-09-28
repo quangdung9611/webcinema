@@ -34,7 +34,7 @@
 
 .poster-container {
     position: relative;
-    width: 260px;
+    width: 220px;
     aspect-ratio: 2 / 3;
     margin: 0 auto;
     flex-shrink: 0;
@@ -150,7 +150,7 @@
 }
 
 /* =========================================================
-   MOVIE NAME
+   MOVIE NAME — line-clamp 2 dòng
 ========================================================= */
 
 .movie-name {
@@ -165,6 +165,14 @@
     padding-bottom: 14px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     text-shadow: 0 0 24px rgba(232, 232, 232, 0.08);
+
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: break-word;
+    min-height: calc(1.4em * 2);
 }
 
 /* =========================================================
@@ -185,6 +193,11 @@
     padding-bottom: 0;
 }
 
+/* ✅ Ghế dùng chip list, cần align-items center */
+.detail-item--seats {
+    align-items: center;
+}
+
 .detail-item span {
     flex-shrink: 0;
     color: var(--text-muted);
@@ -197,7 +210,6 @@
     gap: 6px;
 }
 
-/* ✅ Icon trong label */
 .detail-item span svg {
     color: var(--silver-dark);
     flex-shrink: 0;
@@ -223,16 +235,73 @@
     gap: 6px;
 }
 
-/* ✅ Icon trong value (ghế) */
 .detail-item strong svg {
     color: var(--silver-primary);
     flex-shrink: 0;
     opacity: 0.85;
 }
 
-.seats-list {
-    color: var(--silver-light) !important;
-    font-weight: var(--fw-bold) !important;
+/* =========================================================
+   SEAT CHIPS
+========================================================= */
+
+.seats-chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+    flex: 1;
+}
+
+.seat-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 24px;
+    padding: 0 8px;
+    border-radius: var(--radius-xs, 5px);
+    background: rgba(232, 232, 232, 0.1);
+    border: 1px solid rgba(232, 232, 232, 0.18);
+    color: var(--silver-light);
+    font-size: 0.7rem;
+    font-weight: var(--fw-extrabold);
+    letter-spacing: 0.02em;
+    font-variant-numeric: tabular-nums;
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease;
+    cursor: default;
+}
+
+.seat-chip:hover {
+    background: rgba(232, 232, 232, 0.16);
+    border-color: rgba(232, 232, 232, 0.32);
+    transform: translateY(-1px);
+}
+
+.seat-chip--more {
+    background: rgba(232, 232, 232, 0.05);
+    border-color: rgba(232, 232, 232, 0.12);
+    color: var(--text-muted);
+    font-style: italic;
+    font-weight: var(--fw-bold);
+    min-width: auto;
+}
+
+.seat-chip--more:hover {
+    background: rgba(232, 232, 232, 0.1);
+    border-color: rgba(232, 232, 232, 0.24);
+    color: var(--silver-primary);
+}
+
+.seats-empty {
+    color: var(--text-muted) !important;
+    font-weight: var(--fw-medium) !important;
+    font-size: 0.85rem;
 }
 
 /* =========================================================
@@ -353,7 +422,7 @@
 }
 
 /* =========================================================
-   ✅ RESCHEDULE — PRICE COMPARISON
+   RESCHEDULE — PRICE COMPARISON
 ========================================================= */
 
 .summary-row {
@@ -483,15 +552,14 @@
 ========================================================= */
 
 .full-width-actions {
-    display: flex;
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: auto 1fr;
     gap: 10px;
     width: 100%;
 }
 
 .btn-back-food-sidebar,
 .btn-next-sidebar {
-    flex: 1;
     height: 50px;
     border-radius: var(--radius-md);
     font-size: 0.82rem;
@@ -510,7 +578,6 @@
     gap: 8px;
 }
 
-/* ✅ Icon trong nút */
 .btn-back-food-sidebar svg,
 .btn-next-sidebar svg {
     flex-shrink: 0;
@@ -527,6 +594,8 @@
 
 /* Nút quay lại */
 .btn-back-food-sidebar {
+    min-width: 110px;
+    padding: 0 18px;
     border: 1px solid rgba(255, 255, 255, 0.14);
     background: rgba(255, 255, 255, 0.025);
     color: var(--text-secondary);
@@ -540,6 +609,8 @@
 
 /* Nút tiếp tục */
 .btn-next-sidebar {
+    min-width: 0;
+    width: 100%;
     border: none;
     background: var(--premium-gradient);
     color: var(--bg-primary);
@@ -569,7 +640,7 @@
     }
 
     .poster-container {
-        width: 220px;
+        width: 200px;
     }
 
     .ticket-details {
@@ -599,13 +670,11 @@
     .ticket-sidebar > .countdown-wrapper {
         width: 100%;
         padding: var(--space-sm) var(--space-md);
+        padding-bottom: calc(var(--space-sm) + 4px);
         background: var(--bg-card);
         border: var(--border-premium);
         border-radius: var(--radius-md);
         box-shadow: var(--glass-shadow);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
     }
 
     .sidebar-horizontal-layout {
@@ -713,6 +782,7 @@
 @media (max-width: 480px) {
     .ticket-sidebar > .countdown-wrapper {
         padding: var(--space-xs) var(--space-sm);
+        padding-bottom: calc(var(--space-xs) + 4px);
     }
 
     .poster-container {
@@ -763,6 +833,14 @@
         overflow-wrap: anywhere;
     }
 
+    /* ✅ Chip nhỏ hơn trên mobile */
+    .seat-chip {
+        min-width: 30px;
+        height: 22px;
+        padding: 0 6px;
+        font-size: 0.65rem;
+    }
+
     .summary-value {
         font-size: 0.95rem;
     }
@@ -773,6 +851,15 @@
 
     .summary-row.summary-delta .summary-value-delta {
         font-size: 0.92rem;
+    }
+
+    .full-width-actions {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .btn-back-food-sidebar {
+        min-width: 0;
+        padding: 0 12px;
     }
 
     .btn-back-food-sidebar,

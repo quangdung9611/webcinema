@@ -14,6 +14,7 @@ import {
     RefreshCw,
     Check,
     X,
+    Sparkles,
 } from 'lucide-react';
 import api from '../../api/api';
 import Modal from '../components/Modal';
@@ -124,12 +125,10 @@ const BankApp = () => {
     const errorTimerRef = useRef(null);
 
     // ========================================================
-    // ✅ PREMIUM SUCCESS EFFECT
+    // ✅ PREMIUM SUCCESS / ERROR EFFECT
     // ========================================================
 
     const [otpSuccess, setOtpSuccess] = useState(false);
-
-    // ❌ PREMIUM ERROR EFFECT
     const [otpError, setOtpError] = useState(false);
 
     // ========================================================
@@ -149,7 +148,10 @@ const BankApp = () => {
     const [timeLeft, setTimeLeft] = useState(OTP_TTL);
     const [lockTimeLeft, setLockTimeLeft] = useState(0);
 
-    // ✅ UNIFIED TIMER
+    // ========================================================
+    // UNIFIED TIMER
+    // ========================================================
+
     useEffect(() => {
         const tick = () => {
             const now = Date.now();
@@ -484,10 +486,6 @@ const BankApp = () => {
         clearAllBookingData();
         safeNavigate(isRescheduleMode ? '/profile' : '/');
     };
-
-    // ========================================================
-    // STAY
-    // ========================================================
 
     const handleStay = () => {
         setShowBackConfirm(false);
@@ -912,14 +910,6 @@ const BankApp = () => {
                     hasShownExpiredModalRef.current = false;
                 }
 
-                const successTitle = isRescheduleMode
-                    ? 'ĐỔI SUẤT THÀNH CÔNG'
-                    : 'THANH TOÁN THÀNH CÔNG';
-
-                const successMessage = isRescheduleMode
-                    ? `Đổi suất thành công! Bạn đã bù thêm ${Math.max(0, deltaAmount).toLocaleString('vi-VN')} điểm.`
-                    : 'Cảm ơn bạn đã đặt vé! Vui lòng kiểm tra email để nhận vé.';
-
                 const successNavigate = isRescheduleMode ? '/profile' : '/confirm-success';
 
                 const successState = isRescheduleMode
@@ -941,22 +931,8 @@ const BankApp = () => {
 
                 successTimerRef.current = setTimeout(() => {
                     setOtpSuccess(false);
-
-                    openModal(
-                        'success',
-                        successTitle,
-                        successMessage,
-                        () => {
-                            closeModal();
-                            safeNavigate(successNavigate, successState);
-                        }
-                    );
-                    autoNavigateRef.current = setTimeout(() => {
-                        if (isModalOpenRef.current) {
-                            closeModal();
-                            safeNavigate(successNavigate, successState);
-                        }
-                    }, 3000);
+                    // ✅ NAVIGATE TRỰC TIẾP — không qua modal, tránh auth redirect
+                    safeNavigate(successNavigate, successState);
                 }, 2000);
                 return;
             }
@@ -994,7 +970,6 @@ const BankApp = () => {
             const errorData = error.response?.data || {};
             const errorMessage = errorData.message || 'Mã OTP không đúng hoặc đã hết hạn.';
 
-            // ❌ TRIGGER ERROR
             if (!(error.response?.status === 429 || errorData.code === 'OTP_LOCKED' ||
                 errorData.code === 'ACCOUNT_LOCKED' || errorMessage.toLowerCase().includes('khóa'))) {
                 triggerErrorEffect();
@@ -1128,6 +1103,32 @@ const BankApp = () => {
                 </div>
 
                 <div className="bank-otp-section">
+                    {/* ✅ PAGE HEADER — ĐỒNG BỘ */}
+                    <header className="bank-page-header">
+                        <div className="bank-page-header__row">
+                            <div>
+                                <div className="bank-page-header__eyebrow">
+                                    QUANG DŨNG CINEMA
+                                </div>
+                                <h1>
+                                    XÁC THỰC{' '}
+                                    <span className="bank-page-header__accent">
+                                        OTP
+                                    </span>
+                                </h1>
+                                <p>
+                                    Nhập mã OTP đã được gửi tới email để hoàn tất
+                                    {isRescheduleMode ? ' đổi suất chiếu.' : ' thanh toán.'}
+                                </p>
+                            </div>
+
+                            <div className="bank-page-header__badge">
+                                <Sparkles size={14} />
+                                <span>BƯỚC 05 / 05</span>
+                            </div>
+                        </div>
+                    </header>
+
                     <div className="otp-card">
                         {isRescheduleMode && (
                             <div className="reschedule-banner">

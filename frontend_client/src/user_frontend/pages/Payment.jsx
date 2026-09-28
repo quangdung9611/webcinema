@@ -2,6 +2,7 @@
 // PAYMENT PAGE
 // Bước 4: THANH TOÁN
 // HỖ TRỢ CẢ ĐẶT VÉ THƯỜNG VÀ ĐỔI VÉ (RESCHEDULE)
+// ✅ 2 NÚT NẰM TRONG BOOKINGSIDEBAR
 // ============================================================
 
 import React, { useState, useEffect } from 'react';
@@ -13,7 +14,16 @@ import LoadingButton from '../components/LoadingButton';
 import PaymentPinModal from '../components/PaymentPinModal';
 import BookingProgress from '../components/BookingProgress';
 import useOTPGuard from '../../hooks/useOTPGuard';
-import { RefreshCw, Check } from 'lucide-react';
+import {
+    RefreshCw,
+    Check,
+    Sparkles,
+    Building2,
+    Wallet,
+    ShieldCheck,
+    ArrowRight,
+    X,
+} from 'lucide-react';
 import '../styles/Payment.css';
 
 // ============================================================
@@ -108,7 +118,6 @@ const Payment = () => {
     const [pinError, setPinError] = useState('');
     const [isVerifyingPin, setIsVerifyingPin] = useState(false);
 
-    // ✅ RESCHEDULE: đang xử lý hoàn điểm tự động
     const [rescheduleProcessing, setRescheduleProcessing] = useState(false);
 
     // ============================================================
@@ -132,7 +141,6 @@ const Payment = () => {
     const subTotal = Number(totalTicketPrice || 0) + Number(totalFoodPrice || 0);
     const grandTotal = Math.max(0, subTotal - Number(discountAmount || 0));
 
-    // ✅ Reschedule: số tiền cần bù (nếu > 0)
     const reschedulePayAmount = isRescheduleMode ? Math.max(0, deltaAmount) : 0;
 
     // ============================================================
@@ -172,7 +180,7 @@ const Payment = () => {
     };
 
     // ============================================================
-    // ✅ RESCHEDULE: XỬ LÝ HOÀN ĐIỂM NGAY (delta <= 0)
+    // RESCHEDULE: XỬ LÝ HOÀN ĐIỂM NGAY (delta <= 0)
     // ============================================================
 
     const processRescheduleNoPayment = async () => {
@@ -207,7 +215,6 @@ const Payment = () => {
                     () => navigate('/profile')
                 );
 
-                // Tự về profile sau 5s
                 setTimeout(() => navigate('/profile'), 5000);
             } else {
                 showNotice(
@@ -250,9 +257,6 @@ const Payment = () => {
     useEffect(() => {
         window.scrollTo(0, 0);
 
-        // =============================================
-        // ✅ RESCHEDULE MODE
-        // =============================================
         if (isRescheduleMode) {
             if (!rescheduleBookingId) {
                 showNotice('error', 'LỖI', 'Không tìm thấy mã booking để đổi.', () => navigate('/profile'));
@@ -267,21 +271,15 @@ const Payment = () => {
                 return;
             }
 
-            // ✅ Nếu delta <= 0 → hoàn điểm ngay, không cần thanh toán
             if (deltaAmount <= 0) {
                 processRescheduleNoPayment();
                 return;
             }
 
-            // ✅ Nếu delta > 0 → cho user thanh toán bù
-            // (tiếp tục flow bên dưới)
             verifySessionAndProceed();
             return;
         }
 
-        // =============================================
-        // FLOW THƯỜNG
-        // =============================================
         if (!movie || typeof movie !== 'object' || selectedSeats.length === 0) {
             console.warn('⚠️ [PAYMENT] Booking không hợp lệ');
             navigate('/');
@@ -387,7 +385,7 @@ const Payment = () => {
     };
 
     // ============================================================
-    // TIMER EXPIRE - INTERNAL
+    // TIMER EXPIRE
     // ============================================================
 
     const handleTimeExpireInternal = () => {
@@ -402,10 +400,6 @@ const Payment = () => {
             () => { navigate('/'); window.location.reload(); }
         );
     };
-
-    // ============================================================
-    // TIMER EXPIRE
-    // ============================================================
 
     const handleTimeExpire = async () => {
         if (isRescheduleMode) return;
@@ -463,6 +457,12 @@ const Payment = () => {
         } finally {
             setIsApplyingCoupon(false);
         }
+    };
+
+    const handleRemoveCoupon = () => {
+        setCouponCode('');
+        setDiscountAmount(0);
+        setAppliedCouponId(null);
     };
 
     // ============================================================
@@ -524,15 +524,12 @@ const Payment = () => {
     };
 
     // ============================================================
-    // ✅ PAYMENT PROCESS
+    // PAYMENT PROCESS (giữ nguyên logic)
     // ============================================================
 
     const handleProceed = async () => {
         if (isProcessing) return;
 
-        // =============================================
-        // ✅ RESCHEDULE MODE — thanh toán bù
-        // =============================================
         if (isRescheduleMode) {
             if (!userInfo.user_id) {
                 showNotice(
@@ -554,7 +551,6 @@ const Payment = () => {
             setIsProcessing(true);
 
             try {
-                // ✅ Bước 1: Tạo temp booking cho phần bù tiền
                 const seatsWithPrice = selectedSeats.map(seat => ({
                     seat_id: seat.seat_id,
                     seat_row: seat.seat_row || '',
@@ -566,7 +562,7 @@ const Payment = () => {
                     userId: userInfo.user_id,
                     showtimeId,
                     ownerToken: null,
-                    totalAmount: reschedulePayAmount, // ✅ Chỉ phần bù
+                    totalAmount: reschedulePayAmount,
                     discountAmount: 0,
                     couponId: null,
                     selectedSeats: seatsWithPrice,
@@ -577,7 +573,6 @@ const Payment = () => {
                     movieTitle: movie?.title || '',
                     cinemaName: selectedCinema?.cinema_name || '',
                     startTime: selectedShowtime?.start_time || '',
-                    // ✅ Báo cho backend biết đây là reschedule
                     isReschedule: true,
                     rescheduleBookingId,
                     newShowtimeId: showtimeId,
@@ -640,7 +635,6 @@ const Payment = () => {
                         return;
                     }
 
-                    // MOMO
                     const sendMomoOtpResponse = await api.post('/api/momo/send-otp', {
                         email,
                         tempBookingId: tempId,
@@ -684,9 +678,7 @@ const Payment = () => {
             return;
         }
 
-        // =============================================
         // FLOW THƯỜNG
-        // =============================================
         if (!ownerToken) {
             showNotice(
                 'error',
@@ -719,7 +711,6 @@ const Payment = () => {
             return;
         }
 
-        // 🔥 Xóa OTP cũ
         try {
             await api.post('/api/auth/invalidate-otp', {
                 email: email,
@@ -830,7 +821,6 @@ const Payment = () => {
                     return;
                 }
 
-                // MOMO
                 const sendMomoOtpResponse = await api.post('/api/momo/send-otp', {
                     email,
                     tempBookingId: tempId
@@ -899,9 +889,9 @@ const Payment = () => {
     useEffect(() => {
         const handleBeforeUnload = (event) => {
             const hasOtp = localStorage.getItem('bankOtpInput') || localStorage.getItem('momoOtpInput');
-            const hasSentOtp = localStorage.getItem('bankHasSentOtp') === 'true' || 
+            const hasSentOtp = localStorage.getItem('bankHasSentOtp') === 'true' ||
                                localStorage.getItem('momoHasSentOtp') === 'true';
-            
+
             if ((hasOtp || hasSentOtp) && !isProcessing) {
                 const email = userInfo.email || localStorage.getItem('momoCustomerEmail') || '';
                 if (email) {
@@ -914,30 +904,23 @@ const Payment = () => {
                 event.returnValue = 'Bạn đang trong quá trình thanh toán. Nếu rời trang, bạn có thể mất tiến trình!';
             }
         };
-        
+
         window.addEventListener('beforeunload', handleBeforeUnload);
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [userInfo.email, isProcessing]);
 
     // ============================================================
-    // ✅ RESCHEDULE: ĐANG XỬ LÝ HOÀN ĐIỂM
+    // RESCHEDULE: ĐANG XỬ LÝ HOÀN ĐIỂM
     // ============================================================
 
     if (isRescheduleMode && deltaAmount <= 0 && !modal.show) {
         return (
             <div className="payment-page">
                 <div className="payment-container">
-                    <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        minHeight: '60vh',
-                        gap: 16
-                    }}>
-                        <RefreshCw size={48} className="spin-icon" style={{ color: '#f37021' }} />
-                        <h2 style={{ margin: 0 }}>ĐANG XỬ LÝ ĐỔI SUẤT</h2>
-                        <p style={{ color: '#666', margin: 0 }}>
+                    <div className="payment-processing-state">
+                        <RefreshCw size={48} className="spin-icon" />
+                        <h2>ĐANG XỬ LÝ ĐỔI SUẤT</h2>
+                        <p>
                             {deltaAmount < 0
                                 ? `Hệ thống đang hoàn ${Math.abs(deltaAmount).toLocaleString('vi-VN')} điểm vào tài khoản của bạn...`
                                 : 'Đang xử lý đổi suất chiếu...'}
@@ -980,10 +963,45 @@ const Payment = () => {
                 isLoading={isVerifyingPin}
                 email={userInfo.email}
             />
+
             <div className="payment-container">
+
+                {/* HEADER */}
+                <header className="payment-page-header">
+                    <div className="payment-page-header__row">
+                        <div>
+                            <div className="payment-page-header__eyebrow">
+                                QUANG DŨNG CINEMA
+                            </div>
+                            <h1>
+                                {isRescheduleMode ? (
+                                    <>
+                                        ĐỔI <span className="payment-page-header__accent">SUẤT CHIẾU</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        THANH <span className="payment-page-header__accent">TOÁN</span>
+                                    </>
+                                )}
+                            </h1>
+                            <p>
+                                {isRescheduleMode
+                                    ? 'Bù thêm phần chênh lệch để hoàn tất đổi suất chiếu.'
+                                    : 'Hoàn tất đơn hàng để nhận vé điện tử ngay.'}
+                            </p>
+                        </div>
+
+                        <div className="payment-page-header__badge">
+                            <Sparkles size={14} />
+                            <span>BƯỚC 04 / 04</span>
+                        </div>
+                    </div>
+                </header>
+
                 <div className="payment-progress-wrapper">
                     <BookingProgress currentStep={4} />
                 </div>
+
                 <div className="payment-layout">
                     <main className="main-booking-area">
                         {isLoadingUser && (
@@ -1000,34 +1018,42 @@ const Payment = () => {
                         )}
                         {!isLoadingUser && userInfo.user_id && (
                             <>
-                                {/* ✅ RESCHEDULE BANNER */}
+                                {/* RESCHEDULE BANNER */}
                                 {isRescheduleMode && (
                                     <div className="payment-card reschedule-notice-card">
-                                        <div style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: 12,
-                                            padding: '12px 16px',
-                                            background: '#fff3e6',
-                                            border: '1px solid #f37021',
-                                            borderRadius: 8
-                                        }}>
-                                            <RefreshCw size={20} style={{ color: '#f37021', flexShrink: 0 }} />
-                                            <div>
-                                                <strong style={{ display: 'block', marginBottom: 4 }}>
-                                                    BẠN ĐANG ĐỔI SUẤT CHIẾU
-                                                </strong>
-                                                <span style={{ fontSize: 13, color: '#666' }}>
-                                                    Chỉ cần bù thêm <strong style={{ color: '#f37021' }}>
-                                                        {reschedulePayAmount.toLocaleString('vi-VN')} ₫
-                                                    </strong> để hoàn tất đổi suất
+                                        <div className="reschedule-banner-premium">
+                                            <div className="reschedule-banner-icon">
+                                                <RefreshCw size={22} />
+                                            </div>
+                                            <div className="reschedule-banner-content">
+                                                <strong>ĐỔI SUẤT CHIẾU</strong>
+                                                <span>
+                                                    Chỉ cần bù thêm{' '}
+                                                    <b>{reschedulePayAmount.toLocaleString('vi-VN')}₫</b>{' '}
+                                                    để hoàn tất
                                                 </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="reschedule-compare">
+                                            <div className="compare-item">
+                                                <span>Vé cũ</span>
+                                                <strong>{oldTotalAmount.toLocaleString('vi-VN')}₫</strong>
+                                            </div>
+                                            <ArrowRight size={18} className="compare-arrow" />
+                                            <div className="compare-item">
+                                                <span>Vé mới</span>
+                                                <strong>{grandTotal.toLocaleString('vi-VN')}₫</strong>
+                                            </div>
+                                            <div className="compare-delta">
+                                                <span>Chênh lệch</span>
+                                                <strong>+{reschedulePayAmount.toLocaleString('vi-VN')}₫</strong>
                                             </div>
                                         </div>
                                     </div>
                                 )}
 
-                                {/* COUPON — chỉ hiện khi KHÔNG phải reschedule */}
+                                {/* COUPON */}
                                 {!isRescheduleMode && (
                                     <div className="payment-card">
                                         <div className="payment-section-heading">
@@ -1043,20 +1069,38 @@ const Payment = () => {
                                                 placeholder="Nhập mã giảm giá..."
                                                 value={couponCode}
                                                 onChange={e => setCouponCode(e.target.value)}
-                                                disabled={isApplyingCoupon || isProcessing}
+                                                disabled={isApplyingCoupon || isProcessing || discountAmount > 0}
                                             />
                                             <LoadingButton
                                                 type="button"
                                                 loading={isApplyingCoupon}
                                                 loadingText="Đang áp dụng..."
                                                 onClick={handleApplyCoupon}
-                                                disabled={isApplyingCoupon || isProcessing}
+                                                disabled={isApplyingCoupon || isProcessing || discountAmount > 0}
                                                 className="coupon-btn"
                                                 spinnerColor="#ffffff"
                                             >
                                                 ÁP DỤNG
                                             </LoadingButton>
                                         </div>
+
+                                        {discountAmount > 0 && (
+                                            <div className="coupon-success">
+                                                <Check size={14} strokeWidth={3} />
+                                                <span>
+                                                    Đã giảm <b>{discountAmount.toLocaleString('vi-VN')}₫</b>
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    className="coupon-remove"
+                                                    onClick={handleRemoveCoupon}
+                                                    disabled={isProcessing}
+                                                    aria-label="Xóa mã giảm giá"
+                                                >
+                                                    <X size={14} strokeWidth={2.5} />
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
@@ -1120,12 +1164,18 @@ const Payment = () => {
                                                 onChange={() => setPaymentMethod('bank')}
                                                 disabled={isProcessing}
                                             />
+                                            <div className="payment-method-brand bank">
+                                                <Building2 size={22} strokeWidth={2} />
+                                            </div>
                                             <div className="payment-method-info">
                                                 <strong>VietQR</strong>
                                                 <span>Thanh toán qua ngân hàng</span>
                                             </div>
-                                            <span className="payment-method-check">{paymentMethod === 'bank' && '✓'}</span>
+                                            <span className="payment-method-check">
+                                                {paymentMethod === 'bank' && <Check size={14} strokeWidth={3} />}
+                                            </span>
                                         </label>
+
                                         <label className={`payment-method ${paymentMethod === 'momo' ? 'active' : ''}`}>
                                             <input
                                                 type="radio"
@@ -1133,42 +1183,41 @@ const Payment = () => {
                                                 onChange={() => setPaymentMethod('momo')}
                                                 disabled={isProcessing}
                                             />
+                                            <div className="payment-method-brand momo">
+                                                <Wallet size={22} strokeWidth={2} />
+                                            </div>
                                             <div className="payment-method-info">
                                                 <strong>MoMo</strong>
                                                 <span>Thanh toán qua ví điện tử</span>
                                             </div>
-                                            <span className="payment-method-check">{paymentMethod === 'momo' && '✓'}</span>
+                                            <span className="payment-method-check">
+                                                {paymentMethod === 'momo' && <Check size={14} strokeWidth={3} />}
+                                            </span>
                                         </label>
                                     </div>
+
+                                    {/* ✅ Total nổi bật — nút đã chuyển sang sidebar */}
                                     <div className="payment-total">
-                                        <span>TỔNG THANH TOÁN</span>
+                                        <span>
+                                            {isRescheduleMode ? 'CẦN BÙ THÊM' : 'TỔNG THANH TOÁN'}
+                                        </span>
                                         <strong>
                                             {isRescheduleMode
                                                 ? reschedulePayAmount.toLocaleString('vi-VN')
                                                 : grandTotal.toLocaleString('vi-VN')
-                                            } ₫
+                                            }₫
                                         </strong>
                                     </div>
-                                    <div className="payment-actions">
-                                        <LoadingButton
-                                            type="button"
-                                            loading={isProcessing}
-                                            loadingText="ĐANG XỬ LÝ..."
-                                            onClick={onConfirmPaymentClick}
-                                            disabled={isProcessing || isLoadingUser}
-                                            className="btn-next"
-                                            spinnerColor="#ffffff"
-                                        >
-                                            {isRescheduleMode ? 'XÁC NHẬN ĐỔI VÉ' : 'XÁC NHẬN THANH TOÁN'}
-                                        </LoadingButton>
-                                        <button type="button" className="btn-back" onClick={() => navigate(-1)} disabled={isProcessing}>
-                                            ← QUAY LẠI
-                                        </button>
+
+                                    <div className="payment-secure-note">
+                                        <ShieldCheck size={14} />
+                                        <span>Giao dịch được bảo mật bởi SSL 256-bit</span>
                                     </div>
                                 </div>
                             </>
                         )}
                     </main>
+
                     <aside className="payment-sidebar">
                         <BookingSidebar
                             movie={movie}
@@ -1185,6 +1234,20 @@ const Payment = () => {
                             isTimerActive={isTimerActive}
                             onExpire={handleTimeExpire}
                             showFoodSection={!isRescheduleMode}
+
+                            /* ✅ 2 NÚT NẰM TRONG SIDEBAR */
+                            showContinueButton={true}
+                            showBackButton={true}
+                            continueText={
+                                isProcessing
+                                    ? 'ĐANG XỬ LÝ...'
+                                    : isRescheduleMode
+                                        ? 'XÁC NHẬN ĐỔI VÉ'
+                                        : 'XÁC NHẬN THANH TOÁN'
+                            }
+                            onContinue={onConfirmPaymentClick}
+                            onBack={() => navigate(-1)}
+                            isContinueDisabled={isProcessing || isLoadingUser}
                         />
                     </aside>
                 </div>

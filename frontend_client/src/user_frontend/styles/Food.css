@@ -1,8 +1,8 @@
 /* =========================================================
    FOOD PAGE - PREMIUM SILVER EDITION
-   SUBTLE HOVER EDITION
    MAX WIDTH: 1300px
    USING GLOBAL VARIABLES FROM INDEX.CSS
+   ✅ CATEGORY FILTER THEO ENUM CSDL
 ========================================================= */
 
 /* =========================================================
@@ -16,16 +16,22 @@
     color: var(--text-body);
     background:
         radial-gradient(
-            circle at 15% 5%,
-            rgba(255, 255, 255, 0.035),
-            transparent 30%
+            ellipse 80% 40% at 50% -10%,
+            rgba(221, 226, 232, 0.09),
+            transparent 60%
         ),
         radial-gradient(
-            circle at 85% 20%,
-            rgba(255, 255, 255, 0.025),
-            transparent 28%
+            ellipse 60% 30% at 20% 40%,
+            rgba(190, 200, 212, 0.025),
+            transparent 70%
+        ),
+        radial-gradient(
+            ellipse 60% 30% at 85% 75%,
+            rgba(190, 200, 212, 0.02),
+            transparent 70%
         ),
         var(--bg-primary);
+    overflow-x: hidden;
 }
 
 /* =========================================================
@@ -39,7 +45,140 @@
 }
 
 /* =========================================================
-   LAYOUT - GRID 2 CỘT
+   ✅ PAGE HEADER — ĐỒNG BỘ VỚI BOOKING
+========================================================= */
+
+.food-page-header {
+    padding: 0 0 var(--space-xl);
+    position: relative;
+    overflow: hidden;
+}
+
+.food-page-header__row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-lg);
+    position: relative;
+    z-index: 1;
+}
+
+.food-page-header__eyebrow {
+    margin-bottom: var(--space-sm);
+    font-size: 0.72rem;
+    font-weight: var(--fw-extrabold);
+    letter-spacing: 0.24em;
+    color: var(--silver-dark);
+}
+
+.food-page-header h1 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4.4vw, 3.8rem);
+    font-weight: var(--fw-bold);
+    line-height: 0.95;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+    color: var(--silver-light);
+    text-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+}
+
+.food-page-header__accent {
+    background: linear-gradient(
+        135deg,
+        #F4F6F8 0%,
+        #A9B2BC 60%,
+        #DDE2E8 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    position: relative;
+}
+
+.food-page-header p {
+    max-width: 600px;
+    margin: var(--space-md) 0 0;
+    font-size: var(--font-size-h5);
+    line-height: var(--line-height-base);
+    color: var(--text-muted);
+}
+
+/* ✅ Badge BƯỚC 03 / 04 */
+.food-page-header__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: var(--radius-round);
+    background: linear-gradient(
+        135deg,
+        rgba(244, 246, 248, 0.08),
+        rgba(244, 246, 248, 0.02)
+    );
+    border: 1px solid rgba(221, 226, 232, 0.2);
+    color: var(--silver-light);
+    font-size: 0.72rem;
+    font-weight: var(--fw-extrabold);
+    letter-spacing: 0.16em;
+    white-space: nowrap;
+    flex-shrink: 0;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    transition:
+        border-color 0.3s ease,
+        background 0.3s ease,
+        box-shadow 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.food-page-header__badge::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        110deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.12) 50%,
+        transparent 70%
+    );
+    background-size: 200% 100%;
+    animation: badgeShimmer 3s linear infinite;
+    pointer-events: none;
+}
+
+.food-page-header__badge:hover {
+    border-color: rgba(221, 226, 232, 0.4);
+    background: rgba(244, 246, 248, 0.1);
+    box-shadow:
+        0 12px 32px rgba(0, 0, 0, 0.28),
+        0 0 24px rgba(221, 226, 232, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.food-page-header__badge svg {
+    color: var(--silver-primary);
+    flex-shrink: 0;
+    animation: sparkleRotate 4s ease-in-out infinite;
+}
+
+@keyframes badgeShimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+@keyframes sparkleRotate {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(180deg) scale(1.1); }
+}
+
+/* =========================================================
+   ✅ LAYOUT - GRID 2 CỘT
 ========================================================= */
 
 .food-layout {
@@ -50,10 +189,6 @@
     gap: var(--space-lg);
 }
 
-/* =========================================================
-   SIDEBAR - STICKY
-========================================================= */
-
 .food-sidebar-wrapper {
     min-width: 0;
     grid-column: 2;
@@ -63,22 +198,18 @@
     overflow: visible !important;
 }
 
-/* =========================================================
-   MAIN AREA
-========================================================= */
-
 .food-main-area {
     min-width: 0;
     grid-column: 1;
     grid-row: 1;
     display: flex;
     flex-direction: column;
-    gap: var(--space-xl);
+    gap: var(--space-lg);
     overflow: visible !important;
 }
 
 /* =========================================================
-   INTRO CARD
+   ✅ INTRO CARD
 ========================================================= */
 
 .food-intro-card {
@@ -160,12 +291,13 @@
     font-size: 28px;
     color: var(--silver-primary);
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.20);
-    transition: border-color 0.3s ease, color 0.3s ease;
+    transition: border-color 0.3s ease, color 0.3s ease, transform 0.3s ease;
 }
 
 .food-intro-card:hover .food-intro-icon {
     border-color: rgba(232, 232, 232, 0.35);
     color: var(--silver-light);
+    transform: rotate(-6deg) scale(1.05);
 }
 
 .food-intro-content {
@@ -176,6 +308,7 @@
 .food-intro-content h2 {
     margin: 0 0 5px;
     color: var(--silver-primary);
+    font-family: var(--font-display);
     font-size: 20px;
     font-weight: var(--fw-extrabold);
     letter-spacing: 1px;
@@ -194,37 +327,128 @@
     line-height: 1.6;
 }
 
-/* =========================================================
-   FOOD COUNT BADGE
-========================================================= */
-
+/* ✅ Count badge */
 .food-count-badge {
     display: flex;
     align-items: center;
     gap: 9px;
-    padding: 7px 12px;
+    padding: 8px 14px;
     border-radius: var(--radius-md);
-    background: rgba(255, 255, 255, 0.035);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    transition: border-color 0.25s ease, background 0.25s ease;
+    background: linear-gradient(
+        135deg,
+        rgba(16, 185, 129, 0.12),
+        rgba(16, 185, 129, 0.04)
+    );
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    transition: all 0.25s ease;
 }
 
 .food-count-badge:hover {
-    border-color: rgba(232, 232, 232, 0.22);
-    background: rgba(255, 255, 255, 0.055);
+    border-color: rgba(16, 185, 129, 0.5);
+    background: linear-gradient(
+        135deg,
+        rgba(16, 185, 129, 0.18),
+        rgba(16, 185, 129, 0.06)
+    );
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
 }
 
 .food-count-badge span {
     font-size: 8px;
     font-weight: var(--fw-bold);
     letter-spacing: 1.4px;
-    color: var(--text-muted);
+    color: #43B77A;
 }
 
 .food-count-badge strong {
-    color: var(--silver-primary);
-    font-size: 15px;
+    color: #10B981;
+    font-size: 17px;
     font-weight: var(--fw-extrabold);
+    text-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+}
+
+/* =========================================================
+   ✅ CATEGORY TABS
+========================================================= */
+
+.food-category-tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 4px 0;
+}
+
+.food-category-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.food-category-tab {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 16px;
+    border-radius: var(--radius-round);
+    border: 1px solid rgba(221, 226, 232, 0.12);
+    background: rgba(255, 255, 255, 0.025);
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.food-category-tab:hover {
+    border-color: rgba(221, 226, 232, 0.3);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-body);
+    transform: translateY(-1px);
+}
+
+.food-category-tab.active {
+    background: var(--premium-gradient);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: var(--bg-primary);
+    box-shadow:
+        0 8px 22px rgba(221, 226, 232, 0.2),
+        0 0 0 3px rgba(232, 232, 232, 0.08);
+}
+
+.food-category-tab.active svg {
+    color: var(--bg-primary);
+}
+
+/* ✅ Count badge trong tab */
+.food-category-tab__count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    font-size: 0.6rem;
+    font-weight: var(--fw-extrabold);
+    letter-spacing: 0;
+    line-height: 1;
+    transition: all 0.28s ease;
+}
+
+.food-category-tab:hover .food-category-tab__count {
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--text-body);
+}
+
+.food-category-tab.active .food-category-tab__count {
+    background: rgba(0, 0, 0, 0.15);
+    color: var(--bg-primary);
 }
 
 /* =========================================================
@@ -315,12 +539,24 @@
 
 .food-list-header h2 {
     margin: 0;
+    font-family: var(--font-display);
     font-size: 19px;
     line-height: 1.25;
     font-weight: var(--fw-extrabold);
     letter-spacing: 1.2px;
     color: var(--silver-primary);
     text-transform: uppercase;
+}
+
+.food-result-count {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: var(--fw-semibold);
+    padding: 5px 12px;
+    border-radius: var(--radius-round);
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    white-space: nowrap;
 }
 
 /* =========================================================
@@ -335,7 +571,7 @@
 }
 
 /* =========================================================
-   FOOD CARD — hover nhẹ
+   ✅ FOOD CARD
 ========================================================= */
 
 .food-card {
@@ -359,9 +595,10 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.025);
     overflow: visible !important;
     transition:
-        border-color 0.25s ease,
-        box-shadow 0.25s ease,
-        background 0.25s ease;
+        border-color 0.28s ease,
+        box-shadow 0.28s ease,
+        background 0.28s ease,
+        transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .food-card::before {
@@ -375,28 +612,43 @@
     background: rgba(232, 232, 232, 0.055);
     filter: blur(55px);
     pointer-events: none;
+    transition: background 0.3s ease;
 }
 
-/* Hover nhẹ — chỉ viền sáng + shadow nhẹ */
 .food-card:hover {
-    border-color: rgba(232, 232, 232, 0.24);
+    border-color: rgba(232, 232, 232, 0.28);
     box-shadow:
-        0 14px 34px rgba(0, 0, 0, 0.22),
-        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        0 18px 42px rgba(0, 0, 0, 0.28),
+        0 0 0 1px rgba(232, 232, 232, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transform: translateY(-3px);
 }
 
+.food-card:hover::before {
+    background: rgba(232, 232, 232, 0.1);
+}
+
+/* ✅ Selected state */
 .food-card.is-selected {
-    border-color: rgba(232, 232, 232, 0.32);
+    border-color: rgba(67, 183, 122, 0.4);
     background:
         linear-gradient(
             145deg,
-            rgba(232, 232, 232, 0.085),
+            rgba(67, 183, 122, 0.08),
             rgba(255, 255, 255, 0.025)
         );
+    box-shadow:
+        0 14px 34px rgba(0, 0, 0, 0.22),
+        0 0 0 1px rgba(67, 183, 122, 0.15),
+        inset 0 1px 0 rgba(67, 183, 122, 0.1);
 }
 
 .food-card.is-selected:hover {
-    border-color: rgba(232, 232, 232, 0.42);
+    border-color: rgba(67, 183, 122, 0.55);
+    box-shadow:
+        0 18px 42px rgba(0, 0, 0, 0.28),
+        0 0 24px rgba(67, 183, 122, 0.15),
+        inset 0 1px 0 rgba(67, 183, 122, 0.15);
 }
 
 /* =========================================================
@@ -416,11 +668,21 @@
     border: 1px solid rgba(255, 255, 255, 0.10);
     background: var(--bg-tertiary);
     box-shadow: 0 10px 22px rgba(0, 0, 0, 0.20);
-    transition: border-color 0.3s ease;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .food-card:hover .food-image {
-    border-color: rgba(232, 232, 232, 0.22);
+    border-color: rgba(232, 232, 232, 0.28);
+    box-shadow:
+        0 12px 28px rgba(0, 0, 0, 0.28),
+        0 0 0 1px rgba(232, 232, 232, 0.06);
+}
+
+.food-card.is-selected .food-image {
+    border-color: rgba(67, 183, 122, 0.35);
+    box-shadow:
+        0 12px 28px rgba(0, 0, 0, 0.28),
+        0 0 20px rgba(67, 183, 122, 0.15);
 }
 
 .food-image img {
@@ -428,11 +690,11 @@
     height: 100%;
     display: block;
     object-fit: cover;
-    transition: transform 0.4s ease;
+    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .food-card:hover .food-image img {
-    transform: scale(1.05);
+    transform: scale(1.08);
 }
 
 .food-no-image {
@@ -452,20 +714,72 @@
         var(--bg-tertiary);
 }
 
+/* =========================================================
+   ✅ FOOD CATEGORY BADGE — hiển thị loại sản phẩm trên card
+========================================================= */
+
+.food-category-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 2;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.75);
+    border: 1px solid var(--badge-color, rgba(255, 255, 255, 0.2));
+    color: var(--badge-color, #FFFFFF);
+    font-size: 7px;
+    font-weight: var(--fw-extrabold);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    pointer-events: none;
+    white-space: nowrap;
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.food-card:hover .food-category-badge {
+    border-color: var(--badge-color);
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.4),
+        0 0 12px rgba(232, 232, 232, 0.15);
+}
+
+.food-card.is-selected .food-category-badge {
+    opacity: 0.5;
+}
+
+/* =========================================================
+   ✅ SELECTED BADGE — với icon Check
+========================================================= */
+
 .food-selected-badge {
     position: absolute;
     left: 8px;
     bottom: 8px;
-    padding: 5px 7px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 8px;
     border-radius: 7px;
-    background: rgba(18, 18, 18, 0.86);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    color: var(--silver-primary);
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
     font-size: 7px;
     font-weight: var(--fw-extrabold);
     letter-spacing: 1px;
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    animation: badgePop 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes badgePop {
+    0% { transform: scale(0.6); opacity: 0; }
+    60% { transform: scale(1.08); opacity: 1; }
+    100% { transform: scale(1); }
 }
 
 /* =========================================================
@@ -492,6 +806,10 @@
     font-size: 15px;
     line-height: 1.4;
     font-weight: var(--fw-extrabold);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
     transition: color 0.25s ease;
 }
 
@@ -504,10 +822,17 @@
     font-size: 18px;
     line-height: 1.2;
     font-weight: var(--fw-extrabold);
+    font-variant-numeric: tabular-nums;
+    transition: color 0.25s ease;
+}
+
+.food-card.is-selected .food-price {
+    color: #10B981;
+    text-shadow: 0 0 16px rgba(16, 185, 129, 0.4);
 }
 
 /* =========================================================
-   QUANTITY CONTROL
+   ✅ QUANTITY CONTROL
 ========================================================= */
 
 .food-action-row {
@@ -542,23 +867,25 @@
     border: 1px solid rgba(255, 255, 255, 0.12);
     background: rgba(255, 255, 255, 0.045);
     color: var(--text-body);
-    font-size: 18px;
     line-height: 1;
-    font-weight: var(--fw-extrabold);
     cursor: pointer;
     transition:
-        border-color 0.22s ease,
-        background 0.22s ease,
-        color 0.22s ease;
+        border-color 0.24s ease,
+        background 0.24s ease,
+        color 0.24s ease,
+        transform 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.24s ease;
 }
 
-.food-qty-btn:hover {
-    border-color: rgba(232, 232, 232, 0.30);
+.food-qty-btn:hover:not(:disabled) {
+    border-color: rgba(232, 232, 232, 0.4);
     background: var(--premium-gradient);
     color: var(--bg-primary);
+    transform: scale(1.08);
+    box-shadow: 0 6px 18px rgba(232, 232, 232, 0.25);
 }
 
-.food-qty-btn:active {
+.food-qty-btn:active:not(:disabled) {
     transform: scale(0.94);
 }
 
@@ -567,12 +894,25 @@
     cursor: not-allowed;
 }
 
+.food-qty-plus:hover:not(:disabled) {
+    box-shadow:
+        0 6px 18px rgba(232, 232, 232, 0.25),
+        0 0 20px rgba(232, 232, 232, 0.15);
+}
+
 .food-qty {
-    min-width: 27px;
+    min-width: 30px;
     text-align: center;
     color: var(--silver-primary);
-    font-size: 14px;
+    font-size: 15px;
     font-weight: var(--fw-extrabold);
+    font-variant-numeric: tabular-nums;
+    transition: color 0.25s ease, text-shadow 0.25s ease;
+}
+
+.food-card.is-selected .food-qty {
+    color: #10B981;
+    text-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
 }
 
 /* =========================================================
@@ -587,6 +927,12 @@
     justify-content: space-between;
     align-items: center;
     gap: 8px;
+    animation: totalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes totalFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .food-item-total span {
@@ -595,9 +941,11 @@
 }
 
 .food-item-total strong {
-    color: var(--silver-light);
+    color: #10B981;
     font-size: 11px;
     font-weight: var(--fw-extrabold);
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
 }
 
 /* =========================================================
@@ -640,12 +988,19 @@
     font-size: 14px;
     font-weight: var(--fw-extrabold);
     letter-spacing: 1px;
+    font-family: var(--font-display);
 }
 
 .food-empty p {
     margin: 0;
     color: var(--text-muted);
     font-size: 10px;
+}
+
+.food-empty p strong {
+    color: var(--silver-light);
+    font-weight: var(--fw-bold);
+    margin: 0 2px;
 }
 
 /* =========================================================
@@ -795,6 +1150,25 @@
         padding: 20px 12px 45px;
     }
 
+    .food-page-header {
+        padding: 0 0 var(--space-lg);
+    }
+
+    .food-page-header__row {
+        flex-direction: column;
+        gap: var(--space-md);
+    }
+
+    .food-page-header h1 {
+        font-size: clamp(1.8rem, 9vw, 2.8rem);
+    }
+
+    .food-page-header__badge {
+        align-self: flex-start;
+        padding: 8px 14px;
+        font-size: 0.65rem;
+    }
+
     .food-progress-wrapper {
         margin-bottom: 16px;
     }
@@ -840,12 +1214,35 @@
     }
 
     .food-count-badge {
-        padding: 6px 9px;
+        padding: 6px 10px;
         gap: 6px;
     }
 
     .food-count-badge span {
         display: none;
+    }
+
+    /* Category tabs responsive */
+    .food-category-tabs {
+        gap: 6px;
+    }
+
+    .food-category-tab {
+        padding: 9px 13px;
+        font-size: 0.68rem;
+        gap: 5px;
+    }
+
+    .food-category-tab svg {
+        width: 13px;
+        height: 13px;
+    }
+
+    .food-category-tab__count {
+        min-width: 16px;
+        height: 16px;
+        font-size: 0.58rem;
+        padding: 0 4px;
     }
 
     .food-grid {
@@ -933,6 +1330,14 @@
         gap: 12px;
     }
 
+    .food-page-header__eyebrow {
+        font-size: 0.6rem;
+    }
+
+    .food-page-header p {
+        font-size: var(--font-size-h6);
+    }
+
     .food-list-card {
         padding: 12px;
         border-radius: var(--radius-md);
@@ -941,6 +1346,8 @@
     .food-list-header {
         padding-bottom: 12px;
         margin-bottom: 13px;
+        flex-wrap: wrap;
+        gap: 8px;
     }
 
     .food-list-header h2 {
@@ -948,13 +1355,47 @@
         letter-spacing: 0.8px;
     }
 
+    .food-result-count {
+        font-size: 0.65rem;
+        padding: 4px 9px;
+    }
+
     .food-count-badge {
-        padding: 4px 7px;
+        padding: 4px 8px;
         border-radius: var(--radius-sm);
     }
 
     .food-count-badge strong {
-        font-size: 12px;
+        font-size: 13px;
+    }
+
+    /* Category tabs mobile */
+    .food-category-tabs {
+        gap: 5px;
+    }
+
+    .food-category-tab {
+        padding: 8px 11px;
+        font-size: 0.62rem;
+        gap: 4px;
+    }
+
+    .food-category-tab svg {
+        width: 12px;
+        height: 12px;
+    }
+
+    .food-category-tab__count {
+        min-width: 15px;
+        height: 15px;
+        font-size: 0.55rem;
+    }
+
+    .food-category-badge {
+        padding: 3px 6px;
+        font-size: 6px;
+        top: 6px;
+        left: 6px;
     }
 
     .food-intro-card {
@@ -1010,7 +1451,11 @@
         width: 29px;
         height: 29px;
         border-radius: var(--radius-sm);
-        font-size: 15px;
+    }
+
+    .food-qty-btn svg {
+        width: 14px;
+        height: 14px;
     }
 
     .food-qty {
@@ -1026,6 +1471,7 @@
         font-size: 8px;
     }
 
+    /* Mobile summary + actions */
     .food-mobile-summary {
         display: flex;
         justify-content: space-between;
@@ -1050,6 +1496,7 @@
         color: var(--silver-primary);
         font-size: 15px;
         font-weight: var(--fw-extrabold);
+        text-shadow: 0 0 12px rgba(221, 226, 232, 0.3);
     }
 
     .food-mobile-actions {
@@ -1126,7 +1573,6 @@
     .food-qty-btn {
         width: 26px;
         height: 26px;
-        font-size: 13px;
     }
 
     .food-qty {

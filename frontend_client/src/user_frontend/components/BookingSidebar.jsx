@@ -47,7 +47,7 @@ const BookingSidebar = ({
     showBackButton = false,
     onBack = null,
 
-    // ✅ PROPS MỚI CHO RESCHEDULE
+    // ✅ PROPS CHO RESCHEDULE
     isReschedule = false,
     oldTotalAmount = 0,
 }) => {
@@ -68,14 +68,13 @@ const BookingSidebar = ({
         selectedShowtime?.room_name ||
         '';
 
-    // ✅ CHỈ LẤY PHẦN GIỜ (HH:mm) — BỎ NGÀY
+    // ✅ CHỈ LẤY PHẦN GIỜ (HH:mm)
     const rawStartTime =
         selectedShowtime?.time ||
         selectedShowtime?.start_time ||
         showtimeDetail?.start_time ||
         '';
 
-    // Tách chỉ lấy HH:mm từ string
     const startTime = (() => {
         if (!rawStartTime) return '';
 
@@ -100,7 +99,7 @@ const BookingSidebar = ({
             : startTime
         : '---';
 
-    // ✅ Format ngày cho đẹp
+    // ✅ Format ngày
     const formatDate = (dateStr) => {
         if (!dateStr) return '---';
 
@@ -117,6 +116,17 @@ const BookingSidebar = ({
             return dateStr;
         }
     };
+
+    // ✅ Sort ghế theo hàng + số
+    const sortedSeats = [...selectedSeats].sort((a, b) => {
+        if (a.seat_row !== b.seat_row) {
+            return a.seat_row.localeCompare(b.seat_row);
+        }
+        return Number(a.seat_number) - Number(b.seat_number);
+    });
+
+    const visibleSeats = sortedSeats.slice(0, 5);
+    const hiddenSeats = sortedSeats.slice(5);
 
     // ✅ Tối ưu ảnh poster
     const posterUrl = optimizeCloudinary(
@@ -150,7 +160,9 @@ const BookingSidebar = ({
 
                 {/* Thông tin bên phải */}
                 <div className="ticket-details">
-                    <h2 className="movie-name">{movieTitle}</h2>
+                    <h2 className="movie-name" title={movieTitle}>
+                        {movieTitle}
+                    </h2>
 
                     {/* RẠP */}
                     <div className="detail-item">
@@ -179,19 +191,39 @@ const BookingSidebar = ({
                         <strong>{showtimeDisplay}</strong>
                     </div>
 
-                    {/* GHẾ */}
-                    <div className="detail-item">
+                    {/* ✅ GHẾ — DÙNG CHIP LIST */}
+                    <div className="detail-item detail-item--seats">
                         <span>
                             <Armchair size={13} strokeWidth={2.2} />
                             Ghế:
                         </span>
-                        <strong className="seats-list">
-                            {selectedSeats.length > 0
-                                ? selectedSeats
-                                      .map(seat => `${seat.seat_row}${seat.seat_number}`)
-                                      .join(', ')
-                                : '---'}
-                        </strong>
+
+                        {sortedSeats.length > 0 ? (
+                            <div className="seats-chip-list">
+                                {visibleSeats.map(seat => (
+                                    <span
+                                        key={seat.seat_id}
+                                        className="seat-chip"
+                                        title={`${seat.seat_row}${seat.seat_number}`}
+                                    >
+                                        {seat.seat_row}{seat.seat_number}
+                                    </span>
+                                ))}
+
+                                {hiddenSeats.length > 0 && (
+                                    <span
+                                        className="seat-chip seat-chip--more"
+                                        title={hiddenSeats
+                                            .map(s => `${s.seat_row}${s.seat_number}`)
+                                            .join(', ')}
+                                    >
+                                        +{hiddenSeats.length}
+                                    </span>
+                                )}
+                            </div>
+                        ) : (
+                            <strong className="seats-empty">---</strong>
+                        )}
                     </div>
 
                     {/* THỨC ĂN */}
@@ -219,9 +251,7 @@ const BookingSidebar = ({
                     <div className="total-summary-box">
                         {isReschedule ? (
                             <>
-                                {/* ✅ RESCHEDULE — HIỂN THỊ SO SÁNH */}
-
-                                {/* Giá vé gốc (gạch ngang) */}
+                                {/* Giá vé gốc */}
                                 <div className="summary-row summary-old">
                                     <span className="summary-label">
                                         <Receipt size={12} strokeWidth={2.2} />
@@ -247,7 +277,15 @@ const BookingSidebar = ({
                                 <div className="summary-divider" />
 
                                 {/* Chênh lệch */}
-                                <div className={`summary-row summary-delta ${deltaAmount > 0 ? 'delta-pay' : deltaAmount < 0 ? 'delta-refund' : 'delta-same'}`}>
+                                <div
+                                    className={`summary-row summary-delta ${
+                                        deltaAmount > 0
+                                            ? 'delta-pay'
+                                            : deltaAmount < 0
+                                                ? 'delta-refund'
+                                                : 'delta-same'
+                                    }`}
+                                >
                                     <span className="summary-label">
                                         {deltaAmount > 0 ? (
                                             <>
@@ -295,8 +333,10 @@ const BookingSidebar = ({
                 <div className="full-width-actions">
                     {showBackButton && (
                         <button
+                            type="button"
                             className="btn-back-food-sidebar"
                             onClick={onBack}
+                            aria-label="Quay lại bước trước"
                         >
                             <ArrowLeft size={15} strokeWidth={2.4} />
                             Quay lại
@@ -304,6 +344,7 @@ const BookingSidebar = ({
                     )}
                     {showContinueButton && (
                         <button
+                            type="button"
                             className="btn-next-sidebar"
                             onClick={onContinue}
                             disabled={isContinueDisabled}

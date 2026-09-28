@@ -16,7 +16,13 @@ import {
     Building2,
     Info,
     Plus,
-    Minus
+    Minus,
+    // ⭐ Icon cho room types
+    Clapperboard,  // 2D
+    Glasses,       // 3D
+    Crown,         // VIP
+    Sparkles,      // IMAX
+    Film,          // Default
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -38,27 +44,39 @@ const roomTypeMap = {
     'IMAX': 'Phòng IMAX'
 };
 
+// ⭐ Config với Lucide icon component
 const roomTypeConfig = {
     '2D': {
         bg: '#e0f2fe',
         color: '#0284c7',
-        icon: '🎬'
+        Icon: Clapperboard,
+        gradient: 'linear-gradient(135deg, #bae6fd, #7dd3fc)'
     },
     '3D': {
         bg: '#ede9fe',
         color: '#7c3aed',
-        icon: '🕶️'
+        Icon: Glasses,
+        gradient: 'linear-gradient(135deg, #ddd6fe, #c4b5fd)'
     },
     'VIP': {
         bg: '#fce4ec',
         color: '#e91e63',
-        icon: '👑'
+        Icon: Crown,
+        gradient: 'linear-gradient(135deg, #fbcfe8, #f9a8d4)'
     },
     'IMAX': {
         bg: '#dcfce7',
         color: '#16a34a',
-        icon: '🌌'
+        Icon: Sparkles,
+        gradient: 'linear-gradient(135deg, #bbf7d0, #86efac)'
     }
+};
+
+const DEFAULT_TYPE_CONFIG = {
+    bg: '#e2e8f0',
+    color: '#475569',
+    Icon: Film,
+    gradient: 'linear-gradient(135deg, #cbd5e1, #94a3b8)'
 };
 
 const normalizeRoomType = (value) => {
@@ -415,33 +433,44 @@ const RoomPage = () => {
     };
 
     // ======================================================
-    // RENDER TYPE BADGE
+    // ⭐ RENDER TYPE BADGE — dùng Lucide icon
     // ======================================================
 
     const renderTypeBadge = (type) => {
         const normalizedType = normalizeRoomType(type);
-        const config = roomTypeConfig[normalizedType] || {
-            bg: '#e2e8f0',
-            color: '#475569',
-            icon: '📽️'
-        };
+        const config = roomTypeConfig[normalizedType] || DEFAULT_TYPE_CONFIG;
         const displayName = roomTypeMap[normalizedType] || normalizedType;
+        const IconComponent = config.Icon;
 
         return (
             <span
                 style={{
                     background: config.bg,
                     color: config.color,
-                    padding: '7px 12px',
+                    padding: '6px 14px 6px 8px',
                     borderRadius: '999px',
                     fontSize: '12px',
                     fontWeight: '700',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '6px'
+                    gap: '8px',
+                    border: `1px solid ${config.color}25`
                 }}
             >
-                <span>{config.icon}</span>
+                <span
+                    style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '50%',
+                        background: config.gradient,
+                        color: config.color
+                    }}
+                >
+                    <IconComponent size={14} strokeWidth={2.4} />
+                </span>
                 {displayName}
             </span>
         );
@@ -608,89 +637,106 @@ const RoomPage = () => {
                     Nhập số lượng phòng (nhập 0 nếu không tạo):
                 </div>
 
-                {ROOM_TYPES.map((type) => (
-                    <div
-                        key={type}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            padding: '12px 16px',
-                            marginBottom: '10px',
-                            background: roomTypeConfig[type].bg,
-                            borderRadius: '10px',
-                            border: '1px solid rgba(0,0,0,0.05)'
-                        }}
-                    >
+                {ROOM_TYPES.map((type) => {
+                    const config = roomTypeConfig[type];
+                    const IconComponent = config.Icon;
+
+                    return (
                         <div
+                            key={type}
                             style={{
-                                fontWeight: '600',
-                                color: roomTypeConfig[type].color,
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '8px'
+                                justifyContent: 'space-between',
+                                padding: '12px 16px',
+                                marginBottom: '10px',
+                                background: config.bg,
+                                borderRadius: '10px',
+                                border: '1px solid rgba(0,0,0,0.05)'
                             }}
                         >
-                            <span style={{ fontSize: '20px' }}>
-                                {roomTypeConfig[type].icon}
-                            </span>
-                            {roomTypeMap[type]}
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <button
-                                type="button"
-                                onClick={() => handleCountChange(type, -1)}
+                            <div
                                 style={{
-                                    width: '32px',
-                                    height: '32px',
-                                    borderRadius: '8px',
-                                    background: '#fff',
-                                    border: '1px solid #ccc',
-                                    cursor: 'pointer',
+                                    fontWeight: '600',
+                                    color: config.color,
                                     display: 'flex',
                                     alignItems: 'center',
-                                    justifyContent: 'center'
+                                    gap: '10px'
                                 }}
                             >
-                                <Minus size={16} />
-                            </button>
+                                {/* ⭐ Icon Lucide */}
+                                <span
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        width: '32px',
+                                        height: '32px',
+                                        borderRadius: '50%',
+                                        background: config.gradient,
+                                        color: config.color
+                                    }}
+                                >
+                                    <IconComponent size={18} strokeWidth={2.4} />
+                                </span>
+                                {roomTypeMap[type]}
+                            </div>
 
-                            <input
-                                type="number"
-                                min="0"
-                                value={bulkFormData.counts[type]}
-                                onChange={(e) => handleInputCountChange(type, e.target.value)}
-                                style={{
-                                    width: '60px',
-                                    textAlign: 'center',
-                                    padding: '6px',
-                                    borderRadius: '8px',
-                                    border: '1px solid #ccc',
-                                    fontWeight: '700'
-                                }}
-                            />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => handleCountChange(type, -1)}
+                                    style={{
+                                        width: '32px',
+                                        height: '32px',
+                                        borderRadius: '8px',
+                                        background: '#fff',
+                                        border: '1px solid #ccc',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}
+                                >
+                                    <Minus size={16} />
+                                </button>
 
-                            <button
-                                type="button"
-                                onClick={() => handleCountChange(type, 1)}
-                                style={{
-                                    width: '32px',
-                                    height: '32px',
-                                    borderRadius: '8px',
-                                    background: '#fff',
-                                    border: '1px solid #ccc',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}
-                            >
-                                <Plus size={16} />
-                            </button>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    value={bulkFormData.counts[type]}
+                                    onChange={(e) => handleInputCountChange(type, e.target.value)}
+                                    style={{
+                                        width: '60px',
+                                        textAlign: 'center',
+                                        padding: '6px',
+                                        borderRadius: '8px',
+                                        border: '1px solid #ccc',
+                                        fontWeight: '700'
+                                    }}
+                                />
+
+                                <button
+                                    type="button"
+                                    onClick={() => handleCountChange(type, 1)}
+                                    style={{
+                                        width: '32px',
+                                        height: '32px',
+                                        borderRadius: '8px',
+                                        background: '#fff',
+                                        border: '1px solid #ccc',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}
+                                >
+                                    <Plus size={16} />
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             {/* Nút tạo */}
@@ -729,10 +775,6 @@ const RoomPage = () => {
 
     return (
         <>
-            {/* ==================================================
-                ADMIN PAGE
-            ================================================== */}
-
             <AdminPage
                 title="Quản lý phòng chiếu"
                 subtitle="Quản lý toàn bộ phòng chiếu trong hệ thống"
@@ -763,10 +805,6 @@ const RoomPage = () => {
                 )}
             </AdminPage>
 
-            {/* ==================================================
-                BULK MODAL
-            ================================================== */}
-
             <AdminModal
                 open={isBulkModalOpen}
                 onClose={() => {
@@ -791,10 +829,6 @@ const RoomPage = () => {
 
                 {renderBulkForm()}
             </AdminModal>
-
-            {/* ==================================================
-                ALERT / CONFIRM MODAL
-            ================================================== */}
 
             <AdminModal
                 open={alertModal.open}

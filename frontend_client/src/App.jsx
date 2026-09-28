@@ -20,7 +20,10 @@ import axios from "axios";
 import api from "./api/api";
 import adminapi from "./api/adminapi";
 
-// ✅ LENIS SMOOTH SCROLL HOOK
+// ============================================================
+// LENIS SMOOTH SCROLL
+// ============================================================
+
 import useLenis from "./hooks/useLenis";
 
 // ============================================================
@@ -45,7 +48,6 @@ import {
     NetworkProvider,
     useNetwork,
 } from "./context/NetworkContext";
-
 
 // ============================================================
 // COMPONENTS
@@ -109,8 +111,7 @@ const lazyRetry = (
                         ) {
                             setTimeout(
                                 tryLoad,
-                                1000 *
-                                    retries
+                                1000 * retries
                             );
                         } else {
                             sessionStorage.removeItem(
@@ -304,7 +305,7 @@ const CinemaCardDetail = lazy(() =>
 );
 
 // ============================================================
-// ✅ BOOKING SELECT - TRANG CHỌN RẠP/PHIM/SUẤT
+// BOOKING SELECT
 // ============================================================
 
 const BookingSelect = lazy(() =>
@@ -416,7 +417,7 @@ const MemberShip = lazy(() =>
 );
 
 // ============================================================
-// ✅ RESCHEDULE SELECT - CHỌN SUẤT MỚI (ĐỔI SUẤT CHIẾU)
+// RESCHEDULE SELECT
 // ============================================================
 
 const RescheduleSelect = lazy(() =>
@@ -654,7 +655,7 @@ const SuspenseLoading = () => (
 );
 
 // ============================================================
-// ✅ SCROLL TO TOP — DÙNG LENIS
+// SCROLL TO TOP
 // ============================================================
 
 const ScrollToTop = () => {
@@ -663,11 +664,15 @@ const ScrollToTop = () => {
     useEffect(() => {
         window.history.scrollRestoration = "manual";
 
-        // ✅ Nếu có Lenis → dùng scrollTo của nó
         if (window.__lenis) {
-            window.__lenis.scrollTo(0, { immediate: true });
+            window.__lenis.scrollTo(0, {
+                immediate: true,
+            });
         } else {
-            window.scrollTo({ top: 0, behavior: "smooth" });
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth",
+            });
         }
     }, [pathname]);
 
@@ -730,8 +735,7 @@ const NotFoundPage = () => {
                     navigate("/")
                 }
                 style={{
-                    padding:
-                        "10px 24px",
+                    padding: "10px 24px",
                     cursor: "pointer",
                     background:
                         "linear-gradient(135deg, #f37021, #f5a623)",
@@ -749,7 +753,7 @@ const NotFoundPage = () => {
 };
 
 // ============================================================
-// ROUTE GUARD
+// USER ROUTE GUARD
 // ============================================================
 
 const UserRouteGuard = ({
@@ -796,7 +800,7 @@ const UserRouteGuard = ({
 };
 
 // ============================================================
-// AUTH ROUTES (USER)
+// AUTH ROUTES
 // ============================================================
 
 const AUTH_ROUTES = [
@@ -843,7 +847,7 @@ const AUTH_ROUTES = [
 ];
 
 // ============================================================
-// MAIN ROUTES (USER)
+// MAIN ROUTES
 // ============================================================
 
 const MAIN_ROUTES = [
@@ -851,34 +855,42 @@ const MAIN_ROUTES = [
         path: "/",
         element: <UserHome />,
     },
+
     {
         path: "movies/status/:statusSlug",
         element: <MovieStatusPage />,
     },
+
     {
         path: "movies/detail/:slug",
         element: <MovieDetail />,
     },
+
     {
         path: "actors",
         element: <Actor />,
     },
+
     {
         path: "cinema",
         element: <Cinema />,
     },
+
     {
         path: "cinema/detail/:slug",
         element: <CinemaDetail />,
     },
+
     {
         path: "foods",
         element: <Food />,
     },
+
     {
         path: "news",
         element: <News />,
     },
+
     {
         path: "news/detail/:slug",
         element: (
@@ -887,10 +899,12 @@ const MAIN_ROUTES = [
             />
         ),
     },
+
     {
         path: "promotion",
         element: <Promotion />,
     },
+
     {
         path: "promotion/detail/:slug",
         element: (
@@ -899,10 +913,12 @@ const MAIN_ROUTES = [
             />
         ),
     },
+
     {
         path: "blog-cinema",
         element: <BlogCinema />,
     },
+
     {
         path: "blog-cinema/detail/:slug",
         element: (
@@ -911,30 +927,41 @@ const MAIN_ROUTES = [
             />
         ),
     },
+
     {
         path: "faq",
         element: <FAQ />,
     },
+
     {
         path: "privacy-policy",
         element: <PrivacyPolicy />,
     },
+
     {
         path: "terms",
         element: <TermsOfService />,
     },
+
     {
         path: "booking-guide",
         element: <BookingGuide />,
     },
+
     {
         path: "contact",
         element: <ContactSupport />,
     },
+
     {
         path: "membership",
         element: <MemberShip />,
     },
+
+    // ========================================================
+    // PROFILE
+    // ========================================================
+
     {
         path: "profile",
         element: (
@@ -944,9 +971,10 @@ const MAIN_ROUTES = [
         ),
     },
 
-    // ============================================================
-    // ✅ ĐỔI SUẤT CHIẾU (RESCHEDULE) — CHỌN SUẤT MỚI
-    // ============================================================
+    // ========================================================
+    // RESCHEDULE
+    // ========================================================
+
     {
         path: "reschedule/:bookingId/select",
         element: (
@@ -956,17 +984,21 @@ const MAIN_ROUTES = [
         ),
     },
 
-    // ============================================================
-    // ✅ BOOKING SELECT - Chọn rạp/phim/suất (không cần login)
-    // ============================================================
+    // ========================================================
+    // BOOKING SELECT
+    // Không cần login
+    // ========================================================
+
     {
         path: "booking",
         element: <BookingSelect />,
     },
 
-    // ============================================================
-    // BOOKING CHECKOUT - Chọn ghế + thanh toán (cần login)
-    // ============================================================
+    // ========================================================
+    // BOOKING CHECKOUT
+    // Cần login
+    // ========================================================
+
     {
         path: "booking/:slug",
         element: (
@@ -975,6 +1007,12 @@ const MAIN_ROUTES = [
             </UserRouteGuard>
         ),
     },
+
+    // ========================================================
+    // PAYMENT
+    // Cần login
+    // ========================================================
+
     {
         path: "payment",
         element: (
@@ -983,14 +1021,18 @@ const MAIN_ROUTES = [
             </UserRouteGuard>
         ),
     },
-    {
-        path: "confirm-success",
-        element: (
-            <UserRouteGuard>
-                <ConfirmSuccess />
-            </UserRouteGuard>
-        ),
-    },
+
+    // ========================================================
+    // ❗ KHÔNG ĐẶT CONFIRM-SUCCESS Ở ĐÂY
+    //
+    // ConfirmSuccess được đưa ra ngoài SessionGuard bên dưới.
+    // ========================================================
+
+    // ========================================================
+    // BANK APP
+    // Cần login
+    // ========================================================
+
     {
         path: "bank-app",
         element: (
@@ -999,6 +1041,12 @@ const MAIN_ROUTES = [
             </UserRouteGuard>
         ),
     },
+
+    // ========================================================
+    // MOMO APP
+    // Cần login
+    // ========================================================
+
     {
         path: "momo-app",
         element: (
@@ -1010,7 +1058,7 @@ const MAIN_ROUTES = [
 ];
 
 // ============================================================
-// ADMIN ROUTES (có layout sidebar)
+// ADMIN ROUTES
 // ============================================================
 
 const ADMIN_ROUTES = [
@@ -1023,84 +1071,104 @@ const ADMIN_ROUTES = [
             />
         ),
     },
+
     {
         path: "users",
         element: <UserPage />,
     },
+
     {
         path: "movies",
         element: <MoviePage />,
     },
+
     {
         path: "rooms",
         element: <RoomPage />,
     },
+
     {
         path: "news",
         element: <NewsPage />,
     },
+
     {
         path: "blog-cinema",
         element: <BlogCinemaPage />,
     },
+
     {
         path: "promotions",
         element: <PromotionPage />,
     },
+
     {
         path: "coupons",
         element: <CouponPage />,
     },
+
     {
         path: "genres",
         element: <GenresPage />,
     },
+
     {
         path: "cinemas",
         element: <CinemaPage />,
     },
+
     {
         path: "showtimes",
         element: <ShowTimePage />,
     },
+
     {
         path: "showtime-config",
         element: (
             <MovieShowtimeConfigPage />
         ),
     },
+
     {
         path: "price-config",
         element: <PriceConfigPage />,
     },
+
     {
         path: "seats",
         element: <SeatList />,
     },
+
     {
         path: "movie-genres",
         element: <MovieGenrePage />,
     },
+
     {
         path: "movie-actors",
         element: <MovieActorPage />,
     },
+
     {
         path: "bookings",
         element: <BookingPage />,
     },
+
     {
         path: "tickets",
         element: <TicketList />,
     },
+
     {
         path: "actors",
         element: <ActorPage />,
     },
+
     {
         path: "foods",
         element: <FoodPage />,
     },
+
     {
         path: "banners",
         element: <BannerPage />,
@@ -1113,6 +1181,7 @@ const ADMIN_ROUTES = [
 
 const AdminRoutesComponent = () => (
     <Routes>
+
         <Route
             path="/login"
             element={<AdminLogin />}
@@ -1187,6 +1256,7 @@ const AdminRoutesComponent = () => (
                 <NotFoundPage />
             }
         />
+
     </Routes>
 );
 
@@ -1213,6 +1283,11 @@ const UserPageContainer = () => {
 
 const UserRoutesComponent = () => (
     <Routes>
+
+        {/* ======================================================
+            AUTH ROUTES
+        ====================================================== */}
+
         {AUTH_ROUTES.map(
             ({
                 path,
@@ -1226,6 +1301,34 @@ const UserRoutesComponent = () => (
             )
         )}
 
+        {/* ======================================================
+            ⭐ CONFIRM SUCCESS
+            ------------------------------------------------------
+            QUAN TRỌNG:
+
+            Route này nằm ngoài:
+            - SessionGuard
+            - UserRouteGuard
+
+            Vì sau khi thanh toán thành công, AuthContext có thể
+            chưa kịp cập nhật user hoặc session guard có thể kiểm
+            tra lại session đúng lúc chuyển trang.
+
+            Trang này vẫn tự gọi /api/auth/me nếu cần cập nhật
+            thông tin user.
+        ====================================================== */}
+
+        <Route
+            path="/confirm-success"
+            element={
+                <ConfirmSuccess />
+            }
+        />
+
+        {/* ======================================================
+            USER APP
+            ====================================================== */}
+
         <Route
             path="/"
             element={
@@ -1234,11 +1337,13 @@ const UserRoutesComponent = () => (
                 </SessionGuard>
             }
         >
+
             <Route
                 element={
                     <UserPageContainer />
                 }
             >
+
                 {MAIN_ROUTES.map(
                     ({
                         path,
@@ -1251,8 +1356,14 @@ const UserRoutesComponent = () => (
                         />
                     )
                 )}
+
             </Route>
+
         </Route>
+
+        {/* ======================================================
+            ADMIN REDIRECT
+        ====================================================== */}
 
         <Route
             path="/admin/*"
@@ -1264,10 +1375,17 @@ const UserRoutesComponent = () => (
             }
         />
 
+        {/* ======================================================
+            404
+        ====================================================== */}
+
         <Route
             path="*"
-            element={<NotFoundPage />}
+            element={
+                <NotFoundPage />
+            }
         />
+
     </Routes>
 );
 
@@ -1276,12 +1394,24 @@ const UserRoutesComponent = () => (
 // ============================================================
 
 const AppContent = () => {
-    // ✅ KÍCH HOẠT LENIS SMOOTH SCROLL
+
+    // ==========================================================
+    // LENIS
+    // ==========================================================
+
     useLenis();
+
+    // ==========================================================
+    // ROUTE LOADING
+    // ==========================================================
 
     const {
         loading: routeLoading,
     } = useRouteLoading();
+
+    // ==========================================================
+    // NETWORK
+    // ==========================================================
 
     const {
         isOnline,
@@ -1297,13 +1427,23 @@ const AppContent = () => {
         setAxiosNetworkError,
     ] = useState(null);
 
+    // ==========================================================
+    // ADMIN DOMAIN
+    // ==========================================================
+
     const isAdminDomain =
         window.location.hostname ===
         "admin.quangdungcinema.id.vn";
 
+    // ==========================================================
+    // NETWORK EVENT
+    // ==========================================================
+
     useEffect(() => {
+
         const handleNetworkError =
             (event) => {
+
                 const detail =
                     event?.detail;
 
@@ -1327,21 +1467,35 @@ const AppContent = () => {
         );
 
         return () => {
+
             window.removeEventListener(
                 "networkError",
                 handleNetworkError
             );
+
         };
+
     }, []);
 
+    // ==========================================================
+    // CLEAR NETWORK ERROR
+    // ==========================================================
+
     useEffect(() => {
+
         if (isOnline) {
             setAxiosNetworkError(null);
         }
+
     }, [isOnline]);
+
+    // ==========================================================
+    // RETRY NETWORK
+    // ==========================================================
 
     const handleRetryConnection =
         async () => {
+
             console.log(
                 "🔄 [App] Retry network connection"
             );
@@ -1350,26 +1504,39 @@ const AppContent = () => {
                 await retryConnection();
 
             if (connected) {
+
                 console.log(
                     "✅ [App] Network restored"
                 );
+
             } else {
+
                 console.warn(
                     "🔴 [App] Network still unavailable"
                 );
+
             }
 
             return connected;
         };
 
+    // ==========================================================
+    // EFFECTIVE NETWORK ERROR
+    // ==========================================================
+
     const effectiveNetworkError =
         contextNetworkError ||
         axiosNetworkError;
+
+    // ==========================================================
+    // OFFLINE
+    // ==========================================================
 
     if (
         isOffline ||
         !isOnline
     ) {
+
         const error =
             effectiveNetworkError ||
             {
@@ -1408,11 +1575,16 @@ const AppContent = () => {
         );
     }
 
+    // ==========================================================
+    // NETWORK ERROR
+    // ==========================================================
+
     if (
         effectiveNetworkError &&
         isOnline &&
         !isOffline
     ) {
+
         return (
             <NetworkErrorPage
                 mode={
@@ -1441,8 +1613,17 @@ const AppContent = () => {
         );
     }
 
+    // ==========================================================
+    // MAIN
+    // ==========================================================
+
     return (
         <>
+
+            {/* ==================================================
+                ROUTE LOADING
+            ================================================== */}
+
             {routeLoading && (
                 <LoadingSpinner
                     size={72}
@@ -1453,21 +1634,34 @@ const AppContent = () => {
                 />
             )}
 
+            {/* ==================================================
+                SCROLL TOP
+            ================================================== */}
+
             <ScrollToTop />
 
+            {/* ==================================================
+                ROUTER
+            ================================================== */}
+
             <LazyErrorBoundary>
+
                 <Suspense
                     fallback={
                         <SuspenseLoading />
                     }
                 >
+
                     {isAdminDomain ? (
                         <AdminRoutesComponent />
                     ) : (
                         <UserRoutesComponent />
                     )}
+
                 </Suspense>
+
             </LazyErrorBoundary>
+
         </>
     );
 };
@@ -1477,22 +1671,32 @@ const AppContent = () => {
 // ============================================================
 
 function App() {
+
     const isAdminDomain =
-        window.location.hostname === "admin.quangdungcinema.id.vn";
+        window.location.hostname ===
+        "admin.quangdungcinema.id.vn";
 
     return (
         <RouteLoadingProvider>
+
             <NetworkProvider>
+
                 {isAdminDomain ? (
+
                     <AdminAuthProvider>
                         <AppContent />
                     </AdminAuthProvider>
+
                 ) : (
+
                     <AuthProvider>
                         <AppContent />
                     </AuthProvider>
+
                 )}
+
             </NetworkProvider>
+
         </RouteLoadingProvider>
     );
 }
