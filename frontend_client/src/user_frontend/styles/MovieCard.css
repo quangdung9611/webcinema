@@ -1,9 +1,12 @@
 /* ============================================================
    FILM CARD – SILVER PREMIUM
+   V2: BỎ HOVER OVERLAY — 2 NÚT LUÔN HIỆN
    SỬ DỤNG 100% BIẾN TỪ INDEX.CSS
    ============================================================ */
 
-/* BASE CARD */
+/* ============================================================
+   BASE CARD
+============================================================ */
 .film-card {
     position: relative;
     width: 100%;
@@ -11,12 +14,10 @@
     cursor: pointer;
     border-radius: var(--radius-md);
 
-    /* GPU acceleration */
     transform: translateZ(0);
     transform-style: preserve-3d;
     will-change: transform, opacity;
 
-    /* Animation xuất hiện */
     opacity: 0;
     transform: translateY(40px) scale(0.95);
     transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
@@ -28,7 +29,9 @@
     transform: translateY(0) scale(1);
 }
 
-/* INNER CARD */
+/* ============================================================
+   INNER CARD
+============================================================ */
 .film-card__inner {
     position: relative;
     overflow: hidden;
@@ -57,7 +60,9 @@
     box-shadow: var(--card-shadow-hover);
 }
 
-/* BORDER GLOW SHIMMER */
+/* ============================================================
+   BORDER GLOW SHIMMER
+============================================================ */
 .film-card__border-glow {
     position: absolute;
     inset: -2px;
@@ -94,7 +99,9 @@
     100% { background-position: 300% 0%; }
 }
 
-/* POSTER */
+/* ============================================================
+   POSTER
+============================================================ */
 .film-card__poster {
     position: relative;
     overflow: hidden;
@@ -140,16 +147,16 @@
     opacity: 1;
 }
 
-/* Gradient overlay dưới cùng */
+/* Gradient dưới poster */
 .film-card__poster::before {
     content: "";
     position: absolute;
     inset: 0;
     background: linear-gradient(
         to top,
-        rgba(0, 0, 0, 0.7) 0%,
-        rgba(0, 0, 0, 0.10) 40%,
-        transparent 70%
+        rgba(0, 0, 0, 0.55) 0%,
+        rgba(0, 0, 0, 0.08) 35%,
+        transparent 65%
     );
     z-index: 3;
     pointer-events: none;
@@ -157,10 +164,12 @@
 }
 
 .film-card--hover .film-card__poster::before {
-    opacity: 0.6;
+    opacity: 0.7;
 }
 
-/* AGE BADGE */
+/* ============================================================
+   AGE BADGE
+============================================================ */
 .film-card__age {
     position: absolute;
     top: 14px;
@@ -184,7 +193,9 @@
     box-shadow: 0 6px 24px rgba(220, 38, 38, 0.5);
 }
 
-/* BADGE HOT / NEW */
+/* ============================================================
+   BADGE HOT / NEW
+============================================================ */
 .film-card__badge {
     position: absolute;
     top: 14px;
@@ -219,123 +230,28 @@
 }
 
 /* ============================================================
-   ACTION BUTTONS OVERLAY - XUẤT HIỆN KHI HOVER
-   ============================================================ */
-.film-card__actions-overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 6;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(180deg, rgba(5, 6, 7, 0.3) 0%, rgba(5, 6, 7, 0.75) 100%);
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
-    opacity: 0;
-    transition: opacity var(--transition-normal),
-                backdrop-filter var(--transition-normal);
-    pointer-events: none;
-}
-
-.film-card--hover .film-card__actions-overlay {
-    opacity: 1;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    pointer-events: auto;
-}
-
-.film-card__actions-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-    transform: translateY(15px) scale(0.92);
-    opacity: 0;
-    transition: transform var(--transition-normal),
-                opacity var(--transition-normal);
-}
-
-.film-card--hover .film-card__actions-wrapper {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-}
-
-.film-card__action-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-sm);
-    padding: 10px 24px;
-    border-radius: var(--radius-round);
-    border: none;
-    font-family: var(--font-primary);
-    font-size: var(--font-size-h6);
-    font-weight: var(--fw-bold);
-    letter-spacing: 0.4px;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    width: 100%;
-    min-width: 140px;
-}
-
-.film-card__action-btn svg {
-    flex-shrink: 0;
-}
-
-/* Nút Xem chi tiết - Silver */
-.film-card__action-btn.btn-detail {
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--silver-light);
-    border: var(--border-premium);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-}
-
-.film-card__action-btn.btn-detail:hover {
-    background: rgba(255, 255, 255, 0.18);
-    border-color: var(--silver-primary);
-    transform: scale(1.04);
-    box-shadow: 0 8px 30px rgba(255, 255, 255, 0.08);
-}
-
-/* Nút Đặt vé - Premium Gradient */
-.film-card__action-btn.btn-booking {
-    background: var(--premium-gradient);
-    color: var(--bg-primary);
-    box-shadow: var(--btn-silver-shadow);
-}
-
-.film-card__action-btn.btn-booking:hover {
-    transform: scale(1.04);
-    box-shadow: 0 8px 30px rgba(159, 183, 210, 0.4);
-}
-
-.film-card__action-btn.btn-booking:active,
-.film-card__action-btn.btn-detail:active {
-    transform: scale(0.95);
-}
-
-/* ============================================================
-   INFO – CHỈ GIỮ TÊN (H3) VÀ PHỤ ĐỀ
-   ============================================================ */
+   INFO SECTION
+============================================================ */
 .film-card__info {
     position: relative;
     z-index: 3;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 18px 16px 22px;
+    justify-content: flex-start;
+    padding: 16px 14px 14px;
     background: var(--bg-card);
     flex: 1;
     transform: translateZ(20px);
     text-align: center;
-    gap: 2px;
+    gap: 8px;
 }
 
-/* TÊN PHIM – H3, TO, NỔI BẬT */
+/* ============================================================
+   TITLE
+============================================================ */
 .film-card__title {
-    font-size: var(--font-size-h3);
+    font-size: var(--font-size-h4);
     font-weight: var(--fw-extrabold);
     line-height: 1.3;
     color: var(--text-heading);
@@ -344,11 +260,13 @@
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    min-height: 2.6em;
+    cursor: pointer;
     transition: all var(--transition-normal);
     text-shadow: 0 0 10px rgba(232, 232, 232, 0.1);
+    width: 100%;
 }
 
-/* Hover: đổi màu gradient bạc */
 .film-card--hover .film-card__title {
     background: linear-gradient(135deg, var(--silver-primary), var(--silver-light), var(--silver-primary));
     background-size: 200% 200%;
@@ -364,21 +282,91 @@
     50% { background-position: 100% 50%; }
 }
 
-/* PHỤ ĐỀ */
+/* ============================================================
+   SUBTITLE
+============================================================ */
 .film-card__subtitle {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 4px;
     color: var(--text-muted);
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     flex-wrap: wrap;
-    margin-top: 2px;
+    width: 100%;
+    min-height: 1.2em;
+}
+
+/* ============================================================
+   ACTION BUTTONS — LUÔN HIỆN
+============================================================ */
+.film-card__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    margin-top: auto;
+    padding-top: 6px;
+}
+
+.film-card__action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    border: none;
+    font-family: var(--font-primary);
+    font-size: 0.72rem;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    white-space: nowrap;
+}
+
+.film-card__action-btn svg {
+    flex-shrink: 0;
+}
+
+/* -------- Nút "Xem chi tiết" — Outline Silver -------- */
+.film-card__action-btn.btn-detail {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--silver-primary);
+    border: var(--border-premium);
+}
+
+.film-card__action-btn.btn-detail:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: var(--silver-primary);
+    color: var(--silver-light);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+}
+
+/* -------- Nút "Đặt vé" — Silver Gradient -------- */
+.film-card__action-btn.btn-booking {
+    background: var(--premium-gradient);
+    color: var(--bg-primary);
+    box-shadow: var(--btn-silver-shadow);
+}
+
+.film-card__action-btn.btn-booking:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.08);
+    box-shadow: 0 8px 24px rgba(159, 183, 210, 0.4);
+}
+
+.film-card__action-btn:active {
+    transform: scale(0.97);
 }
 
 /* ============================================================
    SPARKLE PARTICLES
-   ============================================================ */
+============================================================ */
 .film-card__sparkles {
     position: absolute;
     inset: 0;
@@ -410,7 +398,7 @@
 
 /* ============================================================
    NO POSTER
-   ============================================================ */
+============================================================ */
 .film-card__no-poster {
     width: 100%;
     height: 100%;
@@ -424,7 +412,7 @@
 
 /* ============================================================
    OPEN ANIMATION
-   ============================================================ */
+============================================================ */
 .film-card--opening {
     animation: cardOpen 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     z-index: 100;
@@ -437,50 +425,91 @@
 }
 
 /* ============================================================
-   RESPONSIVE
-   ============================================================ */
+   RESPONSIVE — 768px
+============================================================ */
 @media (max-width: 768px) {
-    .film-card__info { padding: 14px 12px 18px; }
-    .film-card__subtitle { font-size: 0.6875rem; }
-    .film-card__age { top: 10px; right: 10px; font-size: 0.6rem; padding: 4px 10px; }
-    .film-card__badge { top: 10px; left: 10px; font-size: 0.5rem; padding: 3px 10px; }
-    .film-card__border-glow,
-    .film-card__depth-overlay {
-        display: none;
-    }
-
-    .film-card__action-btn {
-        padding: 8px 16px;
-        font-size: calc(var(--font-size-h6) * 0.86);
-        min-width: 110px;
-    }
-    .film-card__action-btn svg {
-        width: 16px;
-        height: 16px;
-    }
-}
-
-@media (max-width: 480px) {
-    .film-card__info { padding: 10px 10px 14px; }
-    .film-card__subtitle { font-size: 0.625rem; }
-    .film-card__age { top: 8px; right: 8px; font-size: 0.5rem; padding: 3px 8px; }
-    .film-card__badge { top: 8px; left: 8px; font-size: 0.45rem; padding: 2px 8px; }
-    .film-card__border-glow,
-    .film-card__depth-overlay {
-        display: none;
-    }
-
-    .film-card__actions-wrapper {
+    .film-card__info {
+        padding: 12px 10px 10px;
         gap: 6px;
     }
+    .film-card__title {
+        font-size: 0.85rem;
+        min-height: 2.4em;
+    }
+    .film-card__subtitle {
+        font-size: 0.65rem;
+    }
+    .film-card__age {
+        top: 10px;
+        right: 10px;
+        font-size: 0.6rem;
+        padding: 3px 9px;
+    }
+    .film-card__badge {
+        top: 10px;
+        left: 10px;
+        font-size: 0.5rem;
+        padding: 2px 8px;
+    }
+    .film-card__border-glow,
+    .film-card__depth-overlay {
+        display: none;
+    }
+
     .film-card__action-btn {
-        padding: 6px 12px;
-        font-size: calc(var(--font-size-h6) * 0.72);
-        min-width: 80px;
+        padding: 7px 8px;
+        font-size: 0.66rem;
         gap: 4px;
     }
     .film-card__action-btn svg {
         width: 14px;
         height: 14px;
+    }
+}
+
+/* ============================================================
+   RESPONSIVE — 480px
+============================================================ */
+@media (max-width: 480px) {
+    .film-card__info {
+        padding: 10px 8px 8px;
+        gap: 5px;
+    }
+    .film-card__title {
+        font-size: 0.75rem;
+        min-height: 2.2em;
+    }
+    .film-card__subtitle {
+        font-size: 0.58rem;
+    }
+    .film-card__age {
+        top: 8px;
+        right: 8px;
+        font-size: 0.5rem;
+        padding: 2px 7px;
+    }
+    .film-card__badge {
+        top: 8px;
+        left: 8px;
+        font-size: 0.45rem;
+        padding: 2px 6px;
+    }
+    .film-card__border-glow,
+    .film-card__depth-overlay {
+        display: none;
+    }
+
+    .film-card__actions {
+        gap: 4px;
+        padding-top: 4px;
+    }
+    .film-card__action-btn {
+        padding: 6px 6px;
+        font-size: 0.6rem;
+        gap: 3px;
+    }
+    .film-card__action-btn svg {
+        width: 12px;
+        height: 12px;
     }
 }

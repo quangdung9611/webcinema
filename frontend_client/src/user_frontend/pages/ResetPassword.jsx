@@ -1,7 +1,14 @@
-// ResetPassword.jsx
+// user_frontend/pages/ResetPassword.jsx
+// ============================================================
+// RESET PASSWORD — PREMIUM CINEMATIC SILVER
+// Layout: form card ở giữa màn hình
+// Giữ nguyên 100% logic
+// ============================================================
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../../api/api';
+
 import {
     LockKeyhole,
     AlertCircle,
@@ -12,11 +19,15 @@ import {
     Eye,
     EyeOff,
     Loader2,
+    Film,
+    ShieldCheck,
+    KeyRound,
 } from 'lucide-react';
+
 import LoadingButton from '../components/LoadingButton';
 import ResetPasswordSuccessModal from '../components/ResetPasswordSuccessModal';
 import useOTPGuard from '../../hooks/useOTPGuard';
-import '../styles/UserAuth.css';
+import '../styles/ResetPassword.css';
 
 const ResetPassword = () => {
     const navigate = useNavigate();
@@ -26,20 +37,22 @@ const ResetPassword = () => {
     const otp = location.state?.otp || '';
     const purpose = 'RESET_PASSWORD';
 
-    // 🔥 SỬ DỤNG useOTPGuard
     const { safeNavigate } = useOTPGuard(email, purpose, {
         onInvalidate: () => {
-            console.log('[RESET PASSWORD] OTP đã bị vô hiệu do rời trang');
-        }
+            console.log(
+                '[RESET PASSWORD] OTP đã bị vô hiệu do rời trang'
+            );
+        },
     });
 
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState(null);       // { icon, text }
+    const [message, setMessage] = useState(null);
     const [messageType, setMessageType] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] =
+        useState(false);
     const [fieldErrors, setFieldErrors] = useState({});
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [isCheckingOTP, setIsCheckingOTP] = useState(true);
@@ -48,14 +61,13 @@ const ResetPassword = () => {
     const [isRateLimited, setIsRateLimited] = useState(false);
     const [rateLimitTimeLeft, setRateLimitTimeLeft] = useState(0);
 
-    // Helper tạo message object
     const makeMessage = (IconComponent, text) => ({
         icon: <IconComponent size={18} />,
         text,
     });
 
     // ============================================================
-    // 🔥 KIỂM TRA OTP CÒN HIỆU LỰC KHI VÀO TRANG
+    // CHECK OTP ON MOUNT
     // ============================================================
     useEffect(() => {
         const checkOTP = async () => {
@@ -66,33 +78,44 @@ const ResetPassword = () => {
 
             try {
                 setIsCheckingOTP(true);
-                const response = await api.get('/api/auth/check-otp-ttl', {
-                    params: { email, purpose }
-                });
+                const response = await api.get(
+                    '/api/auth/check-otp-ttl',
+                    {
+                        params: { email, purpose },
+                    }
+                );
 
                 const data = response.data?.data;
                 if (data?.exists && data?.expiresIn > 0) {
                     setIsOtpValid(true);
                 } else {
-                    // OTP đã hết hạn hoặc không tồn tại
-                    setMessage(makeMessage(
-                        XCircle,
-                        'Mã OTP đã hết hạn hoặc không tồn tại. Vui lòng yêu cầu mã mới.'
-                    ));
+                    setMessage(
+                        makeMessage(
+                            XCircle,
+                            'Mã OTP đã hết hạn hoặc không tồn tại. Vui lòng yêu cầu mã mới.'
+                        )
+                    );
                     setMessageType('error');
-                    // Sau 3 giây chuyển về forgot-password
                     setTimeout(() => {
                         safeNavigate('/forgot-password', {
-                            state: { error: 'Mã OTP đã hết hạn. Vui lòng gửi lại.' }
+                            state: {
+                                error:
+                                    'Mã OTP đã hết hạn. Vui lòng gửi lại.',
+                            },
                         });
                     }, 3000);
                 }
             } catch (error) {
-                console.error('[RESET PASSWORD] Check OTP error:', error);
-                setMessage(makeMessage(
-                    XCircle,
-                    'Không thể kiểm tra OTP. Vui lòng thử lại.'
-                ));
+                console.error(
+                    '[RESET PASSWORD] Check OTP error:',
+                    error
+                );
+                setMessage(
+                    makeMessage(
+                        XCircle,
+                        'Không thể kiểm tra OTP. Vui lòng thử lại.'
+                    )
+                );
                 setMessageType('error');
                 setTimeout(() => {
                     safeNavigate('/forgot-password');
@@ -109,7 +132,7 @@ const ResetPassword = () => {
         if (!isRateLimited || rateLimitTimeLeft <= 0) return;
 
         const timer = setInterval(() => {
-            setRateLimitTimeLeft(prev => {
+            setRateLimitTimeLeft((prev) => {
                 if (prev <= 1) {
                     setIsRateLimited(false);
                     setMessage(null);
@@ -126,12 +149,18 @@ const ResetPassword = () => {
         if (field === 'newPassword') {
             setNewPassword(value);
             if (fieldErrors.newPassword) {
-                setFieldErrors(prev => ({ ...prev, newPassword: '' }));
+                setFieldErrors((prev) => ({
+                    ...prev,
+                    newPassword: '',
+                }));
             }
         } else if (field === 'confirmPassword') {
             setConfirmPassword(value);
             if (fieldErrors.confirmPassword) {
-                setFieldErrors(prev => ({ ...prev, confirmPassword: '' }));
+                setFieldErrors((prev) => ({
+                    ...prev,
+                    confirmPassword: '',
+                }));
             }
         }
         if (message) setMessage(null);
@@ -144,10 +173,12 @@ const ResetPassword = () => {
         setFieldErrors({});
 
         if (isRateLimited) {
-            setMessage(makeMessage(
-                AlertTriangle,
-                `Vui lòng đợi ${rateLimitTimeLeft} giây trước khi thử lại.`
-            ));
+            setMessage(
+                makeMessage(
+                    AlertTriangle,
+                    `Vui lòng đợi ${rateLimitTimeLeft} giây trước khi thử lại.`
+                )
+            );
             setMessageType('error');
             return;
         }
@@ -159,7 +190,8 @@ const ResetPassword = () => {
             errors.newPassword = 'Vui lòng nhập mật khẩu mới';
             hasError = true;
         } else if (newPassword.length < 8) {
-            errors.newPassword = 'Mật khẩu phải có ít nhất 8 ký tự';
+            errors.newPassword =
+                'Mật khẩu phải có ít nhất 8 ký tự';
             hasError = true;
         }
 
@@ -167,7 +199,8 @@ const ResetPassword = () => {
             errors.confirmPassword = 'Vui lòng xác nhận mật khẩu';
             hasError = true;
         } else if (newPassword !== confirmPassword) {
-            errors.confirmPassword = 'Mật khẩu xác nhận không khớp';
+            errors.confirmPassword =
+                'Mật khẩu xác nhận không khớp';
             hasError = true;
         }
 
@@ -179,53 +212,77 @@ const ResetPassword = () => {
         try {
             setLoading(true);
 
-            const res = await api.post('/api/auth/verify-otp-and-reset', {
-                email,
-                otp,
-                newPassword
-            });
+            const res = await api.post(
+                '/api/auth/verify-otp-and-reset',
+                {
+                    email,
+                    otp,
+                    newPassword,
+                }
+            );
 
-            setMessage(makeMessage(
-                CheckCircle,
-                res.data.message || 'Đặt lại mật khẩu thành công!'
-            ));
+            setMessage(
+                makeMessage(
+                    CheckCircle,
+                    res.data.message ||
+                        'Đặt lại mật khẩu thành công!'
+                )
+            );
             setMessageType('success');
             setShowSuccessModal(true);
-
         } catch (err) {
             const status = err.response?.status;
             const field = err.response?.data?.field;
             const errorData = err.response?.data || {};
-            const errorMessage = errorData.message || 'Không thể đặt lại mật khẩu';
+            const errorMessage =
+                errorData.message ||
+                'Không thể đặt lại mật khẩu';
 
             if (field === 'newPassword') {
-                setFieldErrors({ newPassword: errorMessage });
+                setFieldErrors({
+                    newPassword: errorMessage,
+                });
             } else if (field === 'confirmPassword') {
-                setFieldErrors({ confirmPassword: errorMessage });
+                setFieldErrors({
+                    confirmPassword: errorMessage,
+                });
             } else if (status === 404) {
-                setMessage(makeMessage(
-                    XCircle,
-                    'Email này chưa được đăng ký trong hệ thống.'
-                ));
+                setMessage(
+                    makeMessage(
+                        XCircle,
+                        'Email này chưa được đăng ký trong hệ thống.'
+                    )
+                );
                 setMessageType('error');
             } else if (status === 429) {
-                const remainingSeconds = errorData.data?.remainingSeconds || 60;
-                const maxAttempts = errorData.data?.maxAttempts || 3;
-                setMessage(makeMessage(
-                    AlertTriangle,
-                    `Bạn chỉ được gửi tối đa ${maxAttempts} lần. Vui lòng thử lại sau ${remainingSeconds} giây.`
-                ));
+                const remainingSeconds =
+                    errorData.data?.remainingSeconds || 60;
+                const maxAttempts =
+                    errorData.data?.maxAttempts || 3;
+                setMessage(
+                    makeMessage(
+                        AlertTriangle,
+                        `Bạn chỉ được gửi tối đa ${maxAttempts} lần. Vui lòng thử lại sau ${remainingSeconds} giây.`
+                    )
+                );
                 setMessageType('error');
                 setIsRateLimited(true);
                 setRateLimitTimeLeft(remainingSeconds);
-            } else if (status === 400 && errorMessage?.toLowerCase().includes('otp')) {
-                setMessage(makeMessage(
-                    XCircle,
-                    'Mã OTP không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu mã mới.'
-                ));
+            } else if (
+                status === 400 &&
+                errorMessage?.toLowerCase().includes('otp')
+            ) {
+                setMessage(
+                    makeMessage(
+                        XCircle,
+                        'Mã OTP không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu mã mới.'
+                    )
+                );
                 setMessageType('error');
             } else {
-                setMessage(makeMessage(AlertCircle, errorMessage));
+                setMessage(
+                    makeMessage(AlertCircle, errorMessage)
+                );
                 setMessageType('error');
             }
         } finally {
@@ -250,136 +307,290 @@ const ResetPassword = () => {
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
-    // 🔥 HIỂN THỊ LOADING KHI KIỂM TRA OTP
+    // ============================================================
+    // LOADING STATE
+    // ============================================================
     if (isCheckingOTP) {
         return (
-            <div className="auth-container">
-                <div className="auth-card">
-                    <div className="forgot-icon-wrapper">
-                        <LockKeyhole size={42} className="forgot-icon" />
-                    </div>
-                    <h2>ĐẶT LẠI MẬT KHẨU</h2>
-                    <p className="auth-subtitle auth-checking">
-                        <Loader2 size={16} className="spin-icon" />
-                        Đang kiểm tra mã OTP...
-                    </p>
-                    <div className="loading-spinner">
-                        <div className="spinner"></div>
+            <div className="reset-page">
+                <div className="reset-page__logo">
+                    <Film size={20} strokeWidth={2.4} />
+                    <span>Cinema Star</span>
+                </div>
+
+                <div className="reset-shell">
+                    <div className="reset-card">
+                        <div className="reset-card__header">
+                            <div className="reset-card__icon">
+                                <LockKeyhole
+                                    size={30}
+                                    strokeWidth={2}
+                                />
+                            </div>
+
+                            <div className="reset-card__eyebrow">
+                                RESET PASSWORD
+                            </div>
+
+                            <h1 className="reset-card__title">
+                                ĐẶT LẠI MẬT KHẨU
+                            </h1>
+
+                            <p className="reset-card__subtitle">
+                                Đang kiểm tra mã OTP...
+                            </p>
+                        </div>
+
+                        <div className="reset-loading">
+                            <Loader2
+                                size={20}
+                                className="reset-spin"
+                            />
+                            <span>Đang xác thực OTP...</span>
+                        </div>
                     </div>
                 </div>
             </div>
         );
     }
 
-    // 🔥 NẾU OTP KHÔNG HỢP LỆ, KHÔNG HIỂN THỊ FORM
     if (!isOtpValid) {
         return null;
     }
 
+    // ============================================================
+    // MAIN FORM
+    // ============================================================
     return (
-        <div className="auth-container">
-            <div className="auth-card">
-                <div className="forgot-icon-wrapper">
-                    <LockKeyhole size={42} className="forgot-icon" />
-                </div>
+        <div className="reset-page">
+            <div className="reset-page__logo">
+                <Film size={20} strokeWidth={2.4} />
+                <span>Cinema Star</span>
+            </div>
 
-                <h2>ĐẶT LẠI MẬT KHẨU</h2>
-                <p className="auth-subtitle">
-                    Nhập mật khẩu mới cho tài khoản <strong className="text-highlight">{email}</strong>
-                </p>
+            <div className="reset-shell">
+                <div className="reset-card">
+                    <div className="reset-card__header">
+                        <div className="reset-card__icon">
+                            <LockKeyhole
+                                size={30}
+                                strokeWidth={2}
+                            />
+                        </div>
 
-                {message && (
-                    <div className={`forgot-message ${messageType}`}>
-                        {message.icon}
-                        <span>{message.text}</span>
+                        <div className="reset-card__eyebrow">
+                            RESET PASSWORD
+                        </div>
+
+                        <h1 className="reset-card__title">
+                            ĐẶT LẠI MẬT KHẨU
+                        </h1>
+
+                        <p className="reset-card__subtitle">
+                            Nhập mật khẩu mới cho tài khoản{' '}
+                            <strong className="reset-card__email">
+                                {email}
+                            </strong>
+                        </p>
                     </div>
-                )}
 
-                <div className="auth-form-wrapper">
-                    <form onSubmit={handleSubmit} noValidate>
-                        <div className="form-group">
-                            <label>Mật khẩu mới</label>
-                            <div className="password-wrapper">
+                    {message && (
+                        <div
+                            className={`reset-alert reset-alert--${messageType}`}
+                        >
+                            {message.icon}
+                            <span>{message.text}</span>
+                        </div>
+                    )}
+
+                    <form
+                        className="reset-form"
+                        onSubmit={handleSubmit}
+                        noValidate
+                    >
+                        {/* NEW PASSWORD */}
+                        <div className="reset-field">
+                            <label
+                                htmlFor="reset-new-password"
+                                className="reset-field__label"
+                            >
+                                <span>Mật khẩu mới</span>
+                                <small>Tối thiểu 8 ký tự</small>
+                            </label>
+
+                            <div className="reset-field__wrap">
+                                <LockKeyhole
+                                    className="reset-field__icon"
+                                    size={16}
+                                    strokeWidth={2}
+                                />
+
                                 <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    className={`auth-input ${fieldErrors.newPassword ? 'input-error' : ''}`}
-                                    placeholder="Nhập mật khẩu mới (tối thiểu 8 ký tự)"
+                                    id="reset-new-password"
+                                    type={
+                                        showPassword
+                                            ? 'text'
+                                            : 'password'
+                                    }
+                                    className={`reset-field__input ${
+                                        fieldErrors.newPassword
+                                            ? 'reset-field__input--error'
+                                            : ''
+                                    }`}
+                                    placeholder="Nhập mật khẩu mới"
                                     value={newPassword}
-                                    onChange={(e) => handleFieldChange('newPassword', e.target.value)}
-                                    disabled={loading || isRateLimited}
+                                    onChange={(e) =>
+                                        handleFieldChange(
+                                            'newPassword',
+                                            e.target.value
+                                        )
+                                    }
+                                    disabled={
+                                        loading || isRateLimited
+                                    }
                                     autoComplete="new-password"
                                 />
+
                                 <button
                                     type="button"
-                                    className="toggle-password"
-                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="reset-field__toggle"
+                                    onClick={() =>
+                                        setShowPassword(
+                                            (prev) => !prev
+                                        )
+                                    }
                                     tabIndex="-1"
-                                    disabled={loading || isRateLimited}
+                                    disabled={
+                                        loading || isRateLimited
+                                    }
+                                    aria-label="Hiện hoặc ẩn mật khẩu"
                                 >
-                                    {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                                    {showPassword ? (
+                                        <Eye size={16} />
+                                    ) : (
+                                        <EyeOff size={16} />
+                                    )}
                                 </button>
                             </div>
+
                             {fieldErrors.newPassword && (
-                                <span className="error-text">{fieldErrors.newPassword}</span>
+                                <span className="reset-field__error">
+                                    {fieldErrors.newPassword}
+                                </span>
                             )}
                         </div>
 
-                        <div className="form-group">
-                            <label>Xác nhận mật khẩu</label>
-                            <div className="password-wrapper">
+                        {/* CONFIRM PASSWORD */}
+                        <div className="reset-field">
+                            <label
+                                htmlFor="reset-confirm-password"
+                                className="reset-field__label"
+                            >
+                                <span>Xác nhận mật khẩu</span>
+                                <small>Nhập lại chính xác</small>
+                            </label>
+
+                            <div className="reset-field__wrap">
+                                <LockKeyhole
+                                    className="reset-field__icon"
+                                    size={16}
+                                    strokeWidth={2}
+                                />
+
                                 <input
-                                    type={showConfirmPassword ? 'text' : 'password'}
-                                    className={`auth-input ${fieldErrors.confirmPassword ? 'input-error' : ''}`}
+                                    id="reset-confirm-password"
+                                    type={
+                                        showConfirmPassword
+                                            ? 'text'
+                                            : 'password'
+                                    }
+                                    className={`reset-field__input ${
+                                        fieldErrors.confirmPassword
+                                            ? 'reset-field__input--error'
+                                            : ''
+                                    }`}
                                     placeholder="Nhập lại mật khẩu"
                                     value={confirmPassword}
-                                    onChange={(e) => handleFieldChange('confirmPassword', e.target.value)}
-                                    disabled={loading || isRateLimited}
+                                    onChange={(e) =>
+                                        handleFieldChange(
+                                            'confirmPassword',
+                                            e.target.value
+                                        )
+                                    }
+                                    disabled={
+                                        loading || isRateLimited
+                                    }
                                     autoComplete="new-password"
                                 />
+
                                 <button
                                     type="button"
-                                    className="toggle-password"
-                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="reset-field__toggle"
+                                    onClick={() =>
+                                        setShowConfirmPassword(
+                                            (prev) => !prev
+                                        )
+                                    }
                                     tabIndex="-1"
-                                    disabled={loading || isRateLimited}
+                                    disabled={
+                                        loading || isRateLimited
+                                    }
+                                    aria-label="Hiện hoặc ẩn mật khẩu"
                                 >
-                                    {showConfirmPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                                    {showConfirmPassword ? (
+                                        <Eye size={16} />
+                                    ) : (
+                                        <EyeOff size={16} />
+                                    )}
                                 </button>
                             </div>
+
                             {fieldErrors.confirmPassword && (
-                                <span className="error-text">{fieldErrors.confirmPassword}</span>
+                                <span className="reset-field__error">
+                                    {fieldErrors.confirmPassword}
+                                </span>
                             )}
                         </div>
 
-                        <div className="button-group">
-                            <LoadingButton
-                                type="submit"
-                                loading={loading}
-                                loadingText="Đang xử lý..."
-                                disabled={loading || isRateLimited}
-                                className="btn-user btn-user-silver"
-                                spinnerColor="#000000"
-                            >
-                                {isRateLimited ? (
-                                    `ĐANG CHỜ (${formatTime(rateLimitTimeLeft)})`
-                                ) : (
-                                    'XÁC NHẬN ĐẶT LẠI'
-                                )}
-                            </LoadingButton>
-                        </div>
+                        {/* SUBMIT */}
+                        <LoadingButton
+                            type="submit"
+                            loading={loading}
+                            loadingText="ĐANG XỬ LÝ..."
+                            disabled={loading || isRateLimited}
+                            className="reset-submit"
+                            spinnerColor="#0a0a0b"
+                        >
+                            {isRateLimited ? (
+                                `ĐANG CHỜ (${formatTime(
+                                    rateLimitTimeLeft
+                                )})`
+                            ) : (
+                                <>
+                                    <span>XÁC NHẬN ĐẶT LẠI</span>
+                                    <KeyRound
+                                        size={17}
+                                        strokeWidth={2.4}
+                                    />
+                                </>
+                            )}
+                        </LoadingButton>
                     </form>
-                </div>
 
-                <div className="auth-footer">
-                    <button
-                        type="button"
-                        className="btn-link back-btn"
-                        onClick={() => safeNavigate('/forgot-password')}
-                        disabled={loading}
-                    >
-                        <ArrowLeft size={16} />
-                        Quay lại
-                    </button>
+                    {/* FOOTER */}
+                    <div className="reset-footer">
+                        <button
+                            type="button"
+                            className="reset-footer__back"
+                            onClick={() =>
+                                safeNavigate('/forgot-password')
+                            }
+                            disabled={loading}
+                        >
+                            <ArrowLeft size={14} strokeWidth={2.4} />
+                            QUAY LẠI
+                        </button>
+                    </div>
                 </div>
             </div>
 

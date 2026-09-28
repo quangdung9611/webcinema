@@ -1,0 +1,1246 @@
+
+/* ============================================================
+   QUANG DŨNG CINEMA
+   UNIVERSAL CINEMATIC PAGE TRANSITION
+   ============================================================ */
+
+/* ============================================================
+   ROOT
+   ============================================================ */
+
+.content-reveal {
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+
+    width: 100vw;
+    height: 100vh;
+
+    overflow: hidden;
+
+    background: #000;
+
+    pointer-events: all;
+
+    isolation: isolate;
+
+    opacity: 1;
+
+    --silver: #f2f4f7;
+    --silver-soft: rgba(230, 235, 241, 0.75);
+    --silver-dim: rgba(190, 198, 208, 0.35);
+    --white: rgba(255, 255, 255, 0.95);
+
+    --ease-cinematic: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+
+/* ============================================================
+   BACKGROUND
+   ============================================================ */
+
+.content-reveal__background {
+    position: absolute;
+    inset: 0;
+
+    background:
+        radial-gradient(
+            circle at 50% 50%,
+            rgba(255, 255, 255, 0.035) 0%,
+            rgba(255, 255, 255, 0.018) 16%,
+            rgba(0, 0, 0, 0.94) 58%,
+            #000 100%
+        );
+
+    opacity: 0;
+
+    transform: scale(1.08);
+
+    transition:
+        opacity 0.65s ease,
+        transform 1.1s var(--ease-cinematic);
+}
+
+
+/* ============================================================
+   VIGNETTE
+   ============================================================ */
+
+.content-reveal__vignette {
+    position: absolute;
+    inset: 0;
+
+    z-index: 2;
+
+    background:
+        radial-gradient(
+            ellipse at center,
+            transparent 20%,
+            rgba(0, 0, 0, 0.18) 48%,
+            rgba(0, 0, 0, 0.8) 100%
+        );
+
+    opacity: 0;
+
+    transition: opacity 0.8s ease;
+}
+
+
+/* ============================================================
+   GRAIN
+   ============================================================ */
+
+.content-reveal__grain {
+    position: absolute;
+    inset: -50%;
+
+    z-index: 20;
+
+    pointer-events: none;
+
+    opacity: 0;
+
+    background-image:
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
+
+    mix-blend-mode: overlay;
+
+    animation: contentRevealGrain 0.16s steps(2) infinite;
+}
+
+
+/* ============================================================
+   CINEMA BARS
+   ============================================================ */
+
+.content-reveal__bar {
+    position: absolute;
+
+    left: 0;
+
+    width: 100%;
+
+    z-index: 30;
+
+    background: #000;
+
+    transform: scaleY(0);
+}
+
+.content-reveal__bar--top {
+    top: 0;
+
+    height: clamp(28px, 6vh, 72px);
+
+    transform-origin: top;
+}
+
+.content-reveal__bar--bottom {
+    bottom: 0;
+
+    height: clamp(28px, 6vh, 72px);
+
+    transform-origin: bottom;
+}
+
+
+/* ============================================================
+   AMBIENT LIGHT
+   ============================================================ */
+
+.content-reveal__ambient-light {
+    position: absolute;
+
+    z-index: 3;
+
+    top: 50%;
+    left: 50%;
+
+    width: 42vw;
+    height: 42vw;
+
+    max-width: 760px;
+    max-height: 760px;
+
+    transform:
+        translate(-50%, -50%)
+        scale(0.35);
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(240, 244, 248, 0.12) 0%,
+            rgba(210, 218, 228, 0.045) 25%,
+            rgba(255, 255, 255, 0) 70%
+        );
+
+    filter: blur(12px);
+
+    opacity: 0;
+
+    transition:
+        opacity 0.8s ease,
+        transform 1.15s var(--ease-cinematic);
+}
+
+.content-reveal__ambient-light--left {
+    left: 10%;
+
+    width: 30vw;
+    height: 70vh;
+
+    background:
+        radial-gradient(
+            ellipse,
+            rgba(220, 226, 234, 0.055) 0%,
+            transparent 68%
+        );
+}
+
+.content-reveal__ambient-light--right {
+    left: 90%;
+
+    width: 30vw;
+    height: 70vh;
+
+    background:
+        radial-gradient(
+            ellipse,
+            rgba(220, 226, 234, 0.055) 0%,
+            transparent 68%
+        );
+}
+
+
+/* ============================================================
+   MAIN PORTAL
+   ============================================================ */
+
+.content-reveal__portal {
+    position: absolute;
+
+    inset: 0;
+
+    z-index: 10;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    perspective: 1000px;
+}
+
+
+/* ============================================================
+   FRAME
+   ============================================================ */
+
+.content-reveal__frame {
+    position: absolute;
+
+    width: min(72vw, 1100px);
+    height: min(72vh, 680px);
+
+    border: 1px solid rgba(225, 230, 236, 0.08);
+
+    opacity: 0;
+
+    transform:
+        scale(0.88)
+        perspective(900px)
+        rotateX(3deg);
+
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.012),
+        inset 0 0 80px rgba(255, 255, 255, 0.015);
+
+    transition:
+        opacity 0.45s ease,
+        transform 0.9s var(--ease-cinematic);
+}
+
+
+/* ============================================================
+   FRAME CORNERS
+   ============================================================ */
+
+.content-reveal__corner {
+    position: absolute;
+
+    width: 34px;
+    height: 34px;
+
+    border-color: rgba(235, 239, 244, 0.55);
+
+    opacity: 0;
+
+    transition:
+        opacity 0.4s ease,
+        width 0.7s var(--ease-cinematic),
+        height 0.7s var(--ease-cinematic);
+}
+
+.content-reveal__corner--tl {
+    top: -1px;
+    left: -1px;
+
+    border-top: 1px solid;
+    border-left: 1px solid;
+}
+
+.content-reveal__corner--tr {
+    top: -1px;
+    right: -1px;
+
+    border-top: 1px solid;
+    border-right: 1px solid;
+}
+
+.content-reveal__corner--bl {
+    bottom: -1px;
+    left: -1px;
+
+    border-bottom: 1px solid;
+    border-left: 1px solid;
+}
+
+.content-reveal__corner--br {
+    right: -1px;
+    bottom: -1px;
+
+    border-right: 1px solid;
+    border-bottom: 1px solid;
+}
+
+
+/* ============================================================
+   HORIZONTAL LIGHT
+   ============================================================ */
+
+.content-reveal__horizontal-light {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    width: 0;
+    height: 1px;
+
+    transform: translate(-50%, -50%);
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.15),
+            rgba(255, 255, 255, 0.9),
+            rgba(255, 255, 255, 0.15),
+            transparent
+        );
+
+    box-shadow:
+        0 0 18px rgba(230, 235, 240, 0.6),
+        0 0 45px rgba(220, 228, 236, 0.25);
+
+    opacity: 0;
+
+    transition:
+        width 0.85s var(--ease-cinematic),
+        opacity 0.4s ease;
+}
+
+
+/* ============================================================
+   VERTICAL LIGHT
+   ============================================================ */
+
+.content-reveal__vertical-light {
+    position: absolute;
+
+    top: 50%;
+    left: 50%;
+
+    width: 1px;
+    height: 0;
+
+    transform: translate(-50%, -50%);
+
+    background:
+        linear-gradient(
+            180deg,
+            transparent,
+            rgba(255, 255, 255, 0.12),
+            rgba(255, 255, 255, 0.7),
+            rgba(255, 255, 255, 0.12),
+            transparent
+        );
+
+    box-shadow:
+        0 0 18px rgba(230, 235, 240, 0.45),
+        0 0 50px rgba(220, 228, 236, 0.18);
+
+    opacity: 0;
+
+    transition:
+        height 0.9s var(--ease-cinematic),
+        opacity 0.4s ease;
+}
+
+
+/* ============================================================
+   SCAN LINE
+   ============================================================ */
+
+.content-reveal__scan-line {
+    position: absolute;
+
+    top: 0;
+    left: -15%;
+
+    width: 130%;
+    height: 1px;
+
+    z-index: 15;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.04) 18%,
+            rgba(255, 255, 255, 0.8) 50%,
+            rgba(255, 255, 255, 0.04) 82%,
+            transparent 100%
+        );
+
+    box-shadow:
+        0 0 14px rgba(255, 255, 255, 0.5),
+        0 0 35px rgba(230, 235, 240, 0.22);
+
+    opacity: 0;
+
+    transform: translateY(-20vh);
+
+    transition:
+        transform 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.25s ease;
+}
+
+
+/* ============================================================
+   PARTICLES
+   ============================================================ */
+
+.content-reveal__particles {
+    position: absolute;
+
+    inset: 0;
+
+    pointer-events: none;
+
+    opacity: 0;
+}
+
+.content-reveal__particle {
+    position: absolute;
+
+    width: 2px;
+    height: 2px;
+
+    border-radius: 50%;
+
+    background: rgba(235, 240, 245, 0.85);
+
+    box-shadow:
+        0 0 5px rgba(235, 240, 245, 0.75),
+        0 0 14px rgba(220, 228, 236, 0.35);
+
+    opacity: 0;
+
+    transform: scale(0.3);
+}
+
+
+/* Individual particles */
+
+.particle-1 {
+    top: 32%;
+    left: 27%;
+}
+
+.particle-2 {
+    top: 68%;
+    left: 32%;
+}
+
+.particle-3 {
+    top: 28%;
+    left: 68%;
+}
+
+.particle-4 {
+    top: 72%;
+    left: 71%;
+}
+
+.particle-5 {
+    top: 42%;
+    left: 18%;
+}
+
+.particle-6 {
+    top: 57%;
+    left: 82%;
+}
+
+.particle-7 {
+    top: 20%;
+    left: 48%;
+}
+
+.particle-8 {
+    top: 79%;
+    left: 53%;
+}
+
+.particle-9 {
+    top: 38%;
+    left: 76%;
+}
+
+.particle-10 {
+    top: 61%;
+    left: 23%;
+}
+
+.particle-11 {
+    top: 25%;
+    left: 57%;
+}
+
+.particle-12 {
+    top: 75%;
+    left: 43%;
+}
+
+
+/* ============================================================
+   ENERGY CORE
+   ============================================================ */
+
+.content-reveal__core {
+    position: absolute;
+
+    top: 50%;
+    left: 50%;
+
+    width: 90px;
+    height: 90px;
+
+    transform:
+        translate(-50%, -50%)
+        scale(0);
+
+    opacity: 0;
+}
+
+
+/* Outer energy */
+
+.content-reveal__core-outer {
+    position: absolute;
+
+    inset: -30px;
+
+    border-radius: 50%;
+
+    border: 1px solid rgba(235, 240, 245, 0.06);
+
+    box-shadow:
+        0 0 60px rgba(225, 232, 240, 0.08);
+}
+
+
+/* Main ring */
+
+.content-reveal__core-ring {
+    position: absolute;
+
+    inset: 0;
+
+    border-radius: 50%;
+
+    border: 1px solid rgba(238, 242, 246, 0.55);
+
+    box-shadow:
+        0 0 12px rgba(235, 240, 245, 0.25),
+        inset 0 0 12px rgba(235, 240, 245, 0.12);
+
+    animation:
+        contentRevealCoreSpin 2.4s linear infinite;
+}
+
+.content-reveal__core-ring--inner {
+    inset: 12px;
+
+    border-color: rgba(220, 227, 235, 0.3);
+
+    animation:
+        contentRevealCoreSpinReverse 1.8s linear infinite;
+}
+
+
+/* Core glow */
+
+.content-reveal__core-glow {
+    position: absolute;
+
+    inset: 20px;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(255, 255, 255, 0.9) 0%,
+            rgba(230, 236, 242, 0.38) 15%,
+            rgba(220, 228, 236, 0.08) 45%,
+            transparent 72%
+        );
+
+    filter: blur(2px);
+
+    animation: contentRevealCorePulse 1.25s ease-in-out infinite;
+}
+
+
+/* Core dot */
+
+.content-reveal__core-dot {
+    position: absolute;
+
+    top: 50%;
+    left: 50%;
+
+    width: 5px;
+    height: 5px;
+
+    border-radius: 50%;
+
+    transform: translate(-50%, -50%);
+
+    background: #fff;
+
+    box-shadow:
+        0 0 8px rgba(255, 255, 255, 1),
+        0 0 25px rgba(235, 240, 245, 0.9),
+        0 0 60px rgba(220, 228, 236, 0.5);
+}
+
+
+/* ============================================================
+   CROSS LIGHT
+   ============================================================ */
+
+.content-reveal__cross-light {
+    position: absolute;
+
+    inset: 0;
+
+    z-index: 18;
+
+    pointer-events: none;
+
+    opacity: 0;
+}
+
+.content-reveal__cross-line {
+    position: absolute;
+
+    top: 50%;
+    left: 50%;
+
+    transform: translate(-50%, -50%);
+
+    background: rgba(255, 255, 255, 0.9);
+
+    box-shadow:
+        0 0 12px rgba(255, 255, 255, 0.7),
+        0 0 30px rgba(225, 232, 240, 0.4);
+}
+
+.content-reveal__cross-line--horizontal {
+    width: 100%;
+    height: 1px;
+}
+
+.content-reveal__cross-line--vertical {
+    width: 1px;
+    height: 100%;
+}
+
+
+/* ============================================================
+   FLASH
+   ============================================================ */
+
+.content-reveal__flash {
+    position: absolute;
+
+    inset: 0;
+
+    z-index: 50;
+
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(255, 255, 255, 1) 0%,
+            rgba(245, 247, 249, 0.9) 12%,
+            rgba(225, 231, 237, 0.45) 30%,
+            rgba(255, 255, 255, 0) 68%
+        );
+
+    opacity: 0;
+
+    pointer-events: none;
+}
+
+
+/* ============================================================
+   FINAL SWEEP
+   ============================================================ */
+
+.content-reveal__sweep {
+    position: absolute;
+
+    top: 0;
+    left: -30%;
+
+    width: 30%;
+    height: 100%;
+
+    z-index: 45;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.055),
+            rgba(255, 255, 255, 0.24),
+            rgba(255, 255, 255, 0.055),
+            transparent
+        );
+
+    filter: blur(4px);
+
+    transform: skewX(-12deg) translateX(-120%);
+
+    opacity: 0;
+}
+
+
+/* ============================================================
+   PHASE: PREPARE
+   ============================================================ */
+
+.content-reveal.prepare .content-reveal__background {
+    opacity: 0.3;
+}
+
+.content-reveal.prepare .content-reveal__vignette {
+    opacity: 0.4;
+}
+
+.content-reveal.prepare .content-reveal__bar {
+    animation:
+        contentRevealBarsIn 0.5s var(--ease-cinematic) forwards;
+}
+
+
+/* ============================================================
+   PHASE: DARK
+   ============================================================ */
+
+.content-reveal.dark .content-reveal__background,
+.content-reveal.scan .content-reveal__background,
+.content-reveal.reveal .content-reveal__background,
+.content-reveal.energy .content-reveal__background {
+    opacity: 1;
+
+    transform: scale(1);
+}
+
+.content-reveal.dark .content-reveal__vignette,
+.content-reveal.scan .content-reveal__vignette,
+.content-reveal.reveal .content-reveal__vignette,
+.content-reveal.energy .content-reveal__vignette {
+    opacity: 1;
+}
+
+.content-reveal.dark .content-reveal__grain,
+.content-reveal.scan .content-reveal__grain,
+.content-reveal.reveal .content-reveal__grain,
+.content-reveal.energy .content-reveal__grain {
+    opacity: 0.12;
+}
+
+.content-reveal.dark .content-reveal__bar,
+.content-reveal.scan .content-reveal__bar,
+.content-reveal.reveal .content-reveal__bar,
+.content-reveal.energy .content-reveal__bar {
+    transform: scaleY(1);
+}
+
+
+/* ============================================================
+   PHASE: SCAN
+   ============================================================ */
+
+.content-reveal.scan .content-reveal__scan-line {
+    opacity: 1;
+
+    transform: translateY(100vh);
+}
+
+.content-reveal.scan .content-reveal__horizontal-light {
+    width: 60vw;
+
+    opacity: 1;
+}
+
+.content-reveal.scan .content-reveal__vertical-light {
+    height: 55vh;
+
+    opacity: 0.65;
+}
+
+.content-reveal.scan .content-reveal__frame {
+    opacity: 1;
+
+    transform:
+        scale(0.94)
+        perspective(900px)
+        rotateX(1deg);
+}
+
+
+/* ============================================================
+   PHASE: REVEAL
+   ============================================================ */
+
+.content-reveal.reveal .content-reveal__frame,
+.content-reveal.energy .content-reveal__frame {
+    opacity: 1;
+
+    transform:
+        scale(1)
+        perspective(900px)
+        rotateX(0);
+}
+
+.content-reveal.reveal .content-reveal__corner,
+.content-reveal.energy .content-reveal__corner {
+    opacity: 1;
+}
+
+.content-reveal.reveal .content-reveal__horizontal-light,
+.content-reveal.energy .content-reveal__horizontal-light {
+    width: 82vw;
+
+    opacity: 0.85;
+}
+
+.content-reveal.reveal .content-reveal__vertical-light,
+.content-reveal.energy .content-reveal__vertical-light {
+    height: 72vh;
+
+    opacity: 0.5;
+}
+
+
+/* ============================================================
+   PHASE: ENERGY
+   ============================================================ */
+
+.content-reveal.energy .content-reveal__ambient-light {
+    opacity: 1;
+
+    transform:
+        translate(-50%, -50%)
+        scale(1);
+}
+
+.content-reveal.energy .content-reveal__core {
+    opacity: 1;
+
+    transform:
+        translate(-50%, -50%)
+        scale(1);
+
+    transition:
+        opacity 0.35s ease,
+        transform 0.75s var(--ease-cinematic);
+}
+
+.content-reveal.energy .content-reveal__particles {
+    opacity: 1;
+}
+
+.content-reveal.energy .content-reveal__particle {
+    animation:
+        contentRevealParticleBurst 0.75s var(--ease-cinematic) forwards;
+}
+
+.content-reveal.energy .content-reveal__cross-light {
+    opacity: 0.12;
+}
+
+
+/* ============================================================
+   PHASE: FLASH
+   ============================================================ */
+
+.content-reveal.flash .content-reveal__background {
+    opacity: 1;
+}
+
+.content-reveal.flash .content-reveal__core {
+    opacity: 1;
+
+    transform:
+        translate(-50%, -50%)
+        scale(1.45);
+}
+
+.content-reveal.flash .content-reveal__core-glow {
+    transform: scale(1.4);
+}
+
+.content-reveal.flash .content-reveal__flash {
+    animation:
+        contentRevealFlash 0.34s ease-out forwards;
+}
+
+.content-reveal.flash .content-reveal__sweep {
+    opacity: 1;
+
+    animation:
+        contentRevealSweep 0.55s var(--ease-cinematic) forwards;
+}
+
+
+/* ============================================================
+   PHASE: COMPLETE
+   ============================================================ */
+
+.content-reveal.complete {
+    opacity: 0;
+
+    transition:
+        opacity 0.18s ease;
+}
+
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+
+@keyframes contentRevealBarsIn {
+    from {
+        transform: scaleY(0);
+    }
+
+    to {
+        transform: scaleY(1);
+    }
+}
+
+
+@keyframes contentRevealGrain {
+    0% {
+        transform: translate3d(0, 0, 0);
+    }
+
+    25% {
+        transform: translate3d(-2%, 1%, 0);
+    }
+
+    50% {
+        transform: translate3d(1%, -2%, 0);
+    }
+
+    75% {
+        transform: translate3d(2%, 1%, 0);
+    }
+
+    100% {
+        transform: translate3d(-1%, -1%, 0);
+    }
+}
+
+
+@keyframes contentRevealCoreSpin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+@keyframes contentRevealCoreSpinReverse {
+    from {
+        transform: rotate(360deg);
+    }
+
+    to {
+        transform: rotate(0deg);
+    }
+}
+
+
+@keyframes contentRevealCorePulse {
+    0%,
+    100% {
+        transform: scale(0.82);
+
+        opacity: 0.55;
+    }
+
+    50% {
+        transform: scale(1.15);
+
+        opacity: 1;
+    }
+}
+
+
+@keyframes contentRevealParticleBurst {
+    0% {
+        opacity: 0;
+
+        transform:
+            translate(0, 0)
+            scale(0.2);
+    }
+
+    35% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.15;
+
+        transform:
+            translate(
+                calc((50% - 50px) * var(--particle-x, 1)),
+                calc((50% - 50px) * var(--particle-y, 1))
+            )
+            scale(1);
+    }
+}
+
+
+@keyframes contentRevealFlash {
+    0% {
+        opacity: 0;
+    }
+
+    20% {
+        opacity: 0.98;
+    }
+
+    55% {
+        opacity: 0.7;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+
+@keyframes contentRevealSweep {
+    0% {
+        transform:
+            skewX(-12deg)
+            translateX(-120%);
+    }
+
+    100% {
+        transform:
+            skewX(-12deg)
+            translateX(520%);
+    }
+}
+
+
+/* ============================================================
+   PARTICLE VARIATIONS
+   ============================================================ */
+
+.particle-1 {
+    --particle-x: -1.2;
+    --particle-y: -0.8;
+}
+
+.particle-2 {
+    --particle-x: -0.9;
+    --particle-y: 1.1;
+}
+
+.particle-3 {
+    --particle-x: 1.2;
+    --particle-y: -0.9;
+}
+
+.particle-4 {
+    --particle-x: 1;
+    --particle-y: 1;
+}
+
+.particle-5 {
+    --particle-x: -1.4;
+    --particle-y: -0.1;
+}
+
+.particle-6 {
+    --particle-x: 1.4;
+    --particle-y: 0.1;
+}
+
+.particle-7 {
+    --particle-x: -0.1;
+    --particle-y: -1.3;
+}
+
+.particle-8 {
+    --particle-x: 0.1;
+    --particle-y: 1.3;
+}
+
+.particle-9 {
+    --particle-x: 1.3;
+    --particle-y: -0.3;
+}
+
+.particle-10 {
+    --particle-x: -1.3;
+    --particle-y: 0.3;
+}
+
+.particle-11 {
+    --particle-x: 0.6;
+    --particle-y: -1.1;
+}
+
+.particle-12 {
+    --particle-x: -0.6;
+    --particle-y: 1.1;
+}
+
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 1200px) {
+    .content-reveal__frame {
+        width: 78vw;
+        height: 68vh;
+    }
+
+    .content-reveal__horizontal-light {
+        width: 70vw;
+    }
+}
+
+
+@media (max-width: 992px) {
+    .content-reveal__frame {
+        width: 84vw;
+        height: 64vh;
+    }
+
+    .content-reveal__core {
+        width: 76px;
+        height: 76px;
+    }
+
+    .content-reveal__corner {
+        width: 27px;
+        height: 27px;
+    }
+}
+
+
+@media (max-width: 768px) {
+    .content-reveal__frame {
+        width: 88vw;
+        height: 56vh;
+    }
+
+    .content-reveal__bar--top,
+    .content-reveal__bar--bottom {
+        height: 36px;
+    }
+
+    .content-reveal__horizontal-light {
+        width: 85vw;
+    }
+
+    .content-reveal__vertical-light {
+        height: 60vh;
+    }
+
+    .content-reveal__core {
+        width: 68px;
+        height: 68px;
+    }
+
+    .content-reveal__core-outer {
+        inset: -22px;
+    }
+}
+
+
+@media (max-width: 480px) {
+    .content-reveal__frame {
+        width: 90vw;
+        height: 48vh;
+    }
+
+    .content-reveal__bar--top,
+    .content-reveal__bar--bottom {
+        height: 28px;
+    }
+
+    .content-reveal__core {
+        width: 58px;
+        height: 58px;
+    }
+
+    .content-reveal__core-ring--inner {
+        inset: 9px;
+    }
+
+    .content-reveal__core-glow {
+        inset: 15px;
+    }
+
+    .content-reveal__corner {
+        width: 22px;
+        height: 22px;
+    }
+
+    .content-reveal__particle {
+        width: 1.5px;
+        height: 1.5px;
+    }
+}
+
+

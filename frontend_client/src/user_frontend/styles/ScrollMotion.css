@@ -1,0 +1,78 @@
+/* ============================================================
+   QUANG DŨNG CINEMA
+   SCROLL MOTION
+============================================================ */
+
+.scroll-motion {
+  position: relative;
+
+  width: 100%;
+
+  transform-origin: center center;
+
+  will-change:
+    transform,
+    opacity;
+
+  backface-visibility: hidden;
+
+  -webkit-backface-visibility: hidden;
+
+  transform-style: preserve-3d;
+
+  pointer-events: auto;
+}
+
+
+/* ============================================================
+   3D DEPTH
+============================================================ */
+
+.scroll-motion--3d {
+  perspective: 1400px;
+
+  transform-style: preserve-3d;
+}
+
+
+/* ============================================================
+   TOP / STACK POSITION
+============================================================ */
+
+.scroll-motion--top {
+  z-index: 2;
+}
+
+
+/* ============================================================
+   DISABLED
+============================================================ */
+
+.scroll-motion--disabled {
+  opacity: 1 !important;
+
+  transform: none !important;
+
+  filter: none !important;
+
+  will-change: auto;
+}
+
+
+/* ============================================================
+   MOBILE
+============================================================ */
+
+@media (max-width: 768px) {
+  .scroll-motion {
+    will-change: transform, opacity;
+
+    transform-style: flat;
+  }
+
+  .scroll-motion--3d {
+    perspective: none;
+
+    transform-style: flat;
+  }
+}

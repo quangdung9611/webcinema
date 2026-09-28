@@ -1,31 +1,25 @@
-
 /* =========================================================
-   BOOKING SIDEBAR - SILVER EDITION
+   BOOKING SIDEBAR - PREMIUM SILVER EDITION
+   Cinema-grade summary card with Lucide icons
 ========================================================= */
 
-
 /* =========================================================
-   SIDEBAR
+   SIDEBAR ROOT
 ========================================================= */
 
 .ticket-sidebar {
     width: 320px;
     flex-shrink: 0;
-
     position: sticky;
     top: 20px;
-
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
-
     height: fit-content;
 }
 
-
 /* =========================================================
-   DESKTOP
-   POSTER TRÊN + THÔNG TIN DƯỚI
+   VERTICAL LAYOUT (Desktop)
 ========================================================= */
 
 .sidebar-horizontal-layout {
@@ -34,89 +28,126 @@
     gap: var(--space-md);
 }
 
-
 /* =========================================================
    POSTER
-   TỶ LỆ GỐC: 500 x 750 = 2 : 3
 ========================================================= */
 
 .poster-container {
-    width: 240px;
+    position: relative;
+    width: 260px;
     aspect-ratio: 2 / 3;
-
     margin: 0 auto;
     flex-shrink: 0;
-
     border-radius: var(--radius-xl);
-
     background: var(--bg-card);
     border: var(--border-premium);
-    box-shadow: var(--glass-shadow);
-
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
     overflow: hidden;
+    transition:
+        transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.35s ease,
+        border-color 0.35s ease;
 }
 
+.poster-container::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0) 60%,
+        rgba(0, 0, 0, 0.35) 100%
+    );
+    opacity: 0;
+    transition: opacity 0.35s ease;
+}
 
-/* Ảnh poster */
+.poster-container:hover {
+    transform: translateY(-4px);
+    border-color: rgba(232, 232, 232, 0.28);
+    box-shadow:
+        0 30px 70px rgba(0, 0, 0, 0.55),
+        0 0 0 1px rgba(232, 232, 232, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.poster-container:hover::after {
+    opacity: 1;
+}
 
 .booking-poster {
     width: 100%;
     height: 100%;
-
     display: block;
-
     aspect-ratio: 2 / 3;
-
     object-fit: cover;
     object-position: center;
-
-    transition: transform var(--transition-normal);
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
-
-
-/* Hover */
 
 .poster-container:hover .booking-poster {
-    transform: scale(1.03);
+    transform: scale(1.05);
 }
-
-
-/* Placeholder */
 
 .poster-placeholder {
     width: 100%;
     height: 100%;
-
     aspect-ratio: 2 / 3;
-
-    background: var(--bg-card);
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(255, 255, 255, 0.06),
+            transparent 70%
+        ),
+        var(--bg-card);
 }
-
 
 /* =========================================================
    DETAILS BOX
 ========================================================= */
 
 .ticket-details {
+    position: relative;
     width: 100%;
-
-    padding: var(--space-lg);
-
+    padding: 22px;
     border-radius: var(--radius-xl);
-
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
-
-    background: var(--bg-card);
-
-    backdrop-filter: blur(14px);
-
+    gap: 14px;
+    background:
+        linear-gradient(
+            155deg,
+            rgba(255, 255, 255, 0.055),
+            rgba(255, 255, 255, 0.015)
+        );
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
     border: var(--border-premium);
-
-    box-shadow: var(--glass-shadow);
+    box-shadow:
+        0 20px 55px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    overflow: hidden;
 }
 
+.ticket-details::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(232, 232, 232, 0.65),
+        transparent
+    );
+    pointer-events: none;
+}
 
 /* =========================================================
    MOVIE NAME
@@ -124,284 +155,205 @@
 
 .movie-name {
     margin: 0;
-
     font-size: var(--font-size-h4);
     font-weight: var(--fw-extrabold);
-
-    line-height: 1.5;
-
+    line-height: 1.4;
+    letter-spacing: 0.02em;
     text-transform: uppercase;
     text-align: center;
-
-    color: var(--silver-primary);
-
-    padding-bottom: var(--space-md);
-
-    border-bottom: var(--border-premium);
+    color: var(--silver-light);
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    text-shadow: 0 0 24px rgba(232, 232, 232, 0.08);
 }
 
-
 /* =========================================================
-   DETAIL ITEM
+   DETAIL ITEMS
 ========================================================= */
 
 .detail-item {
     display: flex;
-
     justify-content: space-between;
-    align-items: center;
-
-    gap: var(--space-sm);
-
-    padding-bottom: var(--space-sm);
-
-    border-bottom: var(--border-subtle);
+    align-items: flex-start;
+    gap: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
 }
 
-
-/* Không có border ở item cuối */
-
-.detail-item:last-child {
+.detail-item:last-of-type {
     border-bottom: none;
+    padding-bottom: 0;
 }
-
-
-/* Label */
 
 .detail-item span {
     flex-shrink: 0;
-
-    color: var(--text-secondary);
-
-    font-size: var(--font-size-base);
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: var(--fw-medium);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
+/* ✅ Icon trong label */
+.detail-item span svg {
+    color: var(--silver-dark);
+    flex-shrink: 0;
+    transition: color 0.25s ease;
+}
 
-/* Value */
+.detail-item:hover span svg {
+    color: var(--silver-primary);
+}
 
 .detail-item strong {
     min-width: 0;
-
     color: var(--text-body);
-
     text-align: right;
-
-    font-size: var(--font-size-base);
-
+    font-size: 0.85rem;
     font-weight: var(--fw-semibold);
-
     overflow-wrap: anywhere;
-
     white-space: normal;
+    line-height: 1.4;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
 }
 
-
-/* =========================================================
-   SEATS
-========================================================= */
+/* ✅ Icon trong value (ghế) */
+.detail-item strong svg {
+    color: var(--silver-primary);
+    flex-shrink: 0;
+    opacity: 0.85;
+}
 
 .seats-list {
-    color: var(--silver-light);
+    color: var(--silver-light) !important;
+    font-weight: var(--fw-bold) !important;
 }
-
 
 /* =========================================================
    FOOD SECTION
 ========================================================= */
 
 .food-selected-box {
-    margin-top: var(--space-xs);
-
-    padding-top: var(--space-md);
-
-    border-top: var(--border-premium);
-
+    margin-top: 4px;
+    padding: 12px 0 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
     display: flex;
     flex-direction: column;
-
-    gap: var(--space-sm);
+    gap: 8px;
 }
-
-
-/* Food title */
 
 .food-selected-title {
     margin: 0;
-
     color: var(--silver-primary);
-
-    font-size: var(--font-size-base);
-
-    letter-spacing: 2px;
-
+    font-size: 0.72rem;
+    font-weight: var(--fw-extrabold);
+    letter-spacing: 0.15em;
     text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
-
-/* Food item */
+.food-selected-title svg {
+    color: var(--silver-dark);
+}
 
 .food-selected-item {
     display: flex;
-
     justify-content: space-between;
     align-items: flex-start;
-
-    gap: var(--space-sm);
-
+    gap: 10px;
     color: var(--text-secondary);
-
-    font-size: var(--font-size-base);
+    font-size: 0.82rem;
+    line-height: 1.4;
 }
 
+.food-selected-item span {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 6px;
+}
 
-/* Food price */
+.food-selected-item span svg {
+    color: var(--silver-dark);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
 
 .food-selected-item strong {
+    flex-shrink: 0;
     color: var(--silver-light);
-
+    font-weight: var(--fw-bold);
     text-align: right;
-
-    overflow-wrap: anywhere;
 }
 
-
 /* =========================================================
-   TỔNG CỘNG
+   TOTAL SUMMARY
 ========================================================= */
 
 .total-summary-box {
-    margin-top: var(--space-sm);
-
-    padding-top: var(--space-sm);
-
-    border-top: var(--border-premium);
+    margin-top: 4px;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    background:
+        linear-gradient(
+            135deg,
+            rgba(232, 232, 232, 0.06),
+            rgba(232, 232, 232, 0.015)
+        );
+    border: 1px solid rgba(232, 232, 232, 0.12);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
-
 
 .summary-total {
     display: flex;
-
     justify-content: space-between;
     align-items: center;
-
-    gap: var(--space-sm);
-
-    text-align: right;
+    gap: 12px;
 }
-
 
 .summary-label {
-    font-size: var(--font-size-base);
-
+    font-size: 0.72rem;
     color: var(--text-muted);
-
-    letter-spacing: 1px;
-
+    letter-spacing: 0.15em;
     text-transform: uppercase;
-
     font-weight: var(--fw-bold);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
+.summary-label svg {
+    color: var(--silver-dark);
+}
 
 .summary-value {
-    font-size: var(--font-size-h3);
-
+    font-size: 1.35rem;
     font-weight: var(--fw-extrabold);
+    color: var(--silver-light);
+    text-shadow: 0 0 20px rgba(232, 232, 232, 0.2);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
 
+.summary-value svg {
     color: var(--silver-primary);
-
-    text-shadow: 0 0 10px rgba(232, 232, 232, 0.15);
 }
-
 
 /* =========================================================
-   NÚT QUAY LẠI / TIẾP TỤC
-========================================================= */
-
-.full-width-actions {
-    display: flex;
-
-    flex-direction: row;
-
-    gap: var(--space-sm);
-
-    width: 100%;
-}
-
-
-.btn-back-food-sidebar,
-.btn-next-sidebar {
-    flex: 1;
-
-    width: 100%;
-
-    height: 48px;
-
-    border-radius: var(--radius-md);
-
-    font-size: var(--font-size-base);
-
-    font-weight: var(--fw-bold);
-
-    cursor: pointer;
-
-    transition: var(--transition-normal);
-}
-
-
-/* =========================================================
-   BUTTON BACK
-========================================================= */
-
-.btn-back-food-sidebar {
-    border: var(--border-premium);
-
-    background: transparent;
-
-    color: var(--text-secondary);
-}
-
-
-.btn-back-food-sidebar:hover {
-    background: rgba(232, 232, 232, 0.08);
-
-    color: var(--text-body);
-
-    border-color: var(--silver-primary);
-}
-
-
-/* =========================================================
-   BUTTON NEXT
-========================================================= */
-
-.btn-next-sidebar {
-    border: none;
-
-    background: var(--premium-gradient);
-
-    color: var(--bg-primary);
-
-    box-shadow: var(--btn-silver-shadow);
-}
-
-
-.btn-next-sidebar:hover:not(:disabled) {
-    transform: translateY(-2px);
-
-    box-shadow: var(--card-shadow-hover);
-}
-
-
-.btn-next-sidebar:disabled {
-    opacity: 0.45;
-
-    cursor: not-allowed;
-
-    transform: none;
-}
-/* =========================================================
-   ✅ RESCHEDULE — HIỂN THỊ SO SÁNH GIÁ
+   ✅ RESCHEDULE — PRICE COMPARISON
 ========================================================= */
 
 .summary-row {
@@ -409,414 +361,423 @@
     justify-content: space-between;
     align-items: center;
     padding: 6px 0;
+    gap: 10px;
+}
+
+.summary-row .summary-label {
+    font-size: 0.72rem;
 }
 
 .summary-row.summary-old {
-    opacity: 0.6;
+    opacity: 0.55;
 }
 
 .summary-row.summary-old .summary-value-strike {
     text-decoration: line-through;
-    text-decoration-color: #999;
-    text-decoration-thickness: 2px;
-    color: #999;
-    font-weight: 500;
-    font-size: 15px;
+    text-decoration-color: rgba(216, 90, 90, 0.8);
+    text-decoration-thickness: 1.5px;
+    color: var(--text-muted);
+    font-weight: var(--fw-medium);
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
-.summary-row.summary-new {
-    margin-top: 2px;
+.summary-row.summary-old .summary-value-strike svg {
+    color: var(--text-muted);
 }
 
 .summary-row.summary-new .summary-value-new {
-    color: #f37021;
-    font-weight: 700;
-    font-size: 18px;
+    color: var(--silver-light);
+    font-weight: var(--fw-extrabold);
+    font-size: 1.05rem;
+    text-shadow: 0 0 18px rgba(232, 232, 232, 0.18);
+    font-variant-numeric: tabular-nums;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.summary-row.summary-new .summary-value-new svg {
+    color: var(--silver-primary);
 }
 
 .summary-divider {
     height: 1px;
-    background: linear-gradient(90deg, transparent, #ccc, transparent);
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(232, 232, 232, 0.3),
+        transparent
+    );
     margin: 8px 0;
 }
 
 .summary-row.summary-delta {
-    margin-top: 8px;
+    margin-top: 6px;
     padding: 10px 12px;
-    border-radius: 8px;
-    background: #f9fafb;
+    border-radius: var(--radius-sm);
+    transition: background 0.25s ease;
 }
 
 .summary-row.summary-delta .summary-label {
-    font-weight: 700;
-    font-size: 14px;
+    font-weight: var(--fw-extrabold);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
 }
 
 .summary-row.summary-delta .summary-value-delta {
-    font-weight: 800;
-    font-size: 18px;
+    font-weight: var(--fw-extrabold);
+    font-size: 1.05rem;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
-/* Bù thêm — màu cam */
+.summary-row.summary-delta .summary-value-delta svg {
+    flex-shrink: 0;
+}
+
+/* Bù thêm — cam */
 .summary-row.summary-delta.delta-pay {
-    background: #fff3e6;
-    border: 1px solid #f37021;
+    background: rgba(243, 112, 33, 0.12);
+    border: 1px solid rgba(243, 112, 33, 0.4);
 }
-
 .summary-row.summary-delta.delta-pay .summary-label,
-.summary-row.summary-delta.delta-pay .summary-value-delta {
-    color: #f37021;
+.summary-row.summary-delta.delta-pay .summary-value-delta,
+.summary-row.summary-delta.delta-pay .summary-value-delta svg,
+.summary-row.summary-delta.delta-pay .summary-label svg {
+    color: #FFB74D;
 }
 
-/* Hoàn lại — màu xanh lá */
+/* Hoàn lại — xanh lá */
 .summary-row.summary-delta.delta-refund {
-    background: #d4edda;
-    border: 1px solid #27ae60;
+    background: rgba(67, 183, 122, 0.12);
+    border: 1px solid rgba(67, 183, 122, 0.4);
 }
-
 .summary-row.summary-delta.delta-refund .summary-label,
-.summary-row.summary-delta.delta-refund .summary-value-delta {
-    color: #155724;
+.summary-row.summary-delta.delta-refund .summary-value-delta,
+.summary-row.summary-delta.delta-refund .summary-value-delta svg,
+.summary-row.summary-delta.delta-refund .summary-label svg {
+    color: #43B77A;
 }
 
-/* Không đổi — màu xanh dương */
+/* Không đổi — xanh dương */
 .summary-row.summary-delta.delta-same {
-    background: #e7f3ff;
-    border: 1px solid #2196F3;
+    background: rgba(95, 159, 234, 0.12);
+    border: 1px solid rgba(95, 159, 234, 0.4);
 }
-
 .summary-row.summary-delta.delta-same .summary-label,
-.summary-row.summary-delta.delta-same .summary-value-delta {
-    color: #0c5460;
+.summary-row.summary-delta.delta-same .summary-value-delta,
+.summary-row.summary-delta.delta-same .summary-value-delta svg,
+.summary-row.summary-delta.delta-same .summary-label svg {
+    color: #5F9FEA;
 }
 
 /* =========================================================
-   RESPONSIVE <= 1200px
+   ACTION BUTTONS
+========================================================= */
+
+.full-width-actions {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    width: 100%;
+}
+
+.btn-back-food-sidebar,
+.btn-next-sidebar {
+    flex: 1;
+    height: 50px;
+    border-radius: var(--radius-md);
+    font-size: 0.82rem;
+    font-weight: var(--fw-extrabold);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition:
+        border-color 0.25s ease,
+        background 0.25s ease,
+        color 0.25s ease,
+        box-shadow 0.25s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+/* ✅ Icon trong nút */
+.btn-back-food-sidebar svg,
+.btn-next-sidebar svg {
+    flex-shrink: 0;
+    transition: transform 0.25s ease;
+}
+
+.btn-back-food-sidebar:hover svg {
+    transform: translateX(-2px);
+}
+
+.btn-next-sidebar:hover:not(:disabled) svg {
+    transform: translateX(2px);
+}
+
+/* Nút quay lại */
+.btn-back-food-sidebar {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.025);
+    color: var(--text-secondary);
+}
+
+.btn-back-food-sidebar:hover {
+    background: rgba(232, 232, 232, 0.06);
+    color: var(--silver-light);
+    border-color: rgba(232, 232, 232, 0.35);
+}
+
+/* Nút tiếp tục */
+.btn-next-sidebar {
+    border: none;
+    background: var(--premium-gradient);
+    color: var(--bg-primary);
+    box-shadow: var(--btn-silver-shadow);
+}
+
+.btn-next-sidebar:hover:not(:disabled) {
+    box-shadow:
+        0 12px 32px rgba(232, 232, 232, 0.25),
+        0 0 0 3px rgba(232, 232, 232, 0.06);
+    filter: brightness(1.05);
+}
+
+.btn-next-sidebar:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: var(--btn-silver-shadow);
+}
+
+/* =========================================================
+   RESPONSIVE — 1200px
 ========================================================= */
 
 @media (max-width: 1200px) {
-
     .ticket-sidebar {
         width: 280px;
     }
 
-
-    /* Poster nhỏ hơn */
-
     .poster-container {
         width: 220px;
-
-        aspect-ratio: 2 / 3;
     }
-
 
     .ticket-details {
-        padding: var(--space-md);
+        padding: 18px;
     }
 
-
     .movie-name {
-        font-size: var(--font-size-h5);
+        font-size: 1rem;
+    }
+
+    .summary-value {
+        font-size: 1.15rem;
     }
 }
 
-
 /* =========================================================
-   RESPONSIVE <= 992px
-   POSTER + INFO NẰM NGANG
+   RESPONSIVE — 992px (Tablet)
 ========================================================= */
 
 @media (max-width: 992px) {
-
     .ticket-sidebar {
         width: 100%;
-
         position: static;
-
         gap: var(--space-sm);
     }
 
-
-    /* =====================================================
-       COUNTDOWN
-    ===================================================== */
-
     .ticket-sidebar > .countdown-wrapper {
         width: 100%;
-
         padding: var(--space-sm) var(--space-md);
-
         background: var(--bg-card);
-
         border: var(--border-premium);
-
         border-radius: var(--radius-md);
-
         box-shadow: var(--glass-shadow);
-
         display: flex;
-
         justify-content: space-between;
-
         align-items: center;
     }
 
-
-    /* =====================================================
-       LAYOUT NGANG
-    ===================================================== */
-
     .sidebar-horizontal-layout {
         flex-direction: row;
-
         gap: 0;
-
-        background: var(--bg-card);
-
+        background:
+            linear-gradient(
+                145deg,
+                rgba(255, 255, 255, 0.05),
+                rgba(255, 255, 255, 0.015)
+            );
         border: var(--border-premium);
-
         border-radius: var(--radius-lg);
-
         overflow: hidden;
-
-        box-shadow: var(--glass-shadow);
+        box-shadow:
+            0 20px 50px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.05);
     }
-
-
-    /* =====================================================
-       POSTER MOBILE / TABLET
-    ===================================================== */
 
     .poster-container {
         width: 40%;
-
         max-width: none;
-
         aspect-ratio: 2 / 3;
-
         height: auto;
-
         margin: 0;
-
         border-radius: 0;
-
         border: none;
-
         box-shadow: none;
-
         overflow: hidden;
     }
 
+    .poster-container:hover {
+        transform: none;
+        box-shadow: none;
+    }
 
     .booking-poster {
         width: 100%;
-
         height: 100%;
-
         aspect-ratio: 2 / 3;
-
         object-fit: cover;
-
         object-position: center;
     }
 
-
-    /* =====================================================
-       DETAILS MOBILE / TABLET
-    ===================================================== */
+    .poster-container:hover .booking-poster {
+        transform: none;
+    }
 
     .ticket-details {
         flex: 1;
-
         min-width: 0;
-
         padding: var(--space-md);
-
         border-radius: 0;
-
         border: none;
-
         box-shadow: none;
-
         backdrop-filter: none;
-
+        -webkit-backdrop-filter: none;
         justify-content: center;
+        background: transparent;
     }
 
-
-    /* Movie name */
+    .ticket-details::before {
+        display: none;
+    }
 
     .movie-name {
-        font-size: var(--font-size-base);
-
+        font-size: 0.95rem;
         text-align: left;
-
-        padding-bottom: var(--space-xs);
+        padding-bottom: 10px;
     }
-
-
-    /* Detail */
 
     .detail-item {
-        gap: var(--space-xs);
-
-        padding-bottom: var(--space-xs);
+        gap: 8px;
+        padding-bottom: 8px;
     }
-
 
     .detail-item span,
     .detail-item strong {
-        font-size: var(--font-size-sm);
+        font-size: 0.78rem;
     }
-
-
-    /* Total */
 
     .summary-value {
-        font-size: var(--font-size-h5);
+        font-size: 1.05rem;
     }
 
-
-    /* =====================================================
-       BUTTON
-    ===================================================== */
+    .total-summary-box {
+        padding: 10px 12px;
+    }
 
     .full-width-actions {
-        gap: var(--space-xs);
+        gap: 8px;
     }
-
 
     .btn-back-food-sidebar,
     .btn-next-sidebar {
         height: 44px;
-
-        font-size: var(--font-size-sm);
+        font-size: 0.75rem;
     }
 }
 
-
 /* =========================================================
-   RESPONSIVE <= 480px
-   MOBILE NHỎ
+   RESPONSIVE — 480px (Mobile nhỏ)
 ========================================================= */
 
 @media (max-width: 480px) {
-
-    /* =====================================================
-       COUNTDOWN
-    ===================================================== */
-
     .ticket-sidebar > .countdown-wrapper {
         padding: var(--space-xs) var(--space-sm);
     }
 
-
-    /* =====================================================
-       POSTER
-    ===================================================== */
-
     .poster-container {
         width: 40%;
-
         aspect-ratio: 2 / 3;
     }
-
 
     .booking-poster {
         width: 100%;
-
         height: 100%;
-
         aspect-ratio: 2 / 3;
-
         object-fit: cover;
-
         object-position: center;
     }
 
-
-    /* =====================================================
-       DETAILS
-    ===================================================== */
-
     .ticket-details {
         padding: var(--space-sm);
-
-        gap: var(--space-xs);
+        gap: 10px;
     }
-
-
-    /* Movie */
 
     .movie-name {
-        font-size: var(--font-size-sm);
-
+        font-size: 0.82rem;
         line-height: 1.35;
+        padding-bottom: 8px;
     }
-
-
-    /* =====================================================
-       DETAIL ITEM
-       LABEL TRÁI - VALUE PHẢI
-    ===================================================== */
 
     .detail-item {
         display: flex;
-
         flex-direction: row;
-
         justify-content: space-between;
-
         align-items: center;
-
-        gap: var(--space-xs);
-
-        padding-bottom: var(--space-xs);
+        gap: 8px;
+        padding-bottom: 6px;
     }
 
-
     .detail-item span {
-        font-size: var(--font-size-xs);
-
+        font-size: 0.68rem;
         color: var(--text-muted);
-
         flex-shrink: 0;
     }
 
-
     .detail-item strong {
-        font-size: var(--font-size-xs);
-
+        font-size: 0.72rem;
         color: var(--text-body);
-
         text-align: right;
-
         width: auto;
-
         min-width: 0;
-
         overflow-wrap: anywhere;
     }
 
-
-    /* =====================================================
-       TOTAL
-    ===================================================== */
-
     .summary-value {
-        font-size: var(--font-size-base);
+        font-size: 0.95rem;
     }
 
+    .summary-label {
+        font-size: 0.68rem;
+    }
 
-    /* =====================================================
-       BUTTON
-    ===================================================== */
+    .summary-row.summary-delta .summary-value-delta {
+        font-size: 0.92rem;
+    }
 
     .btn-back-food-sidebar,
     .btn-next-sidebar {
-        height: 44px;
-
-        font-size: var(--font-size-xs);
+        height: 42px;
+        font-size: 0.7rem;
     }
 }
-

@@ -1,0 +1,248 @@
+/* ============================================================
+   CUSTOM CURSOR — FULL REPLACEMENT EDITION
+   ============================================================
+   ✅ Ẩn HOÀN TOÀN cursor trình duyệt (khi bật)
+   ✅ Thay bằng cursor riêng (mũi tên cam + vòng tròn)
+   ✅ Context-aware: hover button/card/text → đổi hình
+   ✅ Chỉ desktop, có toggle
+   ✅ Fallback: tắt custom → cursor mặc định hiện lại
+============================================================ */
+
+
+/* =========================================
+   1. ẨN CURSOR TRÌNH DUYỆT
+   =========================================
+   Chỉ ẩn khi html có class .qd-cursor-active
+   (class này do JS thêm khi cursor custom bật)
+========================================= */
+
+html.qd-cursor-active,
+html.qd-cursor-active body,
+html.qd-cursor-active * {
+    cursor: none !important;
+}
+
+/* Ngoại lệ — input/textarea vẫn giữ cursor text
+   để user biết đang gõ ở đâu */
+html.qd-cursor-active input,
+html.qd-cursor-active textarea,
+html.qd-cursor-active select,
+html.qd-cursor-active [contenteditable="true"] {
+    cursor: text !important;
+}
+
+
+/* =========================================
+   2. CURSOR WRAPPER
+========================================= */
+
+.qd-cursor {
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 100%;
+
+    pointer-events: none;
+
+    z-index: 999999;
+
+    contain: layout style;
+}
+
+
+/* =========================================
+   3. RING — VÒNG TRÒN PHÁT SÁNG
+========================================= */
+
+.qd-cursor__ring {
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    width: 38px;
+    height: 38px;
+
+    border: 1.5px solid rgba(243, 112, 33, 0.55);
+    border-radius: 50%;
+
+    background: rgba(243, 112, 33, 0.06);
+
+    box-shadow:
+        0 0 14px rgba(243, 112, 33, 0.35),
+        inset 0 0 10px rgba(243, 112, 33, 0.08);
+
+    pointer-events: none;
+
+    transform: translate(-50%, -50%);
+
+    transition:
+        width 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+        height 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 0.35s ease,
+        box-shadow 0.35s ease,
+        background 0.35s ease,
+        opacity 0.35s ease;
+
+    will-change: transform, width, height;
+}
+
+
+/* =========================================
+   4. DOT — MŨI TÊN CAM Ở TÂM
+========================================= */
+
+.qd-cursor__dot {
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    width: 20px;
+    height: 20px;
+
+    pointer-events: none;
+
+    /* Mũi tên lệch về góc trên-trái — giống cursor mặc định */
+    transform: translate(-30%, -20%);
+
+    filter: drop-shadow(0 0 6px rgba(243, 112, 33, 0.6));
+
+    transition:
+        width 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+        height 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 0.3s ease,
+        filter 0.3s ease,
+        opacity 0.3s ease;
+
+    will-change: transform, width, height;
+}
+
+/* SVG mask để vẽ mũi tên — dùng background color cam */
+.qd-cursor__dot::before {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    background: rgb(243, 112, 33);
+
+    -webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5.5 3.21 L5.5 19.79 L10.13 15.16 L13.21 22.2 L16.21 20.79 L13.13 13.75 L19.79 13.75 Z' fill='black'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5.5 3.21 L5.5 19.79 L10.13 15.16 L13.21 22.2 L16.21 20.79 L13.13 13.75 L19.79 13.75 Z' fill='black'/%3E%3C/svg%3E");
+
+    -webkit-mask-size: contain;
+    mask-size: contain;
+
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+
+    -webkit-mask-position: center;
+    mask-position: center;
+}
+
+
+/* =========================================
+   5. STATE: hover-link — link, tab
+========================================= */
+
+.qd-cursor--hover-link .qd-cursor__ring {
+    width: 48px;
+    height: 48px;
+    border-color: rgba(243, 112, 33, 0.9);
+    background: rgba(243, 112, 33, 0.12);
+}
+
+.qd-cursor--hover-link .qd-cursor__dot {
+    transform: translate(-30%, -20%) scale(1.1);
+}
+
+
+/* =========================================
+   6. STATE: hover-button — nút CTA
+========================================= */
+
+.qd-cursor--hover-button .qd-cursor__ring {
+    width: 60px;
+    height: 60px;
+    border-color: rgba(243, 112, 33, 1);
+    background: rgba(243, 112, 33, 0.18);
+
+    box-shadow:
+        0 0 22px rgba(243, 112, 33, 0.55),
+        0 0 44px rgba(243, 112, 33, 0.25),
+        inset 0 0 12px rgba(243, 112, 33, 0.15);
+}
+
+.qd-cursor--hover-button .qd-cursor__dot {
+    width: 24px;
+    height: 24px;
+    transform: translate(-30%, -20%) scale(1.15);
+    filter: drop-shadow(0 0 10px rgba(243, 112, 33, 1));
+}
+
+
+/* =========================================
+   7. STATE: hover-card — card phim, rạp, KM
+========================================= */
+
+.qd-cursor--hover-card .qd-cursor__ring {
+    width: 52px;
+    height: 52px;
+    border-color: rgba(220, 38, 38, 0.9);
+    background: rgba(220, 38, 38, 0.1);
+
+    box-shadow:
+        0 0 18px rgba(220, 38, 38, 0.45),
+        0 0 36px rgba(220, 38, 38, 0.2);
+}
+
+.qd-cursor--hover-card .qd-cursor__dot::before {
+    background: rgb(220, 38, 38);
+}
+
+.qd-cursor--hover-card .qd-cursor__dot {
+    filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.8));
+}
+
+
+/* =========================================
+   8. STATE: hover-text — biến thành caret
+========================================= */
+
+.qd-cursor--hover-text .qd-cursor__ring {
+    width: 2px;
+    height: 26px;
+    border-radius: 1px;
+    border-color: rgba(243, 112, 33, 0.95);
+    background: rgba(243, 112, 33, 0.95);
+
+    box-shadow: 0 0 8px rgba(243, 112, 33, 0.6);
+}
+
+.qd-cursor--hover-text .qd-cursor__dot {
+    opacity: 0;
+}
+
+
+/* =========================================
+   9. MOBILE / TOUCH — tắt hoàn toàn
+========================================= */
+
+@media (hover: none), (pointer: coarse) {
+    .qd-cursor {
+        display: none !important;
+    }
+
+    html.qd-cursor-active,
+    html.qd-cursor-active * {
+        cursor: auto !important;
+    }
+
+    html.qd-cursor-active input,
+    html.qd-cursor-active textarea,
+    html.qd-cursor-active select,
+    html.qd-cursor-active [contenteditable="true"] {
+        cursor: auto !important;
+    }
+}
+

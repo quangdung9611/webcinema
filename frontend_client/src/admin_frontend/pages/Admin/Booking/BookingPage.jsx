@@ -57,7 +57,7 @@ const BookingPage = () => {
     // ------------------------------------------------------
     // TAB STATE
     // ------------------------------------------------------
-    const [activeTab, setActiveTab] = useState('bookings'); // 'bookings' | 'rescheduled'
+    const [activeTab, setActiveTab] = useState('bookings');
 
     // ------------------------------------------------------
     // BOOKINGS STATES
@@ -65,6 +65,8 @@ const BookingPage = () => {
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState('');
+    const [bookingFrom, setBookingFrom] = useState('');
+    const [bookingTo, setBookingTo] = useState('');
 
     const [pagination, setPagination] = useState({
         page: 1,
@@ -128,7 +130,7 @@ const BookingPage = () => {
     // ------------------------------------------------------
     // FETCH BOOKINGS
     // ------------------------------------------------------
-    const fetchBookings = useCallback(async (page = 1, keyword = '') => {
+    const fetchBookings = useCallback(async (page = 1, keyword = '', from = '', to = '') => {
         if (isFetching.current) return;
 
         if (abortControllerRef.current) {
@@ -145,7 +147,9 @@ const BookingPage = () => {
                 params: {
                     page,
                     limit: 20,
-                    search: keyword.trim()
+                    search: keyword.trim() || undefined,
+                    from: from || undefined,
+                    to: to || undefined,
                 },
                 signal: controller.signal
             });
@@ -188,7 +192,7 @@ const BookingPage = () => {
 
     useEffect(() => {
         if (activeTab === 'bookings') {
-            fetchBookings(1, '');
+            fetchBookings(1, search, bookingFrom, bookingTo);
         }
         return () => {
             if (abortControllerRef.current) {
@@ -211,14 +215,14 @@ const BookingPage = () => {
         prevSearchRef.current = currentSearch;
 
         const timer = setTimeout(() => {
-            fetchBookings(1, currentSearch);
+            fetchBookings(1, currentSearch, bookingFrom, bookingTo);
         }, 400);
 
         return () => clearTimeout(timer);
     }, [search, fetchBookings, activeTab]);
 
     const handlePageChange = (page) => {
-        fetchBookings(page, search);
+        fetchBookings(page, search, bookingFrom, bookingTo);
     };
 
     // ======================================================
@@ -311,7 +315,7 @@ const BookingPage = () => {
                 try {
                     await api.put(`/api/bookings/update/${booking_id}/status`, { status: nextStatus });
                     closeAlert();
-                    fetchBookings(pagination.page, search);
+                    fetchBookings(pagination.page, search, bookingFrom, bookingTo);
                     setTimeout(() => {
                         showAlert('Thành công', 'Cập nhật trạng thái thành công.', 'success');
                     }, 100);
@@ -343,7 +347,7 @@ const BookingPage = () => {
                     const newPage = bookings.length === 1 && currentPage > 1
                         ? currentPage - 1
                         : currentPage;
-                    await fetchBookings(newPage, search);
+                    await fetchBookings(newPage, search, bookingFrom, bookingTo);
                     setTimeout(() => {
                         showAlert('Thành công', 'Xóa đơn hàng thành công.', 'success');
                     }, 100);
@@ -606,6 +610,52 @@ const BookingPage = () => {
                 {/* TAB: BOOKINGS */}
                 {activeTab === 'bookings' && (
                     <>
+                        {/* ✅ FILTER NGÀY */}
+                        <div className="reschedule-tab-filter">
+                            <div className="reschedule-tab-filter__group">
+                                <Calendar size={14} />
+                                <label>Từ ngày</label>
+                                <input
+                                    type="date"
+                                    value={bookingFrom}
+                                    onChange={(e) => setBookingFrom(e.target.value)}
+                                />
+                            </div>
+                            <div className="reschedule-tab-filter__group">
+                                <Calendar size={14} />
+                                <label>Đến ngày</label>
+                                <input
+                                    type="date"
+                                    value={bookingTo}
+                                    onChange={(e) => setBookingTo(e.target.value)}
+                                />
+                            </div>
+                            <button
+                                className="reschedule-tab-filter__btn reschedule-tab-filter__btn--primary"
+                                onClick={() => fetchBookings(1, search, bookingFrom, bookingTo)}
+                                disabled={loading}
+                            >
+                                <Filter size={14} />
+                                Lọc
+                            </button>
+                            {(bookingFrom || bookingTo) && (
+                                <button
+                                    className="reschedule-tab-filter__btn reschedule-tab-filter__btn--clear"
+                                    onClick={() => {
+                                        setBookingFrom('');
+                                        setBookingTo('');
+                                        setTimeout(
+                                            () => fetchBookings(1, search, '', ''),
+                                            0
+                                        );
+                                    }}
+                                    disabled={loading}
+                                >
+                                    Xóa lọc
+                                </button>
+                            )}
+                        </div>
+
                         {loading ? (
                             <div className="admin-loading">
                                 <Loader2 size={32} className="spin-icon" />
@@ -700,7 +750,6 @@ const BookingPage = () => {
                 {selectedBooking && (
                     <div className="booking-detail-wrapper">
                         <div className="detail-content-vertical">
-                            {/* 1. Khách hàng */}
                             <section className="detail-section">
                                 <h3 className="section-title">
                                     <User size={18} /> Thông tin khách hàng
@@ -711,7 +760,6 @@ const BookingPage = () => {
                                 </div>
                             </section>
 
-                            {/* 2. Suất chiếu */}
                             <section className="detail-section">
                                 <h3 className="section-title">
                                     <Film size={18} /> Thông tin suất chiếu
@@ -737,7 +785,6 @@ const BookingPage = () => {
                                 </div>
                             </section>
 
-                            {/* 3. Ghế */}
                             <section className="detail-section">
                                 <h3 className="section-title">
                                     <Ticket size={18} /> Danh sách ghế ({seats.length})
@@ -751,7 +798,6 @@ const BookingPage = () => {
                                 </div>
                             </section>
 
-                            {/* 4. Dịch vụ */}
                             <section className="detail-section">
                                 <h3 className="section-title">
                                     <Popcorn size={18} /> Dịch vụ bắp nước
@@ -774,7 +820,6 @@ const BookingPage = () => {
                                 </div>
                             </section>
 
-                            {/* 5. Tổng tiền */}
                             <section className="detail-section total-card-final">
                                 <div className="footer-row">
                                     <span>Mã đơn (Memo):</span>

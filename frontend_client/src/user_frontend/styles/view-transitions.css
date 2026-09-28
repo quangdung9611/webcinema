@@ -1,0 +1,99 @@
+/* ============================================================
+   VIEW TRANSITIONS — CHUYỂN TRANG MƯỢT NHƯ NATIVE APP
+   ============================================================
+   ✅ Fade + scale nhẹ khi chuyển trang
+   ✅ Chỉ chạy khi browser hỗ trợ (React 19 + Chrome/Edge/Safari 18+)
+   ✅ Tôn trọng reduced-motion
+   ✅ Không xung đột với Lenis smooth scroll
+
+   Cách dùng:
+   - React 19 tự trigger khi <ViewTransition> bọc quanh Routes
+   - CSS này chỉ định nghĩa animation cho từng trạng thái
+============================================================ */
+
+
+/* ============================================================
+   1. TRANG CŨ — MỜ DẦN + THU NHỎ NHẸ
+============================================================ */
+
+::view-transition-old(root) {
+    animation: 0.4s cubic-bezier(0.16, 1, 0.3, 1) both view-fade-out;
+}
+
+@keyframes view-fade-out {
+    to {
+        opacity: 0;
+        transform: scale(0.98);
+    }
+}
+
+
+/* ============================================================
+   2. TRANG MỚI — HIỆN TỪ TỪ + PHÓNG NHẸ
+============================================================ */
+
+::view-transition-new(root) {
+    animation: 0.5s cubic-bezier(0.16, 1, 0.3, 1) both view-fade-in;
+}
+
+@keyframes view-fade-in {
+    from {
+        opacity: 0;
+        transform: scale(1.02);
+    }
+}
+
+
+/* ============================================================
+   3. LAYER ĐÈ LÊN NHAU — cho phép 2 trang cùng hiện
+============================================================ */
+
+::view-transition-image-pair(root) {
+    isolation: auto;
+}
+
+
+/* ============================================================
+   4. REDUCED MOTION — TẮT ANIMATION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+        animation: none;
+    }
+}
+
+
+/* ============================================================
+   5. FALLBACK — BROWSER CŨ KHÔNG HỖ TRỢ
+   ============================================================
+   Không có ::view-transition → CSS này bị bỏ qua
+   → Trang chuyển bình thường, không lỗi
+   ============================================================ */
+
+
+/* ============================================================
+   6. (TÙY CHỌN) — ANIMATION CHO TỪNG ROUTE
+   ============================================================
+   Nếu muốn route khác nhau có animation khác nhau,
+   set prop "name" cho <ViewTransition name="...">
+   rồi thêm CSS bên dưới.
+   ============================================================ */
+
+/*
+Ví dụ:
+::view-transition-old(home),
+::view-transition-new(home) {
+    animation-duration: 0.6s;
+}
+*/
+
+
+/* ============================================================
+   7. ĐẢM BẢO Z-INDEX VIEW TRANSITION LUÔN TRÊN CÙNG
+   ============================================================ */
+
+::view-transition-group(root) {
+    z-index: 9999;
+}

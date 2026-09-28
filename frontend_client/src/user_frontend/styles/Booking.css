@@ -1,5 +1,6 @@
 /* =========================================================
    BOOKING PAGE - PREMIUM SILVER EDITION
+   SUBTLE HOVER EDITION
    MAX WIDTH: 1300px
    USING GLOBAL VARIABLES FROM INDEX.CSS
 ========================================================= */
@@ -28,7 +29,6 @@
     overflow-x: hidden;
 }
 
-
 /* =========================================================
    MAIN CONTAINER
 ========================================================= */
@@ -43,7 +43,6 @@
     gap: var(--space-lg);
 }
 
-
 /* =========================================================
    LEFT COLUMN
 ========================================================= */
@@ -54,7 +53,6 @@
     flex-direction: column;
     gap: var(--space-lg);
 }
-
 
 /* =========================================================
    RIGHT SIDEBAR
@@ -70,7 +68,6 @@
     top: 20px;
     width: 100%;
 }
-
 
 /* =========================================================
    COMMON SECTION CARD
@@ -94,6 +91,7 @@
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     overflow: hidden;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .booking-section::before {
@@ -131,6 +129,23 @@
     pointer-events: none;
 }
 
+/* Hover nhẹ */
+.booking-section:hover {
+    border-color: rgba(232, 232, 232, 0.22);
+    box-shadow:
+        0 22px 60px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* ✅ Không dùng spotlight nữa */
+.section-spotlight {
+    display: none;
+}
+
+.booking-section > *:not(.section-spotlight) {
+    position: relative;
+    z-index: 1;
+}
 
 /* =========================================================
    SECTION HEADING
@@ -166,6 +181,12 @@
     box-shadow:
         0 8px 22px rgba(0, 0, 0, 0.22),
         inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    transition: border-color 0.25s ease, color 0.25s ease;
+}
+
+.booking-section:hover .section-number {
+    border-color: rgba(232, 232, 232, 0.35);
+    color: var(--silver-light);
 }
 
 .section-heading-content {
@@ -190,8 +211,12 @@
     letter-spacing: 1.2px;
     color: var(--silver-primary);
     text-transform: uppercase;
+    transition: color 0.25s ease;
 }
 
+.booking-section:hover .section-heading h2 {
+    color: var(--silver-light);
+}
 
 /* =========================================================
    SELECTED SEAT COUNTER
@@ -206,6 +231,12 @@
     border-radius: var(--radius-md);
     background: rgba(255, 255, 255, 0.035);
     border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: border-color 0.25s ease, background 0.25s ease;
+}
+
+.selected-seat-counter:hover {
+    border-color: rgba(232, 232, 232, 0.22);
+    background: rgba(255, 255, 255, 0.055);
 }
 
 .selected-seat-counter span {
@@ -227,7 +258,6 @@
     font-weight: var(--fw-semibold);
 }
 
-
 /* =========================================================
    DIVIDER
 ========================================================= */
@@ -246,7 +276,6 @@
         );
 }
 
-
 /* =========================================================
    BOOKING NAVIGATION
 ========================================================= */
@@ -258,7 +287,6 @@
     gap: 18px;
     align-items: start;
 }
-
 
 /* =========================================================
    NAV COLUMN
@@ -288,7 +316,6 @@
     font-size: 12px;
     font-weight: var(--fw-extrabold);
 }
-
 
 /* =========================================================
    CINEMA SELECT
@@ -339,7 +366,7 @@
 }
 
 .cinema-select select:hover {
-    border-color: rgba(232, 232, 232, 0.35);
+    border-color: rgba(232, 232, 232, 0.32);
     background: rgba(255, 255, 255, 0.065);
 }
 
@@ -354,7 +381,6 @@
     background: var(--bg-tertiary);
     color: var(--text-body);
 }
-
 
 /* =========================================================
    DATE / TIME SLIDERS
@@ -391,9 +417,8 @@
     display: none;
 }
 
-
 /* =========================================================
-   SLIDER BUTTON
+   SLIDE BUTTON — hover nhẹ
 ========================================================= */
 
 .slide-btn {
@@ -412,18 +437,15 @@
     line-height: 1;
     cursor: pointer;
     transition:
-        transform 0.22s ease,
         background 0.22s ease,
         border-color 0.22s ease,
-        box-shadow 0.22s ease;
+        color 0.22s ease;
 }
 
 .slide-btn:hover:not(:disabled) {
-    transform: scale(1.06);
     background: var(--premium-gradient);
     color: var(--bg-primary);
     border-color: rgba(255, 255, 255, 0.20);
-    box-shadow: 0 7px 20px rgba(232, 232, 232, 0.14);
 }
 
 .slide-btn:active:not(:disabled) {
@@ -435,9 +457,8 @@
     cursor: not-allowed;
 }
 
-
 /* =========================================================
-   COMPACT CARD
+   COMPACT CARD — hover nhẹ
 ========================================================= */
 
 .compact-card {
@@ -457,19 +478,14 @@
     cursor: pointer;
     scroll-snap-align: start;
     transition:
-        transform 0.22s ease,
         border-color 0.22s ease,
-        background 0.22s ease,
-        box-shadow 0.22s ease;
+        background 0.22s ease;
 }
 
 .compact-card:hover {
-    transform: translateY(-2px);
-    border-color: rgba(232, 232, 232, 0.30);
-    background: rgba(255, 255, 255, 0.065);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+    border-color: rgba(232, 232, 232, 0.28);
+    background: rgba(255, 255, 255, 0.06);
 }
-
 
 /* =========================================================
    DATE CARD
@@ -488,7 +504,6 @@
     font-weight: var(--fw-extrabold);
     color: var(--text-body);
 }
-
 
 /* =========================================================
    TIME CARD
@@ -513,13 +528,11 @@
     color: var(--text-body);
 }
 
-
 /* =========================================================
    ACTIVE CARD
 ========================================================= */
 
 .compact-card.active {
-    transform: translateY(-2px);
     background: var(--premium-gradient) !important;
     border-color: rgba(255, 255, 255, 0.20) !important;
     color: var(--bg-primary) !important;
@@ -535,6 +548,9 @@
     color: var(--bg-primary) !important;
 }
 
+.compact-card.active:hover {
+    border-color: rgba(255, 255, 255, 0.35) !important;
+}
 
 /* =========================================================
    DISABLED STEP
@@ -544,7 +560,6 @@
     opacity: 0.38;
     pointer-events: none;
 }
-
 
 /* =========================================================
    NO SHOWTIMES
@@ -562,7 +577,6 @@
     white-space: nowrap;
 }
 
-
 /* =========================================================
    SEAT SELECTION
 ========================================================= */
@@ -577,7 +591,6 @@
     flex-direction: column;
     align-items: center;
 }
-
 
 /* =========================================================
    SCREEN
@@ -647,7 +660,6 @@
     text-transform: uppercase;
 }
 
-
 /* =========================================================
    SEATS LAYOUT
 ========================================================= */
@@ -675,7 +687,6 @@
     border-radius: var(--radius-round);
 }
 
-
 /* =========================================================
    SEAT ROW
 ========================================================= */
@@ -698,6 +709,11 @@
     font-size: 12px;
     font-weight: var(--fw-extrabold);
     color: var(--text-muted);
+    transition: color 0.2s ease;
+}
+
+.seat-row:hover .row-id {
+    color: var(--silver-dark);
 }
 
 .row-items {
@@ -708,9 +724,8 @@
     justify-content: center;
 }
 
-
 /* =========================================================
-   SEAT COMPONENT SUPPORT
+   SEAT — HOVER NHẸ
 ========================================================= */
 
 .seat {
@@ -723,15 +738,18 @@
     flex-shrink: 0;
     cursor: pointer;
     transition:
-        transform 0.18s ease,
-        filter 0.18s ease;
+        transform 0.2s ease,
+        filter 0.2s ease,
+        color 0.2s ease;
     fill: currentColor !important;
     stroke: currentColor !important;
 }
 
-.seat:hover:not(.sold):not(.maintenance):not(.held-by-other) {
-    transform: translateY(-3px) scale(1.06);
-    filter: drop-shadow(0 5px 9px rgba(0, 0, 0, 0.30));
+/* Hover chung — bay lên nhẹ + sáng lên nhẹ */
+.seat:hover:not(.sold):not(.maintenance):not(.held-by-other):not(.locked) {
+    transform: translateY(-3px) scale(1.08);
+    filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.3)) brightness(1.15);
+    z-index: 3;
 }
 
 .seat.COUPLE,
@@ -764,7 +782,6 @@
     white-space: nowrap;
 }
 
-
 /* =========================================================
    STANDARD
 ========================================================= */
@@ -782,9 +799,17 @@
     color: var(--bg-primary);
 }
 
+.seat.NORMAL:hover:not(.sold):not(.maintenance):not(.held-by-other):not(.locked),
+.seat.STANDARD:hover:not(.sold):not(.maintenance):not(.held-by-other):not(.locked),
+.seat.THUONG:hover:not(.sold):not(.maintenance):not(.held-by-other):not(.locked) {
+    color: #ffffff !important;
+    filter:
+        drop-shadow(0 5px 10px rgba(0, 0, 0, 0.35))
+        brightness(1.25);
+}
 
 /* =========================================================
-   VIP
+   VIP — hover vàng nhẹ
 ========================================================= */
 
 .seat.VIP {
@@ -796,9 +821,16 @@
     color: var(--bg-primary);
 }
 
+.seat.VIP:hover:not(.sold):not(.maintenance):not(.held-by-other):not(.locked) {
+    color: #FFD966 !important;
+    filter:
+        drop-shadow(0 5px 10px rgba(0, 0, 0, 0.35))
+        drop-shadow(0 0 10px rgba(255, 217, 102, 0.45))
+        brightness(1.2);
+}
 
 /* =========================================================
-   COUPLE
+   COUPLE — hover hồng nhẹ
 ========================================================= */
 
 .seat.COUPLE,
@@ -812,6 +844,56 @@
     color: var(--bg-primary);
 }
 
+.seat.COUPLE:hover:not(.sold):not(.maintenance):not(.held-by-other):not(.locked),
+.seat.DOUBLE:hover:not(.sold):not(.maintenance):not(.held-by-other):not(.locked) {
+    color: #F48FB1 !important;
+    filter:
+        drop-shadow(0 5px 10px rgba(0, 0, 0, 0.35))
+        drop-shadow(0 0 10px rgba(244, 143, 177, 0.45))
+        brightness(1.2);
+}
+
+/* =========================================================
+   DELUXE — hover xám bạc nhẹ
+========================================================= */
+
+.seat.DELUXE {
+    color: var(--seat-deluxe-color, #B8C0C9) !important;
+}
+
+.seat.DELUXE .seat-number {
+    background: rgba(255, 255, 255, 0.8);
+    color: var(--bg-primary);
+}
+
+.seat.DELUXE:hover:not(.sold):not(.maintenance):not(.held-by-other):not(.locked) {
+    color: #D8DEE4 !important;
+    filter:
+        drop-shadow(0 5px 10px rgba(0, 0, 0, 0.35))
+        drop-shadow(0 0 10px rgba(216, 222, 228, 0.4))
+        brightness(1.2);
+}
+
+/* =========================================================
+   RECLINER — hover xanh xám nhẹ
+========================================================= */
+
+.seat.RECLINER {
+    color: var(--seat-recliner-color, #6F8FA8) !important;
+}
+
+.seat.RECLINER .seat-number {
+    background: rgba(255, 255, 255, 0.75);
+    color: var(--bg-primary);
+}
+
+.seat.RECLINER:hover:not(.sold):not(.maintenance):not(.held-by-other):not(.locked) {
+    color: #9DB6CC !important;
+    filter:
+        drop-shadow(0 5px 10px rgba(0, 0, 0, 0.35))
+        drop-shadow(0 0 10px rgba(157, 182, 204, 0.4))
+        brightness(1.2);
+}
 
 /* =========================================================
    PREMIUM
@@ -826,7 +908,6 @@
     color: var(--bg-primary);
 }
 
-
 /* =========================================================
    LUXURY
 ========================================================= */
@@ -840,24 +921,30 @@
     color: var(--bg-primary);
 }
 
-
 /* =========================================================
-   SELECTED
+   SELECTED — glow nhẹ, KHÔNG breathing
 ========================================================= */
 
 .seat.selected {
     color: var(--seat-selected-color) !important;
-    filter: drop-shadow(0 0 9px rgba(255, 255, 255, 0.18));
+    filter: drop-shadow(0 0 8px rgba(67, 183, 122, 0.4));
 }
 
 .seat.selected .seat-number {
-    background: rgba(255, 255, 255, 0.92);
-    color: var(--bg-primary) !important;
+    background: rgba(67, 183, 122, 0.95);
+    color: #ffffff !important;
 }
 
+.seat.selected:hover {
+    transform: translateY(-3px) scale(1.08);
+    filter:
+        drop-shadow(0 5px 10px rgba(0, 0, 0, 0.35))
+        drop-shadow(0 0 12px rgba(67, 183, 122, 0.6))
+        brightness(1.15);
+}
 
 /* =========================================================
-   SOLD
+   SOLD — không hover
 ========================================================= */
 
 .seat.sold {
@@ -866,14 +953,18 @@
     cursor: not-allowed;
 }
 
+.seat.sold:hover {
+    transform: none !important;
+    filter: none !important;
+}
+
 .seat.sold .seat-number {
     background: rgba(0, 0, 0, 0.30);
     color: var(--silver-light);
 }
 
-
 /* =========================================================
-   MAINTENANCE
+   MAINTENANCE — không hover
 ========================================================= */
 
 .seat.maintenance {
@@ -882,20 +973,29 @@
     cursor: not-allowed;
 }
 
+.seat.maintenance:hover {
+    transform: none !important;
+    filter: none !important;
+}
+
 .seat.maintenance .seat-number {
     background: rgba(0, 0, 0, 0.20);
     color: var(--text-secondary);
 }
 
-
 /* =========================================================
-   HELD BY OTHER
+   HELD BY OTHER — không hover
 ========================================================= */
 
 .seat.held-by-other {
     color: #f39c12 !important;
     opacity: 0.92;
     cursor: not-allowed !important;
+}
+
+.seat.held-by-other:hover {
+    transform: none !important;
+    filter: none !important;
 }
 
 .seat.held-by-other .seat-icon {
@@ -923,9 +1023,22 @@
     border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
+/* =========================================================
+   LOCKED — pulse nhẹ (giữ để user biết đang chờ)
+========================================================= */
+
+.seat.locked {
+    animation: seatLockedPulse 1.6s ease-in-out infinite;
+    cursor: wait;
+}
+
+@keyframes seatLockedPulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 0.95; }
+}
 
 /* =========================================================
-   LEGEND - NẰM NGANG (HORIZONTAL)
+   LEGEND
 ========================================================= */
 
 .seat-legend {
@@ -966,6 +1079,11 @@
     font-size: 10px;
     color: var(--text-secondary);
     white-space: nowrap;
+    transition: color 0.2s ease;
+}
+
+.leg-item:hover {
+    color: var(--silver-light);
 }
 
 .leg-item .box {
@@ -974,6 +1092,11 @@
     flex-shrink: 0;
     border-radius: 5px;
     border: 1px solid rgba(255, 255, 255, 0.10);
+    transition: border-color 0.2s ease;
+}
+
+.leg-item:hover .box {
+    border-color: rgba(255, 255, 255, 0.35);
 }
 
 .box.normal,
@@ -1025,7 +1148,6 @@
     line-height: 1;
 }
 
-
 /* =========================================================
    PLACEHOLDER
 ========================================================= */
@@ -1076,7 +1198,6 @@
     margin: 0 3px;
     color: var(--silver-light);
 }
-
 
 /* =========================================================
    ERROR
@@ -1150,7 +1271,6 @@
     box-shadow: 0 13px 32px rgba(232, 232, 232, 0.20);
 }
 
-
 /* =========================================================
    BOOKING PROGRESS WRAPPER
 ========================================================= */
@@ -1161,6 +1281,113 @@
     margin: 0 auto 24px;
 }
 
+/* ============================================================
+   ✅ RESCHEDULE BANNER
+============================================================ */
+
+.reschedule-banner {
+    width: 100%;
+    max-width: 1300px;
+    margin: 0 auto 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(
+        100deg,
+        rgba(243, 112, 33, 0.15),
+        rgba(243, 112, 33, 0.05)
+    );
+    border: 1px solid rgba(243, 112, 33, 0.35);
+    color: #FFB74D;
+    font-size: 13px;
+    font-weight: var(--fw-semibold);
+    box-shadow: 0 8px 24px rgba(243, 112, 33, 0.1);
+}
+
+.reschedule-banner svg {
+    color: #f37021;
+    flex-shrink: 0;
+}
+
+/* ============================================================
+   ✅ SOCKET STATUS INDICATOR
+============================================================ */
+
+.socket-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 var(--space-md);
+    padding: 8px 14px;
+    border-radius: var(--radius-round);
+    font-size: 0.78rem;
+    font-weight: var(--fw-semibold);
+    letter-spacing: 0.02em;
+    transition: all var(--transition-fast);
+    border: 1px solid transparent;
+}
+
+.socket-status--ready {
+    background: rgba(67, 183, 122, 0.1);
+    border-color: rgba(67, 183, 122, 0.3);
+    color: #43B77A;
+}
+
+.socket-status--connecting {
+    background: rgba(255, 183, 77, 0.1);
+    border-color: rgba(255, 183, 77, 0.35);
+    color: #FFB74D;
+}
+
+.socket-status .spin-icon {
+    animation: spin 1s linear infinite;
+}
+
+.socket-status .pulse-icon {
+    animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+/* ✅ Seat map bị disable khi socket chưa ready */
+.seat-map-booking--disabled {
+    opacity: 0.55;
+    pointer-events: none;
+    filter: grayscale(0.4);
+    transition: all var(--transition-fast);
+    position: relative;
+}
+
+.seat-map-booking--disabled::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.04),
+        transparent
+    );
+    background-size: 200% 100%;
+    animation: shimmerBg 1.6s linear infinite;
+    pointer-events: none;
+    border-radius: var(--radius-lg);
+}
+
+@keyframes shimmerBg {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+}
 
 /* =========================================================
    RESPONSIVE - 1200px
@@ -1211,7 +1438,6 @@
     }
 }
 
-
 /* =========================================================
    RESPONSIVE - 992px
 ========================================================= */
@@ -1261,7 +1487,6 @@
         min-width: 0;
     }
 
-    /* Legend vẫn giữ ngang trên tablet */
     .seat-legend {
         gap: 12px 18px;
     }
@@ -1270,7 +1495,6 @@
         gap: 8px 14px;
     }
 }
-
 
 /* =========================================================
    RESPONSIVE - 768px
@@ -1436,7 +1660,6 @@
     }
 }
 
-
 /* =========================================================
    RESPONSIVE - 600px
 ========================================================= */
@@ -1515,7 +1738,6 @@
         width: 24px;
     }
 }
-
 
 /* =========================================================
    RESPONSIVE - 480px
@@ -1740,23 +1962,5 @@
 
     .placeholder-msg p {
         font-size: 9px;
-    }
-}
-
-
-/* =========================================================
-   REDUCE MOTION
-========================================================= */
-
-@media (prefers-reduced-motion: reduce) {
-    .compact-card,
-    .slide-btn,
-    .seat,
-    .booking-retry-btn {
-        transition: none;
-    }
-
-    .scroll-list {
-        scroll-behavior: auto;
     }
 }

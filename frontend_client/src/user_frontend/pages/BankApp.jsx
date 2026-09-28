@@ -12,6 +12,8 @@ import {
     RotateCw,
     Loader2,
     RefreshCw,
+    Check,
+    X,
 } from 'lucide-react';
 import api from '../../api/api';
 import Modal from '../components/Modal';
@@ -72,7 +74,6 @@ const BankApp = () => {
     const oldTotalAmount = Number(bookingData?.oldTotalAmount || 0);
     const newTotalAmount = Number(bookingData?.newTotalAmount || 0);
 
-    // ✅ Số tiền cần thanh toán: reschedule → delta, flow thường → totalAmount
     const totalAmount = isRescheduleMode
         ? Math.max(0, deltaAmount)
         : Number(bookingData.totalAmount || 0);
@@ -119,6 +120,17 @@ const BankApp = () => {
     const redirectTimeoutRef = useRef(null);
     const otpAttemptsRef = useRef(parseInt(localStorage.getItem('bankOtpAttempts') || '0', 10));
     const isLockedRef = useRef(localStorage.getItem('bankIsLocked') === 'true');
+    const successTimerRef = useRef(null);
+    const errorTimerRef = useRef(null);
+
+    // ========================================================
+    // ✅ PREMIUM SUCCESS EFFECT
+    // ========================================================
+
+    const [otpSuccess, setOtpSuccess] = useState(false);
+
+    // ❌ PREMIUM ERROR EFFECT
+    const [otpError, setOtpError] = useState(false);
 
     // ========================================================
     // TIME STATE
@@ -236,6 +248,19 @@ const BankApp = () => {
         localStorage.setItem('bankOtpInput', '');
         if (otpInputsRef.current[0]) otpInputsRef.current[0].focus();
     }, []);
+
+    // ========================================================
+    // ❌ TRIGGER ERROR — hiện dấu ✗ 1.5s rồi reset
+    // ========================================================
+
+    const triggerErrorEffect = useCallback(() => {
+        setOtpError(true);
+        if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+        errorTimerRef.current = setTimeout(() => {
+            setOtpError(false);
+            resetOtpInput();
+        }, 1500);
+    }, [resetOtpInput]);
 
     // ========================================================
     // CLOSE MODAL
@@ -395,7 +420,6 @@ const BankApp = () => {
         isCancellingRef.current = true;
         try {
             if (isRescheduleMode) {
-                // ✅ Reschedule: hủy temp booking riêng
                 await api.post('/api/payment/cancel-reschedule-timeout', {
                     tempBookingId,
                     rescheduleBookingId,
@@ -490,7 +514,6 @@ const BankApp = () => {
                 tempBookingId,
             };
 
-            // ✅ Thêm field reschedule nếu cần
             if (isRescheduleMode) {
                 payload.isReschedule = true;
                 payload.rescheduleBookingId = rescheduleBookingId;
@@ -729,7 +752,17 @@ const BankApp = () => {
                 'Bạn đã thanh toán thành công! Vui lòng quay lại trang xác nhận.',
                 () => {
                     closeModal();
-                    safeNavigate('/confirm-success', { state: bookingData });
+                    safeNavigate('/confirm-success', {
+                        state: {
+                            orderId: completedId,
+                            bookingId: completedId,
+                            data: {
+                                ...bookingData,
+                                orderId: completedId,
+                                bookingId: completedId,
+                            }
+                        }
+                    });
                 }
             );
         }
@@ -781,11 +814,13 @@ const BankApp = () => {
             if (redisSyncIntervalRef.current) clearInterval(redisSyncIntervalRef.current);
             if (autoNavigateRef.current) clearTimeout(autoNavigateRef.current);
             if (redirectTimeoutRef.current) clearTimeout(redirectTimeoutRef.current);
+            if (successTimerRef.current) clearTimeout(successTimerRef.current);
+            if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
         };
     }, []);
 
     // ========================================================
-    // ✅ VERIFY OTP — HỖ TRỢ CẢ FLOW THƯỜNG + RESCHEDULE
+    // ✅ VERIFY OTP
     // ========================================================
 
     const handleVerifyPayment = async () => {
@@ -799,20 +834,22 @@ const BankApp = () => {
         }
         if (otpExpiredRef.current || timeLeft <= 0) {
             openModal('warning', 'OTP HẾT HẠN', 'Mã OTP đã hết hạn. Vui lòng gửi lại OTP nếu bạn chưa thanh toán.');
+            triggerErrorEffect();
             return;
         }
         if (otp.length !== 6) {
             openModal('error', 'THÔNG BÁO', 'Vui lòng nhập đủ 6 số OTP.');
+            triggerErrorEffect();
             return;
         }
         if (!customerEmail || !tempBookingId) {
             openModal('error', 'THIẾU THÔNG TIN', 'Không tìm thấy thông tin thanh toán.');
+            triggerErrorEffect();
             return;
         }
 
         setLoadingVerify(true);
         try {
-            // ✅ Payload khác nhau giữa 2 flow
             const payload = isRescheduleMode
                 ? {
                     email: customerEmail,
@@ -833,7 +870,6 @@ const BankApp = () => {
                     ownerToken: ownerToken || undefined,
                 };
 
-            // ✅ Endpoint khác nhau
             const endpoint = isRescheduleMode
                 ? '/api/payment/verify-reschedule-otp-bank'
                 : '/api/bank/verify-otp';
@@ -847,12 +883,35 @@ const BankApp = () => {
                 localStorage.setItem('bankOtpAttempts', '0');
                 resetLockState();
                 const realBookingId = response.data?.data?.bookingId || tempBookingId;
+
                 localStorage.setItem('paymentCompleted', 'true');
                 localStorage.setItem('completedBookingId', String(realBookingId));
-                paymentCompletedRef.current = true;
-                clearAllBookingData();
 
-                // ✅ Thông báo khác nhau
+                paymentCompletedRef.current = true;
+
+                if (isRescheduleMode) {
+                    clearAllBookingData();
+                } else {
+                    const keysToRemoveTemp = [
+                        'bankHasSentOtp', 'bankHasVisited', 'bankOtpInput',
+                        'bankLastOtpSentAt', 'paymentInitiated',
+                        'holdExpiresAt', 'selectedSeats', 'currentShowtimeId',
+                        'selectedFoods', 'booking_temp', 'tempBookingId',
+                        'bookingOwnerToken', 'bankIsLocked', 'bankLockTime',
+                        'bankOtpAttempts', 'bankOtpExpiresAt'
+                    ];
+                    keysToRemoveTemp.forEach(key => localStorage.removeItem(key));
+                    setOtpExpiresAt(0);
+                    setOtp('');
+                    resetLockState();
+                    hasSentOtp.current = false;
+                    hasVisitedBankApp.current = false;
+                    otpExpiredRef.current = false;
+                    isPaymentInitiated.current = false;
+                    hasShownModalRef.current = false;
+                    hasShownExpiredModalRef.current = false;
+                }
+
                 const successTitle = isRescheduleMode
                     ? 'ĐỔI SUẤT THÀNH CÔNG'
                     : 'THANH TOÁN THÀNH CÔNG';
@@ -863,27 +922,54 @@ const BankApp = () => {
 
                 const successNavigate = isRescheduleMode ? '/profile' : '/confirm-success';
 
-                openModal(
-                    'success',
-                    successTitle,
-                    successMessage,
-                    () => {
-                        closeModal();
-                        safeNavigate(successNavigate, { state: bookingData });
-                    }
-                );
-                autoNavigateRef.current = setTimeout(() => {
-                    if (isModalOpenRef.current) {
-                        closeModal();
-                        safeNavigate(successNavigate, { state: bookingData });
-                    }
-                }, 3000);
+                const successState = isRescheduleMode
+                    ? { state: bookingData }
+                    : {
+                        state: {
+                            orderId: realBookingId,
+                            bookingId: realBookingId,
+                            data: {
+                                ...bookingData,
+                                orderId: realBookingId,
+                                bookingId: realBookingId,
+                            }
+                        }
+                    };
+
+                // ✅ TRIGGER SUCCESS EFFECT — hiện dấu ✓ to ở giữa
+                setOtpSuccess(true);
+
+                successTimerRef.current = setTimeout(() => {
+                    setOtpSuccess(false);
+
+                    openModal(
+                        'success',
+                        successTitle,
+                        successMessage,
+                        () => {
+                            closeModal();
+                            safeNavigate(successNavigate, successState);
+                        }
+                    );
+                    autoNavigateRef.current = setTimeout(() => {
+                        if (isModalOpenRef.current) {
+                            closeModal();
+                            safeNavigate(successNavigate, successState);
+                        }
+                    }, 3000);
+                }, 2000);
                 return;
             }
 
             const errorData = response.data?.data || {};
             const remainingAttempts = errorData?.remainingAttempts;
             const message = response.data?.message || 'Mã OTP không đúng hoặc đã hết hạn.';
+
+            // ❌ TRIGGER ERROR — hiện dấu ✗ to ở giữa
+            if (!(response.data?.code === 'OTP_LOCKED' || response.data?.code === 'ACCOUNT_LOCKED' ||
+                message.toLowerCase().includes('khóa') || remainingAttempts === 0)) {
+                triggerErrorEffect();
+            }
 
             if (!(response.data?.code === 'OTP_LOCKED' || response.data?.code === 'ACCOUNT_LOCKED' ||
                 message.toLowerCase().includes('khóa') || remainingAttempts === 0)) {
@@ -907,6 +993,12 @@ const BankApp = () => {
             console.error('❌ [BANK APP] Verify OTP Error:', error);
             const errorData = error.response?.data || {};
             const errorMessage = errorData.message || 'Mã OTP không đúng hoặc đã hết hạn.';
+
+            // ❌ TRIGGER ERROR
+            if (!(error.response?.status === 429 || errorData.code === 'OTP_LOCKED' ||
+                errorData.code === 'ACCOUNT_LOCKED' || errorMessage.toLowerCase().includes('khóa'))) {
+                triggerErrorEffect();
+            }
 
             if (!(error.response?.status === 429 || errorData.code === 'OTP_LOCKED' ||
                 errorData.code === 'ACCOUNT_LOCKED' || errorMessage.toLowerCase().includes('khóa'))) {
@@ -937,7 +1029,7 @@ const BankApp = () => {
     // ========================================================
 
     const handleOtpChange = (event, index) => {
-        if (isLocked || otpExpiredRef.current) return;
+        if (isLocked || otpExpiredRef.current || otpSuccess || otpError) return;
         const value = event.target.value.replace(/\D/g, '').slice(0, 1);
         const current = otp.padEnd(6, '').split('');
         current[index] = value;
@@ -977,7 +1069,7 @@ const BankApp = () => {
 
     const handleOtpPaste = event => {
         event.preventDefault();
-        if (isLocked || otpExpiredRef.current) return;
+        if (isLocked || otpExpiredRef.current || otpSuccess || otpError) return;
         const pasted = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
         if (!pasted) return;
         setOtp(pasted.padEnd(6, ''));
@@ -1005,6 +1097,8 @@ const BankApp = () => {
         loadingVerify ||
         paymentCompletedRef.current ||
         isLocked ||
+        otpSuccess ||
+        otpError ||
         (!otpExpiredRef.current && timeLeft > 0);
 
     // ========================================================
@@ -1035,22 +1129,12 @@ const BankApp = () => {
 
                 <div className="bank-otp-section">
                     <div className="otp-card">
-                        {/* ✅ BANNER RESCHEDULE */}
                         {isRescheduleMode && (
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 10,
-                                padding: '10px 14px',
-                                background: '#fff3e6',
-                                border: '1px solid #f37021',
-                                borderRadius: 8,
-                                marginBottom: 12,
-                                fontSize: 13,
-                            }}>
-                                <RefreshCw size={16} style={{ color: '#f37021', flexShrink: 0 }} />
+                            <div className="reschedule-banner">
+                                <RefreshCw size={16} className="reschedule-icon" />
                                 <span>
-                                    Đổi suất chiếu — Bù thêm <strong>{totalAmount.toLocaleString('vi-VN')} ₫</strong>
+                                    Đổi suất chiếu — Bù thêm{' '}
+                                    <strong>{totalAmount.toLocaleString('vi-VN')} ₫</strong>
                                 </span>
                             </div>
                         )}
@@ -1069,43 +1153,62 @@ const BankApp = () => {
                             Gửi đến: <strong>{customerEmail || 'Chưa có email'}</strong>
                         </p>
 
-                        <div className="otp-circle-container">
-                            {[...Array(6)].map((_, index) => (
-                                <input
-                                    key={index}
-                                    type="text"
-                                    inputMode="numeric"
-                                    autoComplete="one-time-code"
-                                    className="otp-circle"
-                                    maxLength={1}
-                                    value={otp[index] || ''}
-                                    onChange={event => handleOtpChange(event, index)}
-                                    onKeyDown={event => handleOtpKeyDown(event, index)}
-                                    onPaste={handleOtpPaste}
-                                    disabled={paymentCompletedRef.current || isLocked || otpExpiredRef.current || loadingVerify}
-                                    autoFocus={index === 0 && !isLocked && !otpExpiredRef.current}
-                                    ref={element => { otpInputsRef.current[index] = element; }}
-                                />
-                            ))}
+                        {/* ✅ OTP ZONE — 6 ô input HOẶC 1 dấu ✓/✗ to */}
+                        <div className="otp-input-wrapper">
+                            {otpSuccess || otpError ? (
+                                <div className={`otp-result-container ${otpSuccess ? 'otp-result-container--success' : ''} ${otpError ? 'otp-result-container--error' : ''}`}>
+                                    <div className={`otp-result-icon ${otpSuccess ? 'otp-result-icon--success' : ''} ${otpError ? 'otp-result-icon--error' : ''}`}>
+                                        {otpSuccess ? (
+                                            <Check size={120} strokeWidth={3} />
+                                        ) : (
+                                            <X size={120} strokeWidth={3} />
+                                        )}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="otp-circle-container">
+                                    {[...Array(6)].map((_, index) => (
+                                        <input
+                                            key={index}
+                                            type="text"
+                                            inputMode="numeric"
+                                            autoComplete="one-time-code"
+                                            className="otp-circle"
+                                            maxLength={1}
+                                            value={otp[index] || ''}
+                                            onChange={event => handleOtpChange(event, index)}
+                                            onKeyDown={event => handleOtpKeyDown(event, index)}
+                                            onPaste={handleOtpPaste}
+                                            disabled={
+                                                paymentCompletedRef.current ||
+                                                isLocked ||
+                                                otpExpiredRef.current ||
+                                                loadingVerify
+                                            }
+                                            autoFocus={index === 0 && !isLocked && !otpExpiredRef.current}
+                                            ref={element => {
+                                                otpInputsRef.current[index] = element;
+                                            }}
+                                        />
+                                    ))}
+                                </div>
+                            )}
                         </div>
+
+                        {otpError && (
+                            <div className="otp-error-text">
+                                <X size={16} />
+                                <span>Mã OTP không đúng. Vui lòng thử lại!</span>
+                            </div>
+                        )}
 
                         <div className={getTimerBoxClass()}>
                             {isLocked ? (
-                                <span className="timer-text" style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    justifyContent: 'center'
-                                }}>
+                                <span className="timer-text timer-text-icon">
                                     <Lock size={16} /> Tài khoản bị khóa: {formatTime(lockTimeLeft)}
                                 </span>
                             ) : otpExpiredRef.current || timeLeft <= 0 ? (
-                                <span className="timer-text" style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    justifyContent: 'center'
-                                }}>
+                                <span className="timer-text timer-text-icon">
                                     <Clock size={16} /> OTP đã hết hạn
                                 </span>
                             ) : (
@@ -1122,12 +1225,6 @@ const BankApp = () => {
                                 className="btn-resend-otp"
                                 onClick={handleResendOtp}
                                 disabled={isResendDisabled}
-                                style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '6px'
-                                }}
                             >
                                 {loadingSendOtp ? (
                                     <>
@@ -1148,8 +1245,17 @@ const BankApp = () => {
                             loading={loadingVerify}
                             loadingText="Đang xác nhận..."
                             onClick={handleVerifyPayment}
-                            disabled={loadingVerify || loadingSendOtp || paymentCompletedRef.current || isLocked ||
-                                otpExpiredRef.current || timeLeft <= 0 || otp.length !== 6}
+                            disabled={
+                                loadingVerify ||
+                                loadingSendOtp ||
+                                paymentCompletedRef.current ||
+                                isLocked ||
+                                otpExpiredRef.current ||
+                                timeLeft <= 0 ||
+                                otp.length !== 6 ||
+                                otpSuccess ||
+                                otpError
+                            }
                             className="btn-confirm-payment"
                             spinnerColor="#ffffff"
                         >

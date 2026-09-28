@@ -5,9 +5,11 @@
    ✅ Dùng 100% biến var() từ index.css
    ✅ Card có viền bạc mặc định (--card-border-base)
    ✅ Font: --font-heading (Oswald) + --font-primary (Inter)
-   ✅ OTP input: 6 ô VUÔNG + NÚT EYE (giống Admin)
-   ✅ Google Login button: CUSTOM BUTTON (dùng useGoogleLogin hook)
-   ✅ RECAPTCHA v2 Checkbox
+   ✅ 100% Lucide React icons – KHÔNG dùng emoji
+   ✅ Google Login: custom button (useGoogleLogin hook)
+   ✅ Premium 3D feedback effect (typing/loading/success/error)
+   ✅ OTP RESULT — 6 ô ẩn, hiện 1 dấu ✓/✗ TO ở giữa
+   ✅ Responsive: 1200 / 992 / 768 / 480 / 360
    ========================================================= */
 
 /* =========================================================
@@ -25,6 +27,8 @@
     background-size: cover;
     position: relative;
     isolation: isolate;
+    perspective: 1400px;
+    perspective-origin: center;
 }
 
 .auth-container::before {
@@ -39,7 +43,7 @@
 }
 
 /* =========================================================
-   2. CARD GLASSMORPHISM — ✅ VIỀN BẠC MẶC ĐỊNH
+   2. CARD GLASSMORPHISM
    ========================================================= */
 .auth-card {
     position: relative;
@@ -55,8 +59,14 @@
     border: var(--card-border-base);
 
     box-shadow: var(--glass-shadow);
-    transition: all var(--transition-normal);
     overflow: hidden;
+
+    transform-style: preserve-3d;
+    will-change: transform, box-shadow;
+    transition:
+        transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.6s ease,
+        border-color 0.4s ease;
 }
 
 .auth-card::before {
@@ -65,7 +75,8 @@
     inset: -1px;
     border-radius: var(--radius-xl);
     padding: 1px;
-    background: linear-gradient(135deg,
+    background: linear-gradient(
+        135deg,
         rgba(255, 255, 255, 0.05) 0%,
         rgba(255, 255, 255, 0.12) 30%,
         rgba(255, 255, 255, 0.05) 60%,
@@ -87,7 +98,6 @@
 .auth-card:hover {
     border: var(--card-border-hover);
     box-shadow: var(--card-shadow-hover);
-    transform: translateY(-4px);
 }
 
 .auth-card::after {
@@ -108,13 +118,60 @@
 }
 
 /* =========================================================
-   3. FORM WRAPPER – SCROLL CUSTOM
+   3. TITLE ROW + ICON
+   ========================================================= */
+.auth-card__title-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-xs);
+}
+
+.auth-card__title-icon {
+    color: var(--silver-primary);
+    filter: drop-shadow(0 0 12px rgba(221, 226, 232, 0.15));
+    flex-shrink: 0;
+}
+
+.auth-card h2 {
+    text-align: center;
+    color: var(--text-heading);
+    font-family: var(--font-heading);
+    font-size: var(--font-size-h2);
+    font-weight: var(--fw-extrabold);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin: 0;
+    text-shadow: 0 2px 30px rgba(0, 0, 0, 0.4);
+}
+
+.auth-subtitle {
+    text-align: center;
+    color: var(--text-secondary);
+    font-family: var(--font-primary);
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-medium);
+    margin-bottom: var(--space-lg);
+    letter-spacing: 0.3px;
+}
+
+.auth-subtitle-sm {
+    font-size: var(--font-size-h6);
+    color: var(--text-secondary);
+    margin-bottom: var(--space-lg);
+}
+
+/* =========================================================
+   4. FORM WRAPPER – SCROLL CUSTOM
    ========================================================= */
 .auth-form-wrapper {
     max-height: 400px;
     overflow-y: auto;
     padding-right: 6px;
     margin: var(--space-md) 0 var(--space-sm);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(200, 204, 210, 0.2) transparent;
 }
 
 .auth-form-wrapper::-webkit-scrollbar {
@@ -129,20 +186,14 @@
 .auth-form-wrapper::-webkit-scrollbar-thumb {
     background: rgba(200, 204, 210, 0.2);
     border-radius: var(--radius-round);
-    transition: background var(--transition-fast);
 }
 
 .auth-form-wrapper::-webkit-scrollbar-thumb:hover {
     background: rgba(200, 204, 210, 0.4);
 }
 
-.auth-form-wrapper {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(200, 204, 210, 0.2) transparent;
-}
-
 /* =========================================================
-   4. STEP INDICATOR
+   5. STEP INDICATOR
    ========================================================= */
 .step-indicator {
     display: flex;
@@ -196,38 +247,7 @@
 }
 
 /* =========================================================
-   5. TIÊU ĐỀ & PHỤ ĐỀ
-   ========================================================= */
-.auth-card h2 {
-    text-align: center;
-    color: var(--text-heading);
-    font-family: var(--font-heading);
-    font-size: var(--font-size-h2);
-    font-weight: var(--fw-extrabold);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    margin-bottom: var(--space-xs);
-    text-shadow: 0 2px 30px rgba(0, 0, 0, 0.4);
-}
-
-.auth-subtitle {
-    text-align: center;
-    color: var(--text-secondary);
-    font-family: var(--font-primary);
-    font-size: var(--font-size-h6);
-    font-weight: var(--fw-medium);
-    margin-bottom: var(--space-lg);
-    letter-spacing: 0.3px;
-}
-
-.auth-subtitle-sm {
-    font-size: var(--font-size-h6);
-    color: var(--text-secondary);
-    margin-bottom: var(--space-lg);
-}
-
-/* =========================================================
-   6. USER INFO BOX (BƯỚC 2)
+   6. USER INFO BOX
    ========================================================= */
 .user-info-box {
     display: flex;
@@ -301,10 +321,14 @@
     background: rgba(255, 255, 255, 0.06);
 }
 
-.auth-input:focus {
+.auth-input:focus,
+.auth-input:focus-visible {
     border-color: var(--silver-primary);
     background: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 0 0 3px rgba(200, 204, 210, 0.08);
+    transform: translateY(-2px);
+    box-shadow:
+        0 0 0 3px rgba(221, 226, 232, 0.06),
+        0 8px 24px rgba(0, 0, 0, 0.25);
 }
 
 .auth-input.input-error {
@@ -418,14 +442,18 @@
     font-size: var(--font-size-h6);
     font-weight: var(--fw-medium);
     margin-top: var(--space-xs);
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: var(--space-xs);
 }
 
 .error-text::before {
-    content: '⚠';
-    font-size: var(--font-size-h6);
+    content: '';
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #ff6b8a;
+    flex-shrink: 0;
 }
 
 /* =========================================================
@@ -476,7 +504,7 @@
 }
 
 /* =========================================================
-   13. FORGOT PASSWORD & RESET PASSWORD
+   13. FORGOT PASSWORD
    ========================================================= */
 .forgot-icon-wrapper {
     display: flex;
@@ -542,13 +570,15 @@
 }
 
 /* =========================================================
-   14. PIN INPUT – 6 Ô VUÔNG (GIỐNG ADMIN)
+   14. PIN INPUT – 6 Ô VUÔNG
    ========================================================= */
 .pin-input-container {
     display: flex;
     justify-content: center;
     gap: var(--space-sm);
     margin: var(--space-md) 0 var(--space-sm);
+    position: relative;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .pin-box {
@@ -608,7 +638,7 @@
 }
 
 /* =========================================================
-   ✅ 14b. OTP INPUT WRAPPER + NÚT EYE
+   14b. OTP INPUT WRAPPER + NÚT EYE
    ========================================================= */
 .pin-input-wrapper {
     position: relative;
@@ -618,6 +648,7 @@
     justify-content: center;
     gap: var(--space-md);
     margin: var(--space-md) 0 var(--space-sm);
+    min-height: 140px;
 }
 
 .pin-input-wrapper .pin-input-container {
@@ -787,6 +818,7 @@
     align-items: center;
     justify-content: center;
     margin: 0 auto 15px;
+    color: #4ade80;
 }
 
 .verify-email-text {
@@ -805,6 +837,11 @@
     background: rgba(255, 255, 255, 0.03);
     border-radius: var(--radius-sm);
     border: var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    color: var(--silver-primary);
 }
 
 .verify-email-hint p {
@@ -843,12 +880,17 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg,
+    background: linear-gradient(
+        135deg,
         rgba(255, 255, 255, 0.15) 0%,
         transparent 50%,
         rgba(0, 0, 0, 0.05) 100%
     );
     pointer-events: none;
+}
+
+.btn-user svg {
+    flex-shrink: 0;
 }
 
 .btn-user:hover:not(:disabled) {
@@ -964,6 +1006,41 @@
     color: #ff6b8a;
 }
 
+/* Flex helpers cho icon + text */
+.hint-flex {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    justify-content: center;
+}
+
+.otp-attempt-flex {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    justify-content: center;
+    width: 100%;
+}
+
+.loading-ttl-flex {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    justify-content: center;
+    width: 100%;
+}
+
+.loading-spinner-flex {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    justify-content: center;
+}
+
+.loading-spinner-small {
+    font-size: var(--font-size-h6);
+}
+
 /* =========================================================
    22. FOOTER
    ========================================================= */
@@ -989,6 +1066,13 @@
     transition: all var(--transition-fast);
     padding: var(--space-xs) var(--space-sm);
     border-radius: var(--radius-xs);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.auth-footer .btn-link svg {
+    flex-shrink: 0;
 }
 
 .auth-footer .btn-link:hover {
@@ -1043,9 +1127,7 @@
     background: var(--glass-bg);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
-
     border: var(--card-border-base);
-
     box-shadow: var(--glass-shadow);
     animation: modalScale var(--transition-normal);
     text-align: center;
@@ -1067,7 +1149,6 @@
     border-radius: 50%;
     background: rgba(74, 222, 128, 0.12);
     color: #4ade80;
-    font-size: 30px;
 }
 
 .modal-box .modal-icon.error {
@@ -1166,9 +1247,7 @@
     background: var(--glass-bg);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
-
     border: var(--card-border-base);
-
     border-radius: var(--radius-xl);
     padding: var(--space-2xl);
     box-shadow: var(--glass-shadow);
@@ -1272,13 +1351,21 @@
     }
 }
 
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
 .dot-pulse {
     animation: pulse 1.5s ease-in-out infinite;
 }
 
+.spin-icon {
+    animation: spin 1s linear infinite;
+}
+
 /* =========================================================
-   ✅ 25b. GOOGLE LOGIN WRAPPER + CUSTOM BUTTON
-   (Dùng useGoogleLogin hook – KHÔNG dùng iframe)
+   25b. GOOGLE LOGIN WRAPPER + CUSTOM BUTTON
    ========================================================= */
 .google-login-wrapper {
     margin-top: var(--space-lg);
@@ -1288,7 +1375,6 @@
     align-items: center;
 }
 
-/* ---- Divider "Hoặc" ---- */
 .google-login-wrapper .divider {
     display: flex;
     align-items: center;
@@ -1321,7 +1407,6 @@
     white-space: nowrap;
 }
 
-/* ---- Custom Google Button ---- */
 .google-custom-btn {
     position: relative;
     width: 100%;
@@ -1352,7 +1437,6 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-/* Hiệu ứng shimmer khi hover */
 .google-custom-btn::before {
     content: '';
     position: absolute;
@@ -1395,7 +1479,6 @@
     transform: none !important;
 }
 
-/* ---- Google Icon ---- */
 .google-custom-btn .google-icon {
     flex-shrink: 0;
     width: 20px;
@@ -1407,14 +1490,13 @@
     transform: scale(1.1) rotate(-3deg);
 }
 
-/* ---- Text ---- */
 .google-custom-btn span {
     white-space: nowrap;
     line-height: 1;
 }
 
 /* =========================================================
-   ✅ 25c. UPDATE PHONE MODAL (SAU GOOGLE LOGIN)
+   25c. UPDATE PHONE MODAL
    ========================================================= */
 .update-phone-content {
     text-align: center;
@@ -1431,6 +1513,7 @@
     justify-content: center;
     background: rgba(214, 179, 106, 0.12);
     border: 1px solid rgba(214, 179, 106, 0.25);
+    color: #d6b36a;
 }
 
 .update-phone-text {
@@ -1445,7 +1528,7 @@
 }
 
 /* =========================================================
-   ✅ 25d. RECAPTCHA WRAPPER
+   25d. RECAPTCHA WRAPPER
    ========================================================= */
 .recaptcha-wrapper {
     display: flex;
@@ -1465,7 +1548,6 @@
     margin: 0 auto;
 }
 
-/* Error state (nếu thiếu Site Key) */
 .recaptcha-wrapper.recaptcha-error {
     background: rgba(255, 59, 92, 0.08);
     border: 1px solid rgba(255, 59, 92, 0.25);
@@ -1477,17 +1559,714 @@
 }
 
 /* =========================================================
-   26. RESPONSIVE – 768px
+   30. PREMIUM 3D AUTH FEEDBACK EFFECT
+   typing | loading | success | error
+   ========================================================= */
+
+/* TYPING */
+.auth-card--typing {
+    transform: translateY(-2px) scale(1.002);
+    box-shadow:
+        0 30px 70px rgba(0, 0, 0, 0.45),
+        0 0 0 1px rgba(221, 226, 232, 0.08);
+}
+
+/* LOADING */
+.auth-card--loading {
+    animation: authCardLoading 2s ease-in-out infinite;
+}
+
+@keyframes authCardLoading {
+    0%, 100% {
+        transform: rotateX(0deg) rotateY(0deg) translateY(0);
+    }
+    25% {
+        transform: rotateX(1.5deg) rotateY(-1.5deg) translateY(-2px);
+    }
+    50% {
+        transform: rotateX(-1deg) rotateY(1deg) translateY(2px);
+    }
+    75% {
+        transform: rotateX(1deg) rotateY(-0.5deg) translateY(-1px);
+    }
+}
+
+.auth-card--loading .btn-user-silver {
+    animation: authButtonLoading 1.4s ease-in-out infinite;
+}
+
+@keyframes authButtonLoading {
+    0%, 100% {
+        box-shadow:
+            0 4px 20px rgba(159, 183, 210, 0.25),
+            inset 0 1px 0 rgba(255, 255, 255, 0.80);
+    }
+    50% {
+        box-shadow:
+            0 4px 28px rgba(159, 183, 210, 0.55),
+            0 0 24px rgba(221, 226, 232, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.90);
+    }
+}
+
+/* SUCCESS */
+.auth-card--success {
+    animation: authCardSuccess 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    border-color: rgba(67, 183, 122, 0.65) !important;
+    box-shadow:
+        0 0 0 4px rgba(67, 183, 122, 0.15),
+        0 0 80px rgba(67, 183, 122, 0.35),
+        0 40px 90px rgba(0, 0, 0, 0.5) !important;
+}
+
+@keyframes authCardSuccess {
+    0% {
+        transform: rotateY(0deg) rotateX(0deg) scale(1);
+    }
+    30% {
+        transform: rotateY(180deg) rotateX(0deg) scale(1.06);
+    }
+    60% {
+        transform: rotateY(360deg) rotateX(8deg) scale(1.03);
+    }
+    100% {
+        transform: rotateY(360deg) rotateX(0deg) scale(1);
+    }
+}
+
+.auth-card--success::before,
+.auth-card--success::after {
+    content: "";
+    position: absolute;
+    inset: -40px;
+    pointer-events: none;
+    border-radius: inherit;
+    z-index: 5;
+    animation: authCardParticles 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.auth-card--success::before {
+    background:
+        radial-gradient(circle at 20% 30%, rgba(67, 183, 122, 0.6) 0%, transparent 3%),
+        radial-gradient(circle at 80% 20%, rgba(67, 183, 122, 0.5) 0%, transparent 2.5%),
+        radial-gradient(circle at 30% 80%, rgba(67, 183, 122, 0.55) 0%, transparent 3%),
+        radial-gradient(circle at 70% 70%, rgba(67, 183, 122, 0.5) 0%, transparent 2.5%),
+        radial-gradient(circle at 50% 15%, rgba(67, 183, 122, 0.45) 0%, transparent 2%),
+        radial-gradient(circle at 15% 60%, rgba(67, 183, 122, 0.5) 0%, transparent 2.5%),
+        radial-gradient(circle at 85% 55%, rgba(67, 183, 122, 0.5) 0%, transparent 2.5%);
+    animation-delay: 0.1s;
+}
+
+.auth-card--success::after {
+    background:
+        radial-gradient(circle at 60% 40%, rgba(221, 226, 232, 0.7) 0%, transparent 2.5%),
+        radial-gradient(circle at 40% 60%, rgba(221, 226, 232, 0.65) 0%, transparent 2%),
+        radial-gradient(circle at 25% 45%, rgba(221, 226, 232, 0.6) 0%, transparent 2%),
+        radial-gradient(circle at 75% 35%, rgba(221, 226, 232, 0.65) 0%, transparent 2.5%),
+        radial-gradient(circle at 55% 75%, rgba(221, 226, 232, 0.55) 0%, transparent 2%);
+    animation-delay: 0.2s;
+}
+
+@keyframes authCardParticles {
+    0% {
+        opacity: 0;
+        transform: scale(0.7);
+    }
+    30% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1.4);
+    }
+}
+
+.auth-card__success-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border: 2px solid rgba(67, 183, 122, 0.8);
+    pointer-events: none;
+    z-index: 4;
+    animation: authCardRing 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes authCardRing {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1.15);
+    }
+}
+
+/* ERROR */
+.auth-card--error {
+    animation: authCardError 0.9s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+    border-color: rgba(216, 90, 90, 0.7) !important;
+    box-shadow:
+        0 0 0 4px rgba(216, 90, 90, 0.15),
+        0 0 60px rgba(216, 90, 90, 0.3),
+        0 30px 70px rgba(0, 0, 0, 0.45) !important;
+}
+
+@keyframes authCardError {
+    0%, 100% { transform: translateX(0) rotateZ(0deg); }
+    10% { transform: translateX(-14px) rotateZ(-1.2deg); }
+    20% { transform: translateX(12px) rotateZ(1deg); }
+    30% { transform: translateX(-10px) rotateZ(-0.8deg); }
+    40% { transform: translateX(8px) rotateZ(0.6deg); }
+    50% { transform: translateX(-6px) rotateZ(-0.4deg); }
+    60% { transform: translateX(4px) rotateZ(0.3deg); }
+    70% { transform: translateX(-2px) rotateZ(-0.2deg); }
+    80% { transform: translateX(1px) rotateZ(0.1deg); }
+    90% { transform: translateX(-0.5px) rotateZ(-0.05deg); }
+}
+
+.auth-card__error-glow {
+    position: absolute;
+    inset: -8px;
+    border-radius: inherit;
+    background:
+        radial-gradient(circle at center, rgba(216, 90, 90, 0.35), transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+    animation: authErrorGlow 0.9s ease-out;
+}
+
+@keyframes authErrorGlow {
+    0% {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1.05);
+    }
+}
+
+/* =========================================================
+   31. ✅ OTP RESULT — 1 DẤU ✓/✗ TO Ở GIỮA
+   Cách hoạt động:
+   - Bình thường: 6 ô input OTP
+   - Success: 6 ô biến mất, hiện 1 dấu ✓ xanh lá cỡ lớn ở giữa
+   - Error: 6 ô biến mất, hiện 1 dấu ✗ đỏ cỡ lớn ở giữa
+   - Error tự reset về 6 ô trống sau 1.5s
+   ========================================================= */
+
+/* =====================================================
+   CONTAINER KẾT QUẢ — chiếm chỗ 6 ô
+   ===================================================== */
+.otp-result-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 140px;
+    padding: var(--space-md) 0;
+    animation: otpResultContainerIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes otpResultContainerIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.85);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* =====================================================
+   ICON DẤU ✓/✗ — to ở giữa
+   ===================================================== */
+.otp-result-icon {
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    position: relative;
+    animation: otpResultIconPop 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s backwards;
+}
+
+@keyframes otpResultIconPop {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    60% {
+        opacity: 1;
+        transform: scale(1.12);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.otp-result-icon svg {
+    animation: otpResultSvgPop 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.35s backwards;
+}
+
+@keyframes otpResultSvgPop {
+    0% {
+        opacity: 0;
+        transform: scale(0.4);
+    }
+    60% {
+        opacity: 1;
+        transform: scale(1.15);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* =====================================================
+   ✅ SUCCESS — xanh lá #43B77A
+   ===================================================== */
+.otp-result-icon--success {
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(67, 183, 122, 0.25) 0%,
+            rgba(67, 183, 122, 0.10) 60%,
+            rgba(67, 183, 122, 0.04) 100%
+        );
+    border: 3px solid rgba(67, 183, 122, 0.65);
+    color: #43B77A;
+
+    box-shadow:
+        0 0 0 8px rgba(67, 183, 122, 0.08),
+        0 0 40px rgba(67, 183, 122, 0.45),
+        0 0 80px rgba(67, 183, 122, 0.20),
+        inset 0 2px 4px rgba(255, 255, 255, 0.10);
+}
+
+.otp-result-icon--success svg {
+    filter: drop-shadow(0 0 12px rgba(67, 183, 122, 0.8));
+}
+
+/* Success ring tỏa ra */
+.otp-result-icon--success::before {
+    content: '';
+    position: absolute;
+    inset: -20px;
+    border-radius: 50%;
+    border: 2px solid rgba(67, 183, 122, 0.7);
+    animation: otpRingBurst 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.otp-result-icon--success::after {
+    content: '';
+    position: absolute;
+    inset: -40px;
+    border-radius: 50%;
+    border: 2px solid rgba(67, 183, 122, 0.4);
+    animation: otpRingBurst 1.6s cubic-bezier(0.16, 1, 0.3, 1) 0.7s forwards;
+    opacity: 0;
+    pointer-events: none;
+}
+
+@keyframes otpRingBurst {
+    0% {
+        opacity: 1;
+        transform: scale(0.8);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1.5);
+    }
+}
+
+/* =====================================================
+   ❌ ERROR — đỏ #ff6b8a
+   ===================================================== */
+.otp-result-icon--error {
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(216, 90, 90, 0.25) 0%,
+            rgba(216, 90, 90, 0.10) 60%,
+            rgba(216, 90, 90, 0.04) 100%
+        );
+    border: 3px solid rgba(216, 90, 90, 0.65);
+    color: #ff6b8a;
+
+    box-shadow:
+        0 0 0 8px rgba(216, 90, 90, 0.08),
+        0 0 40px rgba(216, 90, 90, 0.45),
+        0 0 80px rgba(216, 90, 90, 0.20),
+        inset 0 2px 4px rgba(255, 255, 255, 0.10);
+}
+
+.otp-result-icon--error svg {
+    filter: drop-shadow(0 0 12px rgba(216, 90, 90, 0.8));
+}
+
+/* Error ring tỏa ra */
+.otp-result-icon--error::before {
+    content: '';
+    position: absolute;
+    inset: -20px;
+    border-radius: 50%;
+    border: 2px solid rgba(216, 90, 90, 0.7);
+    animation: otpRingBurst 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Error container rung nhẹ */
+.otp-result-container--error {
+    animation: otpResultErrorShake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes otpResultErrorShake {
+    0%, 100% { transform: translateX(0); }
+    15% { transform: translateX(-10px); }
+    30% { transform: translateX(9px); }
+    45% { transform: translateX(-7px); }
+    60% { transform: translateX(5px); }
+    75% { transform: translateX(-3px); }
+    90% { transform: translateX(1px); }
+}
+
+/* =====================================================
+   TEXT THÔNG BÁO — Đúng / Sai
+   ===================================================== */
+.pin-success-text {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    color: #43B77A;
+    font-family: var(--font-primary);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-semibold);
+    margin-top: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    background: rgba(67, 183, 122, 0.10);
+    border: 1px solid rgba(67, 183, 122, 0.25);
+    animation: pinTextFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s backwards;
+}
+
+.pin-success-text svg {
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 6px rgba(67, 183, 122, 0.5));
+}
+
+.pin-error-text {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    color: #ff6b8a;
+    font-family: var(--font-primary);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-semibold);
+    margin-top: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    background: rgba(216, 90, 90, 0.10);
+    border: 1px solid rgba(216, 90, 90, 0.25);
+    animation: pinTextFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s backwards;
+}
+
+.pin-error-text svg {
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 6px rgba(216, 90, 90, 0.5));
+}
+
+@keyframes pinTextFadeIn {
+    0%   { opacity: 0; transform: translateY(8px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- Input viền đỏ khi error ---------- */
+.pin-box.input-error {
+    border-color: rgba(216, 90, 90, 0.5) !important;
+    background: rgba(216, 90, 90, 0.08) !important;
+}
+
+/* =========================================================
+   32. RESPONSIVE – 1200px (LAPTOP NHỎ / TABLET NGANG)
+   ========================================================= */
+@media (max-width: 1200px) {
+    .auth-container {
+        padding: var(--space-xl);
+    }
+
+    .auth-card {
+        max-width: 460px;
+        padding: var(--space-xl) var(--space-lg);
+    }
+
+    .auth-card h2 {
+        font-size: var(--font-size-h3);
+    }
+
+    .auth-subtitle {
+        font-size: var(--font-size-h6);
+    }
+
+    .auth-form-wrapper {
+        max-height: 380px;
+    }
+
+    .pin-box {
+        width: 52px;
+        height: 60px;
+        font-size: var(--font-size-h4);
+    }
+
+    .toggle-pin-visibility {
+        width: 36px;
+        height: 36px;
+    }
+
+    .btn-user {
+        padding: var(--space-md) var(--space-lg);
+        font-size: var(--font-size-h6);
+    }
+
+    .modal-box {
+        max-width: 400px;
+        padding: var(--space-xl) var(--space-lg);
+    }
+
+    .session-expired-modal {
+        max-width: 420px;
+        padding: var(--space-xl);
+    }
+
+    .forgot-icon-wrapper {
+        margin-bottom: var(--space-md);
+        padding: var(--space-sm);
+    }
+
+    .forgot-icon {
+        width: 38px;
+        height: 38px;
+    }
+
+    .google-custom-btn {
+        min-height: 50px;
+        font-size: var(--font-size-h6);
+    }
+
+    .google-custom-btn .google-icon {
+        width: 19px;
+        height: 19px;
+    }
+
+    /* OTP Result responsive */
+    .otp-result-icon {
+        width: 110px;
+        height: 110px;
+    }
+    .otp-result-icon svg {
+        width: 100px !important;
+        height: 100px !important;
+    }
+    .otp-result-container {
+        min-height: 130px;
+    }
+}
+
+/* =========================================================
+   33. RESPONSIVE – 992px (TABLET DỌC)
+   ========================================================= */
+@media (max-width: 992px) {
+    .auth-container {
+        padding: var(--space-lg);
+        perspective: 1200px;
+    }
+
+    .auth-card {
+        max-width: 440px;
+        padding: var(--space-xl) var(--space-lg);
+        border-radius: var(--radius-lg);
+    }
+
+    .auth-card::before {
+        border-radius: var(--radius-lg);
+    }
+
+    .auth-card h2 {
+        font-size: var(--font-size-h4);
+        letter-spacing: 0.4px;
+    }
+
+    .auth-card__title-icon {
+        width: 24px;
+        height: 24px;
+    }
+
+    .auth-subtitle {
+        font-size: var(--font-size-h6);
+        margin-bottom: var(--space-md);
+    }
+
+    .auth-form-wrapper {
+        max-height: 350px;
+    }
+
+    .step-indicator {
+        gap: var(--space-sm);
+        margin-bottom: var(--space-lg);
+    }
+
+    .step-indicator span {
+        width: 32px;
+        height: 32px;
+        font-size: var(--font-size-h6);
+    }
+
+    .step-line {
+        width: 32px;
+    }
+
+    .pin-input-container {
+        gap: var(--space-xs);
+    }
+
+    .pin-box {
+        width: 48px;
+        height: 58px;
+        font-size: var(--font-size-h4);
+        border-width: 2px;
+    }
+
+    .pin-input-wrapper {
+        gap: var(--space-sm);
+        min-height: 130px;
+    }
+
+    .toggle-pin-visibility {
+        width: 34px;
+        height: 34px;
+    }
+
+    .btn-user {
+        padding: var(--space-md);
+        font-size: var(--font-size-h6);
+    }
+
+    .button-group {
+        gap: var(--space-sm);
+        margin-top: var(--space-md);
+    }
+
+    .modal-box {
+        max-width: 380px;
+        padding: var(--space-lg) var(--space-md);
+    }
+
+    .modal-box h3 {
+        font-size: var(--font-size-h4);
+    }
+
+    .modal-box p {
+        font-size: var(--font-size-h6);
+    }
+
+    .modal-box .modal-btn {
+        padding: var(--space-sm) var(--space-xl);
+        font-size: var(--font-size-h6);
+    }
+
+    .session-expired-modal {
+        max-width: 400px;
+        padding: var(--space-lg) var(--space-md);
+    }
+
+    .forgot-icon-wrapper {
+        margin-bottom: var(--space-md);
+        padding: var(--space-xs);
+    }
+
+    .forgot-icon {
+        width: 34px;
+        height: 34px;
+    }
+
+    .otp-attempt-counter {
+        font-size: var(--font-size-h6);
+        padding: var(--space-xs) var(--space-sm);
+    }
+
+    .loading-ttl-text {
+        font-size: var(--font-size-h6);
+    }
+
+    .google-login-wrapper {
+        margin-top: var(--space-md);
+    }
+
+    .google-custom-btn {
+        min-height: 48px;
+        font-size: var(--font-size-h6);
+        padding: var(--space-sm) var(--space-md);
+    }
+
+    .google-custom-btn .google-icon {
+        width: 18px;
+        height: 18px;
+    }
+
+    .recaptcha-wrapper {
+        min-height: 72px;
+    }
+
+    .recaptcha-wrapper > div {
+        transform: scale(0.92);
+    }
+
+    /* OTP Result responsive */
+    .otp-result-icon {
+        width: 105px;
+        height: 105px;
+    }
+    .otp-result-icon svg {
+        width: 95px !important;
+        height: 95px !important;
+    }
+    .otp-result-container {
+        min-height: 125px;
+    }
+}
+
+/* =========================================================
+   34. RESPONSIVE – 768px (TABLET NHỎ / MOBILE NGANG)
    ========================================================= */
 @media (max-width: 768px) {
     .auth-container {
         padding: var(--space-md);
+        perspective: 1000px;
     }
 
     .auth-card {
         padding: var(--space-xl) var(--space-lg);
         border-radius: var(--radius-lg);
         max-width: 100%;
+    }
+
+    .auth-card::before {
+        border-radius: var(--radius-lg);
     }
 
     .auth-card h2 {
@@ -1502,7 +2281,6 @@
         max-height: 320px;
     }
 
-    /* ✅ OTP boxes mobile */
     .pin-input-container {
         gap: var(--space-xs);
     }
@@ -1514,7 +2292,6 @@
         border-width: 2px;
     }
 
-    /* ✅ Nút eye mobile */
     .toggle-pin-visibility {
         width: 34px;
         height: 34px;
@@ -1583,7 +2360,6 @@
         font-size: var(--font-size-h6);
     }
 
-    /* ✅ Google button mobile */
     .google-login-wrapper {
         margin-top: var(--space-md);
     }
@@ -1598,10 +2374,32 @@
         width: 18px;
         height: 18px;
     }
+
+    .pin-success-text,
+    .pin-error-text {
+        font-size: var(--font-size-h6);
+        padding: var(--space-xs) var(--space-sm);
+    }
+
+    /* OTP Result responsive */
+    .pin-input-wrapper {
+        min-height: 115px;
+    }
+    .otp-result-icon {
+        width: 95px;
+        height: 95px;
+    }
+    .otp-result-icon svg {
+        width: 85px !important;
+        height: 85px !important;
+    }
+    .otp-result-container {
+        min-height: 115px;
+    }
 }
 
 /* =========================================================
-   27. RESPONSIVE – 480px
+   35. RESPONSIVE – 480px (MOBILE)
    ========================================================= */
 @media (max-width: 480px) {
     .auth-card {
@@ -1609,8 +2407,17 @@
         border-radius: var(--radius-md);
     }
 
+    .auth-card::before {
+        border-radius: var(--radius-md);
+    }
+
     .auth-card h2 {
         font-size: var(--font-size-h4);
+    }
+
+    .auth-card__title-icon {
+        width: 22px;
+        height: 22px;
     }
 
     .auth-form-wrapper {
@@ -1627,7 +2434,6 @@
         width: 28px;
     }
 
-    /* ✅ OTP boxes mobile nhỏ */
     .pin-input-container {
         gap: 6px;
     }
@@ -1639,9 +2445,9 @@
         border-width: 2px;
     }
 
-    /* ✅ Nút eye mobile nhỏ */
     .pin-input-wrapper {
         gap: var(--space-sm);
+        min-height: 105px;
     }
 
     .toggle-pin-visibility {
@@ -1742,7 +2548,6 @@
         font-size: var(--font-size-h6);
     }
 
-    /* ✅ Google button mobile nhỏ */
     .google-custom-btn {
         min-height: 46px;
         font-size: var(--font-size-h6);
@@ -1761,23 +2566,62 @@
         margin: var(--space-sm) 0 var(--space-md);
     }
 
-    /* ✅ CAPTCHA mobile */
     .recaptcha-wrapper > div {
         transform: scale(0.85);
+    }
+
+    .pin-success-text,
+    .pin-error-text {
+        font-size: var(--font-size-h6);
+        gap: var(--space-xs);
+    }
+
+    /* OTP Result responsive */
+    .otp-result-icon {
+        width: 85px;
+        height: 85px;
+        border-width: 2.5px;
+    }
+    .otp-result-icon svg {
+        width: 75px !important;
+        height: 75px !important;
+    }
+    .otp-result-container {
+        min-height: 105px;
     }
 }
 
 /* =========================================================
-   28. RESPONSIVE – 360px (CAPTCHA scale nhỏ hơn)
+   36. RESPONSIVE – 360px (MOBILE NHỎ)
    ========================================================= */
 @media (max-width: 360px) {
     .recaptcha-wrapper > div {
         transform: scale(0.75);
     }
+
+    .pin-box {
+        width: 36px;
+        height: 44px;
+        font-size: var(--font-size-sm);
+        border-width: 2px;
+    }
+
+    /* OTP Result responsive */
+    .otp-result-icon {
+        width: 75px;
+        height: 75px;
+    }
+    .otp-result-icon svg {
+        width: 65px !important;
+        height: 65px !important;
+    }
+    .otp-result-container {
+        min-height: 95px;
+    }
 }
 
 /* =========================================================
-   29. UTILITY
+   37. UTILITY
    ========================================================= */
 .text-center {
     text-align: center;
@@ -1806,10 +2650,3 @@
     align-items: center;
     justify-content: center;
 }
-
-/* =========================================================
-   END – USER AUTH SILVER PREMIUM EDITION
-   OTP INPUT: 6 Ô VUÔNG + NÚT EYE (ĐỒNG BỘ ADMIN)
-   GOOGLE LOGIN: CUSTOM BUTTON (useGoogleLogin hook)
-   RECAPTCHA: v2 Checkbox
-   ========================================================= */

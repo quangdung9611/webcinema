@@ -3,7 +3,6 @@
    BOOKING SELECT — PREMIUM CINEMATIC
    FLOW: 01 RẠP → 02 PHIM → 03 SUẤT CHIẾU
    Layout: 70% (left) / 30% (right sidebar)
-   Movies: 4 phim/hàng, title căn giữa
 ============================================================ */
 
 /* ============================================================
@@ -21,6 +20,8 @@
         var(--bg-primary);
     color: var(--text-body);
     padding-bottom: var(--space-4xl);
+    position: relative;
+    isolation: isolate;
 }
 
 /* ============================================================
@@ -28,11 +29,10 @@
 ============================================================ */
 
 .booking-container {
-    width: min(
-        var(--container-width),
-        calc(100% - 40px)
-    );
+    width: min(var(--container-width), calc(100% - 40px));
     margin: 0 auto;
+    position: relative;
+    z-index: 1;
 }
 
 /* ============================================================
@@ -40,10 +40,7 @@
 ============================================================ */
 
 .booking-page-header {
-    padding:
-        var(--space-4xl)
-        0
-        var(--space-xl);
+    padding: var(--space-4xl) 0 var(--space-xl);
     position: relative;
     overflow: hidden;
 }
@@ -57,12 +54,11 @@
     left: 50%;
     transform: translateX(-50%);
     border-radius: 50%;
-    background:
-        radial-gradient(
-            circle,
-            rgba(221, 226, 232, 0.12),
-            transparent 68%
-        );
+    background: radial-gradient(
+        circle,
+        rgba(221, 226, 232, 0.12),
+        transparent 68%
+    );
     pointer-events: none;
 }
 
@@ -95,104 +91,28 @@
 }
 
 /* ============================================================
-   STEP BAR
+   ✅ BOOKING PROGRESS BLOCK — 4 BƯỚC TỔNG
 ============================================================ */
 
-.booking-stepbar {
-    position: sticky;
-    top: 0;
-    z-index: 30;
-    background: rgba(9, 10, 12, 0.88);
-    border-top: var(--border-subtle);
-    border-bottom: 1px solid rgba(221, 226, 232, 0.12);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+.booking-progress-block {
+    position: relative;
+    z-index: 2;
+    padding-top: var(--space-lg);
+    padding-bottom: var(--space-2xl);
 }
 
-.booking-stepbar__inner {
-    min-height: 78px;
-    display: flex;
-    align-items: center;
-}
-
-.booking-step {
-    min-width: 180px;
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    opacity: 0.38;
-    transition:
-        opacity var(--transition-normal),
-        transform var(--transition-normal);
-}
-
-.booking-step.active {
-    opacity: 1;
-}
-
-.booking-step.completed {
-    opacity: 0.72;
-}
-
-.booking-step__number {
-    width: 38px;
-    height: 38px;
-    flex: 0 0 38px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid rgba(221, 226, 232, 0.2);
-    border-radius: 50%;
-    font-size: 0.72rem;
-    font-weight: var(--fw-extrabold);
-    color: var(--text-muted);
-    transition:
-        background var(--transition-normal),
-        border-color var(--transition-normal),
-        color var(--transition-normal);
-}
-
-.booking-step.active .booking-step__number {
-    background: var(--silver-primary);
-    border-color: var(--silver-primary);
-    color: var(--bg-primary);
-    box-shadow: 0 0 0 5px rgba(221, 226, 232, 0.06);
-}
-
-.booking-step__content {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.booking-step__content span {
-    font-size: 0.64rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--text-muted);
-}
-
-.booking-step__content strong {
-    font-size: var(--font-size-h6);
-    font-weight: var(--fw-bold);
-    color: var(--text-body);
-}
-
-.booking-step.active .booking-step__content strong {
-    color: var(--silver-light);
-}
-
-.booking-step__line {
-    height: 1px;
-    flex: 1;
-    min-width: 50px;
-    margin: 0 var(--space-lg);
-    background: rgba(221, 226, 232, 0.1);
-    transition: background var(--transition-normal);
-}
-
-.booking-step__line.active {
-    background: rgba(221, 226, 232, 0.4);
+.booking-progress-block .booking-progress {
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.05),
+            rgba(255, 255, 255, 0.014)
+        );
+    border: 1px solid rgba(221, 226, 232, 0.14);
+    box-shadow:
+        0 18px 45px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.045);
+    border-radius: var(--radius-xl);
 }
 
 /* ============================================================
@@ -200,12 +120,11 @@
 ============================================================ */
 
 .booking-main {
-    padding-top: var(--space-xl);
+    padding-top: 0;
 }
 
 .booking-layout {
     display: grid;
-    /* ✅ 70% trái / 30% phải */
     grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
     gap: var(--space-lg);
     align-items: start;
@@ -223,10 +142,11 @@
 }
 
 /* ============================================================
-   PANEL
+   PANEL — hover nhẹ, không spotlight
 ============================================================ */
 
 .booking-panel {
+    position: relative;
     overflow: hidden;
     background:
         linear-gradient(
@@ -242,9 +162,23 @@
         box-shadow var(--transition-normal);
 }
 
+.booking-panel:hover {
+    border-color: rgba(221, 226, 232, 0.18);
+    box-shadow:
+        0 22px 56px rgba(0, 0, 0, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.booking-panel > * {
+    position: relative;
+    z-index: 1;
+}
+
 .booking-panel--active {
-    border-color: rgba(221, 226, 232, 0.2);
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.28);
+    border-color: rgba(221, 226, 232, 0.22);
+    box-shadow:
+        0 25px 60px rgba(0, 0, 0, 0.28),
+        0 0 0 1px rgba(221, 226, 232, 0.05) inset;
 }
 
 /* ============================================================
@@ -279,6 +213,14 @@
     border-radius: var(--radius-md);
     color: var(--silver-primary);
     background: rgba(221, 226, 232, 0.055);
+    transition: all var(--transition-normal);
+}
+
+.booking-panel:hover .booking-panel__icon {
+    transform: rotate(-6deg) scale(1.05);
+    border-color: rgba(221, 226, 232, 0.4);
+    color: var(--silver-light);
+    box-shadow: 0 0 22px rgba(221, 226, 232, 0.12);
 }
 
 .booking-panel__eyebrow {
@@ -320,6 +262,18 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    animation: chipIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes chipIn {
+    from {
+        opacity: 0;
+        transform: translateX(8px) scale(0.94);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
 }
 
 .booking-panel__selected svg {
@@ -367,18 +321,23 @@
     font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition:
+        color var(--transition-fast),
+        border-color var(--transition-fast),
+        background var(--transition-fast);
 }
 
 .booking-city__item:hover {
     color: var(--text-body);
-    border-color: rgba(221, 226, 232, 0.22);
+    border-color: rgba(221, 226, 232, 0.32);
+    background: rgba(255, 255, 255, 0.045);
 }
 
 .booking-city__item.active {
     background: var(--silver-primary);
     color: var(--bg-primary);
     border-color: var(--silver-primary);
+    box-shadow: 0 8px 22px rgba(221, 226, 232, 0.15);
 }
 
 /* ============================================================
@@ -393,6 +352,7 @@
 }
 
 .booking-cinema-card {
+    position: relative;
     width: 100%;
     min-height: 88px;
     display: flex;
@@ -406,17 +366,17 @@
     background: rgba(255, 255, 255, 0.018);
     color: var(--text-body);
     cursor: pointer;
+    overflow: hidden;
     transition:
-        transform var(--transition-fast),
         border-color var(--transition-fast),
         background var(--transition-fast),
         box-shadow var(--transition-fast);
 }
 
 .booking-cinema-card:hover {
-    transform: translateY(-1px);
-    border-color: rgba(221, 226, 232, 0.2);
+    border-color: rgba(221, 226, 232, 0.28);
     background: rgba(255, 255, 255, 0.035);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
 }
 
 .booking-cinema-card.active {
@@ -428,6 +388,20 @@
             rgba(221, 226, 232, 0.025)
         );
     box-shadow: inset 3px 0 0 var(--silver-primary);
+    animation: cardSelectedPulse 0.55s ease-out;
+}
+
+@keyframes cardSelectedPulse {
+    0% {
+        box-shadow:
+            inset 3px 0 0 var(--silver-primary),
+            0 0 0 0 rgba(221, 226, 232, 0.35);
+    }
+    100% {
+        box-shadow:
+            inset 3px 0 0 var(--silver-primary),
+            0 0 0 14px rgba(221, 226, 232, 0);
+    }
 }
 
 .booking-cinema-card__left {
@@ -435,6 +409,8 @@
     display: flex;
     align-items: center;
     gap: var(--space-md);
+    position: relative;
+    z-index: 1;
 }
 
 .booking-cinema-card__icon {
@@ -447,6 +423,13 @@
     border-radius: var(--radius-md);
     background: rgba(221, 226, 232, 0.055);
     color: var(--silver-dark);
+    transition: all var(--transition-fast);
+}
+
+.booking-cinema-card:hover .booking-cinema-card__icon {
+    transform: scale(1.08) rotate(-5deg);
+    color: var(--silver-light);
+    background: rgba(221, 226, 232, 0.1);
 }
 
 .booking-cinema-card.active .booking-cinema-card__icon {
@@ -467,6 +450,11 @@
     white-space: nowrap;
     font-size: var(--font-size-h5);
     color: var(--silver-light);
+    transition: color var(--transition-fast);
+}
+
+.booking-cinema-card:hover .booking-cinema-card__info strong {
+    color: #fff;
 }
 
 .booking-cinema-card__info span {
@@ -492,10 +480,24 @@
     border-radius: 50%;
     background: var(--silver-primary);
     color: var(--bg-primary);
+    position: relative;
+    z-index: 1;
+    animation: checkPop 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes checkPop {
+    from {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 /* ============================================================
-   MOVIES — 4 PHIM / HÀNG, TITLE CĂN GIỮA
+   MOVIES — 4 PHIM / HÀNG
 ============================================================ */
 
 .booking-movie-wrapper {
@@ -516,13 +518,11 @@
 }
 
 .booking-movie-card {
-    /* ✅ 4 phim/hàng */
     width: calc((100% - var(--space-md) * 3) / 4);
     flex: 0 0 calc((100% - var(--space-md) * 3) / 4);
     padding: 0;
     border: 0;
     background: transparent;
-    /* ✅ Căn giữa toàn bộ nội dung */
     text-align: center;
     cursor: pointer;
 }
@@ -536,19 +536,22 @@
     background: var(--bg-card);
     border: 1px solid rgba(221, 226, 232, 0.08);
     transition:
-        transform var(--transition-normal),
         border-color var(--transition-normal),
         box-shadow var(--transition-normal);
 }
 
 .booking-movie-card:hover .booking-movie-card__poster {
-    transform: translateY(-5px);
-    border-color: rgba(221, 226, 232, 0.28);
+    border-color: rgba(221, 226, 232, 0.32);
+    box-shadow:
+        0 22px 44px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(221, 226, 232, 0.08) inset;
 }
 
 .booking-movie-card.active .booking-movie-card__poster {
     border: 2px solid var(--silver-primary);
-    box-shadow: 0 16px 38px rgba(0, 0, 0, 0.45);
+    box-shadow:
+        0 16px 38px rgba(0, 0, 0, 0.45),
+        0 0 24px rgba(221, 226, 232, 0.18);
 }
 
 .booking-movie-card__poster img {
@@ -560,13 +563,14 @@
 }
 
 .booking-movie-card:hover .booking-movie-card__poster img {
-    transform: scale(1.035);
+    transform: scale(1.05);
 }
 
 .booking-movie-card__age {
     position: absolute;
     left: 9px;
     top: 9px;
+    z-index: 3;
     min-width: 28px;
     padding: 4px 6px;
     border-radius: var(--radius-xs);
@@ -581,10 +585,17 @@
 .booking-movie-card__selected {
     position: absolute;
     inset: 0;
+    z-index: 3;
     display: flex;
     align-items: center;
     justify-content: center;
     background: rgba(0, 0, 0, 0.42);
+    animation: fadeInFast 0.25s ease;
+}
+
+@keyframes fadeInFast {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .booking-movie-card__selected svg {
@@ -594,11 +605,12 @@
     border-radius: 50%;
     background: var(--silver-primary);
     color: var(--bg-primary);
+    animation: checkPop 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 0 26px rgba(221, 226, 232, 0.3);
 }
 
 .booking-movie-card__body {
     padding-top: 11px;
-    /* ✅ Căn giữa */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -616,9 +628,13 @@
     line-height: 1.35;
     font-weight: var(--fw-bold);
     color: var(--text-body);
-    /* ✅ Căn giữa chữ */
     text-align: center;
     width: 100%;
+    transition: color var(--transition-fast);
+}
+
+.booking-movie-card:hover .booking-movie-card__body h3 {
+    color: var(--silver-light);
 }
 
 .booking-movie-card.active .booking-movie-card__body h3 {
@@ -629,7 +645,6 @@
     margin-top: 7px;
     display: flex;
     flex-wrap: wrap;
-    /* ✅ Căn giữa meta */
     justify-content: center;
     gap: var(--space-sm);
     font-size: 0.65rem;
@@ -642,10 +657,14 @@
     gap: 4px;
 }
 
+/* ============================================================
+   SLIDER ARROW
+============================================================ */
+
 .booking-slider-arrow {
     position: absolute;
     top: 43%;
-    z-index: 2;
+    z-index: 4;
     width: 38px;
     height: 38px;
     display: flex;
@@ -664,6 +683,7 @@
     background: var(--silver-primary);
     color: var(--bg-primary);
     border-color: var(--silver-primary);
+    box-shadow: 0 0 22px rgba(221, 226, 232, 0.3);
 }
 
 .booking-slider-arrow--left {
@@ -719,29 +739,49 @@
     background: rgba(255, 255, 255, 0.02);
     color: var(--text-muted);
     cursor: pointer;
-    transition: all var(--transition-fast);
+    overflow: hidden;
+    transition:
+        color var(--transition-fast),
+        border-color var(--transition-fast),
+        background var(--transition-fast),
+        box-shadow var(--transition-fast);
 }
 
 .booking-date-card:hover {
-    border-color: rgba(221, 226, 232, 0.25);
+    border-color: rgba(221, 226, 232, 0.32);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-body);
 }
 
 .booking-date-card.active {
     background: var(--silver-primary);
     border-color: var(--silver-primary);
     color: var(--bg-primary);
-    box-shadow: 0 8px 24px rgba(221, 226, 232, 0.13);
+    box-shadow:
+        0 8px 24px rgba(221, 226, 232, 0.18),
+        0 0 30px rgba(221, 226, 232, 0.1);
+    animation: dateActivePop 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dateActivePop {
+    0% { transform: scale(0.94); }
+    60% { transform: scale(1.05); }
+    100% { transform: scale(1); }
 }
 
 .booking-date-card__label {
     font-size: 0.61rem;
     font-weight: var(--fw-extrabold);
     text-transform: uppercase;
+    position: relative;
+    z-index: 1;
 }
 
 .booking-date-card strong {
     font-size: var(--font-size-h5);
     line-height: 1;
+    position: relative;
+    z-index: 1;
 }
 
 .booking-date-card__check {
@@ -756,6 +796,8 @@
     border-radius: 50%;
     background: var(--bg-primary);
     color: var(--silver-primary);
+    z-index: 2;
+    animation: checkPop 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .booking-date-arrow {
@@ -777,6 +819,7 @@
     background: var(--silver-primary);
     color: var(--bg-primary);
     border-color: var(--silver-primary);
+    box-shadow: 0 0 20px rgba(221, 226, 232, 0.25);
 }
 
 /* ============================================================
@@ -792,6 +835,12 @@
     border: 1px solid rgba(221, 226, 232, 0.08);
     border-radius: var(--radius-md);
     background: rgba(255, 255, 255, 0.018);
+    transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.booking-showtime-context:hover {
+    border-color: rgba(221, 226, 232, 0.16);
+    background: rgba(255, 255, 255, 0.025);
 }
 
 .booking-showtime-context > div {
@@ -799,6 +848,8 @@
     display: flex;
     flex-direction: column;
     gap: 5px;
+    position: relative;
+    z-index: 1;
 }
 
 .booking-showtime-context span {
@@ -832,6 +883,11 @@
     border: 1px solid rgba(221, 226, 232, 0.08);
     border-radius: var(--radius-md);
     background: rgba(255, 255, 255, 0.015);
+    transition: border-color var(--transition-fast);
+}
+
+.booking-showtime-group:hover {
+    border-color: rgba(221, 226, 232, 0.18);
 }
 
 .booking-showtime-group__header {
@@ -874,7 +930,12 @@
     gap: 9px;
 }
 
+/* ============================================================
+   SHOWTIME CHIP
+============================================================ */
+
 .booking-time {
+    position: relative;
     min-width: 96px;
     min-height: 42px;
     display: flex;
@@ -887,24 +948,46 @@
     background: rgba(255, 255, 255, 0.025);
     color: var(--text-body);
     cursor: pointer;
-    transition: all var(--transition-fast);
+    overflow: hidden;
+    transition:
+        border-color var(--transition-fast),
+        background var(--transition-fast),
+        color var(--transition-fast),
+        box-shadow var(--transition-fast);
 }
 
 .booking-time:hover {
-    border-color: rgba(221, 226, 232, 0.32);
-    background: rgba(221, 226, 232, 0.07);
+    border-color: rgba(221, 226, 232, 0.4);
+    background: rgba(221, 226, 232, 0.06);
     color: var(--silver-light);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
 }
 
 .booking-time.active {
     border-color: var(--silver-primary);
     background: var(--silver-primary);
     color: var(--bg-primary);
-    box-shadow: 0 7px 20px rgba(221, 226, 232, 0.12);
+    box-shadow:
+        0 7px 20px rgba(221, 226, 232, 0.2),
+        0 0 26px rgba(221, 226, 232, 0.12);
+    animation: timeActivePop 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes timeActivePop {
+    0% { transform: scale(0.92); }
+    60% { transform: scale(1.05); }
+    100% { transform: scale(1); }
 }
 
 .booking-time__clock {
     display: flex;
+    position: relative;
+    z-index: 1;
+}
+
+.booking-time strong {
+    position: relative;
+    z-index: 1;
 }
 
 /* ============================================================
@@ -923,6 +1006,11 @@
     border-radius: var(--radius-md);
     color: var(--text-muted);
     text-align: center;
+    transition: border-color var(--transition-fast);
+}
+
+.booking-empty:hover {
+    border-color: rgba(221, 226, 232, 0.28);
 }
 
 .booking-empty svg {
@@ -947,7 +1035,7 @@
 
 .booking-sidebar-column {
     position: sticky;
-    top: 105px;
+    top: 30px;
     align-self: start;
     min-width: 0;
 }
@@ -967,7 +1055,7 @@
 
 .booking-summary__sticky {
     position: sticky;
-    top: 105px;
+    top: 30px;
     overflow: hidden;
     border: 1px solid rgba(221, 226, 232, 0.12);
     border-radius: var(--radius-xl);
@@ -1036,6 +1124,11 @@
     font-size: var(--font-size-h6);
     font-weight: var(--fw-extrabold);
     cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.booking-state__retry:hover {
+    box-shadow: 0 12px 26px rgba(221, 226, 232, 0.2);
 }
 
 /* ============================================================
@@ -1059,24 +1152,19 @@
         gap: var(--space-md);
     }
 
-    /* ✅ Vẫn 4 phim/hàng */
     .booking-movie-card {
         width: calc((100% - var(--space-md) * 3) / 4);
         flex: 0 0 calc((100% - var(--space-md) * 3) / 4);
     }
 
-    .booking-step {
-        min-width: 150px;
-    }
-
-    .booking-step__line {
-        margin: 0 var(--space-md);
+    .booking-progress-block {
+        padding-top: var(--space-md);
+        padding-bottom: var(--space-xl);
     }
 }
 
 /* ============================================================
    RESPONSIVE — 992px (Tablet)
-   Chuyển về 1 cột
 ============================================================ */
 
 @media (max-width: 992px) {
@@ -1102,28 +1190,14 @@
         position: static;
     }
 
-    .booking-stepbar__inner {
-        overflow-x: auto;
-        scrollbar-width: none;
-    }
-
-    .booking-stepbar__inner::-webkit-scrollbar {
-        display: none;
-    }
-
-    .booking-step {
-        flex: 0 0 auto;
-    }
-
-    .booking-step__line {
-        flex: 0 0 45px;
-        min-width: 45px;
-    }
-
-    /* ✅ 3 phim/hàng trên tablet */
     .booking-movie-card {
         width: calc((100% - var(--space-md) * 2) / 3);
         flex: 0 0 calc((100% - var(--space-md) * 2) / 3);
+    }
+
+    .booking-progress-block {
+        padding-top: var(--space-md);
+        padding-bottom: var(--space-lg);
     }
 }
 
@@ -1144,41 +1218,8 @@
         font-size: clamp(2.1rem, 11vw, 3.2rem);
     }
 
-    .booking-stepbar {
-        position: static;
-    }
-
-    .booking-stepbar__inner {
-        min-height: 70px;
-    }
-
-    .booking-step {
-        gap: var(--space-sm);
-    }
-
-    .booking-step__number {
-        width: 32px;
-        height: 32px;
-        flex-basis: 32px;
-        font-size: 0.62rem;
-    }
-
-    .booking-step__content strong {
-        font-size: 0.72rem;
-    }
-
-    .booking-step__content span {
-        font-size: 0.55rem;
-    }
-
-    .booking-step__line {
-        flex-basis: 25px;
-        min-width: 25px;
-        margin: 0 10px;
-    }
-
     .booking-main {
-        padding-top: var(--space-md);
+        padding-top: 0;
     }
 
     .booking-panel__header {
@@ -1239,7 +1280,6 @@
         padding: 20px 40px 25px;
     }
 
-    /* ✅ Vẫn 3 phim/hàng */
     .booking-movie-card {
         width: calc((100% - var(--space-md) * 2) / 3);
         flex: 0 0 calc((100% - var(--space-md) * 2) / 3);
@@ -1293,6 +1333,11 @@
     .booking-empty {
         margin: var(--space-md);
     }
+
+    .booking-progress-block {
+        padding-top: var(--space-sm);
+        padding-bottom: var(--space-lg);
+    }
 }
 
 /* ============================================================
@@ -1316,24 +1361,6 @@
         font-size: var(--font-size-h6);
     }
 
-    .booking-stepbar__inner {
-        min-height: 64px;
-    }
-
-    .booking-step__content span {
-        display: none;
-    }
-
-    .booking-step__content strong {
-        font-size: 0.66rem;
-    }
-
-    .booking-step__line {
-        flex-basis: 16px;
-        min-width: 16px;
-        margin: 0 7px;
-    }
-
     .booking-panel {
         border-radius: var(--radius-md);
     }
@@ -1350,7 +1377,6 @@
         padding: 17px 35px 22px;
     }
 
-    /* ✅ 2 phim/hàng trên mobile nhỏ */
     .booking-movie-card {
         width: calc((100% - var(--space-md)) / 2);
         flex: 0 0 calc((100% - var(--space-md)) / 2);
@@ -1391,5 +1417,10 @@
 
     .booking-time {
         min-width: 76px;
+    }
+
+    .booking-progress-block {
+        padding-top: var(--space-xs);
+        padding-bottom: var(--space-md);
     }
 }

@@ -370,7 +370,12 @@ const Food = () => {
             return (
                 <div className="food-loading">
                     <div className="food-loading-inner">
-                        <LoadingButton loading={true} loadingText="Đang tải đồ ăn..." className="food-loading-btn" spinnerColor="#ffffff" />
+                        <LoadingButton
+                            loading={true}
+                            loadingText="Đang tải đồ ăn..."
+                            className="food-loading-btn"
+                            spinnerColor="#ffffff"
+                        />
                     </div>
                 </div>
             );
@@ -379,7 +384,9 @@ const Food = () => {
         if (foods.length === 0) {
             return (
                 <div className="food-empty">
-                    <div className="food-empty-icon"><Popcorn size={48} strokeWidth={1.5} /></div>
+                    <div className="food-empty-icon">
+                        <Popcorn size={48} strokeWidth={1.5} />
+                    </div>
                     <h3>CHƯA CÓ COMBO</h3>
                     <p>Hiện chưa có combo bắp nước nào.</p>
                 </div>
@@ -389,38 +396,64 @@ const Food = () => {
         return foods.map(item => {
             const quantity = Number(selectedFoods[item.product_id] || 0);
             return (
-                <article key={item.product_id} className={`food-card ${quantity > 0 ? 'is-selected' : ''}`}>
+                <article
+                    key={item.product_id}
+                    className={`food-card ${quantity > 0 ? 'is-selected' : ''}`}
+                >
                     <div className="food-image-wrapper">
                         <div className="food-image">
                             {item.food_image ? (
-                                <img src={`https://api.quangdungcinema.id.vn/uploads/foods/${item.food_image}`} alt={item.product_name} loading="lazy" />
+                                <img
+                                    src={`https://api.quangdungcinema.id.vn/uploads/foods/${item.food_image}`}
+                                    alt={item.product_name}
+                                    loading="lazy"
+                                />
                             ) : (
-                                <div className="food-no-image"><UtensilsCrossed size={40} strokeWidth={1.5} /></div>
+                                <div className="food-no-image">
+                                    <UtensilsCrossed size={40} strokeWidth={1.5} />
+                                </div>
                             )}
                         </div>
-                        {quantity > 0 && <div className="food-selected-badge">ĐÃ CHỌN</div>}
+                        {quantity > 0 && (
+                            <div className="food-selected-badge">ĐÃ CHỌN</div>
+                        )}
                     </div>
+
                     <div className="food-content">
                         <div className="food-info">
                             <h3>{item.product_name}</h3>
-                            <div className="food-price">{Number(item.price).toLocaleString()}₫</div>
+                            <div className="food-price">
+                                {Number(item.price).toLocaleString()}₫
+                            </div>
                         </div>
+
                         <div className="food-action-row">
                             <span className="food-quantity-label">SỐ LƯỢNG</span>
                             <div className="food-actions">
-                                <button type="button" className="food-qty-btn food-qty-minus" onClick={() => updateQty(item.product_id, -1)}>
+                                <button
+                                    type="button"
+                                    className="food-qty-btn food-qty-minus"
+                                    onClick={() => updateQty(item.product_id, -1)}
+                                >
                                     <Minus size={16} strokeWidth={2.5} />
                                 </button>
                                 <span className="food-qty">{quantity}</span>
-                                <button type="button" className="food-qty-btn food-qty-plus" onClick={() => updateQty(item.product_id, 1)}>
+                                <button
+                                    type="button"
+                                    className="food-qty-btn food-qty-plus"
+                                    onClick={() => updateQty(item.product_id, 1)}
+                                >
                                     <Plus size={16} strokeWidth={2.5} />
                                 </button>
                             </div>
                         </div>
+
                         {quantity > 0 && (
                             <div className="food-item-total">
                                 <span>Thành tiền</span>
-                                <strong>{(Number(item.price) * quantity).toLocaleString()}₫</strong>
+                                <strong>
+                                    {(Number(item.price) * quantity).toLocaleString()}₫
+                                </strong>
                             </div>
                         )}
                     </div>
@@ -436,14 +469,7 @@ const Food = () => {
     if (isRescheduleMode) {
         return (
             <div className="food-wrapper">
-                <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: '60vh',
-                    gap: 12
-                }}>
+                <div className="food-reschedule-loading">
                     <RefreshCw size={48} className="spin-icon" />
                     <p>Đang chuyển đến trang thanh toán...</p>
                 </div>
@@ -467,10 +493,12 @@ const Food = () => {
                 confirmText="Về trang chủ"
                 cancelText="Về trang chủ"
             />
+
             <div className="food-container">
                 <div className="food-progress-wrapper">
                     <BookingProgress currentStep={3} />
                 </div>
+
                 <div className="food-layout">
                     <aside className="food-sidebar-wrapper">
                         <BookingSidebar
@@ -481,9 +509,13 @@ const Food = () => {
                             selectedShowtime={selectedShowtime}
                             selectedSeats={Array.isArray(selectedSeats) ? selectedSeats : []}
                             foods={Array.isArray(foods) ? foods : []}
-                            selectedFoods={foods
-                                .filter(item => Number(selectedFoods[item.product_id] || 0) > 0)
-                                .map(item => ({ ...item, quantity: Number(selectedFoods[item.product_id]) }))
+                            selectedFoods={
+                                foods
+                                    .filter(item => Number(selectedFoods[item.product_id] || 0) > 0)
+                                    .map(item => ({
+                                        ...item,
+                                        quantity: Number(selectedFoods[item.product_id])
+                                    }))
                             }
                             totalTicketPrice={totalTicketPrice}
                             totalFoodPrice={totalFoodPrice}
@@ -493,15 +525,18 @@ const Food = () => {
                             showFoodSection={true}
                             showContinueButton={true}
                             showBackButton={true}
-                            continueText="TIẾP TỤC THANH TOÁN"
+                            continueText=" TIẾP TỤC "
                             onContinue={handleContinue}
                             onBack={() => navigate(-1)}
                             isContinueDisabled={loading}
                         />
                     </aside>
+
                     <main className="food-main-area">
                         <section className="food-intro-card">
-                            <div className="food-intro-icon"><Popcorn size={32} strokeWidth={1.5} /></div>
+                            <div className="food-intro-icon">
+                                <Popcorn size={32} strokeWidth={1.5} />
+                            </div>
                             <div className="food-intro-content">
                                 <h2>CHỌN COMBO YÊU THÍCH</h2>
                                 <p>Bạn có thể thêm bắp, nước và các combo vào đơn hàng.</p>
@@ -511,24 +546,40 @@ const Food = () => {
                                 <span>SẢN PHẨM</span>
                             </div>
                         </section>
+
                         <section className="food-list-card">
                             <div className="food-list-header">
                                 <div>
-                                    <span className="food-section-label"><Coffee size={12} strokeWidth={2} /> FOOD &amp; DRINK</span>
+                                    <span className="food-section-label">
+                                        <Coffee size={12} strokeWidth={2} /> FOOD &amp; DRINK
+                                    </span>
                                     <h2>COMBO ĐANG CÓ</h2>
                                 </div>
                             </div>
+
                             <div className="food-grid">{renderFoods()}</div>
                         </section>
+
                         <div className="food-mobile-summary">
                             <span>Tổng cộng</span>
                             <strong>{Number(grandTotal).toLocaleString()}₫</strong>
                         </div>
+
                         <div className="food-mobile-actions">
-                            <button type="button" className="food-mobile-back" onClick={() => navigate(-1)} disabled={loading}>
+                            <button
+                                type="button"
+                                className="food-mobile-back"
+                                onClick={() => navigate(-1)}
+                                disabled={loading}
+                            >
                                 <ChevronLeft size={14} strokeWidth={2.5} /> QUAY LẠI
                             </button>
-                            <button type="button" className="food-mobile-next" onClick={handleContinue} disabled={loading}>
+                            <button
+                                type="button"
+                                className="food-mobile-next"
+                                onClick={handleContinue}
+                                disabled={loading}
+                            >
                                 {loading ? 'ĐANG XỬ LÝ...' : 'TIẾP TỤC'}
                                 <ChevronRight size={14} strokeWidth={2.5} />
                             </button>

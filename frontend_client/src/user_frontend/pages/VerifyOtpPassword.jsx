@@ -1,6 +1,13 @@
-// VerifyOtpPassword.jsx
+// user_frontend/pages/VerifyOtpPassword.jsx
+// ============================================================
+// VERIFY OTP PASSWORD — PREMIUM CINEMATIC SILVER
+// Layout: form card ở giữa màn hình
+// Giữ nguyên 100% logic
+// ============================================================
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+
 import {
     ShieldCheck,
     ArrowLeft,
@@ -10,47 +17,63 @@ import {
     AlertTriangle,
     XCircle,
     Clock,
-    Lock,
     Loader2,
     Eye,
     EyeOff,
+    Check,
+    X,
+    Film,
+    KeyRound,
 } from 'lucide-react';
+
 import api from '../../api/api';
 import LoadingButton from '../components/LoadingButton';
 import LockModal from '../components/LockModal';
 import useOTPGuard from '../../hooks/useOTPGuard';
-import '../styles/UserAuth.css';
+import '../styles/VerifyOtpPin.css';
 
 const VerifyOtpPassword = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
     const [email, setEmail] = useState(() => {
-        if (location.state?.email) {
-            return location.state.email;
-        }
-        const savedEmail = sessionStorage.getItem('verify_otp_password_email');
-        if (savedEmail) {
-            return savedEmail;
-        }
+        if (location.state?.email) return location.state.email;
+        const savedEmail = sessionStorage.getItem(
+            'verify_otp_password_email'
+        );
+        if (savedEmail) return savedEmail;
         return '';
     });
 
-    const purpose = location.state?.purpose || 'RESET_PASSWORD';
+    const purpose =
+        location.state?.purpose || 'RESET_PASSWORD';
 
-    const { safeNavigate, invalidateOTP } = useOTPGuard(email, purpose, {
-        onInvalidate: () => {
-            console.log('[VERIFY OTP] OTP đã bị vô hiệu do rời trang');
-            localStorage.removeItem('verify_otp_password_lock');
-            sessionStorage.removeItem('verify_otp_password_email');
+    const { safeNavigate, invalidateOTP } = useOTPGuard(
+        email,
+        purpose,
+        {
+            onInvalidate: () => {
+                console.log(
+                    '[VERIFY OTP] OTP đã bị vô hiệu do rời trang'
+                );
+                localStorage.removeItem(
+                    'verify_otp_password_lock'
+                );
+                sessionStorage.removeItem(
+                    'verify_otp_password_email'
+                );
+            },
         }
-    });
+    );
 
     const [otp, setOtp] = useState('');
-    const [showOtp, setShowOtp] = useState(false);   // ✅ MỚI: toggle hiện/ẩn OTP
-    const [error, setError] = useState(null);          // { icon, text }
-    const [successMessage, setSuccessMessage] = useState(null); // { icon, text }
+    const [showOtp, setShowOtp] = useState(false);
+    const [error, setError] = useState(null);
+    const [successMessage, setSuccessMessage] = useState(null);
     const [loading, setLoading] = useState(false);
+
+    const [otpSuccess, setOtpSuccess] = useState(false);
+    const [otpError, setOtpError] = useState(false);
 
     const [countdown, setCountdown] = useState(0);
     const [isOtpExpired, setIsOtpExpired] = useState(false);
@@ -58,7 +81,8 @@ const VerifyOtpPassword = () => {
 
     const [otpAttempts, setOtpAttempts] = useState(0);
     const [maxOtpAttempts] = useState(5);
-    const [remainingOtpAttempts, setRemainingOtpAttempts] = useState(5);
+    const [remainingOtpAttempts, setRemainingOtpAttempts] =
+        useState(5);
 
     const [showLockModal, setShowLockModal] = useState(false);
     const [lockMessage, setLockMessage] = useState('');
@@ -73,11 +97,12 @@ const VerifyOtpPassword = () => {
     const countdownIntervalRef = useRef(null);
     const lockIntervalRef = useRef(null);
     const successTimeoutRef = useRef(null);
+    const successTimerRef = useRef(null);
+    const errorTimerRef = useRef(null);
 
     const OTP_LOCK_STORAGE_KEY = 'verify_otp_password_lock';
     const EMAIL_STORAGE_KEY = 'verify_otp_password_email';
 
-    // Helper tạo message object
     const makeError = (IconComponent, text) => ({
         icon: <IconComponent size={18} />,
         text,
@@ -95,13 +120,20 @@ const VerifyOtpPassword = () => {
     }, [email]);
 
     const saveOtpLockToStorage = (lockData) => {
-        if (lockData && lockData.lockedUntil > Date.now() && email) {
+        if (
+            lockData &&
+            lockData.lockedUntil > Date.now() &&
+            email
+        ) {
             const data = {
                 ...lockData,
                 lockedAt: Date.now(),
-                email: email
+                email,
             };
-            localStorage.setItem(OTP_LOCK_STORAGE_KEY, JSON.stringify(data));
+            localStorage.setItem(
+                OTP_LOCK_STORAGE_KEY,
+                JSON.stringify(data)
+            );
         } else {
             localStorage.removeItem(OTP_LOCK_STORAGE_KEY);
         }
@@ -109,7 +141,9 @@ const VerifyOtpPassword = () => {
 
     const restoreOtpLockFromStorage = () => {
         try {
-            const stored = localStorage.getItem(OTP_LOCK_STORAGE_KEY);
+            const stored = localStorage.getItem(
+                OTP_LOCK_STORAGE_KEY
+            );
             if (!stored) return null;
 
             const data = JSON.parse(stored);
@@ -118,13 +152,13 @@ const VerifyOtpPassword = () => {
                 return null;
             }
 
-            const remaining = Math.max(0, Math.ceil((data.lockedUntil - Date.now()) / 1000));
+            const remaining = Math.max(
+                0,
+                Math.ceil((data.lockedUntil - Date.now()) / 1000)
+            );
 
             if (remaining > 0) {
-                return {
-                    ...data,
-                    remainingSeconds: remaining
-                };
+                return { ...data, remainingSeconds: remaining };
             } else {
                 localStorage.removeItem(OTP_LOCK_STORAGE_KEY);
                 return null;
@@ -139,7 +173,7 @@ const VerifyOtpPassword = () => {
         localStorage.removeItem(OTP_LOCK_STORAGE_KEY);
         sessionStorage.removeItem(EMAIL_STORAGE_KEY);
         safeNavigate('/forgot-password', {
-            message: 'OTP đã hết hạn. Vui lòng gửi lại OTP mới.'
+            message: 'OTP đã hết hạn. Vui lòng gửi lại OTP mới.',
         });
     };
 
@@ -151,7 +185,16 @@ const VerifyOtpPassword = () => {
         otpRefs.current[0]?.focus();
     };
 
-    // Khởi tạo trạng thái
+    const triggerErrorEffect = () => {
+        setOtpError(true);
+        if (errorTimerRef.current)
+            clearTimeout(errorTimerRef.current);
+        errorTimerRef.current = setTimeout(() => {
+            setOtpError(false);
+            resetOtpInput();
+        }, 1500);
+    };
+
     useEffect(() => {
         if (!email) {
             safeNavigate('/forgot-password');
@@ -173,11 +216,13 @@ const VerifyOtpPassword = () => {
             setLockUntil(restoredOtpLock.lockedUntil);
             setLockTimeLeft(restoredOtpLock.remainingSeconds);
             setShowLockModal(true);
-            setLockMessage(restoredOtpLock.message || 'Bạn đã nhập sai OTP quá 5 lần. OTP đã bị khóa. Vui lòng gửi lại OTP mới.');
+            setLockMessage(
+                restoredOtpLock.message ||
+                    'Bạn đã nhập sai OTP quá 5 lần. OTP đã bị khóa. Vui lòng gửi lại OTP mới.'
+            );
         }
     }, [email]);
 
-    // Lock timer
     useEffect(() => {
         if (lockIntervalRef.current) {
             clearInterval(lockIntervalRef.current);
@@ -193,7 +238,10 @@ const VerifyOtpPassword = () => {
         }
 
         const updateLockTime = () => {
-            const left = Math.max(0, Math.ceil((lockUntil - Date.now()) / 1000));
+            const left = Math.max(
+                0,
+                Math.ceil((lockUntil - Date.now()) / 1000)
+            );
             setLockTimeLeft(left);
 
             if (left > 0 && left % 5 === 0) {
@@ -201,7 +249,10 @@ const VerifyOtpPassword = () => {
                     ...lockInfo,
                     remainingSeconds: left,
                     lockedUntil: lockUntil,
-                    lockedAt: Date.now() - ((lockInfo?.lockDuration || 300) - left) * 1000
+                    lockedAt:
+                        Date.now() -
+                        ((lockInfo?.lockDuration || 300) - left) *
+                            1000,
                 };
                 saveOtpLockToStorage(lockData);
             }
@@ -219,7 +270,10 @@ const VerifyOtpPassword = () => {
         };
 
         updateLockTime();
-        lockIntervalRef.current = setInterval(updateLockTime, 1000);
+        lockIntervalRef.current = setInterval(
+            updateLockTime,
+            1000
+        );
 
         return () => {
             if (lockIntervalRef.current) {
@@ -229,7 +283,6 @@ const VerifyOtpPassword = () => {
         };
     }, [lockUntil, lockInfo]);
 
-    // Fetch TTL ban đầu
     useEffect(() => {
         if (!email) {
             if (countdownIntervalRef.current) {
@@ -242,19 +295,23 @@ const VerifyOtpPassword = () => {
         const fetchTTL = async () => {
             setIsLoadingTTL(true);
             try {
-                const response = await api.get('/api/auth/check-otp-ttl', {
-                    params: {
-                        email: email,
-                        purpose: purpose
+                const response = await api.get(
+                    '/api/auth/check-otp-ttl',
+                    {
+                        params: { email, purpose },
                     }
-                });
+                );
 
                 if (response.data?.success) {
-                    const ttl = response.data?.data?.expiresIn || 0;
-                    const serverTime = response.data?.data?.serverTime || Date.now();
+                    const ttl =
+                        response.data?.data?.expiresIn || 0;
+                    const serverTime =
+                        response.data?.data?.serverTime ||
+                        Date.now();
 
                     if (ttl > 0) {
-                        const expiresAt = serverTime + (ttl * 1000);
+                        const expiresAt =
+                            serverTime + ttl * 1000;
                         setCountdown(ttl);
                         setIsOtpExpired(false);
                         startCountdown(expiresAt);
@@ -267,7 +324,10 @@ const VerifyOtpPassword = () => {
                     setCountdown(0);
                 }
             } catch (error) {
-                console.error('[VERIFY OTP PASSWORD] Failed to fetch TTL:', error);
+                console.error(
+                    '[VERIFY OTP PASSWORD] Failed to fetch TTL:',
+                    error
+                );
                 setIsOtpExpired(true);
                 setCountdown(0);
             } finally {
@@ -292,7 +352,10 @@ const VerifyOtpPassword = () => {
         }
 
         countdownIntervalRef.current = setInterval(() => {
-            const remaining = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
+            const remaining = Math.max(
+                0,
+                Math.ceil((expiresAt - Date.now()) / 1000)
+            );
             setCountdown(remaining);
 
             if (remaining <= 0) {
@@ -304,14 +367,11 @@ const VerifyOtpPassword = () => {
         }, 250);
     };
 
-    // Rate limit timer
     useEffect(() => {
-        if (!isRateLimited || rateLimitTimeLeft <= 0) {
-            return;
-        }
+        if (!isRateLimited || rateLimitTimeLeft <= 0) return;
 
         const timer = setInterval(() => {
-            setRateLimitTimeLeft(prev => {
+            setRateLimitTimeLeft((prev) => {
                 if (prev <= 1) {
                     setIsRateLimited(false);
                     return 0;
@@ -340,44 +400,59 @@ const VerifyOtpPassword = () => {
     const isLocked = lockUntil && lockUntil > Date.now();
 
     const handleOtpChange = (index, value) => {
+        if (otpSuccess || otpError) return;
         const clean = value.replace(/\D/g, '').slice(-1);
         const newOtp = otp.split('');
         newOtp[index] = clean;
         setOtp(newOtp.join(''));
-        if (clean && index < 5) otpRefs.current[index + 1]?.focus();
+        if (clean && index < 5)
+            otpRefs.current[index + 1]?.focus();
         if (error) setError(null);
         if (successMessage) setSuccessMessage(null);
     };
 
     const handleOtpKeyDown = (index, e) => {
-        if (e.key === 'Backspace' && !otp[index] && index > 0) {
+        if (
+            e.key === 'Backspace' &&
+            !otp[index] &&
+            index > 0
+        ) {
             otpRefs.current[index - 1]?.focus();
         }
     };
 
-    // HANDLE RESEND OTP
     const handleResendOtp = async () => {
         if (isLocked) {
-            setError(makeError(
-                AlertTriangle,
-                `Bạn đã bị khóa. Vui lòng đợi ${formatLockTime(lockTimeLeft)} để thử lại.`
-            ));
+            setError(
+                makeError(
+                    AlertTriangle,
+                    `Bạn đã bị khóa. Vui lòng đợi ${formatLockTime(
+                        lockTimeLeft
+                    )} để thử lại.`
+                )
+            );
             return;
         }
-
         if (isRateLimited) {
-            setError(makeError(
-                AlertTriangle,
-                `Vui lòng đợi ${formatLockTime(rateLimitTimeLeft)} trước khi thử lại.`
-            ));
+            setError(
+                makeError(
+                    AlertTriangle,
+                    `Vui lòng đợi ${formatLockTime(
+                        rateLimitTimeLeft
+                    )} trước khi thử lại.`
+                )
+            );
             return;
         }
-
         if (countdown > 0 && !isOtpExpired) {
-            setError(makeError(
-                AlertTriangle,
-                `Vui lòng đợi ${formatTime(countdown)} trước khi gửi lại.`
-            ));
+            setError(
+                makeError(
+                    AlertTriangle,
+                    `Vui lòng đợi ${formatTime(
+                        countdown
+                    )} trước khi gửi lại.`
+                )
+            );
             return;
         }
 
@@ -386,37 +461,45 @@ const VerifyOtpPassword = () => {
         setSuccessMessage(null);
 
         try {
-            const response = await api.post('/api/auth/resend-otp', {
-                email,
-                purpose: purpose
-            });
+            const response = await api.post(
+                '/api/auth/resend-otp',
+                { email, purpose }
+            );
 
             if (response.data.success) {
-                // Chờ tối thiểu 1.5 giây để email thực sự được gửi
-                await new Promise(resolve => setTimeout(resolve, 1500));
+                await new Promise((resolve) =>
+                    setTimeout(resolve, 1500)
+                );
 
-                setSuccessMessage(makeSuccess(
-                    CheckCircle,
-                    'Đã gửi lại mã OTP mới vào email. Vui lòng kiểm tra hộp thư.'
-                ));
+                setSuccessMessage(
+                    makeSuccess(
+                        CheckCircle,
+                        'Đã gửi lại mã OTP mới vào email. Vui lòng kiểm tra hộp thư.'
+                    )
+                );
 
-                if (successTimeoutRef.current) {
+                if (successTimeoutRef.current)
                     clearTimeout(successTimeoutRef.current);
-                }
-                successTimeoutRef.current = setTimeout(() => setSuccessMessage(null), 6000);
+                successTimeoutRef.current = setTimeout(
+                    () => setSuccessMessage(null),
+                    6000
+                );
 
                 resetOtpInput();
 
                 const ttl = response.data?.data?.expiresIn || 300;
-                const serverTime = response.data?.data?.serverTime || Date.now();
-                const expiresAt = serverTime + (ttl * 1000);
+                const serverTime =
+                    response.data?.data?.serverTime || Date.now();
+                const expiresAt = serverTime + ttl * 1000;
 
                 setIsOtpExpired(false);
                 setCountdown(ttl);
                 startCountdown(expiresAt);
 
                 if (isLocked) {
-                    localStorage.removeItem(OTP_LOCK_STORAGE_KEY);
+                    localStorage.removeItem(
+                        OTP_LOCK_STORAGE_KEY
+                    );
                     setLockUntil(null);
                     setLockInfo(null);
                     setLockTimeLeft(0);
@@ -426,16 +509,22 @@ const VerifyOtpPassword = () => {
         } catch (err) {
             const status = err.response?.status;
             const errorData = err.response?.data || {};
-            const errorMessage = errorData.message || 'Không thể gửi lại OTP';
+            const errorMessage =
+                errorData.message || 'Không thể gửi lại OTP';
 
             if (status === 429) {
-                const remainingSeconds = errorData.data?.remainingSeconds || 300;
+                const remainingSeconds =
+                    errorData.data?.remainingSeconds || 300;
                 setIsRateLimited(true);
                 setRateLimitTimeLeft(remainingSeconds);
-                setError(makeError(
-                    AlertTriangle,
-                    `Vui lòng thử lại sau ${formatLockTime(remainingSeconds)}.`
-                ));
+                setError(
+                    makeError(
+                        AlertTriangle,
+                        `Vui lòng thử lại sau ${formatLockTime(
+                            remainingSeconds
+                        )}.`
+                    )
+                );
             } else {
                 setError(makeError(AlertCircle, errorMessage));
             }
@@ -444,34 +533,52 @@ const VerifyOtpPassword = () => {
         }
     };
 
-    // HANDLE VERIFY OTP
     const handleVerifyOtp = async () => {
         if (isOtpExpired) {
-            setError(makeError(
-                AlertTriangle,
-                'OTP đã hết hạn. Vui lòng gửi lại.'
-            ));
+            setError(
+                makeError(
+                    AlertTriangle,
+                    'OTP đã hết hạn. Vui lòng gửi lại.'
+                )
+            );
+            triggerErrorEffect();
             return;
         }
 
         if (!/^\d{6}$/.test(otp)) {
-            setError(makeError(AlertCircle, 'Vui lòng nhập đủ 6 số OTP'));
+            setError(
+                makeError(
+                    AlertCircle,
+                    'Vui lòng nhập đủ 6 số OTP'
+                )
+            );
+            triggerErrorEffect();
             return;
         }
 
         if (isRateLimited) {
-            setError(makeError(
-                AlertTriangle,
-                `Vui lòng đợi ${formatLockTime(rateLimitTimeLeft)} trước khi thử lại.`
-            ));
+            setError(
+                makeError(
+                    AlertTriangle,
+                    `Vui lòng đợi ${formatLockTime(
+                        rateLimitTimeLeft
+                    )} trước khi thử lại.`
+                )
+            );
+            triggerErrorEffect();
             return;
         }
 
         if (isLocked) {
-            setError(makeError(
-                AlertTriangle,
-                `Bạn đã bị khóa. Vui lòng đợi ${formatLockTime(lockTimeLeft)} để thử lại.`
-            ));
+            setError(
+                makeError(
+                    AlertTriangle,
+                    `Bạn đã bị khóa. Vui lòng đợi ${formatLockTime(
+                        lockTimeLeft
+                    )} để thử lại.`
+                )
+            );
+            triggerErrorEffect();
             return;
         }
 
@@ -480,35 +587,58 @@ const VerifyOtpPassword = () => {
         setSuccessMessage(null);
 
         try {
-            const response = await api.post('/api/auth/verify-otp-and-reset', {
-                email,
-                otp,
-                newPassword: ''
-            });
+            const response = await api.post(
+                '/api/auth/verify-otp-and-reset',
+                {
+                    email,
+                    otp,
+                    newPassword: '',
+                }
+            );
 
             if (response.data.success) {
                 setOtpAttempts(0);
                 setRemainingOtpAttempts(maxOtpAttempts);
                 localStorage.removeItem(OTP_LOCK_STORAGE_KEY);
-                sessionStorage.removeItem(EMAIL_STORAGE_KEY);
 
-                safeNavigate('/reset-password', {
-                    email: email,
-                    otp: otp,
-                    fromForgotPassword: true
-                });
+                setOtpSuccess(true);
+
+                if (successTimerRef.current)
+                    clearTimeout(successTimerRef.current);
+                successTimerRef.current = setTimeout(() => {
+                    setOtpSuccess(false);
+                    sessionStorage.removeItem(
+                        EMAIL_STORAGE_KEY
+                    );
+                    safeNavigate('/reset-password', {
+                        email,
+                        otp,
+                        fromForgotPassword: true,
+                    });
+                }, 2000);
             }
         } catch (err) {
             const status = err.response?.status;
             const errorData = err.response?.data || {};
-            let errorMessage = errorData.message || 'OTP không đúng';
+            let errorMessage =
+                errorData.message || 'OTP không đúng';
 
             const backendData = errorData.data || {};
 
-            if (backendData.attempts !== undefined || backendData.currentAttempts !== undefined) {
-                const attempts = Number(backendData.attempts) || Number(backendData.currentAttempts) || 0;
-                const maxAttempts = Number(backendData.maxAttempts) || 5;
-                const remaining = Math.max(0, maxAttempts - attempts);
+            if (
+                backendData.attempts !== undefined ||
+                backendData.currentAttempts !== undefined
+            ) {
+                const attempts =
+                    Number(backendData.attempts) ||
+                    Number(backendData.currentAttempts) ||
+                    0;
+                const maxAttempts =
+                    Number(backendData.maxAttempts) || 5;
+                const remaining = Math.max(
+                    0,
+                    maxAttempts - attempts
+                );
 
                 setOtpAttempts(attempts);
                 setRemainingOtpAttempts(remaining);
@@ -519,18 +649,26 @@ const VerifyOtpPassword = () => {
             }
 
             if (status === 429) {
-                const remainingSeconds = backendData.remainingSeconds || 300;
-                const lockDuration = backendData.lockDuration || remainingSeconds;
-                const lockDurationText = backendData.lockDurationText || formatLockTime(remainingSeconds);
-                const lockUntilTimestamp = Date.now() + remainingSeconds * 1000;
+                const remainingSeconds =
+                    backendData.remainingSeconds || 300;
+                const lockDuration =
+                    backendData.lockDuration ||
+                    remainingSeconds;
+                const lockDurationText =
+                    backendData.lockDurationText ||
+                    formatLockTime(remainingSeconds);
+                const lockUntilTimestamp =
+                    Date.now() + remainingSeconds * 1000;
 
                 const lockData = {
-                    message: backendData.message || 'Bạn đã nhập sai OTP quá 5 lần. OTP đã bị khóa. Vui lòng gửi lại OTP mới.',
-                    lockDuration: lockDuration,
-                    lockDurationText: lockDurationText,
+                    message:
+                        backendData.message ||
+                        'Bạn đã nhập sai OTP quá 5 lần. OTP đã bị khóa. Vui lòng gửi lại OTP mới.',
+                    lockDuration,
+                    lockDurationText,
                     lockedUntil: lockUntilTimestamp,
-                    remainingSeconds: remainingSeconds,
-                    email: email
+                    remainingSeconds,
+                    email,
                 };
 
                 setLockInfo(lockData);
@@ -540,14 +678,22 @@ const VerifyOtpPassword = () => {
                 setRateLimitTimeLeft(remainingSeconds);
                 saveOtpLockToStorage(lockData);
 
-                const isOtpLock = backendData.level !== undefined ||
+                const isOtpLock =
+                    backendData.level !== undefined ||
                     backendData.lockDuration !== undefined ||
                     backendData.lockedUntil !== undefined ||
-                    errorMessage.toLowerCase().includes('khóa') ||
-                    errorMessage.toLowerCase().includes('lock');
+                    errorMessage
+                        .toLowerCase()
+                        .includes('khóa') ||
+                    errorMessage
+                        .toLowerCase()
+                        .includes('lock');
 
                 if (isOtpLock) {
-                    setLockMessage(backendData.message || 'Bạn đã nhập sai OTP quá 5 lần. OTP đã bị khóa. Vui lòng gửi lại OTP mới.');
+                    setLockMessage(
+                        backendData.message ||
+                            'Bạn đã nhập sai OTP quá 5 lần. OTP đã bị khóa. Vui lòng gửi lại OTP mới.'
+                    );
                     setShowLockModal(true);
                     setOtpAttempts(0);
                     setRemainingOtpAttempts(maxOtpAttempts);
@@ -556,220 +702,479 @@ const VerifyOtpPassword = () => {
                     return;
                 }
 
-                errorMessage = backendData.message || `Bạn đã thử quá nhiều lần. Vui lòng thử lại sau ${formatLockTime(remainingSeconds)}.`;
+                errorMessage =
+                    backendData.message ||
+                    `Bạn đã thử quá nhiều lần. Vui lòng thử lại sau ${formatLockTime(
+                        remainingSeconds
+                    )}.`;
             }
 
-            if (errorMessage.toLowerCase().includes('hết hạn') ||
-                errorMessage.toLowerCase().includes('expired')) {
+            if (
+                errorMessage
+                    .toLowerCase()
+                    .includes('hết hạn') ||
+                errorMessage.toLowerCase().includes('expired')
+            ) {
                 setIsOtpExpired(true);
                 setCountdown(0);
-                setError(makeError(
-                    AlertTriangle,
-                    'OTP đã hết hạn. Vui lòng gửi lại mã mới.'
-                ));
+                setError(
+                    makeError(
+                        AlertTriangle,
+                        'OTP đã hết hạn. Vui lòng gửi lại mã mới.'
+                    )
+                );
             } else {
                 setError(makeError(XCircle, errorMessage));
             }
 
-            resetOtpInput();
+            triggerErrorEffect();
         } finally {
             setLoading(false);
         }
     };
 
-    // Dọn dẹp timeout khi unmount
     useEffect(() => {
         return () => {
-            if (successTimeoutRef.current) {
+            if (successTimeoutRef.current)
                 clearTimeout(successTimeoutRef.current);
-            }
+            if (successTimerRef.current)
+                clearTimeout(successTimerRef.current);
+            if (errorTimerRef.current)
+                clearTimeout(errorTimerRef.current);
         };
     }, []);
 
-    const handleLockModalClose = () => {
-        setShowLockModal(false);
-    };
-
+    const handleLockModalClose = () => setShowLockModal(false);
     const handleLockModalResend = () => {
         setShowLockModal(false);
         handleResendOtp();
     };
 
-    const isDisabled = loading || isRateLimited || isLocked || showLockModal || isLoadingTTL;
+    const isDisabled =
+        loading ||
+        isRateLimited ||
+        isLocked ||
+        showLockModal ||
+        isLoadingTTL ||
+        otpSuccess ||
+        otpError;
 
     const getResendButtonText = () => {
-        if (isLocked) {
+        if (isLocked)
             return `Đang khóa (${formatLockTime(lockTimeLeft)})`;
-        }
-        if (isRateLimited) {
-            return `Đang chờ (${formatLockTime(rateLimitTimeLeft)})`;
-        }
+        if (isRateLimited)
+            return `Đang chờ (${formatLockTime(
+                rateLimitTimeLeft
+            )})`;
         return 'Gửi lại OTP';
     };
 
     const getVerifyButtonText = () => {
-        if (isLocked) {
+        if (isLocked)
             return `Đang khóa (${formatLockTime(lockTimeLeft)})`;
-        }
-        if (isRateLimited) {
-            return `Đang chờ (${formatLockTime(rateLimitTimeLeft)})`;
-        }
+        if (isRateLimited)
+            return `Đang chờ (${formatLockTime(
+                rateLimitTimeLeft
+            )})`;
         return 'XÁC NHẬN';
     };
 
     return (
-        <div className="auth-container">
-            <div className="auth-card">
-                <div className="forgot-icon-wrapper">
-                    <ShieldCheck size={42} className="forgot-icon" />
-                </div>
+        <div className="otp-page">
+            {/* BRAND LOGO */}
+            <div className="otp-page__logo">
+                <Film size={20} strokeWidth={2.4} />
+                <span>Cinema Star</span>
+            </div>
 
-                <h2>XÁC THỰC OTP</h2>
-                <p className="auth-subtitle">
-                    Nhập mã OTP đã gửi đến <strong className="text-highlight">{email}</strong>
-                </p>
-
-                {successMessage && (
-                    <div className="success-message">
-                        {successMessage.icon}
-                        <span>{successMessage.text}</span>
-                    </div>
-                )}
-
-                {error && !showLockModal && (
-                    <div className="error-message">
-                        {error.icon}
-                        <span>{error.text}</span>
-                    </div>
-                )}
-
-                {isLoadingTTL && (
-                    <div className="loading-ttl-text loading-ttl-flex">
-                        <Loader2 size={16} className="spin-icon" />
-                        Đang đồng bộ thời gian...
-                    </div>
-                )}
-
-                {otpAttempts > 0 && !isLocked && !showLockModal && (
-                    <div className={`otp-attempt-counter ${otpAttempts >= 3 ? 'danger' : 'warning'} otp-attempt-flex`}>
-                        <AlertTriangle size={16} />
-                        <span>
-                            Bạn đã nhập sai <strong>{otpAttempts}/{maxOtpAttempts}</strong> lần.
-                            {remainingOtpAttempts > 0 ? (
-                                <> Còn <strong>{remainingOtpAttempts}</strong> lần thử.</>
-                            ) : (
-                                <> <strong className="text-danger">OTP đã bị khóa!</strong></>
-                            )}
-                        </span>
-                    </div>
-                )}
-
-                {/* ✅ OTP INPUT + NÚT EYE */}
-                <div className="pin-input-wrapper">
-                    <div className="pin-input-container">
-                        {Array.from({ length: 6 }).map((_, index) => (
-                            <input
-                                key={index}
-                                ref={(el) => (otpRefs.current[index] = el)}
-                                type={showOtp ? 'text' : 'password'}
-                                inputMode="numeric"
-                                maxLength={1}
-                                value={otp[index] || ''}
-                                onChange={(e) => handleOtpChange(index, e.target.value)}
-                                onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                                className={`pin-box ${isOtpExpired ? 'input-error' : ''} ${error && error.text.toLowerCase().includes('otp') ? 'input-error' : ''}`}
-                                disabled={isDisabled}
+            {/* FORM CARD */}
+            <div className="otp-shell">
+                <div className="otp-card">
+                    {/* HEADER */}
+                    <div className="otp-card__header">
+                        <div className="otp-card__icon">
+                            <ShieldCheck
+                                size={30}
+                                strokeWidth={2}
                             />
-                        ))}
+                        </div>
+
+                        <div className="otp-card__eyebrow">
+                            VERIFY OTP · PASSWORD
+                        </div>
+
+                        <h1 className="otp-card__title">
+                            XÁC THỰC OTP
+                        </h1>
+
+                        <p className="otp-card__subtitle">
+                            Nhập mã OTP đã gửi đến{' '}
+                            <strong className="otp-card__email">
+                                {email}
+                            </strong>
+                        </p>
                     </div>
 
-                    <button
-                        type="button"
-                        className="toggle-pin-visibility"
-                        onClick={() => setShowOtp((prev) => !prev)}
-                        disabled={isDisabled}
-                        tabIndex="-1"
-                        title={showOtp ? 'Ẩn OTP' : 'Hiện OTP'}
-                    >
-                        {showOtp ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                </div>
+                    {/* SUCCESS */}
+                    {successMessage && (
+                        <div className="otp-alert otp-alert--success">
+                            {successMessage.icon}
+                            <span>{successMessage.text}</span>
+                        </div>
+                    )}
 
-                {/* OTP TIMER */}
-                {!isLocked && !showLockModal && !isLoadingTTL && (
-                    <div className="input-hint center-text">
-                        {isOtpExpired ? (
-                            <span className="text-danger hint-flex">
-                                <AlertTriangle size={14} />
-                                <span>OTP đã hết hạn. Vui lòng <strong>gửi lại</strong> mã mới.</span>
+                    {/* ERROR */}
+                    {error &&
+                        !showLockModal &&
+                        !otpError &&
+                        !otpSuccess && (
+                            <div className="otp-alert otp-alert--error">
+                                {error.icon}
+                                <span>{error.text}</span>
+                            </div>
+                        )}
+
+                    {/* LOADING TTL */}
+                    {isLoadingTTL && (
+                        <div className="otp-loading">
+                            <Loader2
+                                size={16}
+                                className="otp-spin"
+                            />
+                            <span>
+                                Đang đồng bộ thời gian...
                             </span>
-                        ) : (
-                            <span className="hint-flex">
-                                <Clock size={14} />
+                        </div>
+                    )}
+
+                    {/* ATTEMPT COUNTER */}
+                    {otpAttempts > 0 &&
+                        !isLocked &&
+                        !showLockModal &&
+                        !otpError &&
+                        !otpSuccess && (
+                            <div
+                                className={`otp-attempt ${
+                                    otpAttempts >= 3
+                                        ? 'otp-attempt--danger'
+                                        : 'otp-attempt--warning'
+                                }`}
+                            >
+                                <AlertTriangle size={16} />
                                 <span>
-                                    OTP hết hạn sau: <strong className={countdown <= 60 ? 'text-danger' : 'text-success'}>
-                                        {formatTime(countdown)}
-                                    </strong> (5 phút)
+                                    Bạn đã nhập sai{' '}
+                                    <strong>
+                                        {otpAttempts}/
+                                        {maxOtpAttempts}
+                                    </strong>{' '}
+                                    lần.
+                                    {remainingOtpAttempts >
+                                    0 ? (
+                                        <>
+                                            {' '}
+                                            Còn{' '}
+                                            <strong>
+                                                {
+                                                    remainingOtpAttempts
+                                                }
+                                            </strong>{' '}
+                                            lần thử.
+                                        </>
+                                    ) : (
+                                        <>
+                                            {' '}
+                                            <strong className="otp-text-danger">
+                                                OTP đã bị khóa!
+                                            </strong>
+                                        </>
+                                    )}
                                 </span>
-                            </span>
+                            </div>
+                        )}
+
+                    {/* OTP INPUT ZONE */}
+                    <div className="otp-input-wrapper">
+                        {otpSuccess || otpError ? (
+                            <div
+                                className={`otp-result ${
+                                    otpSuccess
+                                        ? 'otp-result--success'
+                                        : ''
+                                } ${
+                                    otpError
+                                        ? 'otp-result--error'
+                                        : ''
+                                }`}
+                            >
+                                <div
+                                    className={`otp-result__icon ${
+                                        otpSuccess
+                                            ? 'otp-result__icon--success'
+                                            : ''
+                                    } ${
+                                        otpError
+                                            ? 'otp-result__icon--error'
+                                            : ''
+                                    }`}
+                                >
+                                    {otpSuccess ? (
+                                        <Check
+                                            size={110}
+                                            strokeWidth={3}
+                                        />
+                                    ) : (
+                                        <X
+                                            size={110}
+                                            strokeWidth={3}
+                                        />
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="otp-inputs">
+                                    {Array.from({
+                                        length: 6,
+                                    }).map((_, index) => (
+                                        <input
+                                            key={index}
+                                            ref={(el) =>
+                                                (otpRefs.current[
+                                                    index
+                                                ] = el)
+                                            }
+                                            type={
+                                                showOtp
+                                                    ? 'text'
+                                                    : 'password'
+                                            }
+                                            inputMode="numeric"
+                                            maxLength={1}
+                                            value={
+                                                otp[index] || ''
+                                            }
+                                            onChange={(e) =>
+                                                handleOtpChange(
+                                                    index,
+                                                    e.target
+                                                        .value
+                                                )
+                                            }
+                                            onKeyDown={(e) =>
+                                                handleOtpKeyDown(
+                                                    index,
+                                                    e
+                                                )
+                                            }
+                                            className={`otp-input ${
+                                                isOtpExpired
+                                                    ? 'otp-input--error'
+                                                    : ''
+                                            } ${
+                                                otp[index]
+                                                    ? 'otp-input--filled'
+                                                    : ''
+                                            }`}
+                                            disabled={isDisabled}
+                                            autoComplete="one-time-code"
+                                            aria-label={`OTP digit ${
+                                                index + 1
+                                            }`}
+                                        />
+                                    ))}
+                                </div>
+
+                                <button
+                                    type="button"
+                                    className="otp-toggle"
+                                    onClick={() =>
+                                        setShowOtp(
+                                            (prev) => !prev
+                                        )
+                                    }
+                                    disabled={isDisabled}
+                                    tabIndex="-1"
+                                    title={
+                                        showOtp
+                                            ? 'Ẩn OTP'
+                                            : 'Hiện OTP'
+                                    }
+                                >
+                                    {showOtp ? (
+                                        <EyeOff size={16} />
+                                    ) : (
+                                        <Eye size={16} />
+                                    )}
+                                </button>
+                            </>
                         )}
                     </div>
-                )}
 
-                {/* RESEND BUTTON */}
-                <button
-                    className="btn-user btn-outline-secondary"
-                    onClick={handleResendOtp}
-                    disabled={isDisabled || (countdown > 0 && !isOtpExpired) || isLocked || loading}
-                >
-                    {loading ? (
-                        <span className="loading-spinner-small loading-spinner-flex">
-                            <Loader2 size={16} className="spin-icon" />
-                            Đang gửi lại...
-                        </span>
-                    ) : (
-                        <>
-                            <RefreshCw size={16} />
-                            {getResendButtonText()}
-                        </>
+                    {/* RESULT MESSAGES */}
+                    {otpSuccess && (
+                        <div className="otp-result-text otp-result-text--success">
+                            <CheckCircle size={18} />
+                            <span>
+                                Bạn đã nhập đúng OTP! Đang
+                                chuyển trang...
+                            </span>
+                        </div>
                     )}
-                </button>
 
-                {/* BUTTON GROUP */}
-                <div className="button-group">
-                    <button
-                        className="btn-user btn-back"
-                        onClick={() => {
-                            localStorage.removeItem(OTP_LOCK_STORAGE_KEY);
-                            sessionStorage.removeItem(EMAIL_STORAGE_KEY);
-                            safeNavigate('/forgot-password');
-                        }}
-                        disabled={isDisabled}
-                    >
-                        <ArrowLeft size={16} /> Quay lại
-                    </button>
+                    {otpError && (
+                        <div className="otp-result-text otp-result-text--error">
+                            <XCircle size={18} />
+                            <span>
+                                Bạn đã nhập sai OTP. Vui lòng
+                                thử lại!
+                            </span>
+                        </div>
+                    )}
 
-                    <LoadingButton
-                        type="button"
-                        loading={loading}
-                        loadingText="Đang xác thực..."
-                        onClick={handleVerifyOtp}
-                        disabled={isDisabled || isOtpExpired || isLocked}
-                        className="btn-user btn-user-silver"
-                        spinnerColor="#000000"
-                    >
-                        {getVerifyButtonText()}
-                    </LoadingButton>
+                    {/* TIMER */}
+                    {!isLocked &&
+                        !showLockModal &&
+                        !isLoadingTTL &&
+                        !otpSuccess &&
+                        !otpError && (
+                            <div className="otp-timer">
+                                {isOtpExpired ? (
+                                    <span className="otp-timer__text otp-timer__text--danger">
+                                        <AlertTriangle
+                                            size={14}
+                                        />
+                                        <span>
+                                            OTP đã hết hạn. Vui
+                                            lòng{' '}
+                                            <strong>
+                                                gửi lại
+                                            </strong>{' '}
+                                            mã mới.
+                                        </span>
+                                    </span>
+                                ) : (
+                                    <span className="otp-timer__text">
+                                        <Clock size={14} />
+                                        <span>
+                                            OTP hết hạn sau:{' '}
+                                            <strong
+                                                className={
+                                                    countdown <=
+                                                    60
+                                                        ? 'otp-text-danger'
+                                                        : 'otp-text-success'
+                                                }
+                                            >
+                                                {formatTime(
+                                                    countdown
+                                                )}
+                                            </strong>{' '}
+                                            (5 phút)
+                                        </span>
+                                    </span>
+                                )}
+                            </div>
+                        )}
+
+                    {/* RESEND */}
+                    {!otpSuccess && !otpError && (
+                        <button
+                            type="button"
+                            className="otp-resend"
+                            onClick={handleResendOtp}
+                            disabled={
+                                isDisabled ||
+                                (countdown > 0 &&
+                                    !isOtpExpired) ||
+                                isLocked ||
+                                loading
+                            }
+                        >
+                            {loading ? (
+                                <>
+                                    <Loader2
+                                        size={16}
+                                        className="otp-spin"
+                                    />
+                                    <span>
+                                        Đang gửi lại...
+                                    </span>
+                                </>
+                            ) : (
+                                <>
+                                    <RefreshCw size={16} />
+                                    <span>
+                                        {getResendButtonText()}
+                                    </span>
+                                </>
+                            )}
+                        </button>
+                    )}
+
+                    {/* ACTIONS */}
+                    {!otpSuccess && !otpError && (
+                        <div className="otp-actions">
+                            <button
+                                type="button"
+                                className="otp-back"
+                                onClick={() => {
+                                    localStorage.removeItem(
+                                        OTP_LOCK_STORAGE_KEY
+                                    );
+                                    sessionStorage.removeItem(
+                                        EMAIL_STORAGE_KEY
+                                    );
+                                    safeNavigate(
+                                        '/forgot-password'
+                                    );
+                                }}
+                                disabled={isDisabled}
+                            >
+                                <ArrowLeft size={14} />
+                                QUAY LẠI
+                            </button>
+
+                            <LoadingButton
+                                type="button"
+                                loading={loading}
+                                loadingText="ĐANG XÁC THỰC..."
+                                onClick={handleVerifyOtp}
+                                disabled={
+                                    isDisabled ||
+                                    isOtpExpired ||
+                                    isLocked
+                                }
+                                className="otp-submit"
+                                spinnerColor="#0a0a0b"
+                            >
+                                <span>
+                                    {getVerifyButtonText()}
+                                </span>
+                                <KeyRound
+                                    size={16}
+                                    strokeWidth={2.4}
+                                />
+                            </LoadingButton>
+                        </div>
+                    )}
                 </div>
             </div>
 
             {/* LOCK MODAL */}
             <LockModal
                 show={showLockModal}
-                message={lockInfo?.message || lockMessage || 'Bạn đã nhập sai OTP quá 5 lần. OTP đã bị khóa. Vui lòng gửi lại OTP mới.'}
-                lockedUntil={lockInfo?.lockedUntil || lockUntil}
+                message={
+                    lockInfo?.message ||
+                    lockMessage ||
+                    'Bạn đã nhập sai OTP quá 5 lần. OTP đã bị khóa. Vui lòng gửi lại OTP mới.'
+                }
+                lockedUntil={
+                    lockInfo?.lockedUntil || lockUntil
+                }
                 lockDuration={lockInfo?.lockDuration || 300}
-                lockDurationText={lockInfo?.lockDurationText || '5 phút'}
+                lockDurationText={
+                    lockInfo?.lockDurationText || '5 phút'
+                }
                 email={email}
                 onClose={handleLockModalClose}
                 onResend={handleLockModalResend}

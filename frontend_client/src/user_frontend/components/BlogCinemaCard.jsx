@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     ArrowUpRight,
@@ -7,11 +7,15 @@ import {
 } from "lucide-react";
 
 import { optimizeCloudinary, IMAGE_SIZES } from "../../utils/imageHelper";
+
+import TiltCard from "./TiltCard";
+import ContentRevealTransition from "./ContentRevealTransition";
+
 import "../styles/BlogCinemaCard.css";
 
 /* ==========================================================
-   BLOG CINEMA CARD — MAGAZINE 50/50
-   ✅ ĐÃ TỐI ƯU ẢNH CHO MOBILE
+   BLOG CINEMA CARD — MAGAZINE 50/50 + 3D TILT
+   + CINEMATIC CONTENT REVEAL
 ========================================================== */
 
 
@@ -42,6 +46,18 @@ const getBackdropUrl = (backdrop) => {
 const BlogCinemaCard = ({ blogs = [] }) => {
     const navigate = useNavigate();
 
+    // ============================================================
+    // CONTENT REVEAL STATE
+    // ============================================================
+
+    const [reveal, setReveal] = useState({
+        active: false,
+        slug: "",
+        image: "",
+        title: "",
+        subtitle: ""
+    });
+
     // 1 featured + 3 small = 4 bài
     const items = blogs.slice(0, 4);
 
@@ -50,32 +66,6 @@ const BlogCinemaCard = ({ blogs = [] }) => {
     }
 
     const [featured, ...rest] = items;
-
-
-    /* ======================================================
-       NAVIGATION
-    ====================================================== */
-
-    const handleNavigate = (slug) => {
-        if (slug) {
-            navigate(`/blog-cinema/detail/${slug}`);
-        }
-    };
-
-
-    /* ======================================================
-       KEYBOARD
-    ====================================================== */
-
-    const handleCardKeyDown = (event, slug) => {
-        if (
-            event.key === "Enter" ||
-            event.key === " "
-        ) {
-            event.preventDefault();
-            handleNavigate(slug);
-        }
-    };
 
 
     /* ======================================================
@@ -99,10 +89,7 @@ const BlogCinemaCard = ({ blogs = [] }) => {
        EXCERPT
     ====================================================== */
 
-    const renderExcerpt = (
-        content = "",
-        max = 150
-    ) => {
+    const renderExcerpt = (content = "", max = 150) => {
         const clean = String(content)
             .replace(/<[^>]*>/g, "")
             .replace(/&nbsp;/g, " ")
@@ -124,11 +111,66 @@ const BlogCinemaCard = ({ blogs = [] }) => {
     ====================================================== */
 
     const getBlogImage = (item) => {
-        const field =
-            item.blog_backdrop ||
-            item.blog_image;
-
+        const field = item.blog_backdrop || item.blog_image;
         return getBackdropUrl(field);
+    };
+
+
+    /* ======================================================
+       ✅ NAVIGATE VỚI CINEMATIC REVEAL
+    ====================================================== */
+
+    const handleNavigate = useCallback((blog) => {
+        if (!blog?.slug) return;
+
+        const rawImage = getBlogImage(blog);
+
+        // ✅ Optimize ảnh lớn để reveal đẹp hơn
+        const revealImage = optimizeCloudinary(
+            rawImage,
+            IMAGE_SIZES.BLOG_FEATURED
+        );
+
+        setReveal({
+            active: true,
+            slug: blog.slug,
+            image: revealImage,
+            title: blog.title || "",
+            subtitle: renderExcerpt(blog.description, 120)
+        });
+    }, []);
+
+
+    /* ======================================================
+       ✅ REVEAL COMPLETE → NAVIGATE
+    ====================================================== */
+
+    const handleRevealComplete = useCallback(() => {
+        const targetSlug = reveal.slug;
+
+        setReveal({
+            active: false,
+            slug: "",
+            image: "",
+            title: "",
+            subtitle: ""
+        });
+
+        if (targetSlug) {
+            navigate(`/blog-cinema/detail/${targetSlug}`);
+        }
+    }, [navigate, reveal.slug]);
+
+
+    /* ======================================================
+       KEYBOARD
+    ====================================================== */
+
+    const handleCardKeyDown = (event, blog) => {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            handleNavigate(blog);
+        }
     };
 
 
@@ -137,100 +179,83 @@ const BlogCinemaCard = ({ blogs = [] }) => {
     ====================================================== */
 
     const FeaturedCard = ({ blog }) => {
-        const excerpt = renderExcerpt(
-            blog.description,
-            150
-        );
+        const excerpt = renderExcerpt(blog.description, 150);
 
         return (
-            <article
-                className="blog-card blog-card--featured"
-                onClick={() =>
-                    handleNavigate(blog.slug)
-                }
-                role="button"
-                tabIndex={0}
-                onKeyDown={(event) =>
-                    handleCardKeyDown(
-                        event,
-                        blog.slug
-                    )
-                }
+            <TiltCard
+                maxTilt={6}
+                scale={1.02}
+                glare={true}
+                shadow={true}
+                edgeHighlight={true}
             >
-                {/* IMAGE — Tối ưu cho featured (1200px) */}
-
-                <div className="blog-card__image">
-                    <img
-                        src={optimizeCloudinary(
-                            getBlogImage(blog),
-                            IMAGE_SIZES.BLOG_FEATURED
-                        )}
-                        alt={
-                            blog.title ||
-                            "Blog Cinema"
-                        }
-                        loading="lazy"
-                        decoding="async"
-                        width="800"
-                        height="450"
-                        draggable={false}
-                    />
-
-                    <div className="blog-card__gradient" />
-                </div>
-
-
-                {/* CONTENT */}
-
-                <div className="blog-card__content">
-
-                    <div className="blog-card__meta">
-                        <span className="blog-card__meta-item">
-                            <Calendar size={12} />
-                            {formatDate(
-                                blog.created_at
+                <article
+                    className="blog-card blog-card--featured"
+                    onClick={() => handleNavigate(blog)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(event) => handleCardKeyDown(event, blog)}
+                >
+                    {/* IMAGE */}
+                    <div className="blog-card__image">
+                        <img
+                            src={optimizeCloudinary(
+                                getBlogImage(blog),
+                                IMAGE_SIZES.BLOG_FEATURED
                             )}
-                        </span>
+                            alt={blog.title || "Blog Cinema"}
+                            loading="lazy"
+                            decoding="async"
+                            width="800"
+                            height="450"
+                            draggable={false}
+                        />
 
-                        <span className="blog-card__meta-item">
-                            <Eye size={12} />
-                            {blog.views || 0} lượt xem
-                        </span>
+                        <div className="blog-card__gradient" />
                     </div>
 
+                    {/* CONTENT */}
+                    <div className="blog-card__content">
 
-                    <h3 className="blog-card__title">
-                        {blog.title}
-                    </h3>
+                        <div className="blog-card__meta">
+                            <span className="blog-card__meta-item">
+                                <Calendar size={12} />
+                                {formatDate(blog.created_at)}
+                            </span>
 
+                            <span className="blog-card__meta-item">
+                                <Eye size={12} />
+                                {blog.views || 0} lượt xem
+                            </span>
+                        </div>
 
-                    {excerpt && (
-                        <p className="blog-card__desc">
-                            {excerpt}
-                        </p>
-                    )}
+                        <h3 className="blog-card__title">
+                            {blog.title}
+                        </h3>
 
+                        {excerpt && (
+                            <p className="blog-card__desc">
+                                {excerpt}
+                            </p>
+                        )}
 
-                    <button
-                        type="button"
-                        className="btn-blog-action"
-                        onClick={(event) => {
-                            event.stopPropagation();
-
-                            handleNavigate(
-                                blog.slug
-                            );
-                        }}
-                    >
-                        <span>Đọc thêm</span>
-                        <ArrowUpRight
-                            size={16}
-                            className="btn-blog-action__icon"
-                        />
-                    </button>
-
-                </div>
-            </article>
+                        <button
+                            type="button"
+                            className="btn-blog-action"
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                handleNavigate(blog);
+                            }}
+                        >
+                            <span>Đọc thêm</span>
+                            <ArrowUpRight
+                                size={16}
+                                className="btn-blog-action__icon"
+                            />
+                        </button>
+                    </div>
+                </article>
+            </TiltCard>
         );
     };
 
@@ -240,99 +265,81 @@ const BlogCinemaCard = ({ blogs = [] }) => {
     ====================================================== */
 
     const SmallCard = ({ blog }) => {
-        const excerpt = renderExcerpt(
-            blog.description,
-            90
-        );
+        const excerpt = renderExcerpt(blog.description, 90);
 
         return (
-            <article
-                className="blog-card blog-card--small"
-                onClick={() =>
-                    handleNavigate(blog.slug)
-                }
-                role="button"
-                tabIndex={0}
-                onKeyDown={(event) =>
-                    handleCardKeyDown(
-                        event,
-                        blog.slug
-                    )
-                }
+            <TiltCard
+                maxTilt={5}
+                scale={1.015}
+                glare={false}
+                shadow={true}
+                edgeHighlight={true}
             >
-                {/* IMAGE — Tối ưu cho small (600px) */}
+                <article
+                    className="blog-card blog-card--small"
+                    onClick={() => handleNavigate(blog)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(event) => handleCardKeyDown(event, blog)}
+                >
+                    {/* IMAGE */}
+                    <div className="blog-card__image">
+                        <img
+                            src={optimizeCloudinary(
+                                getBlogImage(blog),
+                                IMAGE_SIZES.BLOG_SMALL
+                            )}
+                            alt={blog.title || "Blog Cinema"}
+                            loading="lazy"
+                            decoding="async"
+                            width="400"
+                            height="225"
+                            draggable={false}
+                        />
 
-                <div className="blog-card__image">
-                    <img
-                        src={optimizeCloudinary(
-                            getBlogImage(blog),
-                            IMAGE_SIZES.BLOG_SMALL
-                        )}
-                        alt={
-                            blog.title ||
-                            "Blog Cinema"
-                        }
-                        loading="lazy"
-                        decoding="async"
-                        width="400"
-                        height="225"
-                        draggable={false}
-                    />
-
-                    <div className="blog-card__gradient" />
-                </div>
-
-
-                {/* CONTENT */}
-
-                <div className="blog-card__content">
-
-                    <div className="blog-card__body">
-
-                        <h4 className="blog-card__title">
-                            {blog.title}
-                        </h4>
-
-
-                        <div className="blog-card__meta">
-                            <span className="blog-card__meta-item">
-                                <Calendar size={12} />
-                                {formatDate(
-                                    blog.created_at
-                                )}
-                            </span>
-                        </div>
-
-
-                        {excerpt && (
-                            <p className="blog-card__desc">
-                                {excerpt}
-                            </p>
-                        )}
-
+                        <div className="blog-card__gradient" />
                     </div>
 
+                    {/* CONTENT */}
+                    <div className="blog-card__content">
 
-                    <button
-                        type="button"
-                        className="btn-blog-action btn-blog-action--sm"
-                        onClick={(event) => {
-                            event.stopPropagation();
+                        <div className="blog-card__body">
 
-                            handleNavigate(
-                                blog.slug
-                            );
-                        }}
-                    >
-                        <span>Đọc thêm</span>
-                        <ArrowUpRight
-                            size={15}
-                            className="btn-blog-action__icon"
-                        />
-                    </button>
+                            <h4 className="blog-card__title">
+                                {blog.title}
+                            </h4>
 
-                </div>
-            </article>
+                            <div className="blog-card__meta">
+                                <span className="blog-card__meta-item">
+                                    <Calendar size={12} />
+                                    {formatDate(blog.created_at)}
+                                </span>
+                            </div>
+
+                            {excerpt && (
+                                <p className="blog-card__desc">
+                                    {excerpt}
+                                </p>
+                            )}
+                        </div>
+
+                        <button
+                            type="button"
+                            className="btn-blog-action btn-blog-action--sm"
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                handleNavigate(blog);
+                            }}
+                        >
+                            <span>Đọc thêm</span>
+                            <ArrowUpRight
+                                size={15}
+                                className="btn-blog-action__icon"
+                            />
+                        </button>
+                    </div>
+                </article>
+            </TiltCard>
         );
     };
 
@@ -342,33 +349,50 @@ const BlogCinemaCard = ({ blogs = [] }) => {
     ====================================================== */
 
     return (
-        <div className="blog-magazine-layout">
+        <>
+            {/* ==================================================
+                ✅ CINEMATIC CONTENT REVEAL
+            ================================================== */}
 
-            {/* LEFT — 50% */}
+            <ContentRevealTransition
+                active={reveal.active}
+                image={reveal.image}
+                title={reveal.title}
+                type="BLOG CINEMA"
+                subtitle={reveal.subtitle}
+                targetUrl={`/blog-cinema/detail/${reveal.slug}`}
+                onComplete={handleRevealComplete}
+            />
 
-            <div className="blog-magazine-layout__featured">
-                <FeaturedCard blog={featured} />
+
+            {/* ==================================================
+                BLOG MAGAZINE LAYOUT
+            ================================================== */}
+
+            <div className="blog-magazine-layout">
+
+                {/* LEFT — 50% */}
+                <div className="blog-magazine-layout__featured">
+                    <FeaturedCard blog={featured} />
+                </div>
+
+
+                {/* RIGHT — 50% */}
+                <div className="blog-magazine-layout__side">
+                    {rest.map((blog, index) => (
+                        <SmallCard
+                            key={
+                                blog.blog_id ||
+                                blog.id ||
+                                index
+                            }
+                            blog={blog}
+                        />
+                    ))}
+                </div>
+
             </div>
-
-
-            {/* RIGHT — 50% */}
-
-            <div className="blog-magazine-layout__side">
-
-                {rest.map((blog, index) => (
-                    <SmallCard
-                        key={
-                            blog.blog_id ||
-                            blog.id ||
-                            index
-                        }
-                        blog={blog}
-                    />
-                ))}
-
-            </div>
-
-        </div>
+        </>
     );
 };
 

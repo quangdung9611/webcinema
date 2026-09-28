@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     ArrowUpRight,
@@ -7,11 +7,15 @@ import {
 } from "lucide-react";
 
 import { optimizeCloudinary } from "../../utils/imageHelper";
+
+import TiltCard from "./TiltCard";
+import ContentRevealTransition from "./ContentRevealTransition";
+
 import "../styles/NewsCard.css";
 
 /* ==========================================================
-   NEWS CARD — MAGAZINE 50/50
-   ✅ ĐÃ TỐI ƯU ẢNH CHO MOBILE
+   NEWS CARD — MAGAZINE 50/50 + 3D TILT
+   + CINEMATIC CONTENT REVEAL
 ========================================================== */
 
 const getBackdropUrl = (backdrop) => {
@@ -30,26 +34,23 @@ const getBackdropUrl = (backdrop) => {
 const NewsCard = ({ news = [] }) => {
     const navigate = useNavigate();
 
+    // ============================================================
+    // CONTENT REVEAL STATE
+    // ============================================================
+
+    const [reveal, setReveal] = useState({
+        active: false,
+        slug: "",
+        image: "",
+        title: "",
+        subtitle: ""
+    });
+
     // 1 featured + 3 small = 4 bài
     const items = news.slice(0, 4);
     if (items.length === 0) return null;
 
     const [featured, ...rest] = items;
-
-    /* ======================================================
-       NAVIGATION
-    ====================================================== */
-
-    const handleNavigate = (slug) => {
-        if (slug) navigate(`/news/detail/${slug}`);
-    };
-
-    const handleCardKeyDown = (event, slug) => {
-        if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            handleNavigate(slug);
-        }
-    };
 
     /* ======================================================
        HELPERS
@@ -76,171 +77,219 @@ const NewsCard = ({ news = [] }) => {
     };
 
     /* ======================================================
-       FEATURED CARD
+       ✅ NAVIGATE VỚI CINEMATIC REVEAL
+    ====================================================== */
+
+    const handleNavigate = useCallback((item) => {
+        if (!item?.slug) return;
+
+        const rawImage = getNewsImage(item);
+
+        // ✅ Optimize ảnh lớn cho reveal
+        const revealImage = optimizeCloudinary(rawImage, 1200);
+
+        setReveal({
+            active: true,
+            slug: item.slug,
+            image: revealImage,
+            title: item.title || "",
+            subtitle: renderExcerpt(item.content, 120)
+        });
+    }, []);
+
+    /* ======================================================
+       ✅ REVEAL COMPLETE → NAVIGATE
+    ====================================================== */
+
+    const handleRevealComplete = useCallback(() => {
+        const targetSlug = reveal.slug;
+
+        setReveal({
+            active: false,
+            slug: "",
+            image: "",
+            title: "",
+            subtitle: ""
+        });
+
+        if (targetSlug) {
+            navigate(`/news/detail/${targetSlug}`);
+        }
+    }, [navigate, reveal.slug]);
+
+    /* ======================================================
+       KEYBOARD
+    ====================================================== */
+
+    const handleCardKeyDown = (event, item) => {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            handleNavigate(item);
+        }
+    };
+
+    /* ======================================================
+       FEATURED CARD — wrapped in TiltCard
     ====================================================== */
 
     const FeaturedCard = ({ item }) => {
         const excerpt = renderExcerpt(item.content, 140);
 
         return (
-            <article
-                className="news-card news-card--featured"
-                onClick={() => handleNavigate(item.slug)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(event) =>
-                    handleCardKeyDown(event, item.slug)
-                }
+            <TiltCard
+                maxTilt={6}
+                scale={1.02}
+                glare={true}
+                shadow={true}
+                edgeHighlight={true}
             >
-                {/* IMAGE — Tối ưu cho featured (1200px) */}
+                <article
+                    className="news-card news-card--featured"
+                    onClick={() => handleNavigate(item)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(event) => handleCardKeyDown(event, item)}
+                >
+                    {/* IMAGE */}
+                    <div className="news-card__image">
+                        <img
+                            src={optimizeCloudinary(getNewsImage(item), 1200)}
+                            alt={item.title || "News"}
+                            loading="lazy"
+                            decoding="async"
+                            width="800"
+                            height="450"
+                            draggable={false}
+                        />
 
-                <div className="news-card__image">
-                    <img
-                        src={optimizeCloudinary(getNewsImage(item), 1200)}
-                        alt={item.title || "News"}
-                        loading="lazy"
-                        decoding="async"
-                        width="800"
-                        height="450"
-                        draggable={false}
-                    />
-
-                    <div className="news-card__gradient" />
-                </div>
-
-
-                {/* CONTENT */}
-
-                <div className="news-card__content">
-
-                    <div className="news-card__body">
-
-                        <div className="news-card__meta">
-                            <span className="news-card__meta-item">
-                                <Calendar size={12} />
-                                {formatDate(item.created_at)}
-                            </span>
-
-                            <span className="news-card__meta-item">
-                                <Eye size={12} />
-                                {item.views || 0} lượt xem
-                            </span>
-                        </div>
-
-
-                        <h3 className="news-card__title">
-                            {item.title}
-                        </h3>
-
-
-                        {excerpt && (
-                            <p className="news-card__desc">
-                                {excerpt}
-                            </p>
-                        )}
-
+                        <div className="news-card__gradient" />
                     </div>
 
+                    {/* CONTENT */}
+                    <div className="news-card__content">
 
-                    <button
-                        type="button"
-                        className="btn-news-action"
-                        onClick={(event) => {
-                            event.stopPropagation();
-                            handleNavigate(item.slug);
-                        }}
-                    >
-                        <span>Xem thêm</span>
-                        <ArrowUpRight
-                            size={16}
-                            className="btn-news-action__icon"
-                        />
-                    </button>
+                        <div className="news-card__body">
 
-                </div>
-            </article>
+                            <div className="news-card__meta">
+                                <span className="news-card__meta-item">
+                                    <Calendar size={12} />
+                                    {formatDate(item.created_at)}
+                                </span>
+
+                                <span className="news-card__meta-item">
+                                    <Eye size={12} />
+                                    {item.views || 0} lượt xem
+                                </span>
+                            </div>
+
+                            <h3 className="news-card__title">
+                                {item.title}
+                            </h3>
+
+                            {excerpt && (
+                                <p className="news-card__desc">
+                                    {excerpt}
+                                </p>
+                            )}
+                        </div>
+
+                        <button
+                            type="button"
+                            className="btn-news-action"
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                handleNavigate(item);
+                            }}
+                        >
+                            <span>Xem thêm</span>
+                            <ArrowUpRight
+                                size={16}
+                                className="btn-news-action__icon"
+                            />
+                        </button>
+                    </div>
+                </article>
+            </TiltCard>
         );
     };
 
     /* ======================================================
-       SMALL CARD
+       SMALL CARD — wrapped in TiltCard
     ====================================================== */
 
     const SmallCard = ({ item }) => {
         const excerpt = renderExcerpt(item.content, 90);
 
         return (
-            <article
-                className="news-card news-card--small"
-                onClick={() => handleNavigate(item.slug)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(event) =>
-                    handleCardKeyDown(event, item.slug)
-                }
+            <TiltCard
+                maxTilt={5}
+                scale={1.015}
+                glare={false}
+                shadow={true}
+                edgeHighlight={true}
             >
-                {/* IMAGE — Tối ưu cho small (600px) */}
+                <article
+                    className="news-card news-card--small"
+                    onClick={() => handleNavigate(item)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(event) => handleCardKeyDown(event, item)}
+                >
+                    {/* IMAGE */}
+                    <div className="news-card__image">
+                        <img
+                            src={optimizeCloudinary(getNewsImage(item), 600)}
+                            alt={item.title || "News"}
+                            loading="lazy"
+                            decoding="async"
+                            width="400"
+                            height="225"
+                            draggable={false}
+                        />
 
-                <div className="news-card__image">
-                    <img
-                        src={optimizeCloudinary(getNewsImage(item), 600)}
-                        alt={item.title || "News"}
-                        loading="lazy"
-                        decoding="async"
-                        width="400"
-                        height="225"
-                        draggable={false}
-                    />
-
-                    <div className="news-card__gradient" />
-                </div>
-
-
-                {/* CONTENT */}
-
-                <div className="news-card__content">
-
-                    <div className="news-card__body">
-
-                        <h4 className="news-card__title">
-                            {item.title}
-                        </h4>
-
-
-                        <div className="news-card__meta">
-                            <span className="news-card__meta-item">
-                                <Calendar size={12} />
-                                {formatDate(item.created_at)}
-                            </span>
-                        </div>
-
-
-                        {excerpt && (
-                            <p className="news-card__desc">
-                                {excerpt}
-                            </p>
-                        )}
-
+                        <div className="news-card__gradient" />
                     </div>
 
+                    {/* CONTENT */}
+                    <div className="news-card__content">
 
-                    <button
-                        type="button"
-                        className="btn-news-action btn-news-action--sm"
-                        onClick={(event) => {
-                            event.stopPropagation();
-                            handleNavigate(item.slug);
-                        }}
-                    >
-                        <span>Xem thêm</span>
-                        <ArrowUpRight
-                            size={15}
-                            className="btn-news-action__icon"
-                        />
-                    </button>
+                        <div className="news-card__body">
 
-                </div>
-            </article>
+                            <h4 className="news-card__title">
+                                {item.title}
+                            </h4>
+
+                            <div className="news-card__meta">
+                                <span className="news-card__meta-item">
+                                    <Calendar size={12} />
+                                    {formatDate(item.created_at)}
+                                </span>
+                            </div>
+
+                            {excerpt && (
+                                <p className="news-card__desc">
+                                    {excerpt}
+                                </p>
+                            )}
+                        </div>
+
+                        <button
+                            type="button"
+                            className="btn-news-action btn-news-action--sm"
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                handleNavigate(item);
+                            }}
+                        >
+                            <span>Xem thêm</span>
+                            <ArrowUpRight
+                                size={15}
+                                className="btn-news-action__icon"
+                            />
+                        </button>
+                    </div>
+                </article>
+            </TiltCard>
         );
     };
 
@@ -249,27 +298,44 @@ const NewsCard = ({ news = [] }) => {
     ====================================================== */
 
     return (
-        <div className="news-magazine-layout">
+        <>
+            {/* ==================================================
+                ✅ CINEMATIC CONTENT REVEAL
+            ================================================== */}
 
-            {/* LEFT — Featured */}
+            <ContentRevealTransition
+                active={reveal.active}
+                image={reveal.image}
+                title={reveal.title}
+                type="NEWS"
+                subtitle={reveal.subtitle}
+                targetUrl={`/news/detail/${reveal.slug}`}
+                onComplete={handleRevealComplete}
+            />
 
-            <div className="news-magazine-layout__featured">
-                <FeaturedCard item={featured} />
+            {/* ==================================================
+                NEWS MAGAZINE LAYOUT
+            ================================================== */}
+
+            <div className="news-magazine-layout">
+
+                {/* LEFT — Featured */}
+                <div className="news-magazine-layout__featured">
+                    <FeaturedCard item={featured} />
+                </div>
+
+                {/* RIGHT — 3 Small */}
+                <div className="news-magazine-layout__side">
+                    {rest.map((item, idx) => (
+                        <SmallCard
+                            key={item.news_id || item.id || idx}
+                            item={item}
+                        />
+                    ))}
+                </div>
+
             </div>
-
-
-            {/* RIGHT — 3 Small */}
-
-            <div className="news-magazine-layout__side">
-                {rest.map((item, idx) => (
-                    <SmallCard
-                        key={item.news_id || item.id || idx}
-                        item={item}
-                    />
-                ))}
-            </div>
-
-        </div>
+        </>
     );
 };
 

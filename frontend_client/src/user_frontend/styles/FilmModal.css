@@ -1,345 +1,1216 @@
+
 /* =========================================================
-   FILM MODAL OVERLAY - CINEMA SPOTLIGHT PREMIUM
-   SỬ DỤNG 100% BIẾN TỪ INDEX.CSS
+   FILM MODAL
+   CINEMATIC PLATINUM PREMIUM 2026
+   ---------------------------------------------------------
+   - Không đổi JSX
+   - Giữ nguyên toàn bộ class hiện tại
+   - Tập trung vào transition cinematic
+   - Không dùng hiệu ứng trắng lóa
+========================================================= */
+
+
+/* =========================================================
+   ROOT OVERLAY
 ========================================================= */
 
 .film-modal-overlay {
     position: fixed;
     inset: 0;
+
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
-    background: rgba(0, 0, 0, 0.55);
-    backdrop-filter: blur(8px) saturate(120%);
+
+    padding: 24px;
+
+    background:
+        radial-gradient(
+            circle at 50% 46%,
+            rgba(210, 216, 224, 0.055) 0%,
+            rgba(210, 216, 224, 0.018) 24%,
+            transparent 58%
+        ),
+        rgba(3, 4, 6, 0.84);
+
+    backdrop-filter:
+        blur(0px)
+        saturate(100%);
+
+    -webkit-backdrop-filter:
+        blur(0px)
+        saturate(100%);
+
     z-index: 999999;
-    perspective: 2400px;
+
+    perspective: 1800px;
+
+    overflow: hidden;
+
+    isolation: isolate;
 }
 
+
 /* =========================================================
-   FILM MODAL CONTAINER
+   OVERLAY — OPEN
+   ---------------------------------------------------------
+   Nền tối lại trước, sau đó spotlight nhẹ mở ra.
+========================================================= */
+
+.film-modal-overlay.open {
+    animation:
+        filmOverlayIn
+        1.05s
+        cubic-bezier(0.22, 1, 0.36, 1)
+        forwards;
+}
+
+
+/* =========================================================
+   OVERLAY — CLOSE
+========================================================= */
+
+.film-modal-overlay.close {
+    animation:
+        filmOverlayOut
+        0.72s
+        cubic-bezier(0.4, 0, 1, 1)
+        forwards;
+}
+
+
+/* =========================================================
+   OVERLAY ANIMATION
+========================================================= */
+
+@keyframes filmOverlayIn {
+
+    0% {
+        opacity: 0;
+
+        backdrop-filter:
+            blur(0px)
+            saturate(100%);
+    }
+
+    35% {
+        opacity: 0.72;
+
+        backdrop-filter:
+            blur(3px)
+            saturate(108%);
+    }
+
+    70% {
+        opacity: 0.94;
+
+        backdrop-filter:
+            blur(7px)
+            saturate(112%);
+    }
+
+    100% {
+        opacity: 1;
+
+        backdrop-filter:
+            blur(10px)
+            saturate(115%);
+    }
+}
+
+
+@keyframes filmOverlayOut {
+
+    0% {
+        opacity: 1;
+
+        backdrop-filter:
+            blur(10px)
+            saturate(115%);
+    }
+
+    55% {
+        opacity: 0.72;
+
+        backdrop-filter:
+            blur(5px)
+            saturate(108%);
+    }
+
+    100% {
+        opacity: 0;
+
+        backdrop-filter:
+            blur(0px)
+            saturate(100%);
+    }
+}
+
+
+/* =========================================================
+   CINEMATIC SPOTLIGHT
+   ---------------------------------------------------------
+   Một nguồn sáng rất nhẹ phía sau modal.
+========================================================= */
+
+.film-modal-overlay::before {
+    content: "";
+
+    position: absolute;
+
+    width: min(1100px, 90vw);
+    height: min(720px, 75vh);
+
+    left: 50%;
+    top: 50%;
+
+    transform:
+        translate(-50%, -50%)
+        scale(0.72);
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            ellipse at center,
+            rgba(225, 229, 234, 0.085) 0%,
+            rgba(225, 229, 234, 0.035) 28%,
+            rgba(225, 229, 234, 0.012) 48%,
+            transparent 72%
+        );
+
+    filter: blur(25px);
+
+    opacity: 0;
+
+    pointer-events: none;
+
+    z-index: -1;
+}
+
+
+.film-modal-overlay.open::before {
+    animation:
+        cinematicSpotlightIn
+        1.45s
+        0.05s
+        cubic-bezier(0.16, 1, 0.3, 1)
+        forwards;
+}
+
+
+.film-modal-overlay.close::before {
+    animation:
+        cinematicSpotlightOut
+        0.65s
+        cubic-bezier(0.4, 0, 1, 1)
+        forwards;
+}
+
+
+@keyframes cinematicSpotlightIn {
+
+    0% {
+        opacity: 0;
+
+        transform:
+            translate(-50%, -50%)
+            scale(0.48);
+
+        filter: blur(45px);
+    }
+
+    45% {
+        opacity: 0.9;
+
+        transform:
+            translate(-50%, -50%)
+            scale(1.12);
+
+        filter: blur(30px);
+    }
+
+    100% {
+        opacity: 0.68;
+
+        transform:
+            translate(-50%, -50%)
+            scale(1);
+
+        filter: blur(25px);
+    }
+}
+
+
+@keyframes cinematicSpotlightOut {
+
+    0% {
+        opacity: 0.68;
+
+        transform:
+            translate(-50%, -50%)
+            scale(1);
+    }
+
+    100% {
+        opacity: 0;
+
+        transform:
+            translate(-50%, -50%)
+            scale(0.58);
+
+        filter: blur(45px);
+    }
+}
+
+
+/* =========================================================
+   MODAL CONTAINER
 ========================================================= */
 
 .film-modal-container {
+
     position: relative;
+
     width: 100%;
     max-width: 900px;
     max-height: 90vh;
+
     overflow: hidden;
-    border-radius: var(--radius-xl);
-    transform-style: preserve-3d;
-    backface-visibility: hidden;
-    will-change: transform, opacity, clip-path, filter;
+
     color: var(--silver-light);
-    box-shadow: var(--card-shadow-hover);
-    background: linear-gradient(
-        90deg,
-        rgba(20, 20, 20, 0.9),
-        rgba(50, 50, 50, 0.6),
-        rgba(120, 120, 120, 0.2),
-        rgba(200, 200, 200, 0.05)
-    );
-    transform: translateZ(0);
+
+    border-radius: var(--radius-xl);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(31, 33, 36, 0.97) 0%,
+            rgba(19, 20, 22, 0.985) 42%,
+            rgba(11, 12, 14, 0.99) 100%
+        );
+
+    border:
+        1px solid rgba(220, 225, 231, 0.12);
+
+    box-shadow:
+        0 45px 120px rgba(0, 0, 0, 0.72),
+        0 15px 40px rgba(0, 0, 0, 0.48),
+        inset 0 1px 0 rgba(255, 255, 255, 0.055);
+
+    transform-style: preserve-3d;
+
+    backface-visibility: hidden;
+
+    will-change:
+        transform,
+        opacity,
+        filter;
+
+    transform:
+        translate3d(
+            0,
+            38px,
+            -180px
+        )
+        rotateX(8deg)
+        rotateY(-1deg)
+        scale(0.88);
+
+    opacity: 0;
+
+    filter:
+        blur(10px)
+        brightness(0.65);
+
+    isolation: isolate;
 }
 
+
 /* =========================================================
-   OPEN - SPOTLIGHT PREMIUM
+   PREMIUM EDGE
+   ---------------------------------------------------------
+   Viền platinum rất mỏng.
+========================================================= */
+
+.film-modal-container::before {
+
+    content: "";
+
+    position: absolute;
+
+    inset: 0;
+
+    border-radius: inherit;
+
+    padding: 1px;
+
+    background:
+        linear-gradient(
+            125deg,
+            rgba(255, 255, 255, 0.24),
+            rgba(255, 255, 255, 0.035) 22%,
+            transparent 48%,
+            rgba(255, 255, 255, 0.055) 72%,
+            rgba(255, 255, 255, 0.14)
+        );
+
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+
+    -webkit-mask-composite: xor;
+
+    mask-composite: exclude;
+
+    pointer-events: none;
+
+    z-index: 20;
+
+    opacity: 0.65;
+}
+
+
+/* =========================================================
+   INNER CINEMA VIGNETTE
+========================================================= */
+
+.film-modal-container::after {
+
+    content: "";
+
+    position: absolute;
+
+    inset: 0;
+
+    border-radius: inherit;
+
+    background:
+        radial-gradient(
+            ellipse at 50% 0%,
+            rgba(255, 255, 255, 0.035),
+            transparent 38%
+        ),
+        linear-gradient(
+            180deg,
+            transparent 60%,
+            rgba(0, 0, 0, 0.14) 100%
+        );
+
+    pointer-events: none;
+
+    z-index: 1;
+}
+
+
+/* =========================================================
+   OPEN — MAIN CINEMATIC TRANSITION
 ========================================================= */
 
 .film-modal-overlay.open .film-modal-container {
-    animation: spotlightPremiumIn 1.6s 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+    animation:
+        filmModalCinematicIn
+        1.25s
+        0.12s
+        cubic-bezier(0.16, 1, 0.3, 1)
+        forwards;
 }
 
+
 /* =========================================================
-   CLOSE - SPOTLIGHT PREMIUM
+   CLOSE — MAIN CINEMATIC TRANSITION
 ========================================================= */
 
 .film-modal-overlay.close .film-modal-container {
-    animation: spotlightPremiumOut 0.8s cubic-bezier(0.4, 0, 1, 1) forwards;
+
+    animation:
+        filmModalCinematicOut
+        0.68s
+        cubic-bezier(0.4, 0, 1, 1)
+        forwards;
 }
 
+
 /* =========================================================
-   CINEMA SPOTLIGHT PREMIUM - CHẬM + HIỆU ỨNG LỚP LỚP
+   MODAL ENTER
+   ---------------------------------------------------------
+   0.00s  : nằm sâu trong không gian
+   0.25s  : camera tiến vào
+   0.65s  : modal settle
+   1.00s  : hoàn thiện
 ========================================================= */
 
-@keyframes spotlightPremiumIn {
+@keyframes filmModalCinematicIn {
+
     0% {
+
         opacity: 0;
-        transform: scale(0.7) rotate(3deg);
-        clip-path: circle(0% at center);
-        filter: blur(15px);
+
+        transform:
+            translate3d(
+                0,
+                52px,
+                -240px
+            )
+            rotateX(10deg)
+            rotateY(-1.5deg)
+            scale(0.84);
+
+        filter:
+            blur(13px)
+            brightness(0.55);
     }
+
+
     20% {
-        opacity: 0.2;
-        transform: scale(0.85) rotate(-2deg);
-        clip-path: circle(10% at center);
-        filter: blur(10px);
+
+        opacity: 0.3;
+
+        transform:
+            translate3d(
+                0,
+                30px,
+                -120px
+            )
+            rotateX(6deg)
+            rotateY(-0.8deg)
+            scale(0.91);
+
+        filter:
+            blur(8px)
+            brightness(0.72);
     }
-    40% {
-        opacity: 0.5;
-        transform: scale(1.03) rotate(1.5deg);
-        clip-path: circle(30% at center);
-        filter: blur(5px);
-        box-shadow: 0 0 80px rgba(232, 232, 232, 0.05);
+
+
+    48% {
+
+        opacity: 0.72;
+
+        transform:
+            translate3d(
+                0,
+                -5px,
+                -35px
+            )
+            rotateX(2deg)
+            rotateY(0deg)
+            scale(0.985);
+
+        filter:
+            blur(3px)
+            brightness(0.9);
     }
-    60% {
-        opacity: 0.8;
-        transform: scale(0.97) rotate(-0.5deg);
-        clip-path: circle(60% at center);
-        filter: blur(1px);
-        box-shadow: 0 0 120px rgba(232, 232, 232, 0.08);
+
+
+    72% {
+
+        opacity: 0.94;
+
+        transform:
+            translate3d(
+                0,
+                2px,
+                0
+            )
+            rotateX(-0.5deg)
+            rotateY(0deg)
+            scale(1.008);
+
+        filter:
+            blur(0.6px)
+            brightness(0.98);
     }
-    80% {
-        opacity: 0.95;
-        transform: scale(1.01) rotate(0.3deg);
-        clip-path: circle(85% at center);
-        filter: blur(0px);
-        box-shadow: 0 0 60px rgba(232, 232, 232, 0.03);
-    }
-    100% {
+
+
+    88% {
+
         opacity: 1;
-        transform: scale(1) rotate(0deg);
-        clip-path: circle(100% at center);
-        filter: blur(0);
-        box-shadow: none;
+
+        transform:
+            translate3d(
+                0,
+                -1px,
+                0
+            )
+            rotateX(0deg)
+            rotateY(0deg)
+            scale(0.998);
+
+        filter:
+            blur(0)
+            brightness(1);
+    }
+
+
+    100% {
+
+        opacity: 1;
+
+        transform:
+            translate3d(
+                0,
+                0,
+                0
+            )
+            rotateX(0deg)
+            rotateY(0deg)
+            scale(1);
+
+        filter:
+            blur(0)
+            brightness(1);
     }
 }
 
-@keyframes spotlightPremiumOut {
-    0% {
-        opacity: 1;
-        transform: scale(1) rotate(0deg);
-        clip-path: circle(100% at center);
-        filter: blur(0);
-        box-shadow: none;
-    }
-    30% {
-        opacity: 0.7;
-        transform: scale(0.95) rotate(-2deg);
-        clip-path: circle(60% at center);
-        filter: blur(3px);
-        box-shadow: 0 0 80px rgba(232, 232, 232, 0.05);
-    }
-    100% {
-        opacity: 0;
-        transform: scale(0.6) rotate(5deg);
-        clip-path: circle(0% at center);
-        filter: blur(18px);
-        box-shadow: none;
-    }
-}
 
 /* =========================================================
-   GLOW RING - HIỆU ỨNG ÁNH SÁNG ĐA LỚP
+   MODAL EXIT
 ========================================================= */
 
-.film-modal-overlay.open .film-modal-container::before {
-    content: '';
-    position: absolute;
-    inset: -100px;
-    border-radius: 50%;
-    background: radial-gradient(
-        circle at center,
-        rgba(232, 232, 232, 0.06) 0%,
-        rgba(232, 232, 232, 0.04) 20%,
-        rgba(232, 232, 232, 0.02) 40%,
-        transparent 70%
-    );
-    z-index: -1;
-    opacity: 0;
-    animation: premiumGlow 2.2s 0.8s ease-out forwards;
-    pointer-events: none;
-}
+@keyframes filmModalCinematicOut {
 
-@keyframes premiumGlow {
     0% {
-        opacity: 0;
-        transform: scale(0.2) rotate(0deg);
-    }
-    50% {
+
         opacity: 1;
-        transform: scale(1.3) rotate(180deg);
-    }
-    100% {
-        opacity: 0.6;
-        transform: scale(1) rotate(360deg);
-    }
-}
 
-/* =========================================================
-   HIỆU ỨNG HẠT SÁNG (PARTICLE) - RẤT PREMIUM
-========================================================= */
+        transform:
+            translate3d(
+                0,
+                0,
+                0
+            )
+            rotateX(0deg)
+            rotateY(0deg)
+            scale(1);
 
-.film-modal-overlay.open .film-modal-container::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image: 
-        radial-gradient(2px 2px at 10% 20%, rgba(232, 232, 232, 0.3), transparent),
-        radial-gradient(2px 2px at 30% 60%, rgba(232, 232, 232, 0.2), transparent),
-        radial-gradient(2px 2px at 50% 30%, rgba(232, 232, 232, 0.25), transparent),
-        radial-gradient(2px 2px at 70% 70%, rgba(232, 232, 232, 0.2), transparent),
-        radial-gradient(2px 2px at 90% 40%, rgba(232, 232, 232, 0.3), transparent),
-        radial-gradient(1px 1px at 15% 80%, rgba(232, 232, 232, 0.15), transparent),
-        radial-gradient(1px 1px at 45% 90%, rgba(232, 232, 232, 0.15), transparent),
-        radial-gradient(1px 1px at 75% 10%, rgba(232, 232, 232, 0.15), transparent),
-        radial-gradient(1px 1px at 85% 55%, rgba(232, 232, 232, 0.15), transparent),
-        radial-gradient(1px 1px at 25% 15%, rgba(232, 232, 232, 0.15), transparent);
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    opacity: 0;
-    z-index: 0;
-    pointer-events: none;
-    animation: particleAppear 1.8s 0.6s ease-out forwards;
-}
+        filter:
+            blur(0)
+            brightness(1);
+    }
 
-@keyframes particleAppear {
-    0% {
-        opacity: 0;
-        transform: scale(0.5);
+
+    28% {
+
+        opacity: 0.88;
+
+        transform:
+            translate3d(
+                0,
+                -5px,
+                -30px
+            )
+            rotateX(2deg)
+            scale(0.985);
+
+        filter:
+            blur(1px)
+            brightness(0.9);
     }
-    50% {
-        opacity: 0.8;
-        transform: scale(1.1);
-    }
-    100% {
+
+
+    65% {
+
         opacity: 0.4;
-        transform: scale(1);
-    }
-}
 
-/* =========================================================
-   ÁNH SÁNG LƯỚT QUA MÀN HÌNH
-========================================================= */
+        transform:
+            translate3d(
+                0,
+                24px,
+                -120px
+            )
+            rotateX(7deg)
+            scale(0.91);
 
-.film-modal-overlay.open .film-modal-container .film-light-sweep {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-        to right,
-        transparent 0%,
-        rgba(232, 232, 232, 0.03) 20%,
-        rgba(232, 232, 232, 0.06) 45%,
-        rgba(232, 232, 232, 0.03) 70%,
-        transparent 100%
-    );
-    z-index: 0;
-    opacity: 0;
-    animation: premiumLightSweep 2.4s 0.4s ease-out forwards;
-    pointer-events: none;
-}
+        filter:
+            blur(6px)
+            brightness(0.72);
+    }
 
-@keyframes premiumLightSweep {
-    0% {
-        opacity: 0;
-        transform: translateX(-100%) skewX(-12deg);
-    }
-    40% {
-        opacity: 0.8;
-        transform: translateX(0%) skewX(-12deg);
-    }
+
     100% {
+
         opacity: 0;
-        transform: translateX(100%) skewX(-12deg);
+
+        transform:
+            translate3d(
+                0,
+                58px,
+                -230px
+            )
+            rotateX(11deg)
+            scale(0.82);
+
+        filter:
+            blur(14px)
+            brightness(0.5);
     }
 }
 
+
 /* =========================================================
-   CLOSE BUTTON
+   PLATINUM LIGHT SWEEP
+   ---------------------------------------------------------
+   Ánh sáng chạy qua modal 1 lần khi xuất hiện.
 ========================================================= */
 
-.film-modal-close-btn {
+.film-light-sweep {
+
     position: absolute;
-    top: 18px;
-    right: 18px;
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    border: var(--border-premium);
-    background: rgba(20, 20, 20, 0.75);
-    color: var(--silver-light);
-    cursor: pointer;
-    transition: 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-    z-index: 10;
+
+    top: -25%;
+    left: -80%;
+
+    width: 42%;
+    height: 150%;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.015) 30%,
+            rgba(235, 240, 245, 0.08) 50%,
+            rgba(255, 255, 255, 0.015) 70%,
+            transparent 100%
+        );
+
+    transform:
+        skewX(-18deg)
+        translateX(0);
+
+    opacity: 0;
+
+    filter: blur(7px);
+
+    pointer-events: none;
+
+    z-index: 15;
 }
 
-.film-modal-close-btn:hover {
-    transform: rotate(180deg) scale(1.12);
-    background: var(--silver-primary);
-    color: var(--bg-primary);
-    box-shadow: var(--btn-silver-shadow);
+
+.film-modal-overlay.open
+.film-modal-container
+.film-light-sweep {
+
+    animation:
+        filmLightSweep
+        1.35s
+        0.42s
+        cubic-bezier(0.2, 0.8, 0.2, 1)
+        forwards;
 }
+
+
+@keyframes filmLightSweep {
+
+    0% {
+
+        opacity: 0;
+
+        transform:
+            skewX(-18deg)
+            translateX(0);
+    }
+
+    15% {
+        opacity: 0.7;
+    }
+
+    50% {
+        opacity: 0.35;
+    }
+
+    100% {
+
+        opacity: 0;
+
+        transform:
+            skewX(-18deg)
+            translateX(480%);
+    }
+}
+
+
+/* =========================================================
+   PREMIUM HIGHLIGHT LINE
+   ---------------------------------------------------------
+   Một đường sáng mảnh chạy ngang phần trên modal.
+========================================================= */
+
+.film-modal-container .film-light-sweep::after {
+
+    content: "";
+
+    position: absolute;
+
+    top: 12%;
+
+    left: 0;
+
+    width: 100%;
+    height: 1px;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.16),
+            transparent
+        );
+
+    filter: blur(1px);
+}
+
 
 /* =========================================================
    BODY
 ========================================================= */
 
 .film-modal-body {
-    padding: 0;
-    max-height: 78vh;
-    overflow-y: auto;
+
     position: relative;
-    z-index: 2;
+
+    z-index: 5;
+
+    padding: 0;
+
+    max-height: 78vh;
+
+    overflow-y: auto;
+
+    scrollbar-width: thin;
+
+    scrollbar-color:
+        rgba(220, 225, 231, 0.22)
+        transparent;
 }
 
+
+/* =========================================================
+   BODY SCROLLBAR
+========================================================= */
+
 .film-modal-body::-webkit-scrollbar {
-    width: 6px;
+    width: 5px;
+}
+
+.film-modal-body::-webkit-scrollbar-track {
+    background: transparent;
 }
 
 .film-modal-body::-webkit-scrollbar-thumb {
-    background: rgba(232, 232, 232, 0.2);
-    border-radius: var(--radius-round);
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(230, 234, 239, 0.28),
+            rgba(230, 234, 239, 0.1)
+        );
+
+    border-radius: 999px;
 }
+
+.film-modal-body::-webkit-scrollbar-thumb:hover {
+
+    background:
+        rgba(230, 234, 239, 0.42);
+}
+
+
+/* =========================================================
+   CLOSE BUTTON
+========================================================= */
+
+.film-modal-close-btn {
+
+    position: absolute;
+
+    top: 16px;
+    right: 16px;
+
+    width: 46px;
+    height: 46px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    border:
+        1px solid
+        rgba(220, 225, 231, 0.12);
+
+    background:
+        rgba(10, 11, 13, 0.72);
+
+    color:
+        rgba(235, 238, 242, 0.78);
+
+    backdrop-filter:
+        blur(14px)
+        saturate(120%);
+
+    -webkit-backdrop-filter:
+        blur(14px)
+        saturate(120%);
+
+    cursor: pointer;
+
+    z-index: 50;
+
+    transition:
+        transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+        background 0.3s ease,
+        color 0.3s ease,
+        border-color 0.3s ease,
+        box-shadow 0.3s ease;
+}
+
+
+.film-modal-close-btn:hover {
+
+    transform:
+        rotate(90deg)
+        scale(1.08);
+
+    background:
+        rgba(225, 229, 234, 0.94);
+
+    color:
+        #101113;
+
+    border-color:
+        rgba(255, 255, 255, 0.45);
+
+    box-shadow:
+        0 0 24px rgba(220, 225, 231, 0.13);
+}
+
+
+.film-modal-close-btn:active {
+
+    transform:
+        rotate(90deg)
+        scale(0.94);
+}
+
 
 /* =========================================================
    ICON
 ========================================================= */
 
 .film-modal-icon {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 14px auto 18px;
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background: rgba(232, 232, 232, 0.05);
-    border: var(--border-premium);
+
     position: relative;
-    z-index: 2;
+
+    z-index: 10;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 76px;
+    height: 76px;
+
+    margin:
+        18px auto 18px;
+
+    border-radius: 50%;
+
+    border:
+        1px solid
+        rgba(225, 230, 235, 0.14);
+
+    background:
+        radial-gradient(
+            circle at 35% 25%,
+            rgba(255, 255, 255, 0.07),
+            rgba(255, 255, 255, 0.015) 55%,
+            rgba(0, 0, 0, 0.18)
+        );
+
+    color:
+        var(--silver-light);
+
+    box-shadow:
+        0 14px 35px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+    animation:
+        filmIconReveal
+        0.7s
+        0.62s
+        cubic-bezier(0.16, 1, 0.3, 1)
+        both;
 }
 
+
 /* =========================================================
-   RESPONSIVE
+   ICON REVEAL
+========================================================= */
+
+@keyframes filmIconReveal {
+
+    0% {
+
+        opacity: 0;
+
+        transform:
+            translateY(12px)
+            scale(0.72)
+            rotate(-8deg);
+
+        filter: blur(5px);
+    }
+
+    65% {
+
+        opacity: 1;
+
+        transform:
+            translateY(-2px)
+            scale(1.04)
+            rotate(1deg);
+
+        filter: blur(0);
+    }
+
+    100% {
+
+        opacity: 1;
+
+        transform:
+            translateY(0)
+            scale(1)
+            rotate(0deg);
+    }
+}
+
+
+/* =========================================================
+   TYPE STATES
+========================================================= */
+
+.film-modal-container.success
+.film-modal-icon {
+
+    color:
+        rgba(218, 225, 231, 0.92);
+}
+
+
+.film-modal-container.error
+.film-modal-icon {
+
+    color:
+        rgba(220, 220, 220, 0.9);
+}
+
+
+.film-modal-container.warning
+.film-modal-icon {
+
+    color:
+        rgba(232, 226, 210, 0.92);
+}
+
+
+.film-modal-container.info
+.film-modal-icon {
+
+    color:
+        rgba(215, 222, 229, 0.92);
+}
+
+
+/* =========================================================
+   RESPONSIVE — LARGE TABLET
 ========================================================= */
 
 @media (max-width: 1200px) {
+
     .film-modal-container {
-        max-width: 800px;
+        max-width: 820px;
     }
 }
+
+
+/* =========================================================
+   RESPONSIVE — TABLET
+========================================================= */
 
 @media (max-width: 992px) {
+
+    .film-modal-overlay {
+        padding: 18px;
+    }
+
     .film-modal-container {
-        max-width: 700px;
-        border-radius: var(--radius-lg);
+
+        max-width: 720px;
+
+        max-height: 88vh;
+
+        border-radius:
+            var(--radius-lg);
+
+        transform-origin:
+            center center;
+    }
+
+    .film-modal-body {
+        max-height: 76vh;
     }
 }
 
+
+/* =========================================================
+   RESPONSIVE — MOBILE
+========================================================= */
+
 @media (max-width: 768px) {
+
+    .film-modal-overlay {
+
+        align-items: flex-end;
+
+        padding: 0;
+
+    }
+
     .film-modal-container {
+
         width: 100%;
+
         max-width: 100%;
-        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+
+        max-height: 92vh;
+
+        border-radius:
+            var(--radius-xl)
+            var(--radius-xl)
+            0
+            0;
+
+        transform-origin:
+            center bottom;
+    }
+
+    .film-modal-overlay.open
+    .film-modal-container {
+
+        animation-name:
+            filmModalMobileIn;
+    }
+
+    .film-modal-overlay.close
+    .film-modal-container {
+
+        animation-name:
+            filmModalMobileOut;
+    }
+
+    .film-modal-body {
+        max-height: 86vh;
     }
 
     .film-modal-close-btn {
-        width: 40px;
-        height: 40px;
-        right: 12px;
+
         top: 12px;
+        right: 12px;
+
+        width: 42px;
+        height: 42px;
+    }
+}
+
+
+/* =========================================================
+   MOBILE ENTER
+========================================================= */
+
+@keyframes filmModalMobileIn {
+
+    0% {
+
+        opacity: 0;
+
+        transform:
+            translate3d(
+                0,
+                80px,
+                0
+            )
+            scale(0.97);
+
+        filter: blur(10px);
+    }
+
+    55% {
+
+        opacity: 1;
+
+        transform:
+            translate3d(
+                0,
+                -5px,
+                0
+            )
+            scale(1.005);
+
+        filter: blur(1px);
+    }
+
+    100% {
+
+        opacity: 1;
+
+        transform:
+            translate3d(
+                0,
+                0,
+                0
+            )
+            scale(1);
+
+        filter: blur(0);
+    }
+}
+
+
+/* =========================================================
+   MOBILE EXIT
+========================================================= */
+
+@keyframes filmModalMobileOut {
+
+    0% {
+
+        opacity: 1;
+
+        transform:
+            translate3d(
+                0,
+                0,
+                0
+            )
+            scale(1);
+    }
+
+    100% {
+
+        opacity: 0;
+
+        transform:
+            translate3d(
+                0,
+                70px,
+                0
+            )
+            scale(0.97);
+
+        filter: blur(8px);
     }
 }

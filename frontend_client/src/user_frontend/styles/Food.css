@@ -1,5 +1,6 @@
 /* =========================================================
    FOOD PAGE - PREMIUM SILVER EDITION
+   SUBTLE HOVER EDITION
    MAX WIDTH: 1300px
    USING GLOBAL VARIABLES FROM INDEX.CSS
 ========================================================= */
@@ -25,9 +26,7 @@
             transparent 28%
         ),
         var(--bg-primary);
-   
 }
-
 
 /* =========================================================
    MAIN CONTAINER
@@ -51,7 +50,6 @@
     gap: var(--space-lg);
 }
 
-
 /* =========================================================
    SIDEBAR - STICKY
 ========================================================= */
@@ -64,7 +62,6 @@
     top: 20px;
     overflow: visible !important;
 }
-
 
 /* =========================================================
    MAIN AREA
@@ -79,7 +76,6 @@
     gap: var(--space-xl);
     overflow: visible !important;
 }
-
 
 /* =========================================================
    INTRO CARD
@@ -107,6 +103,7 @@
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     overflow: visible !important;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .food-intro-card::before {
@@ -122,6 +119,7 @@
             transparent
         );
     pointer-events: none;
+    opacity: 0.65;
 }
 
 .food-intro-card::after {
@@ -135,6 +133,13 @@
     background: rgba(232, 232, 232, 0.055);
     filter: blur(55px);
     pointer-events: none;
+}
+
+.food-intro-card:hover {
+    border-color: rgba(232, 232, 232, 0.22);
+    box-shadow:
+        0 22px 60px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .food-intro-icon {
@@ -153,7 +158,14 @@
             rgba(232, 232, 232, 0.025)
         );
     font-size: 28px;
+    color: var(--silver-primary);
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.20);
+    transition: border-color 0.3s ease, color 0.3s ease;
+}
+
+.food-intro-card:hover .food-intro-icon {
+    border-color: rgba(232, 232, 232, 0.35);
+    color: var(--silver-light);
 }
 
 .food-intro-content {
@@ -168,6 +180,11 @@
     font-weight: var(--fw-extrabold);
     letter-spacing: 1px;
     text-transform: uppercase;
+    transition: color 0.25s ease;
+}
+
+.food-intro-card:hover .food-intro-content h2 {
+    color: var(--silver-light);
 }
 
 .food-intro-content p {
@@ -176,7 +193,6 @@
     font-size: 11px;
     line-height: 1.6;
 }
-
 
 /* =========================================================
    FOOD COUNT BADGE
@@ -190,6 +206,12 @@
     border-radius: var(--radius-md);
     background: rgba(255, 255, 255, 0.035);
     border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: border-color 0.25s ease, background 0.25s ease;
+}
+
+.food-count-badge:hover {
+    border-color: rgba(232, 232, 232, 0.22);
+    background: rgba(255, 255, 255, 0.055);
 }
 
 .food-count-badge span {
@@ -204,7 +226,6 @@
     font-size: 15px;
     font-weight: var(--fw-extrabold);
 }
-
 
 /* =========================================================
    FOOD LIST CARD
@@ -266,7 +287,6 @@
     pointer-events: none;
 }
 
-
 /* =========================================================
    FOOD LIST HEADER
 ========================================================= */
@@ -303,7 +323,6 @@
     text-transform: uppercase;
 }
 
-
 /* =========================================================
    FOOD GRID
 ========================================================= */
@@ -315,9 +334,8 @@
     overflow: visible !important;
 }
 
-
 /* =========================================================
-   FOOD CARD
+   FOOD CARD — hover nhẹ
 ========================================================= */
 
 .food-card {
@@ -341,7 +359,6 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.025);
     overflow: visible !important;
     transition:
-        transform 0.25s ease,
         border-color 0.25s ease,
         box-shadow 0.25s ease,
         background 0.25s ease;
@@ -360,16 +377,16 @@
     pointer-events: none;
 }
 
+/* Hover nhẹ — chỉ viền sáng + shadow nhẹ */
 .food-card:hover {
-    transform: translateY(-4px);
-    border-color: rgba(232, 232, 232, 0.28);
+    border-color: rgba(232, 232, 232, 0.24);
     box-shadow:
-        0 18px 38px rgba(0, 0, 0, 0.24),
-        0 0 25px rgba(232, 232, 232, 0.045);
+        0 14px 34px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .food-card.is-selected {
-    border-color: rgba(232, 232, 232, 0.34);
+    border-color: rgba(232, 232, 232, 0.32);
     background:
         linear-gradient(
             145deg,
@@ -378,6 +395,9 @@
         );
 }
 
+.food-card.is-selected:hover {
+    border-color: rgba(232, 232, 232, 0.42);
+}
 
 /* =========================================================
    FOOD IMAGE
@@ -396,6 +416,11 @@
     border: 1px solid rgba(255, 255, 255, 0.10);
     background: var(--bg-tertiary);
     box-shadow: 0 10px 22px rgba(0, 0, 0, 0.20);
+    transition: border-color 0.3s ease;
+}
+
+.food-card:hover .food-image {
+    border-color: rgba(232, 232, 232, 0.22);
 }
 
 .food-image img {
@@ -403,11 +428,11 @@
     height: 100%;
     display: block;
     object-fit: cover;
-    transition: transform 0.35s ease;
+    transition: transform 0.4s ease;
 }
 
 .food-card:hover .food-image img {
-    transform: scale(1.055);
+    transform: scale(1.05);
 }
 
 .food-no-image {
@@ -443,7 +468,6 @@
     -webkit-backdrop-filter: blur(8px);
 }
 
-
 /* =========================================================
    FOOD CONTENT
 ========================================================= */
@@ -468,6 +492,11 @@
     font-size: 15px;
     line-height: 1.4;
     font-weight: var(--fw-extrabold);
+    transition: color 0.25s ease;
+}
+
+.food-card:hover .food-content h3 {
+    color: var(--silver-light);
 }
 
 .food-price {
@@ -476,7 +505,6 @@
     line-height: 1.2;
     font-weight: var(--fw-extrabold);
 }
-
 
 /* =========================================================
    QUANTITY CONTROL
@@ -518,19 +546,20 @@
     line-height: 1;
     font-weight: var(--fw-extrabold);
     cursor: pointer;
-    transition: all 0.22s ease;
+    transition:
+        border-color 0.22s ease,
+        background 0.22s ease,
+        color 0.22s ease;
 }
 
 .food-qty-btn:hover {
-    transform: translateY(-2px);
     border-color: rgba(232, 232, 232, 0.30);
     background: var(--premium-gradient);
     color: var(--bg-primary);
-    box-shadow: var(--btn-silver-shadow);
 }
 
 .food-qty-btn:active {
-    transform: scale(0.92);
+    transform: scale(0.94);
 }
 
 .food-qty-btn:disabled {
@@ -545,7 +574,6 @@
     font-size: 14px;
     font-weight: var(--fw-extrabold);
 }
-
 
 /* =========================================================
    ITEM TOTAL
@@ -571,7 +599,6 @@
     font-size: 11px;
     font-weight: var(--fw-extrabold);
 }
-
 
 /* =========================================================
    LOADING / EMPTY
@@ -604,6 +631,7 @@
 .food-empty-icon {
     margin-bottom: 10px;
     font-size: 38px;
+    color: var(--silver-primary);
 }
 
 .food-empty h3 {
@@ -620,7 +648,6 @@
     font-size: 10px;
 }
 
-
 /* =========================================================
    MOBILE SUMMARY / ACTIONS
 ========================================================= */
@@ -629,7 +656,6 @@
 .food-mobile-actions {
     display: none;
 }
-
 
 /* =========================================================
    FOOD PROGRESS WRAPPER
@@ -641,6 +667,35 @@
     margin: 0 auto 24px;
 }
 
+/* =========================================================
+   ✅ RESCHEDULE LOADING STATE
+========================================================= */
+
+.food-reschedule-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    gap: 12px;
+    color: var(--text-secondary);
+}
+
+.food-reschedule-loading p {
+    margin: 0;
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-medium);
+}
+
+.spin-icon {
+    animation: spin 1s linear infinite;
+    color: var(--silver-primary);
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
 
 /* =========================================================
    RESPONSIVE - 1200px
@@ -683,7 +738,6 @@
         min-height: 112px;
     }
 }
-
 
 /* =========================================================
    RESPONSIVE - 992px
@@ -731,7 +785,6 @@
         min-height: 125px;
     }
 }
-
 
 /* =========================================================
    RESPONSIVE - 768px
@@ -840,7 +893,6 @@
     }
 }
 
-
 /* =========================================================
    RESPONSIVE - 600px
 ========================================================= */
@@ -863,7 +915,6 @@
         font-size: 8px;
     }
 }
-
 
 /* =========================================================
    RESPONSIVE - 480px
@@ -975,10 +1026,6 @@
         font-size: 8px;
     }
 
-    /* ======================================================
-       MOBILE SUMMARY
-    ====================================================== */
-
     .food-mobile-summary {
         display: flex;
         justify-content: space-between;
@@ -1043,7 +1090,6 @@
 
     .food-mobile-next:hover:not(:disabled) {
         box-shadow: 0 4px 28px rgba(159, 183, 210, 0.40);
-        transform: translateY(-2px);
     }
 
     .food-mobile-next:disabled {
@@ -1051,7 +1097,6 @@
         cursor: not-allowed;
     }
 }
-
 
 /* =========================================================
    RESPONSIVE - 360px
@@ -1096,32 +1141,5 @@
     .food-mobile-next {
         height: 40px;
         font-size: 7px;
-    }
-}
-
-
-/* =========================================================
-   REDUCE MOTION
-========================================================= */
-
-@media (prefers-reduced-motion: reduce) {
-    .food-card,
-    .food-qty-btn,
-    .food-image img,
-    .food-mobile-back,
-    .food-mobile-next {
-        transition: none;
-    }
-
-    .food-card:hover {
-        transform: none;
-    }
-
-    .food-qty-btn:hover {
-        transform: none;
-    }
-
-    .food-card:hover .food-image img {
-        transform: none;
     }
 }

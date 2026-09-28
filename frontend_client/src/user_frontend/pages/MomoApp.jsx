@@ -22,6 +22,8 @@ import {
     RotateCw,
     Loader2,
     RefreshCw,
+    Check,
+    X,
 } from 'lucide-react';
 
 import api from '../../api/api';
@@ -132,7 +134,6 @@ const MomoApp = () => {
     const oldTotalAmount = Number(bookingData?.oldTotalAmount || 0);
     const newTotalAmount = Number(bookingData?.newTotalAmount || 0);
 
-    // ✅ Số tiền cần thanh toán
     const totalAmount = isRescheduleMode
         ? Math.max(0, deltaAmount)
         : Number(bookingData.totalAmount) || 0;
@@ -190,6 +191,17 @@ const MomoApp = () => {
     const otpAttemptsRef = useRef(parseInt(localStorage.getItem('momoOtpAttempts') || '0', 10));
     const isLockedRef = useRef(localStorage.getItem('momoIsLocked') === 'true');
     const timerIntervalRef = useRef(null);
+    const successTimerRef = useRef(null);
+    const errorTimerRef = useRef(null);
+
+    // ============================================================
+    // ✅ PREMIUM SUCCESS EFFECT
+    // ============================================================
+
+    const [otpSuccess, setOtpSuccess] = useState(false);
+
+    // ❌ PREMIUM ERROR EFFECT
+    const [otpError, setOtpError] = useState(false);
 
     // ============================================================
     // TIME STATE
@@ -208,7 +220,6 @@ const MomoApp = () => {
     const [timeLeft, setTimeLeft] = useState(OTP_TTL);
     const [lockTimeLeft, setLockTimeLeft] = useState(0);
 
-    // ✅ UNIFIED TIMER
     useEffect(() => {
         const tick = () => {
             const now = Date.now();
@@ -247,36 +258,16 @@ const MomoApp = () => {
         };
     }, [otpExpiresAt, lockExpiresAt]);
 
-    // ============================================================
-    // DERIVED STATE
-    // ============================================================
-
     const isLocked = lockExpiresAt > 0 && lockTimeLeft > 0;
     const isOtpExpired = otpExpiresAt > 0 && timeLeft <= 0;
 
-    // ============================================================
-    // OTP
-    // ============================================================
-
     const [otp, setOtp] = useState(() => localStorage.getItem('momoOtpInput') || '');
-
-    // ============================================================
-    // LOADING
-    // ============================================================
 
     const [loadingVerify, setLoadingVerify] = useState(false);
     const [loadingSendOtp, setLoadingSendOtp] = useState(false);
     const [isSyncing, setIsSyncing] = useState(true);
 
-    // ============================================================
-    // BACK CONFIRM
-    // ============================================================
-
     const [showBackConfirm, setShowBackConfirm] = useState(false);
-
-    // ============================================================
-    // MODAL
-    // ============================================================
 
     const [modalConfig, setModalConfig] = useState({
         show: false,
@@ -287,19 +278,11 @@ const MomoApp = () => {
         onCancel: () => {}
     });
 
-    // ============================================================
-    // RESET OTP INPUT
-    // ============================================================
-
     const resetOtpInput = useCallback(() => {
         setOtp('');
         localStorage.setItem('momoOtpInput', '');
         if (otpInputsRef.current[0]) otpInputsRef.current[0].focus();
     }, []);
-
-    // ============================================================
-    // FORMAT TIME
-    // ============================================================
 
     const formatTime = useCallback((seconds) => {
         if (seconds <= 0) return '00:00';
@@ -309,8 +292,17 @@ const MomoApp = () => {
     }, []);
 
     // ============================================================
-    // MODAL
+    // ❌ TRIGGER ERROR — hiện dấu ✗ 1.5s rồi reset
     // ============================================================
+
+    const triggerErrorEffect = useCallback(() => {
+        setOtpError(true);
+        if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+        errorTimerRef.current = setTimeout(() => {
+            setOtpError(false);
+            resetOtpInput();
+        }, 1500);
+    }, [resetOtpInput]);
 
     const closeModal = useCallback(() => {
         setModalConfig(prev => ({ ...prev, show: false }));
@@ -331,17 +323,9 @@ const MomoApp = () => {
         });
     }, [closeModal]);
 
-    // ============================================================
-    // TRACK MODAL
-    // ============================================================
-
     useEffect(() => {
         isModalOpenRef.current = modalConfig.show;
     }, [modalConfig.show]);
-
-    // ============================================================
-    // REDIS TTL
-    // ============================================================
 
     const fetchTimeFromRedis = useCallback(async () => {
         if (!tempBookingId) return null;
@@ -384,10 +368,6 @@ const MomoApp = () => {
         }
     }, [fetchTimeFromRedis]);
 
-    // ============================================================
-    // RESET OTP LOCK
-    // ============================================================
-
     const resetLockState = useCallback(() => {
         setLockExpiresAt(0);
         otpAttemptsRef.current = 0;
@@ -396,10 +376,6 @@ const MomoApp = () => {
         localStorage.removeItem('momoOtpAttempts');
         isLockedRef.current = false;
     }, []);
-
-    // ============================================================
-    // LOCK ACCOUNT
-    // ============================================================
 
     const lockAccount = useCallback((remainingSeconds = 300) => {
         const lockEndTime = Date.now() + remainingSeconds * 1000;
@@ -417,12 +393,8 @@ const MomoApp = () => {
         );
     }, [openModal, closeModal, formatTime]);
 
-    // ============================================================
-    // RELEASE REDIS SEAT LOCK
-    // ============================================================
-
     const releaseSeatLocks = useCallback(async () => {
-        if (isRescheduleMode) return; // Không cần release khi reschedule
+        if (isRescheduleMode) return;
         if (isReleasingSeatsRef.current) return;
         if (!showtimeId) return;
         if (!socketService.isConnectedStatus()) {
@@ -441,10 +413,6 @@ const MomoApp = () => {
             }, 500);
         }
     }, [showtimeId, ownerToken, isRescheduleMode]);
-
-    // ============================================================
-    // XÓA BOOKING DATA
-    // ============================================================
 
     const clearAllBookingData = useCallback(() => {
         const momoKeys = [
@@ -477,10 +445,6 @@ const MomoApp = () => {
         resetLockState();
     }, [resetLockState]);
 
-    // ============================================================
-    // CANCEL TEMP BOOKING
-    // ============================================================
-
     const cancelBookingOnServer = useCallback(async () => {
         if (!tempBookingId) return;
         if (isCancellingRef.current) return;
@@ -507,10 +471,6 @@ const MomoApp = () => {
         }
     }, [tempBookingId, isRescheduleMode, rescheduleBookingId]);
 
-    // ============================================================
-    // EXPIRE FLOW
-    // ============================================================
-
     const handleExpireFlow = useCallback(async () => {
         if (paymentCompletedRef.current) return;
         console.log('[MOMO] Payment/OTP expired');
@@ -528,10 +488,6 @@ const MomoApp = () => {
             }
         );
     }, [releaseSeatLocks, cancelBookingOnServer, clearAllBookingData, openModal, closeModal, safeNavigate, invalidateOTP, isRescheduleMode]);
-
-    // ============================================================
-    // CHECK PAYMENT COMPLETED
-    // ============================================================
 
     useEffect(() => {
         const completed = localStorage.getItem('momoPaymentCompleted');
@@ -554,10 +510,6 @@ const MomoApp = () => {
         }
     }, [tempBookingId, clearAllBookingData, modalConfig.show, openModal, closeModal, safeNavigate]);
 
-    // ============================================================
-    // CHECK DATA
-    // ============================================================
-
     useEffect(() => {
         if (!tempBookingId || !customerEmail) {
             const hasSavedData = localStorage.getItem('momoLastSuccessTicket') || localStorage.getItem('momoBookingTemp');
@@ -576,12 +528,8 @@ const MomoApp = () => {
         isFirstLoad.current = false;
     }, [tempBookingId, customerEmail, openModal, closeModal, safeNavigate]);
 
-    // ============================================================
-    // CHECK OWNER TOKEN (chỉ flow thường)
-    // ============================================================
-
     useEffect(() => {
-        if (isRescheduleMode) return; // Bỏ qua khi reschedule
+        if (isRescheduleMode) return;
         if (!ownerToken || paymentCompletedRef.current) return;
         const currentSocketId = socketService.getSocketId();
         if (currentSocketId && currentSocketId !== ownerToken) {
@@ -600,22 +548,16 @@ const MomoApp = () => {
         }
     }, [ownerToken, cancelBookingOnServer, clearAllBookingData, openModal, closeModal, safeNavigate, isRescheduleMode]);
 
-    // ============================================================
-    // CLEANUP
-    // ============================================================
-
     useEffect(() => {
         return () => {
             if (autoNavigateRef.current) clearTimeout(autoNavigateRef.current);
             if (redirectTimeoutRef.current) clearTimeout(redirectTimeoutRef.current);
             if (timerCheckRef.current) clearInterval(timerCheckRef.current);
             if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+            if (successTimerRef.current) clearTimeout(successTimerRef.current);
+            if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
         };
     }, []);
-
-    // ============================================================
-    // CLEAR ALL + GO HOME
-    // ============================================================
 
     const clearAllAndGoHome = async () => {
         await invalidateOTP();
@@ -625,25 +567,13 @@ const MomoApp = () => {
         safeNavigate(isRescheduleMode ? '/profile' : '/');
     };
 
-    // ============================================================
-    // STAY
-    // ============================================================
-
     const handleStay = () => {
         setShowBackConfirm(false);
     };
 
-    // ============================================================
-    // SAVE LOCAL STATE
-    // ============================================================
-
     useEffect(() => {
         localStorage.setItem('momoOtpInput', otp);
     }, [otp]);
-
-    // ============================================================
-    // SEND OTP
-    // ============================================================
 
     const sendOtpApi = async () => {
         if (!tempBookingId || !customerEmail) {
@@ -695,10 +625,6 @@ const MomoApp = () => {
             setLoadingSendOtp(false);
         }
     };
-
-    // ============================================================
-    // RESEND OTP
-    // ============================================================
 
     const handleResendOtp = async () => {
         if (isLocked) {
@@ -764,10 +690,6 @@ const MomoApp = () => {
         }
     };
 
-    // ============================================================
-    // INITIALIZE MOMO APP
-    // ============================================================
-
     useEffect(() => {
         let cancelled = false;
         const initializeMomoApp = async () => {
@@ -828,10 +750,6 @@ const MomoApp = () => {
         };
     }, [customerEmail, tempBookingId, syncTimerWithRedis, modalConfig.show, openModal, closeModal, navigate, bookingData, fetchTimeFromRedis]);
 
-    // ============================================================
-    // REDIS TIMER CHECK
-    // ============================================================
-
     useEffect(() => {
         if (paymentCompletedRef.current) return;
         timerCheckRef.current = setInterval(async () => {
@@ -855,10 +773,6 @@ const MomoApp = () => {
         };
     }, [tempBookingId, fetchTimeFromRedis]);
 
-    // ============================================================
-    // AUTO SHOW MODAL KHI OTP HẾT HẠN
-    // ============================================================
-
     useEffect(() => {
         if (
             !paymentCompletedRef.current &&
@@ -878,10 +792,6 @@ const MomoApp = () => {
         }
     }, [timeLeft, isLocked, openModal, closeModal, otpExpiresAt]);
 
-    // ============================================================
-    // ✅ VERIFY OTP — HỖ TRỢ CẢ FLOW THƯỜNG + RESCHEDULE
-    // ============================================================
-
     const handleVerifyPayment = async () => {
         if (paymentCompletedRef.current) {
             openModal('info', 'THÔNG BÁO', 'Mã OTP này đã được thanh toán thành công trước đó.');
@@ -895,35 +805,38 @@ const MomoApp = () => {
 
         if (otpExpiredRef.current || timeLeft <= 0) {
             openModal('warning', 'OTP HẾT HẠN', 'Mã OTP đã hết hạn. Vui lòng gửi lại OTP nếu bạn chưa thanh toán.');
+            triggerErrorEffect();
             return;
         }
 
         if (otp.length < 6) {
             openModal('error', 'THÔNG BÁO', 'Vui lòng nhập đủ 6 số OTP.');
+            triggerErrorEffect();
             return;
         }
 
         if (!tempBookingId) {
             openModal('error', 'PHIÊN THANH TOÁN KHÔNG HỢP LỆ', 'Không tìm thấy phiên thanh toán. Vui lòng đặt vé lại.');
+            triggerErrorEffect();
             return;
         }
 
-        // ✅ Check ownerToken CHỈ khi flow thường
         if (!isRescheduleMode) {
             if (!ownerToken) {
                 openModal('error', 'PHIÊN GIỮ GHẾ KHÔNG HỢP LỆ', 'Không tìm thấy phiên giữ ghế. Vui lòng quay lại chọn ghế.');
+                triggerErrorEffect();
                 return;
             }
             const currentSocketId = socketService.getSocketId();
             if (!socketService.isConnectedStatus() || !currentSocketId || currentSocketId !== ownerToken) {
                 openModal('error', 'MẤT KẾT NỐI GIỮ GHẾ', 'Phiên giữ ghế đã bị gián đoạn. Vui lòng quay lại đặt vé.');
+                triggerErrorEffect();
                 return;
             }
         }
 
         setLoadingVerify(true);
         try {
-            // ✅ Payload khác nhau
             const payload = isRescheduleMode
                 ? {
                     email: customerEmail,
@@ -956,12 +869,47 @@ const MomoApp = () => {
                 localStorage.setItem('momoOtpAttempts', '0');
                 resetLockState();
                 const realBookingId = res.data?.data?.bookingId || tempBookingId;
+
                 localStorage.setItem('momoPaymentCompleted', 'true');
                 localStorage.setItem('momoCompletedBookingId', String(realBookingId));
-                paymentCompletedRef.current = true;
-                clearAllBookingData();
+                localStorage.setItem('paymentCompleted', 'true');
+                localStorage.setItem('completedBookingId', String(realBookingId));
 
-                // ✅ Thông báo khác nhau
+                paymentCompletedRef.current = true;
+
+                if (isRescheduleMode) {
+                    clearAllBookingData();
+                } else {
+                    const momoKeys = [
+                        'momoHasSentOtp', 'momoHasVisited', 'momoOtpInput',
+                        'momoLastOtpSentAt', 'momoPaymentInitiated',
+                        'momoHoldExpiresAt', 'momoSelectedSeats', 'momoCurrentShowtimeId',
+                        'momoLastSuccessTicket', 'momoTempBookingId', 'momoSelectedFoods',
+                        'momoBookingTemp', 'momoIsLocked', 'momoLockTime', 'momoOtpAttempts',
+                        'momoCustomerEmail', 'momoCustomerName', 'momoCustomerPhone',
+                        'momoTotalAmount', 'momoMovie', 'momoSelectedCinema',
+                        'momoSelectedDate', 'momoSelectedShowtime', 'momoFoods',
+                        'momoTotalTicketPrice', 'momoTotalFoodPrice', 'momoShowtimeDetail',
+                        'momoOtpExpiresAt'
+                    ];
+                    momoKeys.forEach(key => localStorage.removeItem(key));
+
+                    const tempKeys = [
+                        'lastSuccessTicket', 'booking_temp', 'tempBookingId',
+                        'selectedSeats', 'selectedFoods', 'holdExpiresAt',
+                        'currentShowtimeId', 'paymentInitiated'
+                    ];
+                    tempKeys.forEach(key => localStorage.removeItem(key));
+
+                    localStorage.removeItem('bookingOwnerToken');
+                    setOtpExpiresAt(0);
+                    setOtp('');
+                    hasShownModalRef.current = false;
+                    hasShownExpiredModalRef.current = false;
+                    otpExpiredRef.current = false;
+                    resetLockState();
+                }
+
                 const successTitle = isRescheduleMode
                     ? 'ĐỔI SUẤT THÀNH CÔNG'
                     : 'THANH TOÁN THÀNH CÔNG';
@@ -972,28 +920,54 @@ const MomoApp = () => {
 
                 const successNavigate = isRescheduleMode ? '/profile' : '/confirm-success';
 
-                openModal(
-                    'success',
-                    successTitle,
-                    successMessage,
-                    () => {
-                        if (autoNavigateRef.current) {
-                            clearTimeout(autoNavigateRef.current);
+                const successState = isRescheduleMode
+                    ? { state: bookingData }
+                    : {
+                        state: {
+                            orderId: realBookingId,
+                            bookingId: realBookingId,
+                            data: {
+                                ...bookingData,
+                                orderId: realBookingId,
+                                bookingId: realBookingId,
+                            }
                         }
-                        closeModal();
-                        safeNavigate(successNavigate, { state: bookingData });
-                    }
-                );
-                autoNavigateRef.current = setTimeout(() => {
-                    if (isModalOpenRef.current) {
-                        closeModal();
-                        safeNavigate(successNavigate, { state: bookingData });
-                    }
-                    autoNavigateRef.current = null;
-                }, 3000);
+                    };
+
+                // ✅ TRIGGER SUCCESS EFFECT — hiện dấu ✓ to ở giữa
+                setOtpSuccess(true);
+
+                successTimerRef.current = setTimeout(() => {
+                    setOtpSuccess(false);
+
+                    openModal(
+                        'success',
+                        successTitle,
+                        successMessage,
+                        () => {
+                            if (autoNavigateRef.current) {
+                                clearTimeout(autoNavigateRef.current);
+                            }
+                            closeModal();
+                            safeNavigate(successNavigate, successState);
+                        }
+                    );
+                    autoNavigateRef.current = setTimeout(() => {
+                        if (isModalOpenRef.current) {
+                            closeModal();
+                            safeNavigate(successNavigate, successState);
+                        }
+                        autoNavigateRef.current = null;
+                    }, 3000);
+                }, 2000);
             } else {
                 const errorData = res.data?.data || {};
                 const remainingAttempts = errorData.remainingAttempts !== undefined ? errorData.remainingAttempts : 0;
+
+                // ❌ TRIGGER ERROR EFFECT
+                if (!(res.data?.message?.toLowerCase()?.includes('khóa') || remainingAttempts === 0)) {
+                    triggerErrorEffect();
+                }
 
                 if (!(res.data?.message?.toLowerCase()?.includes('khóa') || remainingAttempts === 0)) {
                     resetOtpInput();
@@ -1015,6 +989,11 @@ const MomoApp = () => {
         } catch (err) {
             const errorData = err.response?.data || {};
             const errorMsg = errorData.message || 'Mã OTP không đúng hoặc đã hết hạn!';
+
+            // ❌ TRIGGER ERROR EFFECT
+            if (!(err.response?.status === 429 || errorMsg.toLowerCase().includes('khóa') || errorData.code === 'OTP_LOCKED')) {
+                triggerErrorEffect();
+            }
 
             if (!(err.response?.status === 429 || errorMsg.toLowerCase().includes('khóa') || errorData.code === 'OTP_LOCKED')) {
                 resetOtpInput();
@@ -1038,11 +1017,8 @@ const MomoApp = () => {
         }
     };
 
-    // ============================================================
-    // OTP CHANGE
-    // ============================================================
-
     const handleOtpChange = (e, index) => {
+        if (otpSuccess || otpError) return;
         const value = e.target.value.replace(/\D/g, '').slice(0, 1);
         if (value) {
             const newOtp = otp.split('').slice(0, 6);
@@ -1059,10 +1035,6 @@ const MomoApp = () => {
             }
         }
     };
-
-    // ============================================================
-    // OTP KEY DOWN
-    // ============================================================
 
     const handleOtpKeyDown = (e, index) => {
         if (e.key === 'Backspace' && !otp[index]) {
@@ -1081,12 +1053,9 @@ const MomoApp = () => {
         }
     };
 
-    // ============================================================
-    // OTP PASTE
-    // ============================================================
-
     const handleOtpPaste = (e) => {
         e.preventDefault();
+        if (otpSuccess || otpError) return;
         const pasteData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
         if (!pasteData) return;
         const newOtp = pasteData.split('');
@@ -1101,30 +1070,20 @@ const MomoApp = () => {
         }
     };
 
-    // ============================================================
-    // TIMER BOX CLASS
-    // ============================================================
-
     const getTimerBoxClass = () => {
         if (isLocked) return 'momo-timer-box locked';
         if (otpExpiredRef.current || timeLeft <= 0) return 'momo-timer-box expired';
         return 'momo-timer-box';
     };
 
-    // ============================================================
-    // DISABLE RESEND BUTTON
-    // ============================================================
-
     const isResendDisabled =
         loadingSendOtp ||
         loadingVerify ||
         paymentCompletedRef.current ||
         isLocked ||
+        otpSuccess ||
+        otpError ||
         (!otpExpiredRef.current && timeLeft > 0);
-
-    // ============================================================
-    // RENDER
-    // ============================================================
 
     return (
         <div className="momo-checkout-page">
@@ -1151,22 +1110,12 @@ const MomoApp = () => {
 
                 <div className="momo-otp-section">
                     <div className="otp-card">
-                        {/* ✅ BANNER RESCHEDULE */}
                         {isRescheduleMode && (
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 10,
-                                padding: '10px 14px',
-                                background: '#fff3e6',
-                                border: '1px solid #f37021',
-                                borderRadius: 8,
-                                marginBottom: 12,
-                                fontSize: 13
-                            }}>
-                                <RefreshCw size={16} style={{ color: '#f37021', flexShrink: 0 }} />
+                            <div className="reschedule-banner">
+                                <RefreshCw size={16} className="reschedule-icon" />
                                 <span>
-                                    Đổi suất chiếu — Bù thêm <strong>{totalAmount.toLocaleString('vi-VN')} ₫</strong>
+                                    Đổi suất chiếu — Bù thêm{' '}
+                                    <strong>{totalAmount.toLocaleString('vi-VN')} ₫</strong>
                                 </span>
                             </div>
                         )}
@@ -1185,43 +1134,59 @@ const MomoApp = () => {
                             Gửi đến: <strong>{customerEmail || 'Chưa có email'}</strong>
                         </p>
 
-                        <div className="otp-circle-container">
-                            {[...Array(6)].map((_, index) => (
-                                <input
-                                    key={index}
-                                    type="text"
-                                    inputMode="numeric"
-                                    autoComplete={index === 0 ? 'one-time-code' : 'off'}
-                                    className="otp-circle"
-                                    maxLength="1"
-                                    value={otp[index] || ''}
-                                    onChange={(e) => handleOtpChange(e, index)}
-                                    onKeyDown={(e) => handleOtpKeyDown(e, index)}
-                                    onPaste={handleOtpPaste}
-                                    disabled={paymentCompletedRef.current || isLocked || otpExpiredRef.current}
-                                    autoFocus={index === 0 && !otpExpiredRef.current && !isLocked}
-                                    ref={(el) => (otpInputsRef.current[index] = el)}
-                                />
-                            ))}
+                        {/* ✅ OTP ZONE — 6 ô input HOẶC 1 dấu ✓/✗ to */}
+                        <div className="otp-input-wrapper">
+                            {otpSuccess || otpError ? (
+                                <div className={`otp-result-container ${otpSuccess ? 'otp-result-container--success' : ''} ${otpError ? 'otp-result-container--error' : ''}`}>
+                                    <div className={`otp-result-icon ${otpSuccess ? 'otp-result-icon--success' : ''} ${otpError ? 'otp-result-icon--error' : ''}`}>
+                                        {otpSuccess ? (
+                                            <Check size={120} strokeWidth={3} />
+                                        ) : (
+                                            <X size={120} strokeWidth={3} />
+                                        )}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="otp-circle-container">
+                                    {[...Array(6)].map((_, index) => (
+                                        <input
+                                            key={index}
+                                            type="text"
+                                            inputMode="numeric"
+                                            autoComplete={index === 0 ? 'one-time-code' : 'off'}
+                                            className="otp-circle"
+                                            maxLength="1"
+                                            value={otp[index] || ''}
+                                            onChange={(e) => handleOtpChange(e, index)}
+                                            onKeyDown={(e) => handleOtpKeyDown(e, index)}
+                                            onPaste={handleOtpPaste}
+                                            disabled={
+                                                paymentCompletedRef.current ||
+                                                isLocked ||
+                                                otpExpiredRef.current
+                                            }
+                                            autoFocus={index === 0 && !otpExpiredRef.current && !isLocked}
+                                            ref={(el) => (otpInputsRef.current[index] = el)}
+                                        />
+                                    ))}
+                                </div>
+                            )}
                         </div>
+
+                        {otpError && (
+                            <div className="otp-error-text">
+                                <X size={16} />
+                                <span>Mã OTP không đúng. Vui lòng thử lại!</span>
+                            </div>
+                        )}
 
                         <div className={getTimerBoxClass()}>
                             {isLocked ? (
-                                <span className="timer-text" style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    justifyContent: 'center'
-                                }}>
+                                <span className="timer-text timer-text-icon">
                                     <Lock size={16} /> Tài khoản bị khóa: {formatTime(lockTimeLeft)}
                                 </span>
                             ) : (otpExpiredRef.current || timeLeft <= 0) ? (
-                                <span className="timer-text" style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    justifyContent: 'center'
-                                }}>
+                                <span className="timer-text timer-text-icon">
                                     <Clock size={16} /> OTP đã hết hạn
                                 </span>
                             ) : (
@@ -1238,12 +1203,6 @@ const MomoApp = () => {
                                 className="btn-resend-otp"
                                 onClick={handleResendOtp}
                                 disabled={isResendDisabled}
-                                style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '6px'
-                                }}
                             >
                                 {loadingSendOtp ? (
                                     <>
@@ -1264,8 +1223,15 @@ const MomoApp = () => {
                             loading={loadingVerify}
                             loadingText="Đang xác nhận..."
                             onClick={handleVerifyPayment}
-                            disabled={loadingVerify || loadingSendOtp || paymentCompletedRef.current ||
-                                otpExpiredRef.current || isLocked}
+                            disabled={
+                                loadingVerify ||
+                                loadingSendOtp ||
+                                paymentCompletedRef.current ||
+                                otpExpiredRef.current ||
+                                isLocked ||
+                                otpSuccess ||
+                                otpError
+                            }
                             className="btn-confirm-payment"
                             spinnerColor="#ffffff"
                         >

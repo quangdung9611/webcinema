@@ -1,5 +1,21 @@
 // ===================== BookingSidebar.js =====================
 import React from 'react';
+import {
+    MapPin,
+    CalendarDays,
+    Clock3,
+    Armchair,
+    UtensilsCrossed,
+    Receipt,
+    Wallet,
+    ArrowLeft,
+    ArrowRight,
+    RefreshCw,
+    TrendingUp,
+    TrendingDown,
+    Minus,
+    Ticket,
+} from 'lucide-react';
 import CountdownTimer from '../pages/CountdownTimer';
 
 import { optimizeCloudinary, IMAGE_SIZES } from '../../utils/imageHelper';
@@ -138,25 +154,37 @@ const BookingSidebar = ({
 
                     {/* RẠP */}
                     <div className="detail-item">
-                        <span>Rạp:</span>
+                        <span>
+                            <MapPin size={13} strokeWidth={2.2} />
+                            Rạp:
+                        </span>
                         <strong>{selectedCinema?.cinema_name || '---'}</strong>
                     </div>
 
                     {/* NGÀY */}
                     <div className="detail-item">
-                        <span>Ngày:</span>
+                        <span>
+                            <CalendarDays size={13} strokeWidth={2.2} />
+                            Ngày:
+                        </span>
                         <strong>{formatDate(selectedDate)}</strong>
                     </div>
 
                     {/* SUẤT */}
                     <div className="detail-item">
-                        <span>Suất:</span>
+                        <span>
+                            <Clock3 size={13} strokeWidth={2.2} />
+                            Suất:
+                        </span>
                         <strong>{showtimeDisplay}</strong>
                     </div>
 
                     {/* GHẾ */}
                     <div className="detail-item">
-                        <span>Ghế:</span>
+                        <span>
+                            <Armchair size={13} strokeWidth={2.2} />
+                            Ghế:
+                        </span>
                         <strong className="seats-list">
                             {selectedSeats.length > 0
                                 ? selectedSeats
@@ -169,10 +197,16 @@ const BookingSidebar = ({
                     {/* THỨC ĂN */}
                     {showFoodSection && hasFood && (
                         <div className="food-selected-box">
-                            <h4 className="food-selected-title">THỨC ĂN ĐÃ CHỌN</h4>
+                            <h4 className="food-selected-title">
+                                <UtensilsCrossed size={13} strokeWidth={2.2} />
+                                THỨC ĂN ĐÃ CHỌN
+                            </h4>
                             {foodList.map(item => (
                                 <div key={item.product_id} className="food-selected-item">
-                                    <span>{item.product_name} x {item.quantity}</span>
+                                    <span>
+                                        <Ticket size={12} strokeWidth={2.2} />
+                                        {item.product_name} x {item.quantity}
+                                    </span>
                                     <strong>
                                         {(Number(item.price) * Number(item.quantity)).toLocaleString()}₫
                                     </strong>
@@ -186,10 +220,13 @@ const BookingSidebar = ({
                         {isReschedule ? (
                             <>
                                 {/* ✅ RESCHEDULE — HIỂN THỊ SO SÁNH */}
-                                
+
                                 {/* Giá vé gốc (gạch ngang) */}
                                 <div className="summary-row summary-old">
-                                    <span className="summary-label">Giá vé gốc</span>
+                                    <span className="summary-label">
+                                        <Receipt size={12} strokeWidth={2.2} />
+                                        Giá vé gốc
+                                    </span>
                                     <strong className="summary-value-strike">
                                         {Number(oldTotalAmount).toLocaleString()}₫
                                     </strong>
@@ -197,7 +234,10 @@ const BookingSidebar = ({
 
                                 {/* Giá vé mới */}
                                 <div className="summary-row summary-new">
-                                    <span className="summary-label">Giá vé mới</span>
+                                    <span className="summary-label">
+                                        <Wallet size={12} strokeWidth={2.2} />
+                                        Giá vé mới
+                                    </span>
                                     <strong className="summary-value-new">
                                         {Number(totalTicketPrice).toLocaleString()}₫
                                     </strong>
@@ -209,11 +249,22 @@ const BookingSidebar = ({
                                 {/* Chênh lệch */}
                                 <div className={`summary-row summary-delta ${deltaAmount > 0 ? 'delta-pay' : deltaAmount < 0 ? 'delta-refund' : 'delta-same'}`}>
                                     <span className="summary-label">
-                                        {deltaAmount > 0
-                                            ? 'Bù thêm'
-                                            : deltaAmount < 0
-                                                ? 'Hoàn lại'
-                                                : 'Không đổi'}
+                                        {deltaAmount > 0 ? (
+                                            <>
+                                                <TrendingUp size={13} strokeWidth={2.4} />
+                                                Bù thêm
+                                            </>
+                                        ) : deltaAmount < 0 ? (
+                                            <>
+                                                <TrendingDown size={13} strokeWidth={2.4} />
+                                                Hoàn lại
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Minus size={13} strokeWidth={2.4} />
+                                                Không đổi
+                                            </>
+                                        )}
                                     </span>
                                     <strong className="summary-value-delta">
                                         {deltaAmount === 0
@@ -226,7 +277,10 @@ const BookingSidebar = ({
                         ) : (
                             /* ✅ FLOW THƯỜNG */
                             <div className="summary-total">
-                                <span className="summary-label">Tổng cộng</span>
+                                <span className="summary-label">
+                                    <Wallet size={13} strokeWidth={2.2} />
+                                    Tổng cộng
+                                </span>
                                 <strong className="summary-value">
                                     {Number(finalTotal).toLocaleString()}₫
                                 </strong>
@@ -244,6 +298,7 @@ const BookingSidebar = ({
                             className="btn-back-food-sidebar"
                             onClick={onBack}
                         >
+                            <ArrowLeft size={15} strokeWidth={2.4} />
                             Quay lại
                         </button>
                     )}
@@ -254,6 +309,7 @@ const BookingSidebar = ({
                             disabled={isContinueDisabled}
                         >
                             {continueText}
+                            <ArrowRight size={15} strokeWidth={2.4} />
                         </button>
                     )}
                 </div>

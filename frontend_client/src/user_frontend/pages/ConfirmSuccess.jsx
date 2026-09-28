@@ -10,8 +10,8 @@ import {
   Clock3,
   Armchair,
   Mail,
-  Download,
   House,
+  Download,
   Loader2,
 } from 'lucide-react';
 import '../styles/ConfirmSuccess.css';
@@ -25,22 +25,44 @@ const ConfirmSuccess = () => {
   const [printTime, setPrintTime] = useState('');
   const hasConfirmed = useRef(false);
 
-  // Lấy orderId từ location.state hoặc sessionStorage
+  // ✅ Lấy orderId từ location.state, sessionStorage, hoặc localStorage
   const getOrderId = () => {
     const state = location.state?.data || location.state || {};
     const saved = sessionStorage.getItem('lastSuccessTicket');
     const parsed = saved ? JSON.parse(saved) : null;
 
-    const id = state?.orderId || state?.bookingId || parsed?.orderId || parsed?.bookingId;
+    const id =
+      state?.orderId ||
+      state?.bookingId ||
+      parsed?.orderId ||
+      parsed?.bookingId ||
+      localStorage.getItem('completedBookingId') ||
+      null;
+
     return id || null;
   };
 
   const orderId = getOrderId();
 
+  // ✅ CHẶN BACK BUTTON — không cho quay lại trang trước
+  useEffect(() => {
+    window.history.pushState(null, '', window.location.href);
+
+    const handlePopState = () => {
+      window.history.pushState(null, '', window.location.href);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+
   // Nếu không có orderId -> quay về trang chủ
   useEffect(() => {
     if (!orderId) {
-      navigate('/');
+      navigate('/', { replace: true });
     }
   }, [orderId, navigate]);
 
@@ -57,13 +79,11 @@ const ConfirmSuccess = () => {
           const b = response.data.booking;
           const details = response.data.details || [];
 
-          // Xử lý ghế
           const seats = details
             .filter((i) => i.seat_id || i.item_name?.includes('Ghế'))
             .map((i) => i.item_name.replace('Ghế ', '').trim())
             .join(', ');
 
-          // Lấy food (nếu có)
           const foods = details.filter(
             (i) => !i.seat_id && !i.item_name?.includes('Ghế')
           );
@@ -86,10 +106,8 @@ const ConfirmSuccess = () => {
 
           setTicketData(ticketDataFromAPI);
 
-          // Cập nhật sessionStorage để dùng cho lần sau
           sessionStorage.setItem('lastSuccessTicket', JSON.stringify(ticketDataFromAPI));
 
-          // Cập nhật user info (nếu cần)
           try {
             const userRes = await api.get('/api/auth/me');
             if (userRes.data.success) {
@@ -104,7 +122,6 @@ const ConfirmSuccess = () => {
         }
       } catch (err) {
         console.error('Lỗi lấy thông tin vé:', err.message);
-        // Nếu lỗi, thử dùng dữ liệu từ sessionStorage
         const saved = sessionStorage.getItem('lastSuccessTicket');
         if (saved) {
           setTicketData(JSON.parse(saved));
@@ -117,13 +134,29 @@ const ConfirmSuccess = () => {
     fetchBooking();
   }, [orderId]);
 
-  // In thời gian
   useEffect(() => {
     setPrintTime(new Date().toLocaleString('vi-VN'));
     window.scrollTo(0, 0);
   }, []);
 
-  // Hiển thị loading
+  // ✅ Về trang chủ — dùng replace để không lưu history
+  const handleGoHome = () => {
+    localStorage.removeItem('paymentCompleted');
+    localStorage.removeItem('completedBookingId');
+    localStorage.removeItem('momoPaymentCompleted');
+    localStorage.removeItem('momoCompletedBookingId');
+
+    navigate('/', { replace: true });
+  };
+
+  // ✅ Tải vé về máy — dùng window.print() để lưu PDF hoặc in
+  const handleDownload = () => {
+    // Đợi 1 nhịp để đảm bảo DOM đã sẵn sàng
+    setTimeout(() => {
+      window.print();
+    }, 100);
+  };
+
   if (loading) {
     return (
       <div className="confirm-success-page">
@@ -140,13 +173,12 @@ const ConfirmSuccess = () => {
       <div className="confirm-success-page">
         <div className="success-container">
           <h2>Không tìm thấy thông tin vé</h2>
-          <button onClick={() => navigate('/')}>Về trang chủ</button>
+          <button onClick={handleGoHome}>Về trang chủ</button>
         </div>
       </div>
     );
   }
 
-  // Destructure
   const {
     movieTitle,
     moviePoster,
@@ -164,7 +196,6 @@ const ConfirmSuccess = () => {
 
   const orderIdDisplay = finalOrderId || bookingId;
 
-  // Xử lý poster
   const posterUrl = moviePoster
     ? moviePoster.startsWith('http')
       ? moviePoster
@@ -259,11 +290,12 @@ const ConfirmSuccess = () => {
           <CheckCircle2 className="email-check" size={28} />
         </div>
 
+        {/* ✅ 2 NÚT: VỀ TRANG CHỦ + TẢI VÉ */}
         <div className="success-actions">
-          <button className="home-btn" onClick={() => navigate('/')}>
+          <button className="home-btn" onClick={handleGoHome}>
             <House size={20} /> VỀ TRANG CHỦ
           </button>
-          <button className="download-btn" onClick={() => window.print()}>
+          <button className="download-btn" onClick={handleDownload}>
             <Download size={20} /> TẢI VÉ VỀ MÁY
           </button>
         </div>

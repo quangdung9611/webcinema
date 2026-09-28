@@ -4,6 +4,7 @@
 // ============================================================
 
 import React from 'react';
+import { Check, MapPin, Armchair, UtensilsCrossed, CreditCard } from 'lucide-react';
 import '../styles/BookingProgress.css';
 
 const STEPS = [
@@ -11,21 +12,25 @@ const STEPS = [
         number: 1,
         title: 'CHỌN SUẤT CHIẾU',
         description: 'Rạp • Ngày • Suất',
+        icon: MapPin,
     },
     {
         number: 2,
         title: 'CHỌN GHẾ',
         description: 'Sơ đồ ghế',
+        icon: Armchair,
     },
     {
         number: 3,
         title: 'THỨC ĂN',
         description: 'Đồ ăn • Nước uống',
+        icon: UtensilsCrossed,
     },
     {
         number: 4,
         title: 'THANH TOÁN',
         description: 'Xác nhận đơn',
+        icon: CreditCard,
     },
 ];
 
@@ -44,6 +49,8 @@ const BookingProgress = ({ currentStep = 1 }) => {
                     const isActive = step.number === activeStep;
                     const isPending = step.number > activeStep;
 
+                    const Icon = step.icon;
+
                     return (
                         <React.Fragment key={step.number}>
 
@@ -59,9 +66,16 @@ const BookingProgress = ({ currentStep = 1 }) => {
                                 `}
                             >
 
-                                {/* Số bước */}
+                                {/* Số bước / icon */}
                                 <div className="booking-progress-number">
-                                    {isCompleted ? '✓' : `0${step.number}`}
+                                    {isCompleted ? (
+                                        <Check size={18} strokeWidth={3} />
+                                    ) : (
+                                        <Icon size={18} strokeWidth={2.2} />
+                                    )}
+                                    <span className="booking-progress-step-label">
+                                        0{step.number}
+                                    </span>
                                 </div>
 
                                 {/* Nội dung */}

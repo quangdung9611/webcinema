@@ -1,0 +1,1646 @@
+/* =========================================================
+   USER REGISTER PIN — PREMIUM CINEMATIC SILVER
+   Background: ../../assets/background_login.png
+   Layout: 46% / 54% desktop
+   Dùng 100% biến var() từ index.css
+   ========================================================= */
+
+/* =========================================================
+   0. ANIMATIONS
+   ========================================================= */
+
+@keyframes pinFadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pinMsgIn {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pinShimmer {
+    0% {
+        transform: translateX(-140%) skewX(-18deg);
+    }
+    100% {
+        transform: translateX(140%) skewX(-18deg);
+    }
+}
+
+@keyframes pinSoftPulse {
+    0%,
+    100% {
+        opacity: 0.45;
+    }
+    50% {
+        opacity: 0.85;
+    }
+}
+
+@keyframes pinIconPulse {
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(221, 226, 232, 0.05);
+    }
+    50% {
+        box-shadow: 0 0 0 5px rgba(221, 226, 232, 0.035);
+    }
+}
+
+@keyframes pinBadgeFloat {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-3px);
+    }
+}
+
+@keyframes pinBoxGlow {
+    0%,
+    100% {
+        box-shadow:
+            0 0 0 0 rgba(221, 226, 232, 0),
+            0 8px 20px rgba(0, 0, 0, 0.25);
+    }
+    50% {
+        box-shadow:
+            0 0 0 4px rgba(221, 226, 232, 0.06),
+            0 8px 24px rgba(0, 0, 0, 0.32);
+    }
+}
+
+@keyframes pinBoxFilled {
+    0% {
+        transform: scale(0.94);
+        box-shadow: 0 0 0 0 rgba(221, 226, 232, 0.4);
+    }
+    60% {
+        transform: scale(1.04);
+        box-shadow: 0 0 0 8px rgba(221, 226, 232, 0);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(221, 226, 232, 0);
+    }
+}
+
+@keyframes pinStepLine {
+    0% {
+        background-position: -100% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+@keyframes pinSparkleRotate {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* =========================================================
+   1. PAGE / BACKGROUND
+   ========================================================= */
+
+.register-pin-page {
+    position: relative;
+    isolation: isolate;
+
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding:
+        clamp(82px, 8vh, 110px)
+        clamp(28px, 5vw, 72px)
+        clamp(28px, 5vh, 56px);
+
+    background-color: var(--bg-primary);
+    background-image: url('../../assets/background_login.png');
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-attachment: fixed;
+
+    color: var(--text-body);
+}
+
+/* =========================================================
+   2. BRAND LOGO
+   ========================================================= */
+
+.register-pin-page__logo {
+    position: absolute;
+    top: clamp(28px, 5vh, 48px);
+    left: clamp(28px, 4vw, 64px);
+    z-index: 10;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+
+    color: var(--text-heading);
+
+    font-family: var(--font-heading);
+    font-size: 0.86rem;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+
+    text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
+
+    animation: pinFadeUp 0.55s ease both;
+}
+
+.register-pin-page__logo svg {
+    color: var(--silver-primary);
+    filter: drop-shadow(0 0 10px rgba(221, 226, 232, 0.24));
+}
+
+/* =========================================================
+   3. MAIN SHELL
+   ========================================================= */
+
+.register-pin-shell {
+    position: relative;
+    z-index: 2;
+
+    width: min(100%, 1440px);
+    margin: 0 auto;
+}
+
+/* =========================================================
+   4. GRID — 46 / 54
+   ========================================================= */
+
+.register-pin-grid {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 0.92fr)
+        minmax(560px, 1.08fr);
+
+    gap: clamp(48px, 6vw, 104px);
+    align-items: center;
+}
+
+/* =========================================================
+   5. LEFT CONTENT
+   ========================================================= */
+
+.register-pin-content {
+    width: 100%;
+    max-width: 620px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+
+    animation: pinFadeUp 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.register-pin-content__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    min-height: 34px;
+    padding: 7px 13px;
+
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: var(--radius-round);
+
+    background: rgba(12, 13, 15, 0.62);
+
+    color: var(--text-body);
+
+    font-family: var(--font-primary);
+    font-size: 0.7rem;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.08em;
+
+    box-shadow:
+        0 10px 28px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+
+    animation: pinBadgeFloat 4s ease-in-out infinite;
+}
+
+.register-pin-content__badge svg {
+    color: var(--silver-primary);
+}
+
+.register-pin-content__eyebrow {
+    margin-top: var(--space-xl);
+
+    color: var(--silver-primary);
+
+    font-family: var(--font-primary);
+    font-size: 0.68rem;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.22em;
+}
+
+.register-pin-content__title {
+    margin: 11px 0 0;
+
+    color: var(--text-heading);
+
+    font-family: var(--font-heading);
+    font-size: clamp(3.8rem, 5.4vw, 6.1rem);
+    font-weight: var(--fw-bold);
+    line-height: 0.94;
+    letter-spacing: -0.045em;
+    text-transform: uppercase;
+
+    text-shadow: 0 3px 36px rgba(0, 0, 0, 0.6);
+}
+
+.register-pin-content__desc {
+    width: min(100%, 570px);
+    margin: var(--space-xl) 0 0;
+
+    color: var(--text-secondary);
+
+    font-family: var(--font-primary);
+    font-size: clamp(0.92rem, 1.05vw, 1.05rem);
+    font-weight: var(--fw-regular);
+    line-height: var(--line-height-base);
+}
+
+.register-pin-content__list {
+    list-style: none;
+
+    width: min(100%, 550px);
+
+    margin: var(--space-lg) 0 0;
+    padding: 0;
+
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.register-pin-content__list li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+
+    color: var(--text-body);
+
+    font-family: var(--font-primary);
+    font-size: 0.9rem;
+    font-weight: var(--fw-medium);
+}
+
+.register-pin-content__icon {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+
+    background: rgba(255, 255, 255, 0.055);
+    color: var(--silver-primary);
+
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 7px 20px rgba(0, 0, 0, 0.22);
+
+    animation: pinIconPulse 3.8s ease-in-out infinite;
+}
+
+.register-pin-content__list li:nth-child(2)
+    .register-pin-content__icon {
+    animation-delay: 0.5s;
+}
+
+.register-pin-content__list li:nth-child(3)
+    .register-pin-content__icon {
+    animation-delay: 1s;
+}
+
+/* =========================================================
+   6. STEP INDICATOR
+   ========================================================= */
+
+.register-pin-steps {
+    width: min(100%, 590px);
+
+    display: flex;
+    align-items: center;
+
+    margin-top: var(--space-xl);
+    padding: 14px 16px;
+
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-lg);
+
+    background: rgba(12, 13, 15, 0.62);
+
+    box-shadow:
+        0 18px 40px rgba(0, 0, 0, 0.26),
+        inset 0 1px 0 rgba(255, 255, 255, 0.035);
+
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+
+.register-pin-steps__item {
+    min-width: 0;
+    flex: 1;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.register-pin-steps__num {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 50%;
+
+    background: rgba(255, 255, 255, 0.035);
+    color: var(--text-muted);
+
+    font-family: var(--font-primary);
+    font-size: 0.75rem;
+    font-weight: var(--fw-bold);
+}
+
+.register-pin-steps__item--done .register-pin-steps__num {
+    border-color: rgba(74, 222, 128, 0.5);
+    background: rgba(74, 222, 128, 0.14);
+    color: #4ade80;
+
+    box-shadow:
+        0 0 0 4px rgba(74, 222, 128, 0.08),
+        0 5px 18px rgba(74, 222, 128, 0.12);
+}
+
+.register-pin-steps__item--active
+    .register-pin-steps__num {
+    border-color: var(--silver-primary);
+    background: var(--silver-primary);
+    color: var(--bg-primary);
+
+    box-shadow:
+        0 0 0 4px rgba(221, 226, 232, 0.08),
+        0 5px 18px rgba(221, 226, 232, 0.12);
+}
+
+.register-pin-steps__info {
+    min-width: 0;
+}
+
+.register-pin-steps__label {
+    color: var(--text-muted);
+
+    font-family: var(--font-primary);
+    font-size: 0.78rem;
+    font-weight: var(--fw-bold);
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.register-pin-steps__item--active
+    .register-pin-steps__label {
+    color: var(--text-heading);
+}
+
+.register-pin-steps__item--done .register-pin-steps__label {
+    color: #86efac;
+}
+
+.register-pin-steps__hint {
+    margin-top: 2px;
+
+    color: var(--text-muted);
+
+    font-family: var(--font-primary);
+    font-size: 0.68rem;
+}
+
+.register-pin-steps__item--active
+    .register-pin-steps__hint {
+    color: var(--text-secondary);
+}
+
+.register-pin-steps__item--done .register-pin-steps__hint {
+    color: rgba(134, 239, 172, 0.7);
+}
+
+.register-pin-steps__line {
+    width: 38px;
+    height: 1px;
+    flex: 0 0 38px;
+
+    margin: 0 10px;
+
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.05),
+        rgba(255, 255, 255, 0.18),
+        rgba(255, 255, 255, 0.05)
+    );
+}
+
+.register-pin-steps__line--active {
+    background: linear-gradient(
+        90deg,
+        rgba(74, 222, 128, 0.4),
+        rgba(221, 226, 232, 0.5),
+        rgba(221, 226, 232, 0.4)
+    );
+    background-size: 200% 100%;
+    animation: pinStepLine 2.4s linear infinite;
+}
+
+.register-pin-content__footer {
+    margin-top: var(--space-xl);
+
+    color: var(--text-muted);
+
+    font-family: var(--font-primary);
+    font-size: 0.72rem;
+    letter-spacing: 0.01em;
+}
+
+/* =========================================================
+   7. FORM AREA
+   ========================================================= */
+
+.register-pin-form-area {
+    width: 100%;
+
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+/* =========================================================
+   8. FORM CARD
+   ========================================================= */
+
+.register-pin-form-card {
+    position: relative;
+
+    width: 100%;
+    max-width: 720px;
+
+    padding: 30px 34px 25px;
+
+    border: 1px solid rgba(221, 226, 232, 0.22);
+    border-radius: var(--radius-xl);
+
+    background: linear-gradient(
+        155deg,
+        rgba(28, 30, 33, 0.86),
+        rgba(12, 13, 15, 0.88)
+    );
+
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.07) inset,
+        0 35px 90px rgba(0, 0, 0, 0.58),
+        0 12px 40px rgba(0, 0, 0, 0.3);
+
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+
+    overflow: hidden;
+
+    animation: pinFadeUp 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.08s
+        both;
+
+    transition:
+        border-color var(--transition-normal),
+        box-shadow var(--transition-normal);
+}
+
+.register-pin-form-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 15%;
+    width: 70%;
+    height: 1px;
+    pointer-events: none;
+
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(221, 226, 232, 0.9),
+        transparent
+    );
+
+    opacity: 0.62;
+}
+
+.register-pin-form-card::after {
+    content: '';
+    position: absolute;
+    right: -150px;
+    top: -150px;
+    width: 360px;
+    height: 360px;
+
+    border-radius: 50%;
+
+    background: radial-gradient(
+        circle,
+        rgba(221, 226, 232, 0.055),
+        transparent 68%
+    );
+
+    pointer-events: none;
+
+    animation: pinSoftPulse 6s ease-in-out infinite;
+}
+
+.register-pin-form-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+.register-pin-form-card:hover {
+    border-color: rgba(221, 226, 232, 0.3);
+
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.09) inset,
+        0 38px 95px rgba(0, 0, 0, 0.6),
+        0 14px 42px rgba(0, 0, 0, 0.34);
+}
+
+/* =========================================================
+   9. CARD HEADER
+   ========================================================= */
+
+.register-pin-form-card__header {
+    margin-bottom: var(--space-lg);
+    text-align: center;
+}
+
+.register-pin-form-card__eyebrow {
+    margin-bottom: 7px;
+
+    color: var(--silver-primary);
+
+    font-family: var(--font-primary);
+    font-size: 0.62rem;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.24em;
+}
+
+.register-pin-form-card__title {
+    margin: 0;
+
+    color: var(--text-heading);
+
+    font-family: var(--font-heading);
+    font-size: clamp(1.75rem, 2.2vw, 2.2rem);
+    font-weight: var(--fw-bold);
+    line-height: 1;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.register-pin-form-card__subtitle {
+    margin: 9px 0 0;
+
+    color: var(--text-secondary);
+
+    font-family: var(--font-primary);
+    font-size: 0.82rem;
+}
+
+/* =========================================================
+   10. USER INFO BOX
+   ========================================================= */
+
+.register-pin-user-box {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+
+    margin-bottom: var(--space-md);
+    padding: 11px 14px;
+
+    border: 1px solid rgba(221, 226, 232, 0.1);
+    border-radius: var(--radius-md);
+
+    background: linear-gradient(
+        135deg,
+        rgba(221, 226, 232, 0.05),
+        rgba(221, 226, 232, 0.015)
+    );
+
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.03),
+        0 8px 22px rgba(0, 0, 0, 0.16);
+
+    animation: pinMsgIn 0.35s ease both;
+}
+
+.register-pin-user-box__icon {
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid rgba(221, 226, 232, 0.16);
+    border-radius: 50%;
+
+    background: rgba(221, 226, 232, 0.08);
+    color: var(--silver-primary);
+
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.register-pin-user-box__content {
+    min-width: 0;
+    flex: 1;
+}
+
+.register-pin-user-box__label {
+    color: var(--text-muted);
+
+    font-family: var(--font-primary);
+    font-size: 0.62rem;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.register-pin-user-box__value {
+    margin-top: 3px;
+
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    color: var(--text-body);
+
+    font-family: var(--font-primary);
+    font-size: 0.8rem;
+
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.register-pin-user-box__value strong {
+    color: var(--text-heading);
+    font-weight: var(--fw-bold);
+}
+
+.register-pin-user-box__sep {
+    color: var(--text-muted);
+    opacity: 0.5;
+}
+
+.register-pin-user-box__email {
+    color: var(--silver-primary);
+    font-weight: var(--fw-medium);
+}
+
+/* =========================================================
+   11. ALERT
+   ========================================================= */
+
+.register-pin-alert {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-wrap: wrap;
+
+    margin-bottom: var(--space-md);
+    padding: 11px 14px;
+
+    border: 1px solid rgba(255, 88, 105, 0.35);
+    border-radius: var(--radius-sm);
+
+    background: rgba(255, 70, 90, 0.08);
+    color: #ff8194;
+
+    font-family: var(--font-primary);
+    font-size: 0.76rem;
+    font-weight: var(--fw-medium);
+
+    animation: pinMsgIn 0.25s ease both;
+}
+
+.register-pin-alert svg {
+    flex: 0 0 auto;
+    color: #ff8194;
+}
+
+.register-pin-alert span {
+    flex: 1;
+    min-width: 0;
+}
+
+.register-pin-alert__btn {
+    padding: 5px 11px;
+
+    border: 1px solid rgba(255, 88, 105, 0.4);
+    border-radius: var(--radius-xs);
+
+    background: rgba(255, 88, 105, 0.14);
+    color: #ffb3bf;
+
+    font-family: var(--font-primary);
+    font-size: 0.7rem;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.04em;
+
+    cursor: pointer;
+
+    transition:
+        background var(--transition-fast),
+        border-color var(--transition-fast),
+        transform var(--transition-fast);
+}
+
+.register-pin-alert__btn:hover {
+    background: rgba(255, 88, 105, 0.24);
+    border-color: rgba(255, 88, 105, 0.6);
+    transform: translateY(-1px);
+}
+
+/* =========================================================
+   12. FORM
+   ========================================================= */
+
+.register-pin-form {
+    width: 100%;
+}
+
+.register-pin-field {
+    margin-bottom: var(--space-md);
+}
+
+.register-pin-field__label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 9px;
+
+    color: var(--text-body);
+
+    font-family: var(--font-primary);
+    font-size: 0.74rem;
+    font-weight: var(--fw-bold);
+}
+
+.register-pin-field__label small {
+    color: var(--text-muted);
+    font-size: 0.64rem;
+    font-weight: var(--fw-regular);
+    letter-spacing: 0.02em;
+}
+
+/* =========================================================
+   13. PIN INPUT GROUP — CINEMATIC BOXES
+   ========================================================= */
+
+.pin-input-group {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pin-boxes {
+    flex: 1;
+
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 9px;
+}
+
+.pin-box {
+    position: relative;
+
+    width: 100%;
+    height: 54px;
+
+    padding: 0;
+
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-sm);
+    outline: none;
+
+    background: rgba(255, 255, 255, 0.026);
+    color: var(--text-heading);
+
+    font-family: var(--font-heading);
+    font-size: 1.4rem;
+    font-weight: var(--fw-bold);
+    text-align: center;
+    letter-spacing: 0.02em;
+
+    caret-color: var(--silver-primary);
+
+    transition:
+        border-color var(--transition-fast),
+        background var(--transition-fast),
+        box-shadow var(--transition-fast),
+        transform var(--transition-fast);
+
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.pin-box::-webkit-outer-spin-button,
+.pin-box::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.pin-box::placeholder {
+    color: rgba(151, 157, 166, 0.35);
+}
+
+.pin-box:hover:not(:disabled):not(.pin-box--filled) {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.pin-box:focus {
+    border-color: rgba(221, 226, 232, 0.55);
+    background: rgba(255, 255, 255, 0.06);
+
+    box-shadow:
+        0 0 0 3px rgba(221, 226, 232, 0.1),
+        0 10px 26px rgba(0, 0, 0, 0.24),
+        0 0 0 1px rgba(221, 226, 232, 0.15) inset;
+
+    transform: translateY(-1px);
+}
+
+.pin-box--filled {
+    border-color: rgba(221, 226, 232, 0.38);
+    background: linear-gradient(
+        145deg,
+        rgba(221, 226, 232, 0.1),
+        rgba(221, 226, 232, 0.03)
+    );
+
+    color: var(--silver-light);
+
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 6px 18px rgba(0, 0, 0, 0.24);
+
+    animation: pinBoxFilled 0.35s cubic-bezier(0.16, 1, 0.3, 1)
+        both;
+}
+
+.pin-box--filled:focus {
+    border-color: rgba(221, 226, 232, 0.6);
+    box-shadow:
+        0 0 0 3px rgba(221, 226, 232, 0.12),
+        0 10px 26px rgba(0, 0, 0, 0.28);
+}
+
+.pin-box--error {
+    border-color: rgba(255, 88, 105, 0.55) !important;
+    background: rgba(255, 70, 90, 0.05) !important;
+}
+
+.pin-box--error:focus {
+    box-shadow:
+        0 0 0 3px rgba(255, 70, 90, 0.14) !important;
+}
+
+.pin-box:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* =========================================================
+   14. PIN TOGGLE
+   ========================================================= */
+
+.pin-toggle {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-sm);
+
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-muted);
+
+    cursor: pointer;
+
+    transition:
+        color var(--transition-fast),
+        background var(--transition-fast),
+        border-color var(--transition-fast),
+        transform var(--transition-fast);
+}
+
+.pin-toggle:hover:not(:disabled) {
+    color: var(--silver-primary);
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.18);
+    transform: translateY(-1px);
+}
+
+.pin-toggle:active:not(:disabled) {
+    transform: translateY(0) scale(0.96);
+}
+
+.pin-toggle:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* =========================================================
+   15. ERROR TEXT
+   ========================================================= */
+
+.register-pin-field__error {
+    display: block;
+    margin-top: 8px;
+
+    color: #ff8194;
+
+    font-family: var(--font-primary);
+    font-size: 0.68rem;
+    font-weight: var(--fw-regular);
+    line-height: 1.35;
+
+    animation: pinMsgIn 0.2s ease both;
+}
+
+/* =========================================================
+   16. HINT
+   ========================================================= */
+
+.register-pin-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+
+    margin: 4px 0 var(--space-md);
+    padding: 10px 12px;
+
+    border: 1px solid rgba(221, 226, 232, 0.08);
+    border-radius: var(--radius-sm);
+
+    background: rgba(221, 226, 232, 0.025);
+    color: var(--text-secondary);
+
+    font-family: var(--font-primary);
+    font-size: 0.68rem;
+    line-height: 1.5;
+}
+
+.register-pin-hint svg {
+    flex: 0 0 auto;
+    margin-top: 2px;
+    color: var(--silver-primary);
+    filter: drop-shadow(
+        0 0 6px rgba(221, 226, 232, 0.25)
+    );
+}
+
+/* =========================================================
+   17. SUBMIT BUTTON
+   ========================================================= */
+
+.register-pin-submit {
+    position: relative;
+
+    width: 100%;
+    height: 46px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+
+    margin-top: 2px;
+
+    overflow: hidden;
+
+    border: none;
+    border-radius: var(--radius-sm);
+
+    background: var(--btn-silver-bg);
+    color: var(--bg-primary);
+
+    font-family: var(--font-primary);
+    font-size: 0.79rem;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.045em;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.88) inset,
+        var(--btn-silver-shadow);
+
+    transition:
+        transform var(--transition-fast),
+        box-shadow var(--transition-fast);
+}
+
+.register-pin-submit::before {
+    content: '';
+
+    position: absolute;
+    inset: 0;
+    width: 45%;
+
+    background: linear-gradient(
+        100deg,
+        transparent,
+        rgba(255, 255, 255, 0.65),
+        transparent
+    );
+
+    transform: translateX(-140%) skewX(-18deg);
+
+    pointer-events: none;
+}
+
+.register-pin-submit:hover:not(:disabled)::before {
+    animation: pinShimmer 0.8s ease;
+}
+
+.register-pin-submit:hover:not(:disabled) {
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.9) inset,
+        0 11px 30px rgba(232, 232, 232, 0.23);
+}
+
+.register-pin-submit:active:not(:disabled) {
+    transform: translateY(0) scale(0.995);
+}
+
+.register-pin-submit:disabled {
+    opacity: 0.52;
+    cursor: not-allowed;
+}
+
+.register-pin-submit svg {
+    transition: transform var(--transition-fast);
+}
+
+.register-pin-submit:hover:not(:disabled) svg {
+    transform: translateX(2px);
+}
+
+/* =========================================================
+   18. FOOTER
+   ========================================================= */
+
+.register-pin-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-top: var(--space-lg);
+    padding-top: var(--space-md);
+
+    border-top: 1px solid rgba(255, 255, 255, 0.075);
+}
+
+.register-pin-footer__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    padding: 7px 13px;
+
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+
+    background: transparent;
+    color: var(--text-secondary);
+
+    font-family: var(--font-primary);
+    font-size: 0.74rem;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.06em;
+
+    cursor: pointer;
+
+    transition:
+        color var(--transition-fast),
+        background var(--transition-fast),
+        border-color var(--transition-fast),
+        transform var(--transition-fast);
+}
+
+.register-pin-footer__back:hover:not(:disabled) {
+    color: var(--silver-primary);
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    transform: translateX(-2px);
+}
+
+.register-pin-footer__back:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* =========================================================
+   19. SUCCESS MODAL CONTENT
+   ========================================================= */
+
+.verify-success-content {
+    text-align: center;
+    padding: var(--space-sm) 0;
+}
+
+.verify-success-icon-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 72px;
+    height: 72px;
+
+    margin: 0 auto var(--space-md);
+
+    border-radius: 50%;
+
+    background: radial-gradient(
+        circle,
+        rgba(74, 222, 128, 0.18),
+        rgba(74, 222, 128, 0.03)
+    );
+
+    box-shadow:
+        0 0 0 8px rgba(74, 222, 128, 0.06),
+        0 0 30px rgba(74, 222, 128, 0.18);
+
+    animation: pinSoftPulse 2.4s ease-in-out infinite;
+}
+
+.verify-success-title {
+    margin: 0 0 6px;
+
+    color: var(--text-heading);
+
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.01em;
+}
+
+.verify-success-text {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+
+    margin: 0 0 var(--space-md);
+
+    color: var(--text-body);
+
+    font-family: var(--font-primary);
+    font-size: 0.86rem;
+    line-height: 1.55;
+}
+
+.verify-success-emoji {
+    flex: 0 0 auto;
+}
+
+.verify-success-countdown {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+
+    margin: 0;
+    padding: 8px 14px;
+
+    border: 1px solid rgba(221, 226, 232, 0.12);
+    border-radius: var(--radius-round);
+
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-secondary);
+
+    font-family: var(--font-primary);
+    font-size: 0.74rem;
+}
+
+.verify-success-countdown svg {
+    color: var(--silver-primary);
+}
+
+.verify-countdown-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+
+    border-radius: var(--radius-round);
+
+    background: var(--silver-primary);
+    color: var(--bg-primary);
+
+    font-weight: var(--fw-bold);
+    font-size: 0.78rem;
+
+    box-shadow: 0 0 12px rgba(221, 226, 232, 0.25);
+}
+
+.modal-title-with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* =========================================================
+   20. RESPONSIVE — 1200
+   ========================================================= */
+
+@media (max-width: 1200px) {
+    .register-pin-grid {
+        grid-template-columns:
+            minmax(0, 0.88fr)
+            minmax(520px, 1.12fr);
+
+        gap: var(--space-2xl);
+    }
+
+    .register-pin-content__title {
+        font-size: clamp(3.3rem, 5vw, 5.2rem);
+    }
+
+    .register-pin-form-card {
+        max-width: 680px;
+        padding: 28px 30px 23px;
+    }
+}
+
+/* =========================================================
+   21. RESPONSIVE — 992
+   ========================================================= */
+
+@media (max-width: 992px) {
+    .register-pin-page {
+        min-height: 100vh;
+        padding-top: 90px;
+    }
+
+    .register-pin-grid {
+        grid-template-columns: 1fr;
+
+        max-width: 720px;
+        margin: 0 auto;
+        gap: var(--space-xl);
+    }
+
+    .register-pin-content {
+        max-width: 680px;
+    }
+
+    .register-pin-content__title {
+        font-size: clamp(3.1rem, 8vw, 5rem);
+    }
+
+    .register-pin-form-area {
+        justify-content: center;
+    }
+
+    .register-pin-form-card {
+        max-width: 720px;
+    }
+
+    .register-pin-content__footer {
+        display: none;
+    }
+}
+
+/* =========================================================
+   22. RESPONSIVE — 768
+   ========================================================= */
+
+@media (max-width: 768px) {
+    .register-pin-page {
+        padding: 82px var(--space-md) var(--space-lg);
+    }
+
+    .register-pin-page__logo {
+        top: 25px;
+        left: 20px;
+
+        font-size: 0.76rem;
+    }
+
+    .register-pin-page__logo svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .register-pin-grid {
+        gap: var(--space-lg);
+    }
+
+    .register-pin-content__eyebrow {
+        margin-top: var(--space-lg);
+    }
+
+    .register-pin-content__title {
+        font-size: clamp(2.8rem, 11vw, 4rem);
+    }
+
+    .register-pin-content__desc {
+        margin-top: var(--space-lg);
+        font-size: 0.88rem;
+    }
+
+    .register-pin-content__list {
+        margin-top: var(--space-lg);
+    }
+
+    .register-pin-content__list li {
+        font-size: 0.82rem;
+    }
+
+    .register-pin-steps {
+        margin-top: var(--space-lg);
+    }
+
+    .register-pin-form-card {
+        padding: var(--space-lg) var(--space-md);
+        border-radius: var(--radius-lg);
+    }
+
+    .register-pin-form-card__title {
+        font-size: 1.75rem;
+    }
+
+    .pin-box {
+        height: 48px;
+        font-size: 1.2rem;
+    }
+
+    .pin-boxes {
+        gap: 7px;
+    }
+}
+
+/* =========================================================
+   23. RESPONSIVE — 480
+   ========================================================= */
+
+@media (max-width: 480px) {
+    .register-pin-page {
+        padding: 74px var(--space-sm) var(--space-lg);
+    }
+
+    .register-pin-page__logo {
+        top: 20px;
+        left: 13px;
+        gap: var(--space-sm);
+
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+    }
+
+    .register-pin-grid {
+        gap: var(--space-lg);
+    }
+
+    .register-pin-content__badge {
+        min-height: 30px;
+        padding: 6px 10px;
+
+        font-size: 0.62rem;
+    }
+
+    .register-pin-content__eyebrow {
+        margin-top: var(--space-md);
+        font-size: 0.59rem;
+    }
+
+    .register-pin-content__title {
+        margin-top: var(--space-sm);
+        font-size: clamp(2.25rem, 13vw, 3.2rem);
+    }
+
+    .register-pin-content__desc {
+        margin-top: var(--space-md);
+        font-size: 0.8rem;
+        line-height: 1.6;
+    }
+
+    .register-pin-content__list {
+        margin-top: var(--space-md);
+        gap: 11px;
+    }
+
+    .register-pin-content__list li {
+        gap: 9px;
+        font-size: 0.75rem;
+    }
+
+    .register-pin-content__icon {
+        width: 28px;
+        height: 28px;
+        flex-basis: 28px;
+    }
+
+    .register-pin-steps {
+        margin-top: var(--space-md);
+        padding: 11px;
+    }
+
+    .register-pin-steps__num {
+        width: 29px;
+        height: 29px;
+        flex-basis: 29px;
+    }
+
+    .register-pin-steps__label {
+        font-size: 0.68rem;
+    }
+
+    .register-pin-steps__hint {
+        font-size: 0.59rem;
+    }
+
+    .register-pin-steps__line {
+        width: 18px;
+        flex-basis: 18px;
+        margin: 0 6px;
+    }
+
+    .register-pin-form-card {
+        padding: var(--space-lg) var(--space-md);
+        border-radius: var(--radius-md);
+    }
+
+    .register-pin-form-card__eyebrow {
+        font-size: 0.55rem;
+    }
+
+    .register-pin-form-card__title {
+        font-size: 1.5rem;
+    }
+
+    .register-pin-form-card__subtitle {
+        font-size: 0.74rem;
+    }
+
+    .register-pin-field__label {
+        font-size: 0.69rem;
+    }
+
+    .register-pin-user-box {
+        padding: 9px 11px;
+    }
+
+    .register-pin-user-box__value {
+        font-size: 0.72rem;
+    }
+
+    .pin-input-group {
+        gap: 8px;
+    }
+
+    .pin-boxes {
+        gap: 5px;
+    }
+
+    .pin-box {
+        height: 42px;
+        font-size: 1rem;
+        border-radius: var(--radius-xs);
+    }
+
+    .pin-toggle {
+        width: 34px;
+        height: 34px;
+        flex-basis: 34px;
+    }
+
+    .register-pin-submit {
+        height: 43px;
+        font-size: 0.73rem;
+    }
+
+    .register-pin-hint {
+        font-size: 0.64rem;
+        padding: 9px 10px;
+    }
+
+    .register-pin-footer {
+        margin-top: var(--space-md);
+        padding-top: 15px;
+    }
+}
+
+/* =========================================================
+   24. RESPONSIVE — 360
+   ========================================================= */
+
+@media (max-width: 360px) {
+    .register-pin-page {
+        padding: 68px 9px 18px;
+    }
+
+    .register-pin-content__title {
+        font-size: 2.1rem;
+    }
+
+    .register-pin-form-card {
+        padding: 18px 11px 15px;
+    }
+
+    .register-pin-steps {
+        align-items: stretch;
+    }
+
+    .register-pin-steps__item {
+        gap: 7px;
+    }
+
+    .register-pin-steps__line {
+        width: 12px;
+        flex-basis: 12px;
+        margin: 0 3px;
+    }
+
+    .pin-box {
+        height: 38px;
+        font-size: 0.92rem;
+    }
+
+    .pin-boxes {
+        gap: 4px;
+    }
+
+    .pin-toggle {
+        width: 30px;
+        height: 30px;
+        flex-basis: 30px;
+    }
+}

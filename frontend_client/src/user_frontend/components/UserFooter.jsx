@@ -304,10 +304,6 @@ const UserFooter = () => {
                             </div>
 
                             <div className="mystic-footer-contact-content">
-                                <span className="mystic-footer-contact-label">
-                                    Địa chỉ
-                                </span>
-
                                 <p>
                                     123 Đường Số 7, Bình Tân,
                                     <br />
@@ -329,10 +325,6 @@ const UserFooter = () => {
                             </div>
 
                             <div className="mystic-footer-contact-content">
-                                <span className="mystic-footer-contact-label">
-                                    Hotline
-                                </span>
-
                                 <p>
                                     1900 1234
                                 </p>
@@ -352,10 +344,6 @@ const UserFooter = () => {
                             </div>
 
                             <div className="mystic-footer-contact-content">
-                                <span className="mystic-footer-contact-label">
-                                    Email
-                                </span>
-
                                 <p>
                                     support@quangdungcinema.id.vn
                                 </p>
@@ -375,10 +363,7 @@ const UserFooter = () => {
                             </div>
 
                             <div className="mystic-footer-contact-content">
-                                <span className="mystic-footer-contact-label">
-                                    Giờ hoạt động
-                                </span>
-
+                          
                                 <p>
                                     08:00 - 23:00
                                     <br />

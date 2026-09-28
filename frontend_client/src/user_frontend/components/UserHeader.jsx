@@ -253,31 +253,15 @@ const UserHeader = () => {
     // ========================================================
     // FETCH CINEMAS
     // ========================================================
-    // Không gọi khi Header mount.
-    //
-    // force = false
-    // -> nếu đã load thành công thì không gọi lại.
-    //
-    // force = true
-    // -> dùng cho nút "Thử lại".
-    // ========================================================
 
     const fetchCinemas = useCallback(
         async (force = false) => {
-            // ------------------------------------------------
-            // Đã load thành công
-            // ------------------------------------------------
-
             if (
                 cinemasLoaded &&
                 !force
             ) {
                 return;
             }
-
-            // ------------------------------------------------
-            // Đang request
-            // ------------------------------------------------
 
             if (
                 cinemasRequestRef.current
@@ -307,15 +291,6 @@ const UserHeader = () => {
 
                 let list = [];
 
-                // ==================================================
-                // FORMAT 1
-                //
-                // {
-                //   success: true,
-                //   data: [...]
-                // }
-                // ==================================================
-
                 if (
                     Array.isArray(
                         responseData?.data
@@ -324,17 +299,6 @@ const UserHeader = () => {
                     list =
                         responseData.data;
                 }
-
-                // ==================================================
-                // FORMAT 2
-                //
-                // {
-                //   success: true,
-                //   data: {
-                //      data: [...]
-                //   }
-                // }
-                // ==================================================
 
                 else if (
                     Array.isArray(
@@ -349,17 +313,6 @@ const UserHeader = () => {
                             .data;
                 }
 
-                // ==================================================
-                // FORMAT 3
-                //
-                // {
-                //   success: true,
-                //   data: {
-                //      cinemas: [...]
-                //   }
-                // }
-                // ==================================================
-
                 else if (
                     Array.isArray(
                         responseData
@@ -372,12 +325,6 @@ const UserHeader = () => {
                             .data
                             .cinemas;
                 }
-
-                // ==================================================
-                // FORMAT 4
-                //
-                // [...]
-                // ==================================================
 
                 else if (
                     Array.isArray(
@@ -393,16 +340,7 @@ const UserHeader = () => {
                     list
                 );
 
-                // ------------------------------------------------
-                // Lưu danh sách
-                // ------------------------------------------------
-
                 setCinemas(list);
-
-                // ------------------------------------------------
-                // API chạy thành công
-                // dù list rỗng
-                // ------------------------------------------------
 
                 setCinemasLoaded(true);
                 setCinemasError(false);
@@ -563,7 +501,6 @@ const UserHeader = () => {
     useEffect(() => {
         const handleClickOutside =
             (event) => {
-                // Nav đang chứa click
                 if (
                     navRef.current &&
                     navRef.current.contains(
@@ -573,7 +510,6 @@ const UserHeader = () => {
                     return;
                 }
 
-                // Account đang chứa click
                 if (
                     dropdownRef.current &&
                     dropdownRef.current.contains(
@@ -642,10 +578,6 @@ const UserHeader = () => {
     // ========================================================
     // TOGGLE SUB MENU
     // ========================================================
-    // Dùng cho mobile/tablet.
-    //
-    // Desktop vẫn dùng :hover bằng CSS.
-    // ========================================================
 
     const toggleSubMenu = (
         menuName,
@@ -665,10 +597,6 @@ const UserHeader = () => {
                 ? menuName
                 : null
         );
-
-        // ------------------------------------------------
-        // Chỉ fetch khi mở Rạp
-        // ------------------------------------------------
 
         if (
             menuName === 'rap' &&
@@ -928,35 +856,6 @@ const UserHeader = () => {
                     >
 
                         {/* ==================================================
-                            MOBILE CLOSE
-                        ================================================== */}
-
-                        <li className="mobile-menu-header">
-
-                            <div className="mobile-menu-brand">
-                                <span className="mobile-menu-kicker">
-                                    QUANG DŨNG
-                                </span>
-
-                                <span className="mobile-menu-title">
-                                    CINEMA
-                                </span>
-                            </div>
-
-                            <button
-                                type="button"
-                                className="mobile-close-btn"
-                                onClick={
-                                    closeMobileMenu
-                                }
-                                aria-label="Đóng menu"
-                            >
-                                <X size={21} />
-                            </button>
-
-                        </li>
-
-                        {/* ==================================================
                             TRANG CHỦ
                         ================================================== */}
 
@@ -1117,10 +1016,6 @@ const UserHeader = () => {
 
                             <ul className="sub-menu cinema-sub-menu">
 
-                                {/* ==========================================
-                                    LOADING
-                                ========================================== */}
-
                                 {isLoadingCinemas ? (
                                     <li className="sub-menu-state">
 
@@ -1132,10 +1027,6 @@ const UserHeader = () => {
 
                                     </li>
                                 ) : cinemasError ? (
-
-                                    /* ======================================
-                                        ERROR
-                                    ====================================== */
 
                                     <li className="sub-menu-state sub-menu-error">
 
@@ -1163,10 +1054,6 @@ const UserHeader = () => {
                                     </li>
                                 ) : cinemas.length >
                                   0 ? (
-
-                                    /* ======================================
-                                        CINEMA LIST
-                                    ====================================== */
 
                                     cinemas.map(
                                         (
@@ -1208,10 +1095,6 @@ const UserHeader = () => {
                                     )
 
                                 ) : cinemasLoaded ? (
-
-                                    /* ======================================
-                                        EMPTY
-                                    ====================================== */
 
                                     <li className="sub-menu-state">
 
@@ -1462,8 +1345,6 @@ const UserHeader = () => {
 
                                         <div className="dropdown-divider" />
 
-                                        {/* ADMIN */}
-
                                         {user.role ===
                                             'admin' && (
                                             <button
@@ -1495,8 +1376,6 @@ const UserHeader = () => {
                                             </button>
                                         )}
 
-                                        {/* PROFILE */}
-
                                         <button
                                             type="button"
                                             className="dropdown-item"
@@ -1526,8 +1405,6 @@ const UserHeader = () => {
                                         </button>
 
                                         <div className="dropdown-divider" />
-
-                                        {/* LOGOUT */}
 
                                         <button
                                             type="button"
@@ -1575,8 +1452,6 @@ const UserHeader = () => {
 
                                         <div className="dropdown-divider" />
 
-                                        {/* LOGIN */}
-
                                         <button
                                             type="button"
                                             className="dropdown-item"
@@ -1598,8 +1473,6 @@ const UserHeader = () => {
                                                 →
                                             </span>
                                         </button>
-
-                                        {/* REGISTER */}
 
                                         <button
                                             type="button"

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 
 import api from '../../api/api';
+import MovieHorizontalCard from './MovieHorizontalCard';
 import '../styles/CinemaCardDetail.css';
 
 const CinemaCardDetail = ({ type = 'news', apiEndpoint = '' }) => {
@@ -199,9 +200,6 @@ const CinemaCardDetail = ({ type = 'news', apiEndpoint = '' }) => {
     return getImageUrl(movie.movie_backdrop, movieImageBaseUrl);
   };
 
-  // ==========================================================
-  // ĐƯỜNG DẪN PHIM: /movie/detail/:slug
-  // ==========================================================
   const getMoviePath = (movie) => {
     if (!movie) return '/movies';
     const movieSlug = movie.slug || movie.movie_slug;
@@ -337,7 +335,8 @@ const CinemaCardDetail = ({ type = 'news', apiEndpoint = '' }) => {
           </main>
 
           {/* ==================================================
-              RIGHT - 40% - PHIM ĐANG CHIẾU DỌC
+              RIGHT - 40% - PHIM ĐANG CHIẾU
+              ✅ Dùng MovieHorizontalCard compact
           ================================================== */}
           <aside className="detail-sidebar">
             <div className="sidebar-section-heading">
@@ -356,32 +355,14 @@ const CinemaCardDetail = ({ type = 'news', apiEndpoint = '' }) => {
               ) : nowShowingMovies.length > 0 ? (
                 <>
                   <div className="now-showing-list">
-                    {nowShowingMovies.map((movie, index) => {
-                      const image = getMovieImage(movie);
-                      return (
-                        <Link key={getMovieKey(movie, index)} to={getMoviePath(movie)} className="now-showing-card">
-                          <div className="now-showing-image">
-                            {image ? (
-                              <img src={image} alt={getMovieTitle(movie)} loading="lazy" />
-                            ) : (
-                              <div className="movie-image-placeholder"><Play size={28} /></div>
-                            )}
-                            <div className="movie-image-overlay" />
-                            <div className="movie-play-icon">
-                              <Play size={17} fill="currentColor" />
-                            </div>
-                          </div>
-                          <div className="now-showing-content">
-                            <span className="now-showing-label">ĐANG CHIẾU</span>
-                            <h3>{getMovieTitle(movie)}</h3>
-                            <div className="now-showing-meta">
-                              <span>⏱ {movie.duration || '??'} phút</span>
-                              <span>🎬 {movie.nation || 'Việt Nam'}</span>
-                            </div>
-                          </div>
-                        </Link>
-                      );
-                    })}
+                    {nowShowingMovies.map((movie, index) => (
+                      <MovieHorizontalCard
+                        key={getMovieKey(movie, index)}
+                        movie={movie}
+                        index={index}
+                       
+                      />
+                    ))}
                   </div>
 
                   <div className="sidebar-view-all-wrapper">

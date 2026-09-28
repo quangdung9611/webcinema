@@ -1,9 +1,12 @@
 /* =========================================================
-   BOOKING DETAIL MODAL – NỘI DUNG CHI TIẾT ĐƠN HÀNG
+   BOOKING DETAIL MODAL + ADMIN TABS + RESCHEDULE
    SỬ DỤNG 100% BIẾN TỪ INDEX.CSS (SILVER EDITION)
    ========================================================= */
 
-/* Container chính bên trong modal */
+/* =========================================================
+   1. CONTAINER MODAL CHI TIẾT ĐƠN HÀNG
+   ========================================================= */
+
 .booking-detail-wrapper {
     padding: 0;
     background: transparent;
@@ -11,14 +14,16 @@
     max-width: 100%;
 }
 
-/* Nội dung xếp dọc */
 .detail-content-vertical {
     display: flex;
     flex-direction: column;
     gap: var(--space-xl);
 }
 
-/* Mỗi section thông tin */
+/* =========================================================
+   2. SECTION TRONG MODAL
+   ========================================================= */
+
 .detail-section {
     padding: var(--space-md) 0;
     border-bottom: var(--border-subtle);
@@ -29,24 +34,28 @@
     padding-bottom: 0;
 }
 
-/* Tiêu đề section */
 .section-title {
     display: flex;
     align-items: center;
     gap: var(--space-sm);
+    font-family: var(--font-heading);
     font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
     color: var(--text-secondary);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.06em;
     margin-bottom: var(--space-md);
 }
 
 .section-title svg {
     color: var(--silver-primary);
+    flex-shrink: 0;
 }
 
-/* Nội dung bên trong section */
+/* =========================================================
+   3. BODY SECTION
+   ========================================================= */
+
 .section-body {
     display: flex;
     flex-direction: column;
@@ -59,19 +68,29 @@
     align-items: center;
     gap: var(--space-sm);
     color: var(--text-body);
+    font-family: var(--font-primary);
     font-size: var(--font-size-base);
+    line-height: var(--line-height-base);
 }
 
 .section-body p strong {
     color: var(--text-heading);
-    min-width: 100px;
+    font-weight: var(--fw-semibold);
+    min-width: 110px;
+    flex-shrink: 0;
 }
 
-/* Highlight thông tin */
+/* =========================================================
+   4. HIGHLIGHT TEXT
+   ========================================================= */
+
 .movie-name-highlight {
+    font-family: var(--font-heading);
     font-size: var(--font-size-h4);
     font-weight: var(--fw-bold);
     color: var(--text-heading);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
 }
 
 .time-highlight {
@@ -79,7 +98,10 @@
     font-weight: var(--fw-semibold);
 }
 
-/* Ghế ngồi - dạng badge */
+/* =========================================================
+   5. SEAT BADGE
+   ========================================================= */
+
 .seat-list-inline {
     display: flex;
     flex-wrap: wrap;
@@ -88,16 +110,30 @@
 }
 
 .seat-badge {
-    background: rgba(232, 232, 232, 0.08);
-    color: var(--silver-primary);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     padding: var(--space-xs) var(--space-md);
     border-radius: var(--radius-round);
+    background: rgba(255, 255, 255, 0.04);
     border: var(--border-premium);
-    font-weight: var(--fw-semibold);
+    color: var(--silver-primary);
+    font-family: var(--font-primary);
     font-size: var(--font-size-h6);
+    font-weight: var(--fw-semibold);
+    transition: all var(--transition-fast);
 }
 
-/* Dịch vụ bắp nước */
+.seat-badge:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--silver-light);
+    color: var(--silver-light);
+}
+
+/* =========================================================
+   6. FOOD LIST
+   ========================================================= */
+
 .food-list-vertical {
     display: flex;
     flex-direction: column;
@@ -111,7 +147,13 @@
     align-items: center;
     padding: var(--space-xs) 0;
     color: var(--text-body);
+    font-family: var(--font-primary);
     font-size: var(--font-size-base);
+    border-bottom: var(--border-subtle);
+}
+
+.food-item-line:last-child {
+    border-bottom: none;
 }
 
 .food-item-line .text-bold {
@@ -122,19 +164,31 @@
 .no-data {
     color: var(--text-muted);
     font-style: italic;
-    font-size: var(--font-size-base);
+    font-size: var(--font-size-h6);
+    margin: 0;
 }
 
-/* Phần tổng tiền */
+/* =========================================================
+   7. TOTAL CARD
+   ========================================================= */
+
 .total-card-final {
-    background: rgba(232, 232, 232, 0.04);
+    background: rgba(255, 255, 255, 0.02);
     padding: var(--space-lg);
     border-radius: var(--radius-md);
-    border: var(--border-premium);
+    border: var(--card-border-base);
     margin-top: var(--space-sm);
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    transition: all var(--transition-normal);
+}
+
+.total-card-final:hover {
+    background: rgba(255, 255, 255, 0.03);
+    border: var(--card-border-hover);
 }
 
 .footer-row {
@@ -142,58 +196,74 @@
     justify-content: space-between;
     align-items: center;
     color: var(--text-body);
+    font-family: var(--font-primary);
+    font-size: var(--font-size-h6);
 }
 
 .footer-row .memo-text {
-    font-family: monospace;
+    font-family: 'Courier New', monospace;
     font-weight: var(--fw-semibold);
     color: var(--text-muted);
     font-size: var(--font-size-h6);
+    letter-spacing: 0.5px;
 }
 
 .main-total {
     border-top: var(--border-premium);
     padding-top: var(--space-md);
+    font-family: var(--font-heading);
     font-size: var(--font-size-h3);
     font-weight: var(--fw-extrabold);
     color: var(--text-heading);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
 }
 
 .main-total .amount-highlight {
     color: var(--silver-primary);
-}
-
-/* Status color */
-.status-tag {
-    padding: var(--space-xs) var(--space-md);
-    border-radius: var(--radius-round);
-    font-size: var(--font-size-h6);
-    font-weight: var(--fw-bold);
-}
-
-.status-tag.completed {
-    background: rgba(34, 197, 94, 0.12);
-    color: #4ade80;
-    border: 1px solid rgba(34, 197, 94, 0.15);
-}
-
-.status-tag.cancelled {
-    background: rgba(255, 59, 92, 0.12);
-    color: #ff4d6d;
-    border: 1px solid rgba(255, 59, 92, 0.15);
+    text-shadow: 0 0 20px rgba(221, 226, 232, 0.15);
 }
 
 /* =========================================================
-   ✅ ADMIN TABS — CHUYỂN GIỮA ĐƠN HÀNG / ĐỔI SUẤT
+   8. STATUS TAG (DÙNG BIẾN TỪ INDEX.CSS)
+   ========================================================= */
+
+.status-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: var(--space-xs) var(--space-md);
+    border-radius: var(--radius-round);
+    font-family: var(--font-primary);
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.status-tag.completed {
+    background: rgba(94, 214, 160, 0.1);
+    color: #7fe8b8;
+    border: 1px solid rgba(94, 214, 160, 0.25);
+}
+
+.status-tag.cancelled {
+    background: rgba(216, 90, 90, 0.1);
+    color: var(--seat-sold-color);
+    border: 1px solid rgba(216, 90, 90, 0.25);
+}
+
+/* =========================================================
+   9. ADMIN TABS — CHUYỂN TAB ĐƠN HÀNG / ĐỔI SUẤT
    ========================================================= */
 
 .admin-tabs {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 0 0 16px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    margin-bottom: 20px;
+    gap: var(--space-sm);
+    padding: 0 0 var(--space-md) 0;
+    border-bottom: var(--border-subtle);
+    margin-bottom: var(--space-lg);
     overflow-x: auto;
     scrollbar-width: thin;
 }
@@ -202,33 +272,34 @@
     position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
-    border: none;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-lg);
+    border: 1px solid transparent;
     background: transparent;
-    color: #94a3b8;
-    font-size: 14px;
-    font-weight: 600;
-    font-family: inherit;
+    color: var(--text-secondary);
+    font-family: var(--font-primary);
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-semibold);
     cursor: pointer;
-    border-radius: 8px;
-    transition: all 0.15s;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
     white-space: nowrap;
 }
 
 .admin-tab-btn:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: #f1f1f1;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-heading);
 }
 
 .admin-tab-btn.active {
-    background: linear-gradient(135deg, rgba(243, 112, 33, 0.15), rgba(245, 166, 35, 0.08));
-    border: 1px solid rgba(243, 112, 33, 0.3);
-    color: #f37021;
+    background: var(--btn-silver-bg);
+    border: var(--border-premium);
+    color: var(--bg-primary);
+    box-shadow: var(--btn-silver-shadow);
 }
 
 .admin-tab-btn.active svg {
-    color: #f37021;
+    color: var(--bg-primary);
 }
 
 .admin-tab-badge {
@@ -238,107 +309,138 @@
     min-width: 20px;
     height: 20px;
     padding: 0 6px;
-    background: #f37021;
-    color: white;
+    background: var(--seat-sold-color);
+    color: var(--silver-bright);
+    font-family: var(--font-primary);
     font-size: 11px;
-    font-weight: 800;
-    border-radius: 999px;
+    font-weight: var(--fw-extrabold);
+    border-radius: var(--radius-round);
     margin-left: 4px;
 }
 
 /* =========================================================
-   ✅ RESCHEDULE TAB - FILTER
+   10. FILTER BAR — DÙNG CHUNG CHO CẢ 2 TAB
    ========================================================= */
 
 .reschedule-tab-filter {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 12px;
-    padding: 14px 16px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
-    margin-bottom: 20px;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    background: rgba(255, 255, 255, 0.02);
+    border: var(--card-border-base);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-lg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    transition: all var(--transition-normal);
+}
+
+.reschedule-tab-filter:hover {
+    border: var(--card-border-hover);
 }
 
 .reschedule-tab-filter__group {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: rgba(255, 255, 255, 0.03);
+    border: var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-family: var(--font-primary);
+    font-size: var(--font-size-h6);
+    transition: all var(--transition-fast);
+}
+
+.reschedule-tab-filter__group:hover {
+    border-color: rgba(255, 255, 255, 0.08);
     background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 8px;
-    color: #94a3b8;
-    font-size: 13px;
 }
 
 .reschedule-tab-filter__group svg {
-    color: #64748b;
+    color: var(--silver-dark);
     flex-shrink: 0;
 }
 
 .reschedule-tab-filter__group label {
-    font-size: 12px;
-    color: #94a3b8;
+    font-size: var(--font-size-h6);
+    color: var(--text-secondary);
     white-space: nowrap;
+    font-weight: var(--fw-medium);
 }
 
 .reschedule-tab-filter__group input[type="date"] {
     background: transparent;
     border: none;
     outline: none;
-    color: #f1f1f1;
-    font-size: 13px;
-    font-family: inherit;
+    color: var(--text-heading);
+    font-family: var(--font-primary);
+    font-size: var(--font-size-h6);
     color-scheme: dark;
+    cursor: pointer;
+}
+
+.reschedule-tab-filter__group input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.7);
     cursor: pointer;
 }
 
 .reschedule-tab-filter__btn {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 9px 18px;
-    border-radius: 8px;
-    border: none;
-    font-size: 13px;
-    font-weight: 700;
-    font-family: inherit;
+    gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-lg);
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+    font-family: var(--font-primary);
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-bold);
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all var(--transition-fast);
     white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
 .reschedule-tab-filter__btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    transform: none !important;
 }
 
 .reschedule-tab-filter__btn--primary {
-    background: linear-gradient(135deg, #f37021, #f5a623);
-    color: #0a0a14;
+    background: var(--btn-silver-bg);
+    color: var(--bg-primary);
+    box-shadow: var(--btn-silver-shadow);
 }
 
 .reschedule-tab-filter__btn--primary:hover:not(:disabled) {
+    filter: brightness(1.1);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(243, 112, 33, 0.3);
+    box-shadow: 0 6px 24px rgba(221, 226, 232, 0.25);
+}
+
+.reschedule-tab-filter__btn--primary:active:not(:disabled) {
+    transform: translateY(0);
 }
 
 .reschedule-tab-filter__btn--clear {
     background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #94a3b8;
+    border: var(--border-premium);
+    color: var(--text-secondary);
 }
 
 .reschedule-tab-filter__btn--clear:hover:not(:disabled) {
     background: rgba(255, 255, 255, 0.05);
-    color: #f1f1f1;
+    color: var(--text-heading);
+    border-color: var(--silver-primary);
 }
 
 /* =========================================================
-   ✅ RESCHEDULE TAB - EMPTY
+   11. EMPTY STATE
    ========================================================= */
 
 .reschedule-tab-empty {
@@ -346,26 +448,37 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 16px;
-    padding: 80px 20px;
-    color: #64748b;
+    gap: var(--space-md);
+    padding: 80px var(--space-md);
+    color: var(--text-muted);
     text-align: center;
 }
 
 .reschedule-tab-empty svg {
-    color: #475569;
+    color: var(--text-disabled);
     opacity: 0.5;
 }
 
 .reschedule-tab-empty p {
     margin: 0;
-    font-size: 15px;
-    color: #94a3b8;
+    font-family: var(--font-primary);
+    font-size: var(--font-size-h6);
+    color: var(--text-secondary);
 }
 
 /* =========================================================
-   RESPONSIVE
+   12. RESPONSIVE
    ========================================================= */
+
+@media (max-width: 992px) {
+    .admin-tabs {
+        padding-bottom: var(--space-md);
+    }
+
+    .reschedule-tab-filter {
+        padding: var(--space-sm) var(--space-md);
+    }
+}
 
 @media (max-width: 768px) {
     .detail-content-vertical {
@@ -382,7 +495,7 @@
     }
 
     .section-body p strong {
-        min-width: 80px;
+        min-width: 90px;
     }
 
     .movie-name-highlight {
@@ -400,12 +513,12 @@
     }
 
     .admin-tabs {
-        padding-bottom: 12px;
-        margin-bottom: 16px;
+        padding-bottom: var(--space-sm);
+        margin-bottom: var(--space-md);
     }
 
     .admin-tab-btn {
-        padding: 8px 14px;
+        padding: var(--space-xs) var(--space-md);
         font-size: 13px;
     }
 
@@ -416,10 +529,12 @@
 
     .reschedule-tab-filter__group {
         width: 100%;
+        justify-content: space-between;
     }
 
     .reschedule-tab-filter__group input[type="date"] {
         flex: 1;
+        text-align: right;
     }
 
     .reschedule-tab-filter__btn {
@@ -445,5 +560,10 @@
     .food-item-line {
         font-size: var(--font-size-h6);
         flex-wrap: wrap;
+    }
+
+    .admin-tab-btn {
+        padding: var(--space-xs) var(--space-sm);
+        font-size: 12px;
     }
 }

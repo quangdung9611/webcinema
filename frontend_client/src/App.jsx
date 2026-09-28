@@ -20,6 +20,9 @@ import axios from "axios";
 import api from "./api/api";
 import adminapi from "./api/adminapi";
 
+// ✅ LENIS SMOOTH SCROLL HOOK
+import useLenis from "./hooks/useLenis";
+
 // ============================================================
 // CONTEXT
 // ============================================================
@@ -42,6 +45,7 @@ import {
     NetworkProvider,
     useNetwork,
 } from "./context/NetworkContext";
+
 
 // ============================================================
 // COMPONENTS
@@ -650,21 +654,21 @@ const SuspenseLoading = () => (
 );
 
 // ============================================================
-// SCROLL TO TOP
+// ✅ SCROLL TO TOP — DÙNG LENIS
 // ============================================================
 
 const ScrollToTop = () => {
-    const { pathname } =
-        useLocation();
+    const { pathname } = useLocation();
 
     useEffect(() => {
-        window.history.scrollRestoration =
-            "manual";
+        window.history.scrollRestoration = "manual";
 
-        window.scrollTo({
-            top: 0,
-            behavior: "smooth",
-        });
+        // ✅ Nếu có Lenis → dùng scrollTo của nó
+        if (window.__lenis) {
+            window.__lenis.scrollTo(0, { immediate: true });
+        } else {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
     }, [pathname]);
 
     return null;
@@ -675,8 +679,7 @@ const ScrollToTop = () => {
 // ============================================================
 
 const NotFoundPage = () => {
-    const navigate =
-        useNavigate();
+    const navigate = useNavigate();
 
     return (
         <div
@@ -752,8 +755,7 @@ const NotFoundPage = () => {
 const UserRouteGuard = ({
     children,
 }) => {
-    const navigate =
-        useNavigate();
+    const navigate = useNavigate();
 
     const {
         user,
@@ -1274,6 +1276,9 @@ const UserRoutesComponent = () => (
 // ============================================================
 
 const AppContent = () => {
+    // ✅ KÍCH HOẠT LENIS SMOOTH SCROLL
+    useLenis();
+
     const {
         loading: routeLoading,
     } = useRouteLoading();

@@ -1,6 +1,16 @@
 const FoodRepository = require("../Repositories/FoodRepository");
 const { uploadToCloudinary, deleteFromCloudinary } = require("../Middlewares/UploadCloudinary");
 
+// ⭐ Danh sách category hợp lệ — khớp với ENUM trong DB
+const VALID_CATEGORIES = [
+    "Popcorn",
+    "Drink",
+    "Combo",
+    "Snack",
+    "Break", // ⭐ MỚI
+    "Other"
+];
+
 const extractPublicId = (url) => {
     if (!url) return null;
     const parts = url.split("/");
@@ -10,34 +20,36 @@ const extractPublicId = (url) => {
 };
 
 const validateFood = (data, file, isUpdate = false) => {
-    const { product_name, price } = data;
-    if (!product_name || product_name.trim() === "") return "Tên món ăn không được để trống";
-    if (!price || Number(price) <= 0) return "Giá món ăn phải lớn hơn 0";
-    if (!isUpdate && !file) return "Vui lòng upload hình ảnh sản phẩm";
+    const { product_name, price, category } = data;
+
+    if (!product_name || product_name.trim() === "") {
+        return "Tên món ăn không được để trống";
+    }
+    if (!price || Number(price) <= 0) {
+        return "Giá món ăn phải lớn hơn 0";
+    }
+    if (!isUpdate && !file) {
+        return "Vui lòng upload hình ảnh sản phẩm";
+    }
+
+    // ⭐ Validate category
+    if (category && !VALID_CATEGORIES.includes(category)) {
+        return `Danh mục không hợp lệ. Chỉ chấp nhận: ${VALID_CATEGORIES.join(", ")}`;
+    }
+
     return null;
 };
 
 class FoodService {
 
-    /*=========================================================
-        GET ALL FOODS - KHÔNG PHÂN TRANG
-        RETURN: rows[] (trực tiếp từ repository)
-    =========================================================*/
     async getAllFoodsAll(search = "") {
         return await FoodRepository.findAllAll(search);
     }
 
-    /*=========================================================
-        GET ALL FOODS - CÓ PHÂN TRANG
-        RETURN: { data: [], pagination: {} }
-    =========================================================*/
     async getAllFoodsPaginated(page = 1, limit = 20, search = "") {
         return await FoodRepository.findAll(page, limit, search);
     }
 
-    /*=========================================================
-        GET FOOD BY ID
-    =========================================================*/
     async getFoodById(productId) {
         const food = await FoodRepository.findById(productId);
         if (!food) {
@@ -48,9 +60,6 @@ class FoodService {
         return food;
     }
 
-    /*=========================================================
-        CREATE FOOD
-    =========================================================*/
     async createFood(data, file) {
         const { product_name, price, category, status } = data;
 
@@ -85,9 +94,6 @@ class FoodService {
         });
     }
 
-    /*=========================================================
-        UPDATE FOOD
-    =========================================================*/
     async updateFood(productId, data, file) {
         const existing = await FoodRepository.findById(productId);
         if (!existing) {
@@ -135,9 +141,6 @@ class FoodService {
         return true;
     }
 
-    /*=========================================================
-        DELETE FOOD
-    =========================================================*/
     async deleteFood(productId) {
         const existing = await FoodRepository.findById(productId);
         if (!existing) {

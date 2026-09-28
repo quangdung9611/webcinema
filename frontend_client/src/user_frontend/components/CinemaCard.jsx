@@ -3,13 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { ArrowUpRight, MapPin, Phone, ExternalLink } from "lucide-react";
 
 import { optimizeCloudinary, IMAGE_SIZES } from "../../utils/imageHelper";
+import TiltCard from "./TiltCard";   // ✅ THÊM TILTCARD VIP
 import "../styles/CinemaCard.css";
 
 const CinemaCard = ({
     type = "movie",
     image,
     title,
-    text,                          // Text mô tả (giống PromotionCard)
+    text,
     buttonText = "Xem chi tiết",
     link,
     onClick,
@@ -19,7 +20,7 @@ const CinemaCard = ({
     mapLink,
     // Detail props
     slug,
-    detailType,                    // Vẫn giữ để navigate
+    detailType,
     index = 0,
 }) => {
     const navigate = useNavigate();
@@ -68,95 +69,116 @@ const CinemaCard = ({
         return optimizeCloudinary(image, size);
     }, [image, isCinema]);
 
+    // ✅ Config TiltCard theo type
+    // Cinema cần mạnh hơn vì card lớn
+    // Promotion/News/Blog nhẹ hơn
+    const tiltConfig = isCinema
+        ? {
+            maxTilt: 8,
+            scale: 1.03,
+            glare: true,
+            shadow: true,
+            edgeHighlight: true,
+        }
+        : {
+            maxTilt: 6,
+            scale: 1.02,
+            glare: true,
+            shadow: true,
+            edgeHighlight: true,
+        };
+
     return (
-        <div
-            className={`cinema-card cinema-card--${type} card-animated`}
-            style={{ "--card-index": index }}
-            onClick={handleNavigate}
-            role="button"
-            tabIndex={0}
-            aria-label={title}
-        >
-            {/* ==================================================
-                IMAGE AREA
-            ================================================== */}
-            <div className="cinema-card__image">
-                <div className="cinema-card__gradient" />
+        <TiltCard {...tiltConfig}>
+            <div
+                className={`cinema-card cinema-card--${type} card-animated`}
+                style={{ "--card-index": index }}
+                onClick={handleNavigate}
+                role="button"
+                tabIndex={0}
+                aria-label={title}
+            >
+                {/* ==================================================
+                    IMAGE AREA
+                ================================================== */}
+                <div className="cinema-card__image">
+                    <div className="cinema-card__gradient" />
 
-                <img
-                    src={optimizedImage}
-                    alt={title}
-                    loading="lazy"
-                    decoding="async"
-                    width="400"
-                    height="250"
-                    draggable={false}
-                />
-            </div>
-
-            {/* ==================================================
-                CONTENT AREA
-            ================================================== */}
-            <div className="cinema-card__content">
-                <div className="cinema-card__body">
-                    <h3 className="cinema-card__title">{title}</h3>
-
-                    {/* Text mô tả */}
-                    {text && (
-                        <p className="cinema-card__text">{text}</p>
-                    )}
-
-                    {/* Cinema info: address + hotline */}
-                    {isCinema && (
-                        <>
-                            {address && (
-                                <div className="cinema-card__address">
-                                    <MapPin size={14} />
-                                    <span>{address}</span>
-                                </div>
-                            )}
-                            {hotline && (
-                                <div className="cinema-card__hotline">
-                                    <Phone size={14} />
-                                    <span>{hotline}</span>
-                                </div>
-                            )}
-                        </>
-                    )}
+                    <img
+                        src={optimizedImage}
+                        alt={title}
+                        loading="lazy"
+                        decoding="async"
+                        width="400"
+                        height="250"
+                        draggable={false}
+                    />
                 </div>
 
-                <div className="cinema-card__footer">
-                    {/* Nút "Xem chi tiết" */}
-                    <a
-                        className="cinema-card__link"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleNavigate();
-                        }}
-                    >
-                        {buttonText}
-                        <ArrowUpRight
-                            size={16}
-                            className="cinema-card__link-icon"
-                        />
-                    </a>
+                {/* ==================================================
+                    CONTENT AREA
+                ================================================== */}
+                <div className="cinema-card__content">
+                    <div className="cinema-card__body">
+                        <h3 className="cinema-card__title">{title}</h3>
 
-                    {/* Link Google Maps (chỉ cinema) */}
-                    {isCinema && mapLink && (
+                        {/* Text mô tả */}
+                        {text && (
+                            <p className="cinema-card__text">{text}</p>
+                        )}
+
+                        {/* Cinema info: address + hotline */}
+                        {isCinema && (
+                            <>
+                                {address && (
+                                    <div className="cinema-card__address">
+                                        <MapPin size={14} />
+                                        <span>{address}</span>
+                                    </div>
+                                )}
+                                {hotline && (
+                                    <div className="cinema-card__hotline">
+                                        <Phone size={14} />
+                                        <span>{hotline}</span>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+
+                    <div className="cinema-card__footer">
+                        {/* Nút "Xem chi tiết" */}
                         <a
-                            href={mapLink}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="cinema-card__map"
-                            onClick={(e) => e.stopPropagation()}
+                            className="cinema-card__link"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleNavigate();
+                            }}
                         >
-                            <ExternalLink size={14} />
-                            Google Maps
+                            {buttonText}
+                            <ArrowUpRight
+                                size={16}
+                                className="cinema-card__link-icon"
+                            />
                         </a>
-                    )}
+
+                        {/* Link Google Maps (chỉ cinema) */}
+                        {isCinema && mapLink && (
+                            <a
+                                href={mapLink}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="cinema-card__map"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <ExternalLink size={14} />
+                                Google Maps
+                            </a>
+                        )}
+                    </div>
                 </div>
             </div>
-        </div>
+        </TiltCard>
     );
 };
 

@@ -1,0 +1,269 @@
+/* ============================================================
+   TILT CARD — LITE EDITION (SMOOTH 60FPS)
+   ============================================================
+   TỐI ƯU:
+   - Bỏ filter blur → box-shadow tĩnh
+   - Bỏ mix-blend-mode → opacity
+   - Bỏ conic-gradient + mask → linear gradient
+   - Chỉ 3 layer
+   - Chỉ will-change trên stage
+   ============================================================ */
+
+
+/* ============================================================
+   1. ROOT
+============================================================ */
+
+.tilt-card-vip {
+    --tilt-radius: 20px;
+    --tilt-border: rgba(255, 255, 255, 0.08);
+
+    position: relative;
+
+    width: 100%;
+    height: 100%;
+
+    min-width: 0;
+    min-height: 0;
+
+    isolation: isolate;
+
+    border-radius: var(--tilt-radius);
+
+    transform: none;
+    transform-style: flat;
+
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+
+    -webkit-font-smoothing: antialiased;
+}
+
+
+/* ============================================================
+   2. STAGE — nơi DUY NHẤT nhận 3D + will-change
+============================================================ */
+
+.tilt-card-vip__stage {
+    position: relative;
+
+    width: 100%;
+    height: 100%;
+
+    min-width: 0;
+    min-height: 0;
+
+    border-radius: inherit;
+
+    transform-style: preserve-3d;
+
+    /* ⭐ GPU layer duy nhất */
+    will-change: transform;
+
+    transform: translateZ(0);
+
+    overflow: hidden;
+
+    isolation: isolate;
+
+    /* Viền platinum — CSS thuần, không filter */
+    border: 1px solid var(--tilt-border);
+
+    background: linear-gradient(
+        145deg,
+        rgba(255, 255, 255, 0.04),
+        rgba(255, 255, 255, 0.01)
+    );
+
+    /* ⭐ Shadow tĩnh — không animate, không filter */
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+
+    transition:
+        border-color 0.4s ease,
+        box-shadow 0.4s ease;
+}
+
+
+/* ============================================================
+   3. HOVER STAGE
+============================================================ */
+
+.tilt-card-vip--hovered .tilt-card-vip__stage {
+    border-color: rgba(255, 255, 255, 0.16);
+
+    box-shadow:
+        0 24px 60px rgba(0, 0, 0, 0.38),
+        0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+}
+
+
+/* ============================================================
+   4. CONTENT
+============================================================ */
+
+.tilt-card-vip__content {
+    position: relative;
+
+    width: 100%;
+    height: 100%;
+
+    min-width: 0;
+    min-height: 0;
+
+    z-index: 2;
+
+    border-radius: inherit;
+
+    transform-style: preserve-3d;
+
+    overflow: hidden;
+}
+
+
+/* ============================================================
+   5. SHADOW — CSS thuần, không filter, không animate
+============================================================ */
+
+.tilt-card-vip__shadow {
+    position: absolute;
+
+    inset: 6px;
+
+    z-index: 0;
+
+    border-radius: calc(var(--tilt-radius) - 4px);
+
+    pointer-events: none;
+
+    background: rgba(0, 0, 0, 0.4);
+
+    transform: translateZ(-15px);
+
+    /* ⭐ Chỉ animate opacity */
+    transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+
+/* ============================================================
+   6. GLARE — 1 layer duy nhất, radial-gradient đơn giản
+============================================================ */
+
+.tilt-card-vip__glare {
+    position: absolute;
+
+    inset: 0;
+
+    z-index: 5;
+
+    border-radius: inherit;
+
+    pointer-events: none;
+
+    background: radial-gradient(
+        circle 180px at var(--glare-x, 50%) var(--glare-y, 50%),
+        rgba(255, 255, 255, 0.18) 0%,
+        rgba(255, 255, 255, 0.08) 30%,
+        transparent 65%
+    );
+
+    /* ⭐ Không dùng mix-blend-mode */
+    opacity: 0;
+
+    transition: opacity 0.3s ease;
+}
+
+
+/* ============================================================
+   7. EDGE HIGHLIGHT — linear gradient đơn giản, không mask
+============================================================ */
+
+.tilt-card-vip__edge {
+    position: absolute;
+
+    inset: 0;
+
+    z-index: 6;
+
+    border-radius: inherit;
+
+    pointer-events: none;
+
+    /* ⭐ Dùng box-shadow thay vì mask + conic */
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.18),
+        inset 0 0 24px rgba(255, 255, 255, 0.04);
+
+    /* ⭐ Gradient viền đơn giản */
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.08) 0%,
+        transparent 40%,
+        transparent 60%,
+        rgba(255, 255, 255, 0.05) 100%
+    );
+
+    opacity: 0;
+
+    transition: opacity 0.4s ease;
+}
+
+
+/* ============================================================
+   8. DISABLED
+============================================================ */
+
+.tilt-card-vip--disabled {
+    pointer-events: auto;
+}
+
+.tilt-card-vip--disabled .tilt-card-vip__stage {
+    transform: none !important;
+}
+
+
+/* ============================================================
+   9. KHÔNG RESET CARD CON
+============================================================ */
+
+/* Card con (MovieCard, CinemaCard...) tự quản lý hover của nó */
+
+
+/* ============================================================
+   10. MOBILE — tắt hết hiệu ứng nặng
+============================================================ */
+
+@media (hover: none), (max-width: 768px) {
+
+    .tilt-card-vip__stage {
+        transform: none !important;
+        perspective: none;
+
+        border-color: rgba(255, 255, 255, 0.06);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .tilt-card-vip__shadow,
+    .tilt-card-vip__glare,
+    .tilt-card-vip__edge {
+        display: none !important;
+    }
+}
+
+
+/* ============================================================
+   11. REDUCED MOTION
+============================================================ */
+/* 
+@media (prefers-reduced-motion: reduce) {
+
+    .tilt-card-vip__stage {
+        transform: none !important;
+        transition: none !important;
+    }
+
+    .tilt-card-vip__shadow,
+    .tilt-card-vip__glare,
+    .tilt-card-vip__edge {
+        display: none !important;
+    }
+} */

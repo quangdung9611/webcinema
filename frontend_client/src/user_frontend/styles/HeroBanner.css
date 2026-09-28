@@ -1,27 +1,35 @@
 /* ============================================================
-   QUANG DŨNG CINEMA — HERO BANNER
-   PREMIUM CINEMATIC / PERFORMANCE EDITION
+   QUANG DŨNG CINEMA
+   HERO BANNER — CINEMATIC PLATINUM
+   ============================================================
 
-   ------------------------------------------------------------
-   ✅ ĐÃ BỎ TOÀN BỘ INFO BÊN PHẢI
-   ✅ CHẠM ẢNH GIỮ NGUYÊN KÍCH THƯỚC
-   ✅ KHÔNG GLASS PANEL
-   ✅ KHÔNG BACKDROP-FILTER
-   ✅ KHÔNG FILTER VIDEO
-   ✅ ANIMATION CHỈ CHẠY 1 LẦN
-   ✅ TẬP TRUNG VÀO TYPOGRAPHY + VIDEO
+   DESIGN LANGUAGE
 
-   🆕 FIXED: Bỏ clip-path để không cắt logo Navbar
-   🆕 FIXED: Thêm padding-top cho content tránh Navbar fixed
+   Black
+   Platinum
+   White
+   Graphite
+
+   Không dùng gradient màu lòe loẹt.
+   Không dùng panel nặng.
+   Không dùng purple / blue / red.
+
+   Hero tập trung vào:
+   - Video
+   - Typography
+   - Depth
+   - Light
+   - Motion
    ============================================================ */
 
 
 /* ============================================================
-   1. HERO WRAPPER
+   01. HERO ROOT
    ============================================================ */
 
 .hero-banner {
     position: relative;
+
     width: 100%;
     min-height: 100vh;
 
@@ -31,136 +39,416 @@
 
     overflow: hidden;
 
-    background: #020202;
-    color: #ffffff;
-
     isolation: isolate;
 
-    /* ✅ FIX: Bỏ clip-path để Navbar (fixed) không bị cắt */
-    /* clip-path: polygon(0 0, 100% 0, 100% 97%, 0 100%); */
+    background: #030303;
+
+    color: #fff;
 }
 
 
 /* ============================================================
-   2. BACKGROUND
+   02. VIDEO BACKGROUND
    ============================================================ */
 
 .hero-banner__bg {
     position: absolute;
+
     inset: 0;
 
-    z-index: -1;
+    z-index: 1;
 
     overflow: hidden;
+
+    pointer-events: none;
+
+    background: #030303;
+}
+
+
+.hero-banner__video {
+    position: absolute;
+
+    inset: -2%;
+
+    width: 104%;
+    height: 104%;
+
+    object-fit: cover;
+    object-position: center;
+
+    transform: scale(1.045);
+
+    transform-origin: center center;
+
+    will-change: transform, filter;
+
+    opacity: 0;
+
+    transition:
+        opacity 1.2s
+        cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+
+.hero-banner--loaded
+.hero-banner__video {
+    opacity: 1;
 }
 
 
 /* ============================================================
-   VIDEO
-
-   Giữ video nguyên bản.
-   Chỉ transform để tạo parallax.
+   VIDEO FALLBACK
    ============================================================ */
 
-.hero-banner__video {
+.hero-banner__video-fallback {
     position: absolute;
+
     inset: 0;
 
-    width: 100%;
-    height: 100%;
+    background:
+        radial-gradient(
+            circle at 72% 42%,
+            rgba(255, 255, 255, 0.06),
+            transparent 32%
+        ),
+        linear-gradient(
+            135deg,
+            #030303,
+            #0b0b0b 55%,
+            #020202
+        );
 
-    object-fit: cover;
+    z-index: -1;
+}
 
-    transform: scale(1.02);
 
-    transform-origin: center center;
+/* ============================================================
+   03. OVERLAY MASTER
+   ============================================================ */
+
+.hero-banner__overlay-layer {
+    position: absolute;
+
+    inset: -12% 0 0;
+
+    z-index: 2;
+
+    pointer-events: none;
+
+    will-change: transform, opacity;
+}
+
+
+/* ============================================================
+   BASE DARK
+   ============================================================ */
+
+.hero-banner__overlay-base {
+    position: absolute;
+
+    inset: 0;
+
+    background: rgba(0, 0, 0, 0.16);
+}
+
+
+/* ============================================================
+   LEFT CINEMATIC GRADIENT
+   ============================================================ */
+
+.hero-banner__overlay-side {
+    position: absolute;
+
+    inset: 0;
+
+    background:
+        linear-gradient(
+            90deg,
+
+            rgba(0, 0, 0, 0.82) 0%,
+
+            rgba(0, 0, 0, 0.68) 20%,
+
+            rgba(0, 0, 0, 0.42) 39%,
+
+            rgba(0, 0, 0, 0.14) 61%,
+
+            transparent 82%
+        );
+}
+
+
+/* ============================================================
+   BOTTOM CINEMATIC GRADIENT
+   ============================================================ */
+
+.hero-banner__overlay-bottom {
+    position: absolute;
+
+    inset: 0;
+
+    background:
+        linear-gradient(
+            to bottom,
+
+            transparent 48%,
+
+            rgba(0, 0, 0, 0.08) 64%,
+
+            rgba(0, 0, 0, 0.55) 100%
+        );
+}
+
+
+/* ============================================================
+   VIGNETTE
+   ============================================================ */
+
+.hero-banner__vignette {
+    position: absolute;
+
+    inset: 0;
+
+    background:
+        radial-gradient(
+            ellipse at center,
+
+            transparent 42%,
+
+            rgba(0, 0, 0, 0.16) 68%,
+
+            rgba(0, 0, 0, 0.72) 100%
+        );
+}
+
+
+/* ============================================================
+   04. CINEMATIC LIGHT BEAM
+   ============================================================ */
+
+.hero-banner__beam {
+    position: absolute;
+
+    top: -35%;
+    left: 48%;
+
+    width: 18%;
+    height: 170%;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.025),
+            rgba(255, 255, 255, 0.09),
+            rgba(255, 255, 255, 0.025),
+            transparent
+        );
+
+    filter: blur(25px);
+
+    transform: rotate(12deg);
+
+    opacity: 0.7;
+
+    mix-blend-mode: screen;
 
     will-change: transform;
 }
 
 
 /* ============================================================
-   BASE OVERLAY
+   05. FILM GRAIN
    ============================================================ */
 
-.hero-banner__overlay-base {
+.hero-banner__grain {
     position: absolute;
+
     inset: 0;
 
-    pointer-events: none;
+    opacity: 0.045;
 
-    background: rgba(0, 0, 0, 0.25);
+    background-image:
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+
+    mix-blend-mode: soft-light;
+
+    pointer-events: none;
 }
 
 
 /* ============================================================
-   LEFT CINEMATIC GRADIENT
-
-   Tối phía trái để typography nổi bật.
-   Phía phải giữ video sáng hơn.
+   06. SUBTLE SCANLINES
    ============================================================ */
 
-.hero-banner__overlay-side {
+.hero-banner__scanlines {
     position: absolute;
+
     inset: 0;
 
-    pointer-events: none;
+    opacity: 0.035;
 
-    background: linear-gradient(
-        90deg,
-        rgba(0, 0, 0, 0.72) 0%,
-        rgba(0, 0, 0, 0.48) 30%,
-        rgba(0, 0, 0, 0.18) 55%,
-        transparent 78%,
-        transparent 100%
-    );
+    background:
+        repeating-linear-gradient(
+            to bottom,
+
+            rgba(255, 255, 255, 0.4) 0px,
+
+            rgba(255, 255, 255, 0.4) 1px,
+
+            transparent 1px,
+
+            transparent 5px
+        );
+
+    mix-blend-mode: overlay;
 }
 
 
 /* ============================================================
-   BOTTOM OVERLAY
+   07. FRAME
    ============================================================ */
 
-.hero-banner__overlay-bottom {
+.hero-banner__frame {
     position: absolute;
-    inset: 0;
+
+    inset: 26px;
+
+    z-index: 4;
 
     pointer-events: none;
 
-    background: linear-gradient(
-        to bottom,
-        transparent 55%,
-        rgba(0, 0, 0, 0.18) 75%,
-        rgba(0, 0, 0, 0.55) 100%
-    );
+    opacity: 0.38;
+}
+
+
+.hero-banner__frame::before,
+.hero-banner__frame::after {
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+    right: 0;
+
+    height: 1px;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.18),
+            transparent
+        );
+}
+
+
+.hero-banner__frame::before {
+    top: 0;
+}
+
+
+.hero-banner__frame::after {
+    bottom: 0;
+}
+
+
+.hero-banner__frame-corner {
+    position: absolute;
+
+    width: 38px;
+    height: 38px;
+
+    border-color: rgba(255, 255, 255, 0.28);
+
+    border-style: solid;
+}
+
+
+.hero-banner__frame-corner--tl {
+    top: 0;
+    left: 0;
+
+    border-width: 1px 0 0 1px;
+}
+
+
+.hero-banner__frame-corner--tr {
+    top: 0;
+    right: 0;
+
+    border-width: 1px 1px 0 0;
+}
+
+
+.hero-banner__frame-corner--bl {
+    bottom: 0;
+    left: 0;
+
+    border-width: 0 0 1px 1px;
+}
+
+
+.hero-banner__frame-corner--br {
+    bottom: 0;
+    right: 0;
+
+    border-width: 0 1px 1px 0;
 }
 
 
 /* ============================================================
-   CINEMATIC VIGNETTE
-
-   Nhẹ thôi để không làm video quá tối.
+   08. BRAND LINE
    ============================================================ */
 
-.hero-banner__vignette {
+.hero-banner__brandline {
     position: absolute;
-    inset: 0;
 
-    pointer-events: none;
+    top: 42px;
+    left: 50%;
 
-    background: radial-gradient(
-        ellipse at center,
-        transparent 52%,
-        rgba(0, 0, 0, 0.35) 100%
-    );
+    transform: translateX(-50%);
+
+    z-index: 7;
+
+    display: flex;
+    align-items: center;
+
+    gap: 14px;
+
+    color: rgba(255, 255, 255, 0.55);
+
+    font-family: var(--font-primary, "Inter", sans-serif);
+
+    font-size: 0.58rem;
+
+    font-weight: 600;
+
+    letter-spacing: 0.34em;
+
+    text-transform: uppercase;
+
+    white-space: nowrap;
+}
+
+
+.hero-banner__brandline i {
+    width: 3px;
+    height: 3px;
+
+    border-radius: 50%;
+
+    background: rgba(255, 255, 255, 0.6);
+
+    box-shadow:
+        0 0 8px
+        rgba(255, 255, 255, 0.35);
 }
 
 
 /* ============================================================
-   3. CONTENT
-
-   Không còn grid 12 cột vì đã bỏ info bên phải.
-   ✅ FIX: Thêm padding-top để tránh Navbar fixed (74px)
+   09. CONTENT
    ============================================================ */
 
 .hero-banner__content {
@@ -169,230 +457,328 @@
     z-index: 5;
 
     width: 100%;
-    max-width: var(--container-width, 1400px);
+
+    max-width: var(--container-width, 1340px);
 
     margin-inline: auto;
 
+    min-height: 100vh;
+
     display: flex;
+
     align-items: center;
 
-    /* ✅ FIX: padding-top = 74px (Navbar) + space-5xl */
+    justify-content: space-between;
+
+    gap: 5rem;
+
     padding:
-        calc(74px + var(--space-5xl, 6rem))
-        var(--container-padding, 4rem)
-        var(--space-5xl, 6rem);
+        120px
+        var(--container-padding, 2rem)
+        90px;
+
+    will-change: transform, opacity, filter;
 }
 
 
 /* ============================================================
-   4. MAIN CONTENT
-
-   Chiếm phần lớn banner nhưng vẫn để khoảng trống
-   bên phải để tạo cảm giác cinematic.
+   10. LEFT CONTENT
    ============================================================ */
 
 .hero-banner__left {
-    width: 100%;
-    max-width: 820px;
+    position: relative;
+
+    width: min(820px, 70%);
 
     display: flex;
+
     flex-direction: column;
 
     align-items: flex-start;
 
     text-align: left;
-
-    padding-left: var(--space-lg, 2rem);
 }
 
 
 /* ============================================================
-   5. EYEBROW
+   11. EYEBROW
    ============================================================ */
 
 .hero-banner__eyebrow {
     display: flex;
+
     align-items: center;
 
-    gap: var(--space-sm, 0.5rem);
+    gap: 11px;
 
-    margin-bottom: var(--space-lg, 2rem);
+    margin-bottom: 1.45rem;
 
-    color: #ffffff;
+    color: rgba(255, 255, 255, 0.72);
 
-    font-family:
-        var(--font-primary, "Inter", sans-serif);
+    font-family: var(--font-primary, "Inter", sans-serif);
 
-    font-size: 0.8rem;
-    font-weight: 600;
+    font-size: 0.68rem;
 
-    letter-spacing: 0.4em;
+    font-weight: 650;
 
-    line-height: 1.4;
+    letter-spacing: 0.34em;
 
     text-transform: uppercase;
 
-    text-shadow:
-        0 2px 6px rgba(0, 0, 0, 1),
-        0 4px 14px rgba(0, 0, 0, 0.8);
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
 }
 
 
 .hero-banner__eyebrow-line {
-    width: 50px;
+    width: 42px;
     height: 1px;
 
-    flex-shrink: 0;
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.85)
+        );
+}
 
-    background: linear-gradient(
-        90deg,
-        transparent,
-        #ffffff,
-        transparent
-    );
+
+.hero-banner__eyebrow-dot {
+    width: 4px;
+    height: 4px;
+
+    border-radius: 50%;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 0 12px
+        rgba(255, 255, 255, 0.75);
 }
 
 
 /* ============================================================
-   6. MAIN TITLE — CHẠM ẢNH
-
-   ⚠️ GIỮ NGUYÊN KÍCH THƯỚC LỚN
+   12. MAIN TITLE
+   — CHẠM / ẢNH có khoảng cách rõ ràng, không dính sát
    ============================================================ */
 
 .hero-banner__title {
+    position: relative;
+
     display: flex;
 
     flex-direction: column;
 
     align-items: flex-start;
 
-    gap: 0.1em;
+    /* ⬇️ Khoảng cách giữa 2 dòng (CHẠM và ẢNH) */
+    gap: 0.16em;
 
     margin: 0;
 
-    font-family:
-        var(--font-display, "Oswald", sans-serif);
+    font-family: var(--font-display, "Oswald", sans-serif);
 
-    font-size:
-        var(
-            --display-hero,
-            clamp(4.5rem, 8vw, 9rem)
-        );
+    font-size: clamp(5.2rem, 10vw, 9.4rem);
 
     font-weight: 700;
 
-    line-height: 0.95;
+    /* ⬇️ line-height > 1 để chữ không chồng lên nhau */
+    line-height: 1;
 
-    letter-spacing: 0.02em;
+    letter-spacing: 0.015em;
 
     text-transform: uppercase;
 
     user-select: none;
+
+    perspective: 1000px;
+}
+
+
+/* ---------- Từng dòng title ---------- */
+
+.hero-banner__title-solid,
+.hero-banner__title-outline {
+    display: block;
+
+    /* Vẫn giữ line-height gọn bên trong từng dòng */
+    line-height: 0.92;
 }
 
 
 /* ============================================================
    CHẠM
-
-   Trắng bạc nhẹ.
-   Không dùng filter.
    ============================================================ */
 
 .hero-banner__title-solid {
-    display: block;
+    position: relative;
 
     color: #ffffff;
 
+    /* Khoảng cách dọc nhỏ giữa dòng 1 và dòng 2 (bổ trợ cho gap) */
+    margin-bottom: 0.06em;
+
     text-shadow:
-        0 0 3px rgba(0, 0, 0, 1),
-        0 4px 12px rgba(0, 0, 0, 0.95),
-        0 10px 30px rgba(0, 0, 0, 0.7);
+        0 2px 0 rgba(255, 255, 255, 0.3),
+        0 8px 24px rgba(0, 0, 0, 0.85),
+        0 20px 55px rgba(0, 0, 0, 0.6);
 }
 
 
 /* ============================================================
-   ẢNH
-
-   Outline trắng lớn.
+   ẢNH OUTLINE
    ============================================================ */
 
 .hero-banner__title-outline {
-    display: block;
+    position: relative;
 
     color: transparent;
 
-    -webkit-text-stroke: 2.5px #ffffff;
+    -webkit-text-stroke: 2px rgba(255, 255, 255, 0.95);
 
     text-shadow:
-        0 0 6px rgba(0, 0, 0, 1),
-        0 0 12px rgba(0, 0, 0, 0.9),
-        0 6px 20px rgba(0, 0, 0, 0.8);
-
-    transition:
-        -webkit-text-stroke 0.3s ease;
+        0 8px 28px rgba(0, 0, 0, 0.8);
 }
 
 
-.hero-banner__title:hover
-.hero-banner__title-outline {
-    -webkit-text-stroke: 2.5px #ffffff;
+.hero-banner__title-outline
+.split-text__char {
+    color: transparent;
+
+    -webkit-text-stroke: 2px rgba(255, 255, 255, 0.95);
 }
 
 
 /* ============================================================
-   7. DIVIDER
+   TITLE ACCENT
+   ============================================================ */
+
+.hero-banner__title-accent {
+    position: absolute;
+
+    left: 0;
+
+    bottom: -18px;
+
+    width: 155px;
+    height: 1px;
+
+    transform-origin: left center;
+
+    background:
+        linear-gradient(
+            90deg,
+            #ffffff,
+            rgba(255, 255, 255, 0.35),
+            transparent
+        );
+
+    box-shadow:
+        0 0 15px
+        rgba(255, 255, 255, 0.18);
+}
+
+
+/* ============================================================
+   13. SUBTITLE
+   ============================================================ */
+
+.hero-banner__subtitle {
+    display: flex;
+
+    align-items: center;
+
+    gap: 13px;
+
+    margin-top: 1.8rem;
+
+    color: rgba(255, 255, 255, 0.52);
+
+    font-family: var(--font-primary, "Inter", sans-serif);
+
+    font-size: 0.66rem;
+
+    font-weight: 600;
+
+    letter-spacing: 0.3em;
+
+    text-transform: uppercase;
+}
+
+
+.hero-banner__subtitle-line {
+    width: 26px;
+    height: 1px;
+
+    background: rgba(255, 255, 255, 0.38);
+}
+
+
+/* ============================================================
+   14. DIVIDER
    ============================================================ */
 
 .hero-banner__divider {
-    width: 100%;
-    max-width: 700px;
+    width: min(650px, 100%);
 
     height: 1px;
 
-    margin:
-        var(--space-xl, 2.5rem)
-        0
-        var(--space-lg, 1.5rem);
+    margin: 2rem 0 1.4rem;
 
-    background: linear-gradient(
-        90deg,
-        rgba(255, 255, 255, 0.9) 0%,
-        rgba(255, 255, 255, 0.35) 55%,
-        transparent 100%
-    );
+    background:
+        linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.82),
+            rgba(255, 255, 255, 0.18) 60%,
+            transparent
+        );
+
+    box-shadow:
+        0 0 14px
+        rgba(255, 255, 255, 0.08);
+}
+
+
+.hero-banner__divider span {
+    display: block;
+
+    width: 48px;
+    height: 1px;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 0 12px
+        rgba(255, 255, 255, 0.65);
 }
 
 
 /* ============================================================
-   8. DESCRIPTION
+   15. DESCRIPTION
    ============================================================ */
 
 .hero-banner__description {
     width: 100%;
 
-    max-width: 680px;
+    max-width: 640px;
 
     margin: 0;
 
-    color: #ffffff;
+    color: rgba(255, 255, 255, 0.78);
 
-    font-family:
-        var(--font-primary, "Inter", sans-serif);
+    font-family: var(--font-primary, "Inter", sans-serif);
 
-    font-size: 1.05rem;
+    font-size: 0.98rem;
 
-    font-weight: 500;
+    font-weight: 450;
 
-    line-height: 1.8;
+    line-height: 1.85;
 
-    text-shadow:
-        0 2px 8px rgba(0, 0, 0, 1),
-        0 4px 16px rgba(0, 0, 0, 0.85);
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
 }
 
 
 /* ============================================================
-   9. ACTION BUTTONS
+   16. ACTIONS
    ============================================================ */
 
 .hero-banner__actions {
@@ -400,9 +786,9 @@
 
     align-items: center;
 
-    gap: var(--space-md, 1rem);
+    gap: 0.85rem;
 
-    margin-top: var(--space-2xl, 3rem);
+    margin-top: 2.25rem;
 }
 
 
@@ -411,432 +797,817 @@
    ============================================================ */
 
 .hero-banner__btn {
-    min-height: 56px;
+    position: relative;
+
+    min-height: 54px;
 
     display: inline-flex;
 
     align-items: center;
+
     justify-content: center;
 
-    gap: var(--space-sm, 0.5rem);
+    gap: 0.65rem;
 
-    padding:
-        0.9rem
-        2.2rem;
+    padding: 0.8rem 1.65rem;
 
-    border-radius: 100px;
+    border-radius: 999px;
 
-    font-family:
-        var(--font-primary, "Inter", sans-serif);
+    font-family: var(--font-primary, "Inter", sans-serif);
 
-    font-size: 0.78rem;
+    font-size: 0.7rem;
 
     font-weight: 700;
 
-    letter-spacing: 0.2em;
+    letter-spacing: 0.18em;
 
     text-transform: uppercase;
 
-    cursor: pointer;
-
     white-space: nowrap;
 
-    transition:
-        transform 0.3s ease,
-        box-shadow 0.3s ease,
-        background 0.3s ease;
+    cursor: pointer;
+
+    overflow: hidden;
 }
 
 
 /* ============================================================
-   PRIMARY BUTTON
+   PRIMARY
    ============================================================ */
 
 .hero-banner__btn--primary {
-    border: 1px solid #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.95);
 
-    background: #ffffff;
+    background: rgba(255, 255, 255, 0.96);
 
-    color: #000000;
+    color: #050505;
 
     box-shadow:
-        0 8px 24px rgba(0, 0, 0, 0.5);
+        0 12px 35px
+        rgba(0, 0, 0, 0.45);
+
+    transition:
+        box-shadow 0.4s ease,
+        background 0.4s ease;
 }
 
 
 .hero-banner__btn--primary:hover {
-    transform: translateY(-3px);
+    background: #ffffff;
 
     box-shadow:
-        0 12px 32px rgba(0, 0, 0, 0.6);
+        0 18px 45px
+        rgba(0, 0, 0, 0.6);
 }
 
 
 /* ============================================================
-   ARROW
+   BUTTON CONTENT
    ============================================================ */
 
-.hero-banner__btn-arrow {
-    font-size: 1.2rem;
+.hero-banner__btn-content {
+    position: relative;
 
-    line-height: 1;
+    z-index: 2;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 0.65rem;
+}
+
+
+/* ============================================================
+   SHINE
+   ============================================================ */
+
+.hero-banner__btn-shine {
+    position: absolute;
+
+    top: -20%;
+
+    left: -70%;
+
+    width: 35%;
+    height: 140%;
+
+    transform: skewX(-20deg);
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(0, 0, 0, 0.13),
+            transparent
+        );
 
     transition:
-        transform 0.3s ease;
+        left 0.7s
+        cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 
 .hero-banner__btn--primary:hover
-.hero-banner__btn-arrow {
-    transform: translateX(5px);
+.hero-banner__btn-shine {
+    left: 135%;
 }
 
 
 /* ============================================================
-   SECONDARY BUTTON
+   SECONDARY
    ============================================================ */
 
 .hero-banner__btn--secondary {
     border:
-        1.5px solid
-        rgba(255, 255, 255, 0.9);
+        1px solid
+        rgba(255, 255, 255, 0.32);
 
-    background:
-        rgba(0, 0, 0, 0.35);
+    background: rgba(8, 8, 8, 0.38);
 
-    color: #ffffff;
+    color: rgba(255, 255, 255, 0.9);
 
-    text-shadow:
-        0 2px 6px rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(12px);
+
+    -webkit-backdrop-filter: blur(12px);
+
+    box-shadow:
+        inset 0 1px 0
+        rgba(255, 255, 255, 0.08);
+
+    transition:
+        border-color 0.35s ease,
+        background 0.35s ease,
+        box-shadow 0.35s ease;
 }
 
 
 .hero-banner__btn--secondary:hover {
-    transform: translateY(-3px);
+    border-color:
+        rgba(255, 255, 255, 0.72);
 
-    border-color: #ffffff;
+    background: rgba(255, 255, 255, 0.09);
 
-    background:
-        rgba(0, 0, 0, 0.5);
+    box-shadow:
+        inset 0 1px 0
+        rgba(255, 255, 255, 0.14),
+        0 12px 30px
+        rgba(0, 0, 0, 0.35);
 }
 
 
 /* ============================================================
-   10. REVEAL ANIMATIONS
-
-   Chỉ chạy một lần khi trang load.
+   PLAY ICON
    ============================================================ */
 
-@keyframes fadeInUp {
+.hero-banner__play-icon {
+    width: 27px;
+    height: 27px;
 
-    0% {
-        opacity: 0;
-        transform: translateY(30px);
-    }
+    display: inline-flex;
 
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    align-items: center;
+
+    justify-content: center;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.35);
+
+    border-radius: 50%;
+
+    background: rgba(255, 255, 255, 0.06);
+
+    transition:
+        transform 0.35s ease,
+        background 0.35s ease;
 }
 
 
-/* Eyebrow */
+.hero-banner__btn--secondary:hover
+.hero-banner__play-icon {
+    transform: scale(1.1);
 
-.hero-banner__eyebrow {
-    opacity: 0;
-
-    animation:
-        fadeInUp 0.7s ease-out forwards;
-
-    animation-delay: 0.2s;
-}
-
-
-/* CHẠM */
-
-.hero-banner__title-solid {
-    opacity: 0;
-
-    animation:
-        fadeInUp 0.8s ease-out forwards;
-
-    animation-delay: 0.4s;
-}
-
-
-/* ẢNH */
-
-.hero-banner__title-outline {
-    opacity: 0;
-
-    animation:
-        fadeInUp 0.8s ease-out forwards;
-
-    animation-delay: 0.6s;
-}
-
-
-/* Divider */
-
-.hero-banner__divider {
-    opacity: 0;
-
-    animation:
-        fadeInUp 0.7s ease-out forwards;
-
-    animation-delay: 0.8s;
-}
-
-
-/* Description */
-
-.hero-banner__description {
-    opacity: 0;
-
-    animation:
-        fadeInUp 0.7s ease-out forwards;
-
-    animation-delay: 1s;
-}
-
-
-/* Buttons */
-
-.hero-banner__actions {
-    opacity: 0;
-
-    animation:
-        fadeInUp 0.7s ease-out forwards;
-
-    animation-delay: 1.2s;
+    background: rgba(255, 255, 255, 0.12);
 }
 
 
 /* ============================================================
-   11. TABLET
+   17. TRUST LINE
+   ============================================================ */
+
+.hero-banner__trust {
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    margin-top: 1.55rem;
+
+    color: rgba(255, 255, 255, 0.4);
+
+    font-family: var(--font-primary, "Inter", sans-serif);
+
+    font-size: 0.58rem;
+
+    font-weight: 600;
+
+    letter-spacing: 0.2em;
+
+    text-transform: uppercase;
+}
+
+
+.hero-banner__trust svg {
+    color: rgba(255, 255, 255, 0.72);
+}
+
+
+/* ============================================================
+   18. RIGHT META
+   ============================================================ */
+
+.hero-banner__right {
+    position: relative;
+
+    width: 240px;
+
+    flex-shrink: 0;
+
+    margin-right: 2rem;
+}
+
+
+/* ============================================================
+   META
+   ============================================================ */
+
+.hero-banner__meta {
+    position: relative;
+
+    padding: 1.5rem 0 1.5rem 2rem;
+
+    border-left:
+        1px solid
+        rgba(255, 255, 255, 0.2);
+}
+
+
+.hero-banner__meta-line {
+    position: absolute;
+
+    left: -1px;
+    top: 0;
+
+    width: 1px;
+    height: 54px;
+
+    background:
+        linear-gradient(
+            to bottom,
+            #ffffff,
+            transparent
+        );
+
+    box-shadow:
+        0 0 14px
+        rgba(255, 255, 255, 0.45);
+}
+
+
+.hero-banner__meta-label {
+    display: block;
+
+    color: rgba(255, 255, 255, 0.4);
+
+    font-size: 0.57rem;
+
+    font-weight: 700;
+
+    letter-spacing: 0.25em;
+
+    text-transform: uppercase;
+}
+
+
+.hero-banner__meta-items {
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    margin-top: 1rem;
+
+    color: rgba(255, 255, 255, 0.85);
+
+    font-size: 0.62rem;
+
+    font-weight: 700;
+
+    letter-spacing: 0.13em;
+}
+
+
+.hero-banner__meta-items i {
+    width: 3px;
+    height: 3px;
+
+    border-radius: 50%;
+
+    background: rgba(255, 255, 255, 0.5);
+}
+
+
+.hero-banner__meta-caption {
+    margin-top: 1.35rem;
+
+    color: rgba(255, 255, 255, 0.3);
+
+    font-family: var(--font-display, "Oswald", sans-serif);
+
+    font-size: 1.35rem;
+
+    font-weight: 400;
+
+    line-height: 1.15;
+
+    letter-spacing: 0.06em;
+}
+
+
+/* ============================================================
+   ORBIT
+   ============================================================ */
+
+.hero-banner__meta-orbit {
+    position: absolute;
+
+    right: -28px;
+    bottom: -18px;
+
+    width: 74px;
+    height: 74px;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.08);
+
+    border-radius: 50%;
+}
+
+
+.hero-banner__meta-orbit::before {
+    content: "";
+
+    position: absolute;
+
+    inset: 9px;
+
+    border:
+        1px dashed
+        rgba(255, 255, 255, 0.12);
+
+    border-radius: 50%;
+}
+
+
+.hero-banner__meta-orbit span {
+    position: absolute;
+
+    top: -2px;
+    left: 50%;
+
+    width: 4px;
+    height: 4px;
+
+    border-radius: 50%;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 0 12px
+        rgba(255, 255, 255, 0.8);
+}
+
+
+/* ============================================================
+   19. SCROLL INDICATOR
+   ============================================================ */
+
+.hero-banner__scroll-indicator {
+    position: absolute;
+
+    left: 50%;
+    bottom: 30px;
+
+    transform: translateX(-50%);
+
+    z-index: 8;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    gap: 8px;
+
+    pointer-events: none;
+
+    color: rgba(255, 255, 255, 0.45);
+
+    font-size: 0.54rem;
+
+    font-weight: 600;
+
+    letter-spacing: 0.32em;
+
+    text-transform: uppercase;
+}
+
+
+.hero-banner__scroll-line {
+    width: 25px;
+    height: 36px;
+
+    display: flex;
+
+    align-items: flex-end;
+
+    justify-content: center;
+
+    color: rgba(255, 255, 255, 0.8);
+
+    border-bottom:
+        1px solid
+        rgba(255, 255, 255, 0.25);
+}
+
+
+/* ============================================================
+   20. RIGHT PROGRESS
+   ============================================================ */
+
+.hero-banner__progress {
+    position: absolute;
+
+    right: 34px;
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    z-index: 8;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    gap: 12px;
+
+    color: rgba(255, 255, 255, 0.35);
+
+    font-family: var(--font-primary, "Inter", sans-serif);
+
+    font-size: 0.5rem;
+
+    font-weight: 700;
+
+    letter-spacing: 0.16em;
+}
+
+
+.hero-banner__progress-track {
+    position: relative;
+
+    width: 1px;
+    height: 100px;
+
+    background: rgba(255, 255, 255, 0.13);
+}
+
+
+.hero-banner__progress-fill {
+    position: absolute;
+
+    top: 0;
+    left: 0;
+
+    width: 1px;
+    height: 100%;
+
+    background:
+        linear-gradient(
+            to bottom,
+            #ffffff,
+            rgba(255, 255, 255, 0.2)
+        );
+
+    box-shadow:
+        0 0 10px
+        rgba(255, 255, 255, 0.35);
+}
+
+
+/* ============================================================
+   21. TABLET
    ============================================================ */
 
 @media (max-width: 1200px) {
 
     .hero-banner__content {
-        /* ✅ FIX: padding-top cho Navbar 68px */
+        gap: 2rem;
+
         padding:
-            calc(68px + var(--space-4xl, 4rem))
-            var(--container-padding, 4rem)
-            var(--space-4xl, 4rem);
+            110px
+            3rem
+            80px;
     }
 
     .hero-banner__left {
-        max-width: 800px;
-
-        padding-left: 0;
+        width: min(760px, 72%);
     }
 
     .hero-banner__title {
         font-size:
-            clamp(4.5rem, 9vw, 8rem);
+            clamp(4.8rem, 10vw, 8rem);
+
+        gap: 0.15em;
     }
 
-    .hero-banner__description {
-        max-width: 620px;
+    .hero-banner__right {
+        width: 200px;
+
+        margin-right: 1rem;
     }
 }
 
 
 /* ============================================================
-   12. SMALL TABLET
+   22. SMALL TABLET
    ============================================================ */
 
 @media (max-width: 992px) {
 
-    .hero-banner {
+    .hero-banner__content {
         min-height: 92vh;
 
-        /* ✅ Bỏ clip-path */
-        /* clip-path: polygon(0 0, 100% 0, 100% 96%, 0 100%); */
-    }
-
-    .hero-banner__content {
-        /* ✅ FIX: padding-top cho Navbar 68px */
         padding:
-            calc(68px + var(--space-4xl, 4rem))
-            var(--container-padding, 4rem)
-            var(--space-4xl, 4rem);
+            110px 2.5rem 80px;
     }
 
     .hero-banner__left {
         width: 100%;
+    }
 
-        max-width: 760px;
-
-        padding-left: 0;
+    .hero-banner__right {
+        display: none;
     }
 
     .hero-banner__title {
         font-size:
-            clamp(4rem, 13vw, 7rem);
+            clamp(4.5rem, 13vw, 7.5rem);
 
-        line-height: 1.02;
+        gap: 0.14em;
+    }
+
+    .hero-banner__progress {
+        right: 20px;
     }
 }
 
 
 /* ============================================================
-   13. MOBILE
+   23. MOBILE
    ============================================================ */
 
 @media (max-width: 768px) {
 
     .hero-banner {
         min-height: auto;
-
-        padding-bottom:
-            var(--space-2xl, 3rem);
-
-        /* ✅ Bỏ clip-path */
-        /* clip-path: polygon(0 0, 100% 0, 100% 97%, 0 100%); */
     }
-
 
     .hero-banner__content {
-        /* ✅ FIX: padding-top cho Navbar 64px */
-        padding:
-            calc(64px + var(--space-5xl, 6rem))
-            var(--space-md, 1.5rem)
-            var(--space-2xl, 3rem);
-    }
+        min-height: 100svh;
 
+        align-items: flex-end;
+
+        padding:
+            120px 1.4rem 80px;
+    }
 
     .hero-banner__left {
         width: 100%;
-
-        max-width: none;
     }
 
+    .hero-banner__brandline {
+        top: 28px;
 
-    /* Eyebrow */
+        font-size: 0.48rem;
+
+        letter-spacing: 0.22em;
+    }
+
+    .hero-banner__frame {
+        inset: 16px;
+
+        opacity: 0.25;
+    }
+
+    .hero-banner__frame-corner {
+        width: 24px;
+
+        height: 24px;
+    }
 
     .hero-banner__eyebrow {
-        margin-bottom:
-            var(--space-md, 1.5rem);
+        font-size: 0.55rem;
 
-        font-size: 0.6rem;
+        letter-spacing: 0.2em;
 
-        letter-spacing: 0.24em;
+        margin-bottom: 1.2rem;
     }
-
 
     .hero-banner__eyebrow-line {
         width: 26px;
     }
 
-
-    /* Title */
-
+    /* ⬇️ Title mobile: giữ khoảng cách rõ ràng giữa CHẠM / ẢNH */
     .hero-banner__title {
         font-size:
-            clamp(3.8rem, 18vw, 6rem);
+            clamp(3.7rem, 19vw, 6rem);
 
-        line-height: 1.05;
+        line-height: 1;
+
+        gap: 0.14em;
     }
 
-
-    .hero-banner__title-outline {
-        -webkit-text-stroke: 1.8px #ffffff;
+    .hero-banner__title-outline,
+    .hero-banner__title-outline
+    .split-text__char {
+        -webkit-text-stroke:
+            1.5px
+            rgba(255, 255, 255, 0.95);
     }
 
+    .hero-banner__title-accent {
+        bottom: -12px;
 
-    /* Divider */
+        width: 95px;
+    }
+
+    .hero-banner__subtitle {
+        margin-top: 1.5rem;
+
+        font-size: 0.53rem;
+
+        letter-spacing: 0.2em;
+    }
 
     .hero-banner__divider {
-        margin:
-            var(--space-lg, 2rem)
-            0
-            var(--space-md, 1.5rem);
+        margin: 1.5rem 0 1.15rem;
     }
-
-
-    /* Description */
 
     .hero-banner__description {
-        max-width: 100%;
+        font-size: 0.82rem;
 
-        font-size: 0.9rem;
-
-        line-height: 1.7;
+        line-height: 1.72;
     }
-
-
-    /* Actions */
 
     .hero-banner__actions {
         width: 100%;
 
-        gap: var(--space-sm, 0.5rem);
+        margin-top: 1.8rem;
 
-        margin-top:
-            var(--space-lg, 2rem);
+        gap: 0.55rem;
     }
 
-
     .hero-banner__btn {
-        flex: 1;
-
         min-height: 50px;
 
-        padding:
-            0.75rem
-            1.1rem;
+        flex: 1;
 
-        font-size: 0.66rem;
+        padding: 0.7rem 0.9rem;
 
-        letter-spacing: 0.12em;
+        font-size: 0.59rem;
+
+        letter-spacing: 0.1em;
+    }
+
+    .hero-banner__trust {
+        margin-top: 1.2rem;
+
+        font-size: 0.47rem;
+
+        letter-spacing: 0.13em;
+    }
+
+    .hero-banner__scroll-indicator,
+    .hero-banner__progress {
+        display: none;
+    }
+
+    .hero-banner__overlay-side {
+        background:
+            linear-gradient(
+                90deg,
+                rgba(0, 0, 0, 0.76),
+                rgba(0, 0, 0, 0.32) 70%,
+                transparent
+            );
     }
 }
 
 
 /* ============================================================
-   14. SMALL MOBILE
+   24. SMALL MOBILE
    ============================================================ */
 
 @media (max-width: 480px) {
 
     .hero-banner__content {
-        /* ✅ FIX: padding-top cho Navbar 60px */
         padding:
-            calc(60px + var(--space-5xl, 6rem))
-            var(--space-md, 1.5rem)
-            var(--space-2xl, 3rem);
+            105px 1.15rem 65px;
     }
-
 
     .hero-banner__title {
         font-size:
-            clamp(3.2rem, 20vw, 4.6rem);
+            clamp(3.2rem, 20vw, 4.8rem);
 
-        line-height: 1.08;
+        gap: 0.12em;
     }
 
+    .hero-banner__subtitle {
+        flex-wrap: wrap;
 
-    .hero-banner__title-outline {
-        -webkit-text-stroke: 1.5px #ffffff;
+        gap: 8px;
     }
-
 
     .hero-banner__description {
-        font-size: 0.84rem;
+        font-size: 0.78rem;
     }
-
 
     .hero-banner__actions {
         flex-direction: column;
-
-        align-items: stretch;
     }
-
 
     .hero-banner__btn {
         width: 100%;
+
+        flex: none;
     }
+
+    .hero-banner__trust {
+        justify-content: center;
+
+        width: 100%;
+
+        text-align: center;
+    }
+}
+
+
+/* ============================================================
+   26. MAGNETIC BUTTON COMPATIBILITY
+   ============================================================ */
+
+.magnetic-button {
+    position: relative;
+
+    appearance: none;
+
+    -webkit-appearance: none;
+
+    border: none;
+
+    margin: 0;
+
+    font: inherit;
+
+    cursor: pointer;
+
+    transform-style: preserve-3d;
+
+    backface-visibility: hidden;
+
+    -webkit-backface-visibility: hidden;
+}
+
+
+.magnetic-button:focus-visible {
+    outline:
+        2px solid
+        rgba(255, 255, 255, 0.95);
+
+    outline-offset: 4px;
+}
+
+
+.magnetic-button:disabled {
+    cursor: not-allowed;
+
+    opacity: 0.55;
 }

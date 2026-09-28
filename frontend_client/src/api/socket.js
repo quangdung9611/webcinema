@@ -14,6 +14,8 @@ class SocketService {
         this.isSessionExpired = false;
         // ===================================================== BOOKING OWNER TOKEN =====================================================
         this.ownerToken = null;
+        // ===================================================== ✅ ROOM TRACKING =====================================================
+        this.joinedRooms = new Set();
     }
 
     // ========================================================= SESSION EXPIRED CALLBACK =========================================================
@@ -58,6 +60,7 @@ class SocketService {
         this.userId = userId;
         this.reconnectAttempts = 0;
         this.ownerToken = null;
+        this.joinedRooms.clear();
         console.log('🔄 [SOCKET] Connecting user:', userId);
         // ===================================================== CREATE SOCKET =====================================================
         this.socket = io(SOCKET_URL, {
@@ -82,6 +85,13 @@ class SocketService {
             // ================================================ REGISTER USER SOCKET ================================================
             if (this.userId) {
                 this.socket.emit('register_socket', { userId: this.userId });
+            }
+            // ================================================ ✅ REJOIN ROOMS SAU KHI RECONNECT ================================================
+            if (this.joinedRooms.size > 0) {
+                console.log('🔁 [SOCKET] Rejoin rooms:', Array.from(this.joinedRooms));
+                this.joinedRooms.forEach(showtimeId => {
+                    this.socket.emit('join_showtime', { showtimeId });
+                });
             }
         });
         // ===================================================== SOCKET RECONNECT =====================================================
@@ -154,6 +164,7 @@ class SocketService {
                 this.userId = null;
                 this.ownerToken = null;
                 this.reconnectAttempts = 0;
+                this.joinedRooms.clear();
             }
             return;
         }
@@ -177,6 +188,7 @@ class SocketService {
             this.userId = null;
             this.ownerToken = null;
             this.reconnectAttempts = 0;
+            this.joinedRooms.clear();
         }
         console.log('🔴 [SOCKET] Đã ngắt kết nối');
     }
@@ -219,6 +231,37 @@ class SocketService {
         return true;
     }
 
+    // ========================================================= EMIT WITH ACK =========================================================
+    emitWithAck(event, data = {}, timeout = 5000) {
+        return new Promise((resolve) => {
+            if (!this.socket || !this.socket.connected) {
+                console.warn(`⚠️ [SOCKET] emitWithAck "${event}" — chưa kết nối`);
+                resolve({ success: false, error: 'NOT_CONNECTED' });
+                return;
+            }
+            let resolved = false;
+            const timer = setTimeout(() => {
+                if (resolved) return;
+                resolved = true;
+                resolve({ success: false, error: 'TIMEOUT' });
+            }, timeout);
+
+            try {
+                this.socket.emit(event, data, ack => {
+                    if (resolved) return;
+                    resolved = true;
+                    clearTimeout(timer);
+                    resolve(ack || { success: true });
+                });
+            } catch (err) {
+                if (resolved) return;
+                resolved = true;
+                clearTimeout(timer);
+                resolve({ success: false, error: err?.message || 'EMIT_ERROR' });
+            }
+        });
+    }
+
     // ========================================================= EMIT SEAT LOCK =========================================================
     lockSeat(showtimeId, seatId) {
         if (!showtimeId || !seatId) {
@@ -243,6 +286,37 @@ class SocketService {
     // ========================================================= CLEAR ALL HOLDING SEATS =========================================================
     clearAllHoldingSeats(showtimeId = null) {
         return this.emit('clear_all_holding_seats', showtimeId ? { showtimeId } : {});
+    }
+
+    // ========================================================= ✅ JOIN SHOWTIME ROOM =========================================================
+    joinShowtime(showtimeId) {
+        if (!showtimeId) {
+            console.warn('⚠️ [SOCKET] joinShowtime thiếu showtimeId');
+            return Promise.resolve({ success: false, error: 'MISSING_SHOWTIME_ID' });
+        }
+        const roomId = String(showtimeId);
+        this.joinedRooms.add(roomId);
+
+        return this.emitWithAck('join_showtime', { showtimeId: roomId }, 3000);
+    }
+
+    // ========================================================= ✅ LEAVE SHOWTIME ROOM =========================================================
+    leaveShowtime(showtimeId) {
+        if (!showtimeId) return false;
+        const roomId = String(showtimeId);
+        this.joinedRooms.delete(roomId);
+        return this.emit('leave_showtime', { showtimeId: roomId });
+    }
+
+    // ========================================================= ✅ CHECK ĐÃ JOIN ROOM CHƯA =========================================================
+    hasJoinedRoom(showtimeId) {
+        if (!showtimeId) return false;
+        return this.joinedRooms.has(String(showtimeId));
+    }
+
+    // ========================================================= ✅ CLEAR ALL JOINED ROOMS =========================================================
+    clearJoinedRooms() {
+        this.joinedRooms.clear();
     }
 }
 

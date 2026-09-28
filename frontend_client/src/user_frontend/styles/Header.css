@@ -1,17 +1,14 @@
 /* ==========================================================
    QUANG DŨNG CINEMA
-   USER HEADER - SILVER PREMIUM 2026
-
-   PC:
-   - Hover dropdown
-   - Hover Rạp -> load cinemas
-
-   MOBILE / TABLET:
-   - Click menu cha
-   - Click Rạp -> load cinemas
-
-   Đồng bộ với index.css
+   USER HEADER — SILVER PREMIUM 2026 (VIP DROPDOWN)
+   ==========================================================
+   ✅ Dropdown dính sát navbar
+   ✅ Mobile drawer không có logo "QUANG DŨNG CINEMA"
+   ✅ Chỉ có 1 nút X duy nhất (hamburger header)
+   ✅ Avatar mobile to hơn, cân đối
+   ✅ Tất cả tôn trọng reduced-motion
    ========================================================== */
+
 
 /* ==========================================================
    BASE
@@ -34,14 +31,44 @@
 
     background: var(--glass-bg);
 
-    border-bottom: var(--border-premium);
+    border-bottom: 1px solid transparent;
+    border-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(220, 220, 230, 0.08) 20%,
+        rgba(220, 220, 230, 0.22) 50%,
+        rgba(220, 220, 230, 0.08) 80%,
+        transparent 100%
+    ) 1;
 
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
 
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.18),
+        0 1px 0 rgba(255, 255, 255, 0.02) inset;
 
     isolation: isolate;
+}
+
+.user-navbar::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(220, 220, 230, 0.12) 30%,
+        rgba(243, 112, 33, 0.18) 50%,
+        rgba(220, 220, 230, 0.12) 70%,
+        transparent 100%
+    );
+    opacity: 0.7;
+    pointer-events: none;
+    z-index: 1;
 }
 
 .user-navbar a {
@@ -54,6 +81,7 @@
     padding: 0;
 }
 
+
 /* ==========================================================
    CONTAINER
    ========================================================== */
@@ -62,11 +90,9 @@
     position: relative;
 
     width: min(100%, 1400px);
-
     height: 100%;
 
     margin-inline: auto;
-
     padding-inline: var(--space-lg);
 
     display: flex;
@@ -75,12 +101,13 @@
     gap: var(--space-lg);
 }
 
+
 /* ==========================================================
    LOGO
-   Tỷ lệ ảnh gốc: 800x500 (8:5 = 1.6:1)
    ========================================================== */
 
 .header-logo {
+    position: relative;
     flex-shrink: 0;
 
     width: auto;
@@ -91,14 +118,14 @@
     justify-content: flex-start;
 
     cursor: pointer;
-
     z-index: 1002;
+
+    overflow: hidden;
 }
 
 .header-logo img {
     display: block;
 
-    /* ✅ Giới hạn chiều cao để không tràn header 74px */
     height: 52px;
     width: auto;
     max-width: 120px;
@@ -106,19 +133,51 @@
     object-fit: contain;
 
     transition:
-        opacity var(--transition-fast),
-        transform var(--transition-fast),
-        filter var(--transition-fast);
+        transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+        filter 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+        opacity 0.3s ease;
+
+    will-change: transform, filter;
 }
 
 .header-logo:hover img {
-    opacity: 0.9;
-    transform: translateY(-1px);
+    opacity: 1;
+    transform: scale(1.06) translateY(-1px);
+    filter:
+        drop-shadow(0 0 12px rgba(220, 220, 230, 0.35))
+        drop-shadow(0 0 24px rgba(243, 112, 33, 0.15))
+        brightness(1.08);
 }
 
 .header-logo:active img {
     transform: scale(0.98);
 }
+
+.header-logo::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.15) 50%,
+        transparent 100%
+    );
+
+    pointer-events: none;
+
+    transition: left 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 1;
+}
+
+.header-logo:hover::before {
+    left: 100%;
+}
+
 
 /* ==========================================================
    DESKTOP NAV
@@ -142,6 +201,7 @@
     display: flex;
     align-items: center;
 }
+
 
 /* ==========================================================
    MENU LINK
@@ -180,8 +240,7 @@
     cursor: pointer;
 
     transition:
-        color var(--transition-fast),
-        background-color var(--transition-fast);
+        color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .menu-link::after {
@@ -197,21 +256,37 @@
 
     border-radius: var(--radius-round);
 
-    background: var(--silver-primary);
+    background: linear-gradient(
+        90deg,
+        rgba(220, 220, 230, 0.4) 0%,
+        rgba(220, 220, 230, 1) 50%,
+        rgba(220, 220, 230, 0.4) 100%
+    );
+
+    box-shadow: 0 0 12px rgba(220, 220, 230, 0.4);
 
     transform: scaleX(0);
-    transform-origin: center;
+    transform-origin: center center;
 
-    transition: transform var(--transition-fast);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .menu-link:hover {
     color: var(--silver-light);
+
+    text-shadow:
+        0 0 8px rgba(220, 220, 230, 0.35),
+        0 0 16px rgba(220, 220, 230, 0.15);
 }
 
 .menu-link:hover::after {
     transform: scaleX(1);
 }
+
+
+/* ==========================================================
+   NAV ITEM LEFT
+   ========================================================== */
 
 .nav-item-left {
     display: inline-flex;
@@ -219,19 +294,25 @@
     gap: var(--space-sm);
 }
 
+
+/* ==========================================================
+   MENU ICON
+   ========================================================== */
+
 .menu-icon {
     flex-shrink: 0;
     color: var(--silver-dark);
 
     transition:
-        color var(--transition-fast),
-        transform var(--transition-fast);
+        color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .menu-link:hover .menu-icon {
     color: var(--silver-light);
-    transform: translateY(-1px);
+    transform: translateY(-2px) scale(1.08);
 }
+
 
 /* ==========================================================
    CHEVRON
@@ -242,8 +323,8 @@
     color: var(--silver-muted);
 
     transition:
-        transform var(--transition-fast),
-        color var(--transition-fast);
+        transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+        color 0.3s ease;
 }
 
 .has-dropdown:hover > .mobile-parent .icon-down,
@@ -255,66 +336,75 @@
     transform: rotate(180deg);
 }
 
+
 /* ==========================================================
-   DESKTOP DROPDOWN
+   ✅ DESKTOP DROPDOWN — DÍNH SÁT NAVBAR
    ========================================================== */
 
 .sub-menu {
     position: absolute;
 
-    top: calc(100% + 8px);
+    /* ✅ Dính sát navbar — không có khoảng cách */
+    top: 100%;
     left: 0;
 
     z-index: 10000;
 
-    width: 285px;
-
-    max-height: 340px;
+    width: 300px;
+    max-height: 380px;
 
     overflow-x: hidden;
     overflow-y: auto;
 
-    padding: 8px;
+    padding: 10px;
 
-    border: 1px solid rgba(244, 246, 248, 0.20);
+    border: 1px solid transparent;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 
-    border-radius: var(--radius-lg);
-
-    background: linear-gradient(
-        180deg,
-        rgba(24, 28, 33, 0.98) 0%,
-        rgba(12, 15, 18, 0.98) 100%
-    );
+    background:
+        linear-gradient(
+            180deg,
+            rgba(24, 28, 33, 0.98) 0%,
+            rgba(12, 15, 18, 0.99) 100%
+        ) padding-box,
+        linear-gradient(
+            135deg,
+            rgba(220, 220, 230, 0.25) 0%,
+            rgba(243, 112, 33, 0.15) 50%,
+            rgba(220, 220, 230, 0.25) 100%
+        ) border-box;
 
     box-shadow:
-        0 22px 55px rgba(0, 0, 0, 0.60),
-        0 0 0 1px rgba(255, 255, 255, 0.025);
+        0 24px 60px rgba(0, 0, 0, 0.65),
+        0 0 32px rgba(220, 220, 230, 0.04),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
 
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(20px) saturate(1.1);
+    -webkit-backdrop-filter: blur(20px) saturate(1.1);
 
     opacity: 0;
     visibility: hidden;
-
     pointer-events: none;
 
-    transform: translateY(8px) scale(0.985);
+    /* ✅ Chỉ scale — không trượt xuống */
+    transform: scale(0.95);
     transform-origin: top center;
 
     transition:
-        opacity var(--transition-fast),
-        visibility var(--transition-fast),
-        transform var(--transition-fast);
+        opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+        visibility 0.28s ease,
+        transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.28s ease;
 }
 
-/* Bridge để chuột di từ menu xuống dropdown không bị mất hover */
+/* Bridge — vẫn giữ để hover không bị mất */
 .has-dropdown::after {
     content: "";
     position: absolute;
     left: 0;
     right: 0;
     top: 100%;
-    height: 12px;
+    height: 4px;
     pointer-events: none;
 }
 
@@ -325,22 +415,51 @@
         visibility: visible;
         pointer-events: auto;
 
-        transform: translateY(0) scale(1);
+        transform: scale(1);
+
+        box-shadow:
+            0 24px 60px rgba(0, 0, 0, 0.65),
+            0 0 40px rgba(220, 220, 230, 0.08),
+            0 0 60px rgba(243, 112, 33, 0.05),
+            inset 0 1px 0 rgba(255, 255, 255, 0.06);
     }
 }
 
+
 /* ==========================================================
-   SUBMENU ITEM
+   SUBMENU ITEM — STAGGER + HOVER VIP
    ========================================================== */
 
 .sub-menu li {
     width: 100%;
+
+    opacity: 0;
+    transform: translateY(-6px);
+    animation: submenuItemIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+@keyframes submenuItemIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.sub-menu li:nth-child(1) { animation-delay: 0.06s; }
+.sub-menu li:nth-child(2) { animation-delay: 0.10s; }
+.sub-menu li:nth-child(3) { animation-delay: 0.14s; }
+.sub-menu li:nth-child(4) { animation-delay: 0.18s; }
+.sub-menu li:nth-child(5) { animation-delay: 0.22s; }
+.sub-menu li:nth-child(6) { animation-delay: 0.26s; }
+.sub-menu li:nth-child(7) { animation-delay: 0.30s; }
+.sub-menu li:nth-child(8) { animation-delay: 0.34s; }
+.sub-menu li:nth-child(9) { animation-delay: 0.38s; }
+.sub-menu li:nth-child(n+10) { animation-delay: 0.42s; }
 
 .sub-menu li a {
     position: relative;
 
-    min-height: 48px;
+    min-height: 50px;
     width: 100%;
 
     display: flex;
@@ -349,9 +468,11 @@
 
     gap: var(--space-md);
 
-    padding: 11px 13px;
+    padding: 12px 14px;
 
     border-radius: var(--radius-sm);
+
+    border-left: 2px solid transparent;
 
     color: var(--text-secondary);
 
@@ -362,24 +483,68 @@
     text-transform: none;
     letter-spacing: 0;
 
+    overflow: hidden;
+
     transition:
-        color var(--transition-fast),
-        background-color var(--transition-fast),
-        transform var(--transition-fast);
+        color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+        background 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+        border-left-color 0.35s ease,
+        padding-left 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sub-menu li a::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -120%;
+    width: 120%;
+    height: 100%;
+
+    background: linear-gradient(
+        100deg,
+        transparent 20%,
+        rgba(220, 220, 230, 0.10) 45%,
+        rgba(220, 220, 230, 0.18) 50%,
+        rgba(220, 220, 230, 0.10) 55%,
+        transparent 80%
+    );
+
+    pointer-events: none;
+
+    transition: left 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sub-menu li a:hover::before {
+    left: 120%;
 }
 
 .sub-menu li a:hover {
     color: var(--text-heading);
 
-    background: rgba(244, 246, 248, 0.065);
+    background: linear-gradient(
+        90deg,
+        rgba(220, 220, 230, 0.10) 0%,
+        rgba(220, 220, 230, 0.05) 60%,
+        transparent 100%
+    );
+
+    border-left-color: rgba(220, 220, 230, 0.75);
+
+    padding-left: 18px;
 
     transform: translateX(2px);
 }
 
 .sub-menu li a:hover .submenu-arrow {
     color: var(--silver-light);
-    transform: translateX(3px);
+    transform: translateX(5px) scale(1.15);
 }
+
+
+/* ==========================================================
+   SUBMENU ARROW
+   ========================================================== */
 
 .submenu-arrow {
     flex-shrink: 0;
@@ -387,17 +552,18 @@
     font-size: 17px;
 
     transition:
-        color var(--transition-fast),
-        transform var(--transition-fast);
+        color 0.3s ease,
+        transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
 
 /* ==========================================================
    CINEMA SUBMENU
    ========================================================== */
 
 .cinema-sub-menu {
-    width: 310px;
-    max-height: 390px;
+    width: 320px;
+    max-height: 400px;
 }
 
 .cinema-link-left {
@@ -412,13 +578,15 @@
     color: var(--silver-dark);
 
     transition:
-        color var(--transition-fast),
-        transform var(--transition-fast);
+        color 0.3s ease,
+        transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+        filter 0.3s ease;
 }
 
 .sub-menu li a:hover .cinema-link-left svg {
     color: var(--silver-light);
-    transform: translateY(-1px);
+    transform: translateY(-2px) scale(1.12);
+    filter: drop-shadow(0 0 6px rgba(220, 220, 230, 0.4));
 }
 
 .cinema-link-left span {
@@ -427,6 +595,7 @@
     white-space: nowrap;
     text-overflow: ellipsis;
 }
+
 
 /* ==========================================================
    SUBMENU STATE
@@ -448,6 +617,10 @@
 
     font-size: 13px;
     text-align: center;
+
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
 }
 
 .sub-menu-state:hover {
@@ -457,6 +630,7 @@
 .sub-menu-error {
     color: #c7ccd2;
 }
+
 
 /* ==========================================================
    LOADING SPINNER
@@ -480,20 +654,22 @@
     }
 }
 
+
 /* ==========================================================
    RETRY BUTTON
    ========================================================== */
 
 .cinema-retry-btn {
-    min-height: 34px;
+    position: relative;
+    overflow: hidden;
 
+    min-height: 34px;
     padding: 6px 14px;
 
     border: 1px solid rgba(244, 246, 248, 0.22);
     border-radius: var(--radius-round);
 
     color: var(--silver-light);
-
     background: rgba(244, 246, 248, 0.05);
 
     font-size: 12px;
@@ -502,14 +678,16 @@
     cursor: pointer;
 
     transition:
-        background-color var(--transition-fast),
-        border-color var(--transition-fast),
-        transform var(--transition-fast);
+        background-color 0.3s ease,
+        border-color 0.3s ease,
+        box-shadow 0.3s ease,
+        transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .cinema-retry-btn:hover {
     background: rgba(244, 246, 248, 0.10);
     border-color: rgba(244, 246, 248, 0.45);
+    box-shadow: 0 0 14px rgba(220, 220, 230, 0.15);
     transform: translateY(-1px);
 }
 
@@ -517,32 +695,43 @@
     transform: translateY(0) scale(0.97);
 }
 
+
 /* ==========================================================
    SUBMENU SCROLLBAR
    ========================================================== */
 
 .sub-menu::-webkit-scrollbar {
-    width: 5px;
+    width: 6px;
 }
 
 .sub-menu::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.025);
+    background: rgba(255, 255, 255, 0.02);
     border-radius: var(--radius-round);
+    margin: 8px 0;
 }
 
 .sub-menu::-webkit-scrollbar-thumb {
     background: linear-gradient(
         180deg,
-        var(--silver-dark),
-        var(--silver-primary)
+        rgba(220, 220, 230, 0.15),
+        rgba(220, 220, 230, 0.35)
     );
     border-radius: var(--radius-round);
 }
 
+.sub-menu::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(
+        180deg,
+        rgba(220, 220, 230, 0.3),
+        rgba(220, 220, 230, 0.5)
+    );
+}
+
 .sub-menu {
     scrollbar-width: thin;
-    scrollbar-color: var(--silver-dark) rgba(255, 255, 255, 0.025);
+    scrollbar-color: rgba(220, 220, 230, 0.25) rgba(255, 255, 255, 0.02);
 }
+
 
 /* ==========================================================
    ACCOUNT
@@ -556,6 +745,7 @@
 
 .account-trigger {
     position: relative;
+    overflow: hidden;
 
     min-width: 48px;
     height: 46px;
@@ -564,23 +754,45 @@
     align-items: center;
 
     gap: 9px;
-
     padding: 0 13px;
 
     border: 1px solid rgba(244, 246, 248, 0.18);
     border-radius: var(--radius-round);
 
     color: var(--text-heading);
-
     background: rgba(255, 255, 255, 0.025);
 
     cursor: pointer;
 
     transition:
-        border-color var(--transition-fast),
-        background-color var(--transition-fast),
-        box-shadow var(--transition-fast),
-        transform var(--transition-fast);
+        border-color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+        background-color 0.35s ease,
+        box-shadow 0.35s ease,
+        transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.account-trigger::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(220, 220, 230, 0.10) 50%,
+        transparent 100%
+    );
+
+    pointer-events: none;
+
+    transition: left 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.account-trigger:hover::before {
+    left: 100%;
 }
 
 .account-trigger:hover,
@@ -588,12 +800,15 @@
     border-color: rgba(244, 246, 248, 0.42);
     background: rgba(255, 255, 255, 0.055);
 
-    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.22);
+    box-shadow:
+        0 6px 22px rgba(0, 0, 0, 0.22),
+        0 0 16px rgba(220, 220, 230, 0.08);
 }
 
 .account-trigger:active {
     transform: scale(0.98);
 }
+
 
 /* ==========================================================
    AVATAR
@@ -612,12 +827,31 @@
     border: 1px solid rgba(255, 255, 255, 0.24);
 
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.035);
+
+    transition:
+        box-shadow 0.3s ease,
+        border-color 0.3s ease;
+}
+
+.account-trigger:hover .header-avatar {
+    border-color: rgba(255, 255, 255, 0.5);
+
+    box-shadow:
+        0 0 0 2px rgba(255, 255, 255, 0.08),
+        0 0 12px rgba(220, 220, 230, 0.25);
 }
 
 .user-icon {
     flex-shrink: 0;
     color: var(--silver-primary);
+
+    transition: color 0.3s ease;
 }
+
+.account-trigger:hover .user-icon {
+    color: var(--silver-light);
+}
+
 
 /* ==========================================================
    USERNAME
@@ -625,7 +859,6 @@
 
 .username-display {
     max-width: 145px;
-
     overflow: hidden;
 
     color: var(--text-heading);
@@ -641,6 +874,7 @@
     transform: rotate(180deg);
 }
 
+
 /* ==========================================================
    ACCOUNT DROPDOWN
    ========================================================== */
@@ -648,15 +882,14 @@
 .dropdown-content {
     position: absolute;
 
-    top: calc(100% + 10px);
+    top: 100%;
     right: 0;
 
     width: 285px;
-
     overflow: hidden;
 
     border: 1px solid rgba(244, 246, 248, 0.20);
-    border-radius: var(--radius-lg);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 
     background: linear-gradient(
         180deg,
@@ -664,24 +897,27 @@
         rgba(11, 14, 17, 0.99) 100%
     );
 
-    box-shadow: 0 22px 55px rgba(0, 0, 0, 0.60);
+    box-shadow:
+        0 22px 55px rgba(0, 0, 0, 0.60),
+        0 0 24px rgba(220, 220, 230, 0.03);
 
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
 
-    animation: accountDropdown 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: accountDropdown 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes accountDropdown {
     from {
         opacity: 0;
-        transform: translateY(7px) scale(0.985);
+        transform: scale(0.96);
     }
     to {
         opacity: 1;
-        transform: translateY(0) scale(1);
+        transform: scale(1);
     }
 }
+
 
 /* ==========================================================
    ACCOUNT INFO
@@ -693,24 +929,19 @@
 
 .dropdown-kicker {
     display: block;
-
     margin-bottom: 7px;
 
     color: var(--silver-muted);
 
     font-family: var(--font-heading);
-
     font-size: 11px;
     font-weight: var(--fw-bold);
-
     letter-spacing: 0.12em;
 }
 
 .dropdown-user-info p {
     margin: 0;
-
     color: var(--text-secondary);
-
     font-size: 14px;
     line-height: 1.5;
 }
@@ -720,15 +951,14 @@
     font-weight: var(--fw-semibold);
 }
 
+
 /* ==========================================================
    ADMIN BADGE
    ========================================================== */
 
 .admin-badge {
     display: inline-flex;
-
     margin-top: 10px;
-
     padding: 4px 9px;
 
     border: 1px solid rgba(244, 246, 248, 0.18);
@@ -739,9 +969,9 @@
 
     font-size: 11px;
     font-weight: var(--fw-semibold);
-
     letter-spacing: 0.03em;
 }
+
 
 /* ==========================================================
    DIVIDER
@@ -753,11 +983,15 @@
     background: rgba(255, 255, 255, 0.055);
 }
 
+
 /* ==========================================================
    ACCOUNT ITEM
    ========================================================== */
 
 .dropdown-item {
+    position: relative;
+    overflow: hidden;
+
     width: 100%;
     min-height: 49px;
 
@@ -765,7 +999,6 @@
     align-items: center;
 
     gap: 12px;
-
     padding: 0 18px;
 
     border: 0;
@@ -777,9 +1010,32 @@
     cursor: pointer;
 
     transition:
-        color var(--transition-fast),
-        background-color var(--transition-fast),
-        padding-left var(--transition-fast);
+        color 0.3s ease,
+        background-color 0.3s ease,
+        padding-left 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dropdown-item::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(220, 220, 230, 0.06) 50%,
+        transparent 100%
+    );
+
+    pointer-events: none;
+    transition: left 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dropdown-item:hover::before {
+    left: 100%;
 }
 
 .dropdown-item svg {
@@ -787,8 +1043,8 @@
     color: var(--silver-muted);
 
     transition:
-        color var(--transition-fast),
-        transform var(--transition-fast);
+        color 0.3s ease,
+        transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dropdown-item span {
@@ -799,15 +1055,13 @@
 
 .dropdown-item:hover {
     padding-left: 21px;
-
     color: var(--text-heading);
-
     background: rgba(244, 246, 248, 0.055);
 }
 
 .dropdown-item:hover svg {
     color: var(--silver-light);
-    transform: translateX(1px);
+    transform: translateX(2px);
 }
 
 .account-arrow {
@@ -817,26 +1071,34 @@
     font-size: 16px !important;
 
     transition:
-        transform var(--transition-fast),
-        color var(--transition-fast);
+        transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+        color 0.3s ease;
 }
 
 .dropdown-item:hover .account-arrow {
     color: var(--silver-light) !important;
-    transform: translateX(3px);
+    transform: translateX(4px);
 }
 
+
 /* ==========================================================
-   ADMIN
+   ADMIN LINK
    ========================================================== */
 
 .admin-link {
     box-shadow: inset 2px 0 0 rgba(244, 246, 248, 0.28);
+
+    transition:
+        box-shadow 0.3s ease,
+        color 0.3s ease,
+        background-color 0.3s ease,
+        padding-left 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .admin-link:hover {
     box-shadow: inset 3px 0 0 var(--silver-primary);
 }
+
 
 /* ==========================================================
    LOGOUT
@@ -860,6 +1122,7 @@
     pointer-events: none;
 }
 
+
 /* ==========================================================
    TOAST
    ========================================================== */
@@ -873,7 +1136,6 @@
     z-index: 99999;
 
     width: min(calc(100vw - 32px), 440px);
-
     min-height: 62px;
 
     display: flex;
@@ -881,7 +1143,6 @@
     justify-content: space-between;
 
     gap: 14px;
-
     padding: 13px 14px 13px 18px;
 
     border: 1px solid rgba(244, 246, 248, 0.18);
@@ -889,12 +1150,41 @@
 
     background: rgba(18, 21, 24, 0.96);
 
-    box-shadow: 0 18px 55px rgba(0, 0, 0, 0.55);
+    box-shadow:
+        0 18px 55px rgba(0, 0, 0, 0.55),
+        0 0 24px rgba(220, 220, 230, 0.04);
 
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
 
-    animation: slideInRight 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: slideInRight 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+
+    overflow: hidden;
+}
+
+.toast-notification::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.06) 50%,
+        transparent 100%
+    );
+
+    pointer-events: none;
+    animation: toastShimmer 1.5s ease-out 0.3s;
+}
+
+@keyframes toastShimmer {
+    to {
+        left: 100%;
+    }
 }
 
 .toast-notification.toast-success { border-left: 3px solid #4ade80; }
@@ -903,17 +1193,16 @@
 
 .toast-content {
     min-width: 0;
-
     display: flex;
     align-items: center;
-
     gap: 11px;
+    position: relative;
+    z-index: 1;
 }
 
 .toast-icon {
     width: 25px;
     height: 25px;
-
     flex-shrink: 0;
 
     display: flex;
@@ -934,17 +1223,17 @@
 
 .toast-message {
     color: var(--text-heading);
-
     font-size: 14px;
     font-weight: var(--fw-medium);
-
     line-height: 1.45;
 }
 
 .toast-close {
+    position: relative;
+    z-index: 1;
+
     width: 30px;
     height: 30px;
-
     flex-shrink: 0;
 
     display: flex;
@@ -959,13 +1248,15 @@
     cursor: pointer;
 
     transition:
-        color var(--transition-fast),
-        background-color var(--transition-fast);
+        color 0.3s ease,
+        background-color 0.3s ease,
+        transform 0.3s ease;
 }
 
 .toast-close:hover {
     color: var(--text-heading);
     background: rgba(255, 255, 255, 0.07);
+    transform: rotate(90deg);
 }
 
 @keyframes slideInRight {
@@ -979,6 +1270,7 @@
     }
 }
 
+
 /* ==========================================================
    HAMBURGER
    ========================================================== */
@@ -988,7 +1280,6 @@
 
     width: 44px;
     height: 44px;
-
     flex-shrink: 0;
 
     align-items: center;
@@ -996,7 +1287,6 @@
     flex-direction: column;
 
     gap: 5px;
-
     padding: 0;
 
     border: 0;
@@ -1007,27 +1297,31 @@
     cursor: pointer;
 
     transition:
-        background-color var(--transition-fast),
-        border-color var(--transition-fast);
+        background-color 0.3s ease,
+        box-shadow 0.3s ease;
 }
 
 .hamburger:hover {
     background: rgba(255, 255, 255, 0.065);
+    box-shadow: 0 0 12px rgba(220, 220, 230, 0.08);
 }
 
 .bar {
     width: 23px;
     height: 2px;
-
     display: block;
 
     border-radius: var(--radius-round);
-
     background: var(--silver-primary);
 
     transition:
-        transform var(--transition-fast),
-        opacity var(--transition-fast);
+        transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+        opacity 0.3s ease,
+        background-color 0.3s ease;
+}
+
+.hamburger:hover .bar {
+    background: var(--silver-light);
 }
 
 .hamburger.active .bar:nth-child(1) {
@@ -1042,13 +1336,13 @@
     transform: translateY(-7px) rotate(-45deg);
 }
 
+
 /* ==========================================================
    MOBILE OVERLAY
    ========================================================== */
 
 .menu-overlay {
     position: fixed;
-
     inset: 0;
 
     z-index: 998;
@@ -1057,12 +1351,11 @@
 
     opacity: 0;
     visibility: hidden;
-
     pointer-events: none;
 
     transition:
-        opacity var(--transition-normal),
-        visibility var(--transition-normal);
+        opacity 0.4s ease,
+        visibility 0.4s ease;
 
     backdrop-filter: blur(3px);
     -webkit-backdrop-filter: blur(3px);
@@ -1074,16 +1367,18 @@
     pointer-events: auto;
 }
 
+
 /* ==========================================================
-   MOBILE HEADER
+   ✅ MOBILE MENU HEADER — ĐÃ XÓA HOÀN TOÀN
    ========================================================== */
 
 .mobile-menu-header {
     display: none !important;
 }
 
+
 /* ==========================================================
-   BREAKPOINT 1200px - TABLET + MOBILE
+   BREAKPOINT 1200px — TABLET + MOBILE
    ========================================================== */
 
 @media (max-width: 1200px) {
@@ -1098,14 +1393,12 @@
         justify-content: space-between;
     }
 
-    /* HAMBURGER */
     .hamburger {
         display: flex;
         position: relative;
         z-index: 1003;
     }
 
-    /* LOGO CENTER */
     .header-logo {
         position: absolute;
         left: 50%;
@@ -1121,23 +1414,44 @@
         width: auto;
     }
 
-    /* ACCOUNT */
     .user-menu {
         margin-left: auto;
     }
 
+    /* ✅ ACCOUNT TRIGGER — avatar to hơn, cân đối */
     .account-trigger {
         width: 44px;
         height: 44px;
         justify-content: center;
         padding: 0;
+        gap: 0;
     }
 
-    .username-display {
-        display: none;
+    /* ✅ Ẩn username + chevron ở mobile */
+    .account-trigger .username-display,
+    .account-trigger > .rotate,
+    .account-trigger > svg:not(.user-icon) {
+        display: none !important;
     }
 
-    /* NAV DRAWER */
+    /* ✅ Avatar to hơn, có ring glow */
+    .account-trigger .header-avatar {
+        width: 32px;
+        height: 32px;
+        border-width: 1.5px;
+        border-color: rgba(255, 255, 255, 0.35);
+        box-shadow:
+            0 0 0 2px rgba(255, 255, 255, 0.06),
+            0 0 12px rgba(220, 220, 230, 0.15);
+    }
+
+    /* ✅ UserCircle to hơn */
+    .account-trigger .user-icon {
+        width: 24px;
+        height: 24px;
+        color: var(--silver-light);
+    }
+
     .nav-links {
         position: fixed;
 
@@ -1157,8 +1471,7 @@
         justify-content: flex-start;
 
         gap: 0;
-
-        padding: 0 0 30px;
+        padding: 24px 0 30px;
 
         overflow-x: hidden;
         overflow-y: auto;
@@ -1177,8 +1490,8 @@
         visibility: hidden;
 
         transition:
-            transform var(--transition-normal),
-            visibility var(--transition-normal);
+            transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+            visibility 0.45s ease;
     }
 
     .nav-links.active {
@@ -1186,91 +1499,17 @@
         visibility: visible;
     }
 
-    /* MOBILE MENU HEADER */
-    .mobile-menu-header {
-        width: 100%;
-        height: 88px;
-
-        flex-shrink: 0;
-
-        display: flex !important;
-
-        align-items: center;
-        justify-content: space-between;
-
-        padding: 0 20px;
-
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-
-        background: rgba(255, 255, 255, 0.018);
-    }
-
-    .mobile-menu-brand {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-    }
-
-    .mobile-menu-kicker {
-        color: var(--silver-muted);
-
-        font-family: var(--font-heading);
-
-        font-size: 10px;
-        font-weight: var(--fw-bold);
-
-        letter-spacing: 0.16em;
-    }
-
-    .mobile-menu-title {
-        color: var(--silver-light);
-
-        font-family: var(--font-heading);
-
-        font-size: 25px;
-        font-weight: var(--fw-bold);
-
-        letter-spacing: 0.08em;
-    }
-
-    .mobile-close-btn {
-        width: 40px;
-        height: 40px;
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        border: 1px solid rgba(244, 246, 248, 0.13);
-        border-radius: var(--radius-md);
-
-        color: var(--silver-light);
-        background: rgba(255, 255, 255, 0.035);
-
-        cursor: pointer;
-
-        transition:
-            background-color var(--transition-fast),
-            border-color var(--transition-fast),
-            transform var(--transition-fast);
-    }
-
-    .mobile-close-btn:hover {
-        background: rgba(255, 255, 255, 0.075);
-        border-color: rgba(244, 246, 248, 0.30);
-        transform: rotate(3deg);
-    }
-
-    /* MOBILE NAV ITEM */
     .nav-links > li {
         width: 100%;
         height: auto;
-
         flex-shrink: 0;
-
         display: block;
 
         border-bottom: 1px solid rgba(255, 255, 255, 0.035);
+
+        opacity: 1 !important;
+        transform: none !important;
+        animation: none !important;
     }
 
     .nav-links > li:not(.mobile-menu-header) {
@@ -1290,7 +1529,6 @@
         border-radius: var(--radius-md);
 
         color: var(--text-body);
-
         font-size: 14px;
         font-weight: var(--fw-semibold);
 
@@ -1316,7 +1554,6 @@
         color: var(--silver-light);
     }
 
-    /* MOBILE PARENT */
     .mobile-parent {
         cursor: pointer;
     }
@@ -1325,8 +1562,8 @@
         color: var(--silver-muted);
 
         transition:
-            transform var(--transition-fast),
-            color var(--transition-fast);
+            transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+            color 0.3s ease;
     }
 
     .has-dropdown.mobile-active > .mobile-parent .icon-down {
@@ -1334,12 +1571,10 @@
         color: var(--silver-light);
     }
 
-    /* MOBILE SUBMENU */
     .sub-menu {
         position: static;
 
         width: 100%;
-
         max-height: 0;
 
         overflow-x: hidden;
@@ -1351,12 +1586,10 @@
         border-radius: 0;
 
         background: rgba(255, 255, 255, 0.018);
-
         box-shadow: none;
 
         opacity: 1;
         visibility: visible;
-
         pointer-events: auto;
 
         transform: none;
@@ -1364,12 +1597,11 @@
         backdrop-filter: none;
         -webkit-backdrop-filter: none;
 
-        transition: max-height var(--transition-normal);
+        transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .has-dropdown.mobile-active > .sub-menu {
         max-height: 260px;
-
         padding: 4px 8px 10px;
     }
 
@@ -1381,20 +1613,21 @@
         max-height: 300px;
     }
 
-    /* MOBILE SUBMENU ITEM */
     .sub-menu li {
-        width: 100%;
+        opacity: 1 !important;
+        transform: none !important;
+        animation: none !important;
     }
 
     .sub-menu li a {
         min-height: 46px;
-
         padding: 0 13px;
+
+        border-left: 0;
 
         border-radius: var(--radius-sm);
 
         color: var(--text-secondary);
-
         font-size: 14px;
     }
 
@@ -1402,13 +1635,13 @@
         color: var(--text-heading);
         background: rgba(255, 255, 255, 0.055);
         transform: none;
+        padding-left: 13px;
     }
 
     .submenu-arrow {
         color: var(--silver-muted);
     }
 
-    /* MOBILE CINEMA */
     .cinema-link-left {
         gap: 9px;
     }
@@ -1421,21 +1654,19 @@
         max-width: calc(100% - 32px);
     }
 
-    /* MOBILE SUBMENU STATE */
     .sub-menu-state {
         min-height: 76px;
         padding: 15px;
     }
 
-    /* ACCOUNT DROPDOWN */
+    /* ✅ Account dropdown mobile — dính sát */
     .dropdown-content {
-        top: calc(100% + 9px);
-        right: -4px;
+        top: calc(100% + 4px);
+        right: 0;
 
         width: min(285px, calc(100vw - 24px));
     }
 
-    /* TOAST */
     .toast-notification {
         top: 78px;
         right: 12px;
@@ -1443,6 +1674,7 @@
         width: auto;
     }
 }
+
 
 /* ==========================================================
    BREAKPOINT 992px
@@ -1462,15 +1694,6 @@
 
     .nav-links {
         width: 320px;
-    }
-
-    .mobile-menu-header {
-        height: 82px;
-        padding-inline: 18px;
-    }
-
-    .mobile-menu-title {
-        font-size: 22px;
     }
 
     .menu-link {
@@ -1496,10 +1719,16 @@
         height: 42px;
     }
 
+    .account-trigger .header-avatar {
+        width: 30px;
+        height: 30px;
+    }
+
     .dropdown-content {
         width: min(275px, calc(100vw - 24px));
     }
 }
+
 
 /* ==========================================================
    BREAKPOINT 768px
@@ -1531,32 +1760,14 @@
         height: 42px;
     }
 
-    .header-avatar {
-        width: 27px;
-        height: 27px;
+    .account-trigger .header-avatar {
+        width: 30px;
+        height: 30px;
     }
 
     .nav-links {
         width: 88vw;
         max-width: 340px;
-    }
-
-    .mobile-menu-header {
-        height: 74px;
-        padding-inline: 16px;
-    }
-
-    .mobile-menu-kicker {
-        font-size: 9px;
-    }
-
-    .mobile-menu-title {
-        font-size: 20px;
-    }
-
-    .mobile-close-btn {
-        width: 38px;
-        height: 38px;
     }
 
     .menu-link {
@@ -1585,7 +1796,7 @@
     }
 
     .dropdown-content {
-        right: -2px;
+        right: 0;
         width: min(280px, calc(100vw - 24px));
     }
 
@@ -1600,6 +1811,7 @@
         font-size: 13px;
     }
 }
+
 
 /* ==========================================================
    BREAKPOINT 480px
@@ -1631,24 +1843,20 @@
         height: 40px;
     }
 
-    .header-avatar {
-        width: 25px;
-        height: 25px;
+    .account-trigger .header-avatar {
+        width: 28px;
+        height: 28px;
+    }
+
+    .account-trigger .user-icon {
+        width: 22px;
+        height: 22px;
     }
 
     .nav-links {
         width: 100%;
         max-width: 100%;
         border-right: 0;
-    }
-
-    .mobile-menu-header {
-        height: 70px;
-        padding-inline: 16px;
-    }
-
-    .mobile-menu-title {
-        font-size: 18px;
     }
 
     .menu-link {
@@ -1690,7 +1898,7 @@
 
     .dropdown-content {
         position: fixed;
-        top: 68px;
+        top: 64px;
         right: 8px;
         width: calc(100vw - 16px);
         max-width: 320px;
@@ -1746,6 +1954,7 @@
     }
 }
 
+
 /* ==========================================================
    ACCESSIBILITY
    ========================================================== */
@@ -1754,9 +1963,9 @@
 .account-trigger:focus-visible,
 .dropdown-item:focus-visible,
 .hamburger:focus-visible,
-.mobile-close-btn:focus-visible,
 .cinema-retry-btn:focus-visible,
 .sub-menu a:focus-visible {
     outline: 2px solid var(--silver-light);
     outline-offset: 2px;
 }
+

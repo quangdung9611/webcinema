@@ -1,6 +1,11 @@
 /* =========================================================
-   BOOKING PROGRESS
+   BOOKING PROGRESS — PREMIUM SILVER EDITION
    QUANG DŨNG CINEMA
+   Completed: transparent + green check
+========================================================= */
+
+/* =========================================================
+   ROOT
 ========================================================= */
 
 .booking-progress {
@@ -26,7 +31,6 @@
     -webkit-backdrop-filter: blur(14px);
 }
 
-
 /* =========================================================
    TRACK
 ========================================================= */
@@ -41,7 +45,6 @@
 
     gap: 0;
 }
-
 
 /* =========================================================
    STEP
@@ -64,16 +67,17 @@
         transform 0.3s ease;
 }
 
-
 /* =========================================================
    STEP NUMBER
 ========================================================= */
 
 .booking-progress-number {
-    width: 48px;
-    height: 48px;
+    position: relative;
 
-    flex: 0 0 48px;
+    width: 52px;
+    height: 52px;
+
+    flex: 0 0 52px;
 
     display: flex;
     align-items: center;
@@ -88,12 +92,53 @@
 
     background: rgba(255, 255, 255, 0.025);
 
-    color: rgba(255, 255, 255, 0.20);
+    color: rgba(255, 255, 255, 0.25);
 
     transition:
-        all 0.35s ease;
+        color 0.35s ease,
+        background 0.35s ease,
+        border-color 0.35s ease,
+        box-shadow 0.35s ease,
+        transform 0.3s ease;
 }
 
+/* Icon SVG */
+.booking-progress-number svg {
+    color: inherit;
+    transition: color 0.35s ease, transform 0.35s ease;
+}
+
+/* Label số nhỏ ở góc dưới-phải */
+.booking-progress-step-label {
+    position: absolute;
+    right: -2px;
+    bottom: -2px;
+
+    min-width: 18px;
+    height: 18px;
+
+    padding: 0 4px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 9px;
+
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    line-height: 1;
+
+    background: rgba(20, 22, 26, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    color: rgba(255, 255, 255, 0.35);
+
+    transition:
+        color 0.35s ease,
+        background 0.35s ease,
+        border-color 0.35s ease;
+}
 
 /* =========================================================
    STEP CONTENT
@@ -109,7 +154,6 @@
 
     gap: 3px;
 }
-
 
 .booking-progress-title {
     font-size: 13px;
@@ -129,7 +173,6 @@
         opacity 0.35s ease;
 }
 
-
 .booking-progress-description {
     font-size: 10px;
     line-height: 1.2;
@@ -146,37 +189,38 @@
         opacity 0.35s ease;
 }
 
-
 /* =========================================================
    PENDING
 ========================================================= */
 
 .booking-progress-step.pending {
-    opacity: 0.35;
+    opacity: 0.4;
 }
 
-
 .booking-progress-step.pending .booking-progress-number {
-    color: rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 0.22);
 
     background: rgba(255, 255, 255, 0.015);
 
     border-color: rgba(255, 255, 255, 0.07);
 }
 
-
-.booking-progress-step.pending .booking-progress-title {
-    color: rgba(255, 255, 255, 0.38);
+.booking-progress-step.pending .booking-progress-step-label {
+    color: rgba(255, 255, 255, 0.30);
+    background: rgba(20, 22, 26, 0.6);
+    border-color: rgba(255, 255, 255, 0.06);
 }
 
+.booking-progress-step.pending .booking-progress-title {
+    color: rgba(255, 255, 255, 0.40);
+}
 
 .booking-progress-step.pending .booking-progress-description {
     color: rgba(255, 255, 255, 0.22);
 }
 
-
 /* =========================================================
-   ACTIVE
+   ACTIVE — giữ nguyên nền bạc sáng
 ========================================================= */
 
 .booking-progress-step.active {
@@ -184,7 +228,6 @@
 
     transform: translateY(-1px);
 }
-
 
 .booking-progress-step.active .booking-progress-number {
     color: #17191c;
@@ -204,53 +247,66 @@
         inset 0 1px 1px rgba(255, 255, 255, 0.8);
 }
 
+.booking-progress-step.active .booking-progress-number svg {
+    color: #17191c;
+}
+
+.booking-progress-step.active .booking-progress-step-label {
+    color: #f1f3f5;
+    background: rgba(20, 22, 26, 0.95);
+    border-color: rgba(255, 255, 255, 0.35);
+}
 
 .booking-progress-step.active .booking-progress-title {
     color: #f1f3f5;
-
     font-weight: 900;
 }
-
 
 .booking-progress-step.active .booking-progress-description {
     color: rgba(220, 225, 230, 0.60);
 }
 
-
 /* =========================================================
-   COMPLETED
+   ✅ COMPLETED — NỀN TRONG SUỐT + DẤU TÍCH XANH LÁ
 ========================================================= */
 
 .booking-progress-step.completed {
-    opacity: 0.9;
+    opacity: 1;
 }
-
 
 .booking-progress-step.completed .booking-progress-number {
-    color: #16181b;
+    /* ✅ Nền trong suốt, viền xanh lá */
+    color: #43B77A;
 
-    background: linear-gradient(
-        145deg,
-        #dfe2e5 0%,
-        #aeb3b8 100%
-    );
+    background: rgba(67, 183, 122, 0.08);
 
-    border-color: rgba(220, 225, 230, 0.45);
+    border: 1.5px solid rgba(67, 183, 122, 0.55);
 
     box-shadow:
-        0 0 12px rgba(210, 215, 220, 0.08);
+        0 0 0 4px rgba(67, 183, 122, 0.06),
+        0 0 16px rgba(67, 183, 122, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
+/* ✅ Dấu tích màu xanh lá */
+.booking-progress-step.completed .booking-progress-number svg {
+    color: #43B77A;
+    stroke: #43B77A;
+}
+
+.booking-progress-step.completed .booking-progress-step-label {
+    color: #43B77A;
+    background: rgba(20, 22, 26, 0.92);
+    border-color: rgba(67, 183, 122, 0.45);
+}
 
 .booking-progress-step.completed .booking-progress-title {
-    color: rgba(235, 237, 240, 0.78);
+    color: rgba(235, 237, 240, 0.85);
 }
-
 
 .booking-progress-step.completed .booking-progress-description {
-    color: rgba(210, 215, 220, 0.40);
+    color: rgba(210, 215, 220, 0.45);
 }
-
 
 /* =========================================================
    CONNECTOR
@@ -272,44 +328,57 @@
         box-shadow 0.35s ease;
 }
 
-
+/* ✅ Connector đã đi qua — viền xanh lá mờ */
 .booking-progress-connector.completed {
-    background: rgba(215, 218, 222, 0.40);
+    background: rgba(67, 183, 122, 0.45);
 
     box-shadow:
-        0 0 8px rgba(215, 218, 222, 0.08);
+        0 0 8px rgba(67, 183, 122, 0.15);
 }
-
 
 /* =========================================================
    HOVER
 ========================================================= */
 
 .booking-progress-step.active:hover .booking-progress-number {
-    transform: scale(1.04);
+    transform: scale(1.05);
 
     box-shadow:
-        0 0 0 5px rgba(230, 232, 235, 0.10),
-        0 0 28px rgba(220, 225, 230, 0.18);
+        0 0 0 6px rgba(230, 232, 235, 0.12),
+        0 0 30px rgba(220, 225, 230, 0.20),
+        inset 0 1px 1px rgba(255, 255, 255, 0.9);
 }
 
+/* ✅ Hover completed — glow xanh lá nhẹ */
+.booking-progress-step.completed:hover .booking-progress-number {
+    background: rgba(67, 183, 122, 0.14);
+    border-color: rgba(67, 183, 122, 0.75);
+    box-shadow:
+        0 0 0 5px rgba(67, 183, 122, 0.10),
+        0 0 20px rgba(67, 183, 122, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
 
 /* =========================================================
-   RESPONSIVE 1200px
+   RESPONSIVE — 1200px
 ========================================================= */
 
 @media (max-width: 1200px) {
-
     .booking-progress {
         padding: 18px 20px;
     }
 
     .booking-progress-number {
-        width: 44px;
-        height: 44px;
-        flex-basis: 44px;
-
+        width: 48px;
+        height: 48px;
+        flex-basis: 48px;
         font-size: 14px;
+    }
+
+    .booking-progress-step-label {
+        min-width: 17px;
+        height: 17px;
+        font-size: 8px;
     }
 
     .booking-progress-step {
@@ -330,13 +399,11 @@
     }
 }
 
-
 /* =========================================================
-   RESPONSIVE 992px
+   RESPONSIVE — 992px
 ========================================================= */
 
 @media (max-width: 992px) {
-
     .booking-progress {
         padding: 16px;
         border-radius: 18px;
@@ -351,11 +418,21 @@
     }
 
     .booking-progress-number {
-        width: 40px;
-        height: 40px;
-        flex-basis: 40px;
-
+        width: 44px;
+        height: 44px;
+        flex-basis: 44px;
         font-size: 12px;
+    }
+
+    .booking-progress-number svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .booking-progress-step-label {
+        min-width: 16px;
+        height: 16px;
+        font-size: 8px;
     }
 
     .booking-progress-title {
@@ -372,13 +449,11 @@
     }
 }
 
-
 /* =========================================================
-   RESPONSIVE 768px
+   RESPONSIVE — 768px
 ========================================================= */
 
 @media (max-width: 768px) {
-
     .booking-progress {
         padding: 14px 10px;
     }
@@ -390,33 +465,39 @@
     .booking-progress-step {
         flex-direction: column;
         align-items: center;
-
         text-align: center;
-
         gap: 7px;
     }
 
     .booking-progress-number {
-        width: 38px;
-        height: 38px;
-        flex-basis: 38px;
-
+        width: 40px;
+        height: 40px;
+        flex-basis: 40px;
         font-size: 11px;
+    }
+
+    .booking-progress-number svg {
+        width: 15px;
+        height: 15px;
+    }
+
+    .booking-progress-step-label {
+        min-width: 15px;
+        height: 15px;
+        font-size: 7px;
+        right: -1px;
+        bottom: -1px;
     }
 
     .booking-progress-content {
         width: 100%;
-
         align-items: center;
     }
 
     .booking-progress-title {
         width: 100%;
-
         font-size: 9px;
-
         white-space: normal;
-
         line-height: 1.25;
     }
 
@@ -426,23 +507,19 @@
 
     .booking-progress-connector {
         flex: 1;
-
-        margin-top: 19px;
+        margin-top: 20px;
         margin-left: 4px;
         margin-right: 4px;
     }
 }
 
-
 /* =========================================================
-   RESPONSIVE 480px
+   RESPONSIVE — 480px
 ========================================================= */
 
 @media (max-width: 480px) {
-
     .booking-progress {
         padding: 12px 6px;
-
         border-radius: 16px;
     }
 
@@ -455,11 +532,21 @@
     }
 
     .booking-progress-number {
-        width: 34px;
-        height: 34px;
-        flex-basis: 34px;
-
+        width: 36px;
+        height: 36px;
+        flex-basis: 36px;
         font-size: 10px;
+    }
+
+    .booking-progress-number svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .booking-progress-step-label {
+        min-width: 14px;
+        height: 14px;
+        font-size: 7px;
     }
 
     .booking-progress-title {
@@ -468,29 +555,38 @@
     }
 
     .booking-progress-connector {
+        margin-top: 18px;
         margin-left: 2px;
         margin-right: 2px;
     }
 }
 
-
 /* =========================================================
-   VERY SMALL MOBILE
+   VERY SMALL MOBILE — 360px
 ========================================================= */
 
 @media (max-width: 360px) {
-
     .booking-progress {
         padding-left: 4px;
         padding-right: 4px;
     }
 
     .booking-progress-number {
-        width: 30px;
-        height: 30px;
-        flex-basis: 30px;
-
+        width: 32px;
+        height: 32px;
+        flex-basis: 32px;
         font-size: 9px;
+    }
+
+    .booking-progress-number svg {
+        width: 13px;
+        height: 13px;
+    }
+
+    .booking-progress-step-label {
+        min-width: 13px;
+        height: 13px;
+        font-size: 6px;
     }
 
     .booking-progress-title {
@@ -498,6 +594,7 @@
     }
 
     .booking-progress-connector {
+        margin-top: 16px;
         margin-left: 1px;
         margin-right: 1px;
     }

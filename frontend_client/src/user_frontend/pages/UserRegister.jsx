@@ -1,13 +1,35 @@
-// UserRegister.jsx
+// user_frontend/pages/UserRegister.jsx
+// ============================================================
+// USER REGISTER — PREMIUM CINEMATIC SILVER
+// Layout cân đối 50/50, đồng bộ với UserRegisterPin
+// Giữ nguyên toàn bộ logic đăng ký / CAPTCHA / API
+// ============================================================
+
 import React, { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../../api/api';
-import { Eye, EyeOff } from 'lucide-react';
+
+import {
+    Eye,
+    EyeOff,
+    Film,
+    ArrowRight,
+    UserRound,
+    User,
+    Mail,
+    Phone,
+    LockKeyhole,
+    MapPin,
+    ShieldCheck,
+    Ticket,
+    Star,
+    Zap,
+} from 'lucide-react';
 
 import Modal from '../components/Modal';
 import LoadingButton from '../components/LoadingButton';
 import Recaptcha from '../components/Recaptcha';
-import '../styles/UserAuth.css';
+import '../styles/UserRegister.css';
 
 const UserRegister = () => {
     const [formData, setFormData] = useState({
@@ -17,15 +39,15 @@ const UserRegister = () => {
         password: '',
         confirmPassword: '',
         phone: '',
-        address: ''
+        address: '',
     });
 
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] =
+        useState(false);
 
-    // ✅ CAPTCHA STATE
     const [recaptchaToken, setRecaptchaToken] = useState('');
     const recaptchaRef = useRef(null);
 
@@ -33,26 +55,36 @@ const UserRegister = () => {
         show: false,
         type: 'error',
         title: '',
-        message: ''
+        message: '',
     });
 
     const navigate = useNavigate();
 
-    // ==========================================
-    // VALIDATE FIELD
-    // ==========================================
-    const validateField = (name, value, password = formData.password, confirmPassword = formData.confirmPassword) => {
+    // =========================================================
+    // VALIDATION
+    // =========================================================
+
+    const validateField = (
+        name,
+        value,
+        password = formData.password,
+        confirmPassword = formData.confirmPassword
+    ) => {
         let error = '';
 
         switch (name) {
-            case 'username':
+            case 'username': {
                 const usernameRegex = /^[a-zA-Z0-9_.]{4,20}$/;
+
                 if (!value.trim()) {
                     error = 'Tên đăng nhập không được để trống';
                 } else if (!usernameRegex.test(value)) {
-                    error = 'Tên đăng nhập từ 4-20 ký tự, chỉ chứa chữ, số, dấu gạch dưới và dấu chấm';
+                    error =
+                        'Tên đăng nhập 4-20 ký tự (chữ, số, _, .)';
                 }
+
                 break;
+            }
 
             case 'full_name':
                 if (!value.trim()) {
@@ -62,32 +94,46 @@ const UserRegister = () => {
                 }
                 break;
 
-            case 'email':
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            case 'email': {
+                const emailRegex =
+                    /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
                 if (!value.trim()) {
                     error = 'Email không được để trống';
                 } else if (!emailRegex.test(value)) {
                     error = 'Email không hợp lệ';
                 }
-                break;
 
-            case 'phone':
+                break;
+            }
+
+            case 'phone': {
                 const phoneRegex = /^[0-9]{10}$/;
-                if (!value.trim()) {
-                    error = 'Số điện thoại không được để trống';
-                } else if (!phoneRegex.test(value)) {
-                    error = 'Số điện thoại phải đúng 10 chữ số';
-                }
-                break;
 
-            case 'password':
-                const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+                if (!value.trim()) {
+                    error =
+                        'Số điện thoại không được để trống';
+                } else if (!phoneRegex.test(value)) {
+                    error =
+                        'Số điện thoại phải đúng 10 chữ số';
+                }
+
+                break;
+            }
+
+            case 'password': {
+                const passwordRegex =
+                    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
                 if (!value.trim()) {
                     error = 'Mật khẩu không được để trống';
                 } else if (!passwordRegex.test(value)) {
-                    error = 'Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt';
+                    error =
+                        'Mật khẩu cần 8+ ký tự, gồm chữ hoa, thường, số & ký tự đặc biệt';
                 }
+
                 break;
+            }
 
             case 'confirmPassword':
                 if (!value.trim()) {
@@ -104,58 +150,93 @@ const UserRegister = () => {
         return error;
     };
 
-    // ==========================================
-    // HANDLE INPUT
-    // ==========================================
     const handleChange = (e) => {
         const { name, value } = e.target;
 
-        const newPassword = name === 'password' ? value : formData.password;
-        const newConfirmPassword = name === 'confirmPassword' ? value : formData.confirmPassword;
+        const newPassword =
+            name === 'password' ? value : formData.password;
 
-        setFormData(prev => ({ ...prev, [name]: value }));
+        const newConfirmPassword =
+            name === 'confirmPassword'
+                ? value
+                : formData.confirmPassword;
 
-        const error = validateField(name, value, newPassword, newConfirmPassword);
-        setErrors(prev => ({ ...prev, [name]: error }));
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+
+        const error = validateField(
+            name,
+            value,
+            newPassword,
+            newConfirmPassword
+        );
+
+        setErrors((prev) => ({
+            ...prev,
+            [name]: error,
+        }));
 
         if (name === 'password' || name === 'confirmPassword') {
-            const confirmError = validateField('confirmPassword', newConfirmPassword, newPassword, newConfirmPassword);
-            setErrors(prev => ({ ...prev, confirmPassword: confirmError }));
+            const confirmError = validateField(
+                'confirmPassword',
+                newConfirmPassword,
+                newPassword,
+                newConfirmPassword
+            );
+
+            setErrors((prev) => ({
+                ...prev,
+                confirmPassword: confirmError,
+            }));
         }
     };
 
-    // ==========================================
-    // VALIDATE ALL
-    // ==========================================
     const validate = () => {
         const tempErrors = {};
-        const fields = ['username', 'full_name', 'email', 'phone', 'password', 'confirmPassword'];
 
-        fields.forEach(field => {
-            const error = validateField(field, formData[field]);
+        const fields = [
+            'username',
+            'full_name',
+            'email',
+            'phone',
+            'password',
+            'confirmPassword',
+        ];
+
+        fields.forEach((field) => {
+            const error = validateField(
+                field,
+                formData[field]
+            );
+
             if (error) {
                 tempErrors[field] = error;
             }
         });
 
         setErrors(tempErrors);
+
         return Object.keys(tempErrors).length === 0;
     };
 
-    // ==========================================
-    // BƯỚC 1: ĐĂNG KÝ THÔNG TIN CƠ BẢN
-    // ==========================================
+    // =========================================================
+    // REGISTER
+    // =========================================================
+
     const handleRegister = async (e) => {
         e.preventDefault();
 
-        // ✅ CHECK CAPTCHA TRƯỚC
         if (!recaptchaToken) {
             setModalConfig({
                 show: true,
                 type: 'error',
                 title: 'Chưa xác thực CAPTCHA',
-                message: 'Vui lòng tick vào ô "Tôi không phải là robot" để tiếp tục.'
+                message:
+                    'Vui lòng tick vào ô "Tôi không phải là robot" để tiếp tục.',
             });
+
             return;
         }
 
@@ -164,52 +245,63 @@ const UserRegister = () => {
         setLoading(true);
 
         try {
-            const response = await api.post('/api/auth/register-step1', {
-                username: formData.username,
-                full_name: formData.full_name,
-                email: formData.email,
-                password: formData.password,
-                phone: formData.phone,
-                address: formData.address || '',
-                recaptchaToken,   // ✅ GỬI KÈM
-            });
+            const response = await api.post(
+                '/api/auth/register-step1',
+                {
+                    username: formData.username,
+                    full_name: formData.full_name,
+                    email: formData.email,
+                    password: formData.password,
+                    phone: formData.phone,
+                    address: formData.address || '',
+                    recaptchaToken,
+                }
+            );
 
             if (response.data.success) {
-                const { temp_token, email, full_name } = response.data.data;
+                const { temp_token, email, full_name } =
+                    response.data.data;
 
-                sessionStorage.setItem('register_temp', JSON.stringify({
-                    temp_token: temp_token,
-                    username: formData.username,
-                    full_name: full_name || formData.full_name,
-                    email: email,
-                    phone: formData.phone,
-                    password: formData.password,
-                    address: formData.address || ''
-                }));
+                sessionStorage.setItem(
+                    'register_temp',
+                    JSON.stringify({
+                        temp_token,
+                        username: formData.username,
+                        full_name:
+                            full_name || formData.full_name,
+                        email,
+                        phone: formData.phone,
+                        password: formData.password,
+                        address: formData.address || '',
+                    })
+                );
 
                 navigate('/register-pin');
             }
-
         } catch (err) {
             console.error('Register Error:', err);
 
             const serverMsg = err.response?.data?.message;
             const field = err.response?.data?.field;
 
-            // ✅ NẾU CAPTCHA SAI → RESET
             if (field === 'recaptcha') {
                 recaptchaRef.current?.reset();
                 setRecaptchaToken('');
             }
 
             if (field) {
-                setErrors(prev => ({ ...prev, [field]: serverMsg }));
+                setErrors((prev) => ({
+                    ...prev,
+                    [field]: serverMsg,
+                }));
             } else {
                 setModalConfig({
                     show: true,
                     type: 'error',
                     title: 'Thất bại',
-                    message: serverMsg || 'Đã có lỗi xảy ra, vui lòng thử lại!'
+                    message:
+                        serverMsg ||
+                        'Đã có lỗi xảy ra, vui lòng thử lại!',
                 });
             }
         } finally {
@@ -217,190 +309,438 @@ const UserRegister = () => {
         }
     };
 
-    // ==========================================
-    // HANDLE MODAL CLOSE
-    // ==========================================
     const handleModalClose = () => {
-        setModalConfig({ ...modalConfig, show: false });
+        setModalConfig({
+            ...modalConfig,
+            show: false,
+        });
     };
 
-    // ==========================================
-    // RENDER
-    // ==========================================
+    // =========================================================
+    // FIELD COMPONENT HELPER
+    // =========================================================
+
+    const renderInput = ({
+        id,
+        name,
+        label,
+        icon: Icon,
+        type = 'text',
+        placeholder,
+        autoComplete,
+        error,
+        value,
+        toggle,
+        onToggle,
+        toggleState,
+    }) => (
+        <div className="register-field">
+            <label htmlFor={id} className="register-field__label">
+                <span>{label}</span>
+            </label>
+
+            <div className="register-field__wrap">
+                <Icon
+                    className="register-field__icon"
+                    size={16}
+                    strokeWidth={2}
+                />
+
+                <input
+                    id={id}
+                    type={type}
+                    name={name}
+                    placeholder={placeholder}
+                    className={`register-field__input ${
+                        error ? 'input-error' : ''
+                    } ${toggle ? 'has-toggle' : ''}`}
+                    value={value}
+                    onChange={handleChange}
+                    autoComplete={autoComplete}
+                    disabled={loading}
+                />
+
+                {toggle && (
+                    <button
+                        type="button"
+                        className="register-field__toggle"
+                        onClick={onToggle}
+                        tabIndex="-1"
+                        disabled={loading}
+                        aria-label="Hiện hoặc ẩn mật khẩu"
+                    >
+                        {toggleState ? (
+                            <EyeOff size={16} />
+                        ) : (
+                            <Eye size={16} />
+                        )}
+                    </button>
+                )}
+            </div>
+
+            {error && (
+                <span className="register-field__error">
+                    {error}
+                </span>
+            )}
+        </div>
+    );
+
     return (
-        <div className="auth-container">
-            <div className="auth-card">
-                {/* STEP INDICATOR */}
-                <div className="step-indicator">
-                    <span className="step-active">1</span>
-                    <span className="step-line"></span>
-                    <span className="step-inactive">2</span>
-                </div>
+        <div className="register-page">
+            {/* ============================================
+                BRAND LOGO
+            ============================================ */}
+            <div className="register-page__logo">
+                <Film size={20} strokeWidth={2.4} />
+                <span>Cinema Star</span>
+            </div>
 
-                <h2>ĐĂNG KÝ</h2>
-                <p className="auth-subtitle">
-                    Bước 1: Nhập thông tin cơ bản
-                </p>
-
-                <div className="auth-form-wrapper">
-                    <form onSubmit={handleRegister} noValidate>
-                        {/* USERNAME */}
-                        <div className="form-group">
-                            <label>Tên đăng nhập</label>
-                            <input
-                                type="text"
-                                name="username"
-                                className={`auth-input ${errors.username ? 'input-error' : ''}`}
-                                value={formData.username}
-                                onChange={handleChange}
-                                placeholder="vd: dungnguyen_123"
-                                autoComplete="username"
-                                disabled={loading}
+            {/* ============================================
+                MAIN
+            ============================================ */}
+            <div className="register-shell">
+                <div className="register-grid">
+                    {/* ============================================
+                        LEFT CONTENT
+                    ============================================ */}
+                    <section className="register-content">
+                        <div className="register-content__badge">
+                            <ShieldCheck
+                                size={14}
+                                strokeWidth={2.2}
                             />
-                            {errors.username && <span className="error-text">{errors.username}</span>}
+                            <span>BƯỚC 1 / 2</span>
                         </div>
 
-                        {/* FULL NAME */}
-                        <div className="form-group">
-                            <label>Họ và tên</label>
-                            <input
-                                type="text"
-                                name="full_name"
-                                className={`auth-input ${errors.full_name ? 'input-error' : ''}`}
-                                value={formData.full_name}
-                                onChange={handleChange}
-                                placeholder="vd: Nguyễn Văn A"
-                                autoComplete="name"
-                                disabled={loading}
-                            />
-                            {errors.full_name && <span className="error-text">{errors.full_name}</span>}
+                        <div className="register-content__eyebrow">
+                            MEMBER ACCESS
                         </div>
 
-                        {/* EMAIL */}
-                        <div className="form-group">
-                            <label>Email</label>
-                            <input
-                                type="email"
-                                name="email"
-                                className={`auth-input ${errors.email ? 'input-error' : ''}`}
-                                value={formData.email}
-                                onChange={handleChange}
-                                placeholder="example@gmail.com"
-                                autoComplete="email"
-                                disabled={loading}
-                            />
-                            {errors.email && <span className="error-text">{errors.email}</span>}
-                        </div>
+                        <h1 className="register-content__title">
+                            TẠO TÀI KHOẢN
+                        
+                        </h1>
 
-                        {/* PHONE */}
-                        <div className="form-group">
-                            <label>Số điện thoại</label>
-                            <input
-                                type="tel"
-                                name="phone"
-                                className={`auth-input ${errors.phone ? 'input-error' : ''}`}
-                                value={formData.phone}
-                                onChange={handleChange}
-                                placeholder="0123456789"
-                                autoComplete="tel"
-                                disabled={loading}
-                            />
-                            {errors.phone && <span className="error-text">{errors.phone}</span>}
-                        </div>
+                        <p className="register-content__desc">
+                            Chỉ mất 30 giây để bắt đầu. Nhận ngay
+                            voucher chào mừng và trải nghiệm đặt
+                            vé đỉnh cao.
+                        </p>
 
-                        {/* PASSWORD */}
-                        <div className="form-group">
-                            <label>Mật khẩu</label>
-                            <div className="password-wrapper">
-                                <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    name="password"
-                                    className={`auth-input ${errors.password ? 'input-error' : ''}`}
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    placeholder="••••••••"
-                                    autoComplete="new-password"
-                                    disabled={loading}
-                                />
-                                <button
-                                    type="button"
-                                    className="toggle-password"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    tabIndex="-1"
-                                >
-                                    {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
-                                </button>
+                        <ul className="register-content__list">
+                            <li>
+                                <span className="register-content__icon">
+                                    <Ticket
+                                        size={16}
+                                        strokeWidth={2}
+                                    />
+                                </span>
+                                <span>
+                                    Voucher chào mừng lên đến
+                                    100K
+                                </span>
+                            </li>
+
+                            <li>
+                                <span className="register-content__icon">
+                                    <Star
+                                        size={16}
+                                        strokeWidth={2}
+                                    />
+                                </span>
+                                <span>
+                                    Tích điểm đổi quà không giới
+                                    hạn
+                                </span>
+                            </li>
+
+                            <li>
+                                <span className="register-content__icon">
+                                    <Zap
+                                        size={16}
+                                        strokeWidth={2}
+                                    />
+                                </span>
+                                <span>
+                                    Ưu tiên đặt vé sớm cho thành
+                                    viên
+                                </span>
+                            </li>
+                        </ul>
+
+                        {/* STEP INDICATOR */}
+                        <div className="register-steps">
+                            <div className="register-steps__item register-steps__item--active">
+                                <div className="register-steps__num">
+                                    1
+                                </div>
+
+                                <div className="register-steps__info">
+                                    <div className="register-steps__label">
+                                        Thông tin cơ bản
+                                    </div>
+
+                                    <div className="register-steps__hint">
+                                        Đang thực hiện
+                                    </div>
+                                </div>
                             </div>
-                            {errors.password && <span className="error-text">{errors.password}</span>}
-                        </div>
 
-                        {/* CONFIRM PASSWORD */}
-                        <div className="form-group">
-                            <label>Xác nhận mật khẩu</label>
-                            <div className="password-wrapper">
-                                <input
-                                    type={showConfirmPassword ? 'text' : 'password'}
-                                    name="confirmPassword"
-                                    className={`auth-input ${errors.confirmPassword ? 'input-error' : ''}`}
-                                    value={formData.confirmPassword}
-                                    onChange={handleChange}
-                                    placeholder="••••••••"
-                                    autoComplete="new-password"
-                                    disabled={loading}
-                                />
-                                <button
-                                    type="button"
-                                    className="toggle-password"
-                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    tabIndex="-1"
-                                >
-                                    {showConfirmPassword ? <Eye size={18} /> : <EyeOff size={18} />}
-                                </button>
+                            <div className="register-steps__line" />
+
+                            <div className="register-steps__item">
+                                <div className="register-steps__num">
+                                    2
+                                </div>
+
+                                <div className="register-steps__info">
+                                    <div className="register-steps__label">
+                                        Tạo mã PIN
+                                    </div>
+
+                                    <div className="register-steps__hint">
+                                        Tiếp theo
+                                    </div>
+                                </div>
                             </div>
-                            {errors.confirmPassword && <span className="error-text">{errors.confirmPassword}</span>}
                         </div>
 
-                        {/* ADDRESS */}
-                        <div className="form-group">
-                            <label>Địa chỉ (không bắt buộc)</label>
-                            <input
-                                type="text"
-                                name="address"
-                                className="auth-input"
-                                value={formData.address}
-                                onChange={handleChange}
-                                placeholder="vd: 123 Nguyễn Văn Trỗi, Q. Phú Nhuận, TP.HCM"
-                                disabled={loading}
-                            />
+                        <div className="register-content__footer">
+                            © 2026 Cinema Star — All rights
+                            reserved.
                         </div>
+                    </section>
 
-                        {/* ✅ CAPTCHA */}
-                        <Recaptcha
-                            ref={recaptchaRef}
-                            onChange={(token) => setRecaptchaToken(token)}
-                            onExpired={() => setRecaptchaToken('')}
-                        />
-                        {errors.recaptcha && <span className="error-text">{errors.recaptcha}</span>}
+                    {/* ============================================
+                        RIGHT FORM
+                    ============================================ */}
+                    <section className="register-form-area">
+                        <div className="register-form-card">
+                            <div className="register-form-card__header">
+                                <div className="register-form-card__eyebrow">
+                                    CREATE ACCOUNT
+                                </div>
 
-                        <LoadingButton
-                            type="submit"
-                            loading={loading}
-                            loadingText="Đang tạo tài khoản..."
-                            disabled={loading}
-                            className="btn-user"
-                            spinnerColor="#ffffff"
-                        >
-                            TIẾP TỤC
-                        </LoadingButton>
-                    </form>
-                </div>
+                                <h2 className="register-form-card__title">
+                                    ĐĂNG KÝ
+                                </h2>
 
-                <div className="auth-footer">
-                    <span>Đã có tài khoản? </span>
-                    <Link to="/login" className="btn-link">Đăng nhập</Link>
+                                <p className="register-form-card__subtitle">
+                                    Điền thông tin để tiếp tục
+                                </p>
+                            </div>
+
+                            <form
+                                className="register-form"
+                                onSubmit={handleRegister}
+                                noValidate
+                            >
+                                {/* USERNAME + FULL NAME */}
+                                <div className="register-form__row">
+                                    {renderInput({
+                                        id: 'reg-username',
+                                        name: 'username',
+                                        label: 'Tên đăng nhập',
+                                        icon: UserRound,
+                                        placeholder:
+                                            'dungnguyen_123',
+                                        autoComplete: 'username',
+                                        error: errors.username,
+                                        value: formData.username,
+                                    })}
+
+                                    {renderInput({
+                                        id: 'reg-fullname',
+                                        name: 'full_name',
+                                        label: 'Họ và tên',
+                                        icon: User,
+                                        placeholder: 'Nguyễn Văn A',
+                                        autoComplete: 'name',
+                                        error: errors.full_name,
+                                        value: formData.full_name,
+                                    })}
+                                </div>
+
+                                {/* EMAIL + PHONE */}
+                                <div className="register-form__row">
+                                    {renderInput({
+                                        id: 'reg-email',
+                                        name: 'email',
+                                        label: 'Email',
+                                        icon: Mail,
+                                        type: 'email',
+                                        placeholder:
+                                            'example@gmail.com',
+                                        autoComplete: 'email',
+                                        error: errors.email,
+                                        value: formData.email,
+                                    })}
+
+                                    {renderInput({
+                                        id: 'reg-phone',
+                                        name: 'phone',
+                                        label: 'Số điện thoại',
+                                        icon: Phone,
+                                        type: 'tel',
+                                        placeholder: '0123456789',
+                                        autoComplete: 'tel',
+                                        error: errors.phone,
+                                        value: formData.phone,
+                                    })}
+                                </div>
+
+                                {/* PASSWORD + CONFIRM */}
+                                <div className="register-form__row">
+                                    {renderInput({
+                                        id: 'reg-password',
+                                        name: 'password',
+                                        label: 'Mật khẩu',
+                                        icon: LockKeyhole,
+                                        type: showPassword
+                                            ? 'text'
+                                            : 'password',
+                                        placeholder: '••••••••',
+                                        autoComplete:
+                                            'new-password',
+                                        error: errors.password,
+                                        value: formData.password,
+                                        toggle: true,
+                                        toggleState: showPassword,
+                                        onToggle: () =>
+                                            setShowPassword(
+                                                (prev) => !prev
+                                            ),
+                                    })}
+
+                                    {renderInput({
+                                        id: 'reg-confirm',
+                                        name: 'confirmPassword',
+                                        label:
+                                            'Xác nhận mật khẩu',
+                                        icon: LockKeyhole,
+                                        type: showConfirmPassword
+                                            ? 'text'
+                                            : 'password',
+                                        placeholder: '••••••••',
+                                        autoComplete:
+                                            'new-password',
+                                        error: errors.confirmPassword,
+                                        value: formData.confirmPassword,
+                                        toggle: true,
+                                        toggleState:
+                                            showConfirmPassword,
+                                        onToggle: () =>
+                                            setShowConfirmPassword(
+                                                (prev) => !prev
+                                            ),
+                                    })}
+                                </div>
+
+                                {/* ADDRESS */}
+                                <div className="register-field register-field--full">
+                                    <label
+                                        htmlFor="reg-address"
+                                        className="register-field__label"
+                                    >
+                                        <span>Địa chỉ</span>
+
+                                        <small>
+                                            Không bắt buộc
+                                        </small>
+                                    </label>
+
+                                    <div className="register-field__wrap">
+                                        <MapPin
+                                            className="register-field__icon"
+                                            size={16}
+                                            strokeWidth={2}
+                                        />
+
+                                        <input
+                                            id="reg-address"
+                                            type="text"
+                                            name="address"
+                                            placeholder="123 Nguyễn Văn Trỗi, Q. Phú Nhuận, TP.HCM"
+                                            className="register-field__input"
+                                            value={formData.address}
+                                            onChange={handleChange}
+                                            disabled={loading}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* CAPTCHA */}
+                                <div className="register-recaptcha">
+                                    <div className="register-recaptcha__head">
+                                        <ShieldCheck
+                                            size={15}
+                                            strokeWidth={2}
+                                        />
+                                        <span>
+                                            Xác minh bảo mật
+                                        </span>
+                                    </div>
+
+                                    <Recaptcha
+                                        ref={recaptchaRef}
+                                        onChange={(token) =>
+                                            setRecaptchaToken(
+                                                token
+                                            )
+                                        }
+                                        onExpired={() =>
+                                            setRecaptchaToken('')
+                                        }
+                                    />
+                                </div>
+
+                                {errors.recaptcha && (
+                                    <span className="register-field__error register-field__error--captcha">
+                                        {errors.recaptcha}
+                                    </span>
+                                )}
+
+                                {/* SUBMIT */}
+                                <LoadingButton
+                                    type="submit"
+                                    loading={loading}
+                                    loadingText="ĐANG TẠO TÀI KHOẢN..."
+                                    disabled={loading}
+                                    className="register-submit"
+                                    spinnerColor="#0a0a0b"
+                                >
+                                    <span>TIẾP TỤC</span>
+                                    <ArrowRight
+                                        size={17}
+                                        strokeWidth={2.4}
+                                    />
+                                </LoadingButton>
+                            </form>
+
+                            {/* FOOTER */}
+                            <div className="register-footer">
+                                <span>Đã có tài khoản?</span>
+
+                                <Link
+                                    to="/login"
+                                    className="register-footer__link"
+                                >
+                                    ĐĂNG NHẬP
+                                    <ArrowRight
+                                        size={14}
+                                        strokeWidth={2.4}
+                                    />
+                                </Link>
+                            </div>
+                        </div>
+                    </section>
                 </div>
             </div>
 
+            {/* ============================================
+                MODAL
+            ============================================ */}
             <Modal
                 show={modalConfig.show}
                 type={modalConfig.type}

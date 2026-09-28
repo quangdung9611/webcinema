@@ -1,32 +1,65 @@
 /* =========================================================
-   LOADING BUTTON - SILVER EDITION
+   LOADING BUTTON - SILVER EDITION (UPGRADED)
    ĐỒNG BỘ 100% VỚI INDEX.CSS
+   =========================================================
+   ✅ 8 dots spinner — sóng nhấp nhô
+   ✅ Shimmer sweep khi loading
+   ✅ Text transition mượt
+   ✅ Success checkmark vẽ ra
+   ✅ Error cross
 ========================================================= */
+
+/* =========================================
+   1. BUTTON BASE
+========================================= */
 
 .loading-btn {
     position: relative;
+    overflow: hidden;
+    isolation: isolate;
+
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-sm);
-    padding: var(--space-sm) var(--space-lg);
-    border: none;
-    border-radius: var(--radius-round);
-    font-size: var(--font-size-base);
-    font-weight: var(--fw-bold);
-    color: var(--bg-primary) !important; /* ✅ Chữ đen */
-    background: var(--premium-gradient);
-    cursor: pointer;
-    transition: all var(--transition-normal);
+    gap: var(--space-sm, 0.5rem);
+
     min-width: 160px;
     min-height: 52px;
+    padding: var(--space-sm, 0.5rem) var(--space-lg, 1.5rem);
+
+    border: none;
+    border-radius: var(--radius-round, 999px);
+
     font-family: inherit;
-    box-shadow: var(--btn-silver-shadow);
+    font-size: var(--font-size-base, 0.9rem);
+    font-weight: var(--fw-bold, 700);
+
+    color: var(--bg-primary, #0a0a14) !important;
+    background: var(--premium-gradient, linear-gradient(135deg, #e5e7eb, #9ca3af));
+
+    cursor: pointer;
+
+    box-shadow: var(--btn-silver-shadow, 0 8px 24px rgba(0, 0, 0, 0.35));
+
+    transition:
+        transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.3s ease,
+        filter 0.3s ease,
+        background 0.3s ease;
 }
 
 .loading-btn:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: var(--card-shadow-hover);
+    box-shadow: var(--card-shadow-hover, 0 12px 32px rgba(0, 0, 0, 0.45));
+}
+
+.loading-btn:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+}
+
+.loading-btn:focus-visible {
+    outline: 2px solid var(--silver-light, #f5f5f6);
+    outline-offset: 3px;
 }
 
 .loading-btn:disabled {
@@ -34,73 +67,239 @@
     cursor: not-allowed;
 }
 
+
+/* =========================================
+   2. LOADING STATE
+========================================= */
+
 .loading-btn.loading {
-    background: var(--premium-gradient);
+    background: var(--premium-gradient, linear-gradient(135deg, #e5e7eb, #9ca3af));
     cursor: wait;
-    gap: var(--space-sm);
     filter: brightness(0.92);
 }
 
+
 /* =========================================
-   DOTS SPINNER - 8 chấm tròn quay đều
+   3. SUCCESS STATE
+========================================= */
+
+.loading-btn.success {
+    background: linear-gradient(135deg, #d1fae5 0%, #86efac 100%);
+    color: #065f46 !important;
+    cursor: default;
+}
+
+.loading-btn.success .loading-btn-text {
+    color: #065f46 !important;
+}
+
+
+/* =========================================
+   4. ERROR STATE
+========================================= */
+
+.loading-btn.error {
+    background: linear-gradient(135deg, #fee2e2 0%, #fca5a5 100%);
+    color: #991b1b !important;
+    cursor: default;
+}
+
+.loading-btn.error .loading-btn-text {
+    color: #991b1b !important;
+}
+
+
+/* =========================================
+   5. SHIMMER SWEEP — chạy khi loading
+========================================= */
+
+.loading-btn-shimmer {
+    position: absolute;
+    inset: 0;
+
+    z-index: 1;
+
+    pointer-events: none;
+
+    background: linear-gradient(
+        100deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.45) 50%,
+        transparent 70%
+    );
+
+    transform: translateX(-120%);
+    animation: loadingBtnShimmer 1.6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes loadingBtnShimmer {
+    0% {
+        transform: translateX(-120%);
+    }
+    60%, 100% {
+        transform: translateX(120%);
+    }
+}
+
+
+/* =========================================
+   6. CONTENT WRAPPER — transition khi đổi state
+========================================= */
+
+.loading-btn-content {
+    position: relative;
+    z-index: 2;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm, 0.5rem);
+
+    animation: loadingBtnContentIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes loadingBtnContentIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* =========================================
+   7. TEXT
+========================================= */
+
+.loading-btn-text {
+    display: inline-block;
+    line-height: 1;
+
+    color: var(--bg-primary, #0a0a14) !important;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    max-width: 220px;
+
+    transition: color 0.3s ease;
+}
+
+
+/* =========================================
+   8. DOTS SPINNER — 8 chấm sóng
 ========================================= */
 
 .spinner-dots-container {
     position: relative;
+
     width: 32px;
     height: 32px;
+
     flex-shrink: 0;
-    animation: spinCircle 1.2s linear infinite;
 }
 
 .spinner-dot {
     position: absolute;
     top: 50%;
     left: 50%;
+
     width: 6px;
     height: 6px;
+
+    margin-top: -3px;
+    margin-left: -3px;
+
     border-radius: 50%;
-    background: var(--silver-light);
-    opacity: 0.9;
+
+    /* Vị trí trên vòng tròn được set qua CSS var --dot-angle
+       để tránh phải viết 8 rule :nth-child */
+    transform: rotate(var(--dot-angle, 0deg)) translateX(12px);
+
     transform-origin: center center;
+
+    opacity: 0.3;
+
+    /* Animation sóng — mỗi dot delay khác nhau (set trong JSX) */
+    animation: dotPulse 1.2s ease-in-out infinite;
 }
 
-/* ✅ Mỗi dot được xoay đúng vị trí trên vòng tròn */
-.spinner-dot:nth-child(1) { transform: rotate(0deg) translateX(12px); }
-.spinner-dot:nth-child(2) { transform: rotate(45deg) translateX(12px); }
-.spinner-dot:nth-child(3) { transform: rotate(90deg) translateX(12px); }
-.spinner-dot:nth-child(4) { transform: rotate(135deg) translateX(12px); }
-.spinner-dot:nth-child(5) { transform: rotate(180deg) translateX(12px); }
-.spinner-dot:nth-child(6) { transform: rotate(225deg) translateX(12px); }
-.spinner-dot:nth-child(7) { transform: rotate(270deg) translateX(12px); }
-.spinner-dot:nth-child(8) { transform: rotate(315deg) translateX(12px); }
-
-@keyframes spinCircle {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+@keyframes dotPulse {
+    0%, 100% {
+        opacity: 0.3;
+        /* Giữ nguyên rotate + translate + scale */
+        transform: rotate(var(--dot-angle, 0deg)) translateX(12px) scale(0.8);
+    }
+    50% {
+        opacity: 1;
+        transform: rotate(var(--dot-angle, 0deg)) translateX(12px) scale(1.2);
+    }
 }
+
 
 /* =========================================
-   TEXT - ĐẢM BẢO CHỮ ĐEN
+   9. SUCCESS CHECKMARK
 ========================================= */
 
-.loading-btn-text {
-    display: inline-block;
-    line-height: 1;
-    color: var(--bg-primary) !important;
+.loading-btn-check {
+    width: 24px;
+    height: 24px;
+
+    flex-shrink: 0;
+
+    color: #059669;
 }
 
+.loading-btn-check path {
+    stroke-dasharray: 30;
+    stroke-dashoffset: 30;
+
+    animation: checkDraw 0.4s cubic-bezier(0.65, 0, 0.35, 1) 0.05s forwards;
+}
+
+@keyframes checkDraw {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+
 /* =========================================
-   RESPONSIVE
+   10. ERROR CROSS
+========================================= */
+
+.loading-btn-cross {
+    width: 24px;
+    height: 24px;
+
+    flex-shrink: 0;
+
+    color: #dc2626;
+}
+
+.loading-btn-cross path {
+    stroke-dasharray: 30;
+    stroke-dashoffset: 30;
+
+    animation: checkDraw 0.4s cubic-bezier(0.65, 0, 0.35, 1) 0.05s forwards;
+}
+
+
+/* =========================================
+   11. RESPONSIVE
 ========================================= */
 
 @media (max-width: 480px) {
     .loading-btn {
-        padding: var(--space-sm) var(--space-md);
-        font-size: var(--font-size-base);
+        padding: var(--space-sm, 0.5rem) var(--space-md, 1rem);
+        font-size: var(--font-size-base, 0.9rem);
+
         min-height: 44px;
         min-width: 120px;
-        gap: var(--space-sm);
+        gap: var(--space-sm, 0.5rem);
     }
 
     .spinner-dots-container {
@@ -111,14 +310,26 @@
     .spinner-dot {
         width: 5px;
         height: 5px;
+        margin-top: -2.5px;
+        margin-left: -2.5px;
+
+        /* Dịch chuyển nhỏ hơn cho mobile */
+        transform: rotate(var(--dot-angle, 0deg)) translateX(10px);
     }
-    
-    .spinner-dot:nth-child(1) { transform: rotate(0deg) translateX(10px); }
-    .spinner-dot:nth-child(2) { transform: rotate(45deg) translateX(10px); }
-    .spinner-dot:nth-child(3) { transform: rotate(90deg) translateX(10px); }
-    .spinner-dot:nth-child(4) { transform: rotate(135deg) translateX(10px); }
-    .spinner-dot:nth-child(5) { transform: rotate(180deg) translateX(10px); }
-    .spinner-dot:nth-child(6) { transform: rotate(225deg) translateX(10px); }
-    .spinner-dot:nth-child(7) { transform: rotate(270deg) translateX(10px); }
-    .spinner-dot:nth-child(8) { transform: rotate(315deg) translateX(10px); }
+
+    @keyframes dotPulse {
+        0%, 100% {
+            opacity: 0.3;
+            transform: rotate(var(--dot-angle, 0deg)) translateX(10px) scale(0.8);
+        }
+        50% {
+            opacity: 1;
+            transform: rotate(var(--dot-angle, 0deg)) translateX(10px) scale(1.2);
+        }
+    }
+
+    .loading-btn-text {
+        max-width: 140px;
+    }
 }
+

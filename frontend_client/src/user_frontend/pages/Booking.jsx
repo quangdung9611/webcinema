@@ -8,6 +8,8 @@ import {
     ChevronRight,
     RefreshCw,
     Loader2,
+    Wifi,
+    WifiOff,
 } from 'lucide-react';
 import api from '../../api/api';
 import socketService from '../../api/socket';
@@ -25,6 +27,88 @@ import '../styles/Booking.css';
 const SEAT_LOCK_TTL = 10 * 60;
 const MAX_SEATS = 8;
 const LOCK_CONFIRM_TIMEOUT = 5000;
+const SOCKET_READY_TIMEOUT = 5000;
+
+// ============================================================
+// ✅ HOOKS — POINTER TRACKING
+// ============================================================
+
+const usePagePointer = () => {
+    useEffect(() => {
+        let rafId = null;
+        const handleMove = e => {
+            if (rafId) return;
+            rafId = requestAnimationFrame(() => {
+                const root = document.documentElement;
+                root.style.setProperty('--page-mx', `${e.clientX}px`);
+                root.style.setProperty('--page-my', `${e.clientY}px`);
+                rafId = null;
+            });
+        };
+        window.addEventListener('mousemove', handleMove, { passive: true });
+        return () => {
+            window.removeEventListener('mousemove', handleMove);
+            if (rafId) cancelAnimationFrame(rafId);
+        };
+    }, []);
+};
+
+const useSectionPointer = () => {
+    const ref = useRef(null);
+    const onMouseMove = useCallback(e => {
+        const el = ref.current;
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        el.style.setProperty('--mx', `${(x / rect.width) * 100}%`);
+        el.style.setProperty('--my', `${(y / rect.height) * 100}%`);
+    }, []);
+    const onMouseLeave = useCallback(() => {
+        const el = ref.current;
+        if (!el) return;
+        el.style.removeProperty('--mx');
+        el.style.removeProperty('--my');
+    }, []);
+    return { ref, onMouseMove, onMouseLeave };
+};
+
+// ============================================================
+// ✅ SUB-COMPONENTS — POINTER TRACKING
+// ============================================================
+
+const SlideBtn = ({ onClick, disabled, children, label }) => {
+    const tracker = useSectionPointer();
+    return (
+        <button
+            type="button"
+            ref={tracker.ref}
+            onMouseMove={tracker.onMouseMove}
+            onMouseLeave={tracker.onMouseLeave}
+            className="slide-btn"
+            onClick={onClick}
+            disabled={disabled}
+            aria-label={label}
+        >
+            {children}
+        </button>
+    );
+};
+
+const CompactCard = ({ active, onClick, children, extraClass = '' }) => {
+    const tracker = useSectionPointer();
+    return (
+        <div
+            ref={tracker.ref}
+            onMouseMove={tracker.onMouseMove}
+            onMouseLeave={tracker.onMouseLeave}
+            className={`compact-card ${extraClass} ${active ? 'active' : ''}`}
+            onClick={onClick}
+        >
+            {children}
+        </div>
+    );
+};
 
 // ============================================================
 // BOOKING
@@ -37,6 +121,13 @@ const Booking = () => {
     const { slug } = useParams();
 
     const { user: contextUser } = useAuth();
+
+    // ✅ Page pointer spotlight
+    usePagePointer();
+
+    // ✅ Pointer cho 2 section
+    const showtimeSection = useSectionPointer();
+    const seatSection = useSectionPointer();
 
     // =========================================================
     // ✅ RESCHEDULE MODE
@@ -65,6 +156,10 @@ const Booking = () => {
     const [isTimerActive, setIsTimerActive] = useState(false);
     const [fetchError, setFetchError] = useState(null);
     const [pendingSeatIds, setPendingSeatIds] = useState([]);
+
+    // ✅ SOCKET READY STATE
+    const [socketReady, setSocketReady] = useState(false);
+    const [roomJoined, setRoomJoined] = useState(false);
 
     // ✅ Số tiền vé cũ (chỉ dùng khi reschedule)
     const [oldTotalAmount, setOldTotalAmount] = useState(
@@ -100,6 +195,7 @@ const Booking = () => {
     const seatsRef = useRef([]);
     const isSessionClearedRef = useRef(false);
     const userIdRef = useRef(null);
+    const joinedRoomRef = useRef(null);
 
     // =========================================================
     // SYNC STATE → REF
@@ -117,11 +213,100 @@ const Booking = () => {
     }, [contextUser]);
 
     // =========================================================
+    // ✅ SOCKET READY LISTENER
+    // =========================================================
+
+    useEffect(() => {
+        const socket = socketService.getSocket();
+
+        if (socketService.isConnectedStatus()) {
+            setSocketReady(true);
+        }
+
+        if (!socket) {
+            const pollId = setInterval(() => {
+                if (socketService.isConnectedStatus()) {
+                    setSocketReady(true);
+                    clearInterval(pollId);
+                }
+            }, 300);
+            return () => clearInterval(pollId);
+        }
+
+        const handleConnect = () => {
+            console.log('🟢 [BOOKING] Socket connected');
+            setSocketReady(true);
+        };
+        const handleDisconnect = () => {
+            console.log('🔴 [BOOKING] Socket disconnected');
+            setSocketReady(false);
+            setRoomJoined(false);
+            joinedRoomRef.current = null;
+        };
+
+        socket.on('connect', handleConnect);
+        socket.on('disconnect', handleDisconnect);
+
+        return () => {
+            socket.off('connect', handleConnect);
+            socket.off('disconnect', handleDisconnect);
+        };
+    }, []);
+
+    // =========================================================
     // SHOWTIME ID
     // =========================================================
 
     const showtimeId = selectedShowtime?.showtime_id || selectedShowtime?.id;
     useEffect(() => { currentShowtimeIdRef.current = showtimeId ? String(showtimeId) : null; }, [showtimeId]);
+
+    // =========================================================
+    // ✅ JOIN ROOM SHOWTIME
+    // =========================================================
+
+    useEffect(() => {
+        if (isRescheduleMode) return;
+        if (!showtimeId) return;
+        if (!socketReady) return;
+
+        const socket = socketService.getSocket();
+        if (!socket || !socket.connected) return;
+
+        const roomKey = String(showtimeId);
+        if (joinedRoomRef.current === roomKey) {
+            setRoomJoined(true);
+            return;
+        }
+
+        const doJoin = () => {
+            console.log('🚪 [BOOKING] Join room showtime:', roomKey);
+            socket.emit('join_showtime', { showtimeId: roomKey }, ack => {
+                if (ack?.success === false) {
+                    console.warn('⚠️ [BOOKING] join_showtime failed:', ack);
+                }
+                joinedRoomRef.current = roomKey;
+                setRoomJoined(true);
+            });
+
+            setTimeout(() => {
+                if (joinedRoomRef.current !== roomKey) {
+                    joinedRoomRef.current = roomKey;
+                    setRoomJoined(true);
+                }
+            }, 1500);
+        };
+
+        doJoin();
+    }, [showtimeId, socketReady, isRescheduleMode]);
+
+    // =========================================================
+    // ✅ RESET ROOM KHI ĐỔI SHOWTIME
+    // =========================================================
+
+    useEffect(() => {
+        joinedRoomRef.current = null;
+        setRoomJoined(false);
+    }, [showtimeId]);
 
     // =========================================================
     // OWNER TOKEN
@@ -172,13 +357,12 @@ const Booking = () => {
     }, []);
 
     // =========================================================
-    // RELEASE ONE SEAT (chỉ dùng cho flow thường)
+    // RELEASE ONE SEAT
     // =========================================================
 
     const releaseSeat = useCallback((seatId, requestedShowtimeId) => {
         if (isRescheduleMode) return;
-        const currentSocket = socketService.getSocket();
-        if (!currentSocket || !currentSocket.connected) return;
+        if (!socketService.isConnectedStatus()) return;
         if (!seatId || !requestedShowtimeId) return;
         socketService.emit('client-huy-chon-ghe', { seatId, showtimeId: requestedShowtimeId });
     }, [isRescheduleMode]);
@@ -190,9 +374,8 @@ const Booking = () => {
     const clearBookingSession = useCallback(() => {
         if (isSessionClearedRef.current) return;
         console.log('[BOOKING] Clearing booking session...');
-        const currentSocket = socketService.getSocket();
         const currentShowtimeId = currentShowtimeIdRef.current;
-        if (!isRescheduleMode && currentSocket?.connected && currentShowtimeId) {
+        if (!isRescheduleMode && socketService.isConnectedStatus() && currentShowtimeId) {
             selectedSeatsRef.current.forEach(seat => {
                 if (!seat?.seat_id) return;
                 releaseSeat(seat.seat_id, currentShowtimeId);
@@ -475,8 +658,17 @@ const Booking = () => {
                 const normalizedSeats = seatsData.map(seat => ({ ...seat, is_locked_by_user: false, held_by_other: false }));
                 setSeats(normalizedSeats);
                 seatsRef.current = normalizedSeats;
+
                 if (socketService.isConnectedStatus()) {
                     socketService.emit('request-holding-seats', { showtimeId });
+                } else {
+                    const waitSocket = setInterval(() => {
+                        if (socketService.isConnectedStatus()) {
+                            socketService.emit('request-holding-seats', { showtimeId });
+                            clearInterval(waitSocket);
+                        }
+                    }, 300);
+                    setTimeout(() => clearInterval(waitSocket), SOCKET_READY_TIMEOUT);
                 }
             }
         } catch (err) {
@@ -501,6 +693,8 @@ const Booking = () => {
     useEffect(() => {
         if (!showtimeId) return;
         if (isRescheduleMode) return;
+        if (!socketReady) return;
+
         const currentSocket = socketService.getSocket();
         if (!currentSocket) return;
 
@@ -644,7 +838,7 @@ const Booking = () => {
             currentSocket.off('server-gui-danh-sach-dang-giu', handleSeatList);
             currentSocket.off('server-seat-lock-error', handleSeatLockError);
         };
-    }, [showtimeId, showErrorModal, isRescheduleMode]);
+    }, [showtimeId, showErrorModal, isRescheduleMode, socketReady]);
 
     // =========================================================
     // REGISTER PENDING LOCK
@@ -747,12 +941,14 @@ const Booking = () => {
             return;
         }
 
-        // FLOW THƯỜNG (socket)
+        // ✅ FLOW THƯỜNG (socket)
         if (pendingSeatIds.some(id => Number(id) === numericSeatId)) return;
 
-        const currentSocket = socketService.getSocket();
-        if (!currentSocket || !currentSocket.connected) {
-            showErrorModal('Phiên làm việc hết hạn', 'Socket đã ngắt kết nối. Vui lòng tải lại trang.');
+        if (!socketReady || !socketService.isConnectedStatus()) {
+            showErrorModal(
+                'Đang kết nối',
+                'Hệ thống đang kết nối lại. Vui lòng đợi vài giây rồi chọn ghế.'
+            );
             return;
         }
 
@@ -833,14 +1029,29 @@ const Booking = () => {
         const hasOtherLock = seatsToToggle.some(targetSeat => targetSeat.held_by_other || targetSeat.is_locked_by_user);
         if (hasOtherLock) return;
 
-        seatsToToggle.forEach(targetSeat => { registerPendingLock(targetSeat.seat_id, showtimeId); });
+        let allEmitted = true;
         seatsToToggle.forEach(targetSeat => {
-            socketService.emit('client-chon-ghe', { seatId: targetSeat.seat_id, showtimeId, ownerToken });
+            const emitted = socketService.emit('client-chon-ghe', {
+                seatId: targetSeat.seat_id,
+                showtimeId,
+                ownerToken
+            });
+            if (!emitted) allEmitted = false;
         });
+
+        if (!allEmitted) {
+            showErrorModal(
+                'Đang kết nối',
+                'Không thể gửi yêu cầu giữ ghế. Vui lòng đợi vài giây rồi thử lại.'
+            );
+            return;
+        }
+
+        seatsToToggle.forEach(targetSeat => { registerPendingLock(targetSeat.seat_id, showtimeId); });
     }, [
         pendingSeatIds, showtimeId, getOwnerToken, isCoupleSeat, getCouplePair,
         registerPendingLock, releaseSeat, showErrorModal, closeModal, clearOwnerToken,
-        isRescheduleMode
+        isRescheduleMode, socketReady
     ]);
 
     // =========================================================
@@ -959,22 +1170,22 @@ const Booking = () => {
             return;
         }
 
-        const currentSocket = socketService.getSocket();
-        if (!currentSocket || !currentSocket.connected) {
+        if (!socketService.isConnectedStatus()) {
             showErrorModal('Socket đã ngắt kết nối', 'Phiên giữ ghế không còn hoạt động. Vui lòng tải lại trang và chọn ghế lại.');
             return;
         }
 
-        const ownerToken = ownerTokenRef.current || localStorage.getItem('bookingOwnerToken') || currentSocket.id;
+        const ownerToken = ownerTokenRef.current || localStorage.getItem('bookingOwnerToken') || socketService.getSocketId();
         if (!ownerToken) {
             showErrorModal('Không xác định được phiên giữ ghế', 'Vui lòng tải lại trang và chọn ghế lại.');
             return;
         }
 
+        const currentSocketId = socketService.getSocketId();
         const isSameUser = userIdRef.current && contextUser?.user_id &&
                           Number(userIdRef.current) === Number(contextUser.user_id);
 
-        if (!isSameUser && String(ownerToken) !== String(currentSocket.id)) {
+        if (!isSameUser && String(ownerToken) !== String(currentSocketId)) {
             showErrorModal('Phiên giữ ghế không hợp lệ', 'Socket giữ ghế đã thay đổi. Vui lòng tải lại trang và chọn ghế lại.');
             return;
         }
@@ -1053,6 +1264,24 @@ const Booking = () => {
     }
 
     // =========================================================
+    // ✅ SOCKET STATUS CLASS
+    // =========================================================
+
+    const socketStatusClass =
+        socketReady && roomJoined
+            ? 'socket-status socket-status--ready'
+            : 'socket-status socket-status--connecting';
+
+    const socketStatusText =
+        socketReady && roomJoined
+            ? 'Đã kết nối'
+            : !socketReady
+                ? 'Đang kết nối socket...'
+                : 'Đang đồng bộ phòng chiếu...';
+
+    const seatSelectionDisabled = !isRescheduleMode && (!socketReady || !roomJoined);
+
+    // =========================================================
     // RENDER
     // =========================================================
 
@@ -1071,7 +1300,14 @@ const Booking = () => {
                 </div>
                 <div className="booking-container">
                     <main className="booking-main-column">
-                        <section className="booking-section booking-showtime-section">
+                        <section
+                            className="booking-section booking-showtime-section"
+                            ref={showtimeSection.ref}
+                            onMouseMove={showtimeSection.onMouseMove}
+                            onMouseLeave={showtimeSection.onMouseLeave}
+                        >
+                            <div className="section-spotlight" />
+
                             <div className="section-heading">
                                 <div className="section-number">01</div>
                                 <div className="section-heading-content">
@@ -1110,14 +1346,18 @@ const Booking = () => {
                                 <div className={`nav-col date-slider ${!selectedCinema ? 'disabled-step' : ''}`}>
                                     <label><span>2.</span> CHỌN NGÀY</label>
                                     <div className="slider-controls">
-                                        <button type="button" className="slide-btn" onClick={() => scrollDate(-1)} disabled={!selectedCinema} aria-label="Ngày trước">
+                                        <SlideBtn
+                                            onClick={() => scrollDate(-1)}
+                                            disabled={!selectedCinema}
+                                            label="Ngày trước"
+                                        >
                                             <ChevronLeft size={18} />
-                                        </button>
+                                        </SlideBtn>
                                         <div className="scroll-list" ref={dateRef}>
                                             {availableDates.map(date => (
-                                                <div
+                                                <CompactCard
                                                     key={date}
-                                                    className={`compact-card ${selectedDate === date ? 'active' : ''}`}
+                                                    active={selectedDate === date}
                                                     onClick={() => {
                                                         if (!selectedCinema) return;
                                                         if (isRescheduleMode) return;
@@ -1131,29 +1371,38 @@ const Booking = () => {
                                                 >
                                                     <span className="day-txt">{new Date(date).toLocaleDateString('vi-VN', { weekday: 'short' })}</span>
                                                     <span className="date-txt">{new Date(date).getDate()}/{new Date(date).getMonth() + 1}</span>
-                                                </div>
+                                                </CompactCard>
                                             ))}
                                         </div>
-                                        <button type="button" className="slide-btn" onClick={() => scrollDate(1)} disabled={!selectedCinema} aria-label="Ngày sau">
+                                        <SlideBtn
+                                            onClick={() => scrollDate(1)}
+                                            disabled={!selectedCinema}
+                                            label="Ngày sau"
+                                        >
                                             <ChevronRight size={18} />
-                                        </button>
+                                        </SlideBtn>
                                     </div>
                                 </div>
                                 <div className={`nav-col time-slider ${!selectedDate ? 'disabled-step' : ''}`}>
                                     <label><span>3.</span> SUẤT CHIẾU</label>
                                     <div className="slider-controls">
-                                        <button type="button" className="slide-btn" onClick={() => scrollTime(-1)} disabled={!selectedDate} aria-label="Suất trước">
+                                        <SlideBtn
+                                            onClick={() => scrollTime(-1)}
+                                            disabled={!selectedDate}
+                                            label="Suất trước"
+                                        >
                                             <ChevronLeft size={18} />
-                                        </button>
+                                        </SlideBtn>
                                         <div className="scroll-list" ref={timeRef}>
                                             {availableShowtimes.length > 0 ? (
                                                 availableShowtimes.map(st => {
                                                     const stId = st.showtime_id || st.id;
                                                     const active = Number(selectedShowtime?.showtime_id || selectedShowtime?.id) === Number(stId);
                                                     return (
-                                                        <div
+                                                        <CompactCard
                                                             key={stId}
-                                                            className={`compact-card time-card ${active ? 'active' : ''}`}
+                                                            active={active}
+                                                            extraClass="time-card"
                                                             onClick={() => {
                                                                 if (isRescheduleMode) return;
                                                                 if (selectedSeats.length > 0 || pendingSeatIds.length > 0) {
@@ -1165,22 +1414,33 @@ const Booking = () => {
                                                         >
                                                             <span className="time-day">SUẤT</span>
                                                             <span className="time-txt">{st.start_time}</span>
-                                                        </div>
+                                                        </CompactCard>
                                                     );
                                                 })
                                             ) : (
                                                 selectedDate && <span className="no-showtimes">Hết suất</span>
                                             )}
                                         </div>
-                                        <button type="button" className="slide-btn" onClick={() => scrollTime(1)} disabled={!selectedDate} aria-label="Suất sau">
+                                        <SlideBtn
+                                            onClick={() => scrollTime(1)}
+                                            disabled={!selectedDate}
+                                            label="Suất sau"
+                                        >
                                             <ChevronRight size={18} />
-                                        </button>
+                                        </SlideBtn>
                                     </div>
                                 </div>
                             </nav>
                         </section>
 
-                        <section className="booking-section booking-seat-section">
+                        <section
+                            className="booking-section booking-seat-section"
+                            ref={seatSection.ref}
+                            onMouseMove={seatSection.onMouseMove}
+                            onMouseLeave={seatSection.onMouseLeave}
+                        >
+                            <div className="section-spotlight" />
+
                             <div className="section-heading">
                                 <div className="section-number">02</div>
                                 <div className="section-heading-content">
@@ -1194,6 +1454,25 @@ const Booking = () => {
                                 </div>
                             </div>
                             <div className="section-divider" />
+
+                            {/* ✅ SOCKET STATUS INDICATOR */}
+                            {selectedShowtime && !isRescheduleMode && (
+                                <div className={socketStatusClass}>
+                                    {socketReady && roomJoined ? (
+                                        <>
+                                            <Wifi size={14} />
+                                            <span>{socketStatusText}</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <WifiOff size={14} className="pulse-icon" />
+                                            <Loader2 size={14} className="spin-icon" />
+                                            <span>{socketStatusText}</span>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+
                             <div className="seat-selection-content">
                                 {selectedShowtime ? (
                                     loading ? (
@@ -1202,7 +1481,7 @@ const Booking = () => {
                                             <p>Đang tải sơ đồ ghế...</p>
                                         </div>
                                     ) : (
-                                        <div className="seat-map-booking">
+                                        <div className={`seat-map-booking ${seatSelectionDisabled ? 'seat-map-booking--disabled' : ''}`}>
                                             <div className="screen-header">
                                                 <div className="screen-glow" />
                                                 <div className="screen-line" />
@@ -1289,7 +1568,6 @@ const Booking = () => {
                                 grandTotal={totalTicketPrice}
                                 isTimerActive={isTimerActive}
 
-                                // ✅ THÊM 2 DÒNG NÀY
                                 isReschedule={isRescheduleMode}
                                 oldTotalAmount={oldTotalAmount}
 
@@ -1307,7 +1585,8 @@ const Booking = () => {
                                 isContinueDisabled={
                                     selectedSeats.length === 0 ||
                                     pendingSeatIds.length > 0 ||
-                                    submittingReschedule
+                                    submittingReschedule ||
+                                    (!isRescheduleMode && (!socketReady || !roomJoined))
                                 }
                                 onExpire={() => {
                                     if (isRescheduleMode) return;

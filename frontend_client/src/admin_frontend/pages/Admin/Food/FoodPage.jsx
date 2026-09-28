@@ -9,7 +9,8 @@ import {
     CircleDollarSign,
     CircleCheck,
     CircleX,
-    UtensilsCrossed
+    UtensilsCrossed,
+    Sandwich, // ⭐ MỚI: icon bánh mì
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -36,13 +37,40 @@ const initialFormData = {
     status: '1'
 };
 
+// ⭐ Danh sách category — dùng chung cho toàn bộ
+const CATEGORY_OPTIONS = [
+    { label: 'Bắp rang', value: 'Popcorn' },
+    { label: 'Nước uống', value: 'Drink' },
+    { label: 'Combo', value: 'Combo' },
+    { label: 'Snack', value: 'Snack' },
+    { label: 'Bánh mì', value: 'Break' }, // ⭐ MỚI
+    { label: 'Khác', value: 'Other' }
+];
+
+// ⭐ Map label để render trong table
+const CATEGORY_LABEL_MAP = {
+    Popcorn: 'Bắp rang',
+    Drink: 'Nước uống',
+    Combo: 'Combo',
+    Snack: 'Snack',
+    Break: 'Bánh mì', // ⭐ MỚI
+    Other: 'Khác'
+};
+
+// ⭐ Map icon cho từng category
+const CATEGORY_ICON_MAP = {
+    Popcorn: '🍿',
+    Drink: '🥤',
+    Combo: '🍱',
+    Snack: '🍟',
+    Break: '🥖', // ⭐ MỚI
+    Other: '🍽️'
+};
+
 // ==========================================================
 // COMPONENT
 // ==========================================================
 const FoodPage = () => {
-    // ------------------------------------------------------
-    // STATES
-    // ------------------------------------------------------
     const [foods, setFoods] = useState([]);
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
@@ -67,9 +95,6 @@ const FoodPage = () => {
     const [filePreviews, setFilePreviews] = useState({});
     const [formErrors, setFormErrors] = useState({});
 
-    // ======================================================
-    // ALERT MODAL (giống UserPage)
-    // ======================================================
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
@@ -100,13 +125,10 @@ const FoodPage = () => {
     };
 
     // ------------------------------------------------------
-    // FETCH FOODS - GIỐNG MoviePage
+    // FETCH FOODS
     // ------------------------------------------------------
     const fetchFoods = useCallback(async (page = 1, keyword = '') => {
-        if (isFetching.current) {
-            console.log('⏳ Đang fetch, bỏ qua lần gọi mới');
-            return;
-        }
+        if (isFetching.current) return;
 
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
@@ -128,7 +150,6 @@ const FoodPage = () => {
                 signal: controller.signal
             });
 
-            // ✅ Lấy trực tiếp từ res.data giống MoviePage
             const foodsData = res.data?.data || [];
             const paginationData = res.data?.pagination || {
                 page: 1,
@@ -142,10 +163,7 @@ const FoodPage = () => {
             setFoods(foodsData);
             setPagination(paginationData);
         } catch (error) {
-            if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
-                console.log('🛑 Request bị hủy');
-                return;
-            }
+            if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') return;
             console.error('FETCH FOODS ERROR:', error);
             setFoods([]);
             setPagination({
@@ -166,9 +184,6 @@ const FoodPage = () => {
         }
     }, []);
 
-    // ------------------------------------------------------
-    // MOUNT
-    // ------------------------------------------------------
     useEffect(() => {
         fetchFoods(1, '');
         return () => {
@@ -216,6 +231,11 @@ const FoodPage = () => {
         if (!formData.category) {
             errors.category = 'Vui lòng chọn danh mục.';
         }
+        // ⭐ Validate category mới
+        const validCategories = CATEGORY_OPTIONS.map(opt => opt.value);
+        if (formData.category && !validCategories.includes(formData.category)) {
+            errors.category = 'Danh mục không hợp lệ.';
+        }
         if (!editingFood && !foodImage) {
             errors.food_image = 'Vui lòng chọn hình ảnh sản phẩm.';
         }
@@ -258,9 +278,6 @@ const FoodPage = () => {
         setIsFormOpen(true);
     };
 
-    // ------------------------------------------------------
-    // HANDLE CLOSE FORM
-    // ------------------------------------------------------
     const handleCloseForm = () => {
         if (submitLoading) return;
         setIsFormOpen(false);
@@ -270,9 +287,6 @@ const FoodPage = () => {
         setFilePreviews({});
     };
 
-    // ------------------------------------------------------
-    // HANDLE FORM CHANGE
-    // ------------------------------------------------------
     const handleChange = (e) => {
         const { name, value, files } = e.target;
 
@@ -300,9 +314,6 @@ const FoodPage = () => {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    // ------------------------------------------------------
-    // HANDLE SUBMIT
-    // ------------------------------------------------------
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateForm()) return;
@@ -350,9 +361,6 @@ const FoodPage = () => {
         }
     };
 
-    // ------------------------------------------------------
-    // HANDLE DELETE
-    // ------------------------------------------------------
     const handleDelete = (food) => {
         showAlert(
             'Xác nhận xóa',
@@ -383,9 +391,6 @@ const FoodPage = () => {
         );
     };
 
-    // ------------------------------------------------------
-    // HELPER: FORMAT CURRENCY
-    // ------------------------------------------------------
     const formatCurrency = (amount) => {
         return Number(amount).toLocaleString('vi-VN') + 'đ';
     };
@@ -444,7 +449,10 @@ const FoodPage = () => {
             key: 'category',
             render: (row) => (
                 <span className="status-badge used" style={{ gap: '6px' }}>
-                    <Tag size={14} /> {row.category}
+                    <Tag size={14} />
+                    {/* ⭐ Hiển thị icon + label đẹp hơn */}
+                    {CATEGORY_ICON_MAP[row.category] || '📦'}{' '}
+                    {CATEGORY_LABEL_MAP[row.category] || row.category}
                 </span>
             )
         },
@@ -490,7 +498,7 @@ const FoodPage = () => {
     ];
 
     // ------------------------------------------------------
-    // FORM FIELDS
+    // FORM FIELDS — ⭐ THÊM "Bánh mì"
     // ------------------------------------------------------
     const formFields = [
         {
@@ -509,13 +517,7 @@ const FoodPage = () => {
             label: 'Danh mục',
             name: 'category',
             type: 'select',
-            options: [
-                { label: 'Bắp rang', value: 'Popcorn' },
-                { label: 'Nước uống', value: 'Drink' },
-                { label: 'Combo', value: 'Combo' },
-                { label: 'Snack', value: 'Snack' },
-                { label: 'Khác', value: 'Other' }
-            ]
+            options: CATEGORY_OPTIONS // ⭐ Dùng constant — dễ maintain
         },
         {
             label: 'Trạng thái',
@@ -564,9 +566,6 @@ const FoodPage = () => {
                 )}
             </AdminPage>
 
-            {/* ==================================================
-                FORM MODAL (giống UserPage)
-            ================================================== */}
             <AdminModal
                 open={isFormOpen}
                 onClose={handleCloseForm}
@@ -586,9 +585,6 @@ const FoodPage = () => {
                 />
             </AdminModal>
 
-            {/* ==================================================
-                ALERT / CONFIRM MODAL (giống UserPage)
-            ================================================== */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}

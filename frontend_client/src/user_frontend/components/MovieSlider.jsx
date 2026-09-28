@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Film } from "lucide-react";
 import api from "../../api/api";
 import MovieCard from "./MovieCard";
+import ScrollReveal from "./ScrollReveal";
+import MagneticButton from "./MagneticButton";   // ✅ THÊM MAGNETIC
 import "../styles/MovieSlider.css";
 
 /* ==========================================================
@@ -102,20 +104,29 @@ const MovieSlider = () => {
             </h2>
           </div>
 
-          <button
+          {/* ✅ Magnetic Button cho "Xem tất cả" */}
+          <MagneticButton
             className="btn-view-all"
             onClick={() => navigate(viewAllLink)}
+            strength={0.3}
+            radius={80}
           >
             Xem tất cả
-          </button>
+          </MagneticButton>
         </div>
 
         <div className="movie-grid">
-          {displayMovies.map((movie) => (
-            <MovieCard
+          {displayMovies.map((movie, index) => (
+            <ScrollReveal
               key={movie.movie_id}
-              movie={movie}
-            />
+              direction="up"
+              delay={0.15 + index * 0.1}
+              duration={0.7}
+              once
+            >
+              {/* ✅ MovieCard tự wrap TiltCard bên trong */}
+              <MovieCard movie={movie} index={index} />
+            </ScrollReveal>
           ))}
         </div>
       </div>

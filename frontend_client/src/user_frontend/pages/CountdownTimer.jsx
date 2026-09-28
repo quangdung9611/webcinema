@@ -52,7 +52,7 @@ const CountdownTimer = ({ onExpire }) => {
                 <TimerReset size={24} strokeWidth={2.4} />
             </div>
             <div className="countdown-content">
-                <p className="countdown-label">THỜI GIAN GIỮ GHẾ</p>
+                {/* <p className="countdown-label">THỜI GIAN GIỮ GHẾ</p> */}
                 <span className="countdown-time">{formatTime(seconds)}</span>
             </div>
         </div>

@@ -1,19 +1,17 @@
-
 /* ============================================================
-   QUANG DŨNG CINEMA
-   PROMOTION CARD — ULTRA 3D CINEMATIC
+   PROMOTION CARD — CLEAN VERSION
    ============================================================
 
-   DESIGN:
-   - Premium black / silver
-   - Deep 3D layering
-   - Smooth cinematic hover
-   - Image depth + perspective
-   - Glass reflection
-   - Silver edge highlight
-   - Floating content
-   - No excessive glow
-   ============================================================ */
+   ⚠️ LƯU Ý:
+   - File này CHỈ giữ LAYOUT + CONTENT
+   - MỌI hiệu ứng 3D → do TiltCard xử lý
+   - KHÔNG có: transform hover, reflection, silver edge, glow
+
+   Cấu trúc:
+   - Card wrapper: border, background, radius
+   - Image: 16/9 tĩnh
+   - Content: title, text, link
+============================================================ */
 
 
 /* ============================================================
@@ -22,8 +20,7 @@
 
 .promotion-card {
     --promotion-radius: var(--radius-xl, 20px);
-    --promotion-border:
-        rgba(255, 255, 255, 0.14);
+    --promotion-border: rgba(255, 255, 255, 0.14);
 
     position: relative;
 
@@ -35,25 +32,18 @@
     min-height: 100%;
 
     overflow: hidden;
-
     cursor: pointer;
-
     isolation: isolate;
 
-    border:
-        1px solid
-        var(--promotion-border);
+    border: 1px solid var(--promotion-border);
+    border-radius: var(--promotion-radius);
 
-    border-radius:
-        var(--promotion-radius);
-
-    background:
-        linear-gradient(
-            145deg,
-            rgba(255, 255, 255, 0.075) 0%,
-            rgba(255, 255, 255, 0.025) 34%,
-            rgba(7, 9, 11, 0.96) 100%
-        );
+    background: linear-gradient(
+        145deg,
+        rgba(255, 255, 255, 0.075) 0%,
+        rgba(255, 255, 255, 0.025) 34%,
+        rgba(7, 9, 11, 0.96) 100%
+    );
 
     box-shadow:
         0 8px 18px rgba(0, 0, 0, 0.20),
@@ -62,240 +52,63 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.08),
         inset 0 -1px 0 rgba(0, 0, 0, 0.45);
 
-    transform:
-        translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
 
-    transform-style:
-        preserve-3d;
-
-    will-change:
-        transform,
-        box-shadow;
-
-    backface-visibility:
-        hidden;
-
-    -webkit-font-smoothing:
-        antialiased;
-
+    /* ✅ CHỈ transition màu — KHÔNG transform */
     transition:
-        transform
-            var(--transition-slow, 0.6s cubic-bezier(0.16, 1, 0.3, 1)),
-        border-color
-            var(--transition-normal, 0.4s ease),
-        box-shadow
-            var(--transition-slow, 0.6s cubic-bezier(0.16, 1, 0.3, 1)),
-        background
-            var(--transition-normal, 0.4s ease);
+        border-color 0.4s ease,
+        background 0.4s ease;
 }
 
-
-/* ============================================================
-   02. OUTER SILVER EDGE
-   ============================================================ */
-
-.promotion-card::before {
-    content: "";
-
-    position: absolute;
-
-    inset: 0;
-
-    z-index: 10;
-
-    pointer-events: none;
-
-    border-radius:
-        inherit;
-
-    padding: 1px;
-
-    background:
-        linear-gradient(
-            135deg,
-            rgba(255, 255, 255, 0.48),
-            rgba(255, 255, 255, 0.08) 28%,
-            transparent 52%,
-            rgba(255, 255, 255, 0.13) 78%,
-            rgba(255, 255, 255, 0.28)
-        );
-
-    /*
-       Mask the center so only the edge remains.
-    */
-    -webkit-mask:
-        linear-gradient(#fff 0 0) content-box,
-        linear-gradient(#fff 0 0);
-
-    -webkit-mask-composite:
-        xor;
-
-    mask:
-        linear-gradient(#fff 0 0) content-box,
-        linear-gradient(#fff 0 0);
-
-    mask-composite:
-        exclude;
-
-    opacity:
-        0.55;
-
-    transition:
-        opacity
-        var(--transition-normal, 0.4s ease);
-}
-
-
-/* ============================================================
-   03. GLASS REFLECTION
-   ============================================================ */
-
-.promotion-card::after {
-    content: "";
-
-    position: absolute;
-
-    width: 180%;
-    height: 65%;
-
-    left: -42%;
-    top: -72%;
-
-    z-index: 11;
-
-    pointer-events: none;
-
-    background:
-        linear-gradient(
-            115deg,
-            transparent 25%,
-            rgba(255, 255, 255, 0.075) 42%,
-            rgba(255, 255, 255, 0.015) 52%,
-            transparent 66%
-        );
-
-    transform:
-        rotate(7deg);
-
-    opacity:
-        0;
-
-    transition:
-        top
-            0.9s cubic-bezier(0.16, 1, 0.3, 1),
-        opacity
-            0.45s ease;
-}
-
-
-/* ============================================================
-   04. HOVER — CARD FLOAT
-   ============================================================ */
-
+/* ✅ Hover chỉ đổi màu + border */
 .promotion-card:hover {
-    border-color:
-        rgba(255, 255, 255, 0.30);
+    border-color: rgba(255, 255, 255, 0.30);
 
-    transform:
-        translate3d(0, -10px, 0)
-        scale(1.012);
-
-    background:
-        linear-gradient(
-            145deg,
-            rgba(255, 255, 255, 0.095) 0%,
-            rgba(255, 255, 255, 0.028) 34%,
-            rgba(7, 9, 11, 0.97) 100%
-        );
-
-    box-shadow:
-        0 12px 24px rgba(0, 0, 0, 0.22),
-        0 28px 65px rgba(0, 0, 0, 0.46),
-        0 48px 100px rgba(0, 0, 0, 0.30),
-        0 0 0 1px rgba(255, 255, 255, 0.055),
-        inset 0 1px 0 rgba(255, 255, 255, 0.13);
+    background: linear-gradient(
+        145deg,
+        rgba(255, 255, 255, 0.095) 0%,
+        rgba(255, 255, 255, 0.028) 34%,
+        rgba(7, 9, 11, 0.97) 100%
+    );
 }
 
-
-.promotion-card:hover::before {
-    opacity:
-        0.95;
-}
-
-
-.promotion-card:hover::after {
-    top:
-        112%;
-
-    opacity:
-        1;
-}
-
-
-/* ============================================================
-   05. ACTIVE
-   ============================================================ */
-
+/* ✅ Active */
 .promotion-card:active {
-    transform:
-        translate3d(0, -3px, 0)
-        scale(0.995);
-
-    transition-duration:
-        0.16s;
+    border-color: rgba(255, 255, 255, 0.38);
 }
 
-
-/* ============================================================
-   06. FOCUS
-   ============================================================ */
-
+/* ✅ Focus */
 .promotion-card:focus-visible {
-    outline:
-        2px solid
-        var(--silver-light, #f4f7fa);
-
-    outline-offset:
-        5px;
+    outline: 2px solid var(--silver-light, #f4f7fa);
+    outline-offset: 5px;
 }
 
 
 /* ============================================================
-   07. IMAGE WRAPPER
+   02. IMAGE WRAPPER
    ============================================================ */
 
 .promotion-card__image {
     position: relative;
 
     width: 100%;
-
-    aspect-ratio:
-        16 / 9;
+    aspect-ratio: 16 / 9;
 
     flex-shrink: 0;
-
     overflow: hidden;
-
     isolation: isolate;
 
-    background:
-        var(--bg-secondary, #0b0d10);
-
-    transform:
-        translateZ(0);
-
-    transform-style:
-        preserve-3d;
+    background: var(--bg-secondary, #0b0d10);
 }
 
 
 /* ============================================================
-   08. IMAGE — DEPTH
+   03. IMAGE — tĩnh, không zoom hover
    ============================================================ */
 
 .promotion-card__image img {
     position: relative;
-
     z-index: 1;
 
     display: block;
@@ -304,738 +117,402 @@
     height: 100%;
 
     object-fit: cover;
-
     object-position: center;
 
-    /*
-       Normal state slightly cinematic.
-    */
     filter:
         brightness(0.82)
         contrast(1.06)
         saturate(0.78);
 
-    transform:
-        scale(1.045)
-        translateZ(0);
+    mix-blend-mode: luminosity;
 
-    transform-origin:
-        center center;
+    backface-visibility: hidden;
 
-    mix-blend-mode:
-        luminosity;
-
-    will-change:
-        transform,
-        filter;
-
-    backface-visibility:
-        hidden;
-
-    transition:
-        transform
-            1s cubic-bezier(0.16, 1, 0.3, 1),
-        filter
-            0.7s cubic-bezier(0.16, 1, 0.3, 1),
-        mix-blend-mode
-            0.7s ease;
+    transition: filter 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-
-/* ============================================================
-   09. IMAGE HOVER
-   ============================================================ */
-
-.promotion-card:hover
-.promotion-card__image img {
-    transform:
-        scale(1.105)
-        translate3d(0, -1%, 0);
-
+/* ✅ Hover chỉ đổi filter (không transform) */
+.promotion-card:hover .promotion-card__image img {
     filter:
         brightness(1.02)
         contrast(1.04)
         saturate(0.98);
 
-    mix-blend-mode:
-        normal;
+    mix-blend-mode: normal;
 }
 
 
 /* ============================================================
-   10. IMAGE INNER DEPTH
+   04. IMAGE INNER DEPTH
    ============================================================ */
 
 .promotion-card__image::before {
     content: "";
-
     position: absolute;
-
     inset: 0;
-
     z-index: 3;
-
     pointer-events: none;
 
-    background:
-        linear-gradient(
-            135deg,
-            rgba(255, 255, 255, 0.10),
-            transparent 28%,
-            transparent 72%,
-            rgba(0, 0, 0, 0.20)
-        );
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.10),
+        transparent 28%,
+        transparent 72%,
+        rgba(0, 0, 0, 0.20)
+    );
 
-    opacity:
-        0.42;
-
-    transition:
-        opacity
-        var(--transition-normal, 0.4s ease);
+    opacity: 0.42;
+    transition: opacity 0.4s ease;
 }
 
-
-.promotion-card:hover
-.promotion-card__image::before {
-    opacity:
-        0.72;
+.promotion-card:hover .promotion-card__image::before {
+    opacity: 0.72;
 }
 
 
 /* ============================================================
-   11. CINEMATIC IMAGE GRADIENT
+   05. CINEMATIC IMAGE GRADIENT
    ============================================================ */
 
 .promotion-card__gradient {
     position: absolute;
-
     inset: 0;
-
     z-index: 4;
-
     pointer-events: none;
 
-    background:
-        linear-gradient(
-            to bottom,
+    background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.02) 0%,
+        rgba(0, 0, 0, 0.02) 32%,
+        rgba(7, 8, 10, 0.12) 50%,
+        rgba(7, 8, 10, 0.60) 78%,
+        rgba(7, 8, 10, 0.94) 100%
+    );
 
-            rgba(0, 0, 0, 0.02) 0%,
-
-            rgba(0, 0, 0, 0.02) 32%,
-
-            rgba(7, 8, 10, 0.12) 50%,
-
-            rgba(7, 8, 10, 0.60) 78%,
-
-            rgba(7, 8, 10, 0.94) 100%
-        );
-
-    opacity:
-        0.95;
-
-    transition:
-        opacity
-        var(--transition-normal, 0.4s ease);
+    opacity: 0.95;
+    transition: opacity 0.4s ease;
 }
 
-
-.promotion-card:hover
-.promotion-card__gradient {
-    opacity:
-        0.82;
+.promotion-card:hover .promotion-card__gradient {
+    opacity: 0.82;
 }
 
 
 /* ============================================================
-   12. IMAGE TOP LIGHT
+   06. IMAGE TOP LIGHT
    ============================================================ */
 
 .promotion-card__image::after {
     content: "";
-
     position: absolute;
-
     left: 7%;
     right: 7%;
     top: 7%;
-
     height: 1px;
-
     z-index: 5;
-
     pointer-events: none;
 
-    background:
-        linear-gradient(
-            90deg,
-            transparent,
-            rgba(255, 255, 255, 0.34),
-            transparent
-        );
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.34),
+        transparent
+    );
 
-    opacity:
-        0.28;
-
-    transition:
-        opacity
-        var(--transition-normal, 0.4s ease);
+    opacity: 0.28;
+    transition: opacity 0.4s ease;
 }
 
-
-.promotion-card:hover
-.promotion-card__image::after {
-    opacity:
-        0.65;
+.promotion-card:hover .promotion-card__image::after {
+    opacity: 0.65;
 }
 
 
 /* ============================================================
-   13. CONTENT AREA
+   07. CONTENT AREA
    ============================================================ */
 
 .promotion-card__content {
     position: relative;
-
     z-index: 8;
-
     display: flex;
-
     flex-direction: column;
-
     justify-content: space-between;
-
     flex: 1;
-
     min-height: 0;
 
-    padding:
-        var(--space-xl, 32px);
+    padding: var(--space-xl, 32px);
 
-    /*
-       Slight depth separation.
-    */
-    background:
-        linear-gradient(
-            180deg,
-            rgba(16, 18, 21, 0.88),
-            rgba(8, 10, 12, 0.97)
-        );
+    background: linear-gradient(
+        180deg,
+        rgba(16, 18, 21, 0.88),
+        rgba(8, 10, 12, 0.97)
+    );
 
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.055);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055);
 
     transition:
-        background
-            var(--transition-normal, 0.4s ease),
-        box-shadow
-            var(--transition-normal, 0.4s ease);
+        background 0.4s ease,
+        box-shadow 0.4s ease;
 }
 
+.promotion-card:hover .promotion-card__content {
+    background: linear-gradient(
+        180deg,
+        rgba(22, 25, 29, 0.94),
+        rgba(8, 10, 12, 0.98)
+    );
 
-.promotion-card:hover
-.promotion-card__content {
-    background:
-        linear-gradient(
-            180deg,
-            rgba(22, 25, 29, 0.94),
-            rgba(8, 10, 12, 0.98)
-        );
-
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.09);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09);
 }
 
 
 /* ============================================================
-   14. CONTENT BODY
+   08. CONTENT BODY
    ============================================================ */
 
 .promotion-card__body {
     display: flex;
-
     flex-direction: column;
-
     min-height: 0;
-
-    margin-bottom:
-        var(--space-md, 16px);
-
+    margin-bottom: var(--space-md, 16px);
     overflow: hidden;
 }
 
 
 /* ============================================================
-   15. TITLE
+   09. TITLE
    ============================================================ */
 
 .promotion-card__title {
     position: relative;
+    margin: 0 0 var(--space-sm, 8px);
 
-    margin:
-        0 0
-        var(--space-sm, 8px);
+    color: var(--text-heading, #f4f6f8);
+    font-family: var(--font-primary, "Inter"), sans-serif;
+    font-size: var(--font-size-h3, 1.65rem);
+    font-weight: var(--fw-bold, 700);
+    line-height: 1.25;
+    letter-spacing: -0.015em;
 
-    color:
-        var(--text-heading, #f4f6f8);
+    overflow-wrap: anywhere;
+    word-break: break-word;
 
-    font-family:
-        var(--font-primary, "Inter"),
-        sans-serif;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
 
-    font-size:
-        var(--font-size-h3, 1.65rem);
-
-    font-weight:
-        var(--fw-bold, 700);
-
-    line-height:
-        1.25;
-
-    letter-spacing:
-        -0.015em;
-
-    overflow-wrap:
-        anywhere;
-
-    word-break:
-        break-word;
-
-    display:
-        -webkit-box;
-
-    -webkit-box-orient:
-        vertical;
-
-    -webkit-line-clamp:
-        2;
-
-    overflow:
-        hidden;
-
-    text-overflow:
-        ellipsis;
-
-    transform:
-        translateZ(12px);
-
-    transition:
-        color
-            var(--transition-normal, 0.4s ease),
-        text-shadow
-            var(--transition-normal, 0.4s ease),
-        transform
-            var(--transition-normal, 0.4s ease);
+    transition: color 0.35s ease;
 }
 
-
-.promotion-card:hover
-.promotion-card__title {
-    color:
-        var(--silver-light, #f4f7fa);
-
-    text-shadow:
-        0 0 20px
-        rgba(244, 246, 248, 0.10);
-
-    transform:
-        translate3d(0, -2px, 12px);
+.promotion-card:hover .promotion-card__title {
+    color: var(--silver-light, #f4f7fa);
 }
 
 
 /* ============================================================
-   16. DESCRIPTION
+   10. DESCRIPTION
    ============================================================ */
 
 .promotion-card__text {
-    margin:
-        0;
+    margin: 0;
 
-    color:
-        var(--text-secondary, #9ea8b3);
+    color: var(--text-secondary, #9ea8b3);
+    font-family: var(--font-primary, "Inter"), sans-serif;
+    font-size: var(--font-size-h6, 0.875rem);
+    font-weight: var(--fw-regular, 400);
+    line-height: 1.65;
 
-    font-family:
-        var(--font-primary, "Inter"),
-        sans-serif;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
 
-    font-size:
-        var(--font-size-h6, 0.875rem);
-
-    font-weight:
-        var(--fw-regular, 400);
-
-    line-height:
-        1.65;
-
-    display:
-        -webkit-box;
-
-    -webkit-box-orient:
-        vertical;
-
-    -webkit-line-clamp:
-        2;
-
-    overflow:
-        hidden;
-
-    text-overflow:
-        ellipsis;
-
-    transition:
-        color
-            var(--transition-normal, 0.4s ease);
+    transition: color 0.35s ease;
 }
 
-
-.promotion-card:hover
-.promotion-card__text {
-    color:
-        var(--text-body, #d9dde2);
+.promotion-card:hover .promotion-card__text {
+    color: var(--text-body, #d9dde2);
 }
 
 
 /* ============================================================
-   17. LINK
+   11. LINK
    ============================================================ */
 
 .promotion-card__link {
     position: relative;
-
     display: inline-flex;
-
     align-items: center;
-
-    gap:
-        var(--space-sm, 8px);
-
-    width:
-        fit-content;
-
+    gap: var(--space-sm, 8px);
+    width: fit-content;
     flex-shrink: 0;
 
-    color:
-        var(--silver-primary, #dde2e8);
+    color: var(--silver-primary, #dde2e8);
+    font-family: var(--font-primary, "Inter"), sans-serif;
+    font-size: var(--font-size-h6, 0.875rem);
+    font-weight: var(--fw-bold, 700);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
 
-    font-family:
-        var(--font-primary, "Inter"),
-        sans-serif;
-
-    font-size:
-        var(--font-size-h6, 0.875rem);
-
-    font-weight:
-        var(--fw-bold, 700);
-
-    letter-spacing:
-        0.16em;
-
-    text-transform:
-        uppercase;
-
-    text-decoration:
-        none;
-
-    cursor:
-        pointer;
-
-    transform:
-        translateZ(16px);
-
-    transition:
-        color
-            var(--transition-normal, 0.4s ease),
-        transform
-            var(--transition-normal, 0.4s ease);
+    transition: color 0.35s ease;
 }
-
-
-/* Underline */
 
 .promotion-card__link::after {
     content: "";
-
     position: absolute;
-
     left: 0;
     bottom: -6px;
-
     width: 0;
     height: 1px;
 
-    background:
-        linear-gradient(
-            90deg,
-            var(--silver-light, #f4f7fa),
-            transparent
-        );
+    background: linear-gradient(
+        90deg,
+        var(--silver-light, #f4f7fa),
+        transparent
+    );
 
-    transition:
-        width
-        0.45s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: width 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-
-.promotion-card:hover
-.promotion-card__link {
-    color:
-        var(--silver-light, #f4f7fa);
-
-    transform:
-        translate3d(0, -2px, 16px);
+.promotion-card:hover .promotion-card__link {
+    color: var(--silver-light, #f4f7fa);
 }
 
-
-.promotion-card:hover
-.promotion-card__link::after {
-    width:
-        100%;
+.promotion-card:hover .promotion-card__link::after {
+    width: 100%;
 }
 
 
 /* ============================================================
-   18. LINK ICON
+   12. LINK ICON
    ============================================================ */
 
 .promotion-card__link-icon {
-    width:
-        16px;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
 
-    height:
-        16px;
-
-    flex-shrink:
-        0;
-
-    transition:
-        transform
-        0.45s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-
-.promotion-card__link:hover
-.promotion-card__link-icon,
-.promotion-card:hover
-.promotion-card__link-icon {
-    transform:
-        translate3d(4px, -4px, 0);
+.promotion-card__link:hover .promotion-card__link-icon,
+.promotion-card:hover .promotion-card__link-icon {
+    transform: translate3d(4px, -4px, 0);
 }
 
 
 /* ============================================================
-   19. CARD INDEX STAGGER
+   13. CARD INDEX STAGGER — fade in (không transform)
    ============================================================ */
 
 .promotion-card.card-animated {
-    animation:
-        promotionCardReveal
-        0.8s
-        cubic-bezier(0.16, 1, 0.3, 1)
-        both;
-
-    animation-delay:
-        calc(
-            var(--card-index, 0) * 90ms
-        );
+    animation: promotionCardFadeIn 0.8s ease-out both;
+    animation-delay: calc(var(--card-index, 0) * 90ms);
 }
 
-
-@keyframes promotionCardReveal {
-
+@keyframes promotionCardFadeIn {
     from {
         opacity: 0;
-
-        transform:
-            translate3d(0, 25px, 0)
-            scale(0.985);
     }
-
     to {
         opacity: 1;
-
-        transform:
-            translate3d(0, 0, 0)
-            scale(1);
     }
 }
 
 
 /* ============================================================
-   20. RESPONSIVE — 1200
+   14. RESPONSIVE — 1200
    ============================================================ */
 
 @media (max-width: 1200px) {
-
     .promotion-card {
-        --promotion-radius:
-            var(--radius-lg, 16px);
+        --promotion-radius: var(--radius-lg, 16px);
     }
-
     .promotion-card__content {
-        padding:
-            var(--space-lg, 24px);
+        padding: var(--space-lg, 24px);
     }
-
     .promotion-card__title {
-        font-size:
-            var(--font-size-h4, 1.125rem);
+        font-size: var(--font-size-h4, 1.125rem);
     }
 }
 
 
 /* ============================================================
-   21. RESPONSIVE — 992
+   15. RESPONSIVE — 992
    ============================================================ */
 
 @media (max-width: 992px) {
-
-    .promotion-card:hover {
-        transform:
-            translate3d(0, -7px, 0)
-            scale(1.008);
-    }
-
     .promotion-card__content {
-        padding:
-            var(--space-lg, 24px);
+        padding: var(--space-lg, 24px);
     }
-
     .promotion-card__title {
-        font-size:
-            var(--font-size-h4, 1.125rem);
+        font-size: var(--font-size-h4, 1.125rem);
     }
-
     .promotion-card__text {
-        font-size:
-            var(--font-size-h6, 0.875rem);
+        font-size: var(--font-size-h6, 0.875rem);
     }
 }
 
 
 /* ============================================================
-   22. RESPONSIVE — 768
+   16. RESPONSIVE — 768
    ============================================================ */
 
 @media (max-width: 768px) {
-
     .promotion-card {
-        --promotion-radius:
-            var(--radius-lg, 16px);
+        --promotion-radius: var(--radius-lg, 16px);
     }
-
-    .promotion-card:hover {
-        transform:
-            translate3d(0, -5px, 0)
-            scale(1.005);
-    }
-
-    .promotion-card__image img {
-        transform:
-            scale(1.025);
-    }
-
-    .promotion-card:hover
-    .promotion-card__image img {
-        transform:
-            scale(1.065);
-    }
-
     .promotion-card__content {
-        padding:
-            var(--space-md, 16px);
+        padding: var(--space-md, 16px);
     }
-
     .promotion-card__title {
-        font-size:
-            var(--font-size-h4, 1.125rem);
+        font-size: var(--font-size-h4, 1.125rem);
     }
-
     .promotion-card__text {
-        -webkit-line-clamp:
-            2;
+        -webkit-line-clamp: 2;
     }
-
     .promotion-card__link {
-        font-size:
-            0.72rem;
-
-        letter-spacing:
-            0.13em;
+        font-size: 0.72rem;
+        letter-spacing: 0.13em;
     }
 }
 
 
 /* ============================================================
-   23. RESPONSIVE — 480
+   17. RESPONSIVE — 480
    ============================================================ */
 
 @media (max-width: 480px) {
-
     .promotion-card {
-        --promotion-radius:
-            var(--radius-md, 12px);
+        --promotion-radius: var(--radius-md, 12px);
     }
-
     .promotion-card__content {
-        padding:
-            var(--space-md, 16px);
+        padding: var(--space-md, 16px);
     }
-
     .promotion-card__title {
-        font-size:
-            var(--font-size-h5, 1rem);
-
-        line-height:
-            1.3;
+        font-size: var(--font-size-h5, 1rem);
+        line-height: 1.3;
     }
-
     .promotion-card__text {
-        font-size:
-            0.78rem;
-
-        line-height:
-            1.55;
+        font-size: 0.78rem;
+        line-height: 1.55;
     }
-
     .promotion-card__link {
-        font-size:
-            0.66rem;
+        font-size: 0.66rem;
     }
 }
 
 
 /* ============================================================
-   25. TOUCH DEVICES
+   18. TOUCH DEVICES
    ============================================================ */
 
 @media (hover: none) {
-
-    .promotion-card:hover {
-        transform:
-            none;
-
-        box-shadow:
-            0 8px 18px rgba(0, 0, 0, 0.20),
-            0 18px 45px rgba(0, 0, 0, 0.30),
-            inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    }
-
-    .promotion-card:hover
-    .promotion-card__image img {
-        transform:
-            scale(1.045);
-    }
-
-    .promotion-card:hover
-    .promotion-card__title,
-    .promotion-card:hover
-    .promotion-card__link {
-        transform:
-            none;
-    }
-
-    .promotion-card::after {
-        display:
-            none;
-    }
+    /* Không cần gì — không có transform hover */
 }
-
