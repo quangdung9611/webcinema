@@ -1,263 +1,131 @@
 /* ============================================================
    QUANG DŨNG CINEMA
-   SCROLL REVEAL — CINEMATIC 3D v5 (SMOOTH OPTIMIZED)
+   SCROLL REVEAL — PREMIUM ZEPHYR STYLE
    ============================================================
-   NGUYÊN TẮC TỐI ƯU:
-   1. Chỉ dùng transform + opacity (GPU-friendly)
-   2. Blur dùng overlay giả (pseudo backdrop), không filter
-   3. Không animate filter, box-shadow, background
-   4. perspective cố định, không đổi theo direction
-   5. contain: layout style paint → cách ly repaint
-   ============================================================ */
+
+   NGUYÊN TẮC:
+
+   1. CHỈ opacity + translateY
+   2. KHÔNG blur
+   3. KHÔNG scale
+   4. KHÔNG 3D
+   5. KHÔNG perspective
+   6. KHÔNG rotate
+   7. KHÔNG will-change
+   8. KHÔNG translateZ
+   9. Reveal xong → transform: none
+
+   Mục tiêu:
+
+   "Người dùng không nên nhận ra animation đang chạy."
+
+   Nội dung chỉ nhẹ nhàng xuất hiện khi tiến vào viewport.
+============================================================ */
+
 
 /* ============================================================
    ROOT
 ============================================================ */
 
 .scroll-reveal {
-  position: relative;
-  width: 100%;
+    position: relative;
+    width: 100%;
 
-  /* ⭐ Cách ly paint — cực quan trọng để không giật */
-  contain: layout style;
+    /*
+     * Chỉ animate 2 thuộc tính:
+     * opacity
+     * transform
+     */
+    transition:
+        opacity var(--reveal-duration, 0.8s)
+            cubic-bezier(0.16, 1, 0.3, 1)
+            var(--reveal-delay, 0s),
 
-  /* GPU layer */
-  transform: translateZ(0);
-  backface-visibility: hidden;
-
-  isolation: isolate;
+        transform var(--reveal-duration, 0.8s)
+            cubic-bezier(0.16, 1, 0.3, 1)
+            var(--reveal-delay, 0s);
 }
 
+
 /* ============================================================
-   CONTENT
+   HIDDEN — UP
+   Nội dung bắt đầu thấp hơn vị trí thật một khoảng nhỏ.
 ============================================================ */
 
-.scroll-reveal__content {
-  position: relative;
-  width: 100%;
-  z-index: 3;
-  pointer-events: auto;
+.scroll-reveal--up {
+    opacity: 0;
+    transform: translateY(var(--reveal-distance, 28px));
 }
 
+
 /* ============================================================
-   BLUR OVERLAY — thay cho filter: blur()
-   Chỉ animate opacity → siêu mượt
+   HIDDEN — DOWN
+   Giữ lại để tương thích API cũ.
 ============================================================ */
 
-.scroll-reveal__blur {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-
-  border-radius: inherit;
-
-  /* Dùng radial-gradient mờ giả blur — không tốn GPU filter */
-  background: radial-gradient(
-    ellipse at center,
-    rgba(10, 10, 15, 0.35) 0%,
-    rgba(10, 10, 15, 0.2) 50%,
-    transparent 80%
-  );
-
-  opacity: 1;
-  transition: opacity 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  will-change: opacity;
+.scroll-reveal--down {
+    opacity: 0;
+    transform: translateY(
+        calc(var(--reveal-distance, 28px) * -1)
+    );
 }
 
-.scroll-reveal--visible .scroll-reveal__blur {
-  opacity: 0;
-}
 
 /* ============================================================
-   EDGE HIGHLIGHT — viền bạc tinh tế
+   HIDDEN — FADE
+   Không di chuyển.
 ============================================================ */
 
-.scroll-reveal__edge {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  border-radius: inherit;
-
-  opacity: 0;
-
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.14),
-    transparent 30%,
-    transparent 70%,
-    rgba(221, 226, 232, 0.1)
-  );
-
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-
-  padding: 1px;
-
-  transition: opacity 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+.scroll-reveal--fade {
+    opacity: 0;
+    transform: translateY(0);
 }
 
-.scroll-reveal--visible .scroll-reveal__edge {
-  opacity: 1;
-}
-
-.scroll-reveal--done .scroll-reveal__edge {
-  opacity: 0.4;
-}
 
 /* ============================================================
-   PERSPECTIVE — CỐ ĐỊNH, không đổi theo direction
+   VISIBLE
+   Sau khi reveal:
+
+   - opacity = 1
+   - transform = none
+
+   Không để lại transform sau animation.
 ============================================================ */
 
-.scroll-reveal--perspective {
-  perspective: 1000px;
-  perspective-origin: 50% 50%; /* ⭐ cố định — mượt hơn */
-  transform-style: preserve-3d;
+.scroll-reveal--visible {
+    opacity: 1;
+    transform: none;
 }
 
-.scroll-reveal--flat {
-  perspective: none;
-  transform-style: flat;
-}
 
 /* ============================================================
-   3D / 2D MODE
-============================================================ */
-
-.scroll-reveal--3d .scroll-reveal__content {
-  transform-style: preserve-3d;
-}
-
-.scroll-reveal--2d .scroll-reveal__content {
-  transform-style: flat;
-}
-
-/* ============================================================
-   INTENSITY
-============================================================ */
-
-.scroll-reveal--soft {
-  --reveal-shadow-alpha: 0.04;
-}
-
-.scroll-reveal--medium {
-  --reveal-shadow-alpha: 0.06;
-}
-
-.scroll-reveal--strong {
-  --reveal-shadow-alpha: 0.09;
-}
-
-/* ============================================================
-   GLOW — dùng radial-gradient + opacity (KHÔNG filter)
-============================================================ */
-
-.scroll-reveal--glow::after {
-  content: "";
-  position: absolute;
-  inset: 8% 12%;
-  z-index: 0;
-  pointer-events: none;
-  border-radius: inherit;
-
-  background: radial-gradient(
-    ellipse at center,
-    rgba(221, 226, 232, var(--reveal-shadow-alpha, 0.06)),
-    transparent 70%
-  );
-
-  opacity: 0;
-  transform: scale(0.92);
-
-  transition:
-    opacity 1.1s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    transform 1.1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-
-  will-change: opacity, transform;
-}
-
-.scroll-reveal--visible.scroll-reveal--glow::after {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.scroll-reveal--done.scroll-reveal--glow::after {
-  opacity: 0.45;
-  will-change: auto; /* ⭐ giải phóng GPU sau khi xong */
-}
-
-/* ============================================================
-   HOVER
-============================================================ */
-
-.scroll-reveal--done:hover .scroll-reveal__edge {
-  opacity: 0.72;
-  transition-duration: 0.4s;
-}
-
-/* ============================================================
-   GPU OPTIMIZATION
-============================================================ */
-
-.scroll-reveal,
-.scroll-reveal__content,
-.scroll-reveal__edge,
-.scroll-reveal__blur {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* ============================================================
-   REDUCE MOTION — cho user bật "giảm hiệu ứng"
-============================================================ */
-/* 
-@media (prefers-reduced-motion: reduce) {
-  .scroll-reveal,
-  .scroll-reveal * {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-  }
-
-  .scroll-reveal__blur {
-    display: none;
-  }
-} */
-
-/* ============================================================
-   MOBILE — giảm perspective, tắt glow
+   MOBILE
+   Giảm khoảng cách chuyển động.
 ============================================================ */
 
 @media (max-width: 768px) {
-  .scroll-reveal--perspective {
-    perspective: 700px;
-  }
-
-  .scroll-reveal--glow::after {
-    display: none; /* ⭐ tắt glow trên mobile cho mượt */
-  }
-
-  .scroll-reveal__blur {
-    background: radial-gradient(
-      ellipse at center,
-      rgba(10, 10, 15, 0.25) 0%,
-      transparent 75%
-    );
-  }
+    .scroll-reveal {
+        --reveal-distance: 24px;
+    }
 }
+
 
 /* ============================================================
-   TABLET — giảm nhẹ
-============================================================ */
+   REDUCED MOTION
+   Hỗ trợ accessibility.
 
-@media (min-width: 769px) and (max-width: 1024px) {
-  .scroll-reveal--perspective {
-    perspective: 850px;
-  }
-}
+   Nếu người dùng bật Reduce Motion:
+   → không chạy chuyển động.
+============================================================ */
+/* 
+@media (prefers-reduced-motion: reduce) {
+    .scroll-reveal {
+        transition: opacity 0.01s linear;
+    }
+
+    .scroll-reveal--up,
+    .scroll-reveal--down,
+    .scroll-reveal--fade {
+        transform: none;
+    }
+} */

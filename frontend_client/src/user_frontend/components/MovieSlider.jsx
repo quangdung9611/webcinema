@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Film } from "lucide-react";
 import api from "../../api/api";
 import MovieCard from "./MovieCard";
-import ScrollReveal from "./ScrollReveal";
-import MagneticButton from "./MagneticButton";   // ✅ THÊM MAGNETIC
+import MagneticButton from "./MagneticButton";
 import "../styles/MovieSlider.css";
 
 /* ==========================================================
@@ -117,16 +116,12 @@ const MovieSlider = () => {
 
         <div className="movie-grid">
           {displayMovies.map((movie, index) => (
-            <ScrollReveal
+            /* ✅ BỎ ScrollReveal — render trực tiếp */
+            <MovieCard
               key={movie.movie_id}
-              direction="up"
-              delay={0.15 + index * 0.1}
-              duration={0.7}
-              once
-            >
-              {/* ✅ MovieCard tự wrap TiltCard bên trong */}
-              <MovieCard movie={movie} index={index} />
-            </ScrollReveal>
+              movie={movie}
+              index={index}
+            />
           ))}
         </div>
       </div>
@@ -139,7 +134,6 @@ const MovieSlider = () => {
   return (
     <div className="movie-slider-page">
       {/* Tabs thể loại */}
-
       <div className="genre-tabs">
         <button
           className={`genre-tab ${activeGenre === "" ? "active" : ""}`}
@@ -162,7 +156,6 @@ const MovieSlider = () => {
       </div>
 
       {/* Nội dung phim */}
-
       <div className="movie-slider-content">
         {loading ? (
           <div className="loading-movies">Đang tải phim...</div>

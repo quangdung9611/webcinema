@@ -1,4 +1,3 @@
-
 import React, {
     useMemo,
     useState,
@@ -15,7 +14,7 @@ import {
     IMAGE_SIZES
 } from "../../utils/imageHelper";
 
-import TiltCard from "./TiltCard";
+// ❌ ĐÃ XÓA: import TiltCard from "./TiltCard";
 import MovieRevealTransition from "./MovieRevealTransition";
 
 import "../styles/MovieHorizontalCard.css";
@@ -34,7 +33,6 @@ import "../styles/MovieHorizontalCard.css";
    - Backdrop ngang 3:2
 
    Giữ nguyên:
-   - TiltCard
    - Hover
    - Border glow
    - Sparkles
@@ -439,273 +437,264 @@ const MovieHorizontalCard = React.memo(({
 
     return (
         <>
-            <TiltCard
-                maxTilt={10}
-                scale={1.035}
-                perspective={1200}
-                glare={true}
-                shadow={true}
-                edgeHighlight={true}
+            {/* ❌ ĐÃ XÓA TiltCard — render trực tiếp div */}
+
+            <div
+                ref={cardRef}
+
+                className={[
+                    "film-horizontal-card",
+
+                    isHover
+                        ? "film-horizontal-card--hover"
+                        : "",
+
+                    isOpening
+                        ? "film-horizontal-card--opening"
+                        : "",
+
+                    isVisible
+                        ? "film-horizontal-card--visible"
+                        : ""
+                ]
+                    .filter(Boolean)
+                    .join(" ")}
+
+                style={{
+                    "--card-index": index
+                }}
+
+                onMouseEnter={
+                    handleMouseEnter
+                }
+
+                onMouseLeave={
+                    handleMouseLeave
+                }
+
+                onKeyDown={
+                    handleKeyDown
+                }
+
+                role="button"
+                tabIndex={0}
+
+                aria-label={
+                    `Xem chi tiết ${movieData.title}`
+                }
             >
 
-                <div
-                    ref={cardRef}
-
-                    className={[
-                        "film-horizontal-card",
-
-                        isHover
-                            ? "film-horizontal-card--hover"
-                            : "",
-
-                        isOpening
-                            ? "film-horizontal-card--opening"
-                            : "",
-
-                        isVisible
-                            ? "film-horizontal-card--visible"
-                            : ""
-                    ]
-                        .filter(Boolean)
-                        .join(" ")}
-
-                    style={{
-                        "--card-index": index
-                    }}
-
-                    onMouseEnter={
-                        handleMouseEnter
-                    }
-
-                    onMouseLeave={
-                        handleMouseLeave
-                    }
-
-                    onKeyDown={
-                        handleKeyDown
-                    }
-
-                    role="button"
-                    tabIndex={0}
-
-                    aria-label={
-                        `Xem chi tiết ${movieData.title}`
-                    }
-                >
-
-                    <div className="film-horizontal-card__inner">
+                <div className="film-horizontal-card__inner">
 
 
-                        {/* ==================================================
-                            BORDER GLOW
-                        ================================================== */}
+                    {/* ==================================================
+                        BORDER GLOW
+                    ================================================== */}
 
-                        <div className="film-horizontal-card__border-glow" />
+                    <div className="film-horizontal-card__border-glow" />
 
 
-                        {/* ==================================================
-                            SPARKLES
-                        ================================================== */}
+                    {/* ==================================================
+                        SPARKLES
+                    ================================================== */}
 
-                        <div className="film-horizontal-card__sparkles">
+                    <div className="film-horizontal-card__sparkles">
 
-                            <span className="sparkle s1" />
-                            <span className="sparkle s2" />
-                            <span className="sparkle s3" />
-                            <span className="sparkle s4" />
-                            <span className="sparkle s5" />
+                        <span className="sparkle s1" />
+                        <span className="sparkle s2" />
+                        <span className="sparkle s3" />
+                        <span className="sparkle s4" />
+                        <span className="sparkle s5" />
+
+                    </div>
+
+
+                    {/* ==================================================
+                        BACKDROP 3:2
+                    ================================================== */}
+
+                    <div
+                        className="film-horizontal-card__poster"
+
+                        onClick={
+                            handleCardClick
+                        }
+                    >
+
+                        {imageUrl ? (
+
+                            <img
+                                src={imageUrl}
+
+                                alt={
+                                    movieData.title
+                                }
+
+                                loading="lazy"
+
+                                decoding="async"
+
+                                width="600"
+
+                                height="400"
+
+                                draggable={false}
+                            />
+
+                        ) : (
+
+                            <div className="film-horizontal-card__no-poster" />
+
+                        )}
+
+
+                        {/* Depth */}
+
+                        <div className="film-horizontal-card__depth-overlay" />
+
+
+                        {/* Bottom cinematic gradient */}
+
+                        <div className="film-horizontal-card__cinematic-gradient" />
+
+
+                        {/* Age */}
+
+                        <div className="film-horizontal-card__age">
+
+                            {movieData.ageRating}
 
                         </div>
 
 
-                        {/* ==================================================
-                            BACKDROP 3:2
-                        ================================================== */}
+                        {/* Hot */}
 
-                        <div
-                            className="film-horizontal-card__poster"
+                        {movieData.isHot && (
+
+                            <div className="film-horizontal-card__badge hot">
+
+                                🔥 Hot
+
+                            </div>
+
+                        )}
+
+
+                        {/* New */}
+
+                        {movieData.isNew &&
+                            !movieData.isHot && (
+
+                                <div className="film-horizontal-card__badge new">
+
+                                    ✨ Mới
+
+                                </div>
+
+                            )}
+
+                    </div>
+
+
+                    {/* ==================================================
+                        INFO
+                    ================================================== */}
+
+                    <div className="film-horizontal-card__info">
+
+
+                        <h3
+                            className="film-horizontal-card__title"
 
                             onClick={
                                 handleCardClick
                             }
                         >
 
-                            {imageUrl ? (
+                            {movieData.title}
 
-                                <img
-                                    src={imageUrl}
-
-                                    alt={
-                                        movieData.title
-                                    }
-
-                                    loading="lazy"
-
-                                    decoding="async"
-
-                                    width="600"
-
-                                    height="400"
-
-                                    draggable={false}
-                                />
-
-                            ) : (
-
-                                <div className="film-horizontal-card__no-poster" />
-
-                            )}
+                        </h3>
 
 
-                            {/* Depth */}
+                        {subtitle && (
 
-                            <div className="film-horizontal-card__depth-overlay" />
+                            <div className="film-horizontal-card__subtitle">
 
-
-                            {/* Bottom cinematic gradient */}
-
-                            <div className="film-horizontal-card__cinematic-gradient" />
-
-
-                            {/* Age */}
-
-                            <div className="film-horizontal-card__age">
-
-                                {movieData.ageRating}
+                                <span>
+                                    {subtitle}
+                                </span>
 
                             </div>
 
-
-                            {/* Hot */}
-
-                            {movieData.isHot && (
-
-                                <div className="film-horizontal-card__badge hot">
-
-                                    🔥 Hot
-
-                                </div>
-
-                            )}
-
-
-                            {/* New */}
-
-                            {movieData.isNew &&
-                                !movieData.isHot && (
-
-                                    <div className="film-horizontal-card__badge new">
-
-                                        ✨ Mới
-
-                                    </div>
-
-                                )}
-
-                        </div>
+                        )}
 
 
                         {/* ==================================================
-                            INFO
+                            ACTIONS
                         ================================================== */}
 
-                        <div className="film-horizontal-card__info">
+                        <div className="film-horizontal-card__actions">
 
 
-                            <h3
-                                className="film-horizontal-card__title"
+                            <button
+                                type="button"
+
+                                className={[
+                                    "film-horizontal-card__action-btn",
+                                    "btn-detail"
+                                ].join(" ")}
 
                                 onClick={
-                                    handleCardClick
+                                    handleDetailClick
+                                }
+
+                                disabled={
+                                    isOpening
+                                }
+
+                                aria-label={
+                                    `Xem chi tiết ${movieData.title}`
                                 }
                             >
 
-                                {movieData.title}
+                                <Info size={16} />
 
-                            </h3>
+                                <span>
+                                    Xem chi tiết
+                                </span>
 
-
-                            {subtitle && (
-
-                                <div className="film-horizontal-card__subtitle">
-
-                                    <span>
-                                        {subtitle}
-                                    </span>
-
-                                </div>
-
-                            )}
+                            </button>
 
 
-                            {/* ==================================================
-                                ACTIONS
-                            ================================================== */}
+                            <button
+                                type="button"
 
-                            <div className="film-horizontal-card__actions">
+                                className={[
+                                    "film-horizontal-card__action-btn",
+                                    "btn-booking"
+                                ].join(" ")}
 
+                                onClick={
+                                    handleBookingClick
+                                }
 
-                                <button
-                                    type="button"
+                                disabled={
+                                    isOpening
+                                }
 
-                                    className={[
-                                        "film-horizontal-card__action-btn",
-                                        "btn-detail"
-                                    ].join(" ")}
+                                aria-label={
+                                    `Đặt vé ${movieData.title}`
+                                }
+                            >
 
-                                    onClick={
-                                        handleDetailClick
-                                    }
+                                <Ticket size={16} />
 
-                                    disabled={
-                                        isOpening
-                                    }
+                                <span>
+                                    Đặt vé
+                                </span>
 
-                                    aria-label={
-                                        `Xem chi tiết ${movieData.title}`
-                                    }
-                                >
+                            </button>
 
-                                    <Info size={16} />
-
-                                    <span>
-                                        Xem chi tiết
-                                    </span>
-
-                                </button>
-
-
-                                <button
-                                    type="button"
-
-                                    className={[
-                                        "film-horizontal-card__action-btn",
-                                        "btn-booking"
-                                    ].join(" ")}
-
-                                    onClick={
-                                        handleBookingClick
-                                    }
-
-                                    disabled={
-                                        isOpening
-                                    }
-
-                                    aria-label={
-                                        `Đặt vé ${movieData.title}`
-                                    }
-                                >
-
-                                    <Ticket size={16} />
-
-                                    <span>
-                                        Đặt vé
-                                    </span>
-
-                                </button>
-
-
-                            </div>
 
                         </div>
 
@@ -713,7 +702,7 @@ const MovieHorizontalCard = React.memo(({
 
                 </div>
 
-            </TiltCard>
+            </div>
 
 
             {/* ============================================================
@@ -762,4 +751,3 @@ MovieHorizontalCard.displayName =
 
 
 export default MovieHorizontalCard;
-

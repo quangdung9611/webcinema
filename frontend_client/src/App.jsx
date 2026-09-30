@@ -60,6 +60,12 @@ import LazyErrorBoundary from "./user_frontend/components/LazyErrorBoundary";
 import NetworkErrorPage from "./user_frontend/components/NetworkErrorPage";
 
 // ============================================================
+// PAGE TRANSITION
+// ============================================================
+
+import PageTransition from "./user_frontend/components/PageTransition";
+
+// ============================================================
 // LAYOUTS
 // ============================================================
 
@@ -71,6 +77,16 @@ import AdminLayout from "./admin_frontend/layouts/AdminLayout";
 // ============================================================
 
 axios.defaults.withCredentials = true;
+
+// ============================================================
+// ADMIN DOMAIN HELPER
+// ============================================================
+
+const ADMIN_HOSTNAME = "admin.quangdungcinema.id.vn";
+
+const checkIsAdminDomain = () =>
+    typeof window !== "undefined" &&
+    window.location.hostname === ADMIN_HOSTNAME;
 
 // ============================================================
 // LAZY LOAD RETRY HELPER
@@ -662,18 +678,27 @@ const ScrollToTop = () => {
     const { pathname } = useLocation();
 
     useEffect(() => {
-        window.history.scrollRestoration = "manual";
+        if (
+            typeof window !== "undefined" &&
+            "scrollRestoration" in window.history
+        ) {
+            window.history.scrollRestoration = "manual";
+        }
+    }, []);
 
+    useEffect(() => {
         if (window.__lenis) {
             window.__lenis.scrollTo(0, {
                 immediate: true,
             });
-        } else {
-            window.scrollTo({
-                top: 0,
-                behavior: "smooth",
-            });
+            return;
         }
+
+        window.scrollTo({
+            top: 0,
+            left: 0,
+            behavior: "auto",
+        });
     }, [pathname]);
 
     return null;
@@ -986,7 +1011,6 @@ const MAIN_ROUTES = [
 
     // ========================================================
     // BOOKING SELECT
-    // Không cần login
     // ========================================================
 
     {
@@ -996,7 +1020,6 @@ const MAIN_ROUTES = [
 
     // ========================================================
     // BOOKING CHECKOUT
-    // Cần login
     // ========================================================
 
     {
@@ -1010,7 +1033,6 @@ const MAIN_ROUTES = [
 
     // ========================================================
     // PAYMENT
-    // Cần login
     // ========================================================
 
     {
@@ -1023,14 +1045,7 @@ const MAIN_ROUTES = [
     },
 
     // ========================================================
-    // ❗ KHÔNG ĐẶT CONFIRM-SUCCESS Ở ĐÂY
-    //
-    // ConfirmSuccess được đưa ra ngoài SessionGuard bên dưới.
-    // ========================================================
-
-    // ========================================================
     // BANK APP
-    // Cần login
     // ========================================================
 
     {
@@ -1044,7 +1059,6 @@ const MAIN_ROUTES = [
 
     // ========================================================
     // MOMO APP
-    // Cần login
     // ========================================================
 
     {
@@ -1279,10 +1293,12 @@ const UserPageContainer = () => {
 
 // ============================================================
 // USER ROUTES
+// ✅ NHẬN prop `location` từ PageTransition
+// ✅ TRUYỀN location vào <Routes> để freeze trang cũ khi exit
 // ============================================================
 
-const UserRoutesComponent = () => (
-    <Routes>
+const UserRoutesComponent = ({ location }) => (
+    <Routes location={location}>
 
         {/* ======================================================
             AUTH ROUTES
@@ -1303,19 +1319,6 @@ const UserRoutesComponent = () => (
 
         {/* ======================================================
             ⭐ CONFIRM SUCCESS
-            ------------------------------------------------------
-            QUAN TRỌNG:
-
-            Route này nằm ngoài:
-            - SessionGuard
-            - UserRouteGuard
-
-            Vì sau khi thanh toán thành công, AuthContext có thể
-            chưa kịp cập nhật user hoặc session guard có thể kiểm
-            tra lại session đúng lúc chuyển trang.
-
-            Trang này vẫn tự gọi /api/auth/me nếu cần cập nhật
-            thông tin user.
         ====================================================== */}
 
         <Route
@@ -1327,7 +1330,7 @@ const UserRoutesComponent = () => (
 
         {/* ======================================================
             USER APP
-            ====================================================== */}
+        ====================================================== */}
 
         <Route
             path="/"
@@ -1395,23 +1398,13 @@ const UserRoutesComponent = () => (
 
 const AppContent = () => {
 
-    // ==========================================================
-    // LENIS
-    // ==========================================================
+    const isAdminDomain = checkIsAdminDomain();
 
-    useLenis();
-
-    // ==========================================================
-    // ROUTE LOADING
-    // ==========================================================
+    useLenis({ enabled: !isAdminDomain });
 
     const {
         loading: routeLoading,
     } = useRouteLoading();
-
-    // ==========================================================
-    // NETWORK
-    // ==========================================================
 
     const {
         isOnline,
@@ -1426,14 +1419,6 @@ const AppContent = () => {
         axiosNetworkError,
         setAxiosNetworkError,
     ] = useState(null);
-
-    // ==========================================================
-    // ADMIN DOMAIN
-    // ==========================================================
-
-    const isAdminDomain =
-        window.location.hostname ===
-        "admin.quangdungcinema.id.vn";
 
     // ==========================================================
     // NETWORK EVENT
@@ -1642,6 +1627,8 @@ const AppContent = () => {
 
             {/* ==================================================
                 ROUTER
+                ✅ PageTransition chỉ bọc USER routes
+                ❌ KHÔNG bọc ADMIN routes
             ================================================== */}
 
             <LazyErrorBoundary>
@@ -1655,7 +1642,9 @@ const AppContent = () => {
                     {isAdminDomain ? (
                         <AdminRoutesComponent />
                     ) : (
-                        <UserRoutesComponent />
+                        <PageTransition>
+                            <UserRoutesComponent />
+                        </PageTransition>
                     )}
 
                 </Suspense>
@@ -1672,9 +1661,7 @@ const AppContent = () => {
 
 function App() {
 
-    const isAdminDomain =
-        window.location.hostname ===
-        "admin.quangdungcinema.id.vn";
+    const isAdminDomain = checkIsAdminDomain();
 
     return (
         <RouteLoadingProvider>

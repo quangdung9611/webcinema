@@ -25,7 +25,7 @@ const ConfirmSuccess = () => {
   const [printTime, setPrintTime] = useState('');
   const hasConfirmed = useRef(false);
 
-  // ✅ Lấy orderId từ location.state, sessionStorage, hoặc localStorage
+  // ✅ Lấy orderId
   const getOrderId = () => {
     const state = location.state?.data || location.state || {};
     const saved = sessionStorage.getItem('lastSuccessTicket');
@@ -44,7 +44,7 @@ const ConfirmSuccess = () => {
 
   const orderId = getOrderId();
 
-  // ✅ CHẶN BACK BUTTON — không cho quay lại trang trước
+  // ✅ CHẶN BACK BUTTON
   useEffect(() => {
     window.history.pushState(null, '', window.location.href);
 
@@ -59,7 +59,6 @@ const ConfirmSuccess = () => {
     };
   }, []);
 
-  // Nếu không có orderId -> quay về trang chủ
   useEffect(() => {
     if (!orderId) {
       navigate('/', { replace: true });
@@ -73,7 +72,6 @@ const ConfirmSuccess = () => {
       hasConfirmed.current = true;
 
       try {
-        // ✅ GỌI API USER — không cần admin token, chỉ cần user login
         const response = await api.get(`/api/bookings/my-booking/${orderId}`);
 
         if (response.data.success) {
@@ -81,30 +79,27 @@ const ConfirmSuccess = () => {
           const details = response.data.details || [];
           const tickets = response.data.tickets || [];
 
-          // ✅ Build seat display từ tickets hoặc details
+          // ✅ Build seat display
           let seatDisplay = b.seat_label || '';
-
           if (!seatDisplay) {
             const seatSources = details.length > 0 ? details : tickets;
-            const seats = seatSources
+            seatDisplay = seatSources
               .filter((i) => i.seat_id || i.item_name?.includes('Ghế'))
               .map((i) => {
-                if (i.item_name) {
-                  return i.item_name.replace('Ghế ', '').trim();
-                }
-                if (i.seat_row && i.seat_number) {
-                  return `${i.seat_row}${i.seat_number}`;
-                }
+                if (i.item_name) return i.item_name.replace('Ghế ', '').trim();
+                if (i.seat_row && i.seat_number) return `${i.seat_row}${i.seat_number}`;
                 return null;
               })
               .filter(Boolean)
               .join(', ');
-            seatDisplay = seats;
           }
 
           const foods = details.filter(
             (i) => !i.seat_id && !i.item_name?.includes('Ghế')
           );
+
+          // ✅ LẤY MÃ VÉ THẬT từ tickets[0].ticket_code
+          const realTicketCode = tickets[0]?.ticket_code || '------';
 
           const ticketDataFromAPI = {
             orderId: b.booking_id,
@@ -116,22 +111,22 @@ const ConfirmSuccess = () => {
             startTime: b.start_time?.split(' ')[1]?.substring(0, 5),
             selectedDate: b.start_time?.split(' ')[0]?.split('-').reverse().join('/'),
             seatDisplay: seatDisplay || '---',
-            ticketPIN: b.pin || b.memo?.slice(-6) || '------',
+
+            // ✅ MÃ VÉ = ticket_code đầy đủ
+            ticketPIN: realTicketCode,
+
             customerName: b.full_name,
             customerEmail: b.email,
             selectedFoods: foods,
           };
 
           setTicketData(ticketDataFromAPI);
-
           sessionStorage.setItem('lastSuccessTicket', JSON.stringify(ticketDataFromAPI));
         } else {
           console.error('API không trả về success');
         }
       } catch (err) {
         console.error('Lỗi lấy thông tin vé:', err.message);
-
-        // ✅ Fallback: thử lấy từ sessionStorage
         const saved = sessionStorage.getItem('lastSuccessTicket');
         if (saved) {
           try {
@@ -153,7 +148,6 @@ const ConfirmSuccess = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // ✅ Về trang chủ
   const handleGoHome = () => {
     localStorage.removeItem('paymentCompleted');
     localStorage.removeItem('completedBookingId');
@@ -163,7 +157,6 @@ const ConfirmSuccess = () => {
     navigate('/', { replace: true });
   };
 
-  // ✅ Tải vé về máy
   const handleDownload = () => {
     setTimeout(() => {
       window.print();
@@ -199,7 +192,7 @@ const ConfirmSuccess = () => {
     roomName,
     startTime,
     selectedDate,
-    ticketPIN,
+    ticketPIN,       // ← đây là ticket_code đầy đủ
     customerName,
     customerEmail,
     seatDisplay,
@@ -286,7 +279,13 @@ const ConfirmSuccess = () => {
             <p className="pin-title">MÃ NHẬN VÉ</p>
             <h2 className="pin-code">{ticketPIN}</h2>
             <div className="qr-wrapper">
-              <QRCodeCanvas value={`TICKET-${orderIdDisplay}-${ticketPIN}`} size={150} level={'H'} />
+              {/* ✅ QR chứa ticket_code đầy đủ để admin scan ra đúng vé */}
+              <QRCodeCanvas
+                value={ticketPIN}
+                size={140}
+                level={'H'}
+                includeMargin={false}
+              />
             </div>
             <p className="qr-note">Quét mã QR tại rạp để nhận vé</p>
           </div>
@@ -303,7 +302,6 @@ const ConfirmSuccess = () => {
           <CheckCircle2 className="email-check" size={28} />
         </div>
 
-        {/* ✅ 2 NÚT: VỀ TRANG CHỦ + TẢI VÉ */}
         <div className="success-actions">
           <button className="home-btn" onClick={handleGoHome}>
             <House size={20} /> VỀ TRANG CHỦ

@@ -1,26 +1,18 @@
 /* ============================================================
    QUANG DŨNG CINEMA
-   BLOG CINEMA CARD — MAGAZINE — CLEAN VERSION
+   BLOG CINEMA CARD — ZEPHYR HOVER (TÁCH HOVER)
    ============================================================
 
-   ⚠️ LƯU Ý:
-   - File này CHỈ giữ LAYOUT + CONTENT
-   - MỌI hiệu ứng 3D (tilt, glare, shadow, edge) → do TiltCard xử lý
-   - KHÔNG có: transform hover, reflection, silver edge
-
-   DESIGN:
-   - Featured: Editorial / Magazine / 16:9
-   - Small: 42 / 58 magazine split
-
-   HOVER BEHAVIOR (nhẹ nhàng):
-   - Chỉ đổi màu border + background
-   - Image: đổi filter, KHÔNG transform
-   ============================================================ */
+   ✅ Hover HÌNH     → CHỈ hình zoom 1.10 + mất luminosity
+   ✅ Hover THÔNG TIN → CHỈ card nhích lên -6px + viền bạc
+   ✅ Rê content → hình: card VẪN nhích, hình bắt đầu zoom
+   ✅ KHÔNG backdrop-filter, KHÔNG will-change
+============================================================ */
 
 
 /* ============================================================
    01. MAGAZINE LAYOUT
-   ============================================================ */
+============================================================ */
 
 .blog-magazine-layout {
     display: grid;
@@ -33,7 +25,7 @@
 
 /* ============================================================
    02. FEATURED COLUMN
-   ============================================================ */
+============================================================ */
 
 .blog-magazine-layout__featured {
     min-width: 0;
@@ -44,7 +36,7 @@
 
 /* ============================================================
    03. SIDE COLUMN
-   ============================================================ */
+============================================================ */
 
 .blog-magazine-layout__side {
     min-width: 0;
@@ -56,8 +48,8 @@
 
 
 /* ============================================================
-   04. CARD BASE
-   ============================================================ */
+   04. CARD BASE — ZEPHYR
+============================================================ */
 
 .blog-card {
     --blog-radius: var(--radius-xl, 20px);
@@ -79,11 +71,9 @@
         rgba(7, 9, 11, 0.96) 100%
     );
 
-    border: var(--card-border-base);
+    /* ✅ Viền bạc base */
+    border: 1.5px solid rgba(244, 246, 248, 0.20);
     border-radius: var(--blog-radius);
-
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
 
     box-shadow:
         0 4px 12px rgba(0, 0, 0, 0.18),
@@ -94,14 +84,17 @@
     backface-visibility: hidden;
     -webkit-font-smoothing: antialiased;
 
-    /* ✅ CHỈ transition màu — KHÔNG transform */
-    transition:
-        border-color 0.35s ease,
-        background 0.35s ease;
+    /* ✅ ZEPHYR: transition ALL */
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ✅ Hover chỉ đổi màu */
+
+/* ============================================================
+   05. HOVER — CARD NHÍCH LÊN KHI HOVER BẤT KỲ ĐÂU
+============================================================ */
+
 .blog-card:hover {
+    /* ✅ Background sáng hơn */
     background: linear-gradient(
         145deg,
         rgba(255, 255, 255, 0.085) 0%,
@@ -109,12 +102,26 @@
         rgba(7, 9, 11, 0.97) 100%
     );
 
-    border: var(--card-border-hover);
+    /* ✅ Viền bạc RÕ HƠN */
+    border-color: rgba(244, 246, 248, 0.65);
+
+    /* ✅ CẢ CARD NHÍCH LÊN */
+    transform: translateY(-6px);
+
+    /* ✅ Shadow nổi rõ hơn */
+    box-shadow:
+        0 8px 20px rgba(0, 0, 0, 0.30),
+        0 24px 56px rgba(0, 0, 0, 0.55),
+        0 0 0 1px rgba(244, 246, 248, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.10);
 }
+
 
 /* ✅ Active */
 .blog-card:active {
-    border: var(--card-border-active);
+    border-color: rgba(244, 246, 248, 0.80);
+    transform: translateY(-2px) scale(0.998);
+    transition-duration: 0.18s;
 }
 
 /* ✅ Focus */
@@ -125,8 +132,8 @@
 
 
 /* ============================================================
-   05. IMAGE BASE
-   ============================================================ */
+   06. IMAGE BASE
+============================================================ */
 
 .blog-card__image {
     position: relative;
@@ -136,6 +143,7 @@
 }
 
 
+/* ✅ IMAGE — ZEPHYR: chỉ transition transform */
 .blog-card__image img {
     display: block;
     width: 100%;
@@ -143,22 +151,24 @@
     object-fit: cover;
     object-position: center;
 
-    opacity: 0.90;
-
-    filter: brightness(0.90) contrast(1.04) saturate(0.82);
+    mix-blend-mode: luminosity;
 
     backface-visibility: hidden;
 
-    /* ✅ Transition chỉ filter + opacity — KHÔNG transform */
-    transition:
-        opacity 0.4s ease,
-        filter 0.4s ease;
+    /* ✅ ZEPHYR: CHỈ transition transform */
+    transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ✅ CHỈ zoom khi hover VÀO CHÍNH HÌNH — không phải hover card */
+.blog-card__image:hover img {
+    transform: scale(1.10);
+    mix-blend-mode: normal;
 }
 
 
 /* ============================================================
-   06. IMAGE LIGHT
-   ============================================================ */
+   07. IMAGE LIGHT
+============================================================ */
 
 .blog-card__image::before {
     content: "";
@@ -179,15 +189,14 @@
     transition: opacity 0.4s ease;
 }
 
-
-.blog-card:hover .blog-card__image::before {
+.blog-card__image:hover::before {
     opacity: 0.70;
 }
 
 
 /* ============================================================
-   07. FEATURED IMAGE — 16:9
-   ============================================================ */
+   08. FEATURED IMAGE — 16:9
+============================================================ */
 
 .blog-card--featured .blog-card__image {
     width: 100%;
@@ -205,8 +214,8 @@
 
 
 /* ============================================================
-   08. SMALL IMAGE — 16:9
-   ============================================================ */
+   09. SMALL IMAGE — 16:9
+============================================================ */
 
 .blog-card--small .blog-card__image {
     width: 100%;
@@ -224,19 +233,8 @@
 
 
 /* ============================================================
-   09. IMAGE HOVER — chỉ đổi filter, KHÔNG zoom
-   ============================================================ */
-
-.blog-card__image:hover img {
-    opacity: 1;
-    filter: brightness(1.03) contrast(1.02) saturate(0.92);
-    /* ❌ KHÔNG transform */
-}
-
-
-/* ============================================================
    10. IMAGE GRADIENT
-   ============================================================ */
+============================================================ */
 
 .blog-card__gradient {
     position: absolute;
@@ -256,24 +254,14 @@
     transition: opacity 0.4s ease;
 }
 
-
-.blog-card:hover .blog-card__gradient {
+.blog-card__image:hover .blog-card__gradient {
     opacity: 0.80;
 }
 
 
 /* ============================================================
-   11. OLD OVERLAY — DISABLE
-   ============================================================ */
-
-.blog-card__overlay {
-    display: none !important;
-}
-
-
-/* ============================================================
-   12. FEATURED CARD
-   ============================================================ */
+   11. FEATURED CARD
+============================================================ */
 
 .blog-card--featured {
     height: 100%;
@@ -282,8 +270,8 @@
 
 
 /* ============================================================
-   13. FEATURED CONTENT
-   ============================================================ */
+   12. FEATURED CONTENT
+============================================================ */
 
 .blog-card--featured .blog-card__content {
     position: relative;
@@ -313,15 +301,14 @@
     transition: box-shadow 0.4s ease;
 }
 
-
 .blog-card:hover .blog-card--featured .blog-card__content {
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 
 /* ============================================================
-   14. SMALL CARD — MAGAZINE HORIZONTAL
-   ============================================================ */
+   13. SMALL CARD — MAGAZINE HORIZONTAL
+============================================================ */
 
 .blog-card--small {
     display: grid;
@@ -333,8 +320,8 @@
 
 
 /* ============================================================
-   15. SMALL CONTENT
-   ============================================================ */
+   14. SMALL CONTENT
+============================================================ */
 
 .blog-card--small .blog-card__content {
     position: relative;
@@ -362,8 +349,8 @@
 
 
 /* ============================================================
-   16. BODY
-   ============================================================ */
+   15. BODY
+============================================================ */
 
 .blog-card__body {
     display: flex;
@@ -377,8 +364,8 @@
 
 
 /* ============================================================
-   17. META
-   ============================================================ */
+   16. META
+============================================================ */
 
 .blog-card__meta {
     display: flex;
@@ -388,14 +375,13 @@
     min-width: 0;
 }
 
-
 .blog-card__meta-item {
     display: inline-flex;
     align-items: center;
     gap: var(--space-xs, 4px);
     min-width: 0;
 
-    color: var(--accent-ice, var(--silver-primary, #dde2e8));
+    color: var(--silver-primary, #dde2e8);
 
     font-family: var(--font-primary, "Inter"), sans-serif;
     font-size: var(--font-size-h6, 0.875rem);
@@ -410,12 +396,10 @@
     transition: color 0.35s ease, opacity 0.35s ease;
 }
 
-
 .blog-card__meta-item svg {
     flex-shrink: 0;
     opacity: 0.75;
 }
-
 
 .blog-card:hover .blog-card__meta-item {
     color: var(--silver-light, #f4f7fa);
@@ -424,8 +408,8 @@
 
 
 /* ============================================================
-   18. TITLE
-   ============================================================ */
+   17. TITLE
+============================================================ */
 
 .blog-card__title {
     margin: 0;
@@ -449,15 +433,14 @@
     transition: color 0.35s ease;
 }
 
-
 .blog-card:hover .blog-card__title {
     color: var(--silver-light, #f4f7fa);
 }
 
 
 /* ============================================================
-   19. FEATURED TITLE
-   ============================================================ */
+   18. FEATURED TITLE
+============================================================ */
 
 .blog-card--featured .blog-card__title {
     font-size: var(--font-size-h3, 1.65rem);
@@ -466,8 +449,8 @@
 
 
 /* ============================================================
-   20. DESCRIPTION
-   ============================================================ */
+   19. DESCRIPTION
+============================================================ */
 
 .blog-card__desc {
     margin: 0;
@@ -487,15 +470,14 @@
     transition: color 0.35s ease;
 }
 
-
 .blog-card:hover .blog-card__desc {
     color: var(--text-body, #d9dde2);
 }
 
 
 /* ============================================================
-   21. SMALL DESCRIPTION
-   ============================================================ */
+   20. SMALL DESCRIPTION
+============================================================ */
 
 .blog-card--small .blog-card__desc {
     font-size: var(--font-size-h6, 0.875rem);
@@ -507,8 +489,8 @@
 
 
 /* ============================================================
-   22. READ MORE
-   ============================================================ */
+   21. READ MORE
+============================================================ */
 
 .btn-blog-action {
     position: relative;
@@ -542,8 +524,6 @@
     transition: color 0.35s ease;
 }
 
-
-/* Underline */
 .btn-blog-action::after {
     content: "";
     position: absolute;
@@ -561,16 +541,13 @@
     transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-
 .blog-card:hover .btn-blog-action {
     color: var(--silver-light, #f4f7fa);
 }
 
-
 .blog-card:hover .btn-blog-action::after {
     width: 100%;
 }
-
 
 .btn-blog-action:hover,
 .btn-blog-action:focus,
@@ -583,8 +560,8 @@
 
 
 /* ============================================================
-   23. BUTTON ICON
-   ============================================================ */
+   22. BUTTON ICON
+============================================================ */
 
 .btn-blog-action__icon {
     width: 16px;
@@ -594,7 +571,6 @@
     transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-
 .btn-blog-action:hover .btn-blog-action__icon,
 .blog-card:hover .btn-blog-action__icon {
     transform: translate3d(3px, -3px, 0);
@@ -602,8 +578,8 @@
 
 
 /* ============================================================
-   24. FEATURED BUTTON
-   ============================================================ */
+   23. FEATURED BUTTON
+============================================================ */
 
 .blog-card--featured .btn-blog-action {
     margin-top: auto;
@@ -611,15 +587,14 @@
 
 
 /* ============================================================
-   25. SMALL BUTTON
-   ============================================================ */
+   24. SMALL BUTTON
+============================================================ */
 
 .blog-card--small .btn-blog-action {
     margin-top: auto;
     font-size: var(--font-size-h6, 0.875rem);
     flex-shrink: 0;
 }
-
 
 .blog-card--small .btn-blog-action__icon {
     width: 15px;
@@ -628,8 +603,8 @@
 
 
 /* ============================================================
-   26. RESPONSIVE — 1200px
-   ============================================================ */
+   25. RESPONSIVE — 1200px
+============================================================ */
 
 @media (max-width: 1200px) {
     .blog-magazine-layout {
@@ -662,8 +637,8 @@
 
 
 /* ============================================================
-   27. RESPONSIVE — 992px
-   ============================================================ */
+   26. RESPONSIVE — 992px
+============================================================ */
 
 @media (max-width: 992px) {
     .blog-magazine-layout {
@@ -696,8 +671,8 @@
 
 
 /* ============================================================
-   28. MOBILE — 768px
-   ============================================================ */
+   27. MOBILE — 768px
+============================================================ */
 
 @media (max-width: 768px) {
     .blog-magazine-layout {
@@ -747,8 +722,8 @@
 
 
 /* ============================================================
-   29. SMALL MOBILE — 480px
-   ============================================================ */
+   28. SMALL MOBILE — 480px
+============================================================ */
 
 @media (max-width: 480px) {
     .blog-card {
@@ -801,9 +776,15 @@
 
 
 /* ============================================================
-   30. TOUCH DEVICE
-   ============================================================ */
-
+   29. TOUCH DEVICE
+============================================================ */
+/* 
 @media (hover: none) {
-    /* Không cần gì — không có transform hover */
-}
+    .blog-card:hover {
+        transform: none;
+    }
+    .blog-card__image:hover img {
+        transform: none;
+        mix-blend-mode: luminosity;
+    }
+} */

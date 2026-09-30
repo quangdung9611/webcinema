@@ -1,22 +1,17 @@
 /* ============================================================
-   NEWS CARD — MAGAZINE 50/50 — CLEAN VERSION
+   NEWS CARD — ZEPHYR HOVER (TÁCH HOVER)
    ============================================================
 
-   ⚠️ LƯU Ý:
-   - File này CHỈ giữ LAYOUT + CONTENT
-   - MỌI hiệu ứng 3D → do TiltCard xử lý
-   - KHÔNG có: transform hover, reflection, silver edge
-
-   Cấu trúc:
-   - Layout magazine: featured + 3 small
-   - Card base: border, background, radius
-   - Content: image, meta, title, desc, button
+   ✅ Hover HÌNH     → CHỈ hình zoom 1.10 + mất luminosity
+   ✅ Hover THÔNG TIN → CHỈ card nhích lên -6px + viền bạc
+   ✅ Rê content → hình: card VẪN nhích, hình bắt đầu zoom
+   ✅ KHÔNG backdrop-filter, KHÔNG will-change
 ============================================================ */
 
 
 /* ============================================================
    01. MAIN LAYOUT — 50 / 50
-   ============================================================ */
+============================================================ */
 
 .news-magazine-layout {
     display: grid;
@@ -29,7 +24,7 @@
 
 /* ============================================================
    02. LEFT COLUMN — FEATURED
-   ============================================================ */
+============================================================ */
 
 .news-magazine-layout__featured {
     min-width: 0;
@@ -40,7 +35,7 @@
 
 /* ============================================================
    03. RIGHT COLUMN — 3 SMALL CARDS
-   ============================================================ */
+============================================================ */
 
 .news-magazine-layout__side {
     min-width: 0;
@@ -52,8 +47,8 @@
 
 
 /* ============================================================
-   04. CARD BASE
-   ============================================================ */
+   04. CARD BASE — ZEPHYR
+============================================================ */
 
 .news-card {
     position: relative;
@@ -74,11 +69,9 @@
         rgba(255, 255, 255, 0.012)
     );
 
-    border: var(--card-border-base);
+    /* ✅ Viền bạc base */
+    border: 1.5px solid rgba(244, 246, 248, 0.20);
     border-radius: var(--radius-xl);
-
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
 
     box-shadow:
         0 6px 16px rgba(0, 0, 0, 0.22),
@@ -90,26 +83,42 @@
 
     -webkit-font-smoothing: antialiased;
 
-    /* ✅ CHỈ transition màu — KHÔNG transform */
-    transition:
-        background 0.35s ease,
-        border-color 0.35s ease;
+    /* ✅ ZEPHYR: transition ALL */
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ✅ Hover chỉ đổi màu */
+
+/* ============================================================
+   05. HOVER — CARD NHÍCH LÊN KHI HOVER BẤT KỲ ĐÂU
+============================================================ */
+
 .news-card:hover {
+    /* ✅ Background sáng hơn */
     background: linear-gradient(
         145deg,
         rgba(255, 255, 255, 0.065),
         rgba(255, 255, 255, 0.018)
     );
 
-    border: var(--card-border-hover);
+    /* ✅ Viền bạc RÕ HƠN */
+    border-color: rgba(244, 246, 248, 0.65);
+
+    /* ✅ CẢ CARD NHÍCH LÊN */
+    transform: translateY(-6px);
+
+    /* ✅ Shadow nổi rõ hơn */
+    box-shadow:
+        0 8px 20px rgba(0, 0, 0, 0.30),
+        0 24px 56px rgba(0, 0, 0, 0.55),
+        0 0 0 1px rgba(244, 246, 248, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.10);
 }
 
 /* ✅ Active */
 .news-card:active {
-    border: var(--card-border-active);
+    border-color: rgba(244, 246, 248, 0.80);
+    transform: translateY(-2px) scale(0.998);
+    transition-duration: 0.18s;
 }
 
 /* ✅ Focus */
@@ -120,8 +129,8 @@
 
 
 /* ============================================================
-   05. IMAGE BASE
-   ============================================================ */
+   06. IMAGE BASE
+============================================================ */
 
 .news-card__image {
     position: relative;
@@ -149,23 +158,32 @@
     opacity: 0.72;
 }
 
-/* Image tĩnh */
+/* ✅ IMAGE — ZEPHYR: chỉ transition transform */
 .news-card__image img {
     display: block;
     width: 100%;
-    height: auto;
-    object-fit: contain;
+    height: 100%;
+    object-fit: cover;
     object-position: center;
 
-    opacity: 0.94;
+    mix-blend-mode: luminosity;
 
     backface-visibility: hidden;
+
+    /* ✅ ZEPHYR: CHỈ transition transform */
+    transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ✅ CHỈ zoom khi hover VÀO CHÍNH HÌNH — không phải hover card */
+.news-card__image:hover img {
+    transform: scale(1.10);
+    mix-blend-mode: normal;
 }
 
 
 /* ============================================================
-   06. FEATURED IMAGE — 16:9
-   ============================================================ */
+   07. FEATURED IMAGE — 16:9
+============================================================ */
 
 .news-card--featured .news-card__image {
     width: 100%;
@@ -183,8 +201,8 @@
 
 
 /* ============================================================
-   07. SMALL IMAGE — 16:9
-   ============================================================ */
+   08. SMALL IMAGE — 16:9
+============================================================ */
 
 .news-card--small .news-card__image {
     width: 100%;
@@ -202,8 +220,8 @@
 
 
 /* ============================================================
-   08. IMAGE GRADIENT
-   ============================================================ */
+   09. IMAGE GRADIENT
+============================================================ */
 
 .news-card__gradient {
     position: absolute;
@@ -220,12 +238,17 @@
     );
 
     opacity: 1;
+    transition: opacity 0.4s ease;
+}
+
+.news-card__image:hover .news-card__gradient {
+    opacity: 0.85;
 }
 
 
 /* ============================================================
-   09. FEATURED CARD
-   ============================================================ */
+   10. FEATURED CARD
+============================================================ */
 
 .news-card--featured {
     height: 100%;
@@ -234,8 +257,8 @@
 
 
 /* ============================================================
-   10. FEATURED CONTENT
-   ============================================================ */
+   11. FEATURED CONTENT
+============================================================ */
 
 .news-card--featured .news-card__content {
     position: relative;
@@ -266,8 +289,8 @@
 
 
 /* ============================================================
-   11. SMALL CARD — HORIZONTAL
-   ============================================================ */
+   12. SMALL CARD — HORIZONTAL
+============================================================ */
 
 .news-card--small {
     display: grid;
@@ -279,8 +302,8 @@
 
 
 /* ============================================================
-   12. SMALL CONTENT
-   ============================================================ */
+   13. SMALL CONTENT
+============================================================ */
 
 .news-card--small .news-card__content {
     position: relative;
@@ -308,8 +331,8 @@
 
 
 /* ============================================================
-   13. BODY WRAPPER
-   ============================================================ */
+   14. BODY WRAPPER
+============================================================ */
 
 .news-card__body {
     display: flex;
@@ -323,8 +346,8 @@
 
 
 /* ============================================================
-   14. META
-   ============================================================ */
+   15. META
+============================================================ */
 
 .news-card__meta {
     display: flex;
@@ -340,7 +363,7 @@
     gap: var(--space-xs);
     min-width: 0;
 
-    color: var(--accent-ice);
+    color: var(--silver-primary);
 
     font-family: var(--font-primary);
     font-size: var(--font-size-h6);
@@ -351,6 +374,8 @@
 
     opacity: 0.85;
     white-space: nowrap;
+
+    transition: color 0.35s ease, opacity 0.35s ease;
 }
 
 .news-card__meta-item svg {
@@ -358,10 +383,15 @@
     opacity: 0.75;
 }
 
+.news-card:hover .news-card__meta-item {
+    color: var(--silver-light);
+    opacity: 1;
+}
+
 
 /* ============================================================
-   15. TITLE
-   ============================================================ */
+   16. TITLE
+============================================================ */
 
 .news-card__title {
     margin: 0;
@@ -391,8 +421,8 @@
 
 
 /* ============================================================
-   16. FEATURED TITLE
-   ============================================================ */
+   17. FEATURED TITLE
+============================================================ */
 
 .news-card--featured .news-card__title {
     font-size: var(--font-size-h3);
@@ -401,8 +431,8 @@
 
 
 /* ============================================================
-   17. DESCRIPTION — 2 DÒNG
-   ============================================================ */
+   18. DESCRIPTION
+============================================================ */
 
 .news-card__desc {
     margin: 0;
@@ -428,8 +458,8 @@
 
 
 /* ============================================================
-   18. SMALL DESCRIPTION
-   ============================================================ */
+   19. SMALL DESCRIPTION
+============================================================ */
 
 .news-card--small .news-card__desc {
     font-size: var(--font-size-h6);
@@ -441,8 +471,8 @@
 
 
 /* ============================================================
-   19. READ MORE — PREMIUM SILVER LINK
-   ============================================================ */
+   20. READ MORE
+============================================================ */
 
 .btn-news-action {
     position: relative;
@@ -525,8 +555,8 @@
 
 
 /* ============================================================
-   20. FEATURED BUTTON
-   ============================================================ */
+   21. FEATURED BUTTON
+============================================================ */
 
 .news-card--featured .btn-news-action {
     margin-top: auto;
@@ -534,8 +564,8 @@
 
 
 /* ============================================================
-   21. SMALL BUTTON
-   ============================================================ */
+   22. SMALL BUTTON
+============================================================ */
 
 .news-card--small .btn-news-action {
     margin-top: auto;
@@ -550,8 +580,8 @@
 
 
 /* ============================================================
-   22. TABLET — <= 1200px
-   ============================================================ */
+   23. TABLET — <= 1200px
+============================================================ */
 
 @media (max-width: 1200px) {
     .news-magazine-layout {
@@ -584,8 +614,8 @@
 
 
 /* ============================================================
-   23. TABLET NHỎ — <= 992px
-   ============================================================ */
+   24. TABLET NHỎ — <= 992px
+============================================================ */
 
 @media (max-width: 992px) {
     .news-magazine-layout {
@@ -614,8 +644,8 @@
 
 
 /* ============================================================
-   24. MOBILE — <= 768px
-   ============================================================ */
+   25. MOBILE — <= 768px
+============================================================ */
 
 @media (max-width: 768px) {
     .news-magazine-layout {
@@ -658,8 +688,8 @@
 
 
 /* ============================================================
-   25. SMALL MOBILE — <= 480px
-   ============================================================ */
+   26. SMALL MOBILE — <= 480px
+============================================================ */
 
 @media (max-width: 480px) {
     .news-magazine-layout {
@@ -708,9 +738,15 @@
 
 
 /* ============================================================
-   26. TOUCH DEVICES
-   ============================================================ */
-
+   27. TOUCH DEVICES
+============================================================ */
+/* 
 @media (hover: none) and (pointer: coarse) {
-    /* Không cần gì — không có transform hover */
-}
+    .news-card:hover {
+        transform: none;
+    }
+    .news-card__image:hover img {
+        transform: none;
+        mix-blend-mode: luminosity;
+    }
+} */

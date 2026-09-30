@@ -1,6 +1,10 @@
 /* ==========================================================
    QUANG DŨNG CINEMA
-   USER HOME — CLEAN VERSION (v2)
+   USER HOME — CLEAN VERSION (v3)
+   ==========================================================
+   ✅ Bỏ backdrop-filter để tránh lag GPU
+   ✅ Thêm overflow: visible cho promotion-grid / cinema-grid
+   ✅ Thêm rule cho .promotion-card-wrapper
    ========================================================== */
 
 /* ==========================================================
@@ -259,7 +263,6 @@
     padding-inline: var(--container-padding);
     box-sizing: border-box;
 
-    /* ✅ Tách xuống dưới hero để thấy rõ */
     margin-top: 40px;
     margin-bottom: 40px;
 }
@@ -274,10 +277,15 @@
 
     border: var(--home-quick-border);
     border-radius: 20px;
-    background: var(--home-quick-bg);
+
+    /* ✅ Bỏ backdrop-filter — thay bằng background đặc hơn */
+    background: linear-gradient(
+        135deg,
+        rgba(20, 23, 27, 0.97),
+        rgba(8, 10, 12, 0.95)
+    );
+
     box-shadow: var(--home-quick-shadow);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
     box-sizing: border-box;
 
     transform: translate3d(0, 0, 0);
@@ -494,11 +502,16 @@
 
     border: var(--home-dropdown-border);
     border-radius: 14px;
-    background: var(--home-dropdown-bg);
+
+    /* ✅ Bỏ backdrop-filter */
+    background: linear-gradient(
+        145deg,
+        rgba(22, 25, 29, 0.99),
+        rgba(8, 10, 12, 0.99)
+    );
+
     box-shadow: var(--home-dropdown-shadow);
     box-sizing: border-box;
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
 
     animation: dropdownFade 0.2s ease;
 }
@@ -747,7 +760,7 @@
 .feature-text h4 {
     margin: 0 0 7px;
     color: var(--text-heading);
-    font-family: var(--font-body);
+    font-family: var(--font-primary);
     font-size: 0.95rem;
     font-weight: var(--fw-bold);
     letter-spacing: 0.025em;
@@ -986,11 +999,15 @@
 
     border: var(--home-testimonial-border);
     border-radius: 18px;
-    background: var(--home-testimonial-bg);
-    box-shadow: var(--home-testimonial-shadow);
 
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    /* ✅ Bỏ backdrop-filter */
+    background: linear-gradient(
+        145deg,
+        rgba(255, 255, 255, 0.05),
+        rgba(255, 255, 255, 0.015)
+    );
+
+    box-shadow: var(--home-testimonial-shadow);
 
     transition:
         box-shadow var(--transition-normal),
@@ -1183,19 +1200,29 @@
     gap: 16px;
     align-items: stretch;
     width: 100%;
+    overflow: visible;
+}
+
+.promotion-grid > * {
+    overflow: visible;
+    min-width: 0;
+}
+
+.promotion-grid .promotion-card-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    min-width: 0;
+    overflow: visible;
 }
 
 .promotion-grid .promotion-card {
     display: flex;
     flex-direction: column;
+    flex: 1;
     height: 100%;
-    min-width: 0;
-}
-
-.promotion-grid .promotion-card-inner {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+    width: 100%;
     min-width: 0;
 }
 
@@ -1209,6 +1236,12 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 16px;
     align-items: stretch;
+    overflow: visible;
+}
+
+.cinema-grid > * {
+    overflow: visible;
+    min-width: 0;
 }
 
 .cinema-grid .cinema-card {
@@ -1243,14 +1276,8 @@
 
 .feature-item,
 .cinema-card,
-.quick-booking-content,
-.testimonial-card,
 .stat-item {
     backface-visibility: hidden;
-}
-
-.quick-booking-content {
-    will-change: transform;
 }
 
 
@@ -1278,9 +1305,6 @@
         min-width: 155px;
         height: 50px;
         font-size: var(--font-size-h6);
-    }
-    .features-grid {
-        gap: 1px;
     }
     .feature-item {
         padding: 22px 18px;
@@ -1345,8 +1369,6 @@
     }
     .quick-booking-content {
         padding: 15px;
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
     }
     .quick-booking-selects {
         grid-template-columns: repeat(2, minmax(0, 1fr));

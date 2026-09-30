@@ -9,8 +9,6 @@ import React, {
 import { useNavigate } from "react-router-dom";
 import { Ticket, Info } from "lucide-react";
 
-import { optimizeCloudinary, IMAGE_SIZES } from "../../utils/imageHelper";
-import TiltCard from "./TiltCard";
 import MovieRevealTransition from "./MovieRevealTransition";
 
 import "../styles/MovieCard.css";
@@ -31,28 +29,19 @@ const MovieCard = React.memo(({ movie, onClick, index = 0 }) => {
 
     const movieData = useMemo(() => ({
         title: movie?.title || "Đang cập nhật",
-
         poster: movie?.movie_poster || null,
-
         backdrop: movie?.movie_backdrop || null,
-
         ageRating: movie?.age_rating || "T18",
-
         language: movie?.language || "Phụ đề",
-
         releaseDate: movie?.release_date || null,
-
         isHot: movie?.is_hot || false,
-
         isNew: movie?.is_new || false,
-
         slug: movie?.slug || movie?.movie_slug,
-
         movie_id: movie?.movie_id || movie?.id
     }), [movie]);
 
     // ============================================================
-    // INTERSECTION OBSERVER
+    // INTERSECTION OBSERVER — fade in khi scroll
     // ============================================================
 
     useEffect(() => {
@@ -74,6 +63,22 @@ const MovieCard = React.memo(({ movie, onClick, index = 0 }) => {
         }
 
         return () => observer.disconnect();
+    }, []);
+
+    // ============================================================
+    // SPOTLIGHT — theo con trỏ
+    // ============================================================
+
+    const handleMouseMove = useCallback((e) => {
+        const el = cardRef.current;
+        if (!el) return;
+
+        const rect = el.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+        el.style.setProperty("--mx", `${x}%`);
+        el.style.setProperty("--my", `${y}%`);
     }, []);
 
     // ============================================================
@@ -100,64 +105,53 @@ const MovieCard = React.memo(({ movie, onClick, index = 0 }) => {
             e.stopPropagation();
         }
 
-        if (isOpening || showReveal) {
-            return;
-        }
+        if (isOpening || showReveal) return;
+        if (!movieData.slug && !onClick) return;
 
-        if (!movieData.slug && !onClick) {
-            return;
-        }
-
-        // Khóa card ngay lập tức
         setIsOpening(true);
         setIsHover(false);
-
-        // Mở cinematic transition
         setShowReveal(true);
-    }, [
-        isOpening,
-        showReveal,
-        movieData.slug,
-        onClick
-    ]);
+    }, [isOpening, showReveal, movieData.slug, onClick]);
 
     // ============================================================
     // DETAIL BUTTON
     // ============================================================
 
     const handleDetailClick = useCallback((e) => {
-        startMovieReveal(e);
-    }, [startMovieReveal]);
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (isOpening || showReveal) return;
+
+        startMovieReveal(null);
+    }, [startMovieReveal, isOpening, showReveal]);
 
     // ============================================================
-    // BOOKING
+    // BOOKING BUTTON
     // ============================================================
 
     const handleBookingClick = useCallback((e) => {
         e.preventDefault();
         e.stopPropagation();
 
-        if (isOpening || showReveal) {
-            return;
-        }
+        if (isOpening || showReveal) return;
 
         const slug = movieData.slug;
 
         if (slug) {
             navigate(`/booking/${slug}`);
         }
-    }, [
-        isOpening,
-        showReveal,
-        movieData.slug,
-        navigate
-    ]);
+    }, [isOpening, showReveal, movieData.slug, navigate]);
 
     // ============================================================
     // CARD CLICK
     // ============================================================
 
     const handleCardClick = useCallback((e) => {
+        // Bỏ qua nếu click vào nút
+        if (e.target.closest('.film-card__action-btn')) {
+            return;
+        }
         startMovieReveal(e);
     }, [startMovieReveal]);
 
@@ -179,12 +173,6 @@ const MovieCard = React.memo(({ movie, onClick, index = 0 }) => {
     const handleRevealComplete = useCallback(() => {
         const slug = movieData.slug;
 
-        /*
-         * Nếu MovieCard được truyền onClick từ component cha,
-         * giữ nguyên behavior cũ.
-         *
-         * Nếu không có onClick thì tự navigate.
-         */
         if (onClick) {
             onClick(movie);
             return;
@@ -193,12 +181,7 @@ const MovieCard = React.memo(({ movie, onClick, index = 0 }) => {
         if (slug) {
             navigate(`/movies/detail/${slug}`);
         }
-    }, [
-        movie,
-        movieData.slug,
-        navigate,
-        onClick
-    ]);
+    }, [movie, movieData.slug, navigate, onClick]);
 
     // ============================================================
     // CLOSE TRANSITION
@@ -207,9 +190,6 @@ const MovieCard = React.memo(({ movie, onClick, index = 0 }) => {
     const handleRevealCancel = useCallback(() => {
         setShowReveal(false);
 
-        /*
-         * Cho phép card hoạt động lại nếu transition bị hủy.
-         */
         window.setTimeout(() => {
             setIsOpening(false);
         }, 100);
@@ -220,9 +200,7 @@ const MovieCard = React.memo(({ movie, onClick, index = 0 }) => {
     // ============================================================
 
     const formattedDate = useMemo(() => {
-        if (!movieData.releaseDate) {
-            return null;
-        }
+        if (!movieData.releaseDate) return null;
 
         const date = new Date(movieData.releaseDate);
 
@@ -248,19 +226,10 @@ const MovieCard = React.memo(({ movie, onClick, index = 0 }) => {
     const subtitle = subtitleParts.join(" • ");
 
     // ============================================================
-    // POSTER URL
+    // POSTER URL — dùng ảnh gốc
     // ============================================================
 
-    const posterUrl = useMemo(() => {
-        if (!movieData.poster) {
-            return null;
-        }
-
-        return optimizeCloudinary(
-            movieData.poster,
-            IMAGE_SIZES.MOVIE_POSTER_CARD
-        );
-    }, [movieData.poster]);
+    const posterUrl = movieData.poster || null;
 
     // ============================================================
     // RENDER
@@ -268,154 +237,122 @@ const MovieCard = React.memo(({ movie, onClick, index = 0 }) => {
 
     return (
         <>
-            <TiltCard
-                maxTilt={12}
-                scale={1.04}
-                perspective={1200}
-                glare={true}
-                shadow={true}
-                edgeHighlight={true}
+            <div
+                ref={cardRef}
+                className={[
+                    "film-card",
+                    isHover ? "film-card--hover" : "",
+                    isOpening ? "film-card--opening" : "",
+                    isVisible ? "film-card--visible" : ""
+                ]
+                    .filter(Boolean)
+                    .join(" ")}
+
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+                onMouseMove={handleMouseMove}
+                onClick={handleCardClick}
+                onKeyDown={handleKeyDown}
+
+                role="button"
+                tabIndex={0}
+
+                aria-label={`Xem chi tiết ${movieData.title}`}
             >
-                <div
-                    ref={cardRef}
-                    className={[
-                        "film-card",
-                        isHover ? "film-card--hover" : "",
-                        isOpening ? "film-card--opening" : "",
-                        isVisible ? "film-card--visible" : ""
-                    ]
-                        .filter(Boolean)
-                        .join(" ")}
+                <div className="film-card__inner">
 
-                    onMouseEnter={handleMouseEnter}
-                    onMouseLeave={handleMouseLeave}
-                    onKeyDown={handleKeyDown}
+                    {/* SPOTLIGHT — theo con trỏ */}
+                    <div className="film-card__spotlight" />
 
-                    role="button"
-                    tabIndex={0}
+                    {/* BORDER GLOW */}
+                    <div className="film-card__border-glow" />
 
-                    aria-label={`Xem chi tiết ${movieData.title}`}
-                >
-                    <div className="film-card__inner">
+                    {/* SPARKLES */}
+                    <div className="film-card__sparkles">
+                        <span className="sparkle s1" />
+                        <span className="sparkle s2" />
+                        <span className="sparkle s3" />
+                        <span className="sparkle s4" />
+                        <span className="sparkle s5" />
+                    </div>
 
-                        {/* ==================================================
-                            BORDER GLOW
-                        ================================================== */}
+                    {/* POSTER */}
+                    <div className="film-card__poster">
+                        {movieData.poster ? (
+                            <img
+                                src={posterUrl}
+                                alt={movieData.title}
+                                loading="lazy"
+                                decoding="async"
+                                width="300"
+                                height="450"
+                                draggable={false}
+                            />
+                        ) : (
+                            <div className="film-card__no-poster" />
+                        )}
 
-                        <div className="film-card__border-glow" />
-
-                        {/* ==================================================
-                            SPARKLES
-                        ================================================== */}
-
-                        <div className="film-card__sparkles">
-                            <span className="sparkle s1" />
-                            <span className="sparkle s2" />
-                            <span className="sparkle s3" />
-                            <span className="sparkle s4" />
-                            <span className="sparkle s5" />
+                        <div className="film-card__age">
+                            {movieData.ageRating}
                         </div>
 
-                        {/* ==================================================
-                            POSTER
-                        ================================================== */}
-
-                        <div
-                            className="film-card__poster"
-                            onClick={handleCardClick}
-                        >
-                            {movieData.poster ? (
-                                <img
-                                    src={posterUrl}
-                                    alt={movieData.title}
-                                    loading="lazy"
-                                    decoding="async"
-                                    width="300"
-                                    height="450"
-                                    draggable={false}
-                                />
-                            ) : (
-                                <div className="film-card__no-poster" />
-                            )}
-
-                            <div className="film-card__depth-overlay" />
-
-                            <div className="film-card__age">
-                                {movieData.ageRating}
+                        {movieData.isHot && (
+                            <div className="film-card__badge hot">
+                                🔥 Hot
                             </div>
+                        )}
 
-                            {movieData.isHot && (
-                                <div className="film-card__badge hot">
-                                    🔥 Hot
-                                </div>
-                            )}
+                        {movieData.isNew && !movieData.isHot && (
+                            <div className="film-card__badge new">
+                                ✨ Mới
+                            </div>
+                        )}
+                    </div>
 
-                            {movieData.isNew && !movieData.isHot && (
-                                <div className="film-card__badge new">
-                                    ✨ Mới
-                                </div>
-                            )}
-                        </div>
+                    {/* INFO */}
+                    <div className="film-card__info">
 
-                        {/* ==================================================
-                            INFO
-                        ================================================== */}
+                        <h3 className="film-card__title">
+                            {movieData.title}
+                        </h3>
 
-                        <div className="film-card__info">
+                        {subtitle && (
+                            <div className="film-card__subtitle">
+                                <span>{subtitle}</span>
+                            </div>
+                        )}
 
-                            <h3
-                                className="film-card__title"
-                                onClick={handleCardClick}
+                        {/* ACTIONS — 2 NÚT */}
+                        <div className="film-card__actions">
+                            <button
+                                type="button"
+                                className="film-card__action-btn btn-detail"
+                                onClick={handleDetailClick}
+                                disabled={isOpening}
+                                aria-label={`Xem chi tiết ${movieData.title}`}
                             >
-                                {movieData.title}
-                            </h3>
+                                <Info size={16} />
+                                <span>Xem chi tiết</span>
+                            </button>
 
-                            {subtitle && (
-                                <div className="film-card__subtitle">
-                                    <span>{subtitle}</span>
-                                </div>
-                            )}
-
-                            {/* ==================================================
-                                ACTIONS
-                            ================================================== */}
-
-                            <div className="film-card__actions">
-
-                                <button
-                                    type="button"
-                                    className="film-card__action-btn btn-detail"
-                                    onClick={handleDetailClick}
-                                    disabled={isOpening}
-                                    aria-label={`Xem chi tiết ${movieData.title}`}
-                                >
-                                    <Info size={16} />
-                                    <span>Xem chi tiết</span>
-                                </button>
-
-                                <button
-                                    type="button"
-                                    className="film-card__action-btn btn-booking"
-                                    onClick={handleBookingClick}
-                                    disabled={isOpening}
-                                    aria-label={`Đặt vé ${movieData.title}`}
-                                >
-                                    <Ticket size={16} />
-                                    <span>Đặt vé</span>
-                                </button>
-
-                            </div>
-
+                            <button
+                                type="button"
+                                className="film-card__action-btn btn-booking"
+                                onClick={handleBookingClick}
+                                disabled={isOpening}
+                                aria-label={`Đặt vé ${movieData.title}`}
+                            >
+                                <Ticket size={16} />
+                                <span>Đặt vé</span>
+                            </button>
                         </div>
 
                     </div>
+
                 </div>
-            </TiltCard>
+            </div>
 
-            {/* ============================================================
-                CINEMATIC MOVIE REVEAL
-            ============================================================ */}
-
+            {/* CINEMATIC MOVIE REVEAL */}
             {showReveal && (
                 <MovieRevealTransition
                     movie={movie}

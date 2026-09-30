@@ -1,23 +1,23 @@
 /* ============================================================
    QUANG DŨNG CINEMA
-   CINEMA CARD — CLEAN VERSION
+   CINEMA CARD — ZEPHYR HOVER (TÁCH HOVER)
    ============================================================
 
-   ⚠️ LƯU Ý:
-   - File này CHỈ giữ LAYOUT + CONTENT
-   - MỌI hiệu ứng 3D (tilt, glare, shadow, edge) → do TiltCard xử lý
-   - KHÔNG có: transform hover, reflection, silver edge, glow
+   ✅ Hover HÌNH     → CHỈ hình zoom 1.10 + mất luminosity
+   ✅ Hover THÔNG TIN → CHỈ card nhích lên -6px + viền bạc
+   ✅ Rê content → hình: card VẪN nhích, hình bắt đầu zoom
+   ✅ KHÔNG backdrop-filter, KHÔNG will-change
 
    Cấu trúc:
-   - Card wrapper chỉ giữ: border, background, border-radius
+   - Card wrapper: border, background, radius
    - Content: title, text, address, hotline, link, map
-   - Image: tĩnh, chỉ có overlay + gradient
+   - Image: aspect ratio theo type
 ============================================================ */
 
 
 /* ============================================================
-   01. CARD WRAPPER
-   ============================================================ */
+   01. CARD WRAPPER — ZEPHYR
+============================================================ */
 
 .cinema-card {
     --cinema-radius: var(--radius-xl, 20px);
@@ -35,7 +35,8 @@
     cursor: pointer;
     isolation: isolate;
 
-    border: 1px solid rgba(255, 255, 255, 0.14);
+    /* ✅ Viền bạc base */
+    border: 1.5px solid rgba(244, 246, 248, 0.20);
     border-radius: var(--cinema-radius);
 
     background: linear-gradient(
@@ -54,28 +55,46 @@
     backface-visibility: hidden;
     -webkit-font-smoothing: antialiased;
 
-    /* ✅ CHỈ transition cho màu, không cho transform */
-    transition:
-        border-color 0.35s ease,
-        background 0.35s ease;
+    /* ✅ ZEPHYR: transition ALL */
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ✅ Hover chỉ đổi màu — KHÔNG có transform */
-.cinema-card:hover {
-    border-color: rgba(255, 255, 255, 0.24);
 
+/* ============================================================
+   02. HOVER — CARD NHÍCH LÊN KHI HOVER BẤT KỲ ĐÂU
+============================================================ */
+
+.cinema-card:hover {
+    /* ✅ Background sáng hơn */
     background: linear-gradient(
         145deg,
         rgba(255, 255, 255, 0.085) 0%,
         rgba(255, 255, 255, 0.026) 34%,
         rgba(7, 9, 11, 0.97) 100%
     );
+
+    /* ✅ Viền bạc RÕ HƠN */
+    border-color: rgba(244, 246, 248, 0.65);
+
+    /* ✅ CẢ CARD NHÍCH LÊN */
+    transform: translateY(-6px);
+
+    /* ✅ Shadow nổi rõ hơn */
+    box-shadow:
+        0 8px 20px rgba(0, 0, 0, 0.30),
+        0 24px 56px rgba(0, 0, 0, 0.55),
+        0 0 0 1px rgba(244, 246, 248, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.10);
 }
 
-/* ✅ Active chỉ giữ hiệu ứng màu */
+
+/* ✅ Active */
 .cinema-card:active {
-    border-color: rgba(255, 255, 255, 0.30);
+    border-color: rgba(244, 246, 248, 0.80);
+    transform: translateY(-2px) scale(0.998);
+    transition-duration: 0.18s;
 }
+
 
 /* ✅ Focus accessible */
 .cinema-card:focus-visible {
@@ -85,8 +104,8 @@
 
 
 /* ============================================================
-   02. IMAGE AREA
-   ============================================================ */
+   03. IMAGE AREA
+============================================================ */
 
 .cinema-card__image {
     position: relative;
@@ -104,8 +123,8 @@
 
 
 /* ============================================================
-   03. CINEMA — LANDSCAPE
-   ============================================================ */
+   04. CINEMA — LANDSCAPE
+============================================================ */
 
 .cinema-card--cinema .cinema-card__image {
     aspect-ratio: 3 / 2;
@@ -113,8 +132,8 @@
 
 
 /* ============================================================
-   04. ASPECT RATIO FALLBACK
-   ============================================================ */
+   05. ASPECT RATIO FALLBACK
+============================================================ */
 
 @supports not (aspect-ratio: 2 / 3) {
     .cinema-card__image {
@@ -132,8 +151,8 @@
 
 
 /* ============================================================
-   05. IMAGE — TĨNH, KHÔNG ZOOM HOVER
-   ============================================================ */
+   06. IMAGE — ZEPHYR: chỉ transition transform
+============================================================ */
 
 .cinema-card__image img {
     position: relative;
@@ -146,20 +165,24 @@
     object-fit: cover;
     object-position: center;
 
-    opacity: 0.88;
-
-    filter:
-        brightness(0.84)
-        contrast(1.06)
-        saturate(0.78);
+    mix-blend-mode: luminosity;
 
     backface-visibility: hidden;
+
+    /* ✅ ZEPHYR: CHỈ transition transform */
+    transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ✅ CHỈ zoom khi hover VÀO CHÍNH HÌNH — không phải hover card */
+.cinema-card__image:hover img {
+    transform: scale(1.10);
+    mix-blend-mode: normal;
 }
 
 
 /* ============================================================
-   06. IMAGE LIGHT LAYER — chỉ overlay
-   ============================================================ */
+   07. IMAGE LIGHT LAYER
+============================================================ */
 
 .cinema-card__image::before {
     content: "";
@@ -180,14 +203,14 @@
     transition: opacity 0.4s ease;
 }
 
-.cinema-card:hover .cinema-card__image::before {
+.cinema-card__image:hover::before {
     opacity: 0.68;
 }
 
 
 /* ============================================================
-   07. TOP SILVER LINE — chỉ hiện khi hover (line mảnh)
-   ============================================================ */
+   08. TOP SILVER LINE
+============================================================ */
 
 .cinema-card__image::after {
     content: "";
@@ -210,14 +233,14 @@
     transition: opacity 0.4s ease;
 }
 
-.cinema-card:hover .cinema-card__image::after {
+.cinema-card__image:hover::after {
     opacity: 0.62;
 }
 
 
 /* ============================================================
-   08. CINEMATIC GRADIENT
-   ============================================================ */
+   09. CINEMATIC GRADIENT
+============================================================ */
 
 .cinema-card__gradient {
     position: absolute;
@@ -238,14 +261,14 @@
     transition: opacity 0.4s ease;
 }
 
-.cinema-card:hover .cinema-card__gradient {
+.cinema-card__image:hover .cinema-card__gradient {
     opacity: 0.80;
 }
 
 
 /* ============================================================
-   09. CONTENT
-   ============================================================ */
+   10. CONTENT
+============================================================ */
 
 .cinema-card__content {
     position: relative;
@@ -283,8 +306,8 @@
 
 
 /* ============================================================
-   10. BODY
-   ============================================================ */
+   11. BODY
+============================================================ */
 
 .cinema-card__body {
     display: flex;
@@ -296,8 +319,8 @@
 
 
 /* ============================================================
-   11. TITLE
-   ============================================================ */
+   12. TITLE
+============================================================ */
 
 .cinema-card__title {
     position: relative;
@@ -328,8 +351,8 @@
 
 
 /* ============================================================
-   12. DESCRIPTION
-   ============================================================ */
+   13. DESCRIPTION
+============================================================ */
 
 .cinema-card__text {
     margin: 0;
@@ -355,8 +378,8 @@
 
 
 /* ============================================================
-   13. ADDRESS / HOTLINE
-   ============================================================ */
+   14. ADDRESS / HOTLINE
+============================================================ */
 
 .cinema-card__address,
 .cinema-card__hotline {
@@ -391,8 +414,8 @@
 
 
 /* ============================================================
-   14. FOOTER
-   ============================================================ */
+   15. FOOTER
+============================================================ */
 
 .cinema-card__footer {
     display: flex;
@@ -404,8 +427,8 @@
 
 
 /* ============================================================
-   15. DETAIL LINK
-   ============================================================ */
+   16. DETAIL LINK
+============================================================ */
 
 .cinema-card__link {
     position: relative;
@@ -454,8 +477,8 @@
 
 
 /* ============================================================
-   16. DETAIL LINK ICON
-   ============================================================ */
+   17. DETAIL LINK ICON
+============================================================ */
 
 .cinema-card__link-icon {
     width: 16px;
@@ -472,8 +495,8 @@
 
 
 /* ============================================================
-   17. GOOGLE MAPS
-   ============================================================ */
+   18. GOOGLE MAPS
+============================================================ */
 
 .cinema-card__map {
     display: inline-flex;
@@ -510,8 +533,8 @@
 
 
 /* ============================================================
-   18. CINEMA GRID
-   ============================================================ */
+   19. CINEMA GRID
+============================================================ */
 
 .cinema-grid > * {
     display: flex;
@@ -527,8 +550,8 @@
 
 
 /* ============================================================
-   19. RESPONSIVE — 1200px
-   ============================================================ */
+   20. RESPONSIVE — 1200px
+============================================================ */
 
 @media (max-width: 1200px) {
     .cinema-card {
@@ -547,8 +570,8 @@
 
 
 /* ============================================================
-   20. RESPONSIVE — 992px
-   ============================================================ */
+   21. RESPONSIVE — 992px
+============================================================ */
 
 @media (max-width: 992px) {
     .cinema-card__content {
@@ -569,8 +592,8 @@
 
 
 /* ============================================================
-   21. RESPONSIVE — 768px
-   ============================================================ */
+   22. RESPONSIVE — 768px
+============================================================ */
 
 @media (max-width: 768px) {
     .cinema-card__content {
@@ -607,8 +630,8 @@
 
 
 /* ============================================================
-   22. RESPONSIVE — 480px
-   ============================================================ */
+   23. RESPONSIVE — 480px
+============================================================ */
 
 @media (max-width: 480px) {
     .cinema-card {
@@ -656,8 +679,8 @@
 
 
 /* ============================================================
-   23. VERY SMALL MOBILE — 360px
-   ============================================================ */
+   24. VERY SMALL MOBILE — 360px
+============================================================ */
 
 @media (max-width: 360px) {
     .cinema-card__content {
@@ -680,9 +703,15 @@
 
 
 /* ============================================================
-   24. TOUCH DEVICES — giữ nguyên (không cần override)
-   ============================================================ */
-
+   25. TOUCH DEVICES
+============================================================ */
+/* 
 @media (hover: none) {
-    /* Không cần gì — vì CSS không có transform hover */
-}
+    .cinema-card:hover {
+        transform: none;
+    }
+    .cinema-card__image:hover img {
+        transform: none;
+        mix-blend-mode: luminosity;
+    }
+} */

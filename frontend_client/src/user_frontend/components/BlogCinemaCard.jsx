@@ -6,16 +6,14 @@ import {
     Calendar
 } from "lucide-react";
 
-import { optimizeCloudinary, IMAGE_SIZES } from "../../utils/imageHelper";
-
-import TiltCard from "./TiltCard";
 import ContentRevealTransition from "./ContentRevealTransition";
 
 import "../styles/BlogCinemaCard.css";
 
 /* ==========================================================
-   BLOG CINEMA CARD — MAGAZINE 50/50 + 3D TILT
+   BLOG CINEMA CARD — MAGAZINE 50/50
    + CINEMATIC CONTENT REVEAL
+   + ZEPHYR HOVER
 ========================================================== */
 
 
@@ -46,10 +44,6 @@ const getBackdropUrl = (backdrop) => {
 const BlogCinemaCard = ({ blogs = [] }) => {
     const navigate = useNavigate();
 
-    // ============================================================
-    // CONTENT REVEAL STATE
-    // ============================================================
-
     const [reveal, setReveal] = useState({
         active: false,
         slug: "",
@@ -58,7 +52,6 @@ const BlogCinemaCard = ({ blogs = [] }) => {
         subtitle: ""
     });
 
-    // 1 featured + 3 small = 4 bài
     const items = blogs.slice(0, 4);
 
     if (items.length === 0) {
@@ -117,24 +110,16 @@ const BlogCinemaCard = ({ blogs = [] }) => {
 
 
     /* ======================================================
-       ✅ NAVIGATE VỚI CINEMATIC REVEAL
+       NAVIGATE VỚI CINEMATIC REVEAL
     ====================================================== */
 
     const handleNavigate = useCallback((blog) => {
         if (!blog?.slug) return;
 
-        const rawImage = getBlogImage(blog);
-
-        // ✅ Optimize ảnh lớn để reveal đẹp hơn
-        const revealImage = optimizeCloudinary(
-            rawImage,
-            IMAGE_SIZES.BLOG_FEATURED
-        );
-
         setReveal({
             active: true,
             slug: blog.slug,
-            image: revealImage,
+            image: getBlogImage(blog),
             title: blog.title || "",
             subtitle: renderExcerpt(blog.description, 120)
         });
@@ -142,7 +127,7 @@ const BlogCinemaCard = ({ blogs = [] }) => {
 
 
     /* ======================================================
-       ✅ REVEAL COMPLETE → NAVIGATE
+       REVEAL COMPLETE → NAVIGATE
     ====================================================== */
 
     const handleRevealComplete = useCallback(() => {
@@ -182,80 +167,67 @@ const BlogCinemaCard = ({ blogs = [] }) => {
         const excerpt = renderExcerpt(blog.description, 150);
 
         return (
-            <TiltCard
-                maxTilt={6}
-                scale={1.02}
-                glare={true}
-                shadow={true}
-                edgeHighlight={true}
+            <article
+                className="blog-card blog-card--featured"
+                onClick={() => handleNavigate(blog)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => handleCardKeyDown(event, blog)}
             >
-                <article
-                    className="blog-card blog-card--featured"
-                    onClick={() => handleNavigate(blog)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(event) => handleCardKeyDown(event, blog)}
-                >
-                    {/* IMAGE */}
-                    <div className="blog-card__image">
-                        <img
-                            src={optimizeCloudinary(
-                                getBlogImage(blog),
-                                IMAGE_SIZES.BLOG_FEATURED
-                            )}
-                            alt={blog.title || "Blog Cinema"}
-                            loading="lazy"
-                            decoding="async"
-                            width="800"
-                            height="450"
-                            draggable={false}
+                {/* IMAGE */}
+                <div className="blog-card__image">
+                    <img
+                        src={getBlogImage(blog)}
+                        alt={blog.title || "Blog Cinema"}
+                        loading="lazy"
+                        decoding="async"
+                        draggable={false}
+                    />
+
+                    <div className="blog-card__gradient" />
+                </div>
+
+                {/* CONTENT */}
+                <div className="blog-card__content">
+
+                    <div className="blog-card__meta">
+                        <span className="blog-card__meta-item">
+                            <Calendar size={12} />
+                            {formatDate(blog.created_at)}
+                        </span>
+
+                        <span className="blog-card__meta-item">
+                            <Eye size={12} />
+                            {blog.views || 0} lượt xem
+                        </span>
+                    </div>
+
+                    <h3 className="blog-card__title">
+                        {blog.title}
+                    </h3>
+
+                    {excerpt && (
+                        <p className="blog-card__desc">
+                            {excerpt}
+                        </p>
+                    )}
+
+                    <button
+                        type="button"
+                        className="btn-blog-action"
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            handleNavigate(blog);
+                        }}
+                    >
+                        <span>Đọc thêm</span>
+                        <ArrowUpRight
+                            size={16}
+                            className="btn-blog-action__icon"
                         />
-
-                        <div className="blog-card__gradient" />
-                    </div>
-
-                    {/* CONTENT */}
-                    <div className="blog-card__content">
-
-                        <div className="blog-card__meta">
-                            <span className="blog-card__meta-item">
-                                <Calendar size={12} />
-                                {formatDate(blog.created_at)}
-                            </span>
-
-                            <span className="blog-card__meta-item">
-                                <Eye size={12} />
-                                {blog.views || 0} lượt xem
-                            </span>
-                        </div>
-
-                        <h3 className="blog-card__title">
-                            {blog.title}
-                        </h3>
-
-                        {excerpt && (
-                            <p className="blog-card__desc">
-                                {excerpt}
-                            </p>
-                        )}
-
-                        <button
-                            type="button"
-                            className="btn-blog-action"
-                            onClick={(event) => {
-                                event.stopPropagation();
-                                handleNavigate(blog);
-                            }}
-                        >
-                            <span>Đọc thêm</span>
-                            <ArrowUpRight
-                                size={16}
-                                className="btn-blog-action__icon"
-                            />
-                        </button>
-                    </div>
-                </article>
-            </TiltCard>
+                    </button>
+                </div>
+            </article>
         );
     };
 
@@ -268,78 +240,65 @@ const BlogCinemaCard = ({ blogs = [] }) => {
         const excerpt = renderExcerpt(blog.description, 90);
 
         return (
-            <TiltCard
-                maxTilt={5}
-                scale={1.015}
-                glare={false}
-                shadow={true}
-                edgeHighlight={true}
+            <article
+                className="blog-card blog-card--small"
+                onClick={() => handleNavigate(blog)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => handleCardKeyDown(event, blog)}
             >
-                <article
-                    className="blog-card blog-card--small"
-                    onClick={() => handleNavigate(blog)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(event) => handleCardKeyDown(event, blog)}
-                >
-                    {/* IMAGE */}
-                    <div className="blog-card__image">
-                        <img
-                            src={optimizeCloudinary(
-                                getBlogImage(blog),
-                                IMAGE_SIZES.BLOG_SMALL
-                            )}
-                            alt={blog.title || "Blog Cinema"}
-                            loading="lazy"
-                            decoding="async"
-                            width="400"
-                            height="225"
-                            draggable={false}
-                        />
+                {/* IMAGE */}
+                <div className="blog-card__image">
+                    <img
+                        src={getBlogImage(blog)}
+                        alt={blog.title || "Blog Cinema"}
+                        loading="lazy"
+                        decoding="async"
+                        draggable={false}
+                    />
 
-                        <div className="blog-card__gradient" />
-                    </div>
+                    <div className="blog-card__gradient" />
+                </div>
 
-                    {/* CONTENT */}
-                    <div className="blog-card__content">
+                {/* CONTENT */}
+                <div className="blog-card__content">
 
-                        <div className="blog-card__body">
+                    <div className="blog-card__body">
 
-                            <h4 className="blog-card__title">
-                                {blog.title}
-                            </h4>
+                        <h4 className="blog-card__title">
+                            {blog.title}
+                        </h4>
 
-                            <div className="blog-card__meta">
-                                <span className="blog-card__meta-item">
-                                    <Calendar size={12} />
-                                    {formatDate(blog.created_at)}
-                                </span>
-                            </div>
-
-                            {excerpt && (
-                                <p className="blog-card__desc">
-                                    {excerpt}
-                                </p>
-                            )}
+                        <div className="blog-card__meta">
+                            <span className="blog-card__meta-item">
+                                <Calendar size={12} />
+                                {formatDate(blog.created_at)}
+                            </span>
                         </div>
 
-                        <button
-                            type="button"
-                            className="btn-blog-action btn-blog-action--sm"
-                            onClick={(event) => {
-                                event.stopPropagation();
-                                handleNavigate(blog);
-                            }}
-                        >
-                            <span>Đọc thêm</span>
-                            <ArrowUpRight
-                                size={15}
-                                className="btn-blog-action__icon"
-                            />
-                        </button>
+                        {excerpt && (
+                            <p className="blog-card__desc">
+                                {excerpt}
+                            </p>
+                        )}
                     </div>
-                </article>
-            </TiltCard>
+
+                    <button
+                        type="button"
+                        className="btn-blog-action btn-blog-action--sm"
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            handleNavigate(blog);
+                        }}
+                    >
+                        <span>Đọc thêm</span>
+                        <ArrowUpRight
+                            size={15}
+                            className="btn-blog-action__icon"
+                        />
+                    </button>
+                </div>
+            </article>
         );
     };
 
@@ -350,10 +309,6 @@ const BlogCinemaCard = ({ blogs = [] }) => {
 
     return (
         <>
-            {/* ==================================================
-                ✅ CINEMATIC CONTENT REVEAL
-            ================================================== */}
-
             <ContentRevealTransition
                 active={reveal.active}
                 image={reveal.image}
@@ -364,10 +319,6 @@ const BlogCinemaCard = ({ blogs = [] }) => {
                 onComplete={handleRevealComplete}
             />
 
-
-            {/* ==================================================
-                BLOG MAGAZINE LAYOUT
-            ================================================== */}
 
             <div className="blog-magazine-layout">
 

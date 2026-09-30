@@ -1,499 +1,354 @@
 /* ============================================================
    QUANG DŨNG CINEMA
-   HERO BANNER — CINEMATIC PLATINUM
+   HERO — PLATINUM GRAPHITE / BRIGHT OVERLAY EDITION
+   HERO BANNER — SILVER EDITION
    ============================================================
+   🎨 Tone: Xám - Bạc - Đen (Silver / Chrome / Black)
+   🎬 Match video: phòng chiếu tối, đèn LED bạc trắng
+   ✅ CHỈ VIDEO — không poster
+   ✅ VIDEO NÉT — không scale, không giảm màu
+   ✅ GPU layer cho video — không repaint khi fade
+   ✅ CSS thuần — KHÔNG nesting
+============================================================ */
 
-   DESIGN LANGUAGE
 
-   Black
-   Platinum
-   White
-   Graphite
+/* ============================================================
+   00. COLOR TOKENS — ĐỔI MÀU CHỈ Ở ĐÂY
+============================================================ */
 
-   Không dùng gradient màu lòe loẹt.
-   Không dùng panel nặng.
-   Không dùng purple / blue / red.
+:root {
+    /* Nền — đen xám */
+    --hero-bg:              #030305;
+    --hero-bg-soft:         #0a0a0d;
 
-   Hero tập trung vào:
-   - Video
-   - Typography
-   - Depth
-   - Light
-   - Motion
-   ============================================================ */
+    /* Bạc — chủ đạo */
+    --hero-silver:          #c8d0d8;
+    --hero-silver-bright:   #eef2f6;
+    --hero-silver-pure:     #ffffff;
+    --hero-silver-dim:      rgba(200, 208, 216, 0.55);
+    --hero-silver-muted:    rgba(200, 208, 216, 0.32);
+    --hero-silver-faint:    rgba(200, 208, 216, 0.12);
+
+    /* Chrome highlight (bạc sáng như gương) */
+    --hero-chrome:          #f0f4f8;
+    --hero-chrome-mid:      #d8e0e8;
+    --hero-chrome-shadow:   #8a96a3;
+
+    /* Text */
+    --hero-text:            #ffffff;
+    --hero-text-soft:       rgba(232, 238, 243, 0.82);
+    --hero-text-muted:      rgba(200, 208, 216, 0.68);
+}
 
 
 /* ============================================================
    01. HERO ROOT
-   ============================================================ */
+============================================================ */
 
 .hero-banner {
     position: relative;
 
     width: 100%;
-    min-height: 100vh;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
     overflow: hidden;
-
     isolation: isolate;
 
-    background: #030303;
-
-    color: #fff;
+    background: var(--hero-bg);
+    color: var(--hero-text);
 }
 
 
 /* ============================================================
-   02. VIDEO BACKGROUND
-   ============================================================ */
+   02. VIDEO BACKGROUND — NÉT TỐI ĐA
+============================================================ */
 
 .hero-banner__bg {
     position: absolute;
-
     inset: 0;
 
     z-index: 1;
 
     overflow: hidden;
-
     pointer-events: none;
 
-    background: #030303;
+    background: var(--hero-bg);
 }
 
 
+/* ✅ VIDEO — không scale, không giảm màu → NÉT */
 .hero-banner__video {
     position: absolute;
 
-    inset: -2%;
+    /* ✅ KHÔNG inset âm */
+    inset: 0;
 
-    width: 104%;
-    height: 104%;
+    /* ✅ KHÔNG kéo giãn — 100% chính xác */
+    width: 100%;
+    height: 100%;
 
     object-fit: cover;
     object-position: center;
 
-    transform: scale(1.045);
-
-    transform-origin: center center;
-
-    will-change: transform, filter;
+    /* ✅ KHÔNG scale — 1 pixel video = 1 pixel CSS */
+    transform: translateZ(0);
 
     opacity: 0;
+    z-index: 3;
 
-    transition:
-        opacity 1.2s
-        cubic-bezier(0.16, 1, 0.3, 1);
+    /* ✅ TĂNG nhẹ contrast — KHÔNG giảm màu */
+    /* Giữ video Platinum Graphite sáng và sạch */
+    filter: saturate(1.05) contrast(1.04) brightness(1.05);
+
+    /* ✅ Khử răng cưa khi browser render */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+
+    /* ✅ Hint browser composite layer */
+    will-change: opacity;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+
+    /* ✅ Fade in mượt khi video ready */
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 
-.hero-banner--loaded
-.hero-banner__video {
+/* ✅ Khi video ready → hiện lên */
+.hero-banner--video-ready .hero-banner__video {
     opacity: 1;
 }
 
 
-/* ============================================================
-   VIDEO FALLBACK
-   ============================================================ */
-
+/* ✅ Fallback gradient — tone xám bạc khi video chưa load */
 .hero-banner__video-fallback {
     position: absolute;
-
     inset: 0;
+    z-index: 1;
 
     background:
+        /* Silver glow góc phải (match đèn LED bạc) */
         radial-gradient(
-            circle at 72% 42%,
-            rgba(255, 255, 255, 0.06),
-            transparent 32%
+            ellipse 60% 50% at 75% 40%,
+            rgba(200, 208, 216, 0.12),
+            transparent 60%
         ),
+        /* Silver glow góc trái nhẹ */
+        radial-gradient(
+            ellipse 50% 60% at 20% 55%,
+            rgba(200, 208, 216, 0.06),
+            transparent 55%
+        ),
+        /* Đen xám base */
         linear-gradient(
             135deg,
-            #030303,
-            #0b0b0b 55%,
-            #020202
+            #030305 0%,
+            #0a0a0d 45%,
+            #050507 100%
         );
-
-    z-index: -1;
 }
 
 
 /* ============================================================
-   03. OVERLAY MASTER
-   ============================================================ */
+   03. OVERLAY — TONE XÁM ĐEN
+============================================================ */
 
 .hero-banner__overlay-layer {
     position: absolute;
-
     inset: -12% 0 0;
 
-    z-index: 2;
-
+    z-index: 4;
     pointer-events: none;
-
-    will-change: transform, opacity;
 }
 
 
-/* ============================================================
-   BASE DARK
-   ============================================================ */
-
+/* Nền tối nhẹ */
 .hero-banner__overlay-base {
     position: absolute;
-
     inset: 0;
-
-    background: rgba(0, 0, 0, 0.16);
+    background:
+        linear-gradient(
+            180deg,
+            rgba(3, 3, 5, 0.16),
+            rgba(5, 5, 8, 0.08)
+        );
 }
 
 
-/* ============================================================
-   LEFT CINEMATIC GRADIENT
-   ============================================================ */
-
+/* Gradient bên trái → tối dần về phải */
 .hero-banner__overlay-side {
     position: absolute;
-
     inset: 0;
 
-    background:
-        linear-gradient(
-            90deg,
-
-            rgba(0, 0, 0, 0.82) 0%,
-
-            rgba(0, 0, 0, 0.68) 20%,
-
-            rgba(0, 0, 0, 0.42) 39%,
-
-            rgba(0, 0, 0, 0.14) 61%,
-
-            transparent 82%
-        );
+    background: linear-gradient(
+        90deg,
+        /* Chỉ đủ tối phía sau chữ — không phủ đen lên video */
+        rgba(2, 2, 4, 0.56) 0%,
+        rgba(3, 3, 5, 0.46) 18%,
+        rgba(4, 4, 7, 0.30) 38%,
+        rgba(5, 5, 9, 0.12) 58%,
+        rgba(3, 3, 5, 0.04) 76%,
+        transparent 100%
+    );
 }
 
 
-/* ============================================================
-   BOTTOM CINEMATIC GRADIENT
-   ============================================================ */
-
+/* Gradient bottom → hoà vào section dưới */
 .hero-banner__overlay-bottom {
     position: absolute;
-
     inset: 0;
 
-    background:
-        linear-gradient(
-            to bottom,
-
-            transparent 48%,
-
-            rgba(0, 0, 0, 0.08) 64%,
-
-            rgba(0, 0, 0, 0.55) 100%
-        );
+    background: linear-gradient(
+        to bottom,
+        transparent 48%,
+        rgba(3, 3, 5, 0.08) 68%,
+        rgba(2, 2, 4, 0.34) 100%
+    );
 }
 
 
-/* ============================================================
-   VIGNETTE
-   ============================================================ */
-
+/* Vignette — tối 4 góc, giữa sáng */
 .hero-banner__vignette {
     position: absolute;
-
     inset: 0;
+
+    background: radial-gradient(
+        ellipse at 45% 50%,
+        transparent 46%,
+        rgba(3, 3, 5, 0.14) 68%,
+        rgba(2, 2, 4, 0.48) 100%
+    );
+}
+
+
+/* ✨ Silver rim — viền bạc nhẹ ở góc phải (match đèn LED) */
+.hero-banner__overlay-layer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
 
     background:
         radial-gradient(
-            ellipse at center,
-
-            transparent 42%,
-
-            rgba(0, 0, 0, 0.16) 68%,
-
-            rgba(0, 0, 0, 0.72) 100%
+            ellipse 40% 60% at 100% 40%,
+            rgba(200, 208, 216, 0.08),
+            transparent 60%
         );
-}
-
-
-/* ============================================================
-   04. CINEMATIC LIGHT BEAM
-   ============================================================ */
-
-.hero-banner__beam {
-    position: absolute;
-
-    top: -35%;
-    left: 48%;
-
-    width: 18%;
-    height: 170%;
-
-    background:
-        linear-gradient(
-            90deg,
-            transparent,
-            rgba(255, 255, 255, 0.025),
-            rgba(255, 255, 255, 0.09),
-            rgba(255, 255, 255, 0.025),
-            transparent
-        );
-
-    filter: blur(25px);
-
-    transform: rotate(12deg);
-
-    opacity: 0.7;
-
     mix-blend-mode: screen;
-
-    will-change: transform;
 }
 
 
 /* ============================================================
-   05. FILM GRAIN
-   ============================================================ */
-
-.hero-banner__grain {
-    position: absolute;
-
-    inset: 0;
-
-    opacity: 0.045;
-
-    background-image:
-        url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
-
-    mix-blend-mode: soft-light;
-
-    pointer-events: none;
-}
-
-
-/* ============================================================
-   06. SUBTLE SCANLINES
-   ============================================================ */
-
-.hero-banner__scanlines {
-    position: absolute;
-
-    inset: 0;
-
-    opacity: 0.035;
-
-    background:
-        repeating-linear-gradient(
-            to bottom,
-
-            rgba(255, 255, 255, 0.4) 0px,
-
-            rgba(255, 255, 255, 0.4) 1px,
-
-            transparent 1px,
-
-            transparent 5px
-        );
-
-    mix-blend-mode: overlay;
-}
-
-
-/* ============================================================
-   07. FRAME
-   ============================================================ */
+   04. FRAME — VIỀN BẠC
+============================================================ */
 
 .hero-banner__frame {
     position: absolute;
-
     inset: 26px;
 
-    z-index: 4;
-
+    z-index: 5;
     pointer-events: none;
 
-    opacity: 0.38;
+    opacity: 0.42;
 }
 
 
 .hero-banner__frame::before,
 .hero-banner__frame::after {
     content: "";
-
     position: absolute;
-
     left: 0;
     right: 0;
-
     height: 1px;
 
-    background:
-        linear-gradient(
-            90deg,
-            transparent,
-            rgba(255, 255, 255, 0.18),
-            transparent
-        );
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(200, 208, 216, 0.32),
+        rgba(200, 208, 216, 0.12),
+        transparent
+    );
 }
 
-
-.hero-banner__frame::before {
-    top: 0;
-}
+.hero-banner__frame::before { top: 0; }
+.hero-banner__frame::after  { bottom: 0; }
 
 
-.hero-banner__frame::after {
-    bottom: 0;
-}
-
-
+/* Góc frame — bạc */
 .hero-banner__frame-corner {
     position: absolute;
-
     width: 38px;
     height: 38px;
 
-    border-color: rgba(255, 255, 255, 0.28);
-
+    border-color: rgba(200, 208, 216, 0.4);
     border-style: solid;
 }
 
-
 .hero-banner__frame-corner--tl {
-    top: 0;
-    left: 0;
-
+    top: 0; left: 0;
     border-width: 1px 0 0 1px;
 }
-
-
 .hero-banner__frame-corner--tr {
-    top: 0;
-    right: 0;
-
+    top: 0; right: 0;
     border-width: 1px 1px 0 0;
 }
-
-
 .hero-banner__frame-corner--bl {
-    bottom: 0;
-    left: 0;
-
+    bottom: 0; left: 0;
     border-width: 0 0 1px 1px;
 }
-
-
 .hero-banner__frame-corner--br {
-    bottom: 0;
-    right: 0;
-
+    bottom: 0; right: 0;
     border-width: 0 1px 1px 0;
 }
 
 
 /* ============================================================
-   08. BRAND LINE
-   ============================================================ */
-
-.hero-banner__brandline {
-    position: absolute;
-
-    top: 42px;
-    left: 50%;
-
-    transform: translateX(-50%);
-
-    z-index: 7;
-
-    display: flex;
-    align-items: center;
-
-    gap: 14px;
-
-    color: rgba(255, 255, 255, 0.55);
-
-    font-family: var(--font-primary, "Inter", sans-serif);
-
-    font-size: 0.58rem;
-
-    font-weight: 600;
-
-    letter-spacing: 0.34em;
-
-    text-transform: uppercase;
-
-    white-space: nowrap;
-}
-
-
-.hero-banner__brandline i {
-    width: 3px;
-    height: 3px;
-
-    border-radius: 50%;
-
-    background: rgba(255, 255, 255, 0.6);
-
-    box-shadow:
-        0 0 8px
-        rgba(255, 255, 255, 0.35);
-}
-
-
-/* ============================================================
-   09. CONTENT
-   ============================================================ */
+   05. CONTENT — GỌN VÀ XÍCH LÊN
+   - Không ép min-height / max-height cho khung content
+   - Content tự lấy chiều cao theo nội dung thật
+   - Desktop + mobile đều được đẩy lên nhẹ
+============================================================ */
 
 .hero-banner__content {
     position: relative;
 
-    z-index: 5;
+    z-index: 6;
 
     width: 100%;
-
     max-width: var(--container-width, 1340px);
 
     margin-inline: auto;
 
-    min-height: 100vh;
-
     display: flex;
-
     align-items: center;
-
     justify-content: space-between;
 
     gap: 5rem;
 
+    /* Content tự co theo nội dung, không ép full chiều cao viewport */
     padding:
-        120px
+        72px
         var(--container-padding, 2rem)
-        90px;
+        58px;
 
-    will-change: transform, opacity, filter;
+    /* Nhích toàn bộ content lên nhẹ trên desktop */
+    transform: translateY(-28px);
 }
 
 
 /* ============================================================
-   10. LEFT CONTENT
-   ============================================================ */
+   06. LEFT CONTENT
+============================================================ */
 
 .hero-banner__left {
     position: relative;
-
     width: min(820px, 70%);
 
     display: flex;
-
     flex-direction: column;
-
     align-items: flex-start;
 
     text-align: left;
@@ -501,46 +356,42 @@
 
 
 /* ============================================================
-   11. EYEBROW
-   ============================================================ */
+   07. EYEBROW — BẠC
+============================================================ */
 
 .hero-banner__eyebrow {
     display: flex;
-
     align-items: center;
-
     gap: 11px;
 
     margin-bottom: 1.45rem;
 
-    color: rgba(255, 255, 255, 0.72);
+    color: var(--hero-silver-bright);
 
     font-family: var(--font-primary, "Inter", sans-serif);
-
     font-size: 0.68rem;
-
     font-weight: 650;
-
     letter-spacing: 0.34em;
-
     text-transform: uppercase;
 
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+    text-shadow:
+        0 0 12px rgba(200, 208, 216, 0.28),
+        0 2px 9px rgba(0, 0, 0, 0.82);
 }
-
 
 .hero-banner__eyebrow-line {
     width: 42px;
     height: 1px;
 
-    background:
-        linear-gradient(
-            90deg,
-            transparent,
-            rgba(255, 255, 255, 0.85)
-        );
-}
+    background: linear-gradient(
+        90deg,
+        transparent,
+        var(--hero-silver),
+        var(--hero-silver-bright)
+    );
 
+    box-shadow: 0 0 8px rgba(200, 208, 216, 0.5);
+}
 
 .hero-banner__eyebrow-dot {
     width: 4px;
@@ -548,263 +399,270 @@
 
     border-radius: 50%;
 
-    background: #ffffff;
-
+    background: var(--hero-silver-bright);
     box-shadow:
-        0 0 12px
-        rgba(255, 255, 255, 0.75);
+        0 0 10px var(--hero-silver),
+        0 0 20px rgba(200, 208, 216, 0.4);
 }
 
 
 /* ============================================================
-   12. MAIN TITLE
-   — CHẠM / ẢNH có khoảng cách rõ ràng, không dính sát
-   ============================================================ */
+   08. ENTRANCE ANIMATIONS
+============================================================ */
+
+.hero-banner__enter {
+    opacity: 0;
+
+    animation: heroEnterUp 0.9s
+        cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes heroEnterUp {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 28px, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+.hero-banner__enter--grow {
+    transform-origin: left center;
+    animation-name: heroEnterGrow;
+}
+
+@keyframes heroEnterGrow {
+    from {
+        opacity: 0;
+        transform: scaleX(0);
+    }
+    to {
+        opacity: 1;
+        transform: scaleX(1);
+    }
+}
+
+.hero-banner__enter--d1 { animation-delay: 0.15s; }
+.hero-banner__enter--d2 { animation-delay: 0.30s; }
+.hero-banner__enter--d3 { animation-delay: 0.42s; }
+.hero-banner__enter--d4 { animation-delay: 0.58s; }
+
+
+/* ============================================================
+   09. MAIN TITLE — SILVER / CHROME
+============================================================ */
 
 .hero-banner__title {
     position: relative;
 
     display: flex;
-
     flex-direction: column;
-
     align-items: flex-start;
 
-    /* ⬇️ Khoảng cách giữa 2 dòng (CHẠM và ẢNH) */
     gap: 0.16em;
-
     margin: 0;
 
     font-family: var(--font-display, "Oswald", sans-serif);
-
     font-size: clamp(5.2rem, 10vw, 9.4rem);
-
     font-weight: 700;
-
-    /* ⬇️ line-height > 1 để chữ không chồng lên nhau */
-    line-height: 1;
+    line-height: 1.05;
 
     letter-spacing: 0.015em;
-
     text-transform: uppercase;
 
     user-select: none;
-
-    perspective: 1000px;
 }
-
-
-/* ---------- Từng dòng title ---------- */
 
 .hero-banner__title-solid,
 .hero-banner__title-outline {
     display: block;
-
-    /* Vẫn giữ line-height gọn bên trong từng dòng */
-    line-height: 0.92;
+    line-height: 1.05;
+    padding-bottom: 0.08em;
 }
 
 
-/* ============================================================
-   CHẠM
-   ============================================================ */
-
+/* "CHẠM" — trắng với glow bạc */
 .hero-banner__title-solid {
     position: relative;
-
     color: #ffffff;
-
-    /* Khoảng cách dọc nhỏ giữa dòng 1 và dòng 2 (bổ trợ cho gap) */
     margin-bottom: 0.06em;
 
     text-shadow:
-        0 2px 0 rgba(255, 255, 255, 0.3),
-        0 8px 24px rgba(0, 0, 0, 0.85),
-        0 20px 55px rgba(0, 0, 0, 0.6);
+        0 0 30px rgba(200, 208, 216, 0.30),
+        0 0 60px rgba(200, 208, 216, 0.12),
+        0 4px 18px rgba(0, 0, 0, 0.88);
 }
 
 
-/* ============================================================
-   ẢNH OUTLINE
-   ============================================================ */
-
+/* "ẢNH" — outline bạc sáng */
 .hero-banner__title-outline {
     position: relative;
 
     color: transparent;
+    -webkit-text-stroke: 2px var(--hero-silver-bright);
 
-    -webkit-text-stroke: 2px rgba(255, 255, 255, 0.95);
-
-    text-shadow:
-        0 8px 28px rgba(0, 0, 0, 0.8);
+    filter: drop-shadow(0 0 12px rgba(200, 208, 216, 0.5));
 }
 
-
-.hero-banner__title-outline
-.split-text__char {
+.hero-banner__title-outline .split-text__char {
     color: transparent;
-
-    -webkit-text-stroke: 2px rgba(255, 255, 255, 0.95);
+    -webkit-text-stroke: 2px var(--hero-silver-bright);
 }
 
 
-/* ============================================================
-   TITLE ACCENT
-   ============================================================ */
-
+/* Accent line dưới title — bạc gradient */
 .hero-banner__title-accent {
     position: absolute;
 
     left: 0;
-
     bottom: -18px;
 
     width: 155px;
-    height: 1px;
+    height: 2px;
 
     transform-origin: left center;
 
-    background:
-        linear-gradient(
-            90deg,
-            #ffffff,
-            rgba(255, 255, 255, 0.35),
-            transparent
-        );
+    background: linear-gradient(
+        90deg,
+        var(--hero-silver-bright),
+        var(--hero-silver),
+        var(--hero-chrome-shadow),
+        transparent
+    );
+
+    border-radius: 2px;
 
     box-shadow:
-        0 0 15px
-        rgba(255, 255, 255, 0.18);
+        0 0 12px rgba(200, 208, 216, 0.5),
+        0 0 24px rgba(200, 208, 216, 0.25);
+
+    opacity: 0;
+
+    animation: heroTitleAccent 1.2s
+        cubic-bezier(0.16, 1, 0.3, 1) 1.25s both;
+}
+
+@keyframes heroTitleAccent {
+    from {
+        opacity: 0;
+        transform: scaleX(0);
+    }
+    to {
+        opacity: 1;
+        transform: scaleX(1);
+    }
 }
 
 
 /* ============================================================
-   13. SUBTITLE
-   ============================================================ */
+   10. SPLIT TEXT
+============================================================ */
 
-.hero-banner__subtitle {
-    display: flex;
-
-    align-items: center;
-
-    gap: 13px;
-
-    margin-top: 1.8rem;
-
-    color: rgba(255, 255, 255, 0.52);
-
-    font-family: var(--font-primary, "Inter", sans-serif);
-
-    font-size: 0.66rem;
-
-    font-weight: 600;
-
-    letter-spacing: 0.3em;
-
-    text-transform: uppercase;
+.split-text {
+    display: inline;
 }
 
+.split-text__char {
+    display: inline-block;
 
-.hero-banner__subtitle-line {
-    width: 26px;
-    height: 1px;
+    vertical-align: baseline;
+    line-height: 1.1;
+    overflow: visible;
 
-    background: rgba(255, 255, 255, 0.38);
+    opacity: 0;
+    transform: translate3d(0, 70px, 0);
+
+    will-change: transform, opacity;
+
+    animation: splitCharEnter 0.85s
+        cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes splitCharEnter {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 70px, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
 }
 
 
 /* ============================================================
-   14. DIVIDER
-   ============================================================ */
+   11. DIVIDER — BẠC
+============================================================ */
 
 .hero-banner__divider {
     width: min(650px, 100%);
-
     height: 1px;
 
     margin: 2rem 0 1.4rem;
 
-    background:
-        linear-gradient(
-            90deg,
-            rgba(255, 255, 255, 0.82),
-            rgba(255, 255, 255, 0.18) 60%,
-            transparent
-        );
+    background: linear-gradient(
+        90deg,
+        var(--hero-silver),
+        rgba(200, 208, 216, 0.28) 60%,
+        transparent
+    );
 
-    box-shadow:
-        0 0 14px
-        rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 8px rgba(200, 208, 216, 0.3);
 }
-
 
 .hero-banner__divider span {
     display: block;
-
     width: 48px;
     height: 1px;
 
-    background: #ffffff;
-
+    background: var(--hero-silver-bright);
     box-shadow:
-        0 0 12px
-        rgba(255, 255, 255, 0.65);
+        0 0 8px var(--hero-silver),
+        0 0 16px rgba(200, 208, 216, 0.4);
 }
 
 
 /* ============================================================
-   15. DESCRIPTION
-   ============================================================ */
+   12. DESCRIPTION — BẠC MỜ
+============================================================ */
 
 .hero-banner__description {
     width: 100%;
-
     max-width: 640px;
-
     margin: 0;
 
-    color: rgba(255, 255, 255, 0.78);
+    color: var(--hero-text-soft);
 
     font-family: var(--font-primary, "Inter", sans-serif);
-
     font-size: 0.98rem;
-
     font-weight: 450;
-
     line-height: 1.85;
 
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+    text-shadow:
+        0 2px 10px rgba(0, 0, 0, 0.78),
+        0 0 18px rgba(0, 0, 0, 0.18);
 }
 
 
 /* ============================================================
-   16. ACTIONS
-   ============================================================ */
+   13. ACTIONS
+============================================================ */
 
 .hero-banner__actions {
     display: flex;
-
     align-items: center;
-
     gap: 0.85rem;
 
     margin-top: 2.25rem;
 }
 
-
-/* ============================================================
-   BUTTON BASE
-   ============================================================ */
-
 .hero-banner__btn {
     position: relative;
 
-    min-height: 54px;
-
     display: inline-flex;
-
     align-items: center;
-
     justify-content: center;
 
     gap: 0.65rem;
@@ -814,79 +672,58 @@
     border-radius: 999px;
 
     font-family: var(--font-primary, "Inter", sans-serif);
-
     font-size: 0.7rem;
-
     font-weight: 700;
-
     letter-spacing: 0.18em;
-
     text-transform: uppercase;
-
     white-space: nowrap;
 
     cursor: pointer;
-
     overflow: hidden;
 }
 
 
-/* ============================================================
-   PRIMARY
-   ============================================================ */
-
+/* ✅ PRIMARY — bạc sáng, text đen */
 .hero-banner__btn--primary {
-    border: 1px solid rgba(255, 255, 255, 0.95);
-
-    background: rgba(255, 255, 255, 0.96);
-
+    border: 1px solid var(--hero-silver-bright);
+    background: linear-gradient(
+        135deg,
+        var(--hero-silver-bright) 0%,
+        var(--hero-silver) 100%
+    );
     color: #050505;
 
     box-shadow:
-        0 12px 35px
-        rgba(0, 0, 0, 0.45);
+        0 0 20px rgba(200, 208, 216, 0.3),
+        0 12px 35px rgba(0, 0, 0, 0.5);
 
     transition:
         box-shadow 0.4s ease,
-        background 0.4s ease;
+        transform 0.4s ease,
+        filter 0.4s ease;
 }
-
 
 .hero-banner__btn--primary:hover {
-    background: #ffffff;
-
+    filter: brightness(1.08);
     box-shadow:
-        0 18px 45px
-        rgba(0, 0, 0, 0.6);
+        0 0 30px rgba(200, 208, 216, 0.5),
+        0 0 50px rgba(200, 208, 216, 0.2),
+        0 18px 45px rgba(0, 0, 0, 0.6);
 }
-
-
-/* ============================================================
-   BUTTON CONTENT
-   ============================================================ */
 
 .hero-banner__btn-content {
     position: relative;
-
     z-index: 2;
 
     display: inline-flex;
-
     align-items: center;
-
     gap: 0.65rem;
 }
-
-
-/* ============================================================
-   SHINE
-   ============================================================ */
 
 .hero-banner__btn-shine {
     position: absolute;
 
     top: -20%;
-
     left: -70%;
 
     width: 35%;
@@ -894,19 +731,15 @@
 
     transform: skewX(-20deg);
 
-    background:
-        linear-gradient(
-            90deg,
-            transparent,
-            rgba(0, 0, 0, 0.13),
-            transparent
-        );
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.65),
+        transparent
+    );
 
-    transition:
-        left 0.7s
-        cubic-bezier(0.16, 1, 0.3, 1);
+    transition: left 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
-
 
 .hero-banner__btn--primary:hover
 .hero-banner__btn-shine {
@@ -914,417 +747,73 @@
 }
 
 
-/* ============================================================
-   SECONDARY
-   ============================================================ */
-
+/* ✅ SECONDARY — viền bạc, nền đen trong suốt */
 .hero-banner__btn--secondary {
-    border:
-        1px solid
-        rgba(255, 255, 255, 0.32);
+    border: 1px solid var(--hero-silver-muted);
+    background: rgba(5, 5, 8, 0.6);
+    color: var(--hero-silver-bright);
 
-    background: rgba(8, 8, 8, 0.38);
-
-    color: rgba(255, 255, 255, 0.9);
-
-    backdrop-filter: blur(12px);
-
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 
     box-shadow:
-        inset 0 1px 0
-        rgba(255, 255, 255, 0.08);
+        inset 0 1px 0 rgba(200, 208, 216, 0.12),
+        0 0 20px rgba(200, 208, 216, 0.08);
 
     transition:
         border-color 0.35s ease,
         background 0.35s ease,
-        box-shadow 0.35s ease;
+        box-shadow 0.35s ease,
+        color 0.35s ease;
 }
-
 
 .hero-banner__btn--secondary:hover {
-    border-color:
-        rgba(255, 255, 255, 0.72);
-
-    background: rgba(255, 255, 255, 0.09);
+    border-color: var(--hero-silver-bright);
+    background: rgba(200, 208, 216, 0.1);
+    color: #ffffff;
 
     box-shadow:
-        inset 0 1px 0
-        rgba(255, 255, 255, 0.14),
-        0 12px 30px
-        rgba(0, 0, 0, 0.35);
+        inset 0 1px 0 rgba(200, 208, 216, 0.2),
+        0 0 30px rgba(200, 208, 216, 0.25),
+        0 12px 30px rgba(0, 0, 0, 0.4);
 }
-
-
-/* ============================================================
-   PLAY ICON
-   ============================================================ */
 
 .hero-banner__play-icon {
     width: 27px;
     height: 27px;
 
     display: inline-flex;
-
     align-items: center;
-
     justify-content: center;
 
-    border:
-        1px solid
-        rgba(255, 255, 255, 0.35);
-
+    border: 1px solid var(--hero-silver-muted);
     border-radius: 50%;
 
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(200, 208, 216, 0.08);
+    color: var(--hero-silver-bright);
 
     transition:
         transform 0.35s ease,
-        background 0.35s ease;
+        background 0.35s ease,
+        box-shadow 0.35s ease;
 }
-
 
 .hero-banner__btn--secondary:hover
 .hero-banner__play-icon {
-    transform: scale(1.1);
-
-    background: rgba(255, 255, 255, 0.12);
+    transform: scale(1.12);
+    background: rgba(200, 208, 216, 0.18);
+    box-shadow: 0 0 14px rgba(200, 208, 216, 0.45);
 }
 
 
 /* ============================================================
-   17. TRUST LINE
-   ============================================================ */
-
-.hero-banner__trust {
-    display: flex;
-
-    align-items: center;
-
-    gap: 8px;
-
-    margin-top: 1.55rem;
-
-    color: rgba(255, 255, 255, 0.4);
-
-    font-family: var(--font-primary, "Inter", sans-serif);
-
-    font-size: 0.58rem;
-
-    font-weight: 600;
-
-    letter-spacing: 0.2em;
-
-    text-transform: uppercase;
-}
-
-
-.hero-banner__trust svg {
-    color: rgba(255, 255, 255, 0.72);
-}
-
-
-/* ============================================================
-   18. RIGHT META
-   ============================================================ */
-
-.hero-banner__right {
-    position: relative;
-
-    width: 240px;
-
-    flex-shrink: 0;
-
-    margin-right: 2rem;
-}
-
-
-/* ============================================================
-   META
-   ============================================================ */
-
-.hero-banner__meta {
-    position: relative;
-
-    padding: 1.5rem 0 1.5rem 2rem;
-
-    border-left:
-        1px solid
-        rgba(255, 255, 255, 0.2);
-}
-
-
-.hero-banner__meta-line {
-    position: absolute;
-
-    left: -1px;
-    top: 0;
-
-    width: 1px;
-    height: 54px;
-
-    background:
-        linear-gradient(
-            to bottom,
-            #ffffff,
-            transparent
-        );
-
-    box-shadow:
-        0 0 14px
-        rgba(255, 255, 255, 0.45);
-}
-
-
-.hero-banner__meta-label {
-    display: block;
-
-    color: rgba(255, 255, 255, 0.4);
-
-    font-size: 0.57rem;
-
-    font-weight: 700;
-
-    letter-spacing: 0.25em;
-
-    text-transform: uppercase;
-}
-
-
-.hero-banner__meta-items {
-    display: flex;
-
-    align-items: center;
-
-    gap: 8px;
-
-    margin-top: 1rem;
-
-    color: rgba(255, 255, 255, 0.85);
-
-    font-size: 0.62rem;
-
-    font-weight: 700;
-
-    letter-spacing: 0.13em;
-}
-
-
-.hero-banner__meta-items i {
-    width: 3px;
-    height: 3px;
-
-    border-radius: 50%;
-
-    background: rgba(255, 255, 255, 0.5);
-}
-
-
-.hero-banner__meta-caption {
-    margin-top: 1.35rem;
-
-    color: rgba(255, 255, 255, 0.3);
-
-    font-family: var(--font-display, "Oswald", sans-serif);
-
-    font-size: 1.35rem;
-
-    font-weight: 400;
-
-    line-height: 1.15;
-
-    letter-spacing: 0.06em;
-}
-
-
-/* ============================================================
-   ORBIT
-   ============================================================ */
-
-.hero-banner__meta-orbit {
-    position: absolute;
-
-    right: -28px;
-    bottom: -18px;
-
-    width: 74px;
-    height: 74px;
-
-    border:
-        1px solid
-        rgba(255, 255, 255, 0.08);
-
-    border-radius: 50%;
-}
-
-
-.hero-banner__meta-orbit::before {
-    content: "";
-
-    position: absolute;
-
-    inset: 9px;
-
-    border:
-        1px dashed
-        rgba(255, 255, 255, 0.12);
-
-    border-radius: 50%;
-}
-
-
-.hero-banner__meta-orbit span {
-    position: absolute;
-
-    top: -2px;
-    left: 50%;
-
-    width: 4px;
-    height: 4px;
-
-    border-radius: 50%;
-
-    background: #ffffff;
-
-    box-shadow:
-        0 0 12px
-        rgba(255, 255, 255, 0.8);
-}
-
-
-/* ============================================================
-   19. SCROLL INDICATOR
-   ============================================================ */
-
-.hero-banner__scroll-indicator {
-    position: absolute;
-
-    left: 50%;
-    bottom: 30px;
-
-    transform: translateX(-50%);
-
-    z-index: 8;
-
-    display: flex;
-
-    flex-direction: column;
-
-    align-items: center;
-
-    gap: 8px;
-
-    pointer-events: none;
-
-    color: rgba(255, 255, 255, 0.45);
-
-    font-size: 0.54rem;
-
-    font-weight: 600;
-
-    letter-spacing: 0.32em;
-
-    text-transform: uppercase;
-}
-
-
-.hero-banner__scroll-line {
-    width: 25px;
-    height: 36px;
-
-    display: flex;
-
-    align-items: flex-end;
-
-    justify-content: center;
-
-    color: rgba(255, 255, 255, 0.8);
-
-    border-bottom:
-        1px solid
-        rgba(255, 255, 255, 0.25);
-}
-
-
-/* ============================================================
-   20. RIGHT PROGRESS
-   ============================================================ */
-
-.hero-banner__progress {
-    position: absolute;
-
-    right: 34px;
-    top: 50%;
-
-    transform: translateY(-50%);
-
-    z-index: 8;
-
-    display: flex;
-
-    flex-direction: column;
-
-    align-items: center;
-
-    gap: 12px;
-
-    color: rgba(255, 255, 255, 0.35);
-
-    font-family: var(--font-primary, "Inter", sans-serif);
-
-    font-size: 0.5rem;
-
-    font-weight: 700;
-
-    letter-spacing: 0.16em;
-}
-
-
-.hero-banner__progress-track {
-    position: relative;
-
-    width: 1px;
-    height: 100px;
-
-    background: rgba(255, 255, 255, 0.13);
-}
-
-
-.hero-banner__progress-fill {
-    position: absolute;
-
-    top: 0;
-    left: 0;
-
-    width: 1px;
-    height: 100%;
-
-    background:
-        linear-gradient(
-            to bottom,
-            #ffffff,
-            rgba(255, 255, 255, 0.2)
-        );
-
-    box-shadow:
-        0 0 10px
-        rgba(255, 255, 255, 0.35);
-}
-
-
-/* ============================================================
-   21. TABLET
-   ============================================================ */
+   14. TABLET
+============================================================ */
 
 @media (max-width: 1200px) {
-
     .hero-banner__content {
         gap: 2rem;
-
-        padding:
-            110px
-            3rem
-            80px;
+        padding: 110px 3rem 80px;
     }
 
     .hero-banner__left {
@@ -1332,102 +821,61 @@
     }
 
     .hero-banner__title {
-        font-size:
-            clamp(4.8rem, 10vw, 8rem);
-
+        font-size: clamp(4.8rem, 10vw, 8rem);
         gap: 0.15em;
-    }
-
-    .hero-banner__right {
-        width: 200px;
-
-        margin-right: 1rem;
     }
 }
 
 
 /* ============================================================
-   22. SMALL TABLET
-   ============================================================ */
+   15. SMALL TABLET
+============================================================ */
 
 @media (max-width: 992px) {
-
     .hero-banner__content {
-        min-height: 92vh;
-
-        padding:
-            110px 2.5rem 80px;
+        padding: 72px 2.5rem 58px;
+        transform: translateY(-22px);
     }
 
     .hero-banner__left {
         width: 100%;
-    }
-
-    .hero-banner__right {
-        display: none;
     }
 
     .hero-banner__title {
-        font-size:
-            clamp(4.5rem, 13vw, 7.5rem);
-
+        font-size: clamp(4.5rem, 13vw, 7.5rem);
         gap: 0.14em;
-    }
-
-    .hero-banner__progress {
-        right: 20px;
     }
 }
 
 
 /* ============================================================
-   23. MOBILE
-   ============================================================ */
+   16. MOBILE
+============================================================ */
 
 @media (max-width: 768px) {
-
-    .hero-banner {
-        min-height: auto;
-    }
-
     .hero-banner__content {
-        min-height: 100svh;
-
-        align-items: flex-end;
-
-        padding:
-            120px 1.4rem 80px;
+        align-items: center;
+        padding: 72px 1.4rem 52px;
+        transform: translateY(-34px);
     }
 
     .hero-banner__left {
         width: 100%;
-    }
-
-    .hero-banner__brandline {
-        top: 28px;
-
-        font-size: 0.48rem;
-
-        letter-spacing: 0.22em;
     }
 
     .hero-banner__frame {
         inset: 16px;
-
-        opacity: 0.25;
+        opacity: 0.3;
     }
 
     .hero-banner__frame-corner {
         width: 24px;
-
         height: 24px;
     }
 
     .hero-banner__eyebrow {
         font-size: 0.55rem;
-
         letter-spacing: 0.2em;
-
         margin-bottom: 1.2rem;
     }
 
@@ -1435,36 +883,20 @@
         width: 26px;
     }
 
-    /* ⬇️ Title mobile: giữ khoảng cách rõ ràng giữa CHẠM / ẢNH */
     .hero-banner__title {
-        font-size:
-            clamp(3.7rem, 19vw, 6rem);
-
-        line-height: 1;
-
+        font-size: clamp(3.7rem, 19vw, 6rem);
+        line-height: 1.05;
         gap: 0.14em;
     }
 
     .hero-banner__title-outline,
-    .hero-banner__title-outline
-    .split-text__char {
-        -webkit-text-stroke:
-            1.5px
-            rgba(255, 255, 255, 0.95);
+    .hero-banner__title-outline .split-text__char {
+        -webkit-text-stroke: 1.5px var(--hero-silver-bright);
     }
 
     .hero-banner__title-accent {
         bottom: -12px;
-
         width: 95px;
-    }
-
-    .hero-banner__subtitle {
-        margin-top: 1.5rem;
-
-        font-size: 0.53rem;
-
-        letter-spacing: 0.2em;
     }
 
     .hero-banner__divider {
@@ -1473,77 +905,47 @@
 
     .hero-banner__description {
         font-size: 0.82rem;
-
         line-height: 1.72;
+        color: var(--hero-text-soft);
     }
 
     .hero-banner__actions {
         width: 100%;
-
         margin-top: 1.8rem;
-
         gap: 0.55rem;
     }
 
     .hero-banner__btn {
-        min-height: 50px;
-
         flex: 1;
-
         padding: 0.7rem 0.9rem;
-
         font-size: 0.59rem;
-
         letter-spacing: 0.1em;
     }
 
-    .hero-banner__trust {
-        margin-top: 1.2rem;
-
-        font-size: 0.47rem;
-
-        letter-spacing: 0.13em;
-    }
-
-    .hero-banner__scroll-indicator,
-    .hero-banner__progress {
-        display: none;
-    }
-
     .hero-banner__overlay-side {
-        background:
-            linear-gradient(
-                90deg,
-                rgba(0, 0, 0, 0.76),
-                rgba(0, 0, 0, 0.32) 70%,
-                transparent
-            );
+        background: linear-gradient(
+            90deg,
+            rgba(2, 2, 4, 0.52),
+            rgba(4, 4, 7, 0.24) 68%,
+            transparent
+        );
     }
 }
 
 
 /* ============================================================
-   24. SMALL MOBILE
-   ============================================================ */
+   17. SMALL MOBILE
+============================================================ */
 
 @media (max-width: 480px) {
-
     .hero-banner__content {
-        padding:
-            105px 1.15rem 65px;
+        padding: 64px 1.15rem 48px;
+        transform: translateY(-28px);
     }
 
     .hero-banner__title {
-        font-size:
-            clamp(3.2rem, 20vw, 4.8rem);
-
+        font-size: clamp(3.2rem, 20vw, 4.8rem);
         gap: 0.12em;
-    }
-
-    .hero-banner__subtitle {
-        flex-wrap: wrap;
-
-        gap: 8px;
     }
 
     .hero-banner__description {
@@ -1556,58 +958,39 @@
 
     .hero-banner__btn {
         width: 100%;
-
         flex: none;
-    }
-
-    .hero-banner__trust {
-        justify-content: center;
-
-        width: 100%;
-
-        text-align: center;
     }
 }
 
 
 /* ============================================================
-   26. MAGNETIC BUTTON COMPATIBILITY
-   ============================================================ */
+   18. MAGNETIC BUTTON COMPATIBILITY
+============================================================ */
 
 .magnetic-button {
     position: relative;
 
     appearance: none;
-
     -webkit-appearance: none;
 
     border: none;
-
     margin: 0;
 
     font: inherit;
-
     cursor: pointer;
 
     transform-style: preserve-3d;
-
     backface-visibility: hidden;
-
     -webkit-backface-visibility: hidden;
 }
 
-
 .magnetic-button:focus-visible {
-    outline:
-        2px solid
-        rgba(255, 255, 255, 0.95);
-
+    outline: 2px solid var(--hero-silver-bright);
     outline-offset: 4px;
+    box-shadow: 0 0 20px rgba(200, 208, 216, 0.5);
 }
-
 
 .magnetic-button:disabled {
     cursor: not-allowed;
-
     opacity: 0.55;
 }

@@ -13,7 +13,13 @@ cloudinary.config({
 });
 
 /* =========================================================
-   UPLOAD TO CLOUDINARY — CÓ TỐI ƯU ẢNH
+   UPLOAD TO CLOUDINARY — GIỮ NGUYÊN ẢNH GỐC
+   ----------------------------------------------------------
+   ✅ KHÔNG ép size khi upload
+   ✅ KHÔNG eager transformation
+   ✅ KHÔNG fetch_format / quality khi upload
+   → Ảnh upload lên bao nhiêu px giữ nguyên bấy nhiêu
+   → Frontend crop bằng CSS (aspect-ratio + object-fit)
 ========================================================== */
 const uploadToCloudinary = async (file, folder = 'cinema_shop', options = {}) => {
     try {
@@ -36,12 +42,7 @@ const uploadToCloudinary = async (file, folder = 'cinema_shop', options = {}) =>
 
         const publicId = cleanName;
 
-        /* ---------- Detect loại ảnh → chọn size phù hợp ---------- */
-        const imageType = detectImageType(folder);
-
-        const transformation = buildTransformation(imageType);
-
-        /* ---------- Upload với transformation ---------- */
+        /* ---------- Upload KHÔNG transformation ---------- */
         const result = await cloudinary.uploader.upload(file.path, {
             folder: folder,
             public_id: publicId,
@@ -50,26 +51,8 @@ const uploadToCloudinary = async (file, folder = 'cinema_shop', options = {}) =>
             overwrite: true,
             resource_type: 'image',
 
-            /* ✅ TỰ ĐỘNG TỐI ƯU ẢNH */
-            transformation: transformation,
+            /* ⚠️ KHÔNG có: transformation, eager, fetch_format, quality */
 
-            /* ✅ TỰ ĐỘNG CHỌN FORMAT + QUALITY */
-            fetch_format: 'auto',       // WebP/AVIF cho mobile
-            quality: 'auto:good',       // Nén 70-80%
-            flags: 'progressive',       // Progressive JPEG
-
-            /* ✅ Strip metadata để giảm size */
-            strip_metadata: true,
-
-            /* ✅ Eager transformations (tạo sẵn nhiều size) */
-            eager: [
-                { width: 200, height: 300, crop: 'fill', quality: 'auto', fetch_format: 'auto' },
-                { width: 400, height: 600, crop: 'fill', quality: 'auto', fetch_format: 'auto' },
-                { width: 800, height: 1200, crop: 'fill', quality: 'auto', fetch_format: 'auto' }
-            ],
-            eager_async: true,
-
-            /* Override options nếu có */
             ...options
         });
 
@@ -95,95 +78,6 @@ const uploadToCloudinary = async (file, folder = 'cinema_shop', options = {}) =>
 };
 
 /* =========================================================
-   DETECT IMAGE TYPE THEO FOLDER
-========================================================== */
-const detectImageType = (folder) => {
-    if (folder.includes('posters')) return 'poster';
-    if (folder.includes('backdrops')) return 'backdrop';
-    if (folder.includes('banners')) return 'banner';
-    if (folder.includes('avatars')) return 'avatar';
-    if (folder.includes('blogs')) return 'blog';
-    if (folder.includes('news')) return 'news';
-    if (folder.includes('promotions')) return 'promotion';
-    if (folder.includes('actors')) return 'actor';
-
-    return 'default';
-};
-
-/* =========================================================
-   BUILD TRANSFORMATION THEO TYPE
-========================================================== */
-const buildTransformation = (imageType) => {
-    const config = {
-        poster: {
-            width: 600,
-            height: 900,
-            crop: 'fill',
-            gravity: 'auto'
-        },
-        backdrop: {
-            width: 1200,
-            height: 675,
-            crop: 'fill',
-            gravity: 'auto'
-        },
-        banner: {
-            width: 1920,
-            height: 800,
-            crop: 'fill',
-            gravity: 'auto'
-        },
-        avatar: {
-            width: 300,
-            height: 300,
-            crop: 'fill',
-            gravity: 'face'
-        },
-        blog: {
-            width: 1200,
-            height: 675,
-            crop: 'fill',
-            gravity: 'auto'
-        },
-        news: {
-            width: 1200,
-            height: 675,
-            crop: 'fill',
-            gravity: 'auto'
-        },
-        promotion: {
-            width: 800,
-            height: 800,
-            crop: 'fill',
-            gravity: 'auto'
-        },
-        actor: {
-            width: 400,
-            height: 500,
-            crop: 'fill',
-            gravity: 'face'
-        },
-        default: {
-            width: 800,
-            crop: 'limit'
-        }
-    };
-
-    const c = config[imageType] || config.default;
-
-    return [
-        {
-            width: c.width,
-            height: c.height,
-            crop: c.crop,
-            gravity: c.gravity,
-            quality: 'auto:good',
-            fetch_format: 'auto'
-        }
-    ];
-};
-
-/* =========================================================
    DELETE FROM CLOUDINARY
 ========================================================== */
 const deleteFromCloudinary = async (publicId) => {
@@ -198,22 +92,31 @@ const deleteFromCloudinary = async (publicId) => {
 
 /* =========================================================
    HELPER: BUILD URL VỚI SIZE ĐỘNG (cho frontend)
+   ----------------------------------------------------------
+   Dùng khi cần serve ảnh ở size khác ảnh gốc.
+   Ví dụ: ảnh gốc 3000×4000 → cần hiển thị 500×750:
+   
+   buildOptimizedUrl('cinema_shop/poster-abc', {
+       width: 500,
+       height: 750,
+       crop: 'fill'
+   })
 ========================================================== */
 const buildOptimizedUrl = (publicId, options = {}) => {
     if (!publicId) return null;
 
     const {
-        width = 400,
+        width = null,
         height = null,
         crop = 'fill',
-        quality = 'auto:good',
+        quality = 'auto',
         format = 'auto'
     } = options;
 
     const transformation = [
         width ? `w_${width}` : null,
         height ? `h_${height}` : null,
-        `c_${crop}`,
+        (width || height) ? `c_${crop}` : null,
         `q_${quality}`,
         `f_${format}`
     ].filter(Boolean).join(',');

@@ -1,41 +1,35 @@
-import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
 import "../styles/ScrollReveal.css";
 
 /**
  * ============================================================
- * SCROLL REVEAL — CINEMATIC 3D v5 (SMOOTH OPTIMIZED)
+ * SCROLL REVEAL — QUANG DŨNG CINEMA
+ * PREMIUM ZEPHYR STYLE
  * ============================================================
  *
- * TỐI ƯU HÓA:
- * - Bỏ filter: brightness (tốn GPU)
- * - Blur chỉ chạy opacity, không animate blur value
- * - Tắt drop-shadow filter (dùng box-shadow CSS tĩnh)
- * - perspective cố định, không đổi theo direction
- * - will-change chỉ set khi cần, remove sau khi xong
- * - Reduce motion cho user prefer-reduced-motion
- * - Chỉ dùng transform + opacity (2 thuộc tính GPU-friendly nhất)
+ * Nguyên tắc:
+ * - Chỉ opacity + translateY
+ * - Không blur
+ * - Không scale
+ * - Không 3D
+ * - Không perspective
+ * - Không rotate
+ * - Không will-change
+ * - Sau reveal → transform: none
  *
  * Props:
- * - direction   : "up" | "down" | "left" | "right" | "zoom" | "flip" | "fade"
+ * - direction   : "up" | "down" | "fade"
  * - delay       : number (giây)
  * - duration    : number (giây)
  * - distance    : number (px)
- * - blur        : boolean — dùng blur overlay thay vì filter
- * - blurAmount  : number (px)
- * - scale       : boolean
- * - scaleAmount : number (0-1)
- * - rotate      : number (độ) — rotate 2D
- * - rotate3D    : boolean
- * - depth       : number (px)
- * - intensity   : "soft" | "medium" | "strong"
- * - perspective : boolean
- * - glow        : boolean
- * - threshold   : number
  * - once        : boolean
+ * - threshold   : number
  * - rootMargin  : string
- * - releaseTransform : boolean
+ *
+ * Các props cũ như:
+ * blur, scale, rotate, perspective...
+ * vẫn được nhận để giữ API cũ nhưng không sử dụng.
  */
 
 const ScrollReveal = ({
@@ -43,210 +37,106 @@ const ScrollReveal = ({
 
   direction = "up",
   delay = 0,
-  duration = 1.2,
+  duration = 0.8,
 
-  blur = true,
-  scale = true,
-
-  distance = 50,
-  blurAmount = 6,
-  scaleAmount = 0.94,
-  rotate = 0,
-  rotate3D = true,
-  depth = 80,
-
-  intensity = "medium",
-  perspective = true,
-  glow = true,
+  distance = 28,
+  once = true,
+  threshold = 0.08,
+  rootMargin = "0px 0px -80px 0px",
 
   className = "",
-  threshold = 0.08,
-  once = true,
-  rootMargin = "0px 0px -60px 0px",
 
-  releaseTransform = true,
+  // Legacy props — giữ lại để không phá API cũ
+  blur,
+  blurAmount,
+  scale,
+  scaleAmount,
+  rotate,
+  rotate3D,
+  depth,
+  intensity,
+  perspective,
+  glow,
+  releaseTransform,
 
   ...rest
 }) => {
   const ref = useRef(null);
-
-  const [isInView, setIsInView] = useState(false);
-  const [isDone, setIsDone] = useState(false);
-
-  /* ==========================================================
-     INTERSECTION OBSERVER
-  ========================================================== */
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     const element = ref.current;
+
     if (!element) return undefined;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setIsInView(true);
-          if (once) observer.disconnect();
+          setIsVisible(true);
+
+          if (once) {
+            observer.disconnect();
+          }
         } else if (!once) {
-          setIsInView(false);
-          setIsDone(false);
+          setIsVisible(false);
         }
       },
-      { threshold, rootMargin }
+      {
+        threshold,
+        rootMargin,
+      }
     );
 
     observer.observe(element);
-    return () => observer.disconnect();
+
+    return () => {
+      observer.disconnect();
+    };
   }, [once, threshold, rootMargin]);
 
-  /* ==========================================================
-     INITIAL POSITION
-  ========================================================== */
-
-  const getInitialPosition = () => {
-    switch (direction) {
-      case "up":
-        return { x: 0, y: distance, rotateX: rotate3D ? 12 : 0, rotateY: 0 };
-      case "down":
-        return { x: 0, y: -distance, rotateX: rotate3D ? -12 : 0, rotateY: 0 };
-      case "left":
-        return { x: -distance, y: 0, rotateX: 0, rotateY: rotate3D ? -14 : 0 };
-      case "right":
-        return { x: distance, y: 0, rotateX: 0, rotateY: rotate3D ? 14 : 0 };
-      case "zoom":
-        return { x: 0, y: 0, rotateX: 0, rotateY: 0 };
-      case "flip":
-        return { x: 0, y: distance * 0.3, rotateX: rotate3D ? 30 : 0, rotateY: 0 };
-      case "fade":
-        return { x: 0, y: 0, rotateX: 0, rotateY: 0 };
-      default:
-        return { x: 0, y: distance, rotateX: 0, rotateY: 0 };
-    }
-  };
-
-  const initialPosition = getInitialPosition();
-
-  /* ==========================================================
-     INITIAL STATE
-     ⚠️ KHÔNG dùng filter — chỉ dùng transform + opacity
-  ========================================================== */
-
-  const initial = {
-    opacity: 0,
-
-    ...initialPosition,
-
-    /* Scale bổ sung */
-    ...(scale && direction !== "zoom" ? { scale: scaleAmount } : {}),
-    ...(direction === "zoom" ? { scale: scaleAmount * 0.88 } : {}),
-    ...(direction === "flip" ? { scale: 0.92 } : {}),
-
-    /* Rotate 2D */
-    ...(rotate ? { rotate } : {}),
-
-    /* 3D depth */
-    ...(perspective ? { z: -depth } : {}),
-  };
-
-  /* ==========================================================
-     ANIMATE STATE
-  ========================================================== */
-
-  const animate = {
-    opacity: 1,
-    x: 0,
-    y: 0,
-    z: 0,
-    scale: 1,
-    rotate: 0,
-    rotateX: 0,
-    rotateY: 0,
-
-    transition: {
-      duration,
-      delay,
-      /* Easing mượt — smooth-out */
-      ease: [0.25, 0.46, 0.45, 0.94],
-    },
-  };
-
-  /* ==========================================================
-     STYLE — chỉ set transform-origin, KHÔNG set perspective ở đây
-  ========================================================== */
-
-  const getTransformOrigin = () => {
-    switch (direction) {
-      case "up":
-        return "center bottom";
-      case "down":
-        return "center top";
-      case "left":
-        return "right center";
-      case "right":
-        return "left center";
-      default:
-        return "center center";
-    }
-  };
-
-  const wrapperStyle = {
-    transformOrigin: getTransformOrigin(),
-    /* Chỉ set will-change khi chưa xong → sau đó remove để giải phóng GPU */
-    ...(releaseTransform && isDone
-      ? { willChange: "auto" }
-      : { willChange: "transform, opacity" }),
-  };
-
-  /* ==========================================================
-     CLASS
-  ========================================================== */
+  /**
+   * Chỉ cho phép 3 direction premium:
+   * up / down / fade
+   *
+   * Nếu component cũ truyền left/right,
+   * tự động fallback về up để giữ visual consistency.
+   */
+  const safeDirection =
+    direction === "down" || direction === "fade"
+      ? direction
+      : "up";
 
   const revealClassName = [
     "scroll-reveal",
-    `scroll-reveal--${direction}`,
-    `scroll-reveal--${intensity}`,
-
-    perspective ? "scroll-reveal--perspective" : "scroll-reveal--flat",
-    glow ? "scroll-reveal--glow" : "",
-    rotate3D ? "scroll-reveal--3d" : "scroll-reveal--2d",
-    blur ? "scroll-reveal--blur" : "",
-
-    isInView ? "scroll-reveal--visible" : "scroll-reveal--hidden",
-    isDone ? "scroll-reveal--done" : "",
-
+    `scroll-reveal--${safeDirection}`,
+    isVisible ? "scroll-reveal--visible" : "",
     className,
   ]
     .filter(Boolean)
     .join(" ");
 
-  /* ==========================================================
-     RENDER
-  ========================================================== */
+  /**
+   * CSS variables
+   *
+   * Distance mặc định:
+   * Desktop: 28px
+   * Mobile: CSS sẽ giảm nhẹ.
+   */
+  const wrapperStyle = {
+    "--reveal-delay": `${delay}s`,
+    "--reveal-duration": `${duration}s`,
+    "--reveal-distance": `${distance}px`,
+  };
 
   return (
-    <motion.div
+    <div
       ref={ref}
       className={revealClassName}
-      initial={initial}
-      animate={isInView ? animate : initial}
-      onAnimationComplete={() => {
-        if (releaseTransform) setIsDone(true);
-      }}
       style={wrapperStyle}
       {...rest}
     >
-      {/* Blur overlay — thay cho filter: blur() để tối ưu GPU */}
-      {blur && (
-        <span
-          className="scroll-reveal__blur"
-          style={{ "--blur-amount": `${blurAmount}px` }}
-          aria-hidden="true"
-        />
-      )}
-
-      <span className="scroll-reveal__edge" aria-hidden="true" />
-
-      <div className="scroll-reveal__content">{children}</div>
-    </motion.div>
+      {children}
+    </div>
   );
 };
 

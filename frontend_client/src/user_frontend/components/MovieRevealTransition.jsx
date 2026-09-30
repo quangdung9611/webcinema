@@ -255,36 +255,6 @@ const MovieRevealTransition = ({ movie, onComplete }) => {
             </div>
 
             {/* ====================================================
-                MOVIE TITLE
-               ==================================================== */}
-
-            <div className="movie-reveal__title">
-
-                <div className="movie-reveal__title-kicker">
-                    NOW SHOWING
-                </div>
-
-                <h1>
-                    {title}
-                </h1>
-
-                <div className="movie-reveal__title-meta">
-
-                    <span>
-                        QUANG DŨNG CINEMA
-                    </span>
-
-                    <span>•</span>
-
-                    <span>
-                        MOVIE #{movieId}
-                    </span>
-
-                </div>
-
-            </div>
-
-            {/* ====================================================
                 FILM GRAIN
                ==================================================== */}
 

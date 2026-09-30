@@ -1,0 +1,91 @@
+/* ============================================================
+   QUANG DŨNG CINEMA
+   PAGE TRANSITION — FADE OUT + FADE IN (PURE CSS)
+   ============================================================
+   ✅ enter: fade in + trượt lên từ dưới
+   ✅ exit : fade out + trượt lên trên
+   ✅ Không phụ thuộc framer-motion
+============================================================ */
+
+
+/* ============================================================
+   01. INNER WRAPPER
+============================================================ */
+
+.page-transition__inner {
+    position: relative;
+    width: 100%;
+    min-height: 100dvh;
+
+    /* GPU hint */
+    will-change: opacity, transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+
+    /* Tránh layout shift */
+    transform: translate3d(0, 0, 0);
+}
+
+
+/* ============================================================
+   02. ENTER — FADE IN + SLIDE UP
+============================================================ */
+
+.page-transition--enter {
+    animation: pageTransitionEnter 0.4s
+        cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+
+/* ============================================================
+   03. EXIT — FADE OUT + SLIDE UP
+============================================================ */
+
+.page-transition--exit {
+    animation: pageTransitionExit 0.3s
+        cubic-bezier(0.4, 0, 1, 1) both;
+    pointer-events: none;
+}
+
+
+/* ============================================================
+   04. KEYFRAMES
+============================================================ */
+
+@keyframes pageTransitionEnter {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 12px, 0);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+@keyframes pageTransitionExit {
+    from {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translate3d(0, -8px, 0);
+    }
+}
+
+
+/* ============================================================
+   05. REDUCED MOTION
+============================================================ */
+/* 
+@media (prefers-reduced-motion: reduce) {
+    .page-transition--enter,
+    .page-transition--exit {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+    }
+} */

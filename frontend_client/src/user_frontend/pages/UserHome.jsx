@@ -16,13 +16,6 @@ import PromotionCard from '../components/PromotionCard';
 import BlogCinemaCard from '../components/BlogCinemaCard';
 import NewsCard from '../components/NewsCard';
 
-import TiltCard from '../components/TiltCard';
-
-import {
-  optimizeCloudinary,
-  IMAGE_SIZES,
-} from '../../utils/imageHelper';
-
 import {
   Ticket,
   Star,
@@ -107,39 +100,65 @@ const QuickSelect = ({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target)
+      ) {
         setIsOpen(false);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   const validOptions = options.filter(
-    (option) => option && typeof option === 'object' && option[valueKey] !== undefined
+    (option) =>
+      option &&
+      typeof option === 'object' &&
+      option[valueKey] !== undefined
   );
 
-  const selectedOption = validOptions.find((option) => option[valueKey] === value);
+  const selectedOption = validOptions.find(
+    (option) => option[valueKey] === value
+  );
 
   const getDisplayLabel = (option) => {
-    if (renderLabel && typeof renderLabel === 'function') return renderLabel(option);
+    if (renderLabel && typeof renderLabel === 'function') {
+      return renderLabel(option);
+    }
+
     return option[labelKey];
   };
 
   return (
     <div className="quick-select-item" ref={dropdownRef}>
       <div
-        className={`quick-select-trigger ${disabled ? 'disabled' : ''} ${isOpen ? 'open' : ''}`}
+        className={`quick-select-trigger ${
+          disabled ? 'disabled' : ''
+        } ${isOpen ? 'open' : ''}`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
       >
         <div className="quick-select-left">
-          <Icon size={20} className="quick-select-icon" />
+          <Icon
+            size={20}
+            className="quick-select-icon"
+          />
+
           <span className="quick-select-value">
-            {selectedOption ? getDisplayLabel(selectedOption) : placeholder}
+            {selectedOption
+              ? getDisplayLabel(selectedOption)
+              : placeholder}
           </span>
         </div>
-        <ChevronDown size={16} className="quick-select-arrow" />
+
+        <ChevronDown
+          size={16}
+          className="quick-select-arrow"
+        />
       </div>
 
       {isOpen && validOptions.length > 0 && (
@@ -147,7 +166,9 @@ const QuickSelect = ({
           {validOptions.map((option) => (
             <div
               key={option[valueKey]}
-              className={`quick-option-item ${option[valueKey] === value ? 'active' : ''}`}
+              className={`quick-option-item ${
+                option[valueKey] === value ? 'active' : ''
+              }`}
               onClick={() => {
                 onChange(option[valueKey]);
                 setIsOpen(false);
@@ -172,10 +193,26 @@ const StatsSection = ({ loading = false }) => {
   const [hasAnimated, setHasAnimated] = useState(false);
 
   const statsData = [
-    { target: 1234, label: 'Dự án đã thực hiện', suffix: '' },
-    { target: 567, label: 'Khách hàng hài lòng', suffix: '+' },
-    { target: 89, label: 'Giải thưởng đạt được', suffix: '' },
-    { target: 2026, label: 'Ngày hoạt động', suffix: '' },
+    {
+      target: 1234,
+      label: 'Dự án đã thực hiện',
+      suffix: '',
+    },
+    {
+      target: 567,
+      label: 'Khách hàng hài lòng',
+      suffix: '+',
+    },
+    {
+      target: 89,
+      label: 'Giải thưởng đạt được',
+      suffix: '',
+    },
+    {
+      target: 2026,
+      label: 'Ngày hoạt động',
+      suffix: '',
+    },
   ];
 
   useEffect(() => {
@@ -187,7 +224,10 @@ const StatsSection = ({ loading = false }) => {
           setHasAnimated(true);
 
           statsData.forEach((item, index) => {
-            const el = document.getElementById(`stat-${index}`);
+            const el = document.getElementById(
+              `stat-${index}`
+            );
+
             if (!el) return;
 
             const target = item.target;
@@ -195,17 +235,32 @@ const StatsSection = ({ loading = false }) => {
             const startTime = performance.now();
 
             const updateNumber = (currentTime) => {
-              const elapsed = currentTime - startTime;
-              const progress = Math.min(elapsed / duration, 1);
-              const eased = 1 - Math.pow(1 - progress, 3);
-              const currentValue = Math.floor(eased * target);
+              const elapsed =
+                currentTime - startTime;
 
-              el.textContent = currentValue + (item.suffix || '');
+              const progress = Math.min(
+                elapsed / duration,
+                1
+              );
+
+              const eased =
+                1 - Math.pow(1 - progress, 3);
+
+              const currentValue =
+                Math.floor(eased * target);
+
+              el.textContent =
+                currentValue +
+                (item.suffix || '');
 
               if (progress < 1) {
-                requestAnimationFrame(updateNumber);
+                requestAnimationFrame(
+                  updateNumber
+                );
               } else {
-                el.textContent = target + (item.suffix || '');
+                el.textContent =
+                  target +
+                  (item.suffix || '');
               }
             };
 
@@ -215,14 +270,21 @@ const StatsSection = ({ loading = false }) => {
           observer.disconnect();
         }
       },
-      { threshold: 0.3 }
+      {
+        threshold: 0.3,
+      }
     );
 
     const current = statsRef.current;
-    if (current) observer.observe(current);
+
+    if (current) {
+      observer.observe(current);
+    }
 
     return () => {
-      if (current) observer.unobserve(current);
+      if (current) {
+        observer.unobserve(current);
+      }
     };
   }, [hasAnimated, loading]);
 
@@ -231,7 +293,10 @@ const StatsSection = ({ loading = false }) => {
       <section className="stats-section">
         <div className="skeleton-stats">
           {[...Array(4)].map((_, index) => (
-            <div key={index} className="skeleton-stat">
+            <div
+              key={index}
+              className="skeleton-stat"
+            >
               <div className="skeleton-stat__number skeleton-shimmer" />
               <div className="skeleton-stat__label skeleton-shimmer" />
             </div>
@@ -242,17 +307,31 @@ const StatsSection = ({ loading = false }) => {
   }
 
   return (
-    <section ref={statsRef} className="stats-section">
+    <section
+      ref={statsRef}
+      className="stats-section"
+    >
       <div className="container stats-container">
-        <h3 className="stats-title">Thống kê nổi bật</h3>
+        <h3 className="stats-title">
+          Thống kê nổi bật
+        </h3>
 
         <div className="stats-grid">
           {statsData.map((item, index) => (
-            <div key={index} className="stat-item">
-              <div className="stat-number" id={`stat-${index}`}>
+            <div
+              key={index}
+              className="stat-item"
+            >
+              <div
+                className="stat-number"
+                id={`stat-${index}`}
+              >
                 0{item.suffix}
               </div>
-              <div className="stat-label">{item.label}</div>
+
+              <div className="stat-label">
+                {item.label}
+              </div>
             </div>
           ))}
         </div>
@@ -267,55 +346,120 @@ const StatsSection = ({ loading = false }) => {
 ============================================================ */
 
 const TestimonialSkeleton = () => (
-  <div className="testimonial-card" style={{ opacity: 0.5 }}>
+  <div
+    className="testimonial-card"
+    style={{ opacity: 0.5 }}
+  >
     <div className="testimonial-header">
-      <div className="skeleton-shimmer" style={{ width: 56, height: 56, borderRadius: '50%' }} />
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <div className="skeleton-shimmer" style={{ height: 14, width: '70%', borderRadius: 6 }} />
-        <div className="skeleton-shimmer" style={{ height: 12, width: '50%', borderRadius: 6 }} />
+      <div
+        className="skeleton-shimmer"
+        style={{
+          width: 56,
+          height: 56,
+          borderRadius: '50%',
+        }}
+      />
+
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+        }}
+      >
+        <div
+          className="skeleton-shimmer"
+          style={{
+            height: 14,
+            width: '70%',
+            borderRadius: 6,
+          }}
+        />
+
+        <div
+          className="skeleton-shimmer"
+          style={{
+            height: 12,
+            width: '50%',
+            borderRadius: 6,
+          }}
+        />
       </div>
     </div>
 
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
-      <div className="skeleton-shimmer" style={{ height: 12, borderRadius: 6 }} />
-      <div className="skeleton-shimmer" style={{ height: 12, borderRadius: 6 }} />
-      <div className="skeleton-shimmer" style={{ height: 12, width: '60%', borderRadius: 6 }} />
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+        marginTop: 12,
+      }}
+    >
+      <div
+        className="skeleton-shimmer"
+        style={{
+          height: 12,
+          borderRadius: 6,
+        }}
+      />
+
+      <div
+        className="skeleton-shimmer"
+        style={{
+          height: 12,
+          borderRadius: 6,
+        }}
+      />
+
+      <div
+        className="skeleton-shimmer"
+        style={{
+          height: 12,
+          width: '60%',
+          borderRadius: 6,
+        }}
+      />
     </div>
   </div>
 );
 
 
 /* ============================================================
-   SECTION HEADER (dùng chung)
+   SECTION HEADER
 ============================================================ */
 
-const SectionHeader = ({ icon: Icon, title, viewAllPath, onNavigate }) => (
+const SectionHeader = ({
+  icon: Icon,
+  title,
+  viewAllPath,
+  onNavigate,
+}) => (
   <ScrollReveal
     direction="up"
-    delay={0.05}
-    duration={1}
-    distance={40}
-    blur={false}
-    blurAmount={0}
-    scale
-    scaleAmount={0.96}
-    rotate3D={false}
-    depth={40}
-    intensity="soft"
-    perspective
-    glow={false}
+    delay={0.02}
+    duration={0.7}
+    distance={20}
     once
-    releaseTransform
   >
     <div className="section-header">
       <div className="section-header-left">
         <h3 className="section-title">
-          <Icon size={40} className="section-icon" />
+          <Icon
+            size={40}
+            className="section-icon"
+          />
+
           {title}
         </h3>
       </div>
 
-      <button className="btn-view-all" onClick={() => onNavigate(viewAllPath)}>
+      <button
+        className="btn-view-all"
+        onClick={() =>
+          onNavigate(viewAllPath)
+        }
+      >
         Xem tất cả
         <ChevronRight size={18} />
       </button>
@@ -331,41 +475,69 @@ const SectionHeader = ({ icon: Icon, title, viewAllPath, onNavigate }) => (
 const UserHome = () => {
   const navigate = useNavigate();
 
-  const [groupedMovies, setGroupedMovies] = useState({
-    'Đang chiếu': [],
-    'Sắp chiếu': [],
-  });
+  const [groupedMovies, setGroupedMovies] =
+    useState({
+      'Đang chiếu': [],
+      'Sắp chiếu': [],
+    });
 
-  const [loading, setLoading] = useState(true);
-  const [promotions, setPromotions] = useState([]);
-  const [cinemaNews, setCinemaNews] = useState([]);
-  const [cinemas, setCinemas] = useState([]);
-  const [newsItems, setNewsItems] = useState([]);
-  const [testimonials, setTestimonials] = useState([]);
-  const [user, setUser] = useState(null);
+  const [loading, setLoading] =
+    useState(true);
 
-  const [quickData, setQuickData] = useState({ movies: [], cinemas: [] });
+  const [promotions, setPromotions] =
+    useState([]);
 
-  const [selectedQuick, setSelectedQuick] = useState({
-    movie: '',
-    cinema: '',
-    date: '',
-    showtime: '',
-  });
+  const [cinemaNews, setCinemaNews] =
+    useState([]);
 
-  const [availableDates, setAvailableDates] = useState([]);
-  const [availableShowtimes, setAvailableShowtimes] = useState([]);
+  const [cinemas, setCinemas] =
+    useState([]);
 
-  const [modal, setModal] = useState({
-    show: false,
-    type: 'error',
-    title: '',
-    message: '',
-  });
+  const [newsItems, setNewsItems] =
+    useState([]);
 
-  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
-  const [reviewSubmitting, setReviewSubmitting] = useState(false);
-  const [bookingLoading, setBookingLoading] = useState(false);
+  const [testimonials, setTestimonials] =
+    useState([]);
+
+  const [user, setUser] =
+    useState(null);
+
+  const [quickData, setQuickData] =
+    useState({
+      movies: [],
+      cinemas: [],
+    });
+
+  const [selectedQuick, setSelectedQuick] =
+    useState({
+      movie: '',
+      cinema: '',
+      date: '',
+      showtime: '',
+    });
+
+  const [availableDates, setAvailableDates] =
+    useState([]);
+
+  const [availableShowtimes, setAvailableShowtimes] =
+    useState([]);
+
+  const [modal, setModal] =
+    useState({
+      show: false,
+      type: 'error',
+      title: '',
+      message: '',
+    });
+
+  const [isReviewModalOpen, setIsReviewModalOpen] =
+    useState(false);
+
+  const [reviewSubmitting, setReviewSubmitting] =
+    useState(false);
+
+  const [bookingLoading, setBookingLoading] =
+    useState(false);
 
 
   /* ========================================================
@@ -373,10 +545,24 @@ const UserHome = () => {
   ======================================================== */
 
   const closeModal = () =>
-    setModal({ show: false, type: 'error', title: '', message: '' });
+    setModal({
+      show: false,
+      type: 'error',
+      title: '',
+      message: '',
+    });
 
-  const showModal = (type, title, message) =>
-    setModal({ show: true, type, title, message });
+  const showModal = (
+    type,
+    title,
+    message
+  ) =>
+    setModal({
+      show: true,
+      type,
+      title,
+      message,
+    });
 
 
   /* ========================================================
@@ -387,9 +573,17 @@ const UserHome = () => {
     navigate(path);
 
     if (window.__lenis) {
-      window.__lenis.scrollTo(0, { immediate: true });
+      window.__lenis.scrollTo(
+        0,
+        {
+          immediate: true,
+        }
+      );
     } else {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      });
     }
   };
 
@@ -399,75 +593,166 @@ const UserHome = () => {
   ======================================================== */
 
   useEffect(() => {
-    const fetchInitialData = async () => {
-      setLoading(true);
-
-      try {
-        const [
-          statusRes,
-          movieRes,
-          promotionRes,
-          blogRes,
-          cinemaRes,
-          newsRes,
-          testimonialRes,
-        ] = await Promise.all([
-          api.get('/api/movies/status-group'),
-          api.get('/api/showtimes/quick-booking'),
-          api.get('/api/promotions'),
-          api.get('/api/blog-cinema'),
-          api.get('/api/cinemas'),
-          api.get('/api/news'),
-          api.get('/api/testimonials/active?limit=4'),
-        ]);
-
-        const statusData = statusRes?.data?.data || statusRes?.data || {};
-
-        setGroupedMovies({
-          'Đang chiếu': Array.isArray(statusData['Đang chiếu']) ? statusData['Đang chiếu'] : [],
-          'Sắp chiếu': Array.isArray(statusData['Sắp chiếu']) ? statusData['Sắp chiếu'] : [],
-        });
-
-        setQuickData({ movies: unwrapArray(movieRes.data), cinemas: [] });
-        setPromotions(unwrapArray(promotionRes.data));
-        setCinemaNews(unwrapArray(blogRes.data));
-        setCinemas(unwrapArray(cinemaRes.data));
-
-        const newsData = Array.isArray(newsRes.data)
-          ? newsRes.data
-          : Array.isArray(newsRes.data?.data)
-          ? newsRes.data.data
-          : [];
-
-        setNewsItems([...newsData].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
-
-        const testimonialData =
-          testimonialRes.data?.success === true
-            ? testimonialRes.data.data
-            : Array.isArray(testimonialRes.data)
-            ? testimonialRes.data
-            : [];
-
-        setTestimonials(testimonialData);
+    const fetchInitialData =
+      async () => {
+        setLoading(true);
 
         try {
-          const userRes = await api.get('/api/auth/me');
-          setUser(userRes.data?.user || null);
-        } catch (err) {
-          setUser(null);
+          const [
+            statusRes,
+            movieRes,
+            promotionRes,
+            blogRes,
+            cinemaRes,
+            newsRes,
+            testimonialRes,
+          ] = await Promise.all([
+            api.get(
+              '/api/movies/status-group'
+            ),
+
+            api.get(
+              '/api/showtimes/quick-booking'
+            ),
+
+            api.get(
+              '/api/promotions'
+            ),
+
+            api.get(
+              '/api/blog-cinema'
+            ),
+
+            api.get(
+              '/api/cinemas'
+            ),
+
+            api.get(
+              '/api/news'
+            ),
+
+            api.get(
+              '/api/testimonials/active?limit=4'
+            ),
+          ]);
+
+          const statusData =
+            statusRes?.data?.data ||
+            statusRes?.data ||
+            {};
+
+          setGroupedMovies({
+            'Đang chiếu':
+              Array.isArray(
+                statusData['Đang chiếu']
+              )
+                ? statusData['Đang chiếu']
+                : [],
+
+            'Sắp chiếu':
+              Array.isArray(
+                statusData['Sắp chiếu']
+              )
+                ? statusData['Sắp chiếu']
+                : [],
+          });
+
+          setQuickData({
+            movies:
+              unwrapArray(
+                movieRes.data
+              ),
+
+            cinemas: [],
+          });
+
+          setPromotions(
+            unwrapArray(
+              promotionRes.data
+            )
+          );
+
+          setCinemaNews(
+            unwrapArray(
+              blogRes.data
+            )
+          );
+
+          setCinemas(
+            unwrapArray(
+              cinemaRes.data
+            )
+          );
+
+          const newsData =
+            Array.isArray(
+              newsRes.data
+            )
+              ? newsRes.data
+              : Array.isArray(
+                  newsRes.data?.data
+                )
+              ? newsRes.data.data
+              : [];
+
+          setNewsItems(
+            [...newsData].sort(
+              (a, b) =>
+                new Date(
+                  b.created_at
+                ) -
+                new Date(
+                  a.created_at
+                )
+            )
+          );
+
+          const testimonialData =
+            testimonialRes.data?.success === true
+              ? testimonialRes.data.data
+              : Array.isArray(
+                  testimonialRes.data
+                )
+              ? testimonialRes.data
+              : [];
+
+          setTestimonials(
+            testimonialData
+          );
+
+          try {
+            const userRes =
+              await api.get(
+                '/api/auth/me'
+              );
+
+            setUser(
+              userRes.data?.user ||
+                null
+            );
+          } catch (err) {
+            setUser(null);
+          }
+        } catch (error) {
+          console.error(
+            'Lỗi khi load data:',
+            error
+          );
+
+          showModal(
+            'error',
+            'Lỗi tải dữ liệu',
+            'Không thể tải dữ liệu trang chủ. Vui lòng thử lại!'
+          );
+
+          setGroupedMovies({
+            'Đang chiếu': [],
+            'Sắp chiếu': [],
+          });
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        console.error('Lỗi khi load data:', error);
-        showModal(
-          'error',
-          'Lỗi tải dữ liệu',
-          'Không thể tải dữ liệu trang chủ. Vui lòng thử lại!'
-        );
-        setGroupedMovies({ 'Đang chiếu': [], 'Sắp chiếu': [] });
-      } finally {
-        setLoading(false);
-      }
-    };
+      };
 
     fetchInitialData();
   }, []);
@@ -479,24 +764,53 @@ const UserHome = () => {
 
   useEffect(() => {
     if (!selectedQuick.movie) {
-      setQuickData((prev) => ({ ...prev, cinemas: [] }));
+      setQuickData((prev) => ({
+        ...prev,
+        cinemas: [],
+      }));
+
       setAvailableDates([]);
       setAvailableShowtimes([]);
+
       return;
     }
 
-    const fetchCinemas = async () => {
-      try {
-        const res = await api.get('/api/showtimes/quick-booking', {
-          params: { movie_id: selectedQuick.movie },
-        });
+    const fetchCinemas =
+      async () => {
+        try {
+          const res =
+            await api.get(
+              '/api/showtimes/quick-booking',
+              {
+                params: {
+                  movie_id:
+                    selectedQuick.movie,
+                },
+              }
+            );
 
-        setQuickData((prev) => ({ ...prev, cinemas: unwrapArray(res.data) }));
-      } catch (error) {
-        console.error('Lỗi load rạp:', error);
-        showModal('error', 'Lỗi tải rạp', 'Không thể tải danh sách rạp!');
-      }
-    };
+          setQuickData(
+            (prev) => ({
+              ...prev,
+              cinemas:
+                unwrapArray(
+                  res.data
+                ),
+            })
+          );
+        } catch (error) {
+          console.error(
+            'Lỗi load rạp:',
+            error
+          );
+
+          showModal(
+            'error',
+            'Lỗi tải rạp',
+            'Không thể tải danh sách rạp!'
+          );
+        }
+      };
 
     fetchCinemas();
   }, [selectedQuick.movie]);
@@ -507,30 +821,59 @@ const UserHome = () => {
   ======================================================== */
 
   useEffect(() => {
-    if (!selectedQuick.movie || !selectedQuick.cinema) {
+    if (
+      !selectedQuick.movie ||
+      !selectedQuick.cinema
+    ) {
       setAvailableDates([]);
       setAvailableShowtimes([]);
       return;
     }
 
-    const fetchDates = async () => {
-      try {
-        const res = await api.get('/api/showtimes/quick-booking', {
-          params: {
-            movie_id: selectedQuick.movie,
-            cinema_id: selectedQuick.cinema,
-          },
-        });
+    const fetchDates =
+      async () => {
+        try {
+          const res =
+            await api.get(
+              '/api/showtimes/quick-booking',
+              {
+                params: {
+                  movie_id:
+                    selectedQuick.movie,
 
-        setAvailableDates(unwrapArray(res.data).map((item) => item.show_date));
-      } catch (error) {
-        console.error('Lỗi load ngày:', error);
-        showModal('error', 'Lỗi tải ngày chiếu', 'Không thể tải danh sách ngày chiếu!');
-      }
-    };
+                  cinema_id:
+                    selectedQuick.cinema,
+                },
+              }
+            );
+
+          setAvailableDates(
+            unwrapArray(
+              res.data
+            ).map(
+              (item) =>
+                item.show_date
+            )
+          );
+        } catch (error) {
+          console.error(
+            'Lỗi load ngày:',
+            error
+          );
+
+          showModal(
+            'error',
+            'Lỗi tải ngày chiếu',
+            'Không thể tải danh sách ngày chiếu!'
+          );
+        }
+      };
 
     fetchDates();
-  }, [selectedQuick.movie, selectedQuick.cinema]);
+  }, [
+    selectedQuick.movie,
+    selectedQuick.cinema,
+  ]);
 
 
   /* ========================================================
@@ -538,132 +881,277 @@ const UserHome = () => {
   ======================================================== */
 
   useEffect(() => {
-    if (!selectedQuick.movie || !selectedQuick.cinema || !selectedQuick.date) {
+    if (
+      !selectedQuick.movie ||
+      !selectedQuick.cinema ||
+      !selectedQuick.date
+    ) {
       setAvailableShowtimes([]);
       return;
     }
 
-    const fetchShowtimes = async () => {
-      try {
-        const res = await api.get('/api/showtimes/quick-booking', {
-          params: {
-            movie_id: selectedQuick.movie,
-            cinema_id: selectedQuick.cinema,
-            date: selectedQuick.date,
-          },
-        });
+    const fetchShowtimes =
+      async () => {
+        try {
+          const res =
+            await api.get(
+              '/api/showtimes/quick-booking',
+              {
+                params: {
+                  movie_id:
+                    selectedQuick.movie,
 
-        setAvailableShowtimes(unwrapArray(res.data));
-      } catch (error) {
-        console.error('Lỗi load suất:', error);
-        showModal('error', 'Lỗi tải suất chiếu', 'Không thể tải danh sách suất chiếu!');
-      }
-    };
+                  cinema_id:
+                    selectedQuick.cinema,
+
+                  date:
+                    selectedQuick.date,
+                },
+              }
+            );
+
+          setAvailableShowtimes(
+            unwrapArray(
+              res.data
+            )
+          );
+        } catch (error) {
+          console.error(
+            'Lỗi load suất:',
+            error
+          );
+
+          showModal(
+            'error',
+            'Lỗi tải suất chiếu',
+            'Không thể tải danh sách suất chiếu!'
+          );
+        }
+      };
 
     fetchShowtimes();
-  }, [selectedQuick.movie, selectedQuick.cinema, selectedQuick.date]);
+  }, [
+    selectedQuick.movie,
+    selectedQuick.cinema,
+    selectedQuick.date,
+  ]);
 
 
   /* ========================================================
      QUICK BOOKING LABEL
   ======================================================== */
 
-  const renderShowtimeLabel = (option) => {
-    if (!option) return '';
-    const time = option.start_time || '';
-    const room = option.room_name || '';
-    return room ? `${time} - ${room}` : time;
-  };
+  const renderShowtimeLabel =
+    (option) => {
+      if (!option) return '';
+
+      const time =
+        option.start_time || '';
+
+      const room =
+        option.room_name || '';
+
+      return room
+        ? `${time} - ${room}`
+        : time;
+    };
 
 
   /* ========================================================
      QUICK BOOKING HANDLER
   ======================================================== */
 
-  const handleQuickBook = async () => {
-    if (!selectedQuick.movie) return showModal('error', 'Thiếu thông tin', 'Vui lòng chọn phim!');
-    if (!selectedQuick.cinema) return showModal('error', 'Thiếu thông tin', 'Vui lòng chọn rạp!');
-    if (!selectedQuick.date) return showModal('error', 'Thiếu thông tin', 'Vui lòng chọn ngày chiếu!');
-    if (!selectedQuick.showtime) return showModal('error', 'Thiếu thông tin', 'Vui lòng chọn suất chiếu!');
+  const handleQuickBook =
+    async () => {
+      if (!selectedQuick.movie) {
+        return showModal(
+          'error',
+          'Thiếu thông tin',
+          'Vui lòng chọn phim!'
+        );
+      }
 
-    setBookingLoading(true);
+      if (!selectedQuick.cinema) {
+        return showModal(
+          'error',
+          'Thiếu thông tin',
+          'Vui lòng chọn rạp!'
+        );
+      }
 
-    try {
-      const res = await api.get(`/api/showtimes/detail/${selectedQuick.showtime}`);
-      const showtimeData = res.data?.data;
+      if (!selectedQuick.date) {
+        return showModal(
+          'error',
+          'Thiếu thông tin',
+          'Vui lòng chọn ngày chiếu!'
+        );
+      }
 
-      navigate(`/booking/${showtimeData.slug}`, {
-        state: {
-          movie: {
-            title: showtimeData.title,
-            poster_url: showtimeData.poster_url,
-            age_rating: showtimeData.age_rating,
-          },
-          cinema: { cinema_name: showtimeData.cinema_name },
-          room: {
-            room_name: showtimeData.room_name,
-            room_type: showtimeData.room_type,
-          },
-          showtime: {
-            showtime_id: showtimeData.showtime_id,
-            start_time: showtimeData.start_time,
-          },
-          date: showtimeData.start_time.split(' ')[0],
-        },
-      });
-    } catch (err) {
-      console.error('Lỗi khi lấy showtime detail:', err);
-      showModal('error', 'Đặt vé thất bại', 'Không thể lấy thông tin suất chiếu!');
-    } finally {
-      setBookingLoading(false);
-    }
-  };
+      if (!selectedQuick.showtime) {
+        return showModal(
+          'error',
+          'Thiếu thông tin',
+          'Vui lòng chọn suất chiếu!'
+        );
+      }
+
+      setBookingLoading(true);
+
+      try {
+        const res =
+          await api.get(
+            `/api/showtimes/detail/${selectedQuick.showtime}`
+          );
+
+        const showtimeData =
+          res.data?.data;
+
+        navigate(
+          `/booking/${showtimeData.slug}`,
+          {
+            state: {
+              movie: {
+                title:
+                  showtimeData.title,
+
+                poster_url:
+                  showtimeData.poster_url,
+
+                age_rating:
+                  showtimeData.age_rating,
+              },
+
+              cinema: {
+                cinema_name:
+                  showtimeData.cinema_name,
+              },
+
+              room: {
+                room_name:
+                  showtimeData.room_name,
+
+                room_type:
+                  showtimeData.room_type,
+              },
+
+              showtime: {
+                showtime_id:
+                  showtimeData.showtime_id,
+
+                start_time:
+                  showtimeData.start_time,
+              },
+
+              date:
+                showtimeData.start_time.split(
+                  ' '
+                )[0],
+            },
+          }
+        );
+      } catch (err) {
+        console.error(
+          'Lỗi khi lấy showtime detail:',
+          err
+        );
+
+        showModal(
+          'error',
+          'Đặt vé thất bại',
+          'Không thể lấy thông tin suất chiếu!'
+        );
+      } finally {
+        setBookingLoading(false);
+      }
+    };
 
 
   /* ========================================================
      REVIEW
   ======================================================== */
 
-  const handleSubmitReview = async (reviewData) => {
-    if (!user) {
-      return showModal('error', 'Chưa đăng nhập', 'Vui lòng đăng nhập để gửi đánh giá.');
-    }
+  const handleSubmitReview =
+    async (reviewData) => {
+      if (!user) {
+        return showModal(
+          'error',
+          'Chưa đăng nhập',
+          'Vui lòng đăng nhập để gửi đánh giá.'
+        );
+      }
 
-    setReviewSubmitting(true);
+      setReviewSubmitting(true);
 
-    try {
-      await api.post('/api/testimonials', {
-        content: reviewData.content,
-        rating: reviewData.rating,
-      });
+      try {
+        await api.post(
+          '/api/testimonials',
+          {
+            content:
+              reviewData.content,
 
-      setIsReviewModalOpen(false);
-      showModal('success', 'Cảm ơn bạn!', 'Đánh giá của bạn đã được gửi và sẽ được duyệt sớm.');
+            rating:
+              reviewData.rating,
+          }
+        );
 
-      const res = await api.get('/api/testimonials/active?limit=4');
-      const newData = res.data?.success === true
-        ? res.data.data
-        : Array.isArray(res.data)
-        ? res.data
-        : [];
+        setIsReviewModalOpen(
+          false
+        );
 
-      setTestimonials(newData);
-    } catch (error) {
-      console.error('Lỗi gửi đánh giá:', error);
-      showModal(
-        'error',
-        'Lỗi',
-        error.response?.data?.message || 'Không thể gửi đánh giá. Vui lòng thử lại.'
-      );
-    } finally {
-      setReviewSubmitting(false);
-    }
-  };
+        showModal(
+          'success',
+          'Cảm ơn bạn!',
+          'Đánh giá của bạn đã được gửi và sẽ được duyệt sớm.'
+        );
 
-  const handleOpenReviewModal = () => {
-    if (!user) return showModal('error', 'Chưa đăng nhập', 'Vui lòng đăng nhập để gửi đánh giá.');
-    setIsReviewModalOpen(true);
-  };
+        const res =
+          await api.get(
+            '/api/testimonials/active?limit=4'
+          );
+
+        const newData =
+          res.data?.success === true
+            ? res.data.data
+            : Array.isArray(
+                res.data
+              )
+            ? res.data
+            : [];
+
+        setTestimonials(
+          newData
+        );
+      } catch (error) {
+        console.error(
+          'Lỗi gửi đánh giá:',
+          error
+        );
+
+        showModal(
+          'error',
+          'Lỗi',
+          error.response?.data?.message ||
+            'Không thể gửi đánh giá. Vui lòng thử lại.'
+        );
+      } finally {
+        setReviewSubmitting(
+          false
+        );
+      }
+    };
+
+  const handleOpenReviewModal =
+    () => {
+      if (!user) {
+        return showModal(
+          'error',
+          'Chưa đăng nhập',
+          'Vui lòng đăng nhập để gửi đánh giá.'
+        );
+      }
+
+      setIsReviewModalOpen(true);
+    };
 
 
   /* ========================================================
@@ -671,8 +1159,17 @@ const UserHome = () => {
   ======================================================== */
 
   const allMovies = [
-    ...(Array.isArray(groupedMovies['Đang chiếu']) ? groupedMovies['Đang chiếu'] : []),
-    ...(Array.isArray(groupedMovies['Sắp chiếu']) ? groupedMovies['Sắp chiếu'] : []),
+    ...(Array.isArray(
+      groupedMovies['Đang chiếu']
+    )
+      ? groupedMovies['Đang chiếu']
+      : []),
+
+    ...(Array.isArray(
+      groupedMovies['Sắp chiếu']
+    )
+      ? groupedMovies['Sắp chiếu']
+      : []),
   ];
 
 
@@ -693,45 +1190,46 @@ const UserHome = () => {
 
       <ReviewModal
         isOpen={isReviewModalOpen}
-        onClose={() => setIsReviewModalOpen(false)}
+        onClose={() =>
+          setIsReviewModalOpen(false)
+        }
         onSubmit={handleSubmitReview}
         loading={reviewSubmitting}
       />
 
-
       <div className="user-home">
 
         {/* HERO */}
-        <HeroBanner videoSrc="https://res.cloudinary.com/mlznpd9x/video/upload/v1790042515/movietheater_video_dyynv5.mp4" />
+        <HeroBanner />
 
 
-        {/* QUICK BOOKING */}
+        {/* ======================================================
+            QUICK BOOKING
+        ====================================================== */}
+
         <ScrollReveal
           direction="up"
-          delay={0.1}
-          duration={1}
-          distance={50}
-          blur={false}
-          scale
-          scaleAmount={0.94}
-          rotate3D={false}
-          depth={40}
-          intensity="soft"
-          perspective
-          glow
+          delay={0.08}
+          duration={0.8}
+          distance={24}
           once
-          releaseTransform
         >
           <section className="quick-booking-container">
             <div className="quick-booking-content">
               <div className="quick-booking-row">
 
                 <div className="quick-booking-selects">
+
                   <QuickSelect
                     options={quickData.movies}
                     value={selectedQuick.movie}
                     onChange={(val) =>
-                      setSelectedQuick({ movie: val, cinema: '', date: '', showtime: '' })
+                      setSelectedQuick({
+                        movie: val,
+                        cinema: '',
+                        date: '',
+                        showtime: '',
+                      })
                     }
                     placeholder="Chọn phim"
                     icon={Film}
@@ -743,23 +1241,41 @@ const UserHome = () => {
                     options={quickData.cinemas}
                     value={selectedQuick.cinema}
                     onChange={(val) =>
-                      setSelectedQuick({ ...selectedQuick, cinema: val, date: '', showtime: '' })
+                      setSelectedQuick({
+                        ...selectedQuick,
+                        cinema: val,
+                        date: '',
+                        showtime: '',
+                      })
                     }
                     placeholder="Chọn rạp"
-                    disabled={!selectedQuick.movie}
+                    disabled={
+                      !selectedQuick.movie
+                    }
                     icon={Building2}
                     labelKey="cinema_name"
                     valueKey="cinema_id"
                   />
 
                   <QuickSelect
-                    options={availableDates.map((date) => ({ date }))}
+                    options={availableDates.map(
+                      (date) => ({
+                        date,
+                      })
+                    )}
                     value={selectedQuick.date}
                     onChange={(val) =>
-                      setSelectedQuick({ ...selectedQuick, date: val, showtime: '' })
+                      setSelectedQuick({
+                        ...selectedQuick,
+                        date: val,
+                        showtime: '',
+                      })
                     }
                     placeholder="Chọn ngày"
-                    disabled={!selectedQuick.cinema || availableDates.length === 0}
+                    disabled={
+                      !selectedQuick.cinema ||
+                      availableDates.length === 0
+                    }
                     icon={CalendarDays}
                     labelKey="date"
                     valueKey="date"
@@ -768,13 +1284,22 @@ const UserHome = () => {
                   <QuickSelect
                     options={availableShowtimes}
                     value={selectedQuick.showtime}
-                    onChange={(val) => setSelectedQuick({ ...selectedQuick, showtime: val })}
+                    onChange={(val) =>
+                      setSelectedQuick({
+                        ...selectedQuick,
+                        showtime: val,
+                      })
+                    }
                     placeholder="Chọn suất"
-                    disabled={!selectedQuick.date}
+                    disabled={
+                      !selectedQuick.date
+                    }
                     icon={Clock}
                     labelKey="start_time"
                     valueKey="showtime_id"
-                    renderLabel={renderShowtimeLabel}
+                    renderLabel={
+                      renderShowtimeLabel
+                    }
                   />
                 </div>
 
@@ -796,237 +1321,307 @@ const UserHome = () => {
 
         <div className="home-container">
 
-          {/* FEATURES */}
+          {/* ====================================================
+              FEATURES
+          ==================================================== */}
+
           <section className="home-features-section">
             {loading ? (
               <div className="skeleton-grid--features">
-                {[...Array(4)].map((_, index) => (
-                  <div key={index} className="skeleton-feature">
-                    <div className="skeleton-feature__icon skeleton-shimmer" />
-                    <div className="skeleton-feature__text">
-                      <div className="skeleton-feature__title skeleton-shimmer" />
-                      <div className="skeleton-feature__desc skeleton-shimmer" />
+                {[...Array(4)].map(
+                  (_, index) => (
+                    <div
+                      key={index}
+                      className="skeleton-feature"
+                    >
+                      <div className="skeleton-feature__icon skeleton-shimmer" />
+
+                      <div className="skeleton-feature__text">
+                        <div className="skeleton-feature__title skeleton-shimmer" />
+                        <div className="skeleton-feature__desc skeleton-shimmer" />
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                )}
               </div>
             ) : (
               <div className="features-grid">
+
                 {[
-                  { icon: Ticket, title: 'ĐẶT VÉ NHANH CHÓNG', desc: 'Tiết kiệm thời gian tối đa' },
-                  { icon: Star, title: 'NHIỀU ƯU ĐÃI HẤP DẪN', desc: 'Săn deal tốt hời mỗi ngày' },
-                  { icon: CreditCard, title: 'THANH TOÁN ĐA DẠNG', desc: 'Hỗ trợ mọi loại ví điện tử' },
-                  { icon: Monitor, title: 'TRẢI NGHIỆM ĐỈNH CAO', desc: 'Âm thanh, hình ảnh sống động' },
-                ].map((item, index) => (
-                  <ScrollReveal
-                    key={index}
-                    direction="up"
-                    duration={1}
-                    delay={0.05 + index * 0.1}
-                    distance={40}
-                    blur={false}
-                    scale
-                    scaleAmount={0.95}
-                    rotate3D={false}
-                    depth={40}
-                    intensity="soft"
-                    perspective
-                    glow
-                    once
-                    releaseTransform
-                  >
-                    {/* ⭐ FIX: bỏ prop `radius` */}
-                    <TiltCard
-                      maxTilt={8}
-                      scale={1.02}
-                      glare={false}
-                      shadow
-                      edgeHighlight
+                  {
+                    icon: Ticket,
+                    title:
+                      'ĐẶT VÉ NHANH CHÓNG',
+                    desc:
+                      'Tiết kiệm thời gian tối đa',
+                  },
+                  {
+                    icon: Star,
+                    title:
+                      'NHIỀU ƯU ĐÃI HẤP DẪN',
+                    desc:
+                      'Săn deal tốt hời mỗi ngày',
+                  },
+                  {
+                    icon: CreditCard,
+                    title:
+                      'THANH TOÁN ĐA DẠNG',
+                    desc:
+                      'Hỗ trợ mọi loại ví điện tử',
+                  },
+                  {
+                    icon: Monitor,
+                    title:
+                      'TRẢI NGHIỆM ĐỈNH CAO',
+                    desc:
+                      'Âm thanh, hình ảnh sống động',
+                  },
+                ].map(
+                  (item, index) => (
+                    <ScrollReveal
+                      key={index}
+                      direction="up"
+                      duration={0.75}
+                      delay={
+                        0.04 +
+                        index * 0.07
+                      }
+                      distance={24}
+                      once
                     >
                       <div className="feature-item">
+
                         <div className="feature-icon-wrapper">
                           <item.icon size={32} />
                         </div>
+
                         <div className="feature-text">
-                          <h4>{item.title}</h4>
-                          <p>{item.desc}</p>
+                          <h4>
+                            {item.title}
+                          </h4>
+
+                          <p>
+                            {item.desc}
+                          </p>
                         </div>
+
                       </div>
-                    </TiltCard>
-                  </ScrollReveal>
-                ))}
+                    </ScrollReveal>
+                  )
+                )}
+
               </div>
             )}
           </section>
 
 
-          {/* STATS */}
+          {/* ====================================================
+              STATS
+          ==================================================== */}
+
           <ScrollReveal
             direction="up"
-            delay={0.05}
-            duration={1}
-            distance={40}
-            blur={false}
-            scale
-            scaleAmount={0.95}
-            rotate3D={false}
-            depth={40}
-            intensity="soft"
-            perspective
-            glow
+            delay={0.04}
+            duration={0.8}
+            distance={24}
             once
-            releaseTransform
           >
-            <StatsSection loading={loading} />
+            <StatsSection
+              loading={loading}
+            />
           </ScrollReveal>
 
 
-          {/* TESTIMONIALS */}
+          {/* ====================================================
+              TESTIMONIALS
+          ==================================================== */}
+
           <section className="testimonials-section">
+
             <ScrollReveal
               direction="up"
-              delay={0.05}
-              duration={1}
-              distance={40}
-              blur={false}
-              scale
-              scaleAmount={0.96}
-              rotate3D={false}
-              depth={40}
-              intensity="soft"
-              perspective
-              glow={false}
+              delay={0.02}
+              duration={0.7}
+              distance={20}
               once
-              releaseTransform
             >
               <div className="testimonials-header">
+
                 <div className="testimonials-title-group">
-                  <Quote size={32} className="testimonials-icon" />
-                  <h3 className="testimonials-title">Khách hàng nói gì về chúng tôi</h3>
+                  <Quote
+                    size={32}
+                    className="testimonials-icon"
+                  />
+
+                  <h3 className="testimonials-title">
+                    Khách hàng nói gì về chúng tôi
+                  </h3>
                 </div>
 
-                <button className="btn-review-open" onClick={handleOpenReviewModal}>
-                  <Star size={16} fill="var(--silver-primary)" color="var(--silver-primary)" />
+                <button
+                  className="btn-review-open"
+                  onClick={
+                    handleOpenReviewModal
+                  }
+                >
+                  <Star
+                    size={16}
+                    fill="var(--silver-primary)"
+                    color="var(--silver-primary)"
+                  />
+
                   Gửi đánh giá
                 </button>
+
               </div>
             </ScrollReveal>
 
+
             <div className="testimonials-grid">
+
               {loading ? (
-                [...Array(4)].map((_, index) => <TestimonialSkeleton key={index} />)
+                [...Array(4)].map(
+                  (_, index) => (
+                    <TestimonialSkeleton
+                      key={index}
+                    />
+                  )
+                )
               ) : testimonials.length > 0 ? (
-                testimonials.map((item, index) => {
-                  const rawAvatarUrl = item.customer_avatar
-                    ? item.customer_avatar.startsWith('http')
-                      ? item.customer_avatar
-                      : `https://api.quangdungcinema.id.vn/uploads/avatars/${item.customer_avatar}`
-                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(item.customer_name || 'User')}&background=random&size=80&color=fff&bold=true`;
+                testimonials.map(
+                  (item, index) => {
 
-                  const avatarUrl = optimizeCloudinary(rawAvatarUrl, IMAGE_SIZES.AVATAR_SMALL);
+                    const avatarUrl =
+                      item.customer_avatar
+                        ? item.customer_avatar.startsWith(
+                            'http'
+                          )
+                          ? item.customer_avatar
+                          : `https://api.quangdungcinema.id.vn/uploads/avatars/${item.customer_avatar}`
+                        : `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                            item.customer_name ||
+                              'User'
+                          )}&background=random&size=80&color=fff&bold=true`;
 
-                  return (
-                    <ScrollReveal
-                      key={item.testimonial_id || index}
-                      direction="up"
-                      delay={0.05 + index * 0.1}
-                      duration={1}
-                      distance={40}
-                      blur={false}
-                      scale
-                      scaleAmount={0.95}
-                      rotate3D={false}
-                      depth={40}
-                      intensity="soft"
-                      perspective
-                      glow
-                      once
-                      releaseTransform
-                    >
-                      {/* ⭐ FIX: bỏ prop `radius` */}
-                      <TiltCard
-                        maxTilt={10}
-                        scale={1.03}
-                        glare
-                        shadow
-                        edgeHighlight
+                    return (
+                      <ScrollReveal
+                        key={
+                          item.testimonial_id ||
+                          index
+                        }
+                        direction="up"
+                        delay={
+                          0.04 +
+                          index * 0.07
+                        }
+                        duration={0.75}
+                        distance={24}
+                        once
                       >
                         <div className="testimonial-card">
+
                           <div className="testimonial-header">
+
                             <div className="testimonial-avatar">
                               <img
                                 src={avatarUrl}
-                                alt={item.customer_name}
+                                alt={
+                                  item.customer_name
+                                }
                                 loading="lazy"
                                 decoding="async"
-                                width="60"
-                                height="60"
                               />
                             </div>
+
                             <div className="testimonial-user">
+
                               <h4 className="testimonial-name">
-                                {item.customer_name || 'Khách hàng'}
+                                {item.customer_name ||
+                                  'Khách hàng'}
                               </h4>
+
                               <div className="testimonial-stars">
-                                {renderStars(item.rating || 5)}
+                                {renderStars(
+                                  item.rating ||
+                                    5
+                                )}
                               </div>
+
                             </div>
+
                           </div>
 
                           <div className="testimonial-content">
-                            <p>"{item.content}"</p>
+                            <p>
+                              "{item.content}"
+                            </p>
                           </div>
 
                           <div className="testimonial-date">
-                            <span>{formatDate(item.created_at)}</span>
+                            <span>
+                              {formatDate(
+                                item.created_at
+                              )}
+                            </span>
                           </div>
+
                         </div>
-                      </TiltCard>
-                    </ScrollReveal>
-                  );
-                })
+                      </ScrollReveal>
+                    );
+                  }
+                )
               ) : (
                 <div className="testimonials-empty">
-                  <p>Chưa có đánh giá nào.</p>
+                  <p>
+                    Chưa có đánh giá nào.
+                  </p>
                 </div>
               )}
+
             </div>
           </section>
 
 
-          {/* MOVIES */}
+          {/* ====================================================
+              MOVIES
+          ==================================================== */}
+
           <ScrollReveal
             direction="up"
-            delay={0.1}
-            duration={1.1}
-            distance={50}
-            blur={false}
-            scale
-            scaleAmount={0.94}
-            rotate3D={false}
-            depth={40}
-            intensity="soft"
-            perspective
-            glow
+            delay={0.06}
+            duration={0.85}
+            distance={28}
             once
-            releaseTransform
           >
             <div className="movie-container">
+
               {loading ? (
                 <div className="skeleton-grid--4">
-                  <SkeletonCard variant="movie" count={4} />
+                  <SkeletonCard
+                    variant="movie"
+                    count={4}
+                  />
                 </div>
               ) : allMovies.length > 0 ? (
-                <MovieSlider movies={allMovies} />
+                <MovieSlider
+                  movies={allMovies}
+                />
               ) : (
-                <div className="empty-movies">Hiện chưa có phim nào</div>
+                <div className="empty-movies">
+                  Hiện chưa có phim nào
+                </div>
               )}
+
             </div>
           </ScrollReveal>
 
 
-          {/* PROMOTIONS — thêm TiltCard */}
+          {/* ====================================================
+              PROMOTIONS
+          ==================================================== */}
+
           <section className="promotions-section">
+
             <SectionHeader
               icon={Gift}
               title="ƯU ĐÃI HẤP DẪN"
@@ -1035,71 +1630,94 @@ const UserHome = () => {
             />
 
             <div className="promotion-grid">
+
               {loading ? (
-                <SkeletonCard variant="promotion" count={3} />
+                <SkeletonCard
+                  variant="promotion"
+                  count={3}
+                />
               ) : (
-                promotions.slice(0, 3).map((promo, index) => {
-                  const imageField =
-                    promo.promotion_backdrop || promo.promotion_image || promo.image_url;
+                promotions
+                  .slice(0, 3)
+                  .map(
+                    (promo, index) => {
 
-                  const imageUrl = getImageUrl(
-                    imageField,
-                    'https://api.quangdungcinema.id.vn/uploads/promotions/'
-                  );
+                      const imageField =
+                        promo.promotion_backdrop ||
+                        promo.promotion_image ||
+                        promo.image_url;
 
-                  const cleanText = String(promo.description || '')
-                    .replace(/<[^>]*>/g, '')
-                    .replace(/&nbsp;/g, ' ')
-                    .trim();
+                      const imageUrl =
+                        getImageUrl(
+                          imageField,
+                          'https://api.quangdungcinema.id.vn/uploads/promotions/'
+                        );
 
-                  const shortText =
-                    cleanText.length > 120 ? `${cleanText.slice(0, 120)}...` : cleanText;
+                      const cleanText =
+                        String(
+                          promo.description ||
+                            ''
+                        )
+                          .replace(
+                            /<[^>]*>/g,
+                            ''
+                          )
+                          .replace(
+                            /&nbsp;/g,
+                            ' '
+                          )
+                          .trim();
 
-                  return (
-                    <ScrollReveal
-                      key={promo.promotion_id}
-                      direction="up"
-                      delay={0.05 + index * 0.1}
-                      duration={1}
-                      distance={40}
-                      blur={false}
-                      scale
-                      scaleAmount={0.95}
-                      rotate3D={false}
-                      depth={40}
-                      intensity="soft"
-                      perspective
-                      glow
-                      once
-                      releaseTransform
-                    >
-                      {/* ⭐ Thêm TiltCard cho Promotion */}
-                      <TiltCard
-                        maxTilt={10}
-                        scale={1.03}
-                        glare
-                        shadow
-                        edgeHighlight
-                      >
-                        <PromotionCard
-                          slug={promo.slug}
-                          image={imageUrl}
-                          title={promo.title}
-                          text={shortText}
-                          tag="Khuyến mãi"
-                          index={index}
-                        />
-                      </TiltCard>
-                    </ScrollReveal>
-                  );
-                })
+                      const shortText =
+                        cleanText.length > 120
+                          ? `${cleanText.slice(
+                              0,
+                              120
+                            )}...`
+                          : cleanText;
+
+                      return (
+                        <ScrollReveal
+                          key={
+                            promo.promotion_id
+                          }
+                          direction="up"
+                          delay={
+                            0.04 +
+                            index * 0.07
+                          }
+                          duration={0.75}
+                          distance={24}
+                          once
+                        >
+                          <PromotionCard
+                            slug={promo.slug}
+                            image={imageUrl}
+                            title={
+                              promo.title
+                            }
+                            text={
+                              shortText
+                            }
+                            tag="Khuyến mãi"
+                            index={index}
+                          />
+                        </ScrollReveal>
+                      );
+                    }
+                  )
               )}
+
             </div>
           </section>
 
 
-          {/* BLOG */}
+          {/* ====================================================
+              BLOG
+          ==================================================== */}
+
           <section className="cinema-corner-section">
+
             <SectionHeader
               icon={Newspaper}
               title="GÓC ĐIỆN ẢNH"
@@ -1109,43 +1727,57 @@ const UserHome = () => {
 
             {loading ? (
               <div className="skeleton-grid--4">
-                <SkeletonCard variant="blog" count={4} />
+                <SkeletonCard
+                  variant="blog"
+                  count={4}
+                />
               </div>
             ) : cinemaNews?.length > 0 ? (
               <ScrollReveal
                 direction="up"
-                delay={0.1}
-                duration={1.1}
-                distance={45}
-                blur={false}
-                scale
-                scaleAmount={0.95}
-                rotate3D={false}
-                depth={40}
-                intensity="soft"
-                perspective
-                glow
+                delay={0.06}
+                duration={0.85}
+                distance={28}
                 once
-                releaseTransform
               >
                 <BlogCinemaCard
-                  blogs={cinemaNews.slice(0, 4).map((item) => ({
-                    blog_id: item.blog_id,
-                    slug: item.slug,
-                    title: item.title,
-                    description: item.description,
-                    views: item.views || 0,
-                    created_at: item.created_at,
-                    blog_backdrop: item.blog_backdrop,
-                  }))}
+                  blogs={cinemaNews
+                    .slice(0, 4)
+                    .map((item) => ({
+                      blog_id:
+                        item.blog_id,
+
+                      slug:
+                        item.slug,
+
+                      title:
+                        item.title,
+
+                      description:
+                        item.description,
+
+                      views:
+                        item.views || 0,
+
+                      created_at:
+                        item.created_at,
+
+                      blog_backdrop:
+                        item.blog_backdrop,
+                    }))}
                 />
               </ScrollReveal>
             ) : null}
+
           </section>
 
 
-          {/* NEWS */}
+          {/* ====================================================
+              NEWS
+          ==================================================== */}
+
           <section className="news-section">
+
             <SectionHeader
               icon={Newspaper}
               title="TIN TỨC"
@@ -1155,43 +1787,57 @@ const UserHome = () => {
 
             {loading ? (
               <div className="skeleton-grid--4">
-                <SkeletonCard variant="news" count={4} />
+                <SkeletonCard
+                  variant="news"
+                  count={4}
+                />
               </div>
             ) : newsItems?.length > 0 ? (
               <ScrollReveal
                 direction="up"
-                delay={0.1}
-                duration={1.1}
-                distance={45}
-                blur={false}
-                scale
-                scaleAmount={0.95}
-                rotate3D={false}
-                depth={40}
-                intensity="soft"
-                perspective
-                glow
+                delay={0.06}
+                duration={0.85}
+                distance={28}
                 once
-                releaseTransform
               >
                 <NewsCard
-                  news={newsItems.slice(0, 4).map((item) => ({
-                    news_id: item.news_id,
-                    slug: item.slug,
-                    title: item.title,
-                    content: item.content,
-                    views: item.views || 0,
-                    created_at: item.created_at,
-                    news_backdrop: item.news_backdrop,
-                  }))}
+                  news={newsItems
+                    .slice(0, 4)
+                    .map((item) => ({
+                      news_id:
+                        item.news_id,
+
+                      slug:
+                        item.slug,
+
+                      title:
+                        item.title,
+
+                      content:
+                        item.content,
+
+                      views:
+                        item.views || 0,
+
+                      created_at:
+                        item.created_at,
+
+                      news_backdrop:
+                        item.news_backdrop,
+                    }))}
                 />
               </ScrollReveal>
             ) : null}
+
           </section>
 
 
-          {/* CINEMA — thêm TiltCard */}
+          {/* ====================================================
+              CINEMA
+          ==================================================== */}
+
           <section className="cinema-section">
+
             <SectionHeader
               icon={Building2}
               title="HỆ THỐNG RẠP"
@@ -1200,63 +1846,73 @@ const UserHome = () => {
             />
 
             <div className="cinema-grid">
-              {loading ? (
-                <SkeletonCard variant="cinema" count={4} />
-              ) : (
-                cinemas.slice(0, 4).map((cinema, index) => {
-                  const backdropUrl = cinema.cinema_backdrop
-                    ? getBackdropUrl(cinema.cinema_backdrop)
-                    : null;
 
-                  return (
-                    <ScrollReveal
-                      key={cinema.cinema_id}
-                      direction="up"
-                      delay={0.05 + index * 0.1}
-                      duration={1}
-                      distance={40}
-                      blur={false}
-                      scale
-                      scaleAmount={0.95}
-                      rotate3D={false}
-                      depth={40}
-                      intensity="soft"
-                      perspective
-                      glow
-                      once
-                      releaseTransform
-                    >
-                      {/* ⭐ Thêm TiltCard cho Cinema */}
-                      <TiltCard
-                        maxTilt={10}
-                        scale={1.03}
-                        glare
-                        shadow
-                        edgeHighlight
-                      >
-                        <CinemaCard
-                          type="cinema"
-                          detailType="cinema"
-                          slug={cinema.slug}
-                          image={backdropUrl || '/cinema-placeholder.jpg'}
-                          title={cinema.cinema_name}
-                          buttonText="Xem chi tiết"
-                          address={cinema.address}
-                          hotline={cinema.hotline}
-                          mapLink={cinema.map_link}
-                          index={index}
-                        />
-                      </TiltCard>
-                    </ScrollReveal>
-                  );
-                })
+              {loading ? (
+                <SkeletonCard
+                  variant="cinema"
+                  count={4}
+                />
+              ) : (
+                cinemas
+                  .slice(0, 4)
+                  .map(
+                    (cinema, index) => {
+
+                      const backdropUrl =
+                        cinema.cinema_backdrop
+                          ? getBackdropUrl(
+                              cinema.cinema_backdrop
+                            )
+                          : null;
+
+                      return (
+                        <ScrollReveal
+                          key={
+                            cinema.cinema_id
+                          }
+                          direction="up"
+                          delay={
+                            0.04 +
+                            index * 0.07
+                          }
+                          duration={0.75}
+                          distance={24}
+                          once
+                        >
+                          <CinemaCard
+                            type="cinema"
+                            detailType="cinema"
+                            slug={cinema.slug}
+                            image={
+                              backdropUrl ||
+                              '/cinema-placeholder.jpg'
+                            }
+                            title={
+                              cinema.cinema_name
+                            }
+                            buttonText="Xem chi tiết"
+                            address={
+                              cinema.address
+                            }
+                            hotline={
+                              cinema.hotline
+                            }
+                            mapLink={
+                              cinema.map_link
+                            }
+                            index={index}
+                          />
+                        </ScrollReveal>
+                      );
+                    }
+                  )
               )}
+
             </div>
           </section>
 
         </div>
       </div>
-
 
       <AIChatBox />
     </>

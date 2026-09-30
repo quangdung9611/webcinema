@@ -7,6 +7,12 @@
    Font: Oswald (display) + Inter (body)
 
    ✅ SEAT VARIABLES ĐÃ CHUYỂN SANG Seat.css
+   ✅ ĐÃ FIX: --btn-silver-hover sai cú pháp
+   ✅ ĐÃ FIX: --border-premium-hover trùng
+   ✅ ĐÃ FIX: scroll-behavior conflict với Lenis
+   ✅ ĐÃ FIX: overflow-y conflict với Lenis
+   ✅ ĐÃ THÊM: Lenis recommended CSS
+   ✅ ĐÃ FIX: transition mix-blend-mode bị giật
    ========================================================== */
 
 :root {
@@ -54,7 +60,6 @@
         'Segoe UI',
         sans-serif;
 
-    /* ✅ HEADING DÙNG OSWALD */
     --font-heading:
         'Oswald',
         Impact,
@@ -62,7 +67,6 @@
         'Arial Narrow Bold',
         sans-serif;
 
-    /* ✅ DISPLAY DÙNG OSWALD */
     --font-display:
         'Oswald',
         Impact,
@@ -136,8 +140,9 @@
     --border-premium:
         1px solid rgba(244, 246, 248, 0.25);
 
+    /* ✅ FIX: trước đây trùng với --border-premium */
     --border-premium-hover:
-        1px solid rgba(244, 246, 248, 0.25);
+        1px solid rgba(244, 246, 248, 0.55);
 
     --border-subtle:
         1px solid rgba(255, 255, 255, 0.04);
@@ -227,13 +232,9 @@
         0 4px 20px rgba(159, 183, 210, 0.25),
         inset 0 1px 0 rgba(255, 255, 255, 0.80);
 
-    --btn-silver-hover:
-        filter: brightness(1.1);
-        box-shadow: 0 4px 28px rgba(159, 183, 210, 0.40);
-
-    /* ======================================================
-       ✅ SEAT STATUS COLORS — ĐÃ CHUYỂN SANG Seat.css
-       ====================================================== */
+    /* ✅ FIX: trước đây sai cú pháp (dùng `property: value;` trong var) */
+    --btn-silver-hover-filter: brightness(1.1);
+    --btn-silver-hover-shadow: 0 4px 28px rgba(159, 183, 210, 0.40);
 
     /* ======================================================
        BORDER RADIUS
@@ -275,8 +276,7 @@
     --fw-extrabold: 800;
 
     /* ======================================================
-       USER HOME — màu chuyển từ UserHome.css
-       (Toàn bộ màu hard-code trong UserHome.css gom về đây)
+       USER HOME
        ====================================================== */
 
     /* --- Page atmosphere --- */
@@ -634,16 +634,44 @@
 }
 
 /* ==========================================================
+   LENIS SMOOTH SCROLL — RECOMMENDED CSS
+   Tham khảo: https://github.com/darkroomengineering/lenis
+   ⚠️ QUAN TRỌNG:
+   - Khi Lenis active, KHÔNG dùng scroll-behavior: smooth
+   - KHÔNG set overflow-y: auto trên html/body (Lenis tự quản)
+   ========================================================== */
+html.lenis,
+html.lenis body {
+    height: auto;
+}
+
+.lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+    overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+    overflow: hidden;
+}
+
+.lenis.lenis-smooth iframe {
+    pointer-events: none;
+}
+
+/* ==========================================================
    HTML
    ========================================================== */
 html {
     width: 100%;
     min-height: 100%;
     font-size: var(--font-size-base);
-    scroll-behavior: smooth;
+    /* ✅ Bỏ scroll-behavior: smooth — conflict với Lenis */
     scroll-padding-top: 96px;
     overflow-x: hidden;
-    overflow-y: auto;
+    /* ✅ Bỏ overflow-y: auto — Lenis tự quản lý */
 }
 
 /* ==========================================================
@@ -654,7 +682,7 @@ body {
     min-height: 100dvh;
     margin: 0;
     overflow-x: hidden;
-    overflow-y: auto;
+    /* ✅ Bỏ overflow-y: auto — Lenis tự quản lý */
     background: var(--main-background);
     background-color: var(--bg-primary);
     background-repeat: no-repeat;
@@ -706,7 +734,7 @@ button:disabled, input:disabled {
 }
 
 /* ==========================================================
-   TYPOGRAPHY — HEADING DÙNG OSWALD
+   TYPOGRAPHY
    ========================================================== */
 h1, h2, h3, h4, h5, h6, p {
     margin: 0;
@@ -798,11 +826,11 @@ main, .main-content {
    CINEMA SPECIFIC COMPONENTS
    ========================================================== */
 
-/* 1. Premium Section Number (01, 02, 03...) */
+/* 1. Premium Section Number */
 .section-number {
     font-family: var(--font-display);
     font-size: var(--display-section);
-    color: var(--accent-ice);
+    color: var(--silver-primary);
     letter-spacing: -0.01em;
     line-height: 1;
     font-weight: var(--fw-bold);
@@ -811,36 +839,90 @@ main, .main-content {
 }
 
 /* ==========================================================
-   2. GLASS CARD
+   2. ZEPHYR CARD — BASE (dùng chung)
+   Lấy đúng từ code mẫu ZEPHYR .glass-card
 ========================================================== */
+.zephyr-card {
+    position: relative;
+    overflow: hidden;
+
+    background: rgba(255, 255, 255, 0.01);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-xl);
+
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+
+    /* ✅ ZEPHYR: transition ALL */
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.zephyr-card:hover {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: var(--card-border-hover);
+    transform: translateY(-4px);
+}
+
+.zephyr-card:active {
+    transform: translateY(-1px) scale(0.998);
+    transition-duration: 0.18s;
+}
+
+.zephyr-card:focus-visible {
+    outline: 2px solid var(--silver-light);
+    outline-offset: 4px;
+}
+
+
+/* ==========================================================
+   3. ZEPHYR IMAGE — HOVER SCALE + MIX-BLEND
+   ✅ FIX: delay mix-blend-mode để tránh giật khi transition
+========================================================== */
+.zephyr-image {
+    mix-blend-mode: luminosity;
+
+    transition:
+        transform 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+        mix-blend-mode 0s linear 0.35s;
+}
+
+.zephyr-card:hover .zephyr-image,
+.zephyr-image:hover {
+    transform: scale(1.10);
+    mix-blend-mode: normal;
+    /* ✅ Reset delay ngay khi hover vào */
+    transition-delay: 0s, 0s;
+}
+
+
+/* ==========================================================
+   4. ZEPHYR CARD — VARIANTS (giữ tên class cũ)
+   .glass-card / .hero-card / .expedition-card / .gallery-card
+   → Tất cả dùng cùng ZEPHYR hover
+========================================================== */
+
+/* 4.1 GLASS CARD */
 .glass-card {
     position: relative;
+    overflow: hidden;
+
     background: rgba(255, 255, 255, 0.01);
-    border: var(--card-border-base);
+    border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: var(--radius-xl);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow:
-        0 4px 20px rgba(0, 0, 0, 0.30),
-        inset 0 1px 0 rgba(244, 246, 248, 0.05);
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    will-change: transform, background, border-color, box-shadow;
+
     backface-visibility: hidden;
-    transform: translate3d(0, 0, 0) scale(1);
     -webkit-font-smoothing: antialiased;
+
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .glass-card:hover {
-    background: rgba(255, 255, 255, 0.035);
-    border: var(--card-border-hover);
+    background: rgba(255, 255, 255, 0.03);
+    border-color: var(--card-border-hover);
     transform: translateY(-4px);
-    box-shadow:
-        0 20px 48px rgba(0, 0, 0, 0.50),
-        0 0 0 1px rgba(244, 246, 248, 0.12);
 }
 
 .glass-card:active {
-    border: var(--card-border-active);
     transform: translateY(-1px) scale(0.998);
     transition-duration: 0.18s;
 }
@@ -850,119 +932,102 @@ main, .main-content {
     outline-offset: 4px;
 }
 
-/* ==========================================================
-   3. HERO CARD
-========================================================== */
+
+/* 4.2 HERO CARD */
 .hero-card {
     position: relative;
+    overflow: hidden;
+
     background: rgba(255, 255, 255, 0.01);
-    border: var(--card-border-base);
+    border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: var(--radius-lg);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    box-shadow:
-        0 4px 20px rgba(0, 0, 0, 0.30),
-        inset 0 1px 0 rgba(244, 246, 248, 0.05);
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    will-change: transform, background, border-color, box-shadow;
+
     backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hero-card:hover {
-    background: rgba(255, 255, 255, 0.035);
-    border: var(--card-border-hover);
+    background: rgba(255, 255, 255, 0.03);
+    border-color: var(--card-border-hover);
     transform: translateY(-4px);
-    box-shadow:
-        0 20px 56px rgba(0, 0, 0, 0.70),
-        0 0 0 1px rgba(244, 246, 248, 0.14),
-        inset 0 1px 0 rgba(244, 246, 248, 0.08);
 }
 
 .hero-card:active {
-    border: var(--card-border-active);
     transform: translateY(-1px) scale(0.998);
     transition-duration: 0.18s;
 }
 
-/* ==========================================================
-   4. EXPEDITION CARD
-========================================================== */
+
+/* 4.3 EXPEDITION CARD */
 .expedition-card {
     position: relative;
     overflow: hidden;
-    border-radius: var(--radius-xl);
+
     background: rgba(255, 255, 255, 0.01);
-    border: var(--card-border-base);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow:
-        0 4px 20px rgba(0, 0, 0, 0.30),
-        inset 0 1px 0 rgba(244, 246, 248, 0.05);
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    will-change: transform, background, border-color, box-shadow;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-xl);
+
     backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .expedition-card:hover {
     background: rgba(255, 255, 255, 0.03);
-    border: var(--card-border-hover);
+    border-color: var(--card-border-hover);
     transform: translateY(-4px);
-    box-shadow:
-        0 14px 40px rgba(0, 0, 0, 0.50),
-        0 0 0 1px rgba(244, 246, 248, 0.12);
 }
 
 .expedition-card .expedition-image {
-    transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1),
-                mix-blend-mode 0.7s ease;
     mix-blend-mode: luminosity;
-    will-change: transform;
+    transition:
+        transform 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+        mix-blend-mode 0s linear 0.35s;
 }
 
 .expedition-card:hover .expedition-image {
     transform: scale(1.10);
     mix-blend-mode: normal;
+    transition-delay: 0s, 0s;
 }
 
-/* ==========================================================
-   5. GALLERY CARD
-========================================================== */
+
+/* 4.4 GALLERY CARD */
 .gallery-card {
     position: relative;
     overflow: hidden;
-    border-radius: var(--radius-lg);
+
     background: rgba(255, 255, 255, 0.01);
-    border: var(--card-border-base);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow:
-        0 4px 20px rgba(0, 0, 0, 0.30),
-        inset 0 1px 0 rgba(244, 246, 248, 0.05);
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    will-change: transform, background, border-color, box-shadow;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-lg);
+
     backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .gallery-card:hover {
-    background: rgba(255, 255, 255, 0.035);
-    border: var(--card-border-hover);
+    background: rgba(255, 255, 255, 0.03);
+    border-color: var(--card-border-hover);
     transform: translateY(-4px);
-    box-shadow:
-        0 14px 40px rgba(0, 0, 0, 0.50),
-        0 0 0 1px rgba(244, 246, 248, 0.12);
 }
 
 .gallery-card .gallery-image {
     transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-    will-change: transform;
 }
 
 .gallery-card:hover .gallery-image {
-    transform: scale(1.05);
+    transform: scale(1.10);
+    mix-blend-mode: normal;
 }
 
+
 /* ==========================================================
-   6. TEXT-STROKE HOVER
+   5. TEXT-STROKE HOVER
 ========================================================== */
 .text-stroke {
     -webkit-text-stroke: 1px rgba(255, 255, 255, 0.8);
@@ -979,7 +1044,7 @@ main, .main-content {
 }
 
 /* ==========================================================
-   7. LINK HOVER
+   6. LINK HOVER
 ========================================================== */
 .link-underline {
     position: relative;
@@ -1002,7 +1067,7 @@ main, .main-content {
 }
 
 /* ==========================================================
-   8. BUTTON HOVER
+   7. BUTTON HOVER
 ========================================================== */
 .btn-trek {
     position: relative;
@@ -1010,7 +1075,6 @@ main, .main-content {
     border-radius: var(--radius-sm);
     border: 1px solid rgba(244, 246, 248, 0.25);
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    will-change: border-color, transform;
 }
 
 .btn-trek::before {
@@ -1037,11 +1101,10 @@ main, .main-content {
 }
 
 /* ==========================================================
-   9. ICON HOVER
+   8. ICON HOVER
 ========================================================== */
 .icon-hover {
     transition: color 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    will-change: transform, color;
 }
 
 .icon-hover:hover {
@@ -1050,11 +1113,10 @@ main, .main-content {
 }
 
 /* ==========================================================
-   10. ARROW HOVER
+   9. ARROW HOVER
 ========================================================== */
 .arrow-hover {
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    will-change: transform;
 }
 
 .group:hover .arrow-hover {
@@ -1062,7 +1124,7 @@ main, .main-content {
 }
 
 /* ==========================================================
-   11. Silver Button
+   10. SILVER BUTTON
 ========================================================== */
 .btn-silver {
     display: inline-flex;
@@ -1082,8 +1144,8 @@ main, .main-content {
 }
 
 .btn-silver:hover {
-    filter: brightness(1.1);
-    box-shadow: 0 4px 32px rgba(159, 183, 210, 0.35);
+    filter: var(--btn-silver-hover-filter);
+    box-shadow: var(--btn-silver-hover-shadow);
     transform: scale(1.02);
     color: var(--bg-primary) !important;
 }
@@ -1093,7 +1155,7 @@ main, .main-content {
 }
 
 /* ==========================================================
-   12. Outline Button
+   11. OUTLINE BUTTON
 ========================================================== */
 .btn-outline {
     display: inline-flex;
@@ -1109,8 +1171,8 @@ main, .main-content {
 }
 
 .btn-outline:hover {
-    background: var(--accent-ice-bg);
-    border-color: var(--accent-ice);
+    background: rgba(166, 193, 217, 0.08);
+    border-color: var(--silver-primary);
     color: var(--silver-light);
 }
 
@@ -1185,7 +1247,6 @@ main, .main-content {
 .text-secondary { color: var(--text-secondary); }
 .text-muted { color: var(--text-muted); }
 .text-body { color: var(--text-body); }
-.text-ice { color: var(--accent-ice); }
 
 .font-regular { font-weight: var(--fw-regular); }
 .font-medium { font-weight: var(--fw-medium); }
@@ -1199,7 +1260,6 @@ main, .main-content {
 .text-xl { font-size: 1.5rem; }
 .text-2xl { font-size: 1.75rem; }
 
-/* Display Font (Oswald) */
 .display-hero {
     font-family: var(--font-display);
     font-size: var(--display-hero);
