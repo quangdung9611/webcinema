@@ -26,60 +26,30 @@ class RefreshTokenRepository {
     }
 
     /*=========================================================
-        2. SOCKET_LINKED — INSERT (action='socket_linked')
-        Gọi khi frontend register_socket
-    =========================================================*/
-    async logSocketLinked(userId, tokenHash, socketToken) {
-        const fakeHash = `socket_linked_${tokenHash.substring(0, 16)}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-
-        const [result] = await db.query(
-            `INSERT INTO refresh_tokens
-            (user_id, token_hash, expires_at, socket_token, action)
-            VALUES (?, ?, NOW(), ?, 'socket_linked')`,
-            [userId, fakeHash, socketToken]
-        );
-
-        console.log(`📝 [REFRESH] socket_linked: token_id=${result.insertId}, socket=${socketToken}`);
-        return result.insertId;
-    }
-
-    /*=========================================================
-        3. UPDATE SOCKET TOKEN
-        ✅ Vẫn UPDATE socket_token vào token gốc — để query nhanh
+        2. UPDATE SOCKET TOKEN
+        ✅ Chỉ UPDATE socket_token vào token gốc
+        ✅ Bỏ INSERT action='socket_linked' (không có trong ENUM)
     =========================================================*/
     async updateSocketToken(tokenHash, socketToken) {
-        // Lấy user_id từ token
-        const [rows] = await db.query(
-            `SELECT user_id FROM refresh_tokens
-            WHERE token_hash = ? AND action = 'login' AND expires_at > NOW()
-            LIMIT 1`,
-            [tokenHash]
+        // UPDATE socket_token vào token gốc
+        const [result] = await db.query(
+            `UPDATE refresh_tokens
+            SET socket_token = ?, last_used_at = NOW()
+            WHERE token_hash = ? AND action = 'login' AND expires_at > NOW()`,
+            [socketToken, tokenHash]
         );
 
-        if (rows.length === 0) {
+        if (result.affectedRows === 0) {
             console.warn(`⚠️ [REFRESH] No active login token to update socket`);
             return false;
         }
 
-        const { user_id } = rows[0];
-
-        // UPDATE socket_token vào token gốc
-        const [result] = await db.query(
-            `UPDATE refresh_tokens
-            SET socket_token = ?
-            WHERE token_hash = ? AND action = 'login'`,
-            [socketToken, tokenHash]
-        );
-
-        // ✅ INSERT thêm record action='socket_linked'
-        await this.logSocketLinked(user_id, tokenHash, socketToken);
-
-        console.log(`🔗 [REFRESH] socket_token=${socketToken} updated + logged`);
-        return result.affectedRows > 0;
+        console.log(`🔗 [REFRESH] socket_token=${socketToken} updated`);
+        return true;
     }
 
     /*=========================================================
-        4. CLEAR SOCKET TOKEN
+        3. CLEAR SOCKET TOKEN
     =========================================================*/
     async clearSocketToken(socketToken) {
         const [result] = await db.query(
@@ -92,7 +62,7 @@ class RefreshTokenRepository {
     }
 
     /*=========================================================
-        5. GET ACTIVE BY USER — lấy token action='login'
+        4. GET ACTIVE BY USER — lấy token action='login'
     =========================================================*/
     async getActiveByUser(userId) {
         const [rows] = await db.query(
@@ -107,7 +77,7 @@ class RefreshTokenRepository {
     }
 
     /*=========================================================
-        6. FIND VALID TOKEN HASH
+        5. FIND VALID TOKEN HASH
     =========================================================*/
     async findValidTokenHash(tokenHash) {
         const [rows] = await db.query(
@@ -122,8 +92,7 @@ class RefreshTokenRepository {
     }
 
     /*=========================================================
-        7. ✅ REVOKE — INSERT record mới (action='revoked_by_login')
-        KHÔNG UPDATE token gốc, chỉ INSERT record mới
+        6. ✅ REVOKE — INSERT record mới (action='revoked_by_login')
     =========================================================*/
     async revoke(tokenHash, options = {}) {
         const {
@@ -171,7 +140,7 @@ class RefreshTokenRepository {
     }
 
     /*=========================================================
-        8. ✅ REVOKE ALL BY USER — INSERT record cho mỗi token
+        7. ✅ REVOKE ALL BY USER — INSERT record cho mỗi token
     =========================================================*/
     async revokeByUser(userId, options = {}) {
         const {
@@ -219,7 +188,7 @@ class RefreshTokenRepository {
     }
 
     /*=========================================================
-        9. ✅ LOGOUT — INSERT record (action='logged_out')
+        8. ✅ LOGOUT — INSERT record (action='logged_out')
     =========================================================*/
     async logLogout(tokenHash, userId = null) {
         const [rows] = await db.query(
@@ -258,7 +227,7 @@ class RefreshTokenRepository {
     }
 
     /*=========================================================
-        10. ✅ DELETE BY TOKEN HASH — Gọi logLogout + DELETE token gốc
+        9. ✅ DELETE BY TOKEN HASH — Gọi logLogout + DELETE token gốc
     =========================================================*/
     async deleteByTokenHash(tokenHash) {
         // ✅ Log logout
@@ -275,7 +244,7 @@ class RefreshTokenRepository {
     }
 
     /*=========================================================
-        11. ✅ DELETE ALL BY USER
+        10. ✅ DELETE ALL BY USER
     =========================================================*/
     async deleteAllByUser(userId) {
         // ✅ Log logout cho tất cả active tokens
@@ -300,7 +269,7 @@ class RefreshTokenRepository {
     }
 
     /*=========================================================
-        12. UPDATE USAGE
+        11. UPDATE USAGE
     =========================================================*/
     async updateUsage(tokenHash) {
         await db.query(
@@ -310,7 +279,7 @@ class RefreshTokenRepository {
     }
 
     /*=========================================================
-        13. ✅ DELETE EXPIRED — Log 'expired' + DELETE
+        12. ✅ DELETE EXPIRED — Log 'expired' + DELETE
     =========================================================*/
     async deleteExpired() {
         const [rows] = await db.query(
@@ -352,7 +321,7 @@ class RefreshTokenRepository {
     }
 
     /*=========================================================
-        14. ✅ LẤY LỊCH SỬ USER
+        13. ✅ LẤY LỊCH SỬ USER
     =========================================================*/
     async getHistoryByUser(userId, limit = 50) {
         const [rows] = await db.query(
@@ -368,7 +337,7 @@ class RefreshTokenRepository {
     }
 
     /*=========================================================
-        15. ✅ CLEANUP — Xóa records cũ > 7 ngày (trừ action='login')
+        14. ✅ CLEANUP — Xóa records cũ > 7 ngày (trừ action='login')
     =========================================================*/
     async cleanupOldRecords(days = 7) {
         const [result] = await db.query(
