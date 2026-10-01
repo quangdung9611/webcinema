@@ -208,59 +208,56 @@ class BankAppService {
         };
     }
 
+async sendPaymentOTP(email, tempBookingId, userId = null) {
+    if (!email?.trim()) {
+        throw { statusCode: 400, field: "email", message: "Email không được để trống" };
+    }
 
-    /*=========================================================
-        ✅ GỬI OTP THANH TOÁN — FIX OWNER + EMAIL CHECK
-        ⚠️ ĐÂY LÀ METHOD ĐANG BỊ LỖI "is not a function"
-    =========================================================*/
-    async sendPaymentOTP(email, tempBookingId, userId = null) {
-        if (!email?.trim()) {
-            throw { statusCode: 400, field: "email", message: "Email không được để trống" };
-        }
+    const key = `temp:${tempBookingId}`;
+    const tempData = await CacheService.get(key);
 
-        const key = `temp:${tempBookingId}`;
-        const tempData = await CacheService.get(key);
+    const data = this._verifyOwner(tempData, userId, email);
 
-        // ✅ FIX: Check owner + email khớp
-        const data = this._verifyOwner(tempData, userId, email);
-
-        const rateLimit = await CacheService.checkRateLimit(email, "payment-send", 1, 60);
-        if (!rateLimit.allowed) {
-            throw {
-                statusCode: 429,
-                message: `Bạn đã gửi OTP quá nhanh. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 60} giây.`,
-                data: {
-                    remainingSeconds: rateLimit.remainingSeconds || 60
-                }
-            };
-        }
-
-        await CacheService.markOTPAsUsed(email, PURPOSE.PAYMENT);
-        const otpResult = await OtpService.createOTP(email, PURPOSE.PAYMENT);
-        const serverTime = Date.now();
-
-        data.otp = otpResult.otp;
-        data.otpCreatedAt = Date.now();
-
-        await CacheService.set(key, data, 300);
-
-        await MailService.sendPaymentOTP(email, otpResult.otp, data.customerName, data.totalAmount)
-            .then(() => console.log(`✅ Payment OTP email sent to ${email}`))
-            .catch(err => console.error(`❌ Payment OTP email failed: ${err.message}`));
-
-        const otpKey = `otp:${email}:${PURPOSE.PAYMENT}`;
-        const ttl = await CacheService.getTTL(otpKey);
-
-        return {
-            success: true,
-            message: "Mã OTP đã được gửi tới email.",
-            data: {
-                expiresIn: ttl > 0 ? ttl : 300,
-                serverTime: serverTime
-            }
+    const rateLimit = await CacheService.checkRateLimit(email, "payment-send", 1, 60);
+    if (!rateLimit.allowed) {
+        throw {
+            statusCode: 429,
+            message: `Bạn đã gửi OTP quá nhanh. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 60} giây.`,
+            data: { remainingSeconds: rateLimit.remainingSeconds || 60 }
         };
     }
 
+    await CacheService.markOTPAsUsed(email, PURPOSE.PAYMENT);
+    const otpResult = await OtpService.createOTP(email, PURPOSE.PAYMENT);
+    const serverTime = Date.now();
+
+    data.otp = otpResult.otp;
+    data.otpCreatedAt = Date.now();
+
+    await CacheService.set(key, data, 300);
+
+    // ✅ FIX: Truyền 3 params — tempBookingId làm bookingId
+    try {
+        await MailService.sendPaymentOTP(email, otpResult.otp, tempBookingId);
+        console.log(`✅ Payment OTP email sent to ${email}`);
+    } catch (mailErr) {
+        console.error(`❌ Payment OTP email failed:`, mailErr);
+        // Không throw — user vẫn nhập OTP được (đã có trong cache)
+        // NHƯNG log rõ để biết lỗi
+    }
+
+    const otpKey = `otp:${email}:${PURPOSE.PAYMENT}`;
+    const ttl = await CacheService.getTTL(otpKey);
+
+    return {
+        success: true,
+        message: "Mã OTP đã được gửi tới email.",
+        data: {
+            expiresIn: ttl > 0 ? ttl : 300,
+            serverTime: serverTime
+        }
+    };
+}
 }
 
 module.exports = new BankAppService();
