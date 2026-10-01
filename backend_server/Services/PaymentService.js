@@ -27,36 +27,66 @@ const generateTempBookingId = () => {
 
 
 /*=========================================================
+    HELPER: XÁC ĐỊNH TIME_SLOT
+=========================================================*/
+
+const getTimeSlot = (startTime) => {
+    const str = String(startTime).replace("T", " ");
+    const timePart = str.split(" ")[1] || "00:00";
+    const hour = parseInt(timePart.split(":")[0], 10);
+
+    if (hour >= 8 && hour < 12) return "MORNING";
+    if (hour >= 12 && hour < 17) return "AFTERNOON";
+    if (hour >= 17 && hour < 20) return "EVENING";
+    return "NIGHT";
+};
+
+
+/*=========================================================
+    HELPER: XÁC ĐỊNH DAY_TYPE
+=========================================================*/
+
+const getDayType = (startTime) => {
+    const str = String(startTime).replace("T", " ");
+    const datePart = str.split(" ")[0];
+    const d = new Date(datePart + "T00:00:00");
+    const day = d.getDay();
+
+    return (day === 0 || day === 6) ? "WEEKEND" : "WEEKDAY";
+};
+
+
+/*=========================================================
     PAYMENT SERVICE
 =========================================================*/
 
 class PaymentService {
 
     /*=========================================================
-        1. PROCESS ORDER
+        1. PROCESS ORDER — VALIDATE + TÍNH GIÁ SERVER-SIDE
     =========================================================*/
 
-    async processOrder(data) {
+    async processOrder(data, authenticatedUserId = null) {
         const {
-            userId,
             showtimeId,
-            totalAmount,
-            couponId,
             selectedSeats,
             selectedFoods,
             customerEmail,
             customerName,
             customerPhone,
-            movieTitle,
-            moviePoster,        // ✅ THÊM
-            cinemaName,
-            startTime,
+            couponId,
             ownerToken
         } = data;
 
         /*=====================================================
-            VALIDATE
+            ✅ VALIDATE CƠ BẢN
         =====================================================*/
+
+        // ✅ FIX LỖ HỔNG 2: userId PHẢI từ JWT, không từ body
+        if (!authenticatedUserId) {
+            throw new Error("Vui lòng đăng nhập để đặt vé");
+        }
+        const userId = authenticatedUserId;
 
         if (!showtimeId) {
             throw new Error("showtimeId không hợp lệ");
@@ -75,59 +105,249 @@ class PaymentService {
         }
 
         /*=====================================================
-            LẤY ROOM ID + ROOM NAME + CINEMA ID
+            ✅ QUERY SHOWTIME + ROOM + CINEMA + MOVIE
         =====================================================*/
 
-        const [rows] = await db.execute(`
-            SELECT sh.room_id, sh.cinema_id, r.room_name
+        const [showtimeRows] = await db.execute(`
+            SELECT 
+                sh.showtime_id,
+                sh.movie_id,
+                sh.room_id, 
+                sh.cinema_id, 
+                sh.start_time,
+                r.room_name,
+                r.room_type,
+                c.cinema_name,
+                m.title AS movie_title,
+                m.movie_poster,
+                m.age_rating
             FROM showtimes sh
             LEFT JOIN rooms r ON sh.room_id = r.room_id
+            LEFT JOIN cinemas c ON sh.cinema_id = c.cinema_id
+            LEFT JOIN movies m ON sh.movie_id = m.movie_id
             WHERE sh.showtime_id = ?
+            LIMIT 1
         `, [showtimeId]);
 
-        if (!rows.length) {
+        if (!showtimeRows.length) {
             throw new Error("Không tìm thấy suất chiếu");
         }
 
-        const room_id = rows[0].room_id;
-        const cinema_id = rows[0].cinema_id;
-        const roomName = rows[0].room_name;
+        const showtime = showtimeRows[0];
+        const room_id = showtime.room_id;
+        const cinema_id = showtime.cinema_id;
+        const roomName = showtime.room_name;
+        const roomType = showtime.room_type;
+        const finalCinemaName = showtime.cinema_name;
+        const finalMovieTitle = showtime.movie_title;
+        const finalMoviePoster = showtime.movie_poster || "";
+        const finalStartTime = showtime.start_time;
 
         /*=====================================================
-            ✅ LẤY MOVIE POSTER TỪ DB (nếu frontend không truyền)
+            ✅ FIX LỖ HỔNG 5: VERIFY GHẾ THUỘC ĐÚNG ROOM + CINEMA
+            VÀ LẤY GIÁ TỪ DB (KHÔNG TIN FRONTEND)
         =====================================================*/
 
-        let finalMoviePoster = moviePoster;
+        const seatIds = [
+            ...new Set(
+                selectedSeats
+                    .map(s => Number(s.seat_id))
+                    .filter(Number.isInteger)
+                    .filter(id => id > 0)
+            )
+        ].sort((a, b) => a - b);
 
-        if (!finalMoviePoster) {
-            const [movieRows] = await db.execute(`
-                SELECT m.movie_poster
-                FROM showtimes sh
-                JOIN movies m ON sh.movie_id = m.movie_id
-                WHERE sh.showtime_id = ?
-                LIMIT 1
-            `, [showtimeId]);
-
-            finalMoviePoster = movieRows[0]?.movie_poster || "";
-            console.log(`🎬 [PAYMENT] Fallback movie_poster from DB: ${finalMoviePoster}`);
-        } else {
-            console.log(`🎬 [PAYMENT] movie_poster from frontend: ${finalMoviePoster}`);
+        if (seatIds.length !== selectedSeats.length) {
+            throw new Error("Danh sách ghế có ID trùng hoặc không hợp lệ");
         }
+
+        const placeholders = seatIds.map(() => "?").join(", ");
+
+        const [seatRows] = await db.execute(`
+            SELECT 
+                seat_id, 
+                room_id, 
+                cinema_id,
+                seat_row, 
+                seat_number, 
+                seat_type,
+                is_active
+            FROM seats
+            WHERE seat_id IN (${placeholders})
+        `, seatIds);
+
+        if (seatRows.length !== seatIds.length) {
+            throw new Error("Một số ghế không tồn tại trong hệ thống");
+        }
+
+        // ✅ Check từng ghế thuộc đúng room/cinema của showtime
+        for (const seat of seatRows) {
+            if (Number(seat.room_id) !== Number(room_id) ||
+                Number(seat.cinema_id) !== Number(cinema_id)) {
+                throw new Error(`Ghế ${seat.seat_row}${seat.seat_number} không thuộc suất chiếu này`);
+            }
+
+            if (Number(seat.is_active) !== 1) {
+                throw new Error(`Ghế ${seat.seat_row}${seat.seat_number} đang bảo trì`);
+            }
+        }
+
+        /*=====================================================
+            ✅ FIX LỖ HỔNG 1 + 3: TÍNH GIÁ VÉ TỪ price_config
+            (KHÔNG TIN totalAmount + seat.price TỪ FRONTEND)
+        =====================================================*/
+
+        const timeSlot = getTimeSlot(finalStartTime);
+        const dayType = getDayType(finalStartTime);
+
+        let seatSubtotal = 0;
+        const verifiedSeats = [];
+
+        for (const seat of seatRows) {
+            const [priceRows] = await db.execute(`
+                SELECT price
+                FROM price_config
+                WHERE room_type = ?
+                  AND time_slot = ?
+                  AND day_type = ?
+                  AND seat_type = ?
+                  AND status = 1
+                LIMIT 1
+            `, [roomType, timeSlot, dayType, seat.seat_type]);
+
+            if (!priceRows.length) {
+                throw new Error(`Không tìm thấy giá vé cho ghế ${seat.seat_row}${seat.seat_number} (${seat.seat_type})`);
+            }
+
+            const seatPrice = Number(priceRows[0].price);
+            seatSubtotal += seatPrice;
+
+            verifiedSeats.push({
+                seat_id: seat.seat_id,
+                seat_row: seat.seat_row,
+                seat_number: seat.seat_number,
+                seat_type: seat.seat_type,
+                price: seatPrice  // ✅ Giá từ DB, không từ frontend
+            });
+        }
+
+        console.log(`💰 [PAYMENT] Seat subtotal: ${seatSubtotal} (timeSlot=${timeSlot}, dayType=${dayType}, roomType=${roomType})`);
+
+        /*=====================================================
+            ✅ FIX LỖ HỔNG 4: TÍNH GIÁ FOOD TỪ product_menu
+        =====================================================*/
+
+        let foodSubtotal = 0;
+        const verifiedFoods = [];
+
+        if (selectedFoods && Array.isArray(selectedFoods) && selectedFoods.length > 0) {
+            const foodIds = [
+                ...new Set(
+                    selectedFoods
+                        .map(f => Number(f.product_id))
+                        .filter(Number.isInteger)
+                        .filter(id => id > 0)
+                )
+            ];
+
+            if (foodIds.length > 0) {
+                const foodPlaceholders = foodIds.map(() => "?").join(", ");
+
+                const [foodRows] = await db.execute(`
+                    SELECT product_id, product_name, price, status
+                    FROM product_menu
+                    WHERE product_id IN (${foodPlaceholders})
+                `, foodIds);
+
+                const foodMap = new Map(foodRows.map(f => [Number(f.product_id), f]));
+
+                for (const item of selectedFoods) {
+                    const productId = Number(item.product_id);
+                    const quantity = Number(item.quantity) || 1;
+
+                    if (quantity < 1 || quantity > 20) {
+                        throw new Error(`Số lượng món không hợp lệ`);
+                    }
+
+                    const dbFood = foodMap.get(productId);
+
+                    if (!dbFood) {
+                        throw new Error(`Món ăn ID ${productId} không tồn tại`);
+                    }
+
+                    if (Number(dbFood.status) !== 1) {
+                        throw new Error(`Món "${dbFood.product_name}" đang tạm ngừng bán`);
+                    }
+
+                    const foodPrice = Number(dbFood.price);
+                    foodSubtotal += foodPrice * quantity;
+
+                    verifiedFoods.push({
+                        product_id: dbFood.product_id,
+                        product_name: dbFood.product_name,
+                        price: foodPrice,  // ✅ Giá từ DB
+                        quantity
+                    });
+                }
+            }
+        }
+
+        console.log(`💰 [PAYMENT] Food subtotal: ${foodSubtotal}`);
+
+        /*=====================================================
+            ✅ VERIFY COUPON (nếu có)
+        =====================================================*/
+
+        let couponDiscount = 0;
+        let verifiedCouponId = null;
+
+        if (couponId) {
+            const [couponRows] = await db.execute(`
+                SELECT coupon_id, coupon_code, discount_value, expiry_date
+                FROM coupons
+                WHERE coupon_id = ?
+                LIMIT 1
+            `, [couponId]);
+
+            if (!couponRows.length) {
+                throw new Error("Mã giảm giá không tồn tại");
+            }
+
+            const coupon = couponRows[0];
+
+            // Check expiry
+            const expiryDate = new Date(coupon.expiry_date);
+            if (expiryDate < new Date()) {
+                throw new Error("Mã giảm giá đã hết hạn");
+            }
+
+            couponDiscount = Number(coupon.discount_value) || 0;
+            verifiedCouponId = coupon.coupon_id;
+
+            console.log(`🎟️ [PAYMENT] Coupon ${coupon.coupon_code} - discount: ${couponDiscount}`);
+        }
+
+        /*=====================================================
+            ✅ TÍNH TOTAL AMOUNT (SERVER-SIDE)
+        =====================================================*/
+
+        let totalAmount = seatSubtotal + foodSubtotal - couponDiscount;
+
+        // Không cho âm
+        if (totalAmount < 0) totalAmount = 0;
+
+        console.log(`💰 [PAYMENT] TOTAL: ${totalAmount} (seats=${seatSubtotal} + foods=${foodSubtotal} - coupon=${couponDiscount})`);
 
         /*=====================================================
             KIỂM TRA CACHE SEAT LOCK
         =====================================================*/
 
         const seatLockResults = await Promise.all(
-            selectedSeats.map(async (seat) => {
+            verifiedSeats.map(async (seat) => {
                 const lock = await CacheService.getSeatLock(showtimeId, seat.seat_id);
                 return { seat, lock };
             })
         );
-
-        /*=====================================================
-            XÁC NHẬN OWNER
-        =====================================================*/
 
         for (const item of seatLockResults) {
             const { seat, lock } = item;
@@ -146,54 +366,50 @@ class PaymentService {
         }
 
         /*=====================================================
-            TẠO TEMP BOOKING
+            TẠO TEMP BOOKING — DÙNG GIÁ ĐÃ VERIFY
         =====================================================*/
 
         const tempBookingId = generateTempBookingId();
 
         const tempData = {
             tempBookingId,
-            userId,
+            userId,                              // ✅ Từ JWT
             showtimeId,
             room_id,
             roomName,
+            roomType,
             cinema_id,
-            totalAmount,
-            couponId: couponId || null,
-            selectedSeats,
-            selectedFoods: selectedFoods || [],
+            totalAmount,                         // ✅ Tính server-side
+            couponId: verifiedCouponId,
+            couponDiscount,
+            seatSubtotal,
+            foodSubtotal,
+            selectedSeats: verifiedSeats,        // ✅ Giá từ DB
+            selectedFoods: verifiedFoods,        // ✅ Giá từ DB
             customerEmail,
             customerName,
             customerPhone,
-            movieTitle,
-            moviePoster: finalMoviePoster,   // ✅ LƯU VÀO CACHE
-            cinemaName,
-            startTime,
+            movieTitle: finalMovieTitle,
+            moviePoster: finalMoviePoster,
+            cinemaName: finalCinemaName,
+            startTime: finalStartTime,
             ownerToken,
             status: "pending",
             createdAt: Date.now()
         };
 
-        /*=====================================================
-            LƯU TEMP BOOKING CACHE
-        =====================================================*/
-
         const key = `temp:${tempBookingId}`;
         await CacheService.set(key, tempData, TEMP_BOOKING_TTL);
 
         console.log(`✅ Temp booking ${tempBookingId} saved (${TEMP_BOOKING_TTL}s)`);
-        console.log(`🎬 Poster saved in cache: ${finalMoviePoster}`);
-
-        /*=====================================================
-            RETURN
-        =====================================================*/
+        console.log(`💰 Total amount: ${totalAmount}`);
 
         return { tempBookingId };
     }
 
 
     /*=========================================================
-        2. COMMIT TO DATABASE
+        2. COMMIT TO DATABASE — DÙNG GIÁ ĐÃ VERIFY TRONG CACHE
     =========================================================*/
 
     async commitToDatabase(connection, tempBookingId) {
@@ -220,15 +436,15 @@ class PaymentService {
             room_id,
             roomName,
             cinema_id,
-            totalAmount,
+            totalAmount,        // ✅ Giá đã verify ở processOrder
             couponId,
-            selectedSeats,
-            selectedFoods,
+            selectedSeats,      // ✅ Ghế đã verify + giá từ DB
+            selectedFoods,      // ✅ Food đã verify + giá từ DB
             customerEmail,
             customerName,
             customerPhone,
             movieTitle,
-            moviePoster,        // ✅ THÊM
+            moviePoster,
             cinemaName,
             startTime,
             ownerToken
@@ -241,6 +457,10 @@ class PaymentService {
         if (!selectedSeats || !Array.isArray(selectedSeats) || selectedSeats.length === 0) {
             throw new Error("Không tìm thấy ghế trong phiên đặt vé.");
         }
+
+        /*=====================================================
+            VERIFY SEAT LOCKS LẦN CUỐI
+        =====================================================*/
 
         const finalSeatLocks = await Promise.all(
             selectedSeats.map(async (seat) => {
@@ -265,12 +485,20 @@ class PaymentService {
             }
         }
 
+        /*=====================================================
+            ✅ CHECK GHẾ CHƯA ĐƯỢC ĐẶT (chống race condition)
+        =====================================================*/
+
         for (const seat of selectedSeats) {
             const [existing] = await connection.execute(`
                 SELECT t.ticket_id
                 FROM tickets t
                 INNER JOIN bookings b ON t.booking_id = b.booking_id
-                WHERE t.showtime_id = ? AND t.cinema_id = ? AND t.room_id = ? AND t.seat_id = ? AND b.status = 'Completed'
+                WHERE t.showtime_id = ? 
+                  AND t.cinema_id = ? 
+                  AND t.room_id = ? 
+                  AND t.seat_id = ? 
+                  AND b.status = 'Completed'
                 LIMIT 1
             `, [showtimeId, cinema_id, room_id, seat.seat_id]);
 
@@ -278,6 +506,10 @@ class PaymentService {
                 throw new Error(`Ghế ${seat.seat_row}${seat.seat_number} đã được đặt. Vui lòng chọn ghế khác.`);
             }
         }
+
+        /*=====================================================
+            INSERT BOOKING
+        =====================================================*/
 
         const memo = `DUNG${Date.now()}`;
 
@@ -287,6 +519,10 @@ class PaymentService {
         `, [userId, showtimeId, totalAmount, couponId || null, memo, customerEmail]);
 
         const bookingId = bookingResult.insertId;
+
+        /*=====================================================
+            INSERT BOOKING DETAILS + TICKETS
+        =====================================================*/
 
         for (const seat of selectedSeats) {
             await connection.execute(`
@@ -302,6 +538,10 @@ class PaymentService {
             `, [bookingId, showtimeId, room_id, cinema_id, seat.seat_id, ticketCode, seat.price]);
         }
 
+        /*=====================================================
+            INSERT FOODS
+        =====================================================*/
+
         if (selectedFoods && Array.isArray(selectedFoods) && selectedFoods.length > 0) {
             for (const food of selectedFoods) {
                 await connection.execute(`
@@ -311,9 +551,13 @@ class PaymentService {
             }
         }
 
+        /*=====================================================
+            TÍNH ĐIỂM
+        =====================================================*/
+
         let earnedPoints = 0;
 
-        if (userId) {
+        if (userId && totalAmount > 0) {
             const points = Math.floor(totalAmount * 0.05);
 
             if (points > 0) {
@@ -326,8 +570,7 @@ class PaymentService {
 
         await CacheService.delete(key);
 
-        console.log(`✅ Booking ${bookingId} committed successfully`);
-        console.log(`🎬 [COMMIT] moviePoster: ${moviePoster}`);
+        console.log(`✅ Booking ${bookingId} committed successfully (total: ${totalAmount})`);
 
         return {
             bookingId,
@@ -342,7 +585,7 @@ class PaymentService {
             customerName,
             customerPhone,
             movieTitle,
-            moviePoster,        // ✅ RETURN RA NGOÀI
+            moviePoster,
             cinemaName,
             startTime,
             selectedSeats,
