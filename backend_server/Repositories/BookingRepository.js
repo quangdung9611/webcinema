@@ -243,6 +243,7 @@ class BookingRepository {
                 b.memo,
 
                 u.full_name,
+                u.phone,
 
                 COALESCE(b.email, u.email) AS email,
 
@@ -335,7 +336,10 @@ class BookingRepository {
     }
 
     // =========================================================
-    // UPDATE CUSTOMER INFO
+    // ✅ UPDATE CUSTOMER INFO — FIX
+    // Bảng bookings CHỈ có cột: user_id, email, showtime_id,
+    // coupon_id, booking_date, total_amount, status, memo
+    // → full_name + phone là của users, KHÔNG update ở đây
     // =========================================================
 
     async updateCustomerInfo(connection, bookingId, fullName, phone, email) {
@@ -343,16 +347,14 @@ class BookingRepository {
             throw new Error("BookingRepository.updateCustomerInfo requires connection");
         }
 
+        // ✅ Chỉ update email (cột duy nhất tồn tại trong bookings)
         const [result] = await connection.query(
             `
             UPDATE bookings
-            SET
-                full_name = ?,
-                phone = ?,
-                email = ?
+            SET email = ?
             WHERE booking_id = ?
             `,
-            [fullName, phone, email, bookingId]
+            [email, bookingId]
         );
 
         return result.affectedRows;
