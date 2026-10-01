@@ -4,6 +4,7 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const cookieParser = require("cookie-parser");
+const compression = require("compression");  // ✅ THÊM MỚI
 const axios = require("axios");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -82,8 +83,33 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// ✅ COMPRESSION — GIẢM 70-80% BĂNG THÔNG
+app.use(compression({
+    // Chỉ nén response > 1KB
+    threshold: 1024,
+
+    // Mức nén: 1 (nhanh) → 9 (chậm nhưng nén tốt)
+    // Level 6 là cân bằng tốt nhất
+    level: 6,
+
+    // Lọc — không nén ảnh/video/audio (đã nén sẵn)
+    filter: (req, res) => {
+        const contentType = res.getHeader("Content-Type") || "";
+
+        if (
+            contentType.includes("image/") ||
+            contentType.includes("video/") ||
+            contentType.includes("audio/")
+        ) {
+            return false;
+        }
+
+        return compression.filter(req, res);
+    }
+}));
+console.log("✅ Compression middleware loaded!");
+
 // ✅ SANITIZE — CHỐNG XSS / NoSQL INJECTION
-// Đặt SAU body parser để body đã parse xong
 app.use(sanitizeMiddleware);
 console.log("✅ Sanitize middleware loaded!");
 
