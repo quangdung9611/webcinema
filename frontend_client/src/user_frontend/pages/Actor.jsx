@@ -138,9 +138,8 @@ const Actor = () => {
                                     image={avatarUrl || '/actor-placeholder.jpg'}
                                     title={actor.name}
                                     slug={actor.slug}
-                                    detailType="cinema"
-                                    subtitle={`${actor.views || 0} lượt xem`}
-                                    description={cleanBiography(actor.biography)}
+                                    detailType="actor"
+                                    text={cleanBiography(actor.biography)}
                                     buttonText="Xem chi tiết"
                                 />
                             );

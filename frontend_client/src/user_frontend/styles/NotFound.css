@@ -1,0 +1,558 @@
+/* ============================================================
+   NOT FOUND — CINEMA SILVER PREMIUM
+   ------------------------------------------------------------
+   ✅ Sạch, sắc nét — không blur, không overlay mờ
+   ✅ Animation nhẹ: film strip chạy, digit glow
+   ✅ Responsive đầy đủ
+   ✅ Dùng biến từ index.css
+============================================================ */
+
+
+/* ============================================================
+   PAGE
+============================================================ */
+
+.notfound-page {
+    position: relative;
+
+    min-height: 100vh;
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    padding: var(--space-2xl) var(--container-padding, 24px);
+
+    background: var(--bg-primary, #0a0a0f);
+
+    /* Ánh sáng mềm tỏa từ trung tâm */
+    background-image:
+        radial-gradient(
+            ellipse at center,
+            rgba(232, 232, 232, 0.05) 0%,
+            transparent 60%
+        );
+
+    overflow: hidden;
+    isolation: isolate;
+}
+
+
+/* ============================================================
+   FILM STRIP — 2 DẢI TRÊN/DƯỚI
+============================================================ */
+
+.notfound-filmstrip {
+    position: absolute;
+    left: 0;
+    right: 0;
+
+    height: 44px;
+
+    background: #050507;
+    border-top: 1px solid rgba(232, 232, 232, 0.08);
+    border-bottom: 1px solid rgba(232, 232, 232, 0.08);
+
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.notfound-filmstrip--top {
+    top: 0;
+}
+
+.notfound-filmstrip--bottom {
+    bottom: 0;
+}
+
+/* Track bên trong — 2 dải lỗ đục lỗ chạy ngang */
+.notfound-filmstrip__track {
+    position: absolute;
+    inset: 6px 0;
+
+    background-image:
+        repeating-linear-gradient(
+            90deg,
+            transparent 0px,
+            transparent 12px,
+            rgba(232, 232, 232, 0.14) 12px,
+            rgba(232, 232, 232, 0.14) 20px
+        );
+
+    animation: filmScroll 8s linear infinite;
+}
+
+.notfound-filmstrip--bottom .notfound-filmstrip__track {
+    animation-direction: reverse;
+}
+
+@keyframes filmScroll {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-32px); }
+}
+
+
+/* ============================================================
+   CONTENT
+============================================================ */
+
+.notfound-content {
+    position: relative;
+    z-index: 5;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+
+    max-width: 680px;
+    width: 100%;
+
+    animation: notfoundFadeIn 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes notfoundFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* ============================================================
+   ICON CẢNH BÁO
+============================================================ */
+
+.notfound-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 72px;
+    height: 72px;
+
+    border-radius: 50%;
+
+    background: rgba(232, 232, 232, 0.04);
+    border: 1px solid rgba(232, 232, 232, 0.22);
+
+    color: var(--silver-primary, #dde2e8);
+
+    margin-bottom: var(--space-lg, 24px);
+}
+
+
+/* ============================================================
+   404 — SỐ LỚN
+============================================================ */
+
+.notfound-code {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    margin: 0 0 var(--space-lg, 24px);
+
+    font-family: var(--font-primary, "Inter"), sans-serif;
+    font-weight: 900;
+    font-size: clamp(80px, 16vw, 160px);
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+
+    user-select: none;
+}
+
+.notfound-code__digit {
+    background: linear-gradient(
+        180deg,
+        #ffffff 0%,
+        #d8dde3 40%,
+        #8a939c 100%
+    );
+
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+
+    filter: drop-shadow(0 4px 16px rgba(232, 232, 232, 0.15));
+}
+
+/* Số 0 giữa — hiệu ứng pulse nhẹ */
+.notfound-code__digit--middle {
+    animation: notfoundPulse 2.4s ease-in-out infinite;
+    transform-origin: center;
+}
+
+@keyframes notfoundPulse {
+    0%, 100% {
+        transform: scale(1);
+        filter: drop-shadow(0 4px 16px rgba(232, 232, 232, 0.15));
+    }
+    50% {
+        transform: scale(1.06);
+        filter: drop-shadow(0 6px 24px rgba(232, 232, 232, 0.35));
+    }
+}
+
+
+/* ============================================================
+   TITLE
+============================================================ */
+
+.notfound-title {
+    margin: 0 0 var(--space-md, 16px);
+
+    font-family: var(--font-primary, "Inter"), sans-serif;
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
+    font-weight: var(--fw-bold, 700);
+    line-height: 1.25;
+    letter-spacing: 0.02em;
+
+    color: var(--text-heading, #f4f6f8);
+
+    text-transform: uppercase;
+}
+
+
+/* ============================================================
+   DESCRIPTION
+============================================================ */
+
+.notfound-desc {
+    margin: 0 0 var(--space-xl, 32px);
+
+    max-width: 520px;
+
+    font-family: var(--font-primary, "Inter"), sans-serif;
+    font-size: var(--font-size-base, 1rem);
+    font-weight: var(--fw-regular, 400);
+    line-height: 1.7;
+
+    color: var(--text-secondary, #9ea8b3);
+}
+
+
+/* ============================================================
+   COUNTDOWN
+============================================================ */
+
+.notfound-countdown {
+    margin: 0 0 var(--space-lg, 24px);
+
+    font-size: var(--font-size-h6, 0.875rem);
+    color: var(--text-muted, #6a737d);
+    letter-spacing: 0.05em;
+}
+
+.notfound-countdown strong {
+    color: var(--silver-primary, #dde2e8);
+    font-weight: var(--fw-bold, 700);
+}
+
+
+/* ============================================================
+   ACTIONS
+============================================================ */
+
+.notfound-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md, 16px);
+
+    width: 100%;
+    margin-bottom: var(--space-xl, 32px);
+}
+
+
+/* ============================================================
+   BUTTONS
+============================================================ */
+
+.notfound-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm, 8px);
+
+    padding: 14px 28px;
+
+    border-radius: var(--radius-round, 999px);
+    border: 1px solid transparent;
+
+    font-family: var(--font-primary, "Inter"), sans-serif;
+    font-size: var(--font-size-h6, 0.875rem);
+    font-weight: var(--fw-bold, 700);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    white-space: nowrap;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.3s ease,
+        background 0.3s ease,
+        color 0.3s ease,
+        border-color 0.3s ease;
+}
+
+
+/* PRIMARY — Bạc sáng */
+
+.notfound-btn--primary {
+    background: linear-gradient(
+        135deg,
+        #ffffff 0%,
+        #d8dde3 50%,
+        #b0b7bf 100%
+    );
+    color: #0a0a0f;
+
+    box-shadow:
+        0 4px 14px rgba(232, 232, 232, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.notfound-btn--primary:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        0 8px 24px rgba(232, 232, 232, 0.30),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+
+/* SECONDARY — Viền bạc */
+
+.notfound-btn--secondary {
+    background: rgba(232, 232, 232, 0.04);
+    border-color: rgba(232, 232, 232, 0.35);
+    color: var(--silver-primary, #dde2e8);
+}
+
+.notfound-btn--secondary:hover {
+    transform: translateY(-2px);
+    background: rgba(232, 232, 232, 0.08);
+    border-color: rgba(232, 232, 232, 0.65);
+    box-shadow: 0 6px 20px rgba(232, 232, 232, 0.10);
+}
+
+
+/* GHOST — Trong suốt */
+
+.notfound-btn--ghost {
+    background: transparent;
+    border-color: rgba(232, 232, 232, 0.14);
+    color: var(--text-muted, #6a737d);
+}
+
+.notfound-btn--ghost:hover {
+    transform: translateY(-2px);
+    color: var(--text-body, #d9dde2);
+    border-color: rgba(232, 232, 232, 0.32);
+}
+
+
+/* Active */
+
+.notfound-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+
+/* Focus accessible */
+
+.notfound-btn:focus-visible {
+    outline: 2px solid var(--silver-light, #f4f7fa);
+    outline-offset: 4px;
+}
+
+
+/* ============================================================
+   ERROR CODE
+============================================================ */
+
+.notfound-errorcode {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm, 8px);
+
+    padding: 8px 16px;
+
+    border: 1px solid rgba(232, 232, 232, 0.10);
+    border-radius: var(--radius-round, 999px);
+
+    background: rgba(232, 232, 232, 0.02);
+
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.notfound-errorcode span {
+    color: var(--text-muted, #6a737d);
+}
+
+.notfound-errorcode strong {
+    color: var(--silver-primary, #dde2e8);
+    font-weight: var(--fw-bold, 700);
+}
+
+
+/* ============================================================
+   RESPONSIVE
+============================================================ */
+
+/* --- 768px --- */
+@media (max-width: 768px) {
+    .notfound-page {
+        padding: var(--space-xl) var(--space-lg, 24px);
+    }
+
+    .notfound-filmstrip {
+        height: 32px;
+    }
+
+    .notfound-icon {
+        width: 60px;
+        height: 60px;
+        margin-bottom: var(--space-md, 16px);
+    }
+
+    .notfound-icon svg {
+        width: 32px;
+        height: 32px;
+    }
+
+    .notfound-code {
+        gap: 4px;
+        margin-bottom: var(--space-md, 16px);
+    }
+
+    .notfound-title {
+        font-size: 1.15rem;
+    }
+
+    .notfound-desc {
+        font-size: 0.9rem;
+        margin-bottom: var(--space-lg, 24px);
+    }
+
+    .notfound-actions {
+        gap: var(--space-sm, 8px);
+        margin-bottom: var(--space-lg, 24px);
+    }
+
+    .notfound-btn {
+        padding: 12px 20px;
+        font-size: 0.78rem;
+        flex: 1 1 auto;
+        min-width: 140px;
+    }
+}
+
+
+/* --- 480px --- */
+@media (max-width: 480px) {
+    .notfound-page {
+        padding: var(--space-lg, 24px) var(--space-md, 16px);
+    }
+
+    .notfound-filmstrip {
+        height: 26px;
+    }
+
+    .notfound-icon {
+        width: 52px;
+        height: 52px;
+    }
+
+    .notfound-icon svg {
+        width: 26px;
+        height: 26px;
+    }
+
+    .notfound-code {
+        font-size: clamp(68px, 22vw, 100px);
+        letter-spacing: -0.05em;
+        margin-bottom: var(--space-sm, 8px);
+    }
+
+    .notfound-title {
+        font-size: 1rem;
+        letter-spacing: 0.01em;
+    }
+
+    .notfound-desc {
+        font-size: 0.84rem;
+        line-height: 1.6;
+    }
+
+    .notfound-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .notfound-btn {
+        width: 100%;
+        min-width: 0;
+        padding: 12px 18px;
+        font-size: 0.75rem;
+        letter-spacing: 0.06em;
+    }
+
+    .notfound-errorcode {
+        font-size: 0.65rem;
+        padding: 6px 12px;
+    }
+}
+
+
+/* --- 360px --- */
+@media (max-width: 360px) {
+    .notfound-code {
+        font-size: 64px;
+    }
+
+    .notfound-title {
+        font-size: 0.92rem;
+    }
+
+    .notfound-desc {
+        font-size: 0.78rem;
+    }
+
+    .notfound-btn {
+        padding: 11px 16px;
+        font-size: 0.72rem;
+    }
+}
+
+
+/* ============================================================
+   REDUCED MOTION
+============================================================ */
+/* 
+@media (prefers-reduced-motion: reduce) {
+    .notfound-content,
+    .notfound-code__digit--middle,
+    .notfound-filmstrip__track {
+        animation: none;
+    }
+
+    .notfound-btn {
+        transition: none;
+    }
+} */

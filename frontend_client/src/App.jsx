@@ -66,6 +66,12 @@ import NetworkErrorPage from "./user_frontend/components/NetworkErrorPage";
 import PageTransition from "./user_frontend/components/PageTransition";
 
 // ============================================================
+// 404 NOT FOUND
+// ============================================================
+
+import NotFoundPage from "./user_frontend/pages/NotFound";
+
+// ============================================================
 // LAYOUTS
 // ============================================================
 
@@ -260,6 +266,15 @@ const Actor = lazy(() =>
     lazyRetry(() =>
         import(
             "./user_frontend/pages/Actor"
+        )
+    )
+);
+
+// ✅ THÊM MỚI — ActorDetail
+const ActorDetail = lazy(() =>
+    lazyRetry(() =>
+        import(
+            "./user_frontend/pages/ActorDetail"
         )
     )
 );
@@ -705,79 +720,6 @@ const ScrollToTop = () => {
 };
 
 // ============================================================
-// NOT FOUND
-// ============================================================
-
-const NotFoundPage = () => {
-    const navigate = useNavigate();
-
-    return (
-        <div
-            style={{
-                minHeight: "100vh",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                textAlign: "center",
-                padding: "20px",
-                background: "#0a0a14",
-                color: "#f1f1f1",
-            }}
-        >
-            <h1
-                style={{
-                    fontSize: "100px",
-                    margin: 0,
-                    color: "#f37021",
-                }}
-            >
-                404
-            </h1>
-
-            <h2
-                style={{
-                    color: "#fff",
-                    marginBottom: "8px",
-                }}
-            >
-                Oops! Trang bạn tìm kiếm
-                không tồn tại
-            </h2>
-
-            <p
-                style={{
-                    color: "#94a3b8",
-                    marginBottom: "20px",
-                }}
-            >
-                Trang này có thể đã bị xóa
-                hoặc di chuyển.
-            </p>
-
-            <button
-                onClick={() =>
-                    navigate("/")
-                }
-                style={{
-                    padding: "10px 24px",
-                    cursor: "pointer",
-                    background:
-                        "linear-gradient(135deg, #f37021, #f5a623)",
-                    color: "#0a0a14",
-                    border: "none",
-                    borderRadius: "8px",
-                    fontWeight: "bold",
-                    fontSize: "14px",
-                }}
-            >
-                🏠 QUAY LẠI TRANG CHỦ
-            </button>
-        </div>
-    );
-};
-
-// ============================================================
 // USER ROUTE GUARD
 // ============================================================
 
@@ -894,6 +836,12 @@ const MAIN_ROUTES = [
     {
         path: "actors",
         element: <Actor />,
+    },
+
+    // ✅ THÊM MỚI — Actor Detail
+    {
+        path: "actor/detail/:slug",
+        element: <ActorDetail />,
     },
 
     {

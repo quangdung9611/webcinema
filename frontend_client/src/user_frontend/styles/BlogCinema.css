@@ -1,6 +1,9 @@
 /* ==========================================================
-   BLOG CINEMA PAGE – SILVER PREMIUM EDITION
-   SỬ DỤNG 100% BIẾN TỪ INDEX.CSS
+   BLOG CINEMA PAGE – CLEAN EDITION
+   --------------------------------------------------------
+   ✅ Bỏ overlay / light / particles / breath animation
+   ✅ Banner hiển thị rõ ràng, sắc nét, không mờ
+   ✅ Giữ layout, grid, responsive nguyên vẹn
    ========================================================== */
 
 .blog-page {
@@ -17,7 +20,7 @@
 }
 
 /* ==========================================================
-   HERO BANNER
+   HERO BANNER — SẮC NÉT, KHÔNG HIỆU ỨNG
    ========================================================== */
 
 .blog-hero {
@@ -26,12 +29,7 @@
     aspect-ratio: 2.5 / 1;
     overflow: hidden;
     background: var(--bg-primary);
-    box-shadow: var(--glass-shadow);
-    transition: box-shadow var(--transition-normal, 0.3s);
-}
-
-.blog-hero:hover {
-    box-shadow: var(--card-shadow-hover);
+    /* ✅ Bỏ box-shadow gây mờ */
 }
 
 .blog-swiper {
@@ -44,68 +42,15 @@
     height: 100%;
 }
 
+/* ✅ ẢNH BANNER — RÕ RÀNG, KHÔNG ANIMATION, KHÔNG MỜ */
 .blog-banner-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    animation: bannerBreath 10s ease-in-out infinite;
-    transition: transform 1.8s cubic-bezier(0.65, 0, 0.35, 1), opacity 1.4s ease;
-    will-change: transform, opacity;
-}
-
-@keyframes bannerBreath {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.04); }
-    100% { transform: scale(1); }
-}
-
-.blog-overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    background: linear-gradient(
-        180deg,
-        rgba(0, 0, 0, 0.15) 0%,
-        rgba(0, 0, 0, 0.45) 100%
-    );
-    pointer-events: none;
-}
-
-.blog-light {
-    position: absolute;
-    top: 0;
-    left: -40%;
-    width: 18%;
-    height: 100%;
-    z-index: 2;
-    opacity: 0.3;
-    background: linear-gradient(90deg, transparent, rgba(232, 232, 232, 0.08), transparent);
-    transform: skewX(-25deg);
-    animation: shineMove 12s ease-in-out infinite;
-    pointer-events: none;
-}
-
-@keyframes shineMove {
-    0% { left: -40%; opacity: 0; }
-    20% { opacity: 0.2; }
-    50% { opacity: 0.4; }
-    100% { left: 140%; opacity: 0; }
-}
-
-.blog-particles {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    pointer-events: none;
-    opacity: 0.05;
-    background-image: radial-gradient(rgba(232, 232, 232, 0.2) 1px, transparent 1px);
-    background-size: 160px 160px;
-    animation: particleMove 25s linear infinite;
-}
-
-@keyframes particleMove {
-    0% { transform: translateY(0); }
-    100% { transform: translateY(-180px); }
+    object-position: center;
+    display: block;
+    /* ✅ Bỏ animation bannerBreath gây mờ/zoom */
+    /* ✅ Bỏ will-change gây tốn GPU */
 }
 
 /* ==========================================================
@@ -284,182 +229,170 @@
 
 /* ==========================================================
    RESPONSIVE – 4 CỘT → 2 CỘT
-   GIẢM KÍCH THƯỚC HÌNH, TĂNG GAP, THÊM PADDING
    ========================================================== */
 
-/* --- 1200px: 4 cột vẫn giữ, gap vừa phải --- */
+/* --- 1200px --- */
 @media (max-width: 1200px) {
     .blog-grid {
         gap: var(--space-lg);
     }
 }
 
-/* --- 992px: xuống 2 cột, tăng gap, thêm padding --- */
+/* --- 992px: xuống 2 cột --- */
 @media (max-width: 992px) {
     .blog-container {
         padding: 0 var(--space-xl);
     }
-    
+
     .blog-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: var(--space-xl);
         margin-bottom: var(--space-2xl);
     }
-    
+
     .blog-header h1 {
         font-size: var(--font-size-h3);
     }
-    
+
     .blog-hero {
         aspect-ratio: 2.5 / 1;
     }
 }
 
-/* --- 768px: 2 cột, giảm kích thước hình, tăng gap --- */
+/* --- 768px --- */
 @media (max-width: 768px) {
     .blog-page {
         padding: 0 0 var(--space-2xl);
     }
-    
+
     .blog-container {
         padding: 0 var(--space-lg);
     }
-    
+
     .blog-hero {
         aspect-ratio: 2.5 / 1;
     }
-    
-    .blog-light,
-    .blog-particles {
-        display: none;
-    }
-    
+
     .blog-header h1 {
         font-size: var(--font-size-h3);
     }
-    
+
     .blog-header-desc {
         font-size: var(--font-size-base);
     }
-    
+
     .blog-header-icon {
         width: 72px;
         height: 72px;
     }
-    
-    /* GIẢM KÍCH THƯỚC CARD, TĂNG GAP */
+
     .blog-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: var(--space-xl);
         margin-bottom: var(--space-2xl);
     }
-    
-    /* Giảm kích thước card trên tablet */
+
     .blog-grid .cinema-card {
         max-width: 100%;
     }
-    
+
     .blog-grid .cinema-card .cinema-card-inner {
         padding: var(--space-sm);
     }
-    
+
     .blog-empty {
         margin-bottom: var(--space-2xl);
     }
-    
+
     .blog-breadcrumb {
         font-size: var(--font-size-base);
     }
 }
 
-/* --- 480px: 2 cột, giảm kích thước hình nhiều hơn, tăng gap --- */
+/* --- 480px --- */
 @media (max-width: 480px) {
     .blog-hero {
         aspect-ratio: 2.5 / 1;
     }
-    
+
     .blog-container {
         padding: 0 var(--space-md);
     }
-    
+
     .blog-header h1 {
         font-size: var(--font-size-h4);
     }
-    
+
     .blog-header-icon {
         width: 64px;
         height: 64px;
     }
-    
+
     .blog-header-icon svg {
         width: 32px;
         height: 32px;
     }
-    
-    /* GIẢM KÍCH THƯỚC CARD HƠN, GAP LỚN HƠN */
+
     .blog-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: var(--space-lg);
         margin-bottom: var(--space-xl);
     }
-    
-    /* Giảm kích thước card trên mobile */
+
     .blog-grid .cinema-card {
         max-width: 100%;
     }
-    
+
     .blog-grid .cinema-card .cinema-card-inner {
         padding: var(--space-xs);
     }
-    
-    /* Giảm font size cho card trên mobile */
+
     .blog-grid .cinema-card .cinema-card-title {
         font-size: var(--font-size-h6);
     }
-    
+
     .blog-grid .cinema-card .cinema-card-btn {
         font-size: var(--font-size-h6);
         padding: var(--space-xs) var(--space-md);
     }
-    
+
     .blog-empty {
         margin-bottom: var(--space-xl);
     }
-    
+
     .blog-empty h3 {
         font-size: var(--font-size-h5);
     }
-    
+
     .blog-breadcrumb {
         font-size: var(--font-size-h6);
         flex-wrap: wrap;
     }
 }
 
-/* --- 360px: 2 cột, gap nhỏ hơn cho màn hình rất nhỏ --- */
+/* --- 360px --- */
 @media (max-width: 360px) {
     .blog-container {
         padding: 0 var(--space-sm);
     }
-    
+
     .blog-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: var(--space-md);
     }
-    
+
     .blog-hero {
         aspect-ratio: 2.5 / 1;
     }
-    
-    /* Giảm kích thước card tối đa */
+
     .blog-grid .cinema-card .cinema-card-inner {
         padding: var(--space-xs);
     }
-    
+
     .blog-grid .cinema-card .cinema-card-title {
         font-size: var(--font-size-h6);
     }
-    
+
     .blog-grid .cinema-card .cinema-card-btn {
         font-size: 10px;
         padding: var(--space-xs) var(--space-sm);

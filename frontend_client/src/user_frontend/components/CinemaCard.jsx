@@ -40,6 +40,7 @@ const CinemaCard = ({
                 blog:      `/blog-cinema/detail/${slug}`,
                 cinema:    `/cinema/detail/${slug}`,
                 movie:     `/movie/detail/${slug}`,
+                 actor:     `/actor/detail/${slug}`,   // ✅ THÊM DÒNG NÀY
             };
 
             const path = paths[detailType] || `/${detailType}/detail/${slug}`;

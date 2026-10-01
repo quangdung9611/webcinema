@@ -654,35 +654,140 @@ server.listen(PORT, "0.0.0.0", async () => {
 });
 
 // ============================================================
-// AUTO CLEANUP — MỖI 7 NGÀY
+// 🧹 FAST CLEANUP — MỖI 5 PHÚT
+// ------------------------------------------------------------
+// Dọn dẹp các bảng real-time:
+//   - seat_locks       (ghế giữ hết hạn)
+//   - temp_bookings    (booking tạm hết hạn)
+//   - otp_codes        (OTP hết hạn chưa dùng)
+//   - rate_limits      (rate limit hết hạn)
+//   - user_locks       (user bị lock hết hạn)
+//   - login_attempts   (đếm login sai hết hạn)
 // ============================================================
-const CLEANUP_INTERVAL = 7 * 24 * 60 * 60 * 1000;
+const FAST_CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 phút
 
-const runCleanup = async () => {
-    console.log('🧹 [CLEANUP] Bắt đầu dọn dẹp dữ liệu cũ...');
+const runFastCleanup = async () => {
     const startTime = Date.now();
 
     try {
-        const refreshCount = await RefreshTokenRepository.cleanupOldRecords(7);
-        console.log(`🧹 [CLEANUP] refresh_tokens: ${refreshCount} records deleted`);
+        // 1. Ghế đang giữ hết hạn
+        const [seatLockResult] = await db.query(
+            `DELETE FROM seat_locks WHERE expires_at < NOW()`
+        );
 
-        const socketCount = await CacheService.cleanupOldSockets(7);
-        console.log(`🧹 [CLEANUP] user_sockets: ${socketCount} records deleted`);
+        // 2. Booking tạm hết hạn
+        const [tempBookingResult] = await db.query(
+            `DELETE FROM temp_bookings WHERE expires_at < NOW()`
+        );
 
-        await CacheService.cleanupExpiredData();
+        // 3. OTP hết hạn chưa dùng
+        const [otpResult] = await db.query(
+            `DELETE FROM otp_codes 
+             WHERE expires_at < NOW() 
+             AND is_used = 0`
+        );
 
-        const duration = Date.now() - startTime;
-        console.log(`✅ [CLEANUP] Hoàn tất trong ${duration}ms`);
+        // 4. Rate limit hết hạn
+        const [rateLimitResult] = await db.query(
+            `DELETE FROM rate_limits WHERE expires_at < NOW()`
+        );
 
+        // 5. User lock hết hạn
+        const [userLockResult] = await db.query(
+            `DELETE FROM user_locks WHERE expires_at < NOW()`
+        );
+
+        // 6. Login attempts hết hạn
+        const [loginAttemptResult] = await db.query(
+            `DELETE FROM login_attempts WHERE expires_at < NOW()`
+        );
+
+        // Tổng kết
+        const totalDeleted =
+            seatLockResult.affectedRows +
+            tempBookingResult.affectedRows +
+            otpResult.affectedRows +
+            rateLimitResult.affectedRows +
+            userLockResult.affectedRows +
+            loginAttemptResult.affectedRows;
+
+        // Chỉ log khi có xóa (tránh spam)
+        if (totalDeleted > 0) {
+            const duration = Date.now() - startTime;
+            console.log(
+                `🧹 [FAST CLEANUP] ${duration}ms | Deleted: ` +
+                `seat_locks=${seatLockResult.affectedRows}, ` +
+                `temp_bookings=${tempBookingResult.affectedRows}, ` +
+                `otp_codes=${otpResult.affectedRows}, ` +
+                `rate_limits=${rateLimitResult.affectedRows}, ` +
+                `user_locks=${userLockResult.affectedRows}, ` +
+                `login_attempts=${loginAttemptResult.affectedRows}`
+            );
+        }
     } catch (error) {
-        console.error('❌ [CLEANUP] Error:', error.message);
+        console.error('❌ [FAST CLEANUP] Error:', error.message);
     }
 };
 
-setTimeout(runCleanup, 60 * 1000);
-setInterval(runCleanup, CLEANUP_INTERVAL);
+// Chạy sau 30s khi server khởi động
+setTimeout(runFastCleanup, 30 * 1000);
 
-console.log('🧹 [CLEANUP] Auto-cleanup scheduled every 7 days');
+// Chạy định kỳ mỗi 5 phút
+setInterval(runFastCleanup, FAST_CLEANUP_INTERVAL);
+
+console.log('🧹 [FAST CLEANUP] Scheduled every 5 minutes');
+
+
+// ============================================================
+// 🧹 SLOW CLEANUP — MỖI 24 GIỜ
+// ------------------------------------------------------------
+// Dọn dẹp các bảng ít thay đổi:
+//   - refresh_tokens   (token cũ > 7 ngày)
+//   - user_sockets     (socket cũ > 7 ngày)
+//   - otp_logs         (log OTP cũ > 30 ngày)
+//   - Redis cache      (expired data)
+// ============================================================
+const SLOW_CLEANUP_INTERVAL = 24 * 60 * 60 * 1000; // 24h
+
+const runSlowCleanup = async () => {
+    console.log('🧹 [SLOW CLEANUP] Bắt đầu dọn dẹp dữ liệu cũ...');
+    const startTime = Date.now();
+
+    try {
+        // 1. Refresh tokens cũ (>7 ngày)
+        const refreshCount = await RefreshTokenRepository.cleanupOldRecords(7);
+        console.log(`🧹 [SLOW CLEANUP] refresh_tokens: ${refreshCount} deleted`);
+
+        // 2. Sockets cũ (>7 ngày)
+        const socketCount = await CacheService.cleanupOldSockets(7);
+        console.log(`🧹 [SLOW CLEANUP] user_sockets: ${socketCount} deleted`);
+
+        // 3. Redis cache expired data
+        await CacheService.cleanupExpiredData();
+
+        // 4. OTP logs cũ (>30 ngày)
+        const [otpLogResult] = await db.query(
+            `DELETE FROM otp_logs 
+             WHERE created_at < DATE_SUB(NOW(), INTERVAL 30 DAY)`
+        );
+        console.log(`🧹 [SLOW CLEANUP] otp_logs: ${otpLogResult.affectedRows} deleted`);
+
+        const duration = Date.now() - startTime;
+        console.log(`✅ [SLOW CLEANUP] Hoàn tất trong ${duration}ms`);
+
+    } catch (error) {
+        console.error('❌ [SLOW CLEANUP] Error:', error.message);
+    }
+};
+
+// Chạy sau 2 phút khi server khởi động
+setTimeout(runSlowCleanup, 2 * 60 * 1000);
+
+// Chạy định kỳ mỗi 24h
+setInterval(runSlowCleanup, SLOW_CLEANUP_INTERVAL);
+
+console.log('🧹 [SLOW CLEANUP] Scheduled every 24 hours');
+
 
 // ============================================================
 // ✅ REMINDER CRON — GỬI EMAIL NHẮC NHỞ SUẤT CHIẾU

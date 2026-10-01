@@ -1,0 +1,562 @@
+/* ============================================================
+   ACTOR DETAIL — CINEMA SILVER PREMIUM
+   ============================================================ */
+
+.actor-detail-page {
+    width: 100%;
+    min-height: 80vh;
+    padding: var(--space-2xl) 0 var(--space-3xl);
+    background: var(--bg-primary);
+}
+
+.actor-detail-content {
+    max-width: var(--container-width);
+    margin: 0 auto;
+    padding: 0 var(--container-padding);
+}
+
+
+/* ============================================================
+   LOADING / ERROR
+============================================================ */
+
+.actor-detail-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    min-height: 60vh;
+    color: var(--text-secondary);
+    font-size: var(--font-size-base);
+}
+
+.actor-detail-spin {
+    animation: actorSpin 1s linear infinite;
+    color: var(--silver-primary);
+}
+
+@keyframes actorSpin {
+    to { transform: rotate(360deg); }
+}
+
+.actor-detail-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    min-height: 60vh;
+    text-align: center;
+    padding: var(--space-2xl);
+    color: var(--text-secondary);
+}
+
+.actor-detail-error svg {
+    color: var(--text-muted);
+}
+
+.actor-detail-error h2 {
+    margin: 0;
+    font-size: var(--font-size-h3);
+    color: var(--text-heading);
+}
+
+.actor-detail-error p {
+    margin: 0 0 var(--space-md);
+    max-width: 400px;
+}
+
+.btn-back-home {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 12px 24px;
+    border-radius: var(--radius-round);
+    background: var(--premium-gradient);
+    color: var(--bg-primary);
+    font-weight: var(--fw-bold);
+    font-size: var(--font-size-h6);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-back-home:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--btn-silver-shadow);
+}
+
+
+/* ============================================================
+   TOP BAR — BREADCRUMB + BACK
+============================================================ */
+
+.actor-detail-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+    flex-wrap: wrap;
+}
+
+.actor-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 10px 20px;
+    border-radius: var(--radius-round);
+    background: rgba(232, 232, 232, 0.04);
+    border: 1px solid rgba(232, 232, 232, 0.18);
+    color: var(--text-secondary);
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-semibold);
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.actor-back-btn:hover {
+    background: rgba(232, 232, 232, 0.08);
+    border-color: rgba(232, 232, 232, 0.45);
+    color: var(--silver-light);
+    transform: translateX(-3px);
+}
+
+.actor-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: var(--font-size-h6);
+    color: var(--text-muted);
+}
+
+.actor-breadcrumb a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.25s ease;
+}
+
+.actor-breadcrumb a:hover {
+    color: var(--silver-primary);
+}
+
+.actor-breadcrumb .current {
+    color: var(--text-body);
+    font-weight: var(--fw-semibold);
+}
+
+
+/* ============================================================
+   HERO SPLIT — AVATAR + INFO
+============================================================ */
+
+.actor-hero-split {
+    display: grid;
+    grid-template-columns: minmax(320px, 520px) 1fr;
+    gap: var(--space-2xl);
+    align-items: start;
+    margin-bottom: var(--space-3xl);
+    padding: var(--space-xl);
+    border-radius: var(--radius-xl);
+    background: linear-gradient(
+        145deg,
+        rgba(255, 255, 255, 0.04) 0%,
+        rgba(255, 255, 255, 0.015) 40%,
+        rgba(7, 9, 11, 0.6) 100%
+    );
+    border: 1px solid rgba(232, 232, 232, 0.10);
+    box-shadow: var(--glass-shadow);
+}
+
+
+/* Avatar cột trái — ✅ 3/2 (ngang) */
+.actor-hero-avatar {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: var(--bg-secondary);
+    box-shadow:
+        0 12px 32px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.actor-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+}
+
+.actor-avatar-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    width: 100%;
+    height: 100%;
+    color: var(--text-muted);
+    background: linear-gradient(135deg, #1a1a1a, #0a0a0a);
+    font-size: var(--font-size-h6);
+    letter-spacing: 0.05em;
+}
+
+.actor-hero-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+        180deg,
+        transparent 60%,
+        rgba(7, 9, 11, 0.35) 100%
+    );
+}
+
+
+/* Info cột phải */
+.actor-hero-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    padding: var(--space-md) 0;
+}
+
+.actor-hero-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    align-self: flex-start;
+    border-radius: var(--radius-round);
+    background: rgba(232, 232, 232, 0.06);
+    border: 1px solid rgba(232, 232, 232, 0.22);
+    color: var(--silver-primary);
+    font-size: 0.72rem;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.actor-name {
+    margin: 0;
+    font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+    font-weight: var(--fw-extrabold);
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    color: var(--text-heading);
+}
+
+.actor-divider {
+    width: 80px;
+    height: 3px;
+    border-radius: var(--radius-round);
+    background: var(--premium-gradient);
+    margin: var(--space-sm) 0 var(--space-md);
+}
+
+
+/* Info grid */
+.actor-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
+    margin-top: var(--space-sm);
+}
+
+.actor-info-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    background: rgba(232, 232, 232, 0.025);
+    border: 1px solid rgba(232, 232, 232, 0.08);
+    transition: all 0.3s ease;
+}
+
+.actor-info-item:hover {
+    background: rgba(232, 232, 232, 0.05);
+    border-color: rgba(232, 232, 232, 0.22);
+    transform: translateY(-2px);
+}
+
+.actor-info-icon {
+    color: var(--silver-primary);
+    flex-shrink: 0;
+}
+
+.actor-info-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.actor-info-label {
+    font-size: 0.7rem;
+    font-weight: var(--fw-semibold);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.actor-info-value {
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-semibold);
+    color: var(--text-body);
+    overflow-wrap: anywhere;
+}
+
+
+/* ============================================================
+   SECTION TITLE (dùng chung)
+============================================================ */
+
+.actor-section-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid rgba(232, 232, 232, 0.10);
+}
+
+.actor-section-title svg {
+    color: var(--silver-primary);
+    flex-shrink: 0;
+}
+
+.actor-section-title h2 {
+    margin: 0;
+    font-size: var(--font-size-h4);
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-heading);
+}
+
+.actor-movie-count {
+    margin-left: auto;
+    padding: 4px 12px;
+    border-radius: var(--radius-round);
+    background: rgba(232, 232, 232, 0.06);
+    border: 1px solid rgba(232, 232, 232, 0.18);
+    font-size: 0.72rem;
+    font-weight: var(--fw-semibold);
+    letter-spacing: 0.06em;
+    color: var(--silver-primary);
+}
+
+
+/* ============================================================
+   BIOGRAPHY
+============================================================ */
+
+.actor-bio-section {
+    margin-bottom: var(--space-3xl);
+}
+
+.actor-bio-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    padding: var(--space-xl);
+    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(232, 232, 232, 0.08);
+}
+
+.actor-bio-content p {
+    margin: 0;
+    font-size: var(--font-size-base);
+    line-height: 1.85;
+    color: var(--text-body);
+    text-align: justify;
+}
+
+
+/* ============================================================
+   FILMOGRAPHY — PHIM ĐÃ THAM GIA
+============================================================ */
+
+.actor-movies-section {
+    margin-bottom: var(--space-3xl);
+}
+
+.actor-movie-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--space-lg);
+}
+
+.actor-movie-item {
+    display: flex;
+    width: 100%;
+}
+
+.actor-movie-item > * {
+    width: 100%;
+}
+
+.actor-movies-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    padding: 80px 20px;
+    text-align: center;
+    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(232, 232, 232, 0.08);
+    color: var(--text-muted);
+}
+
+.actor-movies-empty h3 {
+    margin: 0;
+    font-size: var(--font-size-h5);
+    color: var(--text-body);
+}
+
+.actor-movies-empty p {
+    margin: 0;
+    font-size: var(--font-size-base);
+}
+
+
+/* ============================================================
+   RESPONSIVE — 992px
+============================================================ */
+
+@media (max-width: 992px) {
+    .actor-hero-split {
+        grid-template-columns: minmax(260px, 400px) 1fr;
+        gap: var(--space-xl);
+        padding: var(--space-lg);
+    }
+
+    .actor-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .actor-movie-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: var(--space-md);
+    }
+}
+
+
+/* ============================================================
+   RESPONSIVE — 768px
+============================================================ */
+
+@media (max-width: 768px) {
+    .actor-detail-page {
+        padding: var(--space-xl) 0 var(--space-2xl);
+    }
+
+    .actor-hero-split {
+        grid-template-columns: 1fr;
+        gap: var(--space-lg);
+        padding: var(--space-md);
+    }
+
+    .actor-hero-avatar {
+        max-width: 520px;
+        margin: 0 auto;
+    }
+
+    .actor-name {
+        font-size: clamp(1.5rem, 5vw, 2rem);
+        text-align: center;
+    }
+
+    .actor-hero-label {
+        align-self: center;
+    }
+
+    .actor-divider {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .actor-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .actor-bio-content {
+        padding: var(--space-md);
+    }
+
+    .actor-bio-content p {
+        text-align: left;
+    }
+
+    .actor-movie-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: var(--space-md);
+    }
+}
+
+
+/* ============================================================
+   RESPONSIVE — 480px
+============================================================ */
+
+@media (max-width: 480px) {
+    .actor-detail-topbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-md);
+    }
+
+    .actor-breadcrumb {
+        font-size: 0.72rem;
+        flex-wrap: wrap;
+    }
+
+    .actor-back-btn {
+        padding: 8px 16px;
+        font-size: 0.75rem;
+    }
+
+    .actor-hero-split {
+        padding: var(--space-sm);
+    }
+
+    .actor-hero-avatar {
+        max-width: 100%;
+    }
+
+    .actor-section-title h2 {
+        font-size: var(--font-size-h5);
+    }
+
+    .actor-movie-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-sm);
+    }
+
+    .actor-bio-content p {
+        font-size: 0.92rem;
+        line-height: 1.7;
+    }
+}
+
+
+/* ============================================================
+   RESPONSIVE — 360px
+============================================================ */
+
+@media (max-width: 360px) {
+    .actor-movie-grid {
+        grid-template-columns: 1fr;
+    }
+}
