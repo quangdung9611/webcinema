@@ -1,3 +1,5 @@
+// Controllers/BankAppController.js
+
 const BankAppService = require("../Services/BankAppService");
 const OtpService = require("../Services/OtpService");
 const { PURPOSE } = require("../Services/OtpService");
@@ -7,9 +9,6 @@ const db = require("../Config/db");
 
 /*=========================================================
     ✅ PROCESS ORDER — TẠO TEMP BOOKING
-    ----------------------------------------------------------
-    ⚠️ ĐÂY LÀ HÀM BỊ THIẾU — PHẢI THÊM
-    Dùng chung PaymentService.processOrder (tính giá server-side)
 =========================================================*/
 exports.processOrder = async (req, res) => {
     try {
@@ -22,7 +21,6 @@ exports.processOrder = async (req, res) => {
             });
         }
 
-        // ✅ Gọi PaymentService.processOrder với userId từ JWT
         const result = await PaymentService.processOrder(req.body, userId);
 
         return res.status(200).json({
@@ -54,7 +52,13 @@ exports.sendOTP = async (req, res) => {
             });
         }
 
-        // ✅ Truyền userId để service check owner
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: "Vui lòng đăng nhập"
+            });
+        }
+
         const result = await BankAppService.sendPaymentOTP(email, tempBookingId, userId);
 
         return res.status(200).json(result);
@@ -87,10 +91,17 @@ exports.verifyOTP = async (req, res) => {
             });
         }
 
-        /*=====================================================
-            ✅ CHECK OWNER TEMP BOOKING TRƯỚC
-        =====================================================*/
+        if (!email || !otp || !tempBookingId) {
+            connection.release();
+            return res.status(400).json({
+                success: false,
+                message: "Thiếu email, otp hoặc tempBookingId"
+            });
+        }
 
+        /*=====================================================
+            CHECK OWNER TEMP BOOKING TRƯỚC
+        =====================================================*/
         const key = `temp:${tempBookingId}`;
         const tempData = await CacheService.get(key);
 
@@ -104,7 +115,6 @@ exports.verifyOTP = async (req, res) => {
 
         const data = typeof tempData === "string" ? JSON.parse(tempData) : tempData;
 
-        // Check user_id khớp
         if (Number(data.userId) !== Number(userId)) {
             connection.release();
             return res.status(403).json({
@@ -113,7 +123,6 @@ exports.verifyOTP = async (req, res) => {
             });
         }
 
-        // Check email khớp
         if (data.customerEmail && email.toLowerCase().trim() !== data.customerEmail.toLowerCase().trim()) {
             connection.release();
             return res.status(403).json({
@@ -125,7 +134,6 @@ exports.verifyOTP = async (req, res) => {
         /*=====================================================
             XÁC THỰC OTP
         =====================================================*/
-
         const verifyResult = await OtpService.verifyOTP(
             email,
             otp,
@@ -150,7 +158,6 @@ exports.verifyOTP = async (req, res) => {
         /*=====================================================
             COMMIT
         =====================================================*/
-
         await connection.beginTransaction();
 
         const result = await PaymentService.commitToDatabase(
@@ -160,15 +167,9 @@ exports.verifyOTP = async (req, res) => {
 
         await connection.commit();
 
-        // Gửi email vé
-        try {
-            await BankAppService.sendTicketEmail(
-                connection,
-                result.bookingId
-            );
-        } catch (err) {
-            console.error("❌ Send Ticket Email Error:", err);
-        }
+        // Gửi email vé (không block response)
+        BankAppService.sendTicketEmail(connection, result.bookingId)
+            .catch(err => console.error("❌ Send Ticket Email Error:", err));
 
         return res.status(200).json({
             success: true,
@@ -221,7 +222,6 @@ exports.cancelBookingTimeout = async (req, res) => {
             });
         }
 
-        // ✅ Check owner
         const key = `temp:${tempBookingId}`;
         const tempData = await CacheService.get(key);
 
@@ -291,6 +291,13 @@ exports.resendOtpPayment = async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: "Thiếu email hoặc tempBookingId"
+            });
+        }
+
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: "Vui lòng đăng nhập"
             });
         }
 

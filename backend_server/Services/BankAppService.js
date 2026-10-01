@@ -8,7 +8,6 @@ const { PURPOSE } = require("./OtpService");
 const MailService = require("./MailService");
 const CacheService = require("./CacheService");
 
-
 class BankAppService {
 
     /*=========================================================
@@ -23,14 +22,12 @@ class BankAppService {
 
         const data = typeof tempData === "string" ? JSON.parse(tempData) : tempData;
 
-        // ✅ Check userId khớp
         if (userId && Number(data.userId) !== Number(userId)) {
             const err = new Error("Bạn không có quyền truy cập phiên đặt vé này");
             err.statusCode = 403;
             throw err;
         }
 
-        // ✅ Check email khớp
         if (email && data.customerEmail &&
             email.toLowerCase().trim() !== data.customerEmail.toLowerCase().trim()) {
             const err = new Error("Email không khớp với phiên đặt vé");
@@ -40,7 +37,6 @@ class BankAppService {
 
         return data;
     }
-
 
     /*=========================================================
         ✅ GỬI EMAIL VÉ SAU KHI THANH TOÁN THÀNH CÔNG
@@ -107,7 +103,6 @@ class BankAppService {
         }
     }
 
-
     /*=========================================================
         CỘNG ĐIỂM CHO USER
     =========================================================*/
@@ -122,7 +117,6 @@ class BankAppService {
         }
     }
 
-
     /*=========================================================
         CHECK TTL — ✅ CHECK OWNER
     =========================================================*/
@@ -135,7 +129,6 @@ class BankAppService {
         const ttl = await CacheService.getTTL(key);
         const data = await CacheService.get(key);
 
-        // ✅ Nếu có data → check owner
         if (data && userId) {
             const parsed = typeof data === "string" ? JSON.parse(data) : data;
             if (Number(parsed.userId) !== Number(userId)) {
@@ -153,19 +146,22 @@ class BankAppService {
         };
     }
 
-
     /*=========================================================
-        ✅ GỬI LẠI OTP PAYMENT — FIX OWNER + EMAIL CHECK
+        ✅ GỬI LẠI OTP PAYMENT — FIX THAM SỐ MailService
     =========================================================*/
     async resendOtpPayment(email, tempBookingId, userId = null) {
         if (!email?.trim()) {
             throw { statusCode: 400, field: "email", message: "Email không được để trống" };
         }
 
+        if (!tempBookingId) {
+            throw { statusCode: 400, message: "Thiếu tempBookingId" };
+        }
+
         const key = `temp:${tempBookingId}`;
         const tempData = await CacheService.get(key);
 
-        // ✅ FIX: Check owner + email khớp
+        // ✅ Check owner + email khớp
         const data = this._verifyOwner(tempData, userId, email);
 
         const rateLimit = await CacheService.checkRateLimit(email, "payment-resend", 3, 300);
@@ -189,9 +185,14 @@ class BankAppService {
 
         await CacheService.set(key, data, 300);
 
-        await MailService.sendPaymentOTP(email, otpResult.otp, data.customerName, data.totalAmount)
-            .then(() => console.log(`✅ Payment OTP email sent to ${email}`))
-            .catch(err => console.error(`❌ Payment OTP email failed: ${err.message}`));
+        // ✅ FIX: Truyền ĐÚNG 3 tham số (email, otp, bookingId)
+        try {
+            await MailService.sendPaymentOTP(email, otpResult.otp, tempBookingId);
+            console.log(`✅ [BankApp] Payment OTP resent to ${email}`);
+        } catch (mailErr) {
+            console.error(`❌ [BankApp] Payment OTP resend failed:`, mailErr.message);
+            // Không throw — user vẫn nhập OTP được (đã lưu trong cache)
+        }
 
         const otpKey = `otp:${email}:${PURPOSE.PAYMENT}`;
         const ttl = await CacheService.getTTL(otpKey);
@@ -208,56 +209,68 @@ class BankAppService {
         };
     }
 
-async sendPaymentOTP(email, tempBookingId, userId = null) {
-    if (!email?.trim()) {
-        throw { statusCode: 400, field: "email", message: "Email không được để trống" };
-    }
+    /*=========================================================
+        ✅ GỬI OTP PAYMENT LẦN ĐẦU
+    =========================================================*/
+    async sendPaymentOTP(email, tempBookingId, userId = null) {
+        if (!email?.trim()) {
+            throw { statusCode: 400, field: "email", message: "Email không được để trống" };
+        }
 
-    const key = `temp:${tempBookingId}`;
-    const tempData = await CacheService.get(key);
+        if (!tempBookingId) {
+            throw { statusCode: 400, message: "Thiếu tempBookingId" };
+        }
 
-    const data = this._verifyOwner(tempData, userId, email);
+        const key = `temp:${tempBookingId}`;
+        const tempData = await CacheService.get(key);
 
-    const rateLimit = await CacheService.checkRateLimit(email, "payment-send", 1, 60);
-    if (!rateLimit.allowed) {
-        throw {
-            statusCode: 429,
-            message: `Bạn đã gửi OTP quá nhanh. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 60} giây.`,
-            data: { remainingSeconds: rateLimit.remainingSeconds || 60 }
+        const data = this._verifyOwner(tempData, userId, email);
+
+        // ✅ FIX: Nới rate limit lên 3 lần / 60s (trước là 1 lần / 60s)
+        const rateLimit = await CacheService.checkRateLimit(email, "payment-send", 3, 60);
+        if (!rateLimit.allowed) {
+            throw {
+                statusCode: 429,
+                message: `Bạn đã gửi OTP quá nhanh. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 60} giây.`,
+                data: {
+                    remainingSeconds: rateLimit.remainingSeconds || 60,
+                    maxAttempts: 3
+                }
+            };
+        }
+
+        await CacheService.markOTPAsUsed(email, PURPOSE.PAYMENT);
+        const otpResult = await OtpService.createOTP(email, PURPOSE.PAYMENT);
+        const serverTime = Date.now();
+
+        data.otp = otpResult.otp;
+        data.otpCreatedAt = Date.now();
+
+        await CacheService.set(key, data, 300);
+
+        // ✅ FIX: Truyền ĐÚNG 3 tham số (email, otp, bookingId)
+        try {
+            await MailService.sendPaymentOTP(email, otpResult.otp, tempBookingId);
+            console.log(`✅ [BankApp] Payment OTP sent to ${email}`);
+        } catch (mailErr) {
+            console.error(`❌ [BankApp] Payment OTP send failed:`, mailErr.message);
+            // Không throw — user vẫn nhập OTP được
+        }
+
+        const otpKey = `otp:${email}:${PURPOSE.PAYMENT}`;
+        const ttl = await CacheService.getTTL(otpKey);
+
+        return {
+            success: true,
+            message: "Mã OTP đã được gửi tới email.",
+            data: {
+                expiresIn: ttl > 0 ? ttl : 300,
+                maxAttempts: 3,
+                remainingAttempts: 3,
+                serverTime: serverTime
+            }
         };
     }
-
-    await CacheService.markOTPAsUsed(email, PURPOSE.PAYMENT);
-    const otpResult = await OtpService.createOTP(email, PURPOSE.PAYMENT);
-    const serverTime = Date.now();
-
-    data.otp = otpResult.otp;
-    data.otpCreatedAt = Date.now();
-
-    await CacheService.set(key, data, 300);
-
-    // ✅ FIX: Truyền 3 params — tempBookingId làm bookingId
-    try {
-        await MailService.sendPaymentOTP(email, otpResult.otp, tempBookingId);
-        console.log(`✅ Payment OTP email sent to ${email}`);
-    } catch (mailErr) {
-        console.error(`❌ Payment OTP email failed:`, mailErr);
-        // Không throw — user vẫn nhập OTP được (đã có trong cache)
-        // NHƯNG log rõ để biết lỗi
-    }
-
-    const otpKey = `otp:${email}:${PURPOSE.PAYMENT}`;
-    const ttl = await CacheService.getTTL(otpKey);
-
-    return {
-        success: true,
-        message: "Mã OTP đã được gửi tới email.",
-        data: {
-            expiresIn: ttl > 0 ? ttl : 300,
-            serverTime: serverTime
-        }
-    };
-}
 }
 
 module.exports = new BankAppService();
