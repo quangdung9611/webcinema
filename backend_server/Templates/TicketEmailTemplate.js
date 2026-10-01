@@ -1,10 +1,12 @@
+// Utils/EmailTemplates/TicketEmailTemplate.js
+
 const TicketEmailTemplate = (ticketData) => {
     const {
         bookingId,
         customerName,
         seatLabel,
         movieTitle,
-        moviePoster,       // ✅ URL công khai từ Cloudinary
+        moviePoster,
         cinemaName,
         startTime,
         selectedDate,
@@ -12,63 +14,96 @@ const TicketEmailTemplate = (ticketData) => {
         earnedPoints,
         ticketPIN,
         qrCid,
-        roomName
+        roomName,
+        // ✅ Link tải vé (tùy chọn)
+        downloadUrl,
+        homeUrl,
     } = ticketData;
 
-    // ✅ Fallback nếu không có poster
-    const posterUrl = moviePoster || '';
+    const posterUrl = moviePoster || "";
 
-    // ✅ ICONS — SVG INLINE (từ Lucide)
-    const ICON_MAP_PIN = `
+    // ✅ LINK fallback
+    const FRONTEND_URL = process.env.FRONTEND_URL || "https://quangdungcinema.id.vn";
+    const finalHomeUrl = homeUrl || FRONTEND_URL;
+    const finalDownloadUrl = downloadUrl || `${FRONTEND_URL}/confirm-success?orderId=${bookingId}`;
+
+    // ✅ Màu brand
+    const GREEN = "#43B77A";
+    const GREEN_DARK = "#2E9B62";
+    const SILVER_LIGHT = "#F4F6F8";
+    const TEXT_DARK = "#1a1a1a";
+    const TEXT_MUTED = "#6a737d";
+    const TEXT_BODY = "#d9dde2";
+
+    // ✅ ICON SVG — dùng đơn giản, inline
+    const ICON_CHECK = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" 
+             viewBox="0 0 24 24" fill="none" stroke="${GREEN}" 
+             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+             style="display:inline-block; vertical-align:middle;">
+            <circle cx="12" cy="12" r="10" fill="none"/>
+            <path d="m9 12 2 2 4-4"/>
+        </svg>
+    `;
+
+    const ICON_PIN = `
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
-             viewBox="0 0 24 24" fill="none" stroke="#e74c3c" 
+             viewBox="0 0 24 24" fill="none" stroke="${GREEN}" 
              stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-             style="vertical-align: middle; margin-right: 6px;">
+             style="vertical-align: middle; margin-right: 8px;">
             <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
             <circle cx="12" cy="10" r="3"/>
         </svg>
     `;
 
+    const ICON_MONITOR = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
+             viewBox="0 0 24 24" fill="none" stroke="${GREEN}" 
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+             style="vertical-align: middle; margin-right: 8px;">
+            <rect width="20" height="14" x="2" y="3" rx="2"/>
+            <line x1="8" x2="16" y1="21" y2="21"/>
+            <line x1="12" x2="12" y1="17" y2="21"/>
+        </svg>
+    `;
+
+    const ICON_CALENDAR = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
+             viewBox="0 0 24 24" fill="none" stroke="${GREEN}" 
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+             style="vertical-align: middle; margin-right: 8px;">
+            <path d="M8 2v4"/><path d="M16 2v4"/>
+            <rect width="18" height="18" x="3" y="4" rx="2"/>
+            <path d="M3 10h18"/>
+        </svg>
+    `;
+
     const ICON_CLOCK = `
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
-             viewBox="0 0 24 24" fill="none" stroke="#e74c3c" 
+             viewBox="0 0 24 24" fill="none" stroke="${GREEN}" 
              stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-             style="vertical-align: middle; margin-right: 6px;">
+             style="vertical-align: middle; margin-right: 8px;">
             <circle cx="12" cy="12" r="10"/>
             <polyline points="12 6 12 12 16 14"/>
         </svg>
     `;
 
-    const ICON_DOOR = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
-             viewBox="0 0 24 24" fill="none" stroke="#e74c3c" 
-             stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-             style="vertical-align: middle; margin-right: 6px;">
-            <path d="M13 4h3a2 2 0 0 1 2 2v14"/>
-            <path d="M2 20h3"/>
-            <path d="M13 20h9"/>
-            <path d="M10 12v.01"/>
-            <path d="M13 4.562v16.157a1 1 0 0 1-1.242.97L5 20V5.562a2 2 0 0 1 1.515-1.94l4-1A2 2 0 0 1 13 4.562Z"/>
-        </svg>
-    `;
-
     const ICON_ARMCHAIR = `
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
-             viewBox="0 0 24 24" fill="none" stroke="#e74c3c" 
+             viewBox="0 0 24 24" fill="none" stroke="${GREEN}" 
              stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-             style="vertical-align: middle; margin-right: 6px;">
+             style="vertical-align: middle; margin-right: 8px;">
             <path d="M19 9V6a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v3"/>
             <path d="M3 16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v2H7v-2a2 2 0 0 0-4 0Z"/>
-            <path d="M5 18v2"/>
-            <path d="M19 18v2"/>
+            <path d="M5 18v2"/><path d="M19 18v2"/>
         </svg>
     `;
 
     const ICON_POPCORN = `
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
-             viewBox="0 0 24 24" fill="none" stroke="#e74c3c" 
+             viewBox="0 0 24 24" fill="none" stroke="${GREEN}" 
              stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-             style="vertical-align: middle; margin-right: 6px;">
+             style="vertical-align: middle; margin-right: 8px;">
             <path d="M18 8a2 2 0 0 0 0-4 2 2 0 0 0-2 2"/>
             <path d="M10 22 9 8"/>
             <path d="m14 22 1-14"/>
@@ -78,111 +113,407 @@ const TicketEmailTemplate = (ticketData) => {
         </svg>
     `;
 
-    const ICON_STAR = `
+    const ICON_MAIL = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" 
+             viewBox="0 0 24 24" fill="none" stroke="${GREEN}" 
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+             style="vertical-align: middle;">
+            <rect width="20" height="16" x="2" y="4" rx="2"/>
+            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+        </svg>
+    `;
+
+    const ICON_HOME = `
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
-             viewBox="0 0 24 24" fill="#27ae60" stroke="#27ae60" 
-             stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
-             style="vertical-align: middle; margin-right: 6px;">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+             viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" 
+             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+             style="vertical-align: middle; margin-right: 8px;">
+            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+    `;
+
+    const ICON_DOWNLOAD = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
+             viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" 
+             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+             style="vertical-align: middle; margin-right: 8px;">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" x2="12" y1="15" y2="3"/>
         </svg>
     `;
 
     return `
-        <div style="background-color: #f4f4f4; padding: 20px; font-family: 'Segoe UI', Arial, sans-serif;">
-            <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xác nhận đặt vé - ${movieTitle}</title>
+</head>
+<body style="margin:0; padding:0; background-color:#0f1115; font-family: 'Segoe UI', Arial, Tahoma, sans-serif; -webkit-font-smoothing:antialiased;">
 
-                <!-- HEADER -->
-                <div style="background: #e74c3c; padding: 25px; text-align: center; color: white;">
-                    <h1 style="margin:0; font-size:24px;">THANH TOÁN THÀNH CÔNG!</h1>
-                    <p style="margin-top:5px; opacity:0.9;">
-                        Hệ thống Dũng Cinema đã ghi nhận đơn hàng
-                    </p>
-                </div>
+<!-- ============================================================
+     OUTER WRAPPER
+============================================================ -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" 
+       style="background-color:#0f1115; padding:32px 16px;">
+    <tr>
+        <td align="center">
 
-                <!-- BODY -->
-                <div style="padding:30px;">
-                    <p>Chào <b>${customerName}</b>,</p>
+            <!-- ============================================================
+                 CONTAINER 640px
+            ============================================================ -->
+            <table role="presentation" width="640" cellpadding="0" cellspacing="0" border="0" 
+                   style="max-width:640px; width:100%; background-color:#141821; border-radius:20px; 
+                          overflow:hidden; border:1px solid rgba(244,246,248,0.08);
+                          box-shadow:0 24px 60px rgba(0,0,0,0.6);">
 
-                    <!-- ✅ POSTER PHIM — DÙNG URL CÔNG KHAI -->
-                    ${posterUrl ? `
-                        <div style="text-align:center; margin:20px 0 25px 0;">
-                            <img 
-                                src="${posterUrl}" 
-                                alt="${movieTitle}"
-                                style="max-width:220px; width:100%; height:auto; border-radius:12px; box-shadow: 0 6px 20px rgba(0,0,0,0.15); display:block; margin:0 auto; border: 0; outline: none;"
-                            />
+                <!-- ============================================================
+                     HEADER — GREEN SUCCESS
+                ============================================================ -->
+                <tr>
+                    <td align="center" 
+                        style="background: linear-gradient(135deg, ${GREEN} 0%, ${GREEN_DARK} 100%);
+                               padding: 38px 24px 32px; text-align:center;">
+
+                        <!-- CHECK ICON -->
+                        <div style="width:90px; height:90px; margin:0 auto 20px; 
+                                    border-radius:50%; 
+                                    background: rgba(255,255,255,0.15);
+                                    border: 3px solid rgba(255,255,255,0.9);
+                                    box-shadow: 0 0 0 8px rgba(255,255,255,0.1), 0 12px 30px rgba(0,0,0,0.25);
+                                    line-height: 84px; text-align:center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" 
+                                 viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" 
+                                 stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"
+                                 style="vertical-align:middle;">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="m9 12 2 2 4-4"/>
+                            </svg>
                         </div>
-                    ` : ''}
 
-                    <div style="border: 2px dashed #eee; padding: 20px; margin: 20px 0; border-radius: 8px;">
-                        <h3 style="color:#e74c3c; margin:0 0 15px 0; font-size:20px; text-align:center;">
-                            ${movieTitle}
-                        </h3>
+                        <!-- TITLE -->
+                        <h1 style="margin:0 0 8px; padding:0; color:#FFFFFF; font-size:26px; 
+                                   font-weight:800; letter-spacing:1.5px; text-transform:uppercase;
+                                   text-shadow: 0 2px 12px rgba(0,0,0,0.25);">
+                            THANH TOÁN THÀNH CÔNG!
+                        </h1>
 
-                        <p style="margin:8px 0; display: flex; align-items: center;">
-                            ${ICON_MAP_PIN}
-                            <b>Rạp:</b>&nbsp;${cinemaName}
+                        <p style="margin:0; color:rgba(255,255,255,0.9); font-size:14px; 
+                                  line-height:1.5; letter-spacing:0.3px;">
+                            Cảm ơn <strong style="color:#FFFFFF;">${customerName || "Quý khách"}</strong>, 
+                            giao dịch của bạn đã hoàn tất.
                         </p>
 
-                        <p style="margin:8px 0; display: flex; align-items: center;">
-                            ${ICON_CLOCK}
-                            <b>Suất:</b>&nbsp;${startTime} | ${selectedDate}
-                        </p>
-
-                        <p style="margin:8px 0; display: flex; align-items: center;">
-                            ${ICON_DOOR}
-                            <b>Phòng:</b>&nbsp;${roomName || '---'}
-                        </p>
-
-                        <p style="margin:8px 0; display: flex; align-items: center;">
-                            ${ICON_ARMCHAIR}
-                            <b>Ghế:</b>&nbsp;
-                            <span style="font-size:18px; color:#e74c3c; font-weight:bold;">
-                                ${seatLabel}
+                        <!-- ORDER BADGE -->
+                        <div style="display:inline-block; margin-top:20px; padding:10px 20px;
+                                    background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.35);
+                                    border-radius: 999px; font-size:13px; color: rgba(255,255,255,0.9);
+                                    letter-spacing:0.5px; font-weight:600;">
+                            Mã đơn hàng: 
+                            <span style="color:#FFFFFF; font-weight:800; margin-left:4px;">
+                                #${bookingId}
                             </span>
-                        </p>
-
-                        <p style="margin:8px 0; display: flex; align-items: center;">
-                            ${ICON_POPCORN}
-                            <b>Đồ ăn:</b>&nbsp;${selectedFoods || 'Không có'}
-                        </p>
-                    </div>
-
-                    <!-- QR CODE -->
-                    <div style="margin:30px 0; text-align:center; padding:25px; border:1px dashed #ddd; border-radius:12px; background:#fafafa;">
-                        <h2 style="margin:0; color:#222; font-size:26px;">MÃ NHẬN VÉ</h2>
-
-                        <div style="margin:15px 0; font-size:38px; font-weight:bold; color:#e74c3c; letter-spacing:8px;">
-                            ${ticketPIN || ""}
                         </div>
+                    </td>
+                </tr>
 
-                        ${qrCid ? `
-                            <img 
-                                src="cid:${qrCid}" 
-                                alt="QR Code" 
-                                style="width:220px; height:220px; display:block; margin:20px auto; border-radius:10px; border:8px solid #fff; box-shadow:0 4px 12px rgba(0,0,0,.15);" 
-                            />
-                        ` : ''}
+                <!-- ============================================================
+                     BODY
+                ============================================================ -->
+                <tr>
+                    <td style="padding: 28px 24px 8px;">
 
-                        <p style="margin-top:15px; color:#666; line-height:24px;">
-                            Vui lòng quét mã QR tại quầy hoặc kiosk để in vé.
+                        <!-- ============================================================
+                             CINEMA TICKET (TABLE 2-COLUMN)
+                        ============================================================ -->
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                               style="background: linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+                                      border: 1px solid rgba(244,246,248,0.12);
+                                      border-radius: 16px; overflow:hidden;">
+
+                            <!-- TOP SILVER LINE -->
+                            <tr>
+                                <td colspan="2" style="height:2px; 
+                                    background: linear-gradient(90deg, transparent, rgba(244,246,248,0.5), ${GREEN}, rgba(244,246,248,0.5), transparent);
+                                    font-size:0; line-height:0;">&nbsp;</td>
+                            </tr>
+
+                            <!-- ============================================================
+                                 MAIN ROW: LEFT (POSTER + INFO) | RIGHT (QR + PIN)
+                            ============================================================ -->
+                            <tr>
+                                <!-- ============ LEFT: POSTER + INFO ============ -->
+                                <td valign="top" 
+                                    style="padding: 24px 18px 24px 24px; 
+                                           border-right: 1px dashed rgba(255,255,255,0.15);">
+
+                                    <!-- POSTER -->
+                                    ${posterUrl ? `
+                                    <div style="text-align:center; margin-bottom: 18px;">
+                                        <img src="${posterUrl}" alt="${movieTitle}"
+                                             width="180" height="270"
+                                             style="width:180px; max-width:100%; height:auto; 
+                                                    border-radius: 12px; display:block; margin:0 auto;
+                                                    box-shadow: 0 12px 28px rgba(0,0,0,0.5);
+                                                    border: 1px solid rgba(255,255,255,0.08);" />
+                                    </div>
+                                    ` : ""}
+
+                                    <!-- MOVIE TITLE -->
+                                    <h2 style="margin: 0 0 18px; padding: 0; 
+                                               color: ${SILVER_LIGHT}; 
+                                               font-size: 17px; font-weight: 800;
+                                               letter-spacing: 0.5px; text-transform: uppercase;
+                                               text-align: center; line-height: 1.3;">
+                                        ${movieTitle}
+                                    </h2>
+
+                                    <!-- DETAILS TABLE -->
+                                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" 
+                                           style="font-size:13px;">
+                                        
+                                        <!-- RẠP -->
+                                        <tr>
+                                            <td width="20" valign="middle" style="padding: 8px 0;">${ICON_PIN}</td>
+                                            <td width="80" valign="middle" style="padding: 8px 0; color: ${TEXT_MUTED}; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase;">Rạp</td>
+                                            <td valign="middle" style="padding: 8px 0; color: ${TEXT_BODY}; font-weight: 600;">${cinemaName || "---"}</td>
+                                        </tr>
+
+                                        <!-- PHÒNG -->
+                                        <tr>
+                                            <td width="20" valign="middle" style="padding: 8px 0; border-top: 1px dashed rgba(255,255,255,0.08);">${ICON_MONITOR}</td>
+                                            <td width="80" valign="middle" style="padding: 8px 0; border-top: 1px dashed rgba(255,255,255,0.08); color: ${TEXT_MUTED}; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase;">Phòng</td>
+                                            <td valign="middle" style="padding: 8px 0; border-top: 1px dashed rgba(255,255,255,0.08); color: ${TEXT_BODY}; font-weight: 600;">${roomName || "---"}</td>
+                                        </tr>
+
+                                        <!-- NGÀY CHIẾU -->
+                                        <tr>
+                                            <td width="20" valign="middle" style="padding: 8px 0; border-top: 1px dashed rgba(255,255,255,0.08);">${ICON_CALENDAR}</td>
+                                            <td width="80" valign="middle" style="padding: 8px 0; border-top: 1px dashed rgba(255,255,255,0.08); color: ${TEXT_MUTED}; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase;">Ngày chiếu</td>
+                                            <td valign="middle" style="padding: 8px 0; border-top: 1px dashed rgba(255,255,255,0.08); color: ${TEXT_BODY}; font-weight: 600;">${selectedDate || "---"}</td>
+                                        </tr>
+
+                                        <!-- SUẤT CHIẾU -->
+                                        <tr>
+                                            <td width="20" valign="middle" style="padding: 8px 0; border-top: 1px dashed rgba(255,255,255,0.08);">${ICON_CLOCK}</td>
+                                            <td width="80" valign="middle" style="padding: 8px 0; border-top: 1px dashed rgba(255,255,255,0.08); color: ${TEXT_MUTED}; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase;">Suất chiếu</td>
+                                            <td valign="middle" style="padding: 8px 0; border-top: 1px dashed rgba(255,255,255,0.08); color: ${TEXT_BODY}; font-weight: 600;">${startTime || "---"}</td>
+                                        </tr>
+
+                                        <!-- GHẾ NGỒI -->
+                                        <tr>
+                                            <td width="20" valign="middle" style="padding: 8px 0; border-top: 1px dashed rgba(255,255,255,0.08);">${ICON_ARMCHAIR}</td>
+                                            <td width="80" valign="middle" style="padding: 8px 0; border-top: 1px dashed rgba(255,255,255,0.08); color: ${TEXT_MUTED}; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase;">Ghế ngồi</td>
+                                            <td valign="middle" style="padding: 8px 0; border-top: 1px dashed rgba(255,255,255,0.08);">
+                                                <span style="color: ${GREEN}; font-weight: 800; font-size: 15px; letter-spacing: 0.5px;">
+                                                    ${seatLabel || "---"}
+                                                </span>
+                                            </td>
+                                        </tr>
+
+                                        ${selectedFoods && selectedFoods !== "Không có" ? `
+                                        <!-- ĐỒ ĂN -->
+                                        <tr>
+                                            <td width="20" valign="middle" style="padding: 8px 0; border-top: 1px dashed rgba(255,255,255,0.08);">${ICON_POPCORN}</td>
+                                            <td width="80" valign="middle" style="padding: 8px 0; border-top: 1px dashed rgba(255,255,255,0.08); color: ${TEXT_MUTED}; font-weight: 600; font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase;">Đồ ăn</td>
+                                            <td valign="middle" style="padding: 8px 0; border-top: 1px dashed rgba(255,255,255,0.08); color: ${TEXT_BODY}; font-weight: 600;">${selectedFoods}</td>
+                                        </tr>
+                                        ` : ""}
+
+                                    </table>
+                                </td>
+
+                                <!-- ============ RIGHT: QR + PIN ============ -->
+                                <td valign="middle" align="center" width="240"
+                                    style="padding: 24px 20px; 
+                                           background: linear-gradient(180deg, rgba(67,183,122,0.06), rgba(255,255,255,0.01));">
+
+                                    <!-- PIN TITLE -->
+                                    <p style="margin: 0 0 10px; padding: 0; 
+                                              font-size: 11px; font-weight: 800; 
+                                              letter-spacing: 2px; text-transform: uppercase;
+                                              color: ${TEXT_MUTED};">
+                                        MÃ NHẬN VÉ
+                                    </p>
+
+                                    <!-- PIN CODE -->
+                                    <div style="margin: 0 0 18px; padding: 10px 12px;
+                                                background: rgba(67,183,122,0.08);
+                                                border: 1px solid rgba(67,183,122,0.3);
+                                                border-radius: 8px;
+                                                font-family: 'Courier New', Consolas, monospace;
+                                                font-size: 11px; font-weight: 800; 
+                                                color: ${GREEN}; 
+                                                letter-spacing: 0.6px; 
+                                                line-height: 1.4;
+                                                word-break: break-all;
+                                                text-align: center;">
+                                        ${ticketPIN || "------"}
+                                    </div>
+
+                                    <!-- QR CODE -->
+                                    ${qrCid ? `
+                                    <div style="display:inline-block; padding: 12px; 
+                                                background:#FFFFFF; border-radius: 10px;
+                                                box-shadow: 0 12px 28px rgba(0,0,0,0.4);">
+                                        <img src="cid:${qrCid}" alt="QR Code" 
+                                             width="160" height="160"
+                                             style="display:block; width:160px; height:160px;" />
+                                    </div>
+                                    ` : `
+                                    <div style="padding: 30px 20px; background:#FFFFFF; border-radius:10px;">
+                                        <p style="margin:0; font-size:12px; color:#666;">QR Code</p>
+                                    </div>
+                                    `}
+
+                                    <!-- QR NOTE -->
+                                    <p style="margin: 14px 0 0; padding: 0; 
+                                              font-size: 11px; color: ${TEXT_MUTED}; 
+                                              line-height: 1.5; text-align: center;">
+                                        Quét mã QR tại rạp<br/>để nhận vé
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- ============================================================
+                             EMAIL NOTIFICATION BOX
+                        ============================================================ -->
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                               style="margin-top: 20px;
+                                      background: linear-gradient(135deg, rgba(67,183,122,0.08), rgba(67,183,122,0.02));
+                                      border: 1px solid rgba(67,183,122,0.25);
+                                      border-radius: 12px;">
+                            <tr>
+                                <td width="50" valign="middle" align="center" style="padding: 16px 0 16px 18px;">
+                                    ${ICON_MAIL}
+                                </td>
+                                <td valign="middle" style="padding: 16px 18px 16px 0;">
+                                    <p style="margin: 0 0 4px; padding: 0; 
+                                              font-size: 12px; color: ${TEXT_MUTED};">
+                                        Vé đã được gửi đến email:
+                                    </p>
+                                    <p style="margin: 0; padding: 0; 
+                                              font-size: 14px; font-weight: 700; 
+                                              color: ${SILVER_LIGHT};
+                                              word-break: break-all;">
+                                        ${customerEmail || "---"}
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- ============================================================
+                             EARNED POINTS
+                        ============================================================ -->
+                        ${earnedPoints > 0 ? `
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                               style="margin-top: 16px; 
+                                      background: rgba(67,183,122,0.06);
+                                      border: 1px solid rgba(67,183,122,0.18);
+                                      border-radius: 10px;">
+                            <tr>
+                                <td align="center" valign="middle" style="padding: 12px;">
+                                    <p style="margin:0; padding:0; font-size:13px; color: ${GREEN}; font-weight: 700;">
+                                        ⭐ Bạn vừa tích lũy thêm 
+                                        <span style="font-size: 16px; color: #FFFFFF;">${earnedPoints}</span> 
+                                        điểm!
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+                        ` : ""}
+
+                        <!-- ============================================================
+                             ACTION BUTTONS
+                        ============================================================ -->
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                               style="margin-top: 24px;">
+                            <tr>
+                                <!-- HOME BUTTON -->
+                                <td align="center" valign="middle" width="50%" style="padding-right: 6px;">
+                                    <a href="${finalHomeUrl}" 
+                                       style="display: block; width: 100%; box-sizing: border-box;
+                                              padding: 14px 18px; text-decoration: none;
+                                              background: linear-gradient(135deg, #FFFFFF 0%, #D8DDE3 50%, #B0B7BF 100%);
+                                              color: #0a0a0f; font-size: 13px; font-weight: 800;
+                                              letter-spacing: 1px; text-transform: uppercase;
+                                              border-radius: 10px; text-align: center;
+                                              box-shadow: 0 8px 20px rgba(232,232,232,0.15);">
+                                        ${ICON_HOME}
+                                        VỀ TRANG CHỦ
+                                    </a>
+                                </td>
+
+                                <!-- DOWNLOAD BUTTON -->
+                                <td align="center" valign="middle" width="50%" style="padding-left: 6px;">
+                                    <a href="${finalDownloadUrl}" 
+                                       style="display: block; width: 100%; box-sizing: border-box;
+                                              padding: 14px 18px; text-decoration: none;
+                                              background: linear-gradient(135deg, ${GREEN} 0%, ${GREEN_DARK} 100%);
+                                              color: #FFFFFF; font-size: 13px; font-weight: 800;
+                                              letter-spacing: 1px; text-transform: uppercase;
+                                              border-radius: 10px; text-align: center;
+                                              box-shadow: 0 8px 20px rgba(67,183,122,0.35);">
+                                        ${ICON_DOWNLOAD}
+                                        TẢI VÉ VỀ MÁY
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- ============================================================
+                             FOOTER NOTE
+                        ============================================================ -->
+                        <p style="margin: 22px 0 8px; padding: 0; 
+                                  text-align: center; font-size: 11px; 
+                                  color: ${TEXT_MUTED}; line-height: 1.6;">
+                            Nếu có vấn đề về đơn hàng, vui lòng liên hệ hotline 
+                            <span style="color: ${GREEN}; font-weight: 700;">1900 2224</span>
+                            hoặc email 
+                            <span style="color: ${GREEN}; font-weight: 700;">support@quangdungcinema.id.vn</span>
                         </p>
-                    </div>
 
-                    <!-- FOOTER -->
-                    <div style="text-align:center; padding:15px; background:#fff9f9; border-radius:8px;">
-                        <p style="color:#27ae60; font-weight:bold; margin:0; display: flex; align-items: center; justify-content: center;">
-                            ${ICON_STAR}
-                            Bạn vừa tích lũy thêm: ${earnedPoints} điểm!
+                    </td>
+                </tr>
+
+                <!-- ============================================================
+                     FOOTER
+                ============================================================ -->
+                <tr>
+                    <td align="center" 
+                        style="padding: 20px 24px 28px; 
+                               border-top: 1px solid rgba(244,246,248,0.06);">
+                        <p style="margin: 0 0 6px; padding: 0; 
+                                  font-size: 13px; font-weight: 700; 
+                                  color: ${SILVER_LIGHT}; letter-spacing: 0.5px;">
+                            QUANG DŨNG CINEMA
                         </p>
+                        <p style="margin: 0; padding: 0; font-size: 11px; color: ${TEXT_MUTED}; line-height: 1.6;">
+                            Trải nghiệm điện ảnh đỉnh cao — 
+                            <a href="${FRONTEND_URL}" 
+                               style="color: ${GREEN}; text-decoration: none; font-weight: 600;">
+                                ${FRONTEND_URL.replace('https://','').replace('http://','')}
+                            </a>
+                        </p>
+                        <p style="margin: 12px 0 0; padding: 0; font-size: 10px; color: #4a4f56;">
+                            Email tự động — vui lòng không trả lời trực tiếp.
+                        </p>
+                    </td>
+                </tr>
 
-                        <h2 style="margin:10px 0 0 0; color:#333; font-size:24px;">
-                            Mã vé: #${bookingId}
-                        </h2>
-                    </div>
-                </div>
-            </div>
-        </div>
+            </table>
+            <!-- END CONTAINER -->
+
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>
     `;
 };
 
