@@ -88,13 +88,22 @@ class BookingService {
 
     /* ==========================================================
        ✅ RESCHEDULE — LẤY INFO ĐỂ HIỆN FORM ĐỔI SUẤT
+       ✅ FIX: Thêm check owner (currentUserId)
        ========================================================== */
-    async getRescheduleInfo(connection, bookingId) {
+    async getRescheduleInfo(connection, bookingId, currentUserId = null) {
         const booking = await BookingRepository.findBookingForReschedule(connection, bookingId);
 
         if (!booking) {
             const err = new Error("Không tìm thấy booking");
             err.statusCode = 404;
+            throw err;
+        }
+
+        // ✅ FIX LỖ HỔNG: Check owner nếu có currentUserId
+        // (currentUserId = null khi admin gọi)
+        if (currentUserId && Number(booking.user_id) !== Number(currentUserId)) {
+            const err = new Error("Bạn không có quyền đổi suất chiếu này");
+            err.statusCode = 403;
             throw err;
         }
 
@@ -137,11 +146,13 @@ class BookingService {
 
     /* ==========================================================
        ✅ RESCHEDULE — LẤY DANH SÁCH SUẤT CÓ THỂ ĐỔI
+       ✅ FIX: Thêm check owner
        ========================================================== */
-    async getRescheduleOptions(bookingId) {
+    async getRescheduleOptions(bookingId, currentUserId = null) {
         const connection = await BookingRepository.getConnection();
         try {
-            const info = await this.getRescheduleInfo(connection, bookingId);
+            // ✅ Truyền currentUserId vào getRescheduleInfo
+            const info = await this.getRescheduleInfo(connection, bookingId, currentUserId);
 
             const now = new Date();
             const minTime = new Date(now.getTime() + 2 * 60 * 60 * 1000);
@@ -180,6 +191,7 @@ class BookingService {
 
     /* ==========================================================
        ✅ RESCHEDULE — LẤY GHẾ TRỐNG
+       (Public — không cần check owner)
        ========================================================== */
     async getAvailableSeats(showtimeId, seatType = null) {
         if (!showtimeId) {
@@ -195,15 +207,16 @@ class BookingService {
 
     /* ==========================================================
        ✅ RESCHEDULE — HÀM CHÍNH
+       ✅ FIX: Thêm check owner (currentUserId)
        ========================================================== */
-    async rescheduleBooking(bookingId, newShowtimeId, newSeatIds) {
+    async rescheduleBooking(bookingId, newShowtimeId, newSeatIds, currentUserId = null) {
         const connection = await BookingRepository.getConnection();
 
         try {
             await BookingRepository.beginTransaction(connection);
 
-            // 1. GET INFO + VALIDATE
-            const info = await this.getRescheduleInfo(connection, bookingId);
+            // 1. GET INFO + VALIDATE — ✅ Truyền currentUserId
+            const info = await this.getRescheduleInfo(connection, bookingId, currentUserId);
 
             if (!Array.isArray(newSeatIds) || newSeatIds.length === 0) {
                 throw new Error("Vui lòng chọn ít nhất 1 ghế mới");
