@@ -2,11 +2,23 @@ const MomoService = require("../Services/MomoService");
 const { PURPOSE } = require("../Services/OtpService");
 
 /*=========================================================
-    PROCESS ORDER - TẠO TEMP BOOKING + QR MOMO
+    ✅ PROCESS ORDER - LẤY userId TỪ JWT
 =========================================================*/
 exports.processOrder = async (req, res) => {
     try {
-        const result = await MomoService.processOrder(req.body);
+        // ✅ Lấy userId từ middleware auth (JWT)
+        const userId = req.user?.user_id;
+
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: "Vui lòng đăng nhập để đặt vé"
+            });
+        }
+
+        // ✅ Truyền userId vào service
+        const result = await MomoService.processOrder(req.body, userId);
+
         return res.status(200).json({
             success: true,
             tempBookingId: result.tempBookingId,
@@ -17,7 +29,7 @@ exports.processOrder = async (req, res) => {
         });
     } catch (error) {
         console.error("❌ processOrder error:", error);
-        return res.status(500).json({
+        return res.status(error.statusCode || 500).json({
             success: false,
             message: error.message || "Lỗi máy chủ"
         });
@@ -70,7 +82,6 @@ exports.verifyOTP = async (req, res) => {
     } catch (error) {
         console.error("❌ verifyOTP error:", error);
 
-        // Xử lý lỗi OTP lock
         if (error.code === 'OTP_LOCKED' || error.message?.includes('khóa')) {
             return res.status(429).json({
                 success: false,

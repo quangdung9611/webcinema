@@ -1,26 +1,58 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const MomoController = require('../Controllers/MomoController');
 
-// 1. Tạo đơn hàng tạm + QR MoMo
-router.post('/process', MomoController.processOrder);
+const MomoController = require("../Controllers/MomoController");
 
-// 2. Gửi OTP
-router.post('/send-otp', MomoController.sendOTP);
+// ✅ Import middleware auth
+const { authenticateUser } = require("../Middlewares/UserAuthMiddleware");
 
-// 3. Xác thực OTP + Commit DB
-router.post('/verify-otp', MomoController.verifyOTP);
+// ==========================================================
+// USER ROUTES — CẦN ĐĂNG NHẬP
+// ==========================================================
 
-// 4. Gửi lại OTP
-router.post('/resend-otp', MomoController.resendOtp);
+router.post(
+    "/process",
+    authenticateUser,
+    MomoController.processOrder
+);
 
-// 5. Check TTL
-router.get('/check-ttl/:tempBookingId', MomoController.checkTTL);
+router.post(
+    "/send-otp",
+    authenticateUser,
+    MomoController.sendOTP
+);
 
-// 6. Hủy phiên đặt vé
-router.post('/cancel', MomoController.cancelBooking);
+router.post(
+    "/verify-otp",
+    authenticateUser,
+    MomoController.verifyOTP
+);
 
-// 7. Callback từ MoMo (GIỮ NGUYÊN)
-router.post('/callback', MomoController.callback);
+router.post(
+    "/resend-otp",
+    authenticateUser,
+    MomoController.resendOtp
+);
+
+router.get(
+    "/check-ttl/:tempBookingId",
+    authenticateUser,
+    MomoController.checkTTL
+);
+
+router.post(
+    "/cancel",
+    authenticateUser,
+    MomoController.cancelBooking
+);
+
+// ==========================================================
+// ✅ CALLBACK — KHÔNG CẦN AUTH (Momo server gọi)
+// Verify signature trong service
+// ==========================================================
+router.post(
+    "/callback",
+    MomoController.callback
+);
 
 module.exports = router;

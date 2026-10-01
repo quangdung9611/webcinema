@@ -1,37 +1,42 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 
-const bankAppController =
-    require('../Controllers/BankAppController');
+const bankAppController = require("../Controllers/BankAppController");
+
+// ✅ Import middleware auth
+const { authenticateUser } = require("../Middlewares/UserAuthMiddleware");
+
+// ==========================================================
+// ✅ TẤT CẢ ROUTES ĐỀU CẦN ĐĂNG NHẬP
+// ==========================================================
 
 router.post(
-    '/send-otp',
+    "/send-otp",
+    authenticateUser,
     bankAppController.sendOTP
 );
 
 router.post(
-    '/verify-otp',
+    "/verify-otp",
+    authenticateUser,
     bankAppController.verifyOTP
 );
 
 router.post(
-    '/cancel-timeout',
+    "/cancel-timeout",
+    authenticateUser,
     bankAppController.cancelBookingTimeout
 );
 
-// ============================================================
-// 🆕 CHECK TTL - GIỐNG AUTH (/check-otp-ttl)
-// ============================================================
 router.get(
-    '/check-ttl/:tempBookingId',
+    "/check-ttl/:tempBookingId",
+    authenticateUser,
     bankAppController.checkTTL
 );
 
-// ============================================================
-// 🆕 RESEND OTP PAYMENT - GIỐNG AUTH (/resend-otp)
-// ============================================================
 router.post(
-    '/resend-otp',
+    "/resend-otp",
+    authenticateUser,
     bankAppController.resendOtpPayment
 );
 
