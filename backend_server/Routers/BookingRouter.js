@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
+
 const bookingController = require("../Controllers/BookingController");
+
 const { authenticateAdmin } = require("../Middlewares/AdminAuthMiddleware");
 const { authenticateUser } = require("../Middlewares/UserAuthMiddleware");
 
@@ -15,7 +17,6 @@ router.get("/", authenticateAdmin, bookingController.getAllBookingsAll);
 router.get("/paginated", authenticateAdmin, bookingController.getBookingsWithPagination);
 
 // ✅ ADMIN — Danh sách booking đã đổi suất chiếu
-// ⚠️ PHẢI ĐẶT TRƯỚC route /:booking_id/* để tránh conflict
 router.get(
     "/rescheduled",
     authenticateAdmin,
@@ -32,31 +33,52 @@ router.put("/update/:booking_id/status", authenticateAdmin, bookingController.up
 router.delete("/delete/:booking_id", authenticateAdmin, bookingController.deleteBooking);
 
 /* ==========================================================
-    ✅ USER ROUTES (đặt TRƯỚC các route động :booking_id/*)
+    ✅ USER ROUTES
 ========================================================== */
 
-// ✅ Lấy chi tiết booking của chính user (không cần admin)
-// ⚠️ PHẢI đặt TRƯỚC /:booking_id/reschedule-info để tránh conflict
+// ✅ Lấy chi tiết booking của chính user
 router.get(
     "/my-booking/:booking_id",
     authenticateUser,
     bookingController.getMyBookingDetail
 );
 
+// ✅ UPDATE CUSTOMER INFO — BỔ SUNG ROUTE
+// User chỉ sửa được của mình, admin sửa được tất cả
+router.post(
+    "/update-customer",
+    authenticateUser,
+    bookingController.updateBookingCustomerInfo
+);
+
 /* ==========================================================
     ✅ RESCHEDULE ROUTES (USER)
 ========================================================== */
 
-// Lấy info để hiện form đổi suất
-router.get("/:booking_id/reschedule-info", bookingController.getRescheduleInfo);
+// ✅ Thêm authenticateUser
+router.get(
+    "/:booking_id/reschedule-info",
+    authenticateUser,
+    bookingController.getRescheduleInfo
+);
 
-// Lấy danh sách suất có thể đổi
-router.get("/:booking_id/reschedule-options", bookingController.getRescheduleOptions);
+router.get(
+    "/:booking_id/reschedule-options",
+    authenticateUser,
+    bookingController.getRescheduleOptions
+);
 
-// Lấy ghế trống theo hạng ở suất mới
-router.get("/showtime/:showtime_id/available-seats", bookingController.getAvailableSeats);
+// Lấy ghế trống — PUBLIC cũng được (chỉ xem, không sửa)
+router.get(
+    "/showtime/:showtime_id/available-seats",
+    bookingController.getAvailableSeats
+);
 
-// Thực hiện đổi suất
-router.post("/:booking_id/reschedule", bookingController.rescheduleBooking);
+// ✅ Thêm authenticateUser
+router.post(
+    "/:booking_id/reschedule",
+    authenticateUser,
+    bookingController.rescheduleBooking
+);
 
 module.exports = router;
