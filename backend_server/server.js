@@ -18,6 +18,9 @@ const AuthService = require("./Services/AuthService");
 const { setSocketIO: setUserSocketIO } = require("./Middlewares/UserAuthMiddleware");
 const { setSocketIO: setAdminSocketIO } = require("./Middlewares/AdminAuthMiddleware");
 
+// ✅ SANITIZE MIDDLEWARE — CHỐNG XSS / NoSQL INJECTION
+const { sanitizeMiddleware } = require("./Middlewares/SanitizeMiddleware");
+
 // ============================================================
 // MAILER
 // ============================================================
@@ -78,6 +81,12 @@ app.set("trust proxy", 1);
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ✅ SANITIZE — CHỐNG XSS / NoSQL INJECTION
+// Đặt SAU body parser để body đã parse xong
+app.use(sanitizeMiddleware);
+console.log("✅ Sanitize middleware loaded!");
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ============================================================
