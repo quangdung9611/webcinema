@@ -1,10 +1,13 @@
 /* ============================================================
    QUANG DŨNG CINEMA
    AI CHAT — PREMIUM CINEMATIC UI
-   ============================================================ */
+   ✅ FIXED: Cố định góc phải dưới (dùng !important + z-index max)
+   ✅ Không bị ảnh hưởng bởi PageTransition (transform/animation)
+   ✅ Hỗ trợ data-lenis-prevent
+============================================================ */
 
 /* ============================================================
-   ROOT
+   ROOT VARS
 ============================================================ */
 
 .ai-chat-fab,
@@ -27,21 +30,29 @@
 }
 
 /* ============================================================
-   FAB
+   ✅ FAB — CỐ ĐỊNH GÓC PHẢI DƯỚI
 ============================================================ */
 
 .ai-chat-fab {
-    position: fixed;
+    /* ✅ FIXED với !important — không bị CSS nào ghi đè */
+    position: fixed !important;
 
-    right: 28px;
-    bottom: 28px;
+    right: 24px !important;
+    bottom: 24px !important;
+
+    top: auto !important;
+    left: auto !important;
+
+    /* ✅ z-index cao nhất có thể */
+    z-index: 2147483647 !important;
 
     width: 58px;
     height: 58px;
 
-    border: 1px solid
-        rgba(221, 226, 232, 0.28);
+    margin: 0 !important;
+    padding: 0;
 
+    border: 1px solid rgba(221, 226, 232, 0.28);
     border-radius: 50%;
 
     background:
@@ -60,13 +71,14 @@
 
     cursor: pointer;
 
-    z-index: 9998;
+    /* ✅ Chống jitter khi Framer Motion animation */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
 
     box-shadow:
-        0 12px 35px
-            rgba(0, 0, 0, 0.38),
-        inset 0 1px 0
-            rgba(255, 255, 255, 0.7);
+        0 12px 35px rgba(0, 0, 0, 0.38),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7);
 
     transition:
         transform 0.25s ease,
@@ -78,7 +90,12 @@
 }
 
 .ai-chat-fab:active {
-    transform: scale(0.95);
+    transform: scale(0.95) translateZ(0);
+}
+
+.ai-chat-fab:focus-visible {
+    outline: 2px solid #dde2e8;
+    outline-offset: 3px;
 }
 
 /* ============================================================
@@ -103,17 +120,26 @@
     box-shadow:
         0 0 0 3px
             rgba(221, 226, 232, 0.15);
+
+    pointer-events: none;
 }
 
 /* ============================================================
-   PANEL
+   ✅ PANEL — CỐ ĐỊNH PHÍA TRÊN FAB
 ============================================================ */
 
 .ai-chat-panel {
-    position: fixed;
+    /* ✅ FIXED với !important */
+    position: fixed !important;
 
-    right: 28px;
-    bottom: 98px;
+    right: 24px !important;
+    bottom: 102px !important;
+
+    top: auto !important;
+    left: auto !important;
+
+    /* ✅ z-index ngay dưới FAB 1 đơn vị */
+    z-index: 2147483646 !important;
 
     width: min(
         410px,
@@ -122,7 +148,7 @@
 
     height: min(
         680px,
-        calc(100vh - 130px)
+        calc(100dvh - 130px)
     );
 
     min-height: 460px;
@@ -141,15 +167,16 @@
             #0c0e12 100%
         );
 
-    border: 1px solid
-        var(--ai-border-strong);
+    border: 1px solid var(--ai-border-strong);
 
     box-shadow:
         var(--ai-shadow),
-        inset 0 1px 0
-            rgba(255, 255, 255, 0.04);
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
 
-    z-index: 9997;
+    /* ✅ Chống jitter */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
 
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
@@ -172,8 +199,7 @@
     align-items: center;
     justify-content: space-between;
 
-    border-bottom: 1px solid
-        var(--ai-border);
+    border-bottom: 1px solid var(--ai-border);
 
     background:
         linear-gradient(
@@ -214,10 +240,8 @@
         );
 
     box-shadow:
-        0 6px 18px
-            rgba(0, 0, 0, 0.22),
-        inset 0 1px 0
-            rgba(255, 255, 255, 0.8);
+        0 6px 18px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .ai-header-left h4 {
@@ -261,14 +285,8 @@
 }
 
 @keyframes ai-status-pulse {
-    0%,
-    100% {
-        opacity: 0.55;
-    }
-
-    50% {
-        opacity: 1;
-    }
+    0%, 100% { opacity: 0.55; }
+    50%      { opacity: 1; }
 }
 
 /* ============================================================
@@ -331,6 +349,9 @@
         20px 15px 18px;
 
     scroll-behavior: smooth;
+
+    /* ✅ Chặn scroll lan ra ngoài */
+    overscroll-behavior: contain;
 
     scrollbar-width: thin;
 
@@ -560,15 +581,8 @@
 }
 
 @keyframes ai-cursor-blink {
-    0%,
-    45% {
-        opacity: 1;
-    }
-
-    46%,
-    100% {
-        opacity: 0;
-    }
+    0%, 45%  { opacity: 1; }
+    46%, 100% { opacity: 0; }
 }
 
 /* ============================================================
@@ -660,17 +674,13 @@
 }
 
 @keyframes ai-thinking-dot {
-    0%,
-    60%,
-    100% {
+    0%, 60%, 100% {
         transform: translateY(0);
-
         opacity: 0.3;
     }
 
     30% {
         transform: translateY(-4px);
-
         opacity: 1;
     }
 }
@@ -984,26 +994,27 @@
 }
 
 /* ============================================================
-   MOBILE
+   ✅ MOBILE — 600px
 ============================================================ */
 
 @media (max-width: 600px) {
     .ai-chat-fab {
-        right: 16px;
-        bottom: 16px;
+        right: 16px !important;
+        bottom: 16px !important;
 
         width: 54px;
         height: 54px;
     }
 
     .ai-chat-panel {
-        right: 8px;
-        bottom: 82px;
+        right: 8px !important;
+        left: 8px !important;
+        bottom: 82px !important;
 
-        width: calc(100vw - 16px);
+        width: auto !important;
 
         height:
-            calc(100vh - 98px);
+            calc(100dvh - 100px);
 
         min-height: 420px;
 
@@ -1038,15 +1049,26 @@
 }
 
 /* ============================================================
-   VERY SMALL MOBILE
+   ✅ VERY SMALL MOBILE — 380px
 ============================================================ */
 
 @media (max-width: 380px) {
-    .ai-chat-panel {
-        right: 5px;
+    .ai-chat-fab {
+        right: 12px !important;
+        bottom: 12px !important;
 
-        width:
-            calc(100vw - 10px);
+        width: 50px;
+        height: 50px;
+    }
+
+    .ai-chat-panel {
+        right: 5px !important;
+        left: 5px !important;
+        bottom: 72px !important;
+
+        width: auto !important;
+
+        border-radius: 14px;
     }
 
     .ai-chat-body {

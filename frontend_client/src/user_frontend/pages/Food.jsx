@@ -4,6 +4,7 @@
 // HỖ TRỢ CẢ ĐẶT VÉ THƯỜNG VÀ ĐỔI VÉ (RESCHEDULE)
 // CLOUDINARY READY
 // ✅ CATEGORY FILTER THEO ENUM CSDL
+// ✅ ĐÃ XÓA MOBILE SUMMARY + MOBILE ACTIONS (SIDEBAR ĐÃ CÓ)
 // =========================================================
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -13,8 +14,6 @@ import {
     Popcorn,
     Plus,
     Minus,
-    ChevronLeft,
-    ChevronRight,
     Coffee,
     UtensilsCrossed,
     RefreshCw,
@@ -49,51 +48,15 @@ const getImageUrl = (image) => {
 // =========================================================
 
 const CATEGORIES = [
-    {
-        id: 'all',
-        label: 'TẤT CẢ',
-        icon: Sparkles,
-        value: null,
-    },
-    {
-        id: 'combo',
-        label: 'COMBO',
-        icon: Popcorn,
-        value: 'Combo',
-    },
-    {
-        id: 'popcorn',
-        label: 'BẮP',
-        icon: Cookie,
-        value: 'Popcorn',
-    },
-    {
-        id: 'drink',
-        label: 'NƯỚC',
-        icon: Wine,
-        value: 'Drink',
-    },
-    {
-        id: 'break',
-        label: 'BÁNH MÌ',
-        icon: Sandwich,
-        value: 'Break',
-    },
-    {
-        id: 'snack',
-        label: 'ĂN VẶT',
-        icon: IceCream,
-        value: 'Snack',
-    },
-    {
-        id: 'other',
-        label: 'KHÁC',
-        icon: UtensilsCrossed,
-        value: 'Other',
-    },
+    { id: 'all',     label: 'TẤT CẢ',  icon: Sparkles,        value: null },
+    { id: 'combo',   label: 'COMBO',   icon: Popcorn,         value: 'Combo' },
+    { id: 'popcorn', label: 'BẮP',     icon: Cookie,          value: 'Popcorn' },
+    { id: 'drink',   label: 'NƯỚC',    icon: Wine,            value: 'Drink' },
+    { id: 'break',   label: 'BÁNH MÌ', icon: Sandwich,        value: 'Break' },
+    { id: 'snack',   label: 'ĂN VẶT',  icon: IceCream,        value: 'Snack' },
+    { id: 'other',   label: 'KHÁC',    icon: UtensilsCrossed, value: 'Other' },
 ];
 
-// ✅ Map enum → label hiển thị trên badge
 const CATEGORY_LABELS = {
     Popcorn: 'BẮP',
     Drink: 'NƯỚC',
@@ -103,14 +66,13 @@ const CATEGORY_LABELS = {
     Other: 'KHÁC',
 };
 
-// ✅ Map enum → màu badge
 const CATEGORY_COLORS = {
-    Popcorn: '#F4D77A',   // vàng bắp
-    Drink: '#7FA0BC',     // xanh nước
-    Combo: '#E8C56A',     // vàng combo
-    Snack: '#E89BC0',     // hồng snack
-    Break: '#F5A623',     // cam bánh mì
-    Other: '#A9B2BC',     // xám khác
+    Popcorn: '#F4D77A',
+    Drink: '#7FA0BC',
+    Combo: '#E8C56A',
+    Snack: '#E89BC0',
+    Break: '#F5A623',
+    Other: '#A9B2BC',
 };
 
 // =========================================================
@@ -118,14 +80,12 @@ const CATEGORY_COLORS = {
 // =========================================================
 
 const Food = () => {
-
     const location = useLocation();
     const navigate = useNavigate();
 
     // =====================================================
     // ✅ RESCHEDULE MODE
     // =====================================================
-
     const isRescheduleMode = location.state?.mode === 'reschedule';
     const rescheduleBookingId = location.state?.rescheduleBookingId || null;
     const oldBookingInfo = location.state?.oldBooking || null;
@@ -134,13 +94,11 @@ const Food = () => {
     // =====================================================
     // MODAL HẾT GIỜ
     // =====================================================
-
     const [showExpiredModal, setShowExpiredModal] = useState(false);
 
     // =====================================================
     // LẤY BOOKING DATA
     // =====================================================
-
     const getStateData = () => {
         const stateData = location.state || {};
         if (Array.isArray(stateData.selectedSeats) && stateData.selectedSeats.length > 0) {
@@ -165,7 +123,6 @@ const Food = () => {
     // =====================================================
     // BOOKING DATA
     // =====================================================
-
     const movie = initialData.movie || {};
     const selectedCinema = initialData.selectedCinema || {};
     const selectedDate = initialData.selectedDate || '';
@@ -173,12 +130,16 @@ const Food = () => {
     const selectedSeats = Array.isArray(initialData.selectedSeats) ? initialData.selectedSeats : [];
     const showtimeDetail = initialData.showtimeDetail || {};
     const ownerToken = initialData.ownerToken || localStorage.getItem('booking_owner_token') || '';
-    const showtimeId = selectedShowtime?.showtime_id || selectedShowtime?.id || initialData.showtimeId || initialData.showtime_id || null;
+    const showtimeId =
+        selectedShowtime?.showtime_id ||
+        selectedShowtime?.id ||
+        initialData.showtimeId ||
+        initialData.showtime_id ||
+        null;
 
     // =====================================================
     // GET SAVED FOODS
     // =====================================================
-
     const getSavedFoods = () => {
         try {
             const savedFoods = localStorage.getItem('selectedFoods');
@@ -197,20 +158,16 @@ const Food = () => {
     // =====================================================
     // STATE
     // =====================================================
-
     const [foods, setFoods] = useState([]);
     const [selectedFoods, setSelectedFoods] = useState(getSavedFoods);
     const [isTimerActive, setIsTimerActive] = useState(false);
     const [loading, setLoading] = useState(false);
     const [loadingFoods, setLoadingFoods] = useState(false);
-
-    // ✅ Category filter
     const [activeCategory, setActiveCategory] = useState('all');
 
     // =====================================================
     // ✅ RESCHEDULE: TỰ ĐỘNG CHUYỂN SANG PAYMENT
     // =====================================================
-
     useEffect(() => {
         if (!isRescheduleMode) return;
 
@@ -233,14 +190,13 @@ const Food = () => {
                 totalFoodPrice: 0,
                 grandTotal: newTotal,
                 deltaAmount: delta,
-            }
+            },
         });
     }, [isRescheduleMode, navigate, selectedSeats, initialData, oldTotalAmount, rescheduleBookingId, oldBookingInfo]);
 
     // =====================================================
     // SAVE OWNER TOKEN
     // =====================================================
-
     useEffect(() => {
         if (!ownerToken) return;
         try {
@@ -253,7 +209,6 @@ const Food = () => {
     // =====================================================
     // SAVE FOOD SELECTION
     // =====================================================
-
     useEffect(() => {
         if (isRescheduleMode) return;
         try {
@@ -266,7 +221,6 @@ const Food = () => {
     // =====================================================
     // INITIAL CHECK + FETCH FOODS
     // =====================================================
-
     useEffect(() => {
         if (isRescheduleMode) return;
 
@@ -323,26 +277,25 @@ const Food = () => {
         };
 
         fetchFoods();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [navigate, selectedSeats.length, ownerToken, showtimeId, isRescheduleMode]);
 
     // =====================================================
     // CLEAR BOOKING DATA
     // =====================================================
-
     const clearBookingData = () => {
         const keysToRemove = [
             'selectedSeats', 'holdExpiresAt', 'currentShowtimeId', 'booking_owner_token',
             'booking_seats', 'booking_showtime', 'booking_data',
-            'booking_cinema', 'booking_date', 'booking_movie', 'booking_showtime',
-            'selected_foods', 'food_selection', 'selectedFoods', 'booking_temp'
+            'booking_cinema', 'booking_date', 'booking_movie',
+            'selected_foods', 'food_selection', 'selectedFoods', 'booking_temp',
         ];
-        keysToRemove.forEach(key => localStorage.removeItem(key));
+        keysToRemove.forEach((key) => localStorage.removeItem(key));
     };
 
     // =====================================================
     // HẾT GIỜ GIỮ GHẾ
     // =====================================================
-
     const handleTimeExpireInternal = () => {
         clearBookingData();
         setIsTimerActive(false);
@@ -361,9 +314,8 @@ const Food = () => {
     // =====================================================
     // UPDATE QUANTITY
     // =====================================================
-
     const updateQty = (id, delta) => {
-        setSelectedFoods(prev => {
+        setSelectedFoods((prev) => {
             const currentQuantity = Number(prev[id] || 0);
             const nextQuantity = Math.max(0, currentQuantity + delta);
             return { ...prev, [id]: nextQuantity };
@@ -373,44 +325,42 @@ const Food = () => {
     // =====================================================
     // TOTAL
     // =====================================================
+    const totalTicketPrice = useMemo(
+        () => selectedSeats.reduce((sum, seat) => sum + Number(seat?.price || 0), 0),
+        [selectedSeats]
+    );
 
-    const totalTicketPrice = useMemo(() => {
-        return selectedSeats.reduce((sum, seat) => sum + Number(seat?.price || 0), 0);
-    }, [selectedSeats]);
-
-    const totalFoodPrice = useMemo(() => {
-        return foods.reduce((sum, item) => {
-            const quantity = Number(selectedFoods[item.product_id] || 0);
-            return sum + Number(item.price || 0) * quantity;
-        }, 0);
-    }, [foods, selectedFoods]);
+    const totalFoodPrice = useMemo(
+        () =>
+            foods.reduce((sum, item) => {
+                const quantity = Number(selectedFoods[item.product_id] || 0);
+                return sum + Number(item.price || 0) * quantity;
+            }, 0),
+        [foods, selectedFoods]
+    );
 
     const grandTotal = totalTicketPrice + totalFoodPrice;
 
-    // ✅ Đếm tổng số món đã chọn
-    const totalItems = useMemo(() => {
-        return Object.values(selectedFoods).reduce((sum, qty) => sum + Number(qty || 0), 0);
-    }, [selectedFoods]);
+    const totalItems = useMemo(
+        () => Object.values(selectedFoods).reduce((sum, qty) => sum + Number(qty || 0), 0),
+        [selectedFoods]
+    );
 
     // =====================================================
-    // ✅ FILTER FOODS BY CATEGORY (theo enum CSDL)
+    // ✅ FILTER FOODS BY CATEGORY
     // =====================================================
-
     const filteredFoods = useMemo(() => {
         if (activeCategory === 'all') return foods;
-
-        const category = CATEGORIES.find(c => c.id === activeCategory);
+        const category = CATEGORIES.find((c) => c.id === activeCategory);
         if (!category || !category.value) return foods;
-
-        return foods.filter(item => item.category === category.value);
+        return foods.filter((item) => item.category === category.value);
     }, [foods, activeCategory]);
 
-    // ✅ Đếm số sản phẩm mỗi category (để hiển thị badge số)
     const categoryCounts = useMemo(() => {
         const counts = { all: foods.length };
-        CATEGORIES.forEach(cat => {
+        CATEGORIES.forEach((cat) => {
             if (cat.value) {
-                counts[cat.id] = foods.filter(f => f.category === cat.value).length;
+                counts[cat.id] = foods.filter((f) => f.category === cat.value).length;
             }
         });
         return counts;
@@ -419,7 +369,6 @@ const Food = () => {
     // =====================================================
     // CONTINUE PAYMENT
     // =====================================================
-
     const handleContinue = () => {
         if (loading) return;
         if (!ownerToken) {
@@ -441,12 +390,12 @@ const Food = () => {
         setLoading(true);
 
         const finalFoods = foods
-            .filter(food => Number(selectedFoods[food.product_id] || 0) > 0)
-            .map(food => ({
+            .filter((food) => Number(selectedFoods[food.product_id] || 0) > 0)
+            .map((food) => ({
                 product_id: food.product_id,
                 product_name: food.product_name,
                 quantity: Number(selectedFoods[food.product_id]),
-                price: food.price
+                price: food.price,
             }));
 
         const finalBookingData = {
@@ -463,7 +412,7 @@ const Food = () => {
             selectedFoods: finalFoods,
             totalTicketPrice,
             totalFoodPrice,
-            grandTotal
+            grandTotal,
         };
 
         try {
@@ -485,7 +434,6 @@ const Food = () => {
     // =====================================================
     // RENDER FOOD LIST
     // =====================================================
-
     const renderFoods = () => {
         if (loadingFoods) {
             return (
@@ -523,16 +471,14 @@ const Food = () => {
                     <h3>KHÔNG CÓ SẢN PHẨM</h3>
                     <p>
                         Danh mục{' '}
-                        <strong>
-                            {CATEGORIES.find(c => c.id === activeCategory)?.label}
-                        </strong>{' '}
+                        <strong>{CATEGORIES.find((c) => c.id === activeCategory)?.label}</strong>{' '}
                         chưa có sản phẩm nào.
                     </p>
                 </div>
             );
         }
 
-        return filteredFoods.map(item => {
+        return filteredFoods.map((item) => {
             const quantity = Number(selectedFoods[item.product_id] || 0);
             const imageUrl = getImageUrl(item.food_image);
             const categoryLabel = CATEGORY_LABELS[item.category] || item.category || '';
@@ -557,7 +503,8 @@ const Food = () => {
                                         if (parent && !parent.querySelector('.food-no-image')) {
                                             const placeholder = document.createElement('div');
                                             placeholder.className = 'food-no-image';
-                                            placeholder.innerHTML = '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>';
+                                            placeholder.innerHTML =
+                                                '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>';
                                             parent.appendChild(placeholder);
                                         }
                                     }}
@@ -569,7 +516,6 @@ const Food = () => {
                             )}
                         </div>
 
-                        {/* ✅ Category badge */}
                         {categoryLabel && (
                             <div
                                 className="food-category-badge"
@@ -636,7 +582,6 @@ const Food = () => {
     // =====================================================
     // ✅ RESCHEDULE: KHÔNG RENDER UI
     // =====================================================
-
     if (isRescheduleMode) {
         return (
             <div className="food-wrapper">
@@ -651,7 +596,6 @@ const Food = () => {
     // =====================================================
     // RENDER
     // =====================================================
-
     return (
         <div className="food-wrapper">
             <Modal
@@ -669,19 +613,15 @@ const Food = () => {
                 {/* ✅ HEADER */}
                 <header className="food-page-header">
                     <div className="food-page-header__row">
-                        <div>
+                        <div className="food-page-header__left">
                             <div className="food-page-header__eyebrow">
                                 QUANG DŨNG CINEMA
                             </div>
                             <h1>
                                 CHỌN{' '}
-                                <span className="food-page-header__accent">
-                                    COMBO
-                                </span>
+                                <span className="food-page-header__accent">COMBO</span>
                             </h1>
-                            <p>
-                                Thêm bắp nước để trải nghiệm phim trọn vẹn hơn.
-                            </p>
+                            <p>Thêm bắp nước để trải nghiệm phim trọn vẹn hơn.</p>
                         </div>
 
                         <div className="food-page-header__badge">
@@ -705,14 +645,12 @@ const Food = () => {
                             selectedShowtime={selectedShowtime}
                             selectedSeats={Array.isArray(selectedSeats) ? selectedSeats : []}
                             foods={Array.isArray(foods) ? foods : []}
-                            selectedFoods={
-                                foods
-                                    .filter(item => Number(selectedFoods[item.product_id] || 0) > 0)
-                                    .map(item => ({
-                                        ...item,
-                                        quantity: Number(selectedFoods[item.product_id])
-                                    }))
-                            }
+                            selectedFoods={foods
+                                .filter((item) => Number(selectedFoods[item.product_id] || 0) > 0)
+                                .map((item) => ({
+                                    ...item,
+                                    quantity: Number(selectedFoods[item.product_id]),
+                                }))}
                             totalTicketPrice={totalTicketPrice}
                             totalFoodPrice={totalFoodPrice}
                             grandTotal={grandTotal}
@@ -745,7 +683,7 @@ const Food = () => {
 
                         {/* ✅ CATEGORY FILTER TABS */}
                         <nav className="food-category-tabs">
-                            {CATEGORIES.map(cat => {
+                            {CATEGORIES.map((cat) => {
                                 const Icon = cat.icon;
                                 const isActive = activeCategory === cat.id;
                                 const count = categoryCounts[cat.id] || 0;
@@ -754,7 +692,9 @@ const Food = () => {
                                     <button
                                         key={cat.id}
                                         type="button"
-                                        className={`food-category-tab ${isActive ? 'active' : ''}`}
+                                        className={`food-category-tab ${
+                                            isActive ? 'active' : ''
+                                        }`}
                                         onClick={() => setActiveCategory(cat.id)}
                                     >
                                         <Icon size={14} strokeWidth={2.2} />
@@ -771,7 +711,7 @@ const Food = () => {
 
                         <section className="food-list-card">
                             <div className="food-list-header">
-                                <div>
+                                <div className="food-list-header__title">
                                     <span className="food-section-label">
                                         <Coffee size={12} strokeWidth={2} />
                                         FOOD &amp; DRINK
@@ -779,8 +719,7 @@ const Food = () => {
                                     <h2>
                                         {activeCategory === 'all'
                                             ? 'COMBO ĐANG CÓ'
-                                            : CATEGORIES.find(c => c.id === activeCategory)?.label
-                                        }
+                                            : CATEGORIES.find((c) => c.id === activeCategory)?.label}
                                     </h2>
                                 </div>
                                 <span className="food-result-count">
@@ -790,31 +729,6 @@ const Food = () => {
 
                             <div className="food-grid">{renderFoods()}</div>
                         </section>
-
-                        <div className="food-mobile-summary">
-                            <span>Tổng cộng</span>
-                            <strong>{Number(grandTotal).toLocaleString()}₫</strong>
-                        </div>
-
-                        <div className="food-mobile-actions">
-                            <button
-                                type="button"
-                                className="food-mobile-back"
-                                onClick={() => navigate(-1)}
-                                disabled={loading}
-                            >
-                                <ChevronLeft size={14} strokeWidth={2.5} /> QUAY LẠI
-                            </button>
-                            <button
-                                type="button"
-                                className="food-mobile-next"
-                                onClick={handleContinue}
-                                disabled={loading}
-                            >
-                                {loading ? 'ĐANG XỬ LÝ...' : 'TIẾP TỤC'}
-                                <ChevronRight size={14} strokeWidth={2.5} />
-                            </button>
-                        </div>
                     </main>
                 </div>
             </div>

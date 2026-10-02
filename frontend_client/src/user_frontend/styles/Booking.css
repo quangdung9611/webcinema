@@ -3,6 +3,7 @@
    MAX WIDTH: 1300px
    USING GLOBAL VARIABLES FROM INDEX.CSS
    ✅ SEAT STYLES ĐÃ CHUYỂN SANG Seat.css
+   ✅ RESPONSIVE: 1440 / 1200 / 992 / 768 / 600 / 480 / 380
 ========================================================= */
 
 /* =========================================================
@@ -12,7 +13,12 @@
 .booking-wrapper {
     width: 100%;
     min-height: 100vh;
+    min-height: 100dvh;
     padding: 42px 20px 70px;
+    padding-left: max(20px, env(safe-area-inset-left));
+    padding-right: max(20px, env(safe-area-inset-right));
+    padding-bottom: max(70px, calc(env(safe-area-inset-bottom) + 40px));
+
     color: var(--text-body);
     background:
         radial-gradient(
@@ -26,7 +32,9 @@
             transparent 28%
         ),
         var(--bg-primary);
+
     overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
 }
 
 /* =========================================================
@@ -155,6 +163,7 @@
     align-items: center;
     gap: 14px;
     z-index: 1;
+    flex-wrap: wrap;
 }
 
 .section-number {
@@ -189,6 +198,7 @@
 
 .section-heading-content {
     min-width: 0;
+    flex: 1 1 auto;
 }
 
 .section-kicker {
@@ -230,6 +240,7 @@
     background: rgba(255, 255, 255, 0.035);
     border: 1px solid rgba(255, 255, 255, 0.08);
     transition: border-color 0.25s ease, background 0.25s ease;
+    flex-shrink: 0;
 }
 
 .selected-seat-counter:hover {
@@ -343,6 +354,7 @@
     border: 1px solid rgba(255, 255, 255, 0.11);
     outline: none;
     appearance: none;
+    -webkit-appearance: none;
     background:
         linear-gradient(
             145deg,
@@ -357,6 +369,7 @@
         border-color 0.25s ease,
         box-shadow 0.25s ease,
         background 0.25s ease;
+    touch-action: manipulation;
 }
 
 .cinema-select select:hover {
@@ -364,7 +377,7 @@
     background: rgba(255, 255, 255, 0.065);
 }
 
-.cinema-select select:focus {
+.cinema-select select:focus-visible {
     border-color: var(--silver-primary);
     box-shadow:
         0 0 0 3px rgba(232, 232, 232, 0.08),
@@ -402,9 +415,12 @@
     gap: 8px;
     overflow-x: auto;
     scrollbar-width: none;
+    -ms-overflow-style: none;
     scroll-behavior: smooth;
     padding: 3px 2px;
     scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
 }
 
 .scroll-list::-webkit-scrollbar {
@@ -430,6 +446,7 @@
     font-size: 18px;
     line-height: 1;
     cursor: pointer;
+    touch-action: manipulation;
     transition:
         background 0.22s ease,
         border-color 0.22s ease,
@@ -444,6 +461,11 @@
 
 .slide-btn:active:not(:disabled) {
     transform: scale(0.96);
+}
+
+.slide-btn:focus-visible {
+    outline: 2px solid var(--silver-primary);
+    outline-offset: 2px;
 }
 
 .slide-btn:disabled {
@@ -471,14 +493,25 @@
     color: var(--text-body);
     cursor: pointer;
     scroll-snap-align: start;
+    touch-action: manipulation;
     transition:
         border-color 0.22s ease,
-        background 0.22s ease;
+        background 0.22s ease,
+        transform 0.15s ease;
 }
 
 .compact-card:hover {
     border-color: rgba(232, 232, 232, 0.28);
     background: rgba(255, 255, 255, 0.06);
+}
+
+.compact-card:active {
+    transform: scale(0.97);
+}
+
+.compact-card:focus-visible {
+    outline: 2px solid var(--silver-primary);
+    outline-offset: 2px;
 }
 
 /* =========================================================
@@ -629,6 +662,7 @@
 .booking-error-container {
     width: 100%;
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -673,7 +707,7 @@
 
 .booking-retry-btn {
     min-width: 150px;
-    height: 46px;
+    min-height: 46px;
     padding: 0 22px;
     border: none;
     border-radius: var(--radius-md);
@@ -684,6 +718,7 @@
     letter-spacing: 0.8px;
     cursor: pointer;
     box-shadow: 0 8px 25px rgba(232, 232, 232, 0.12);
+    touch-action: manipulation;
     transition:
         transform 0.22s ease,
         box-shadow 0.22s ease;
@@ -692,6 +727,15 @@
 .booking-retry-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 13px 32px rgba(232, 232, 232, 0.20);
+}
+
+.booking-retry-btn:active {
+    transform: translateY(0);
+}
+
+.booking-retry-btn:focus-visible {
+    outline: 2px solid var(--silver-primary);
+    outline-offset: 2px;
 }
 
 /* =========================================================
@@ -783,7 +827,7 @@
 }
 
 /* =========================================================
-   RESPONSIVE - 1200px
+   RESPONSIVE — 1200px
 ========================================================= */
 
 @media (max-width: 1200px) {
@@ -818,7 +862,8 @@
 }
 
 /* =========================================================
-   RESPONSIVE - 992px
+   RESPONSIVE — 992px (tablet ngang)
+   Sidebar chuyển lên trên
 ========================================================= */
 
 @media (max-width: 992px) {
@@ -864,12 +909,14 @@
 }
 
 /* =========================================================
-   RESPONSIVE - 768px
+   RESPONSIVE — 768px (tablet dọc)
 ========================================================= */
 
 @media (max-width: 768px) {
     .booking-wrapper {
         padding: 20px 12px 45px;
+        padding-left: max(12px, env(safe-area-inset-left));
+        padding-right: max(12px, env(safe-area-inset-right));
     }
 
     .booking-progress-wrapper {
@@ -890,9 +937,8 @@
     }
 
     .section-number {
-        width: 40px;
-        height: 40px;
-        border-radius: var(--radius-md);
+        width: 42px;
+        height: 42px;
         font-size: 12px;
     }
 
@@ -906,16 +952,12 @@
     }
 
     .section-heading h2 {
-        font-size: 15px;
+        font-size: 16px;
     }
 
     .selected-seat-counter {
-        padding: 6px 9px;
+        padding: 6px 10px;
         gap: 6px;
-    }
-
-    .selected-seat-counter span {
-        display: none;
     }
 
     .section-divider {
@@ -944,14 +986,14 @@
     }
 
     .slide-btn {
-        width: 30px;
-        height: 30px;
+        width: 34px;
+        height: 34px;
         font-size: 16px;
     }
 
     .slider-controls {
-        grid-template-columns: 30px minmax(0, 1fr) 30px;
-        gap: 5px;
+        grid-template-columns: 34px minmax(0, 1fr) 34px;
+        gap: 6px;
     }
 
     .placeholder-msg {
@@ -960,37 +1002,64 @@
 }
 
 /* =========================================================
-   RESPONSIVE - 600px
+   RESPONSIVE — 600px (điện thoại lớn)
 ========================================================= */
 
 @media (max-width: 600px) {
     .booking-wrapper {
-        padding: 15px 8px 35px;
+        padding: 15px 10px 35px;
+        padding-left: max(10px, env(safe-area-inset-left));
+        padding-right: max(10px, env(safe-area-inset-right));
     }
 
     .booking-section {
-        padding: 15px;
+        padding: 16px;
         border-radius: var(--radius-lg);
     }
 
     .section-number {
-        width: 36px;
-        height: 36px;
+        width: 38px;
+        height: 38px;
         font-size: 11px;
     }
 
     .section-heading h2 {
-        font-size: 13px;
+        font-size: 14px;
+    }
+
+    .section-kicker {
+        font-size: 8px;
+        letter-spacing: 1.8px;
+    }
+
+    .selected-seat-counter span {
+        display: none;
+    }
+
+    .selected-seat-counter strong {
+        font-size: 14px;
+    }
+
+    .reschedule-banner {
+        padding: 10px 14px;
+        font-size: 12px;
+    }
+
+    .socket-status {
+        font-size: 0.72rem;
+        padding: 6px 12px;
     }
 }
 
 /* =========================================================
-   RESPONSIVE - 480px
+   RESPONSIVE — 480px (điện thoại tiêu chuẩn)
 ========================================================= */
 
 @media (max-width: 480px) {
     .booking-wrapper {
-        padding: 10px 5px 28px;
+        padding: 12px 8px 30px;
+        padding-left: max(8px, env(safe-area-inset-left));
+        padding-right: max(8px, env(safe-area-inset-right));
     }
 
     .booking-container {
@@ -1002,37 +1071,43 @@
     }
 
     .booking-section {
-        padding: 12px;
+        padding: 14px;
         border-radius: var(--radius-md);
     }
 
     .section-heading {
-        gap: 8px;
+        gap: 10px;
     }
 
     .section-number {
-        width: 32px;
-        height: 32px;
+        width: 36px;
+        height: 36px;
         border-radius: var(--radius-sm);
-        font-size: 9px;
-    }
-
-    .section-kicker {
-        display: none;
+        font-size: 11px;
     }
 
     .section-heading h2 {
-        font-size: 12px;
+        font-size: 13px;
         letter-spacing: 0.8px;
     }
 
+    .section-kicker {
+        font-size: 7px;
+        letter-spacing: 1.4px;
+    }
+
     .selected-seat-counter {
-        padding: 4px 7px;
+        padding: 4px 8px;
         border-radius: var(--radius-sm);
+        gap: 5px;
     }
 
     .selected-seat-counter strong {
-        font-size: 12px;
+        font-size: 13px;
+    }
+
+    .selected-seat-counter small {
+        font-size: 9px;
     }
 
     .section-divider {
@@ -1048,50 +1123,172 @@
     }
 
     .nav-col label {
+        font-size: 9px;
+        letter-spacing: 1.2px;
+    }
+
+    .nav-col label span {
+        font-size: 11px;
+    }
+
+    .cinema-select select {
+        height: 48px;
+        padding-left: 13px;
+        padding-right: 36px;
+        font-size: 12px;
+        border-radius: var(--radius-sm);
+    }
+
+    .select-wrapper::after {
+        right: 13px;
+        font-size: 15px;
+    }
+
+    .slider-controls {
+        height: 50px;
+        grid-template-columns: 32px minmax(0, 1fr) 32px;
+        gap: 5px;
+    }
+
+    .slide-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 15px;
+    }
+
+    .scroll-list {
+        gap: 6px;
+        padding: 2px 1px;
+    }
+
+    /* Giữ 4 card vừa khít — width tính theo container */
+    .compact-card {
+        width: calc((100% - 18px) / 4);
+        min-width: calc((100% - 18px) / 4);
+        height: 48px;
+        border-radius: var(--radius-sm);
+    }
+
+    .time-card {
+        width: calc((100% - 18px) / 4);
+        min-width: calc((100% - 18px) / 4);
+        height: 46px;
+    }
+
+    .day-txt,
+    .time-day {
+        font-size: 8px;
+        letter-spacing: 0.4px;
+    }
+
+    .date-txt,
+    .time-txt {
+        font-size: 11px;
+    }
+
+    .no-showtimes {
+        height: 46px;
+        font-size: 10px;
+    }
+
+    .placeholder-msg {
+        min-height: 240px;
+        padding: 26px 14px;
+    }
+
+    .placeholder-icon {
+        width: 54px;
+        height: 54px;
+        margin-bottom: 13px;
+        border-radius: var(--radius-md);
+        font-size: 26px;
+    }
+
+    .placeholder-msg h3 {
+        font-size: 12px;
+    }
+
+    .placeholder-msg p {
+        font-size: 11px;
+    }
+
+    .booking-error-box {
+        padding: 32px 22px;
+    }
+
+    .booking-error-box p {
+        font-size: 13px;
+    }
+}
+
+/* =========================================================
+   RESPONSIVE — 380px (iPhone SE / điện thoại nhỏ)
+========================================================= */
+
+@media (max-width: 380px) {
+    .booking-wrapper {
+        padding: 10px 6px 25px;
+    }
+
+    .booking-section {
+        padding: 12px;
+    }
+
+    .section-number {
+        width: 32px;
+        height: 32px;
+        font-size: 10px;
+    }
+
+    .section-heading h2 {
+        font-size: 12px;
+        letter-spacing: 0.6px;
+    }
+
+    .section-kicker {
+        display: none;
+    }
+
+    .selected-seat-counter {
+        padding: 3px 7px;
+    }
+
+    .selected-seat-counter strong {
+        font-size: 12px;
+    }
+
+    .nav-col label {
         font-size: 8px;
         letter-spacing: 1px;
     }
 
     .cinema-select select {
-        height: 46px;
-        padding-left: 12px;
-        padding-right: 35px;
-        font-size: 10px;
-        border-radius: var(--radius-sm);
-    }
-
-    .select-wrapper::after {
-        right: 12px;
-        font-size: 14px;
+        height: 44px;
+        font-size: 11px;
     }
 
     .slider-controls {
-        height: 48px;
-        grid-template-columns: 26px minmax(0, 1fr) 26px;
+        height: 46px;
+        grid-template-columns: 30px minmax(0, 1fr) 30px;
         gap: 4px;
     }
 
     .slide-btn {
-        width: 26px;
-        height: 26px;
+        width: 30px;
+        height: 30px;
         font-size: 14px;
-    }
-
-    .scroll-list {
-        gap: 5px;
     }
 
     .compact-card {
         width: calc((100% - 15px) / 4);
         min-width: calc((100% - 15px) / 4);
-        height: 45px;
-        border-radius: var(--radius-sm);
+        height: 44px;
     }
 
     .time-card {
         width: calc((100% - 15px) / 4);
         min-width: calc((100% - 15px) / 4);
-        height: 43px;
+        height: 42px;
     }
 
     .day-txt,
@@ -1104,22 +1301,15 @@
         font-size: 10px;
     }
 
-    .no-showtimes {
-        height: 43px;
-        font-size: 9px;
-    }
-
     .placeholder-msg {
-        min-height: 230px;
-        padding: 25px 12px;
+        min-height: 200px;
+        padding: 20px 12px;
     }
 
     .placeholder-icon {
-        width: 52px;
-        height: 52px;
-        margin-bottom: 12px;
-        border-radius: var(--radius-md);
-        font-size: 25px;
+        width: 48px;
+        height: 48px;
+        font-size: 22px;
     }
 
     .placeholder-msg h3 {
@@ -1127,6 +1317,30 @@
     }
 
     .placeholder-msg p {
-        font-size: 9px;
+        font-size: 10px;
     }
 }
+
+/* =========================================================
+   ✅ ACCESSIBILITY — Reduced Motion
+========================================================= */
+/* 
+@media (prefers-reduced-motion: reduce) {
+    .booking-section,
+    .booking-section::before,
+    .booking-section::after,
+    .slide-btn,
+    .compact-card,
+    .booking-retry-btn {
+        transition: none;
+    }
+
+    .socket-status .spin-icon,
+    .socket-status .pulse-icon {
+        animation: none;
+    }
+
+    .scroll-list {
+        scroll-behavior: auto;
+    }
+} */

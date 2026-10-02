@@ -59,6 +59,9 @@ import AdminSessionGuard from "./admin_frontend/components/AdminSessionGuard";
 import LazyErrorBoundary from "./user_frontend/components/LazyErrorBoundary";
 import NetworkErrorPage from "./user_frontend/components/NetworkErrorPage";
 
+// ✅ THÊM MỚI — AIChatBox
+import AIChatBox from "./user_frontend/components/AiChatBox";
+
 // ============================================================
 // PAGE TRANSITION
 // ============================================================
@@ -270,7 +273,6 @@ const Actor = lazy(() =>
     )
 );
 
-// ✅ THÊM MỚI — ActorDetail
 const ActorDetail = lazy(() =>
     lazyRetry(() =>
         import(
@@ -335,10 +337,6 @@ const CinemaCardDetail = lazy(() =>
     )
 );
 
-// ============================================================
-// BOOKING SELECT
-// ============================================================
-
 const BookingSelect = lazy(() =>
     lazyRetry(() =>
         import(
@@ -346,10 +344,6 @@ const BookingSelect = lazy(() =>
         )
     )
 );
-
-// ============================================================
-// BOOKING CHECKOUT
-// ============================================================
 
 const Booking = lazy(() =>
     lazyRetry(() =>
@@ -446,10 +440,6 @@ const MemberShip = lazy(() =>
         )
     )
 );
-
-// ============================================================
-// RESCHEDULE SELECT
-// ============================================================
 
 const RescheduleSelect = lazy(() =>
     lazyRetry(() =>
@@ -838,7 +828,6 @@ const MAIN_ROUTES = [
         element: <Actor />,
     },
 
-    // ✅ THÊM MỚI — Actor Detail
     {
         path: "actor/detail/:slug",
         element: <ActorDetail />,
@@ -931,10 +920,6 @@ const MAIN_ROUTES = [
         element: <MemberShip />,
     },
 
-    // ========================================================
-    // PROFILE
-    // ========================================================
-
     {
         path: "profile",
         element: (
@@ -943,10 +928,6 @@ const MAIN_ROUTES = [
             </UserRouteGuard>
         ),
     },
-
-    // ========================================================
-    // RESCHEDULE
-    // ========================================================
 
     {
         path: "reschedule/:bookingId/select",
@@ -957,18 +938,10 @@ const MAIN_ROUTES = [
         ),
     },
 
-    // ========================================================
-    // BOOKING SELECT
-    // ========================================================
-
     {
         path: "booking",
         element: <BookingSelect />,
     },
-
-    // ========================================================
-    // BOOKING CHECKOUT
-    // ========================================================
 
     {
         path: "booking/:slug",
@@ -979,10 +952,6 @@ const MAIN_ROUTES = [
         ),
     },
 
-    // ========================================================
-    // PAYMENT
-    // ========================================================
-
     {
         path: "payment",
         element: (
@@ -992,10 +961,6 @@ const MAIN_ROUTES = [
         ),
     },
 
-    // ========================================================
-    // BANK APP
-    // ========================================================
-
     {
         path: "bank-app",
         element: (
@@ -1004,10 +969,6 @@ const MAIN_ROUTES = [
             </UserRouteGuard>
         ),
     },
-
-    // ========================================================
-    // MOMO APP
-    // ========================================================
 
     {
         path: "momo-app",
@@ -1241,16 +1202,10 @@ const UserPageContainer = () => {
 
 // ============================================================
 // USER ROUTES
-// ✅ NHẬN prop `location` từ PageTransition
-// ✅ TRUYỀN location vào <Routes> để freeze trang cũ khi exit
 // ============================================================
 
 const UserRoutesComponent = ({ location }) => (
     <Routes location={location}>
-
-        {/* ======================================================
-            AUTH ROUTES
-        ====================================================== */}
 
         {AUTH_ROUTES.map(
             ({
@@ -1265,20 +1220,12 @@ const UserRoutesComponent = ({ location }) => (
             )
         )}
 
-        {/* ======================================================
-            ⭐ CONFIRM SUCCESS
-        ====================================================== */}
-
         <Route
             path="/confirm-success"
             element={
                 <ConfirmSuccess />
             }
         />
-
-        {/* ======================================================
-            USER APP
-        ====================================================== */}
 
         <Route
             path="/"
@@ -1312,10 +1259,6 @@ const UserRoutesComponent = ({ location }) => (
 
         </Route>
 
-        {/* ======================================================
-            ADMIN REDIRECT
-        ====================================================== */}
-
         <Route
             path="/admin/*"
             element={
@@ -1325,10 +1268,6 @@ const UserRoutesComponent = ({ location }) => (
                 />
             }
         />
-
-        {/* ======================================================
-            404
-        ====================================================== */}
 
         <Route
             path="*"
@@ -1553,10 +1492,6 @@ const AppContent = () => {
     return (
         <>
 
-            {/* ==================================================
-                ROUTE LOADING
-            ================================================== */}
-
             {routeLoading && (
                 <LoadingSpinner
                     size={72}
@@ -1567,19 +1502,17 @@ const AppContent = () => {
                 />
             )}
 
-            {/* ==================================================
-                SCROLL TOP
-            ================================================== */}
-
             <ScrollToTop />
 
-            {/* ==================================================
-                ROUTER
-                ✅ PageTransition chỉ bọc USER routes
-                ❌ KHÔNG bọc ADMIN routes
-            ================================================== */}
-
             <LazyErrorBoundary>
+
+                {/* ==================================================
+                    ✅ AIChatBox — NGOÀI Suspense + NGOÀI PageTransition
+                    → Fixed thật sự ở góc phải dưới
+                    → Không unmount khi chuyển route
+                    → Chỉ hiện ở user domain (không hiện admin)
+                ================================================== */}
+                {!isAdminDomain && <AIChatBox />}
 
                 <Suspense
                     fallback={

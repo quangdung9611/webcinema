@@ -22,6 +22,8 @@ import 'swiper/css';
 import 'swiper/css/effect-fade';
 
 import CinemaCard from '../components/CinemaCard';
+import LazyImage from '../components/LazyImage';   // ✅ THÊM
+
 import '../styles/BlogCinema.css';
 
 const BlogCinema = () => {
@@ -226,12 +228,16 @@ const BlogCinema = () => {
                                     }
                                 >
 
-                                    <img
+                                    {/* ✅ LazyImage với fill — full khung slide */}
+                                    <LazyImage
+                                        fill
                                         src={banner.image_url}
                                         alt={
                                             `Blog Banner ${index + 1}`
                                         }
                                         className="blog-banner-img"
+                                        priority={index === 0}
+                                        placeholderColor="#0a0a0d"
                                     />
 
                                 </SwiperSlide>

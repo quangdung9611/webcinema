@@ -92,9 +92,6 @@ const saveMessagesToStorage = (
     messages
 ) => {
     try {
-        /*
-         * Không lưu message đang stream.
-         */
         const cleaned =
             messages
                 .filter(
@@ -283,9 +280,6 @@ const MessageBubble = ({
         }
     };
 
-    /*
-     * Thinking message
-     */
     if (
         msg.role === 'assistant' &&
         msg.isThinking
@@ -347,27 +341,15 @@ const AiChatBox = () => {
     const { user } =
         useAuth();
 
-    /* --------------------------------------------------------
-       OPEN
-    -------------------------------------------------------- */
-
     const [
         isOpen,
         setIsOpen
     ] = useState(false);
 
-    /* --------------------------------------------------------
-       USER
-    -------------------------------------------------------- */
-
     const userName =
         user?.full_name ||
         user?.username ||
         null;
-
-    /* --------------------------------------------------------
-       MESSAGES
-    -------------------------------------------------------- */
 
     const [
         messages,
@@ -388,36 +370,20 @@ const AiChatBox = () => {
         );
     });
 
-    /* --------------------------------------------------------
-       INPUT
-    -------------------------------------------------------- */
-
     const [
         input,
         setInput
     ] = useState('');
-
-    /* --------------------------------------------------------
-       BADGE
-    -------------------------------------------------------- */
 
     const [
         hasNewMessage,
         setHasNewMessage
     ] = useState(false);
 
-    /* --------------------------------------------------------
-       CLEAR MODAL
-    -------------------------------------------------------- */
-
     const [
         showClearModal,
         setShowClearModal
     ] = useState(false);
-
-    /* --------------------------------------------------------
-       REFS
-    -------------------------------------------------------- */
 
     const messagesEndRef =
         useRef(null);
@@ -428,22 +394,12 @@ const AiChatBox = () => {
     const abortControllerRef =
         useRef(null);
 
-    /*
-     * Buffer dùng để tạo hiệu ứng
-     * trả lời từng chữ.
-     */
     const streamBufferRef =
         useRef('');
 
-    /*
-     * RAF đang chạy hay chưa.
-     */
     const streamFrameRef =
         useRef(null);
 
-    /*
-     * Index message assistant hiện tại.
-     */
     const streamingMessageIdRef =
         useRef(null);
 
@@ -644,10 +600,6 @@ const AiChatBox = () => {
 
     const startTypewriter =
         useCallback(() => {
-            /*
-             * Nếu RAF đã chạy thì không tạo
-             * thêm RAF.
-             */
             if (
                 streamFrameRef.current
             ) {
@@ -665,12 +617,6 @@ const AiChatBox = () => {
                     return;
                 }
 
-                /*
-                 * Lấy nhiều ký tự mỗi frame
-                 * để không bị quá chậm.
-                 *
-                 * ~2-4 ký tự/frame.
-                 */
                 const charsPerFrame =
                     buffer.length > 60
                         ? 4
@@ -753,23 +699,14 @@ const AiChatBox = () => {
 
     const sendChatRequest =
         async (text) => {
-            /*
-             * Hủy request cũ.
-             */
             abortControllerRef.current?.abort();
 
             abortControllerRef.current =
                 new AbortController();
 
-            /*
-             * Reset stream buffer.
-             */
             streamBufferRef.current =
                 '';
 
-            /*
-             * Tạo ID duy nhất cho message.
-             */
             const messageId =
                 `ai-${Date.now()}-${Math.random()
                     .toString(36)
@@ -778,10 +715,6 @@ const AiChatBox = () => {
             streamingMessageIdRef.current =
                 messageId;
 
-            /*
-             * Tạo message thinking
-             * NGAY LẬP TỨC.
-             */
             setMessages((prev) => [
                 ...prev,
 
@@ -801,9 +734,6 @@ const AiChatBox = () => {
             ]);
 
             try {
-                /*
-                 * Lấy history TRƯỚC request.
-                 */
                 const history =
                     messages
                         .slice(-10)
@@ -813,10 +743,6 @@ const AiChatBox = () => {
                             content:
                                 m.content
                         }));
-
-                /* ------------------------------------------------
-                   FETCH SSE
-                ------------------------------------------------ */
 
                 const response =
                     await fetch(
@@ -860,10 +786,6 @@ const AiChatBox = () => {
                     );
                 }
 
-                /* ------------------------------------------------
-                   STREAM READER
-                ------------------------------------------------ */
-
                 const reader =
                     response.body.getReader();
 
@@ -878,10 +800,6 @@ const AiChatBox = () => {
 
                 let streamFinished =
                     false;
-
-                /* ------------------------------------------------
-                   READ LOOP
-                ------------------------------------------------ */
 
                 while (!streamFinished) {
                     const {
@@ -902,19 +820,11 @@ const AiChatBox = () => {
                             }
                         );
 
-                    /*
-                     * SSE event kết thúc bằng
-                     *
-                     * \n\n
-                     */
                     const events =
                         buffer.split(
                             '\n\n'
                         );
 
-                    /*
-                     * Event cuối có thể chưa hoàn chỉnh.
-                     */
                     buffer =
                         events.pop() || '';
 
@@ -968,30 +878,16 @@ const AiChatBox = () => {
                                 continue;
                             }
 
-                            /* ------------------------------------
-                               TEXT
-                            ------------------------------------ */
-
                             if (
                                 data.type ===
                                 'text'
                             ) {
-                                /*
-                                 * Gemini chunk
-                                 * đi vào buffer.
-                                 */
                                 streamBufferRef.current +=
                                     data.content ||
                                     '';
 
-                                /*
-                                 * Bắt đầu typewriter.
-                                 */
                                 startTypewriter();
 
-                                /*
-                                 * Tắt thinking.
-                                 */
                                 setMessages(
                                     (prev) =>
                                         prev.map(
@@ -1012,10 +908,6 @@ const AiChatBox = () => {
                                 );
                             }
 
-                            /* ------------------------------------
-                               DONE
-                            ------------------------------------ */
-
                             else if (
                                 data.type ===
                                 'done'
@@ -1027,10 +919,6 @@ const AiChatBox = () => {
                                 streamFinished =
                                     true;
                             }
-
-                            /* ------------------------------------
-                               ERROR
-                            ------------------------------------ */
 
                             else if (
                                 data.type ===
@@ -1045,11 +933,6 @@ const AiChatBox = () => {
                     }
                 }
 
-                /*
-                 * Nếu stream kết thúc nhưng buffer
-                 * vẫn còn ký tự chưa render,
-                 * chờ render hết.
-                 */
                 await new Promise(
                     (resolve) => {
                         const waitForBuffer =
@@ -1070,10 +953,6 @@ const AiChatBox = () => {
                         waitForBuffer();
                     }
                 );
-
-                /* ------------------------------------------------
-                   FINISH MESSAGE
-                ------------------------------------------------ */
 
                 setMessages((prev) =>
                     prev.map(
@@ -1275,11 +1154,12 @@ const AiChatBox = () => {
     return (
         <>
             {/* ==================================================
-                FAB
+                FAB — ✅ ĐÃ THÊM data-lenis-prevent
             ================================================== */}
 
             <motion.button
                 className="ai-chat-fab"
+                data-lenis-prevent
                 onClick={() =>
                     setIsOpen(
                         (value) =>
@@ -1370,13 +1250,14 @@ const AiChatBox = () => {
             </motion.button>
 
             {/* ==================================================
-                PANEL
+                PANEL — ✅ ĐÃ THÊM data-lenis-prevent
             ================================================== */}
 
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
                         className="ai-chat-panel"
+                        data-lenis-prevent
                         initial={{
                             opacity: 0,
                             y: 40,
@@ -1563,10 +1444,6 @@ const AiChatBox = () => {
                                     </motion.div>
                                 )
                             )}
-
-                            {/* ==================================
-                                QUICK SUGGESTIONS
-                            ================================== */}
 
                             {messages.length <=
                                 1 &&

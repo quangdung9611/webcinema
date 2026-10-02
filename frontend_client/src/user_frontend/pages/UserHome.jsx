@@ -8,7 +8,7 @@ import ScrollReveal from '../components/ScrollReveal';
 import CinemaCard from '../components/CinemaCard';
 import HeroBanner from '../components/HeroBanner';
 import ReviewModal from '../components/ReviewModal';
-import AIChatBox from '../components/AiChatBox';
+// ✅ ĐÃ XÓA: import AIChatBox from '../components/AiChatBox';
 import LoadingButton from '../components/LoadingButton';
 import SkeletonCard from '../components/SkeletonCard';
 
@@ -1914,7 +1914,7 @@ const UserHome = () => {
         </div>
       </div>
 
-      <AIChatBox />
+      {/* ✅ ĐÃ XÓA: <AIChatBox /> — giờ render ở App.jsx */}
     </>
   );
 };

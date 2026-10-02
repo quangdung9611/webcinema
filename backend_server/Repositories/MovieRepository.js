@@ -140,6 +140,33 @@ class MovieRepository {
     }
 
     /*=========================================================
+        ✅ CHECK TỒN TẠI THEO TITLE HOẶC SLUG
+        - Dùng cho create: excludeId = null
+        - Dùng cho update: excludeId = movieId (bỏ qua chính nó)
+    =========================================================*/
+    async existsByTitleOrSlug(title, slug, excludeId = null) {
+        let sql = `
+            SELECT movie_id
+            FROM movies
+            WHERE (title = ? OR slug = ?)
+        `;
+
+        const params = [title, slug];
+
+        // Khi update → loại trừ chính phim đang sửa
+        if (excludeId) {
+            sql += ` AND movie_id != ?`;
+            params.push(excludeId);
+        }
+
+        sql += ` LIMIT 1`;
+
+        const [rows] = await db.query(sql, params);
+
+        return rows.length > 0;
+    }
+
+    /*=========================================================
         GET GENRES BY MOVIE ID
     =========================================================*/
     async getGenresByMovieId(movieId) {
@@ -445,9 +472,6 @@ class MovieRepository {
         - Giá vé (chỉ loại phòng có trong bảng rooms)
         - Khuyến mãi
         - Combo bắp nước
-    =========================================================*/
-        /*=========================================================
-        ✨ GET FULL CONTEXT FOR AI
     =========================================================*/
     async getFullContextForAI() {
 

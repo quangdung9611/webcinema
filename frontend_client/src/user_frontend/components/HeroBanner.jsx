@@ -1,22 +1,19 @@
 // src/user_frontend/components/HeroBanner.jsx
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Play } from "lucide-react";
+
 import MagneticButton from "../components/MagneticButton";
+import LazyBackgroundVideo from "../components/LazyBackgroundVideo";
+
 import "../styles/HeroBanner.css";
 
-
 /* ============================================================
-   HERO BANNER — VIDEO LOCAL (FIXED)
-   ============================================================
-   ✅ Video LUÔN render — không có điều kiện skip
-   ✅ Fade-in khi ready
-   ✅ Pause khi out viewport / tab ẩn
+   HERO BANNER — VIDEO BACKGROUND (LAZY LOAD)
 ============================================================ */
 
 const VIDEO_SRC = "/video_xambac.mp4";
-
 
 /* ============================================================
    SPLIT TEXT
@@ -49,103 +46,16 @@ const SplitText = ({
     );
 };
 
-
 /* ============================================================
    MAIN
 ============================================================ */
 
 const HeroBanner = ({ videoSrc = VIDEO_SRC }) => {
     const navigate = useNavigate();
-
-    const rootRef = useRef(null);
-    const videoRef = useRef(null);
-
     const [videoReady, setVideoReady] = useState(false);
-
-
-    /* ========================================================
-       VIDEO PLAYBACK CONTROL
-    ======================================================== */
-
-    useEffect(() => {
-        const video = videoRef.current;
-        const root = rootRef.current;
-        if (!video || !root) return;
-
-        let cancelled = false;
-
-        const revealVideo = () => {
-            if (cancelled) return;
-            // 2× rAF để chắc chắn frame đầu đã paint
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    if (!cancelled) setVideoReady(true);
-                });
-            });
-        };
-
-        const tryPlay = () => {
-            const p = video.play();
-            if (p && typeof p.then === "function") {
-                p.then(revealVideo).catch(revealVideo);
-            } else {
-                revealVideo();
-            }
-        };
-
-        // Nếu video đã load xong → play luôn
-        if (video.readyState >= 2) {
-            tryPlay();
-        } else {
-            video.addEventListener("canplay", tryPlay, { once: true });
-        }
-
-        // Fallback: nếu 1.5s sau vẫn chưa ready → force hiện
-        const fallbackTimer = setTimeout(() => {
-            if (video.readyState >= 2) tryPlay();
-            else revealVideo();
-        }, 1500);
-
-        // Pause khi tab ẩn
-        const handleVisibility = () => {
-            if (document.visibilityState === "visible") {
-                video.play().catch(() => {});
-            } else {
-                video.pause();
-            }
-        };
-        document.addEventListener("visibilitychange", handleVisibility);
-
-        // Pause khi hero out viewport
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                if (entry.isIntersecting) {
-                    video.play().catch(() => {});
-                } else {
-                    video.pause();
-                }
-            },
-            { threshold: 0.05 }
-        );
-        observer.observe(root);
-
-        return () => {
-            cancelled = true;
-            clearTimeout(fallbackTimer);
-            video.removeEventListener("canplay", tryPlay);
-            document.removeEventListener("visibilitychange", handleVisibility);
-            observer.disconnect();
-        };
-    }, []);
-
-
-    /* ========================================================
-       HANDLERS
-    ======================================================== */
 
     const goBooking = () => navigate("/booking");
     const goMovies = () => navigate("/movies");
-
 
     /* ========================================================
        RENDER
@@ -153,37 +63,21 @@ const HeroBanner = ({ videoSrc = VIDEO_SRC }) => {
 
     return (
         <header
-            ref={rootRef}
             className={`hero-banner ${videoReady ? "hero-banner--video-ready" : ""}`}
         >
-
             {/* ==============================================
-                VIDEO BACKGROUND
+                VIDEO BACKGROUND — Dùng LazyBackgroundVideo
             ============================================== */}
 
             <div className="hero-banner__bg">
                 <div className="hero-banner__video-fallback" />
 
-                {/* ✅ Video LUÔN render — không có điều kiện */}
-                <video
-                    ref={videoRef}
-                    className="hero-banner__video"
+                <LazyBackgroundVideo
                     src={videoSrc}
-                    loop
-                    muted
-                    playsInline
-                    autoPlay
-                    preload="auto"
-                    disablePictureInPicture
-                    disableRemotePlayback
-                    x-webkit-airplay="deny"
-                    style={{
-                        // ✅ Force hiện video — override CSS opacity: 0
-                        opacity: videoReady ? 1 : 0.85,
-                    }}
+                    className="hero-banner__video"
+                    onReady={() => setVideoReady(true)}
                 />
             </div>
-
 
             {/* ==============================================
                 CINEMATIC OVERLAY
@@ -196,7 +90,6 @@ const HeroBanner = ({ videoSrc = VIDEO_SRC }) => {
                 <div className="hero-banner__vignette" />
             </div>
 
-
             {/* ==============================================
                 DECORATIVE FRAME
             ============================================== */}
@@ -208,14 +101,12 @@ const HeroBanner = ({ videoSrc = VIDEO_SRC }) => {
                 <span className="hero-banner__frame-corner hero-banner__frame-corner--br" />
             </div>
 
-
             {/* ==============================================
                 MAIN CONTENT
             ============================================== */}
 
             <div className="hero-banner__content">
                 <div className="hero-banner__left">
-
                     <div className="hero-banner__eyebrow hero-banner__enter hero-banner__enter--d1">
                         <span className="hero-banner__eyebrow-line" />
                         <span>TRẢI NGHIỆM ĐIỆN ẢNH ĐỈNH CAO</span>
@@ -224,10 +115,20 @@ const HeroBanner = ({ videoSrc = VIDEO_SRC }) => {
 
                     <h1 className="hero-banner__title">
                         <span className="hero-banner__title-solid">
-                            <SplitText text="CHẠM" baseDelay={0.3} charDelay={0.075} duration={0.9} />
+                            <SplitText
+                                text="CHẠM"
+                                baseDelay={0.3}
+                                charDelay={0.075}
+                                duration={0.9}
+                            />
                         </span>
                         <span className="hero-banner__title-outline">
-                            <SplitText text="ẢNH" baseDelay={0.66} charDelay={0.075} duration={0.95} />
+                            <SplitText
+                                text="ẢNH"
+                                baseDelay={0.66}
+                                charDelay={0.075}
+                                duration={0.95}
+                            />
                         </span>
                         <span className="hero-banner__title-accent" aria-hidden="true" />
                     </h1>
@@ -268,10 +169,8 @@ const HeroBanner = ({ videoSrc = VIDEO_SRC }) => {
                             <span>Khám phá phim</span>
                         </button>
                     </div>
-
                 </div>
             </div>
-
         </header>
     );
 };

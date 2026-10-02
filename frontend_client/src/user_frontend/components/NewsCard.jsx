@@ -6,9 +6,10 @@ import {
     Calendar
 } from "lucide-react";
 
-import { optimizeCloudinary } from "../../utils/imageHelper";
+// ❌ ĐÃ XÓA: import { optimizeCloudinary } from "../../utils/imageHelper";
 
 import ContentRevealTransition from "./ContentRevealTransition";
+import LazyImage from "./LazyImage";   // ✅ THÊM
 
 import "../styles/NewsCard.css";
 
@@ -78,9 +79,8 @@ const NewsCard = ({ news = [] }) => {
     const handleNavigate = useCallback((item) => {
         if (!item?.slug) return;
 
-        const rawImage = getNewsImage(item);
-
-        const revealImage = optimizeCloudinary(rawImage, 1200);
+        // ✅ Dùng ảnh gốc, không optimize nữa
+        const revealImage = getNewsImage(item);
 
         setReveal({
             active: true,
@@ -139,12 +139,14 @@ const NewsCard = ({ news = [] }) => {
             >
                 {/* IMAGE */}
                 <div className="news-card__image">
-                    <img
-                        src={optimizeCloudinary(getNewsImage(item), 1200)}
+                    {/* ✅ LazyImage với fill — ảnh gốc, không transform */}
+                    <LazyImage
+                        fill
+                        src={getNewsImage(item)}
                         alt={item.title || "News"}
-                        loading="lazy"
-                        decoding="async"
+                        className="news-card__img"
                         draggable={false}
+                        placeholderColor="#0f1115"
                     />
 
                     <div className="news-card__gradient" />
@@ -214,12 +216,14 @@ const NewsCard = ({ news = [] }) => {
             >
                 {/* IMAGE */}
                 <div className="news-card__image">
-                    <img
-                        src={optimizeCloudinary(getNewsImage(item), 600)}
+                    {/* ✅ LazyImage với fill — ảnh gốc */}
+                    <LazyImage
+                        fill
+                        src={getNewsImage(item)}
                         alt={item.title || "News"}
-                        loading="lazy"
-                        decoding="async"
+                        className="news-card__img"
                         draggable={false}
+                        placeholderColor="#0f1115"
                     />
 
                     <div className="news-card__gradient" />

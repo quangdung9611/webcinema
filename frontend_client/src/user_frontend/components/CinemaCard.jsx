@@ -2,6 +2,8 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowUpRight, MapPin, Phone, ExternalLink } from "lucide-react";
 
+import LazyImage from "./LazyImage";   // ✅ THÊM
+
 import "../styles/CinemaCard.css";
 
 const CinemaCard = ({
@@ -40,7 +42,7 @@ const CinemaCard = ({
                 blog:      `/blog-cinema/detail/${slug}`,
                 cinema:    `/cinema/detail/${slug}`,
                 movie:     `/movie/detail/${slug}`,
-                 actor:     `/actor/detail/${slug}`,   // ✅ THÊM DÒNG NÀY
+                actor:     `/actor/detail/${slug}`,
             };
 
             const path = paths[detailType] || `/${detailType}/detail/${slug}`;
@@ -77,12 +79,14 @@ const CinemaCard = ({
             <div className="cinema-card__image">
                 <div className="cinema-card__gradient" />
 
-                <img
+                {/* ✅ LazyImage với fill — full khung card */}
+                <LazyImage
+                    fill
                     src={image}
                     alt={title}
-                    loading="lazy"
-                    decoding="async"
+                    className="cinema-card__img"
                     draggable={false}
+                    placeholderColor="#0f1115"
                 />
             </div>
 

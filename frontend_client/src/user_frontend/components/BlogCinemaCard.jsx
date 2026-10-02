@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 
 import ContentRevealTransition from "./ContentRevealTransition";
+import LazyImage from "./LazyImage";   // ✅ THÊM
 
 import "../styles/BlogCinemaCard.css";
 
@@ -176,12 +177,14 @@ const BlogCinemaCard = ({ blogs = [] }) => {
             >
                 {/* IMAGE */}
                 <div className="blog-card__image">
-                    <img
+                    {/* ✅ LazyImage với fill */}
+                    <LazyImage
+                        fill
                         src={getBlogImage(blog)}
                         alt={blog.title || "Blog Cinema"}
-                        loading="lazy"
-                        decoding="async"
+                        className="blog-card__img"
                         draggable={false}
+                        placeholderColor="#0f1115"
                     />
 
                     <div className="blog-card__gradient" />
@@ -249,12 +252,14 @@ const BlogCinemaCard = ({ blogs = [] }) => {
             >
                 {/* IMAGE */}
                 <div className="blog-card__image">
-                    <img
+                    {/* ✅ LazyImage với fill */}
+                    <LazyImage
+                        fill
                         src={getBlogImage(blog)}
                         alt={blog.title || "Blog Cinema"}
-                        loading="lazy"
-                        decoding="async"
+                        className="blog-card__img"
                         draggable={false}
+                        placeholderColor="#0f1115"
                     />
 
                     <div className="blog-card__gradient" />

@@ -4,7 +4,7 @@
 
    - Sử dụng biến từ index.css
    - Không thay đổi cấu trúc layout bên ngoài
-   - Responsive: 4 cột -> 2 cột -> 1 cột
+   - Responsive: 4 cột -> 2 cột (KHÔNG xuống 1 cột)
    ============================================================ */
 
 
@@ -928,7 +928,7 @@
 
 
 /* ============================================================
-   LARGE DESKTOP
+   LARGE DESKTOP — 1200PX
    ============================================================ */
 
 @media (max-width: 1200px) {
@@ -960,7 +960,7 @@
 
 
 /* ============================================================
-   TABLET - 992PX
+   TABLET — 992PX: 4 CỘT → 2 CỘT
    ============================================================ */
 
 @media (max-width: 992px) {
@@ -981,6 +981,7 @@
         padding-right: var(--space-md);
     }
 
+    /* Cột 3 (Liên hệ) là cột đầu hàng 2 → bỏ divider dọc */
     .mystic-footer-column:nth-child(3)::before {
         display: none;
     }
@@ -1029,7 +1030,7 @@
 
 
 /* ============================================================
-   TABLET SMALL - 768PX
+   TABLET SMALL — 768PX
    ============================================================ */
 
 @media (max-width: 768px) {
@@ -1100,19 +1101,22 @@
 
 
 /* ============================================================
-   MOBILE - 600PX
+   MOBILE — 600PX (VẪN GIỮ 2 CỘT)
    ============================================================ */
 
 @media (max-width: 600px) {
 
     .mystic-footer-container {
-        grid-template-columns: 1fr;
+        /* ✅ GIỮ 2 CỘT — KHÔNG xuống 1 cột */
+        grid-template-columns: repeat(2, minmax(0, 1fr));
 
         padding:
             var(--space-2xl)
             var(--space-lg);
 
-        gap: var(--space-2xl);
+        gap:
+            var(--space-2xl)
+            var(--space-lg);
     }
 
     .mystic-footer-brand {
@@ -1128,7 +1132,7 @@
     }
 
     .mystic-footer-description {
-        max-width: 520px;
+        max-width: 100%;
     }
 
     .mystic-footer-heading {
@@ -1146,6 +1150,8 @@
 
     .mystic-footer-feature {
         width: 100%;
+
+        justify-content: flex-start;
     }
 
     .mystic-footer-feature-icon {
@@ -1162,13 +1168,20 @@
 
 
 /* ============================================================
-   MOBILE - 480PX
+   MOBILE — 480PX (VẪN GIỮ 2 CỘT, NHỎ HƠN)
    ============================================================ */
 
 @media (max-width: 480px) {
 
     .mystic-footer-container {
+        /* ✅ GIỮ 2 CỘT */
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+
         padding:
+            var(--space-xl)
+            var(--space-md);
+
+        gap:
             var(--space-xl)
             var(--space-md);
     }
@@ -1223,6 +1236,8 @@
 
     .mystic-footer-list li a {
         font-size: var(--font-size-sm);
+
+        min-height: 48px;
     }
 
     .mystic-footer-feature-content strong {
@@ -1258,13 +1273,20 @@
 
 
 /* ============================================================
-   VERY SMALL MOBILE - 360PX
+   VERY SMALL MOBILE — 360PX (VẪN GIỮ 2 CỘT)
    ============================================================ */
 
 @media (max-width: 360px) {
 
     .mystic-footer-container {
+        /* ✅ GIỮ 2 CỘT */
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+
         padding:
+            var(--space-xl)
+            var(--space-sm);
+
+        gap:
             var(--space-xl)
             var(--space-sm);
     }
@@ -1284,6 +1306,25 @@
 
     .mystic-footer-signature-text {
         display: none;
+    }
+
+    .mystic-footer-list li a {
+        font-size: 12px;
+
+        min-height: 44px;
+    }
+
+    .mystic-footer-contact-content p {
+        font-size: 12px;
+    }
+
+    .mystic-footer-heading h3 {
+        font-size: 14px;
+    }
+
+    .mystic-footer-socials a {
+        width: 36px;
+        height: 36px;
     }
 
 }

@@ -1,0 +1,71 @@
+/* ==========================================================
+   LAZY IMAGE
+========================================================== */
+
+/* Mặc định — wrapper vô hình cho layout bình thường */
+.lazy-image-wrapper {
+    display: contents;
+}
+
+/* ✅ Chế độ fill — dùng cho Swiper slide / absolute parent */
+.lazy-image-wrapper.is-fill {
+    display: block;
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+}
+
+/* Fallback cho browser cũ không hỗ trợ display: contents */
+@supports not (display: contents) {
+    .lazy-image-wrapper {
+        position: relative;
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+}
+
+/* ==========================================================
+   IMG
+========================================================== */
+
+.lazy-image {
+    display: block;
+    transition:
+        opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+        filter 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Chế độ fill — img full wrapper */
+.is-fill .lazy-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.lazy-image.is-loading {
+    opacity: 0;
+    filter: blur(6px);
+}
+
+.lazy-image.is-loaded {
+    opacity: 1;
+    filter: blur(0);
+}
+
+/* ==========================================================
+   REDUCED MOTION
+========================================================== */
+/* 
+@media (prefers-reduced-motion: reduce) {
+    .lazy-image {
+        transition: none;
+    }
+
+    .lazy-image.is-loading {
+        opacity: 1;
+        filter: none;
+    }
+} */

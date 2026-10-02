@@ -9,6 +9,7 @@
    ✅ VIDEO NÉT — không scale, không giảm màu
    ✅ GPU layer cho video — không repaint khi fade
    ✅ CSS thuần — KHÔNG nesting
+   ✅ HỖ TRỢ LazyBackgroundVideo (wrapper div + video con)
 ============================================================ */
 
 
@@ -79,25 +80,61 @@
 }
 
 
-/* ✅ VIDEO — không scale, không giảm màu → NÉT */
-.hero-banner__video {
-    position: absolute;
+/* ============================================================
+   02.1. WRAPPER — Đây là div bọc video (LazyBackgroundVideo)
+   ----------------------------------------------------------
+   Cấu trúc:
+     <div class="hero-banner__bg">
+         <div class="hero-banner__video-fallback"></div>
+         <div class="lazy-bg-video hero-banner__video">  ← wrapper
+             <video class="lazy-bg-video__el" />          ← video con
+         </div>
+     </div>
+============================================================ */
 
-    /* ✅ KHÔNG inset âm */
+.hero-banner__video {
+    /* ✅ Wrapper cố định, phủ toàn bộ hero */
+    position: absolute;
     inset: 0;
 
-    /* ✅ KHÔNG kéo giãn — 100% chính xác */
     width: 100%;
     height: 100%;
 
+    z-index: 3;
+
+    /* ✅ Không cho pointer event đi vào */
+    pointer-events: none;
+
+    /* ✅ Force compositing layer */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+
+/* ============================================================
+   02.2. VIDEO ELEMENT BÊN TRONG WRAPPER
+   ----------------------------------------------------------
+   Target cả 2 selector để chắc chắn:
+   - <video> bên trong .hero-banner__video
+   - Hoặc .lazy-bg-video__el (class mặc định của LazyBackgroundVideo)
+============================================================ */
+
+.hero-banner__video video,
+.hero-banner__video .lazy-bg-video__el {
+    /* ✅ Phủ toàn bộ wrapper */
+    position: absolute;
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    /* ✅ Crop fill khung hero, không kéo giãn */
     object-fit: cover;
     object-position: center;
 
-    /* ✅ KHÔNG scale — 1 pixel video = 1 pixel CSS */
+    /* ✅ Không scale — 1 pixel video = 1 pixel CSS */
     transform: translateZ(0);
-
-    opacity: 0;
-    z-index: 3;
 
     /* ✅ TĂNG nhẹ contrast — KHÔNG giảm màu */
     /* Giữ video Platinum Graphite sáng và sạch */
@@ -111,19 +148,24 @@
     will-change: opacity;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
-
-    /* ✅ Fade in mượt khi video ready */
-    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 
-/* ✅ Khi video ready → hiện lên */
-.hero-banner--video-ready .hero-banner__video {
-    opacity: 1;
-}
+/* ============================================================
+   ⚠️ LƯU Ý VỀ FADE IN:
+   - Opacity fade (0 → 1) được xử lý BÊN TRONG
+     LazyBackgroundVideo.css (.lazy-bg-video__el)
+   - Không cần override ở đây
+   - Hero banner class `hero-banner--video-ready` vẫn giữ
+     để dùng cho mục đích khác (nếu cần)
+============================================================ */
 
 
-/* ✅ Fallback gradient — tone xám bạc khi video chưa load */
+/* ============================================================
+   02.3. FALLBACK GRADIENT — TONE XÁM BẠC
+   Hiện khi video chưa load
+============================================================ */
+
 .hero-banner__video-fallback {
     position: absolute;
     inset: 0;
@@ -185,7 +227,6 @@
 
     background: linear-gradient(
         90deg,
-        /* Chỉ đủ tối phía sau chữ — không phủ đen lên video */
         rgba(2, 2, 4, 0.56) 0%,
         rgba(3, 3, 5, 0.46) 18%,
         rgba(4, 4, 7, 0.30) 38%,
@@ -224,7 +265,7 @@
 }
 
 
-/* ✨ Silver rim — viền bạc nhẹ ở góc phải (match đèn LED) */
+/* ✨ Silver rim — viền bạc nhẹ ở góc phải */
 .hero-banner__overlay-layer::after {
     content: "";
     position: absolute;
@@ -306,10 +347,7 @@
 
 
 /* ============================================================
-   05. CONTENT — GỌN VÀ XÍCH LÊN
-   - Không ép min-height / max-height cho khung content
-   - Content tự lấy chiều cao theo nội dung thật
-   - Desktop + mobile đều được đẩy lên nhẹ
+   05. CONTENT
 ============================================================ */
 
 .hero-banner__content {
@@ -328,13 +366,11 @@
 
     gap: 5rem;
 
-    /* Content tự co theo nội dung, không ép full chiều cao viewport */
     padding:
         72px
         var(--container-padding, 2rem)
         58px;
 
-    /* Nhích toàn bộ content lên nhẹ trên desktop */
     transform: translateY(-28px);
 }
 
@@ -807,7 +843,7 @@
 
 
 /* ============================================================
-   14. TABLET
+   14. TABLET — 1200px
 ============================================================ */
 
 @media (max-width: 1200px) {
@@ -828,7 +864,7 @@
 
 
 /* ============================================================
-   15. SMALL TABLET
+   15. SMALL TABLET — 992px
 ============================================================ */
 
 @media (max-width: 992px) {
@@ -849,7 +885,7 @@
 
 
 /* ============================================================
-   16. MOBILE
+   16. MOBILE — 768px
 ============================================================ */
 
 @media (max-width: 768px) {
@@ -934,7 +970,7 @@
 
 
 /* ============================================================
-   17. SMALL MOBILE
+   17. SMALL MOBILE — 480px
 ============================================================ */
 
 @media (max-width: 480px) {

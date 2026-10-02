@@ -1,416 +1,857 @@
 /* ============================================
-   MODAL CSS – Silver Edition
-   Phù hợp với theme bạc của Galaxy Cinema
+   MODAL CSS — SILVER PREMIUM EDITION
+   ✅ Fixed triệt để (không trôi khi scroll)
+   ✅ Giao diện nâng cấp — sang trọng hơn
+   ✅ Hỗ trợ 4 loại: success / error / warning / info
+   ✅ Responsive: 992 / 768 / 480
+   ✅ Hỗ trợ data-lenis-prevent + reduce-motion
    ============================================ */
 
-/* ----- OVERLAY ----- */
+/* ============================================
+   OVERLAY — CỐ ĐỊNH TOÀN MÀN HÌNH
+============================================ */
+
 .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 99999;
-  animation: fadeIn 0.25s ease-out;
-  padding: 16px;
-  box-sizing: border-box;
+    /* ✅ FIXED mạnh — không bị CSS nào ghi đè */
+    position: fixed !important;
+
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+
+    /* ✅ z-index cao nhất có thể */
+    z-index: 2147483646 !important;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    /* ✅ Padding an toàn cho notch iPhone */
+    padding: max(16px, env(safe-area-inset-top))
+             max(16px, env(safe-area-inset-right))
+             max(16px, env(safe-area-inset-bottom))
+             max(16px, env(safe-area-inset-left));
+
+    box-sizing: border-box;
+
+    /* ✅ Nền tối mờ */
+    background: rgba(0, 0, 0, 0.72);
+
+    backdrop-filter: blur(8px) saturate(120%);
+    -webkit-backdrop-filter: blur(8px) saturate(120%);
+
+    /* ✅ Chống giật khi animation */
+    transform: translateZ(0);
+    will-change: opacity;
+
+    /* ✅ Chặn scroll lan ra ngoài */
+    overscroll-behavior: contain;
+
+    animation: modalOverlayIn 0.25s ease-out;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+@keyframes modalOverlayIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
 }
 
-@keyframes slideUp {
-  from {
-    transform: translateY(40px) scale(0.96);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-}
+/* ============================================
+   CONTAINER — KHUNG MODAL
+============================================ */
 
-/* ----- CONTAINER ----- */
 .modal-container {
-  background: var(--glass-bg, rgba(10, 12, 14, 0.95));
-  backdrop-filter: var(--glass-blur, blur(16px));
-  -webkit-backdrop-filter: var(--glass-blur, blur(16px));
-  border: var(--border-premium, 1px solid rgba(244, 246, 248, 0.25));
-  border-radius: var(--radius-lg, 20px);
-  max-width: 520px;
-  width: 100%;
-  box-shadow: var(--glass-shadow, 0 16px 48px rgba(0, 0, 0, 0.6));
-  position: relative;
-  animation: slideUp 0.3s ease-out;
-  overflow: hidden;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  color: var(--text-body, #D9DDE2);
+    position: relative;
+
+    width: 100%;
+    max-width: 520px;
+    max-height: calc(100dvh - 32px);
+
+    display: flex;
+    flex-direction: column;
+
+    /* ✅ Nền gradient tinh tế */
+    background:
+        linear-gradient(
+            160deg,
+            rgba(20, 22, 26, 0.98) 0%,
+            rgba(10, 12, 15, 0.99) 100%
+        );
+
+    backdrop-filter: blur(20px) saturate(130%);
+    -webkit-backdrop-filter: blur(20px) saturate(130%);
+
+    /* ✅ Border silver sang trọng */
+    border: 1px solid rgba(232, 232, 232, 0.16);
+    border-radius: 22px;
+
+    /* ✅ Shadow nhiều lớp — tạo depth */
+    box-shadow:
+        0 24px 80px rgba(0, 0, 0, 0.6),
+        0 8px 28px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+
+    /* ✅ Đường sáng trên cùng */
+    overflow: hidden;
+
+    color: var(--text-body, #D9DDE2);
+
+    /* ✅ Chống giật */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+
+    animation: modalSlideUp 0.34s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ----- NÚT ĐÓNG (X) ----- */
+/* Vệt sáng trên đỉnh modal */
+.modal-container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(232, 232, 232, 0.55),
+        transparent
+    );
+
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+/* Quầng sáng góc phải trên */
+.modal-container::after {
+    content: "";
+    position: absolute;
+    top: -80px;
+    right: -80px;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(232, 232, 232, 0.06) 0%,
+            transparent 70%
+        );
+
+    pointer-events: none;
+}
+
+@keyframes modalSlideUp {
+    from {
+        transform: translateY(28px) scale(0.96) translateZ(0);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0) scale(1) translateZ(0);
+        opacity: 1;
+    }
+}
+
+/* ============================================
+   NÚT ĐÓNG (X)
+============================================ */
+
 .modal-close-btn {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  transition: all var(--transition-fast, 0.2s ease);
-  z-index: 10;
-  color: var(--text-secondary, #9EA8B3);
+    position: absolute;
+
+    top: 16px;
+    right: 16px;
+
+    width: 38px;
+    height: 38px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+
+    color: var(--text-secondary, #9EA8B3);
+
+    cursor: pointer;
+
+    z-index: 10;
+
+    transition:
+        background 0.22s ease,
+        border-color 0.22s ease,
+        color 0.22s ease,
+        transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.22s ease;
 }
 
 .modal-close-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.15);
-  color: var(--text-heading, #F4F6F8);
-  transform: rotate(90deg) scale(1.05);
+    background: rgba(255, 255, 255, 0.10);
+    border-color: rgba(232, 232, 232, 0.30);
+    color: var(--text-heading, #F4F6F8);
+
+    transform: rotate(90deg) scale(1.08);
+
+    box-shadow:
+        0 0 0 4px rgba(232, 232, 232, 0.06),
+        0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
 .modal-close-btn:active {
-  transform: scale(0.95);
+    transform: rotate(90deg) scale(0.95);
 }
 
-/* ----- NỘI DUNG CHÍNH ----- */
+.modal-close-btn:focus-visible {
+    outline: 2px solid var(--silver-primary, #DDE2E8);
+    outline-offset: 3px;
+}
+
+/* ============================================
+   CONTENT WRAPPER
+============================================ */
+
 .modal-content {
-  padding: 32px 28px 28px 28px;
-  flex: 1;
-  overflow-y: auto;
+    position: relative;
+    z-index: 1;
+
+    padding: 34px 30px 28px;
+
+    flex: 1 1 auto;
+    min-height: 0;
+
+    overflow-y: auto;
+    overscroll-behavior: contain;
+
+    scrollbar-width: thin;
+    scrollbar-color:
+        rgba(232, 232, 232, 0.22)
+        transparent;
 }
 
-/* ----- TIÊU ĐỀ + ICON (LUCIDE SVG) ----- */
+.modal-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: rgba(232, 232, 232, 0.18);
+    border-radius: 999px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(232, 232, 232, 0.32);
+}
+
+/* ============================================
+   TITLE + ICON
+============================================ */
+
 .modal-title-group {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+
+    gap: 16px;
+
+    margin-bottom: 10px;
 }
 
-/* Wrapper icon – hỗ trợ SVG từ lucide-react */
+/* Icon circle với glow theo loại */
 .modal-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 52px;
-  height: 52px;
-  flex-shrink: 0;
-  line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 54px;
+    height: 54px;
+    flex-shrink: 0;
+
+    border-radius: 16px;
+
+    position: relative;
+
+    transition:
+        transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.3s ease;
 }
 
-/* Icon SVG kế thừa màu từ parent */
 .modal-icon svg {
-  width: 100%;
-  height: 100%;
-  stroke-width: 2;
+    width: 26px;
+    height: 26px;
+    stroke-width: 2.2;
 }
 
-/* Màu icon theo từng loại */
+.modal-title-group:hover .modal-icon {
+    transform: scale(1.06);
+}
+
+/* Success */
 .modal-icon.success-icon {
-  color: #22c55e;
+    color: #22c55e;
+    background:
+        linear-gradient(
+            145deg,
+            rgba(34, 197, 94, 0.16),
+            rgba(34, 197, 94, 0.05)
+        );
+    border: 1px solid rgba(34, 197, 94, 0.28);
+    box-shadow:
+        0 8px 24px rgba(34, 197, 94, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
+/* Error */
 .modal-icon.error-icon {
-  color: #ef4444;
+    color: #ef4444;
+    background:
+        linear-gradient(
+            145deg,
+            rgba(239, 68, 68, 0.16),
+            rgba(239, 68, 68, 0.05)
+        );
+    border: 1px solid rgba(239, 68, 68, 0.28);
+    box-shadow:
+        0 8px 24px rgba(239, 68, 68, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
+/* Warning */
 .modal-icon.warning-icon {
-  color: #f59e0b;
+    color: #f59e0b;
+    background:
+        linear-gradient(
+            145deg,
+            rgba(245, 158, 11, 0.16),
+            rgba(245, 158, 11, 0.05)
+        );
+    border: 1px solid rgba(245, 158, 11, 0.28);
+    box-shadow:
+        0 8px 24px rgba(245, 158, 11, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
+/* Info — silver */
 .modal-icon.info-icon {
-  color: var(--silver-primary, #DDE2E8);
+    color: var(--silver-primary, #DDE2E8);
+    background:
+        linear-gradient(
+            145deg,
+            rgba(232, 232, 232, 0.14),
+            rgba(232, 232, 232, 0.04)
+        );
+    border: 1px solid rgba(232, 232, 232, 0.24);
+    box-shadow:
+        0 8px 24px rgba(232, 232, 232, 0.10),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-/* Tiêu đề */
+/* ============================================
+   TITLE
+============================================ */
+
 .modal-title {
-  font-size: 24px;
-  font-weight: var(--fw-bold, 700);
-  margin: 0;
-  color: var(--text-heading, #F4F6F8);
-  line-height: 1.3;
-  word-break: break-word;
+    flex: 1 1 auto;
+    min-width: 0;
+
+    margin: 0;
+
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.3;
+    letter-spacing: 0.3px;
+
+    color: var(--text-heading, #F4F6F8);
+
+    word-break: break-word;
 }
 
-/* Màu chữ tiêu đề theo loại - Dùng màu bạc/silver thay vì màu riêng */
-.modal-title-group.success .modal-title {
-  color: #22c55e;
-}
-.modal-title-group.error .modal-title {
-  color: #ef4444;
-}
-.modal-title-group.warning .modal-title {
-  color: #f59e0b;
-}
-.modal-title-group.info .modal-title {
-  color: var(--silver-primary, #DDE2E8);
-}
+.modal-title-group.success .modal-title { color: #22c55e; }
+.modal-title-group.error   .modal-title { color: #ef4444; }
+.modal-title-group.warning .modal-title { color: #f59e0b; }
+.modal-title-group.info    .modal-title { color: var(--silver-primary, #DDE2E8); }
 
-/* ----- ĐƯỜNG KẺ ----- */
+/* ============================================
+   DIVIDER
+============================================ */
+
 .modal-divider {
-  height: 2px;
-  background: linear-gradient(to right, rgba(255, 255, 255, 0.06), transparent);
-  margin: 12px 0 16px 0;
-  opacity: 0.6;
+    height: 1px;
+    width: 100%;
+
+    margin: 14px 0 18px;
+
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(232, 232, 232, 0.16),
+        transparent
+    );
+
+    opacity: 0.9;
 }
 
-/* ----- BODY ----- */
+/* ============================================
+   BODY
+============================================ */
+
 .modal-body {
-  font-size: 16px;
-  line-height: 1.6;
-  color: var(--text-body, #D9DDE2);
-  margin: 8px 0 4px 0;
-  max-height: 50vh;
-  overflow-y: auto;
-  padding-right: 4px;
+    font-size: 15.5px;
+    line-height: 1.65;
+
+    color: var(--text-body, #D9DDE2);
+
+    max-height: 52vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+
+    padding-right: 4px;
 }
 
 .modal-body p {
-  margin: 0;
+    margin: 0;
+}
+
+.modal-body p + p {
+    margin-top: 12px;
+}
+
+.modal-body strong {
+    color: var(--silver-light, #F4F6F8);
+    font-weight: 700;
 }
 
 .modal-body::-webkit-scrollbar {
-  width: 6px;
+    width: 6px;
 }
+
 .modal-body::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: var(--radius-round, 999px);
+    background: transparent;
 }
+
 .modal-body::-webkit-scrollbar-thumb {
-  background: var(--silver-dark, #A9B2BC);
-  border-radius: var(--radius-round, 999px);
+    background: rgba(232, 232, 232, 0.18);
+    border-radius: 999px;
 }
+
 .modal-body::-webkit-scrollbar-thumb:hover {
-  background: var(--silver-primary, #DDE2E8);
+    background: rgba(232, 232, 232, 0.32);
 }
 
-/* ----- FOOTER NÚT ----- */
+/* ============================================
+   FOOTER — 2 NÚT
+============================================ */
+
 .modal-footer {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 28px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  padding-top: 20px;
-  flex-wrap: wrap;
+    display: flex;
+    justify-content: stretch;
+    gap: 12px;
+
+    margin-top: 26px;
+    padding-top: 20px;
+
+    border-top: 1px solid rgba(232, 232, 232, 0.08);
+
+    flex-wrap: wrap;
 }
 
-/* Style chung cho 2 nút */
 .modal-footer button {
-  padding: 12px 20px;
-  border-radius: var(--radius-round, 50px);
-  font-weight: var(--fw-semibold, 600);
-  font-size: 15px;
-  border: none;
-  cursor: pointer;
-  transition: all var(--transition-fast, 0.2s ease);
-  flex: 1;
-  min-width: 100px;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  gap: 6px;
+    flex: 1 1 0;
+    min-width: 110px;
+    min-height: 46px;
+
+    padding: 12px 22px;
+
+    border: none;
+    border-radius: 999px;
+
+    font-family: inherit;
+    font-size: 14.5px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+
+    cursor: pointer;
+    touch-action: manipulation;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+
+    position: relative;
+    overflow: hidden;
+
+    transition:
+        background 0.22s ease,
+        color 0.22s ease,
+        border-color 0.22s ease,
+        transform 0.2s ease,
+        box-shadow 0.22s ease,
+        filter 0.22s ease;
 }
 
 .modal-footer button:active {
-  transform: scale(0.96);
+    transform: scale(0.97);
 }
 
-/* Nút Cancel - Style bạc nhẹ */
+.modal-footer button:focus-visible {
+    outline: 2px solid var(--silver-primary, #DDE2E8);
+    outline-offset: 3px;
+}
+
+/* ---------- NÚT CANCEL ---------- */
 .modal-btn-cancel {
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text-secondary, #9EA8B3);
-  border: var(--border-subtle, 1px solid rgba(255, 255, 255, 0.04));
+    background: rgba(255, 255, 255, 0.045);
+    color: var(--text-secondary, #9EA8B3);
+    border: 1px solid rgba(255, 255, 255, 0.09);
 }
 
 .modal-btn-cancel:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text-heading, #F4F6F8);
-  border-color: rgba(255, 255, 255, 0.1);
-  transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.09);
+    color: var(--text-heading, #F4F6F8);
+    border-color: rgba(232, 232, 232, 0.22);
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 8px 22px rgba(0, 0, 0, 0.25);
 }
 
-/* Nút Confirm - Style bạc sáng như nút chính */
+/* ---------- NÚT CONFIRM — SILVER GRADIENT ---------- */
 .modal-btn-confirm {
-  background: var(--btn-silver-bg, linear-gradient(135deg, #E8ECF1 0%, #F4F7FA 50%, #D5DAE1 100%));
-  color: var(--bg-primary, #07080A);
-  box-shadow: var(--btn-silver-shadow, 0 4px 20px rgba(159, 183, 210, 0.25));
+    background:
+        linear-gradient(
+            135deg,
+            #F5F7FA 0%,
+            #E0E5EB 48%,
+            #B8BFC8 100%
+        );
+    color: #0A0C0F;
+
+    box-shadow:
+        0 8px 22px rgba(232, 232, 232, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.08);
+
+    /* ✅ Hiệu ứng shimmer */
+    position: relative;
+}
+
+.modal-btn-confirm::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+
+    background:
+        linear-gradient(
+            100deg,
+            transparent 20%,
+            rgba(255, 255, 255, 0.55) 50%,
+            transparent 80%
+        );
+
+    transform: translateX(-120%);
+    pointer-events: none;
+
+    transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .modal-btn-confirm:hover {
-  filter: brightness(1.05);
-  box-shadow: 0 4px 28px rgba(159, 183, 210, 0.35);
-  transform: translateY(-2px);
+    filter: brightness(1.04);
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 12px 32px rgba(232, 232, 232, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
-/* Nếu có nút Danger (Xóa, v.v.) */
+.modal-btn-confirm:hover::before {
+    transform: translateX(120%);
+}
+
+/* ---------- NÚT DANGER (nếu dùng) ---------- */
 .modal-btn-danger {
-  background: #ef4444;
-  color: #ffffff;
+    background:
+        linear-gradient(
+            135deg,
+            #F87171 0%,
+            #EF4444 50%,
+            #DC2626 100%
+        );
+    color: #FFFFFF;
+
+    box-shadow:
+        0 8px 22px rgba(239, 68, 68, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .modal-btn-danger:hover {
-  background: #dc2626;
+    filter: brightness(1.06);
+    transform: translateY(-2px);
+    box-shadow:
+        0 12px 28px rgba(239, 68, 68, 0.34);
 }
 
 /* ============================================
-   RESPONSIVE
-   ============================================ */
+   RESPONSIVE — TABLET 992px
+============================================ */
 
-/* --- Màn hình tablet (≤ 992px) --- */
 @media (max-width: 992px) {
-  .modal-container {
-    max-width: 560px;
-  }
-  .modal-content {
-    padding: 28px 24px 24px 24px;
-  }
-  .modal-icon {
-    width: 46px;
-    height: 46px;
-  }
-  .modal-title {
-    font-size: 22px;
-  }
-  .modal-body {
-    font-size: 15px;
-  }
-}
+    .modal-container {
+        max-width: 560px;
+    }
 
-/* --- Màn hình nhỏ (≤ 768px) --- */
-@media (max-width: 768px) {
-  .modal-container {
-    max-width: 90%;
-    border-radius: var(--radius-md, 18px);
-  }
-  .modal-content {
-    padding: 24px 20px 20px 20px;
-  }
-  .modal-icon {
-    width: 40px;
-    height: 40px;
-  }
-  .modal-title {
-    font-size: 20px;
-  }
-  .modal-body {
-    font-size: 15px;
-  }
+    .modal-content {
+        padding: 30px 26px 24px;
+    }
 
-  /* Đổi footer: 2 nút xếp chồng lên nhau, full chiều rộng */
-  .modal-footer {
-    flex-direction: column;
-    gap: 10px;
-  }
-  .modal-footer button {
-    width: 100%;
-    flex: none;
-    min-width: unset;
-    padding: 12px;
-    font-size: 15px;
-  }
-  .modal-close-btn {
-    top: 12px;
-    right: 12px;
-    width: 34px;
-    height: 34px;
-  }
-}
+    .modal-icon {
+        width: 50px;
+        height: 50px;
+    }
 
-/* --- Màn hình điện thoại (≤ 480px) --- */
-@media (max-width: 480px) {
-  .modal-overlay {
-    padding: 8px;
-  }
-  .modal-container {
-    max-width: 100%;
-    border-radius: var(--radius-md, 16px);
-    margin: 8px;
-  }
-  .modal-content {
-    padding: 20px 16px 16px 16px;
-  }
-  .modal-title-group {
-    gap: 12px;
-  }
-  .modal-icon {
-    width: 36px;
-    height: 36px;
-  }
-  .modal-title {
-    font-size: 18px;
-  }
-  .modal-body {
-    font-size: 14px;
-    max-height: 40vh;
-  }
+    .modal-icon svg {
+        width: 24px;
+        height: 24px;
+    }
 
-  /* Đảm bảo 2 nút vẫn xếp chồng, full chiều rộng trên mobile */
-  .modal-footer {
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 20px;
-    padding-top: 16px;
-  }
-  .modal-footer button {
-    width: 100%;
-    flex: none;
-    min-width: unset;
-    padding: 10px;
-    font-size: 14px;
-  }
-  .modal-close-btn {
-    top: 10px;
-    right: 10px;
-    width: 30px;
-    height: 30px;
-  }
-  .modal-divider {
-    margin: 8px 0 12px 0;
-  }
+    .modal-title {
+        font-size: 20px;
+    }
+
+    .modal-body {
+        font-size: 15px;
+    }
 }
 
 /* ============================================
-   DARK THEME (FALLBACK - nếu không có biến CSS)
-   ============================================ */
+   RESPONSIVE — MOBILE 768px
+============================================ */
+
+@media (max-width: 768px) {
+    .modal-overlay {
+        padding: max(12px, env(safe-area-inset-top))
+                 max(12px, env(safe-area-inset-right))
+                 max(12px, env(safe-area-inset-bottom))
+                 max(12px, env(safe-area-inset-left));
+    }
+
+    .modal-container {
+        max-width: 100%;
+        border-radius: 18px;
+    }
+
+    .modal-content {
+        padding: 26px 20px 20px;
+    }
+
+    .modal-title-group {
+        gap: 12px;
+    }
+
+    .modal-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 13px;
+    }
+
+    .modal-icon svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .modal-title {
+        font-size: 18px;
+    }
+
+    .modal-body {
+        font-size: 14.5px;
+        max-height: 45vh;
+    }
+
+    /* Nút xếp chồng */
+    .modal-footer {
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 22px;
+        padding-top: 16px;
+    }
+
+    .modal-footer button {
+        width: 100%;
+        flex: none;
+        min-width: unset;
+        min-height: 46px;
+        padding: 12px;
+        font-size: 14.5px;
+    }
+
+    .modal-close-btn {
+        top: 12px;
+        right: 12px;
+        width: 34px;
+        height: 34px;
+    }
+}
+
+/* ============================================
+   RESPONSIVE — MOBILE NHỎ 480px
+============================================ */
+
+@media (max-width: 480px) {
+    .modal-overlay {
+        padding: max(8px, env(safe-area-inset-top))
+                 max(8px, env(safe-area-inset-right))
+                 max(8px, env(safe-area-inset-bottom))
+                 max(8px, env(safe-area-inset-left));
+    }
+
+    .modal-container {
+        border-radius: 16px;
+        max-height: calc(100dvh - 16px);
+    }
+
+    .modal-content {
+        padding: 22px 16px 16px;
+    }
+
+    .modal-title-group {
+        gap: 11px;
+    }
+
+    .modal-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+    }
+
+    .modal-icon svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .modal-title {
+        font-size: 16.5px;
+        letter-spacing: 0.2px;
+    }
+
+    .modal-divider {
+        margin: 10px 0 14px;
+    }
+
+    .modal-body {
+        font-size: 14px;
+        max-height: 40vh;
+    }
+
+    .modal-footer {
+        gap: 8px;
+        margin-top: 18px;
+        padding-top: 14px;
+    }
+
+    .modal-footer button {
+        min-height: 44px;
+        padding: 11px;
+        font-size: 14px;
+    }
+
+    .modal-close-btn {
+        top: 10px;
+        right: 10px;
+        width: 32px;
+        height: 32px;
+    }
+
+    .modal-close-btn svg {
+        width: 17px;
+        height: 17px;
+    }
+}
+
+/* ============================================
+   RESPONSIVE — MOBILE SIÊU NHỎ 380px
+============================================ */
+
+@media (max-width: 380px) {
+    .modal-content {
+        padding: 20px 14px 14px;
+    }
+
+    .modal-title {
+        font-size: 15px;
+    }
+
+    .modal-icon {
+        width: 36px;
+        height: 36px;
+    }
+
+    .modal-icon svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .modal-body {
+        font-size: 13px;
+    }
+
+    .modal-footer button {
+        font-size: 13px;
+        min-height: 42px;
+    }
+}
+
+/* ============================================
+   DARK FALLBACK (nếu không có CSS variables)
+============================================ */
+
 @supports not (--custom: property) {
-  .modal-container {
-    background: #0a0a14;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-  }
-  .modal-title {
-    color: #F4F6F8;
-  }
-  .modal-body {
-    color: #D9DDE2;
-  }
-  .modal-btn-confirm {
-    background: linear-gradient(135deg, #E8ECF1 0%, #F4F7FA 50%, #D5DAE1 100%);
-    color: #0a0a14;
-  }
-  .modal-btn-cancel {
-    background: rgba(255, 255, 255, 0.04);
-    color: #9EA8B3;
-  }
-  .modal-btn-cancel:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: #F4F6F8;
-  }
+    .modal-container {
+        background: #0a0c10;
+        border: 1px solid rgba(232, 232, 232, 0.16);
+    }
+
+    .modal-title {
+        color: #F4F6F8;
+    }
+
+    .modal-body {
+        color: #D9DDE2;
+    }
+
+    .modal-btn-confirm {
+        background:
+            linear-gradient(
+                135deg,
+                #F5F7FA 0%,
+                #E0E5EB 48%,
+                #B8BFC8 100%
+            );
+        color: #0A0C0F;
+    }
+
+    .modal-btn-cancel {
+        background: rgba(255, 255, 255, 0.045);
+        color: #9EA8B3;
+    }
+
+    .modal-btn-cancel:hover {
+        background: rgba(255, 255, 255, 0.09);
+        color: #F4F6F8;
+    }
 }

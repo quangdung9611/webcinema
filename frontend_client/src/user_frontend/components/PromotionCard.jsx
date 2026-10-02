@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 
 import ContentRevealTransition from "./ContentRevealTransition";
+import LazyImage from "./LazyImage";   // ✅ THÊM
 
 import "../styles/PromotionCard.css";
 
@@ -72,12 +73,14 @@ const PromotionCard = ({
 
                     <div className="promotion-card__gradient" />
 
-                    <img
+                    {/* ✅ LazyImage với fill */}
+                    <LazyImage
+                        fill
                         src={image}
                         alt={title}
-                        loading="lazy"
-                        decoding="async"
+                        className="promotion-card__img"
                         draggable={false}
+                        placeholderColor="#0f1115"
                     />
 
                 </div>
